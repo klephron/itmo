@@ -2,7 +2,8 @@ rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(su
 
 CC := gcc
 LD := gcc
-FLAGS := -g -O0 -m64
+# -fsanitize=thread
+FLAGS := -g -O0 -m64 -fsanitize=address -fsanitize=undefined -fsanitize=leak
 MKDIR := mkdir -p
 # ANTLR := java -jar lib/antlr-3.5.3-complete.jar
 ANTLR := java -jar ~/.m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
@@ -41,11 +42,11 @@ DIRS = $(sort $(dir $(OBJS)) $(dir $(TARGET)))
 $(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_GEN_DIR)/%Parser.h: $(GRM_DIR)/%.g3
 	$(ANTLR) $^ -fo $(GRM_GEN_DIR)
 
-%.o: %.c | $(DIRS)
+%.o: %.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
 # generate object files excluding generated
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(DIRS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
 # create directories
