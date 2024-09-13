@@ -3,7 +3,7 @@ rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(su
 CC := gcc
 LD := gcc
 # -fsanitize=thread
-FLAGS := -g -O0 -m64 -fsanitize=address -fsanitize=undefined -fsanitize=leak
+FLAGS := -g3 -O0 -m64 -fsanitize=address,undefined,leak -Wall -Wextra
 MKDIR := mkdir -p
 # ANTLR := java -jar lib/antlr-3.5.3-complete.jar
 ANTLR := java -jar ~/.m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
