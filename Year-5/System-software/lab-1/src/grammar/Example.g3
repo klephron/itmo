@@ -1,6 +1,7 @@
 grammar Example;
 options {
     language=C;
+    output=AST;
 }
 tokens {
     PLUS  = '+';
