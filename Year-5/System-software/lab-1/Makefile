@@ -56,8 +56,8 @@ $(sort $(DIRS)):
 $(TARGET): $(OBJS)
 	$(LD) $(FLAGS) $^ -o $(TARGET) $(INCS)
 
-### Generate antlr3 source and header files
-generate: $(SRCS.GRM) $(HDRS.GRM)
+### Generate antlr3 source and header files from grammar rules
+grammar: $(SRCS.GRM) $(HDRS.GRM)
 	
 ### Build executable
 build: $(TARGET)
