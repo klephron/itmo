@@ -10,6 +10,7 @@
       "args": [],
       "cwd": "${workspaceFolder}",
       "environment": [],
+      "preLaunchTask": "Build",
       "MIMode": "gdb",
       "setupCommands": [
           {
@@ -22,7 +23,7 @@
               "text": "-gdb-set disassembly-flavor intel",
               "ignoreFailures": true
           }
-      ]
+      ],
     }
   ]
 }
