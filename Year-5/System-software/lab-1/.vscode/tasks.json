@@ -3,7 +3,7 @@
   "tasks": [
     {
       "label": "Build",
-      "type": "cppbuild",
+      "type": "process",
       "command": "make",
       "args": ["build"],
       "options": {
