@@ -21,12 +21,13 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get -y install --no-install-r
 # RUN apt install gcc-multilib
 
 # Also can remove achive
+# Maven repository is stored globally
 RUN cd ~ && curl -L -O https://github.com/antlr/antlr3/archive/refs/tags/3.5.3.tar.gz \
-  && tar xzvf 3.5.3.tar.gz && cd antlr3-3.5.3/runtime/C \
+  && tar xzvf 3.5.3.tar.gz && cd ~/antlr3-3.5.3/runtime/C \
   && autoupdate && autoreconf -fi && LDFLAGS="-I/usr/include/x86_64-linux-gnu" CPPFLAGS="-I/usr/include/x86_64-linux-gnu" ./configure --enable-64bit \
   && make && make install \
-  && cd ~/antlr3-3.5.3 && mvn package install -Dmaven.test.skip=true \
-  && cd ~ && rm -rf antlr3-3.5.3
+  && mkdir -p /usr/local/maven/m2/repository && cd ~/antlr3-3.5.3 && mvn package install -Dmaven.test.skip=true -Dmaven.repo.local=/usr/local/maven/m2/repository \
+  && rm -rf ~/antlr3-3.5.3
 
 # Update LD_LIBRARY_PATH
 RUN echo "/usr/local/lib" >> /etc/ld.so.conf.d/usr-local.conf && ldconfig

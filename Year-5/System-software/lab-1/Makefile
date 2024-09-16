@@ -6,7 +6,8 @@ LD := gcc
 FLAGS := -g3 -O0 -m64 -fsanitize=address,undefined,leak -Wall -Wextra
 MKDIR := mkdir -p
 # ANTLR := java -jar lib/antlr-3.5.3-complete.jar
-ANTLR := java -jar ~/.m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
+# ANTLR := java -jar ~/.m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
+ANTLR := java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
 
 SRC_DIR := src
 GRM_DIR := $(SRC_DIR)/grammar
