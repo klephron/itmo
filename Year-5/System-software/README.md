@@ -14,12 +14,14 @@ docker build . -t <tag>
 devpod-cli up . --ide none [--recreate]
 ```
 
+Default remote user is `vscode`. ID of this user is used to mount workspace.
+
 ## Start
 
-Mount this directory on `/workspaces/sppo`.
+Mount this directory on `/workspaces/system-software`.
 
 ```sh
-docker run -v .:/workspaces/sppo -d -it <tag> bash
+docker run -v .:/workspaces/system-software -d -it <tag> bash
 ```
 
 ## Connect
@@ -39,4 +41,6 @@ Get ip:
 ```sh
 docker inspect -f "{{ .Name}} {{ .NetworkSettings.IPAddress }} <container-id>"
 ```
+
+> Or use user `vscode` when used with devcontainers.
 
