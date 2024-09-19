@@ -3,7 +3,7 @@ tree grammar Eval;
 options {
   language = C;
   tokenVocab = Expr;
-  ASTLabelType = BASE;
+  ASTLabelType = pANTLR3_BASE_TREE;
 }
  
  
@@ -13,16 +13,29 @@ options {
 }
  
 @members {
-  p_list list;
+  p_list memory;
 }
 
 prog
-  : stat+ 
+  @init {
+    memory = list_new();
+    printf("list constucted\n");
+
+  }
+  @after {
+    memory->free(memory);
+    printf("list destructed\n");
+  }
+  : statement+ 
   ;
 
-stat
-  : expr {System.out.println($expr.value);}
-  | ^('=' ID expr) {memory.put($ID.text, new Integer($expr.value));}
+statement
+  : expr {printf("\%d\n", $expr.value);}
+  | ^('=' ID expr) {
+      char *c = $ID.text->chars;
+      memory->put(memory, c, $expr.value);
+      printf("assign: '\%s'=\%d\n", c, $expr.value);
+    }
   ;
 
 expr returns [int value]
@@ -30,10 +43,18 @@ expr returns [int value]
   | ^('-' a=expr b=expr) {$value = a-b;}   
   | ^('*' a=expr b=expr) {$value = a*b;}
   | ID {
-    Integer v = (Integer)memory.get($ID.text);
-    if ( v!=null ) $value = v.intValue();
-    else System.err.println("undefined variable "+$ID.text);
+    char *c = $ID.text->chars;
+    result_int v = memory->get(memory, c);
+    if (v.code) {
+      printf("undefined '\%s'\n", c);
+    } else {
+      printf("get \%d<-'\%s'\n", v.value, c);
+      $value = v.value;
+    }
   }
-  | INT {$value = Integer.parseInt($INT.text);}
+  | INT {
+    $value = atoi($INT.text->chars);
+    printf("d: \%d\n", $value);
+    }
   ;
  

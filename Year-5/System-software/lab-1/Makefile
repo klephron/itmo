@@ -1,5 +1,7 @@
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
+.DEFAULT_GOAL := build
+
 CC := gcc
 LD := gcc
 # -fsanitize=thread
@@ -37,6 +39,9 @@ SRCS = $(SRCS.SRC) $(SRCS.GRM) $(SRCS.GRM_REC)
 HDRS = $(HDRS.SRC) $(HDRS.GRM) $(HDRS.GRM_REC)
 OBJS = $(OBJS.SRC) $(OBJS.GRM) $(OBJS.GRM_REC)
 
+# prevent deletion of header files
+.PRECIOUS: $(HDRS)
+
 # absolute imports
 INCLUDE_DIRS := $(SRC_DIR) $(GRM_GEN_DIR)
 INCLUDE_LIBS = antlr3c
@@ -51,7 +56,7 @@ $(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_G
 	$(ANTLR) $^ -fo $(GRM_GEN_DIR)
 
 # generate grammar files and objects for trees
-$(GRM_GEN_DIR)/%.c $(GRM_GEN_DIR)/%.h: $(GRM_DIR)/%.g3 | $(DIRS) $(TKNS.GRM_REC)
+$(GRM_GEN_DIR)/%.c $(GRM_GEN_DIR)/%.h $(GRM_GEN_DIR)/%.tokens: $(GRM_DIR)/%.g3 | $(DIRS) $(TKNS.GRM_REC)
 	$(ANTLR) $^ -fo $(GRM_GEN_DIR)
 
 %.o: %.c $(HDRS) | $(DIRS)

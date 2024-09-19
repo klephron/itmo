@@ -3,6 +3,7 @@ grammar Expr;
 options {
   language=C;
   output=AST;
+  ASTLabelType = pANTLR3_BASE_TREE;
 }
 
 prog

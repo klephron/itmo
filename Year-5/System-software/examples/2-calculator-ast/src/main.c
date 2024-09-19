@@ -2,6 +2,7 @@
 #include <antlr3interfaces.h>
 #include <stdio.h>
 
+#include "Eval.h"
 #include "ExprLexer.h"
 #include "ExprParser.h"
 
@@ -33,19 +34,17 @@ int main_antlr(int argc, char *argv[]) {
   pANTLR3_COMMON_TOKEN_STREAM tokens =
       antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lexer));
   pExprParser parser = ExprParserNew(tokens);
+
   ExprParser_prog_return res = parser->prog(parser);
 
   pANTLR3_BASE_TREE tree = res.tree;
-  pANTLR3_STRING string = tree->toStringTree(tree);
-  printf("tree: %s\n", string->chars);
+  pANTLR3_COMMON_TREE_NODE_STREAM nodes = antlr3CommonTreeNodeStreamNewTree(tree, ANTLR3_SIZE_HINT);
 
-  printf("children-count: %d\n", tree->getChildCount(tree));
-  for (int i = 0; i < tree->getChildCount(tree); ++i) {
-    pANTLR3_BASE_TREE child = (pANTLR3_BASE_TREE) tree->getChild(tree, i);
-    pANTLR3_STRING string = child->toStringTree(child);
-    printf("child-%d: %s\n", i, string->chars);
-  }
+  pEval walker = EvalNew(nodes);
+  walker->prog(walker);
 
+  walker->free(walker);
+  nodes->free(nodes);
   parser->free(parser);
   tokens->free(tokens);
   lexer->free(lexer);
