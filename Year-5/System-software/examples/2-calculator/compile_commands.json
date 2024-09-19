@@ -1,0 +1,22 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/_gen",
+      "-Isrc",
+      "-o",
+      "build/main.o",
+      "src/main.c"
+    ],
+    "directory": "/workspaces/system-software/examples/2-calculator",
+    "file": "/workspaces/system-software/examples/2-calculator/src/main.c",
+    "output": "/workspaces/system-software/examples/2-calculator/build/main.o"
+  }
+]

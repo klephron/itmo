@@ -1,0 +1,12 @@
+grammar T;
+options {
+    language=C;
+}
+r : 'call' ID ';' {
+  printf("invoke \%d \%p \%lu\n", $ID->charPosition, $ID->lineStart, $ID->index); 
+  printf("invoke \%s \%lu \%lu \%p-\%p\n", $ID->lineStart + $ID->charPosition, $ID->index, $ID->stop + 1 - $ID->start, $ID->start, $ID->stop); 
+  printf("invoke \%d \%s \%s\n", $ID->textState, $ID->tokText, $ID->toString($ID)); 
+} ;
+ID: 'a'..'z'+ ;
+WS: (' '|'\n'|'\r')+
+{$channel=HIDDEN;} ; // ignore whitespace

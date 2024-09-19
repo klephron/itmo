@@ -1,0 +1,78 @@
+grammar Expr;
+
+options {
+    language=C;
+}
+
+@header {
+#include "util/list.h"
+#include "util/util.h"
+}
+
+@parser::members {
+  p_list ASSlist;
+}
+
+prog returns [result_int res]
+  @init {
+    int value = 4;
+    ASSlist = list_new();
+    printf("list constucted\n");
+
+  }
+  @after {
+    ASSlist->free(ASSlist);
+    printf("list destructed\n");
+  }
+  : statement+ {
+    $res = (result_int){.code = 0, .value = 10};
+  };
+
+statement
+    @after {
+      printf("list: \%p\n", ASSlist);
+    }
+    : expr NEWLINE {printf("result: \%d\n", $expr.value);}
+    | ID '=' expr NEWLINE {
+      char *c = strndup($ID->lineStart + $ID->charPosition, $ID->stop + 1 - $ID->start);
+      ASSlist->put(ASSlist, c, $expr.value);
+      printf("'\%s'=\%d\n", c, $expr.value);
+      free(c);
+      }
+    | NEWLINE
+    ;
+
+expr returns [int value]
+  : e=multExpr {$value = $e.value;} 
+    ( '+' e=multExpr {$value += $e.value;}
+    | '-' e=multExpr {$value -= $e.value;} 
+    )*
+  ; 
+
+multExpr returns [int value]
+    : e=atom {$value = $e.value;} ('*' e=atom {$value *= $e.value;})*
+    ; 
+
+atom returns [int value]
+    : INT {
+        $value = atoi($INT->lineStart + $INT->charPosition); // NOTE: warning no \0 for string, can corrupt
+        printf("d: \%d\n", $value);
+      }
+    | ID {
+        printf("chars: '\%.*s'\n", $ID->stop + 1 - $ID->start, $ID->lineStart + $ID->charPosition);
+        char *c = strndup($ID->lineStart + $ID->charPosition, $ID->stop + 1 - $ID->start);
+        result_int res = ASSlist->get(ASSlist, c);
+        if (res.code) {
+          printf("error, not found: \%s\n", c);
+        }
+        free(c);
+        return res.value;
+      }
+    | '(' expr ')' {$value = $expr.value; }
+    ;
+
+
+ID  :   ('a'..'z'|'A'..'Z')+ ;
+INT :   '0'..'9'+ ;
+NEWLINE:'\r'? '\n' ;
+WS  :   (' '|'\t')+ {SKIP();} ;
