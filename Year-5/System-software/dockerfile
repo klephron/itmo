@@ -34,7 +34,7 @@ RUN echo "/usr/local/lib" >> /etc/ld.so.conf.d/usr-local.conf && ldconfig
 
 # Install tools for development
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install --no-install-recommends \
-  bear gdb \
+  bear gdb graphviz \
   && rm -rf /var/lib/apt/lists/*
 
 # Change default password for root user
