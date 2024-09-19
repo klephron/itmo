@@ -1,0 +1,35 @@
+grammar Expr;
+
+options {
+  language=C;
+  output=AST;
+}
+
+prog
+  : statement+ ;
+
+statement
+  : expr NEWLINE
+  | ID '=' expr NEWLINE 
+  | NEWLINE
+  ;
+
+expr
+  : multExpr  ( '+'^ multExpr | '-'^ multExpr )*
+  ; 
+
+multExpr
+  : atom ('*'^ atom )*
+  ; 
+
+atom 
+  : INT 
+  | ID 
+  | '('! expr ')'!
+  ;
+
+
+ID  :   ('a'..'z'|'A'..'Z')+ ;
+INT :   '0'..'9'+ ;
+NEWLINE:'\r'? '\n' ;
+WS  :   (' '|'\t')+ {SKIP();} ;

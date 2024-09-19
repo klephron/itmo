@@ -18,5 +18,85 @@
     "directory": "/workspaces/system-software/examples/2-calculator",
     "file": "/workspaces/system-software/examples/2-calculator/src/main.c",
     "output": "/workspaces/system-software/examples/2-calculator/build/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/_gen",
+      "-Isrc",
+      "-o",
+      "build/util/list.o",
+      "src/util/list.c"
+    ],
+    "directory": "/workspaces/system-software/examples/2-calculator",
+    "file": "/workspaces/system-software/examples/2-calculator/src/util/list.c",
+    "output": "/workspaces/system-software/examples/2-calculator/build/util/list.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/_gen",
+      "-Isrc",
+      "-o",
+      "build/util/util.o",
+      "src/util/util.c"
+    ],
+    "directory": "/workspaces/system-software/examples/2-calculator",
+    "file": "/workspaces/system-software/examples/2-calculator/src/util/util.c",
+    "output": "/workspaces/system-software/examples/2-calculator/build/util/util.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/_gen",
+      "-Isrc",
+      "-o",
+      "build/_gen/ExprLexer.o",
+      "build/_gen/ExprLexer.c"
+    ],
+    "directory": "/workspaces/system-software/examples/2-calculator",
+    "file": "/workspaces/system-software/examples/2-calculator/build/_gen/ExprLexer.c",
+    "output": "/workspaces/system-software/examples/2-calculator/build/_gen/ExprLexer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/_gen",
+      "-Isrc",
+      "-o",
+      "build/_gen/ExprParser.o",
+      "build/_gen/ExprParser.c"
+    ],
+    "directory": "/workspaces/system-software/examples/2-calculator",
+    "file": "/workspaces/system-software/examples/2-calculator/build/_gen/ExprParser.c",
+    "output": "/workspaces/system-software/examples/2-calculator/build/_gen/ExprParser.o"
   }
 ]
