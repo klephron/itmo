@@ -1,5 +1,7 @@
 # SPPO
 
+`Makefile` is hardlinked among all the projects.
+
 ## Build
 
 ### Using docker

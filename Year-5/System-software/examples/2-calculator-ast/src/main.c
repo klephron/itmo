@@ -35,6 +35,17 @@ int main_antlr(int argc, char *argv[]) {
   pExprParser parser = ExprParserNew(tokens);
   ExprParser_prog_return res = parser->prog(parser);
 
+  pANTLR3_BASE_TREE tree = res.tree;
+  pANTLR3_STRING string = tree->toStringTree(tree);
+  printf("tree: %s\n", string->chars);
+
+  printf("children-count: %d\n", tree->getChildCount(tree));
+  for (int i = 0; i < tree->getChildCount(tree); ++i) {
+    pANTLR3_BASE_TREE child = (pANTLR3_BASE_TREE) tree->getChild(tree, i);
+    pANTLR3_STRING string = child->toStringTree(child);
+    printf("child-%d: %s\n", i, string->chars);
+  }
+
   parser->free(parser);
   tokens->free(tokens);
   lexer->free(lexer);

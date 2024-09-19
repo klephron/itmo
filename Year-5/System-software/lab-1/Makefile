@@ -11,24 +11,31 @@ ANTLR := java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3
 
 SRC_DIR := src
 GRM_DIR := $(SRC_DIR)/grammar
+GRM_REC_DIR := $(GRM_DIR)/rec
 BUILD_DIR := build
 GRM_GEN_DIR := $(BUILD_DIR)/_gen
 OBJ_DIR := $(BUILD_DIR)
 TARGET := $(BUILD_DIR)/main
 
-GRMS = $(call rwildcard,$(GRM_DIR), *.g3)
-SRCS.GRM = $(patsubst $(GRM_DIR)/%.g3,$(GRM_GEN_DIR)/%Lexer.c, $(GRMS))
-SRCS.GRM +=$(patsubst $(GRM_DIR)/%.g3,$(GRM_GEN_DIR)/%Parser.c, $(GRMS))
+GRMS = $(wildcard $(GRM_DIR)/*.g3)
+SRCS.GRM = $(patsubst $(GRM_DIR)/%.g3,$(GRM_GEN_DIR)/%.c, $(GRMS))
 HDRS.GRM = $(patsubst %.c,%.h,$(SRCS.GRM))
 OBJS.GRM = $(patsubst %.c,%.o,$(SRCS.GRM))
+
+GRM_RECS = $(call rwildcard,$(GRM_REC_DIR), *.g3)
+SRCS.GRM_REC = $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%Lexer.c, $(GRM_RECS))
+SRCS.GRM_REC +=$(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%Parser.c, $(GRM_RECS))
+HDRS.GRM_REC = $(patsubst %.c,%.h,$(SRCS.GRM_REC))
+OBJS.GRM_REC = $(patsubst %.c,%.o,$(SRCS.GRM_REC))
+TKNS.GRM_REC = $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%.tokens, $(GRM_RECS))
 
 SRCS.SRC = $(call rwildcard,$(SRC_DIR),*.c)
 HDRS.SRC = $(call rwildcard,$(SRC_DIR), *.h)
 OBJS.SRC = $(patsubst %.c, $(OBJ_DIR)/%.o, $(patsubst $(SRC_DIR)/%, %, $(SRCS.SRC)))
 
-SRCS = $(SRCS.SRC) $(SRCS.GRM)
-HDRS = $(HDRS.SRC) $(HDRS.GRM)
-OBJS = $(OBJS.SRC) $(OBJS.GRM)
+SRCS = $(SRCS.SRC) $(SRCS.GRM) $(SRCS.GRM_REC)
+HDRS = $(HDRS.SRC) $(HDRS.GRM) $(HDRS.GRM_REC)
+OBJS = $(OBJS.SRC) $(OBJS.GRM) $(OBJS.GRM_REC)
 
 # absolute imports
 INCLUDE_DIRS := $(SRC_DIR) $(GRM_GEN_DIR)
@@ -39,8 +46,12 @@ INCS = $(patsubst %,-I%,$(sort $(INCLUDE_DIRS))) $(patsubst %,-l%,$(sort $(INCLU
 # with trailing slash
 DIRS = $(sort $(dir $(OBJS)) $(dir $(TARGET))) 
 
-# generate grammar files and objects
-$(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_GEN_DIR)/%Parser.h: $(GRM_DIR)/%.g3
+# generate grammar files and objects for recognizers (parser and lexer)
+$(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_GEN_DIR)/%Parser.h $(GRM_GEN_DIR)/%.tokens: $(GRM_REC_DIR)/%.g3 | $(DIRS)
+	$(ANTLR) $^ -fo $(GRM_GEN_DIR)
+
+# generate grammar files and objects for trees
+$(GRM_GEN_DIR)/%.c $(GRM_GEN_DIR)/%.h: $(GRM_DIR)/%.g3 | $(DIRS) $(TKNS.GRM_REC)
 	$(ANTLR) $^ -fo $(GRM_GEN_DIR)
 
 %.o: %.c $(HDRS) | $(DIRS)
@@ -66,7 +77,7 @@ build: $(TARGET)
 
 ### Generate dot files and pdf files from them
 dot/pdf:
-	$(ANTLR) -dfa -fo $(GRM_GEN_DIR) $(GRMS)
+	$(ANTLR) -dfa -nfa -fo $(GRM_GEN_DIR) $(GRMS)
 	for file in $(GRM_GEN_DIR)/*.dot; do dot -Tpdf "$$file" -o "$${file%.dot}.pdf"; done
 
 ### Run executable
