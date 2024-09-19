@@ -64,6 +64,11 @@ grammar: $(SRCS.GRM) $(HDRS.GRM)
 ### Build executable
 build: $(TARGET)
 
+### Generate dot files and pdf files from them
+dot/pdf:
+	$(ANTLR) -dfa -fo $(GRM_GEN_DIR) $(GRMS)
+	for file in $(GRM_GEN_DIR)/*.dot; do dot -Tpdf "$$file" -o "$${file%.dot}.pdf"; done
+
 ### Run executable
 run: build
 	./$(TARGET)
