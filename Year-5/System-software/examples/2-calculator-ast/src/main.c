@@ -23,7 +23,9 @@ int main_antlr(int argc, char *argv[]) {
   //   return EXIT_FAILURE;
   // }
 
-  pANTLR3_UINT8 string_buffer = (pANTLR3_UINT8) "a=(3+4)*5\nb=(a*5)\n(a-b)\n";
+  pANTLR3_UINT8 string_buffer = (pANTLR3_UINT8) "a=(3+4+5+6)*5\nb=(a*5)\n(a-b)\n(a-c)\n";
+
+  printf("prog:\n%s\n", string_buffer);
 
   pANTLR3_UINT8 stream_name = (pANTLR3_UINT8) "stream";
   pANTLR3_INPUT_STREAM input =

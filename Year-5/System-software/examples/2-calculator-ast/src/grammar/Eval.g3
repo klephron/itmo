@@ -34,7 +34,7 @@ statement
   | ^('=' ID expr) {
       char *c = $ID.text->chars;
       memory->put(memory, c, $expr.value);
-      printf("assign: '\%s'=\%d\n", c, $expr.value);
+      printf("list[put]: '\%s'=\%d\n", c, $expr.value);
     }
   ;
 
@@ -46,9 +46,9 @@ expr returns [int value]
     char *c = $ID.text->chars;
     result_int v = memory->get(memory, c);
     if (v.code) {
-      printf("undefined '\%s'\n", c);
+      printf("list[get]: undefined '\%s'\n", c);
     } else {
-      printf("get \%d<-'\%s'\n", v.value, c);
+      printf("list[get]: \%d<-'\%s'\n", v.value, c);
       $value = v.value;
     }
   }
