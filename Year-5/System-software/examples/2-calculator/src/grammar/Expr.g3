@@ -32,11 +32,11 @@ statement
     @after {
       printf("list: \%p\n", ASSlist);
     }
-    : expr NEWLINE {printf("result: \%d\n", $expr.value);}
+    : expr NEWLINE {printf("statement: \%d\n", $expr.value);}
     | ID '=' expr NEWLINE {
       char *c = strndup($ID->lineStart + $ID->charPosition, $ID->stop + 1 - $ID->start);
       ASSlist->put(ASSlist, c, $expr.value);
-      printf("'\%s'=\%d\n", c, $expr.value);
+      printf("assign: '\%s'=\%d\n", c, $expr.value);
       free(c);
       }
     | NEWLINE

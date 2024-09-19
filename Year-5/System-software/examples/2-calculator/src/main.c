@@ -34,7 +34,7 @@ int main_antlr(int argc, char *argv[]) {
       antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lexer));
   pExprParser parser = ExprParserNew(tokens);
   result_int res = parser->prog(parser);
-  printf("res %d, %d", res.code, res.value);
+  printf("res: %d, %d\n", res.code, res.value);
 
   parser->free(parser);
   tokens->free(tokens);
