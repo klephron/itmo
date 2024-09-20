@@ -10,13 +10,15 @@ source
   : identifier '=' str NEWLINE
   ;
 
-bool: BOOL;
+
 identifier: IDENTIFIER;
-bits: BITS;
-hex: HEX;
-dec: DEC;
-rune: CHAR;
+
 str: STR;
+rune: CHAR;
+hex: HEX;
+bits: BITS;
+dec: DEC;
+bool: BOOL;
 
 
 BOOL: (TRUE | FALSE) ;
