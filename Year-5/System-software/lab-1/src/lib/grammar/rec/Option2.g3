@@ -1,0 +1,13 @@
+grammar Option2;
+
+options {
+  language=C;
+  output=AST;
+  ASTLabelType = pANTLR3_BASE_TREE;
+}
+
+identifier: CHAR;
+
+fragment CHAR: ('a'..'z' | 'A'..'Z');
+fragment SPECIAL: ('_');
+fragment DIGIT: ('0'..'9');
