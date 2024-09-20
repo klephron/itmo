@@ -6,11 +6,106 @@ options {
   ASTLabelType = pANTLR3_BASE_TREE;
 }
 
+
+// Sources
 source
-  : identifier '=' str NEWLINE
+  : source_item+ ;
+
+source_item
+  : func_def
   ;
 
 
+// Types
+type_ref
+  : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
+  | identifier
+  | 'array' '[' (',')* ']' 'of' type_ref
+  ;
+
+
+// Functions
+func_def
+  : 'method'^ func_signature (func_body | ';')
+  ;
+
+func_signature
+  : identifier '(' (arg_def (',' arg_def)* )? ')' (':' type_ref)?
+  ;
+
+arg_def
+  : identifier (':' type_ref)?
+  ;
+
+func_body
+  : ('var' ( (identifier (',' identifier)*)? (':' type_ref)? ';' )* )? statement_block
+  ;
+
+
+// Statement
+statement
+  : statement_if
+  | statement_block
+  | statement_while
+  | statement_do
+  | statement_break
+  | statement_expression
+  ;
+
+statement_block
+  : 'begin'^ statement* 'end' ';'
+  ;
+  
+statement_if
+  : 'if'^ expr 'then' statement ('else' statement)?
+  ;
+
+statement_while
+  : 'while'^ expr 'do' statement
+  ;
+
+statement_do
+  : 'repeat'^ statement ('while' | 'until') expr ';'
+  ;
+
+statement_break
+  : 'break'^
+  ;
+
+statement_expression
+  : expr^
+  ;
+
+
+// Expressions
+expr
+  : expr_literal
+//  | expr_binary
+  | expr_unary
+  | expr_braces
+//  | expr_call
+//  | expr_indexer
+  | expr_place
+  ;
+
+expr_literal
+  : bool | str | rune | hex | bits | dec
+  ;
+
+expr_braces
+  : '('! expr^ ')'!
+  ;
+
+expr_place
+  : identifier^
+  ;
+
+expr_unary
+  : ('+' | '-')^ expr
+  ;
+
+
+// Terminal
 identifier: IDENTIFIER;
 
 str: STR;
@@ -29,7 +124,7 @@ DEC: DIGIT+ ;
 CHAR: '\'' ~('\'') '\'' ;
 STR: ('"') ('\\' . | ~('\\'|'"'))* ('"') ;
 
-NEWLINE:'\r'? '\n' ;
+NEWLINE:'\r'? '\n' { SKIP(); };
 WSS: WS+ { SKIP(); };
 
 
