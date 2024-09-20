@@ -18,6 +18,7 @@ dec: DEC;
 rune: CHAR;
 str: STR;
 
+
 BOOL: (TRUE | FALSE) ;
 IDENTIFIER: (ALPHA | SPECIAL) (ALPHA | SPECIAL | DIGIT)* ;
 BITS: '0' ('b'|'B') BINARY_DIGIT+ ;
@@ -28,6 +29,7 @@ STR: ('"') ('\\' . | ~('\\'|'"'))* ('"') ;
 
 NEWLINE:'\r'? '\n' ;
 WSS: WS+ { SKIP(); };
+
 
 fragment TRUE: 'true';
 fragment FALSE: 'false';

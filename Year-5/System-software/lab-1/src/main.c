@@ -33,12 +33,10 @@ struct args_struct parse_args(int argc, char *argv[]) {
 
     c = getopt_long(argc, argv, "i:o:h", long_options, &option_index);
 
-    if (c == EOF) {
-      has_next = 0;
-      continue;
-    }
-
     switch (c) {
+    case EOF:
+      has_next = 0;
+      break;
     case 0:
       if (long_options[option_index].flag != 0) {
         break;
