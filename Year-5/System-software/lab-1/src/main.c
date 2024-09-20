@@ -74,30 +74,18 @@ struct args_struct parse_args(int argc, char *argv[]) {
 }
 
 void execute(struct args_struct args) {
-  pANTLR3_UINT8 string_buffer = (pANTLR3_UINT8) "";
-  printf("prog:\n%s\n", string_buffer);
-
-  pANTLR3_UINT8 stream_name = (pANTLR3_UINT8) "stream";
   pANTLR3_INPUT_STREAM input =
-      antlr3StringStreamNew(string_buffer, ANTLR3_ENC_8BIT,
-                            strlen((char *)string_buffer), stream_name);
+      antlr3FileStreamNew((pANTLR3_UINT8)args.input_file, ANTLR3_ENC_UTF8);
 
   pOption2Lexer lexer = Option2LexerNew(input);
   pANTLR3_COMMON_TOKEN_STREAM tokens =
       antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lexer));
   pOption2Parser parser = Option2ParserNew(tokens);
 
-  // Option2Parser_expr_return r = parser->expr(parser);
-  // pANTLR3_BASE_TREE tree = r.tree;
-  // pANTLR3_STRING string = tree->toStringTree(tree);
-  // printf("%s\n", string->chars);
-
-  // printf("%d\n", tree->getChildCount(tree));
-  // for (ANTLR3_UINT32 i = 0; i < tree->getChildCount(tree); ++i) {
-  //   pANTLR3_BASE_TREE child = (pANTLR3_BASE_TREE)tree->getChild(tree, i);
-  //   pANTLR3_STRING string = child->toStringTree(child);
-  //   printf("%s\n", string->chars);
-  // }
+  Option2Parser_source_return r = parser->source(parser);
+  pANTLR3_BASE_TREE tree = r.tree;
+  pANTLR3_STRING string = tree->toStringTree(tree);
+  printf("%s\n", string->chars);
 
   parser->free(parser);
   tokens->free(tokens);

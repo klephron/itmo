@@ -6,8 +6,35 @@ options {
   ASTLabelType = pANTLR3_BASE_TREE;
 }
 
-identifier: CHAR;
+source
+  : identifier '=' str NEWLINE
+  ;
 
-fragment CHAR: ('a'..'z' | 'A'..'Z');
+bool: BOOL;
+identifier: IDENTIFIER;
+bits: BITS;
+hex: HEX;
+dec: DEC;
+rune: CHAR;
+str: STR;
+
+BOOL: (TRUE | FALSE) ;
+IDENTIFIER: (ALPHA | SPECIAL) (ALPHA | SPECIAL | DIGIT)* ;
+BITS: '0' ('b'|'B') BINARY_DIGIT+ ;
+HEX: '0'('x'|'X') HEX_DIGIT+ ;
+DEC: DIGIT+ ;
+CHAR: '\'' ~('\'') '\'' ;
+STR: ('"') ('\\' . | ~('\\'|'"'))* ('"') ;
+
+NEWLINE:'\r'? '\n' ;
+WSS: WS+ { SKIP(); };
+
+fragment TRUE: 'true';
+fragment FALSE: 'false';
+fragment ALPHA: ('a'..'z' | 'A'..'Z');
 fragment SPECIAL: ('_');
 fragment DIGIT: ('0'..'9');
+fragment BINARY_DIGIT: ('0' | '1');
+fragment HEX_DIGIT: ('0'..'9' | 'a'..'f' | 'A'..'F');
+fragment WS:(' '|'\t') ;
+
