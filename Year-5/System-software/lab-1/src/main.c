@@ -89,8 +89,18 @@ void execute(struct args_struct args) {
   pANTLR3_BASE_TREE tree = r.tree;
   pANTLR3_STRING string = tree->toStringTree(tree);
 
+  const char *data = (const char *)string->chars;
+  const size_t data_len = string->len;
+
+  // print to stdout
   if (args.tee) {
-    printf("%s\n", string->chars);
+    printf("%s", data);
+  }
+  // write to output file
+  if (args.output_file != NULL) {
+    FILE *output_fd = fopen(args.output_file, "wb");
+    fwrite(data, data_len, 1, output_fd);
+    fclose(output_fd);
   }
 
   parser->free(parser);
