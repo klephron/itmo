@@ -9,27 +9,32 @@ struct args_struct {
   char *input_file;
   char *output_file;
   char *prog_name;
+  int tee;
   int code;
   int help;
 };
 
 void usage(char *prog_name) {
-  printf("Usage: %s -i INPUT_FILE -o OUTPUT_FILE\n", prog_name);
+  printf("Usage: %s -i INPUT_FILE -o OUTPUT_FILE [--tee]\n", prog_name);
 }
 
 struct args_struct parse_args(int argc, char *argv[]) {
   struct args_struct args = {.prog_name = argv[0],
                              .code = 0,
                              .help = 0,
+                             .tee = 0,
                              .input_file = NULL,
                              .output_file = NULL};
+
+  struct option long_options[] = {
+      {"tee", no_argument, &args.tee, 1},
+  };
+  int option_index = 0;
 
   int has_next = 1;
 
   while (has_next) {
     unsigned c;
-    static struct option long_options[] = {};
-    int option_index = 0;
 
     c = getopt_long(argc, argv, "i:o:h", long_options, &option_index);
 
@@ -83,7 +88,10 @@ void execute(struct args_struct args) {
   Option2Parser_source_return r = parser->source(parser);
   pANTLR3_BASE_TREE tree = r.tree;
   pANTLR3_STRING string = tree->toStringTree(tree);
-  printf("%s\n", string->chars);
+
+  if (args.tee) {
+    printf("%s\n", string->chars);
+  }
 
   parser->free(parser);
   tokens->free(tokens);
