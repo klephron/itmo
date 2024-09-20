@@ -14,10 +14,14 @@ ANTLR := java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3
 SRC_DIR := src
 GRM_DIR := $(SRC_DIR)/grammar
 GRM_REC_DIR := $(GRM_DIR)/rec
+TST_DIR := test
+
 BUILD_DIR := build
 GRM_GEN_DIR := $(BUILD_DIR)/_gen
 OBJ_DIR := $(BUILD_DIR)
+
 TARGET := $(BUILD_DIR)/main
+TARGET_TST_DIR := $(BUILD_DIR)/test
 
 GRMS = $(wildcard $(GRM_DIR)/*.g3)
 SRCS.GRM = $(patsubst $(GRM_DIR)/%.g3,$(GRM_GEN_DIR)/%.c, $(GRMS))
@@ -39,6 +43,9 @@ SRCS = $(SRCS.SRC) $(SRCS.GRM) $(SRCS.GRM_REC)
 HDRS = $(HDRS.SRC) $(HDRS.GRM) $(HDRS.GRM_REC)
 OBJS = $(OBJS.SRC) $(OBJS.GRM) $(OBJS.GRM_REC)
 
+SRCS.TST = $(call rwildcard,$(TST_DIR),*.c)
+TARGETS.TST = $(patsubst $(TST_DIR)/%.c,$(TARGET_TST_DIR)/%, $(SRCS.TST))
+
 # prevent deletion of header files
 .PRECIOUS: $(HDRS)
 
@@ -49,7 +56,7 @@ INCLUDE_LIBS = antlr3c
 INCS = $(patsubst %,-I%,$(sort $(INCLUDE_DIRS))) $(patsubst %,-l%,$(sort $(INCLUDE_LIBS)))
 
 # with trailing slash
-DIRS = $(sort $(dir $(OBJS)) $(dir $(TARGET))) 
+DIRS = $(sort $(dir $(OBJS)) $(dir $(TARGET)) $(dir $(TARGETS.TST)))
 
 # generate grammar files and objects for recognizers (parser and lexer)
 $(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_GEN_DIR)/%Parser.h $(GRM_GEN_DIR)/%.tokens: $(GRM_REC_DIR)/%.g3 | $(DIRS)
@@ -74,6 +81,10 @@ $(sort $(DIRS)):
 $(TARGET): $(OBJS)
 	$(LD) $(FLAGS) $^ -o $(TARGET) $(INCS)
 
+# create test targets
+$(TARGET_TST_DIR)/%: $(TST_DIR)/%.c $(HDRS) | $(DIRS)
+	gcc -o $@ $< -lcriterion $(INCS)
+
 ### Generate antlr3 source and header files from grammar rules
 grammar: $(SRCS.GRM) $(HDRS.GRM)
 	
@@ -88,6 +99,13 @@ dot/pdf:
 ### Run executable
 run: build
 	./$(TARGET)
+
+### Build tests
+build/test: $(TARGETS.TST)
+
+### Run all tests
+test: build/test
+	@for file in $(TARGETS.TST); do "./$$file"; done
 
 ### Remove build and target files
 clean:
@@ -108,3 +126,6 @@ help:
 		} \
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST) | sort -u
+
+
+# .PHONY: help clean test run dot/pdf build grammar
