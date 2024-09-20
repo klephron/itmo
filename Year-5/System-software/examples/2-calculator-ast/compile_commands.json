@@ -2,81 +2,43 @@
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-g3",
-      "-O0",
-      "-m64",
-      "-fsanitize=address,undefined,leak",
-      "-Wall",
-      "-Wextra",
       "-c",
       "-Ibuild/_gen",
       "-Isrc",
       "-o",
-      "build/main.o",
-      "src/main.c"
+      "build/test/example3",
+      "test/example3.c"
     ],
     "directory": "/workspaces/system-software/examples/2-calculator-ast",
-    "file": "/workspaces/system-software/examples/2-calculator-ast/src/main.c",
-    "output": "/workspaces/system-software/examples/2-calculator-ast/build/main.o"
+    "file": "/workspaces/system-software/examples/2-calculator-ast/test/example3.c",
+    "output": "/workspaces/system-software/examples/2-calculator-ast/build/test/example3"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-g3",
-      "-O0",
-      "-m64",
-      "-fsanitize=address,undefined,leak",
-      "-Wall",
-      "-Wextra",
       "-c",
       "-Ibuild/_gen",
       "-Isrc",
       "-o",
-      "build/util/list.o",
-      "src/util/list.c"
+      "build/test/example",
+      "test/example.c"
     ],
     "directory": "/workspaces/system-software/examples/2-calculator-ast",
-    "file": "/workspaces/system-software/examples/2-calculator-ast/src/util/list.c",
-    "output": "/workspaces/system-software/examples/2-calculator-ast/build/util/list.o"
+    "file": "/workspaces/system-software/examples/2-calculator-ast/test/example.c",
+    "output": "/workspaces/system-software/examples/2-calculator-ast/build/test/example"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-g3",
-      "-O0",
-      "-m64",
-      "-fsanitize=address,undefined,leak",
-      "-Wall",
-      "-Wextra",
       "-c",
       "-Ibuild/_gen",
       "-Isrc",
       "-o",
-      "build/util/util.o",
-      "src/util/util.c"
+      "build/test/in/example2",
+      "test/in/example2.c"
     ],
     "directory": "/workspaces/system-software/examples/2-calculator-ast",
-    "file": "/workspaces/system-software/examples/2-calculator-ast/src/util/util.c",
-    "output": "/workspaces/system-software/examples/2-calculator-ast/build/util/util.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/gcc",
-      "-g3",
-      "-O0",
-      "-m64",
-      "-fsanitize=address,undefined,leak",
-      "-Wall",
-      "-Wextra",
-      "-c",
-      "-Ibuild/_gen",
-      "-Isrc",
-      "-o",
-      "build/_gen/Eval.o",
-      "build/_gen/Eval.c"
-    ],
-    "directory": "/workspaces/system-software/examples/2-calculator-ast",
-    "file": "/workspaces/system-software/examples/2-calculator-ast/build/_gen/Eval.c",
-    "output": "/workspaces/system-software/examples/2-calculator-ast/build/_gen/Eval.o"
+    "file": "/workspaces/system-software/examples/2-calculator-ast/test/in/example2.c",
+    "output": "/workspaces/system-software/examples/2-calculator-ast/build/test/in/example2"
   }
 ]

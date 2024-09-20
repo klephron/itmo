@@ -3,7 +3,6 @@ rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(su
 .DEFAULT_GOAL := build
 
 CC := gcc
-LD := gcc
 # -fsanitize=thread
 FLAGS := -g3 -O0 -m64 -fsanitize=address,undefined,leak -Wall -Wextra
 MKDIR := mkdir -p
@@ -12,17 +11,21 @@ MKDIR := mkdir -p
 ANTLR := java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
 
 SRC_DIR := src
-GRM_DIR := $(SRC_DIR)/grammar
+LIB_DIR := $(SRC_DIR)/lib
+GRM_DIR := $(LIB_DIR)/grammar
 GRM_REC_DIR := $(GRM_DIR)/rec
+BIN_DIR := $(SRC_DIR)
 TST_DIR := test
 
 BUILD_DIR := build
-GRM_GEN_DIR := $(BUILD_DIR)/_gen
-OBJ_DIR := $(BUILD_DIR)
+BUILD_LIB_DIR := $(BUILD_DIR)/lib
+GRM_GEN_DIR := $(BUILD_LIB_DIR)/_gen
+OBJ_DIR := $(BUILD_LIB_DIR)
 
-TARGET := $(BUILD_DIR)/main
+TARGET_DIR := $(BUILD_DIR)
 TARGET_TST_DIR := $(BUILD_DIR)/test
 
+# library files
 GRMS = $(wildcard $(GRM_DIR)/*.g3)
 SRCS.GRM = $(patsubst $(GRM_DIR)/%.g3,$(GRM_GEN_DIR)/%.c, $(GRMS))
 HDRS.GRM = $(patsubst %.c,%.h,$(SRCS.GRM))
@@ -34,29 +37,36 @@ SRCS.GRM_REC +=$(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%Parser.c, $(GRM_RE
 HDRS.GRM_REC = $(patsubst %.c,%.h,$(SRCS.GRM_REC))
 OBJS.GRM_REC = $(patsubst %.c,%.o,$(SRCS.GRM_REC))
 TKNS.GRM_REC = $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%.tokens, $(GRM_RECS))
-
-SRCS.SRC = $(call rwildcard,$(SRC_DIR),*.c)
-HDRS.SRC = $(call rwildcard,$(SRC_DIR), *.h)
-OBJS.SRC = $(patsubst %.c, $(OBJ_DIR)/%.o, $(patsubst $(SRC_DIR)/%, %, $(SRCS.SRC)))
-
-SRCS = $(SRCS.SRC) $(SRCS.GRM) $(SRCS.GRM_REC)
-HDRS = $(HDRS.SRC) $(HDRS.GRM) $(HDRS.GRM_REC)
-OBJS = $(OBJS.SRC) $(OBJS.GRM) $(OBJS.GRM_REC)
-
-SRCS.TST = $(call rwildcard,$(TST_DIR),*.c)
-TARGETS.TST = $(patsubst $(TST_DIR)/%.c,$(TARGET_TST_DIR)/%, $(SRCS.TST))
-
-# prevent deletion of header files
-.PRECIOUS: $(HDRS)
-
+# without generated files
+SRCS.LIB = $(call rwildcard,$(LIB_DIR),*.c)
+HDRS.LIB = $(call rwildcard,$(LIB_DIR), *.h)
+OBJS.LIB = $(patsubst %.c, $(OBJ_DIR)/%.o, $(patsubst $(LIB_DIR)/%, %, $(SRCS.LIB)))
+# all library files
+SRCS = $(SRCS.LIB) $(SRCS.GRM) $(SRCS.GRM_REC)
+HDRS = $(HDRS.LIB) $(HDRS.GRM) $(HDRS.GRM_REC)
+OBJS = $(OBJS.LIB) $(OBJS.GRM) $(OBJS.GRM_REC)
 # absolute imports
-INCLUDE_DIRS := $(SRC_DIR) $(GRM_GEN_DIR)
+INCLUDE_DIRS := $(LIB_DIR) $(GRM_GEN_DIR)
 INCLUDE_LIBS = antlr3c
-
 INCS = $(patsubst %,-I%,$(sort $(INCLUDE_DIRS))) $(patsubst %,-l%,$(sort $(INCLUDE_LIBS)))
+# prevent deletion
+.PRECIOUS: $(HDRS) $(SRCS) $(OBJS)
 
-# with trailing slash
-DIRS = $(sort $(dir $(OBJS)) $(dir $(TARGET)) $(dir $(TARGETS.TST)))
+# executable files
+SRCS.BIN = $(filter-out $(SRCS.LIB),$(call rwildcard,$(BIN_DIR),*.c))
+HDRS.BIN = $(filter-out $(HDRS.LIB),$(call rwildcard,$(BIN_DIR), *.h))
+TGTS.BIN = $(patsubst $(BIN_DIR)/%.c,$(TARGET_DIR)/%,$(SRCS.BIN))
+
+# test files
+SRCS.TST = $(call rwildcard,$(TST_DIR),*.c)
+TGTS.TST = $(patsubst $(TST_DIR)/%.c,$(TARGET_TST_DIR)/%, $(SRCS.TST))
+
+# directories with trailing slash to be created
+DIRS = $(sort $(dir $(OBJS)) $(dir $(OBJS.BIN)) $(dir $(TGTS.BIN)) $(dir $(TGTS.TST)))
+# create directories
+$(sort $(DIRS)):
+	$(MKDIR) $(@:dir/%=%)
+
 
 # generate grammar files and objects for recognizers (parser and lexer)
 $(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_GEN_DIR)/%Parser.h $(GRM_GEN_DIR)/%.tokens: $(GRM_REC_DIR)/%.g3 | $(DIRS)
@@ -66,50 +76,48 @@ $(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_G
 $(GRM_GEN_DIR)/%.c $(GRM_GEN_DIR)/%.h $(GRM_GEN_DIR)/%.tokens: $(GRM_DIR)/%.g3 | $(DIRS) $(TKNS.GRM_REC)
 	$(ANTLR) $^ -fo $(GRM_GEN_DIR)
 
+# compile generated files
 %.o: %.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
-# generate object files excluding generated
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HDRS) | $(DIRS)
+# compile object files excluding generated
+$(OBJ_DIR)/%.o: $(LIB_DIR)/%.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
-# create directories
-$(sort $(DIRS)):
-	$(MKDIR) $(@:dir/%=%)
 
-# create target
-$(TARGET): $(OBJS)
-	$(LD) $(FLAGS) $^ -o $(TARGET) $(INCS)
+# compile targets
+$(TARGET_DIR)/%: $(BIN_DIR)/%.c $(OBJS) | $(DIRS)
+	$(CC) $(FLAGS) $^ -o $@ $(INCS)
 
-# create test targets
-$(TARGET_TST_DIR)/%: $(TST_DIR)/%.c $(HDRS) | $(DIRS)
-	gcc -o $@ $< -lcriterion $(INCS)
+# compile test targets
+$(TARGET_TST_DIR)/%: $(TST_DIR)/%.c $(OBJS) | $(DIRS)
+	$(CC) $(FLAGS) -o $@ $< -lcriterion $(INCS) $(OBJS)
+
 
 ### Generate antlr3 source and header files from grammar rules
 grammar: $(SRCS.GRM) $(HDRS.GRM)
 	
 ### Build executable
-build: $(TARGET)
+build: $(TGTS.BIN)
 
 ### Generate dot files and pdf files from them
 dot/pdf:
 	$(ANTLR) -dfa -nfa -fo $(GRM_GEN_DIR) $(GRMS)
 	for file in $(GRM_GEN_DIR)/*.dot; do dot -Tpdf "$$file" -o "$${file%.dot}.pdf"; done
 
-### Run executable
+### Run main executable
 run: build
-	./$(TARGET)
+	./build/main
 
 ### Build tests
-build/test: $(TARGETS.TST)
+build/test: $(TGTS.TST)
 
 ### Run all tests
 test: build/test
-	@for file in $(TARGETS.TST); do "./$$file"; done
+	@for file in $(TGTS.TST); do "./$$file"; done
 
 ### Remove build and target files
 clean:
-	if [ -e $(TARGET) ] ; then rm $(TARGET); fi
 	rm -rf $(BUILD_DIR)
 
 ### Help 
@@ -127,5 +135,20 @@ help:
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST) | sort -u
 
+### For makefile testing 
+echo:
+	@echo $(SRCS)
+	@echo $(HDRS)
+	@echo $(OBJS)
+	@echo $(DIRS)
+	@echo $(SRCS)
+	@echo $(HDRS)
+	@echo $(OBJS)
+	@echo $(INCS)
+	@echo $(SRCS.BIN)
+	@echo $(HDRS.BIN)
+	@echo $(TGTS.BIN)
+
 
 # .PHONY: help clean test run dot/pdf build grammar
+# k
