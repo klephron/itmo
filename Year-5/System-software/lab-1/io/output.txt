@@ -1,1 +1,0 @@
-(method fun123 ( first : bool , second , third : array [ , , , ] of string ) : string var a : int ; b : float ; (begin (begin (if true then (begin end ;) else (begin end ;)) end ;) end ;))

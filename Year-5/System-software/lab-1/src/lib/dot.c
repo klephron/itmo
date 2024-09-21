@@ -2,6 +2,7 @@
 
 #include "util/list.h"
 #include "util/list_funcs.h"
+#include "util/string.h"
 
 #include <antlr3.h>
 #include <antlr3string.h>
@@ -57,7 +58,7 @@ size_t dot_len(struct dot_ctx *ctx) {
 
   for (list_iter it = ctx->list_nodes->head; it != NULL; it = it->next) {
     len += strlen(it->data->key);
-    len += strlen("[label=\"\"]\n");
+    len += strlen("[label=]\n");
     len += strlen(it->data->value);
   }
 
@@ -83,9 +84,9 @@ void dot_generate(struct dot_ctx *ctx, char *str) {
 
   for (list_iter it = ctx->list_nodes->head; it != NULL; it = it->next) {
     end = stpcpy(end, it->data->key);
-    end = stpcpy(end, "[label=\"");
+    end = stpcpy(end, "[label=");
     end = stpcpy(end, it->data->value);
-    end = stpcpy(end, "\"]\n");
+    end = stpcpy(end, "]\n");
   }
 
   for (list_iter it = ctx->list_edges->head; it != NULL; it = it->next) {
@@ -103,12 +104,23 @@ size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
     return 0;
   }
 
+  char label[256];
   pANTLR3_COMMON_TOKEN root_token = root->getToken(root);
-  const char *label;
   if (root_token == NULL) {
-    label = "<empty>";
+    snprintf(label, 255,
+             "< <FONT POINT-SIZE=\"16\"><b>&lt;empty&gt;</b></FONT> >");
   } else {
-    label = (const char *)root_token->getText(root_token)->chars;
+    char *str = (char *)root_token->getText(root_token)->chars;
+
+    char *escaped_str = escape_html(str);
+
+    snprintf(label, 255,
+             "< <FONT POINT-SIZE=\"16\"><b>%s</b></FONT><br/><FONT "
+             "POINT-SIZE=\"12\">Line: %d, Pos: %d</FONT> >",
+             escaped_str, root_token->line,
+             root_token->getCharPositionInLine(root_token));
+
+    free(escaped_str);
   }
 
   size_t id = ++ctx->id;

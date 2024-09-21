@@ -109,7 +109,7 @@ dot/pdf:
 run: build
 	./build/main -i io/input.txt -o io/output.dot --tee
 
-run/pdf:
+run/pdf: build
 	./build/main -i io/input.txt -o io/output.dot
 	dot -Tpdf io/output.dot -o io/output.pdf
 
