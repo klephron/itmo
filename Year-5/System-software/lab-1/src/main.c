@@ -1,9 +1,8 @@
+#include <getopt.h>
 #include <stdio.h>
 
-#include <getopt.h>
-
-#include "Option2Lexer.h"
-#include "Option2Parser.h"
+#include "dot.h"
+#include "option2.h"
 
 struct args_struct {
   char *input_file;
@@ -77,36 +76,31 @@ struct args_struct parse_args(int argc, char *argv[]) {
 }
 
 void execute(struct args_struct args) {
-  pANTLR3_INPUT_STREAM input =
-      antlr3FileStreamNew((pANTLR3_UINT8)args.input_file, ANTLR3_ENC_UTF8);
+  pANTLR3_INPUT_STREAM stream;
+  pOption2Lexer lexer;
+  pANTLR3_COMMON_TOKEN_STREAM tokens;
+  pOption2Parser parser;
 
-  pOption2Lexer lexer = Option2LexerNew(input);
-  pANTLR3_COMMON_TOKEN_STREAM tokens =
-      antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lexer));
-  pOption2Parser parser = Option2ParserNew(tokens);
+  pANTLR3_BASE_TREE tree = option2_ast((pANTLR3_UINT8)args.input_file, &stream,
+                                       &lexer, &tokens, &parser);
 
-  Option2Parser_source_return r = parser->source(parser);
-  pANTLR3_BASE_TREE tree = r.tree;
-  pANTLR3_STRING string = tree->toStringTree(tree);
-
-  const char *data = (const char *)string->chars;
-  const size_t data_len = string->len;
+  dot_string dot_string = dot_ast(tree);
 
   // print to stdout
   if (args.tee) {
-    printf("%s", data);
+    printf("%s", dot_string.chars);
   }
   // write to output file
   if (args.output_file != NULL) {
     FILE *output_fd = fopen(args.output_file, "wb");
-    fwrite(data, data_len, 1, output_fd);
+    fwrite(dot_string.chars, dot_string.len, 1, output_fd);
     fclose(output_fd);
   }
 
   parser->free(parser);
   tokens->free(tokens);
   lexer->free(lexer);
-  input->close(input);
+  stream->close(stream);
 }
 
 int main(int argc, char *argv[]) {
