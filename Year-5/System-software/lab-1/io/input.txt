@@ -1,8 +1,4 @@
 method fun123():
   begin
-    a = b = c;
-    a = (b + c) = c || d;
+    func;
   end;
-
-
-

@@ -7,6 +7,7 @@ options {
 }
 
 tokens {
+  ROOT;
   VARS;
   VAR;
   FUNC;
@@ -27,7 +28,7 @@ tokens {
 
 // SOURCES
 source
-  : source_item+ ;
+  : source_item+ -> ^(ROOT source_item+);
 
 source_item
   : func_def
@@ -112,7 +113,7 @@ statement_expression
 
 // EXPRESSIONS
 expr
-  : expr_list
+  : expr_15
   ;
 
 expr_literal
@@ -120,14 +121,66 @@ expr_literal
   ;
 
 // OPERATORS
-// (priority 15-lowest)
-expr_list
-  : ((expr_unary | expr_binary_14) (','^ (expr_unary | expr_binary_14) )* )? 
+expr_15
+  : ((expr_14) (','^ (expr_14) )* )? 
+  ;
+
+// tail recursion
+expr_14
+  : expr_12 ('='^ expr_14)?
+  ;
+
+expr_12
+  : expr_11 ('||'^ expr_11)*
+  ;
+
+expr_11
+  : expr_10 ('&&'^ expr_10)*
+  ;
+
+expr_10
+  : expr_9 ('|'^ expr_9)*
+  ;
+
+expr_9
+  : expr_8 ('^'^ expr_8)*
+  ;
+
+expr_8
+  : expr_7 ('&'^ expr_7)*
+  ;
+
+expr_7
+  : expr_6 (('==' | '!=')^ expr_6)*
+  ;
+
+expr_6
+  : expr_5 (('<' | '<=' | '>' | '>=')^ expr_5)*
+  ;
+
+expr_5
+  : expr_4 (('>>' | '<<')^ expr_4)*
+  ;
+
+expr_4
+  : expr_3 (('+' | '-')^ expr_3)*
+  ;
+
+expr_3
+  : expr_2 (('*' | '/' | '%')^ expr_2)*
+  ;
+
+expr_2
+  : ('!' | '~' | '+' | '-')^ (expr_2 | expr_01)
+  ;
+
+expr_01
+  : expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
   ;
 
 caller_indexer
-  : '(' expr_list ')' -> ^(CALLER expr_list)
-  | '[' expr_list ']' -> ^(INDEXER expr_list)
+  : '(' expr_15 ')' -> ^(CALLER expr_15)
+  | '[' expr_15 ']' -> ^(INDEXER expr_15)
   ;
 
 // (priority 0-1) braces or call/index 
@@ -138,60 +191,6 @@ expr_braces_caller_indexer
 // (priority 0-1) identifier or call/index 
 expr_place_caller_indexer
   : identifier caller_indexer^?
-  ;
-
-// (root)
-expr_unary
-  : '!' expr -> ^('!' expr)
-  ;
-
-// tail recursion
-expr_binary_14
-  : expr_binary_12 ('='^ expr_binary_14)?
-  ;
-
-expr_binary_12
-  : expr_binary_11 ('||'^ expr_binary_11)*
-  ;
-
-expr_binary_11
-  : expr_binary_10 ('&&'^ expr_binary_10)*
-  ;
-
-expr_binary_10
-  : expr_binary_9 ('|'^ expr_binary_9)*
-  ;
-
-expr_binary_9
-  : expr_binary_8 ('^'^ expr_binary_8)*
-  ;
-
-expr_binary_8
-  : expr_binary_7 ('&'^ expr_binary_7)*
-  ;
-
-expr_binary_7
-  : expr_binary_6 (('==' | '!=')^ expr_binary_6)*
-  ;
-
-expr_binary_6
-  : expr_binary_5 (('<' | '<=' | '>' | '>=')^ expr_binary_5)*
-  ;
-
-expr_binary_5
-  : expr_binary_4 (('>>' | '<<')^ expr_binary_4)*
-  ;
-
-expr_binary_4
-  : expr_binary_3 (('+' | '-')^ expr_binary_3)*
-  ;
-
-expr_binary_3
-  : expr_binary_01 (('*' | '/' | '%')^ expr_binary_01)*
-  ;
-
-expr_binary_01
-  : expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
   ;
 
 

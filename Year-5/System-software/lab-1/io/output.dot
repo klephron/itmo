@@ -1,44 +1,18 @@
 strict digraph AST{
 node [shape=rect, style=filled]
-id_1[label=< <FONT POINT-SIZE="16"><b>FUNC</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 0</FONT> >]
-id_2[label=< <FONT POINT-SIZE="16"><b>fun123</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 7</FONT> >]
-id_3[label=< <FONT POINT-SIZE="16"><b>ARGS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_4[label=< <FONT POINT-SIZE="16"><b>RETURNS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_5[label=< <FONT POINT-SIZE="16"><b>BODY</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_6[label=< <FONT POINT-SIZE="16"><b>VARS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_7[label=< <FONT POINT-SIZE="16"><b>begin</b></FONT><br/><FONT POINT-SIZE="12">Line: 2, Pos: 2</FONT> >]
-id_8[label=< <FONT POINT-SIZE="16"><b>=</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 6</FONT> >]
-id_9[label=< <FONT POINT-SIZE="16"><b>a</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 4</FONT> >]
-id_10[label=< <FONT POINT-SIZE="16"><b>=</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 10</FONT> >]
-id_11[label=< <FONT POINT-SIZE="16"><b>b</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 8</FONT> >]
-id_12[label=< <FONT POINT-SIZE="16"><b>c</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 12</FONT> >]
-id_13[label=< <FONT POINT-SIZE="16"><b>=</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 6</FONT> >]
-id_14[label=< <FONT POINT-SIZE="16"><b>a</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 4</FONT> >]
-id_15[label=< <FONT POINT-SIZE="16"><b>=</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 16</FONT> >]
-id_16[label=< <FONT POINT-SIZE="16"><b>+</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 11</FONT> >]
-id_17[label=< <FONT POINT-SIZE="16"><b>b</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 9</FONT> >]
-id_18[label=< <FONT POINT-SIZE="16"><b>c</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 13</FONT> >]
-id_19[label=< <FONT POINT-SIZE="16"><b>||</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 20</FONT> >]
-id_20[label=< <FONT POINT-SIZE="16"><b>c</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 18</FONT> >]
-id_21[label=< <FONT POINT-SIZE="16"><b>d</b></FONT><br/><FONT POINT-SIZE="12">Line: 4, Pos: 23</FONT> >]
+id_1[label=< <FONT POINT-SIZE="16"><b>ROOT</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_2[label=< <FONT POINT-SIZE="16"><b>FUNC</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 0</FONT> >]
+id_3[label=< <FONT POINT-SIZE="16"><b>fun123</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 7</FONT> >]
+id_4[label=< <FONT POINT-SIZE="16"><b>ARGS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_5[label=< <FONT POINT-SIZE="16"><b>RETURNS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_6[label=< <FONT POINT-SIZE="16"><b>BODY</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_7[label=< <FONT POINT-SIZE="16"><b>VARS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_8[label=< <FONT POINT-SIZE="16"><b>Tree Error Node</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_2 -> id_3
+id_2 -> id_4
+id_2 -> id_5
+id_6 -> id_7
+id_6 -> id_8
+id_2 -> id_6
 id_1 -> id_2
-id_1 -> id_3
-id_1 -> id_4
-id_5 -> id_6
-id_8 -> id_9
-id_10 -> id_11
-id_10 -> id_12
-id_8 -> id_10
-id_7 -> id_8
-id_13 -> id_14
-id_16 -> id_17
-id_16 -> id_18
-id_15 -> id_16
-id_19 -> id_20
-id_19 -> id_21
-id_15 -> id_19
-id_13 -> id_15
-id_7 -> id_13
-id_5 -> id_7
-id_1 -> id_5
 }
