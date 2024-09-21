@@ -122,7 +122,7 @@ expr_literal
 // OPERATORS
 // (priority 15-lowest)
 expr_list
-  : ((expr_unary | expr_binary) (','^ (expr_unary | expr_binary) )* )? 
+  : ((expr_unary | expr_binary_14) (','^ (expr_unary | expr_binary_14) )* )? 
   ;
 
 caller_indexer
@@ -140,12 +140,54 @@ expr_place_caller_indexer
   : identifier caller_indexer^?
   ;
 
+// (root)
 expr_unary
   : '!' expr -> ^('!' expr)
   ;
 
-expr_binary
-  : expr_binary_01 (('+' | '-')^ expr_binary_01)*
+// tail recursion
+expr_binary_14
+  : expr_binary_12 ('='^ expr_binary_14)?
+  ;
+
+expr_binary_12
+  : expr_binary_11 ('||'^ expr_binary_11)*
+  ;
+
+expr_binary_11
+  : expr_binary_10 ('&&'^ expr_binary_10)*
+  ;
+
+expr_binary_10
+  : expr_binary_9 ('|'^ expr_binary_9)*
+  ;
+
+expr_binary_9
+  : expr_binary_8 ('^'^ expr_binary_8)*
+  ;
+
+expr_binary_8
+  : expr_binary_7 ('&'^ expr_binary_7)*
+  ;
+
+expr_binary_7
+  : expr_binary_6 (('==' | '!=')^ expr_binary_6)*
+  ;
+
+expr_binary_6
+  : expr_binary_5 (('<' | '<=' | '>' | '>=')^ expr_binary_5)*
+  ;
+
+expr_binary_5
+  : expr_binary_4 (('>>' | '<<')^ expr_binary_4)*
+  ;
+
+expr_binary_4
+  : expr_binary_3 (('+' | '-')^ expr_binary_3)*
+  ;
+
+expr_binary_3
+  : expr_binary_01 (('*' | '/' | '%')^ expr_binary_01)*
   ;
 
 expr_binary_01
