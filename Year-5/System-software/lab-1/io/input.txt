@@ -1,3 +1,12 @@
 method fun123():
   begin
+    func(arg1, arg2);
+    func();
+    (func)(func(arg1), arg2);
+    (func)();
+
+    func[ arg1, arg2 ];
+    func[  ];
+    (func)[ func(arg1), arg2 ];
+    (func)[  ];
   end;
