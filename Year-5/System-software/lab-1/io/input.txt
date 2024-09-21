@@ -1,4 +1,3 @@
 method fun123():
   begin
-    func;
   end;
