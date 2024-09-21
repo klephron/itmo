@@ -6,8 +6,20 @@ options {
   ASTLabelType = pANTLR3_BASE_TREE;
 }
 
+tokens {
+  VARS;
+  VAR;
+  FUNC;
+  ARGS;
+  ELEMS;
+  RETURNS;
+  BODY;
+  CALLER;
+  INDEXER;
+}
 
-// Sources
+
+// SOURCES
 source
   : source_item+ ;
 
@@ -16,33 +28,43 @@ source_item
   ;
 
 
-// Types
+// TYPES
 type_ref
   : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
   | identifier
-  | 'array' '[' (',')* ']' 'of' type_ref
+  | arr='array' '[' (elems+=',')* ']' 'of' type_ref -> ^('array' ^(type_ref) ^(ELEMS)) // reference using `elems*`
   ;
 
 
-// Functions
+// FUNCTIONS
 func_def
-  : 'method'^ func_signature (func_body | ';')
+  : ls='method' func_signature (func_body | ';') -> ^(FUNC[$ls, "FUNC"] func_signature ^(BODY func_body)? )
   ;
 
 func_signature
-  : identifier '(' (arg_def (',' arg_def)* )? ')' (':' type_ref)?
+  : identifier '(' arg_def_list ')' (':' type_ref?) -> identifier arg_def_list ^(RETURNS type_ref?)
+  ;
+
+arg_def_list
+  : ls=arg_def (',' arg_def)*  -> ^(ARGS arg_def*)
+  |                            -> ^(ARGS )
   ;
 
 arg_def
-  : identifier (':' type_ref)?
+  : identifier (':' type_ref)? -> ^(type_ref identifier)
   ;
 
 func_body
-  : ('var' ( (identifier (',' identifier)*)? (':' type_ref)? ';' )* )? statement_block
+  : ('var' func_body_var * ) statement_block -> ^(VARS (func_body_var)* ) ^(statement_block)
+  | statement_block -> ^(VARS ) ^(statement_block)
+  ;
+
+func_body_var
+  : ( identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR identifier type_ref?)*
   ;
 
 
-// Statement
+// STATEMENTS
 statement
   : statement_if
   | statement_block
@@ -52,60 +74,83 @@ statement
   | statement_expression
   ;
 
-statement_block
-  : 'begin'^ statement* 'end' ';'
-  ;
-  
 statement_if
-  : 'if'^ expr 'then' statement ('else' statement)?
+  : 'if' expr 'then' st_then=statement ('else' st_else=statement)? -> ^('if' expr $st_then $st_else?)
   ;
 
+statement_block
+  : 'begin' statement* 'end' ';' -> ^('begin' statement*)
+  ;
+  
 statement_while
-  : 'while'^ expr 'do' statement
+  : 'while' expr 'do' statement -> ^('while' expr statement)
   ;
 
 statement_do
-  : 'repeat'^ statement ('while' | 'until') expr ';'
+  : 'repeat' statement statement_do_condition -> ^('repeat' statement_do_condition statement)
+  ;
+
+statement_do_condition
+  : 'while'^ expr ';'!
+  | 'until'^ expr ';'!
   ;
 
 statement_break
-  : 'break'^
+  : 'break' ';' -> ^('break')
   ;
 
 statement_expression
-  : expr^
+  : expr ';' -> ^(expr)
   ;
 
 
-// Expressions
+// EXPRESSIONS
 expr
   : expr_literal
-//  | expr_binary
+  | expr_braces_caller_indexer
+  | expr_place_caller_indexer
   | expr_unary
-  | expr_braces
-//  | expr_call
-//  | expr_indexer
-  | expr_place
+//  | expr_binary
   ;
 
 expr_literal
   : bool | str | rune | hex | bits | dec
   ;
 
-expr_braces
-  : '('! expr^ ')'!
+expr_list
+  : (expr (',' expr)* )? -> expr*
   ;
 
-expr_place
-  : identifier^
+// OPERATORS
+caller_indexer
+  : '(' expr_list ')' -> ^(CALLER expr_list)
+  | '[' expr_list ']' -> ^(INDEXER expr_list)
+  ;
+
+// braces or call/index (priority 1)
+expr_braces_caller_indexer
+  : '('! expr ')'! caller_indexer^?
+  ;
+
+// identifier or call/index (priority 1)
+expr_place_caller_indexer
+  : identifier caller_indexer^?
   ;
 
 expr_unary
-  : ('+' | '-')^ expr
+  : '!' expr -> ^('!' expr)
   ;
 
+// expr_binary
+//    : expr_binary_last (('+' | '-') expr_binary_last)*
+//    ;
+// 
+// expr_binary_last
+//   : expr_place_caller_indexer
+//   ;
 
-// Terminal
+
+// TERMINALS
 identifier: IDENTIFIER;
 
 str: STR;

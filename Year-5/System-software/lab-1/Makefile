@@ -107,7 +107,7 @@ dot/pdf:
 
 ### Run main executable
 run: build
-	./build/main -i io/input.txt -o io/output.dot --tee
+	./build/main -i io/input.txt -o io/output.dot
 
 run/pdf: build
 	./build/main -i io/input.txt -o io/output.dot

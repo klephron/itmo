@@ -1,31 +1,10 @@
-method fun123 (first: bool, second, third: array [,,,] of string) : string
-  var
-    a : int;
-    b : float;
+method fun123():
   begin
-    begin
-      if true
-      then
-        begin
-        end;
-      else
-        begin
-        end;
-    end;
+    (func_outer(arg3))(func_inner(arg1), arg2);
+    (func_outer(arg3))[func_inner[arg1], arg2];
+    (((((((!func)))))()));
+    !func();
   end;
 
-method fun123 (first: bool, second, third: array [,,,] of string) : string
-  var
-    a : int;
-    b : float;
-  begin
-    begin
-      if true
-      then
-        begin
-        end;
-      else
-        begin
-        end;
-    end;
-  end;
+
+

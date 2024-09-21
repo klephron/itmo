@@ -107,6 +107,7 @@ size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   char label[256];
   pANTLR3_COMMON_TOKEN root_token = root->getToken(root);
   if (root_token == NULL) {
+    printf("root is nil\n");
     snprintf(label, 255,
              "< <FONT POINT-SIZE=\"16\"><b>&lt;empty&gt;</b></FONT> >");
   } else {

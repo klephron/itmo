@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Option2Lexer.h"
 #include "Option2Parser.h"
 #include <antlr3.h>
