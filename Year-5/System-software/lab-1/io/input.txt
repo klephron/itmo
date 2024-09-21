@@ -1,12 +1,29 @@
-method fun123():
+method fun123(a, b, c: double, d: array [,,,] of float): char
+  var
+  a, b: float;
+  c, d, e;
+  f: int;
   begin
     func(arg1, arg2);
     func();
-    (func)(func(arg1), arg2);
-    (func)();
 
-    func[ arg1, arg2 ];
-    func[  ];
     (func)[ func(arg1), arg2 ];
     (func)[  ];
+
+    if (a != b) == (c || d) then begin
+      a = 1314;
+      b = "string";
+      c = 'c';
+      d = 0x1241a;
+      e = ((d = f) = g) = p = 0b00001; 
+    end;
+    else false;
+
   end;
+
+method fun123(): char
+begin
+  repeat
+    print("Hello, world");
+  until false;
+end;

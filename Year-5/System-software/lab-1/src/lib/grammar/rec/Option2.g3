@@ -10,8 +10,9 @@ tokens {
   ROOT;
   VARS;
   VAR;
-  FUNC;
   ARGS;
+  ARG;
+  FUNC;
   ELEMS;
   RETURNS;
   BODY;
@@ -58,7 +59,7 @@ arg_def_list
   ;
 
 arg_def
-  : identifier (':' type_ref)? -> ^(type_ref identifier)
+  : iden=identifier (':' type_ref)? -> ^(ARG identifier type_ref)
   ;
 
 func_body
