@@ -16,6 +16,12 @@ tokens {
   BODY;
   CALLER;
   INDEXER;
+  CONST_BOOL;
+  CONST_BITS;
+  CONST_HEX;
+  CONST_DEC;
+  CONST_CHAR;
+  CONST_STR;
 }
 
 
@@ -106,33 +112,30 @@ statement_expression
 
 // EXPRESSIONS
 expr
-  : expr_literal
-  | expr_braces_caller_indexer
-  | expr_place_caller_indexer
-  | expr_unary
-//  | expr_binary
+  : expr_list
   ;
 
 expr_literal
   : bool | str | rune | hex | bits | dec
   ;
 
+// OPERATORS
+// (priority 15-lowest)
 expr_list
-  : (expr (',' expr)* )? -> expr*
+  : ((expr_unary | expr_binary) (','^ (expr_unary | expr_binary) )* )? 
   ;
 
-// OPERATORS
 caller_indexer
   : '(' expr_list ')' -> ^(CALLER expr_list)
   | '[' expr_list ']' -> ^(INDEXER expr_list)
   ;
 
-// braces or call/index (priority 1)
+// (priority 0-1) braces or call/index 
 expr_braces_caller_indexer
   : '('! expr ')'! caller_indexer^?
   ;
 
-// identifier or call/index (priority 1)
+// (priority 0-1) identifier or call/index 
 expr_place_caller_indexer
   : identifier caller_indexer^?
   ;
@@ -141,24 +144,24 @@ expr_unary
   : '!' expr -> ^('!' expr)
   ;
 
-// expr_binary
-//    : expr_binary_last (('+' | '-') expr_binary_last)*
-//    ;
-// 
-// expr_binary_last
-//   : expr_place_caller_indexer
-//   ;
+expr_binary
+  : expr_binary_01 (('+' | '-')^ expr_binary_01)*
+  ;
+
+expr_binary_01
+  : expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
+  ;
 
 
 // TERMINALS
 identifier: IDENTIFIER;
 
-str: STR;
-rune: CHAR;
-hex: HEX;
-bits: BITS;
-dec: DEC;
-bool: BOOL;
+str: STR -> ^(CONST_STR STR);
+rune: CHAR -> ^(CONST_CHAR CHAR);
+hex: HEX -> ^(CONST_HEX HEX); 
+bits: BITS -> ^(CONST_BITS BITS);
+dec: DEC -> ^(CONST_DEC DEC);
+bool: BOOL -> ^(CONST_BOOL BOOL);
 
 
 BOOL: (TRUE | FALSE) ;

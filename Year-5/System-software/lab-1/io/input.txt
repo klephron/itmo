@@ -1,9 +1,6 @@
 method fun123():
   begin
-    (func_outer(arg3))(func_inner(arg1), arg2);
-    (func_outer(arg3))[func_inner[arg1], arg2];
-    (((((((!func)))))()));
-    !func();
+    (0b11 + "abce" + '6' - (66666 + 0x41312) - (true));
   end;
 
 
