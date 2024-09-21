@@ -107,7 +107,11 @@ dot/pdf:
 
 ### Run main executable
 run: build
-	./build/main -i io/input.txt -o io/output.txt --tee
+	./build/main -i io/input.txt -o io/output.dot --tee
+
+run/pdf:
+	./build/main -i io/input.txt -o io/output.dot
+	dot -Tpdf io/output.dot -o io/output.pdf
 
 ### Build tests
 build/test: $(TGTS.TST)

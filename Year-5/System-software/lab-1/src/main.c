@@ -88,7 +88,7 @@ void execute(struct args_struct args) {
 
   // print to stdout
   if (args.tee) {
-    printf("%s", dot_string.chars);
+    printf("%s\n", dot_string.chars);
   }
   // write to output file
   if (args.output_file != NULL) {
@@ -96,6 +96,8 @@ void execute(struct args_struct args) {
     fwrite(dot_string.chars, dot_string.len, 1, output_fd);
     fclose(output_fd);
   }
+
+  free((void *)dot_string.chars);
 
   parser->free(parser);
   tokens->free(tokens);

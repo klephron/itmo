@@ -3,26 +3,27 @@
 #include <stdint.h>
 
 struct list_data_struct {
-  char *key;
-  int value;
+  void *key;
+  void *value;
 };
 
 struct list_entry_struct {
-  struct list_data_struct data;
+  struct list_data_struct *data;
   struct list_entry_struct *next;
-};
-
-struct result_int_struct {
-  uint8_t code;
-  int value;
 };
 
 struct list_struct {
   struct list_entry_struct *head;
+  int unique;
 
-  struct result_int_struct (*get)(struct list_struct *this, const char *key);
-  void (*put)(struct list_struct *this, const char *key, const int value);
+  void *(*get)(struct list_struct *this, const void *key);
+  void (*put)(struct list_struct *this, const void *key, const void *value);
   void (*free)(struct list_struct *this);
+
+  // NOTE: for true OOP may be present in struct instead
+  int (*equals)(const void *lsv_key, const void *rsv_key);
+  struct list_data_struct *(*new)(const void *key, const void *value);
+  void (*delete)(struct list_data_struct *data);
 };
 
 typedef struct list_data_struct list_data;
@@ -30,7 +31,6 @@ typedef struct list_entry_struct list_entry, *p_list_entry;
 typedef p_list_entry list_iter;
 typedef struct list_struct list, *p_list;
 
-typedef struct result_int_struct result_int;
-
-
-p_list list_new();
+p_list list_new(int (*equals)(const void *lsv_key, const void *rsv_key),
+                list_data *(*new)(const void *key, const void *value),
+                void (*delete)(list_data *data), int unique);

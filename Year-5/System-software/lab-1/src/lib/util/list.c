@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "util/list.h"
 
 int list_has_next(list_iter this) {
@@ -11,20 +10,24 @@ int list_has_next(list_iter this) {
   return 0;
 }
 
-result_int list_get(p_list this, const char *key) {
+void *list_get(p_list this, const void *key) {
   for (list_iter it = this->head; it != NULL; it = it->next) {
-    if (strcmp(it->data.key, key) == 0) {
-      return (result_int){.code = 0, .value = it->data.value};
+    if (this->equals(it->data->key, key)) {
+      return it->data->value;
     }
   }
-  return (result_int){.code = -1, .value = 0};
+  return NULL;
 }
 
-void list_put(p_list this, const char *key, const int value) {
-  for (list_iter it = this->head; it != NULL; it = it->next) {
-    if (strcmp(it->data.key, key) == 0) {
-      it->data.value = value;
-      return;
+// NOTE: need to recreate object because of memory
+void list_put(p_list this, const void *key, const void *value) {
+  if (this->unique) {
+    for (list_iter it = this->head; it != NULL; it = it->next) {
+      if (!this->equals(it->data->key, key)) {
+        this->delete (it->data);
+        it->data = this->new (key, value);
+        return;
+      }
     }
   }
 
@@ -37,8 +40,7 @@ void list_put(p_list this, const char *key, const int value) {
   }
 
   p_list_entry tail = malloc(sizeof(list_entry));
-  tail->data.key = strdup(key);
-  tail->data.value = value;
+  tail->data = this->new (key, value);
   tail->next = NULL;
 
   if (it == NULL) {
@@ -53,18 +55,27 @@ void list_free(p_list this) {
     list_iter next;
     for (list_iter it = this->head; it != NULL; it = next) {
       next = it->next;
-      free(it->data.key);
+      this->delete (it->data);
       free(it);
     }
     free(this);
   }
 }
 
-p_list list_new() {
+p_list list_new(int (*equals)(const void *lsv_key, const void *rsv_key),
+                list_data *(*new)(const void *key, const void *value),
+                void (*delete)(list_data *data), int unique) {
   p_list this = malloc(sizeof(list));
+
+  this->unique = unique;
+
   this->head = NULL;
   this->get = list_get;
   this->put = list_put;
   this->free = list_free;
+
+  this->equals = equals;
+  this->new = new;
+  this->delete = delete;
   return this;
 }

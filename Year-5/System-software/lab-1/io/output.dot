@@ -1,0 +1,192 @@
+strict digraph AST{
+node [shape=rect, style=filled]
+id_1[label="<empty>"]
+id_2[label="method"]
+id_3[label="fun123"]
+id_4[label="("]
+id_5[label="first"]
+id_6[label=":"]
+id_7[label="bool"]
+id_8[label=","]
+id_9[label="second"]
+id_10[label=","]
+id_11[label="third"]
+id_12[label=":"]
+id_13[label="array"]
+id_14[label="["]
+id_15[label=","]
+id_16[label=","]
+id_17[label=","]
+id_18[label="]"]
+id_19[label="of"]
+id_20[label="string"]
+id_21[label=")"]
+id_22[label=":"]
+id_23[label="string"]
+id_24[label="var"]
+id_25[label="a"]
+id_26[label=":"]
+id_27[label="int"]
+id_28[label=";"]
+id_29[label="b"]
+id_30[label=":"]
+id_31[label="float"]
+id_32[label=";"]
+id_33[label="begin"]
+id_34[label="begin"]
+id_35[label="if"]
+id_36[label="true"]
+id_37[label="then"]
+id_38[label="begin"]
+id_39[label="end"]
+id_40[label=";"]
+id_41[label="else"]
+id_42[label="begin"]
+id_43[label="end"]
+id_44[label=";"]
+id_45[label="end"]
+id_46[label=";"]
+id_47[label="end"]
+id_48[label=";"]
+id_49[label="method"]
+id_50[label="fun123"]
+id_51[label="("]
+id_52[label="first"]
+id_53[label=":"]
+id_54[label="bool"]
+id_55[label=","]
+id_56[label="second"]
+id_57[label=","]
+id_58[label="third"]
+id_59[label=":"]
+id_60[label="array"]
+id_61[label="["]
+id_62[label=","]
+id_63[label=","]
+id_64[label=","]
+id_65[label="]"]
+id_66[label="of"]
+id_67[label="string"]
+id_68[label=")"]
+id_69[label=":"]
+id_70[label="string"]
+id_71[label="var"]
+id_72[label="a"]
+id_73[label=":"]
+id_74[label="int"]
+id_75[label=";"]
+id_76[label="b"]
+id_77[label=":"]
+id_78[label="float"]
+id_79[label=";"]
+id_80[label="begin"]
+id_81[label="begin"]
+id_82[label="if"]
+id_83[label="true"]
+id_84[label="then"]
+id_85[label="begin"]
+id_86[label="end"]
+id_87[label=";"]
+id_88[label="else"]
+id_89[label="begin"]
+id_90[label="end"]
+id_91[label=";"]
+id_92[label="end"]
+id_93[label=";"]
+id_94[label="end"]
+id_95[label=";"]
+id_2 -> id_3
+id_2 -> id_4
+id_2 -> id_5
+id_2 -> id_6
+id_2 -> id_7
+id_2 -> id_8
+id_2 -> id_9
+id_2 -> id_10
+id_2 -> id_11
+id_2 -> id_12
+id_2 -> id_13
+id_2 -> id_14
+id_2 -> id_15
+id_2 -> id_16
+id_2 -> id_17
+id_2 -> id_18
+id_2 -> id_19
+id_2 -> id_20
+id_2 -> id_21
+id_2 -> id_22
+id_2 -> id_23
+id_2 -> id_24
+id_2 -> id_25
+id_2 -> id_26
+id_2 -> id_27
+id_2 -> id_28
+id_2 -> id_29
+id_2 -> id_30
+id_2 -> id_31
+id_2 -> id_32
+id_35 -> id_36
+id_35 -> id_37
+id_38 -> id_39
+id_38 -> id_40
+id_35 -> id_38
+id_35 -> id_41
+id_42 -> id_43
+id_42 -> id_44
+id_35 -> id_42
+id_34 -> id_35
+id_34 -> id_45
+id_34 -> id_46
+id_33 -> id_34
+id_33 -> id_47
+id_33 -> id_48
+id_2 -> id_33
+id_1 -> id_2
+id_49 -> id_50
+id_49 -> id_51
+id_49 -> id_52
+id_49 -> id_53
+id_49 -> id_54
+id_49 -> id_55
+id_49 -> id_56
+id_49 -> id_57
+id_49 -> id_58
+id_49 -> id_59
+id_49 -> id_60
+id_49 -> id_61
+id_49 -> id_62
+id_49 -> id_63
+id_49 -> id_64
+id_49 -> id_65
+id_49 -> id_66
+id_49 -> id_67
+id_49 -> id_68
+id_49 -> id_69
+id_49 -> id_70
+id_49 -> id_71
+id_49 -> id_72
+id_49 -> id_73
+id_49 -> id_74
+id_49 -> id_75
+id_49 -> id_76
+id_49 -> id_77
+id_49 -> id_78
+id_49 -> id_79
+id_82 -> id_83
+id_82 -> id_84
+id_85 -> id_86
+id_85 -> id_87
+id_82 -> id_85
+id_82 -> id_88
+id_89 -> id_90
+id_89 -> id_91
+id_82 -> id_89
+id_81 -> id_82
+id_81 -> id_92
+id_81 -> id_93
+id_80 -> id_81
+id_80 -> id_94
+id_80 -> id_95
+id_49 -> id_80
+id_1 -> id_49
+}
