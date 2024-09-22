@@ -14,9 +14,10 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
   uint32_t exc_offset;
   char *exc_name;
   char exc_msg[256]; // NOTE: limited message size
+                     //
 
-  if (recognizer->type != ANTLR3_TYPE_PARSER) {
-    return;
+  if (!(recognizer->type != ANTLR3_TYPE_PARSER &&
+        recognizer->type != ANTLR3_TYPE_LEXER)) {
   }
 
   ex = recognizer->state->exception;
@@ -34,16 +35,29 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
   pANTLR3_COMMON_TOKEN theToken;
   pANTLR3_STRING ttext;
 
-  theToken = (pANTLR3_COMMON_TOKEN)(recognizer->state->exception->token);
-  ttext = theToken->toString(theToken);
-
   exc_offset = recognizer->state->exception->charPositionInLine;
 
-  if (theToken->type == ANTLR3_TOKEN_EOF) {
-    snprintf(exc_msg, 255, "at <EOF>");
+  theToken = (pANTLR3_COMMON_TOKEN)(recognizer->state->exception->token);
+
+  if (theToken) {
+    ttext = theToken->toString(theToken);
+
+    if (theToken->type == ANTLR3_TOKEN_EOF) {
+      snprintf(exc_msg, 255, "at <EOF>");
+    } else {
+      snprintf(exc_msg, 255, "near %s",
+               ttext == NULL ? (pANTLR3_UINT8) "<empty>" : ttext->chars);
+    }
   } else {
-    snprintf(exc_msg, 255, "near %s",
-             ttext == NULL ? (pANTLR3_UINT8) "<empty>" : ttext->chars);
+    if (recognizer->state) {
+      snprintf(exc_msg, 255, "error matching from [Line: %d, LinePos: %d]",
+               recognizer->state->tokenStartLine,
+               recognizer->state->tokenStartCharPositionInLine);
+    } else {
+      snprintf(exc_msg, 255,
+               "error, dumb implementation, may help [Line: %d, LinePos: %d]",
+               exc_line, exc_offset);
+    }
   }
 
   exception *exc = exception_new(exc_stream, exc_type, exc_line, exc_offset,
@@ -79,14 +93,17 @@ option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
       antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lexer));
   pOption2Parser parser = Option2ParserNew(tokens);
 
+  lexer->pLexer->rec->displayRecognitionError = displayRecognitionError;
   parser->pParser->rec->displayRecognitionError = displayRecognitionError;
 
   p_list exc_list =
       list_new(list_equals_false, exc_list_new, exc_list_delete, 0);
 
+  lexer->pLexer->rec->state->userp = exc_list;
   parser->pParser->rec->state->userp = exc_list;
   Option2Parser_source_return r = parser->source(parser);
   parser->pParser->rec->state->userp = NULL;
+  lexer->pLexer->rec->state->userp = NULL;
 
   *parser_out = parser;
   *tokens_out = tokens;

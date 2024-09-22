@@ -28,7 +28,7 @@ struct exception_struct *exception_new(const char *stream, uint32_t type,
                                               uint32_t line, uint32_t offset, const char *name,
                                               const char *message) {
 
-  struct exception_struct *exc = malloc(sizeof(struct exception_struct));
+  struct exception_struct *exc = calloc(1, sizeof(struct exception_struct));
 
   exc->free = exception_free;
 
