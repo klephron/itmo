@@ -7,11 +7,11 @@ begin
       print("Hello, world");
       print("Hello, world")
       print("Hello, world");
-      print("Hello, world")
+      print("Hello, world
       print("Hello, world");
       print("Hello, world");
       print("Hello, world")
-      print("Hello, world");
+      print("Hello, world);
       print("Hello, world")
     end;
   until false;

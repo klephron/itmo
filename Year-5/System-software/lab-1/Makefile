@@ -110,7 +110,7 @@ run: build
 	./build/main -i io/input.txt -o io/output.dot
 
 run/pdf: build
-	./build/main -i io/input.txt -o io/output.dot
+	./build/main -i io/input.txt -o io/output.dot --ignore-errors
 	dot -Tpdf io/output.dot -o io/output.pdf
 
 ### Build tests
