@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdio.h>
 
 struct list_data_struct {
   void *key;
@@ -19,6 +20,7 @@ struct list_struct {
   void *(*get)(struct list_struct *this, const void *key);
   void (*put)(struct list_struct *this, const void *key, const void *value);
   void (*free)(struct list_struct *this);
+  size_t (*size)(struct list_struct *this);
 
   // NOTE: for true OOP may be present in struct instead
   int (*equals)(const void *lsv_key, const void *rsv_key);

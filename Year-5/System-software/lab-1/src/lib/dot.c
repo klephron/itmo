@@ -39,9 +39,9 @@ struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
   ctx->id = 0;
 
   ctx->list_nodes =
-      list_new(string_equals, string_string_new, string_string_delete, 1);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
   ctx->list_edges =
-      list_new(string_equals, string_string_new, string_string_delete, 0);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 0);
 
   ctx->free = dot_ctx_free;
 

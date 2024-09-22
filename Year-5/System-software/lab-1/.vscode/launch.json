@@ -7,7 +7,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/build/main",
-      "args": ["io/input.txt"],
+      "args": ["-i", "io/input.txt", "-o", "io/output.txt"],
       "cwd": "${workspaceFolder}",
       "environment": [],
       "preLaunchTask": "Build",

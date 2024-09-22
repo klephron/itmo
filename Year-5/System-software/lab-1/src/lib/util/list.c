@@ -3,14 +3,14 @@
 
 #include "util/list.h"
 
-int list_has_next(list_iter this) {
+static int list_has_next(list_iter this) {
   if (this->next != NULL) {
     return 1;
   }
   return 0;
 }
 
-void *list_get(p_list this, const void *key) {
+static void *list_get(p_list this, const void *key) {
   for (list_iter it = this->head; it != NULL; it = it->next) {
     if (this->equals(it->data->key, key)) {
       return it->data->value;
@@ -20,7 +20,7 @@ void *list_get(p_list this, const void *key) {
 }
 
 // NOTE: need to recreate object because of memory
-void list_put(p_list this, const void *key, const void *value) {
+static void list_put(p_list this, const void *key, const void *value) {
   if (this->unique) {
     for (list_iter it = this->head; it != NULL; it = it->next) {
       if (!this->equals(it->data->key, key)) {
@@ -50,7 +50,15 @@ void list_put(p_list this, const void *key, const void *value) {
   }
 }
 
-void list_free(p_list this) {
+static size_t list_size(p_list this) {
+  size_t size = 0;
+  for (list_iter it = this->head; it != NULL; it = it->next) {
+    ++size;
+  }
+  return size;
+}
+
+static void list_free(p_list this) {
   if (this != NULL) {
     list_iter next;
     for (list_iter it = this->head; it != NULL; it = next) {
@@ -73,6 +81,7 @@ p_list list_new(int (*equals)(const void *lsv_key, const void *rsv_key),
   this->get = list_get;
   this->put = list_put;
   this->free = list_free;
+  this->size = list_size;
 
   this->equals = equals;
   this->new = new;

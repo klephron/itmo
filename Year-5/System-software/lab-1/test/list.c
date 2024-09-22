@@ -6,18 +6,18 @@
 
 Test(list, create_delete) {
   p_list list =
-      list_new(string_equals, string_string_new, string_string_delete, 1);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
 
-  cr_expect_eq(list->equals, string_equals);
-  cr_expect_eq(list->new, string_string_new);
-  cr_expect_eq(list->delete, string_string_delete);
+  cr_expect_eq(list->equals, list_string_equals);
+  cr_expect_eq(list->new, list_string_string_new);
+  cr_expect_eq(list->delete, list_string_string_delete);
 
   list->free(list);
 }
 
 Test(list, put) {
   p_list list =
-      list_new(string_equals, string_string_new, string_string_delete, 1);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
 
   list->put(list, "hello", "world");
 
@@ -26,7 +26,7 @@ Test(list, put) {
 
 Test(list, put_put) {
   p_list list =
-      list_new(string_equals, string_string_new, string_string_delete, 1);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
 
   list->put(list, "hello", "world");
   list->put(list, "world", "world2");
@@ -42,7 +42,7 @@ Test(list, put_put) {
 
 Test(list, put_putsame_unique) {
   p_list list =
-      list_new(string_equals, string_string_new, string_string_delete, 1);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
 
   list->put(list, "hello", "world");
   list->put(list, "hello", "world2");
@@ -58,7 +58,7 @@ Test(list, put_putsame_unique) {
 
 Test(list, put_putsame) {
   p_list list =
-      list_new(string_equals, string_string_new, string_string_delete, 0);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 0);
 
   list->put(list, "hello", "world");
   list->put(list, "hello", "world2");
@@ -74,7 +74,7 @@ Test(list, put_putsame) {
 
 Test(list, put_many) {
   p_list list =
-      list_new(string_equals, string_string_new, string_string_delete, 1);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
 
   char key[10];
   char value[10];
@@ -96,7 +96,7 @@ Test(list, put_many) {
 
 Test(list, put_many_check) {
   p_list list =
-      list_new(string_equals, string_string_new, string_string_delete, 1);
+      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
 
   char key[16];
   char value[16];

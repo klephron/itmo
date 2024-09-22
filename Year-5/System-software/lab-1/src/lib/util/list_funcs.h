@@ -2,8 +2,10 @@
 
 #include "util/list.h"
 
-int string_equals(const void *lsv, const void *rsv);
+int list_string_equals(const void *lsv, const void *rsv);
 
-list_data *string_string_new(const void *_lsv, const void *_rsv);
+int list_equals_false(const void *lsv, const void *rsv);
 
-void string_string_delete(list_data *data);
+list_data *list_string_string_new(const void *_lsv, const void *_rsv);
+
+void list_string_string_delete(list_data *data);
