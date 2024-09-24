@@ -1,14 +1,3 @@
-method fun123(): char
+method fun123(a : array [,,,] of int):
 begin
-  repeat
-    begin
-      print("Hello, world");
-      print("Hello, world");
-      print("Hello, world");
-      print("Hello, world");
-      print("Hello, world");
-      print("Hello, world");
-      print("Hello, world);
-    end;
-  until false;
 end;

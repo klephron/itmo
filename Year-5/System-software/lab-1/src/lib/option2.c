@@ -3,6 +3,8 @@
 #include "exception.h"
 #include "util/list.h"
 #include "util/list_funcs.h"
+#include <antlr3.h>
+#include <antlr3basetree.h>
 
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
                                     pANTLR3_UINT8 *_) {
@@ -112,4 +114,7 @@ option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
   *exc_list_out = exc_list;
 
   return r.tree;
+}
+
+static int test() {
 }

@@ -26,6 +26,9 @@ tokens {
   CONST_STR;
 }
 
+@headers{
+}
+
 
 // SOURCES
 source
@@ -40,7 +43,14 @@ source_item
 type_ref
   : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
   | identifier
-  | arr='array' '[' (elems+=',')* ']' 'of' type_ref -> ^('array' ^(type_ref) ^(ELEMS)) // reference using `elems*`
+  | arr='array' '[' (elems+=',')* ']' 'of' type_ref {
+
+// printf("elems: \%d\n", $elems->size($elems));
+
+// to build tree node
+// (pANTLR3_BASE_TREE)(ADAPTOR->createTypeText(ADAPTOR, ELEMS, (pANTLR3_UINT8) "10"))
+
+    } -> ^('array' ^(type_ref) ^(ELEMS $elems*))
   ;
 
 
