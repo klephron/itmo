@@ -10,8 +10,9 @@ tokens {
   ROOT;
   VARS;
   VAR;
+  PARAMS;
+  PARAM;
   ARGS;
-  ARG;
   FUNC;
   ELEMS;
   RETURNS;
@@ -64,12 +65,12 @@ func_signature
   ;
 
 arg_def_list
-  : ls=arg_def (',' arg_def)*  -> ^(ARGS arg_def*)
-  |                            -> ^(ARGS )
+  : ls=arg_def (',' arg_def)*  -> ^(PARAMS arg_def*)
+  |                            -> ^(PARAMS )
   ;
 
 arg_def
-  : iden=identifier (':' type_ref)? -> ^(ARG identifier type_ref)
+  : iden=identifier (':' type_ref)? -> ^(PARAM identifier type_ref)
   ;
 
 func_body
@@ -124,7 +125,7 @@ statement_expression
 
 // EXPRESSIONS
 expr
-  : expr_15
+  : expr_14
   ;
 
 expr_literal
@@ -191,8 +192,8 @@ expr_01
   ;
 
 caller_indexer
-  : '(' expr_15 ')' -> ^(CALLER expr_15)
-  | '[' expr_15 ']' -> ^(INDEXER expr_15)
+  : '(' expr_15 ')' -> ^(CALLER ^(ARGS expr_15))
+  | '[' expr_15 ']' -> ^(INDEXER ^(ARGS expr_15))
   ;
 
 // (priority 0-1) braces or call/index 
