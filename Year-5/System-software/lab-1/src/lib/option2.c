@@ -116,5 +116,3 @@ option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
   return r.tree;
 }
 
-static int test() {
-}
