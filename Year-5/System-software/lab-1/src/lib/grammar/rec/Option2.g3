@@ -32,7 +32,7 @@ tokens {
 
 // SOURCES
 source
-  : source_item+ EOF -> ^(ROOT source_item+)
+  : source_item* EOF -> ^(ROOT source_item*)
   ;
 
 source_item
