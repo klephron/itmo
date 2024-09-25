@@ -1,9 +1,9 @@
 grammar Option2;
 
 options {
-  language=C;
   output=AST;
-  ASTLabelType = pANTLR3_BASE_TREE;
+  language=C;
+  ASTLabelType=pANTLR3_BASE_TREE;
 }
 
 tokens {
@@ -30,10 +30,10 @@ tokens {
 @headers{
 }
 
-
 // SOURCES
 source
-  : source_item+ -> ^(ROOT source_item+);
+  : source_item+ EOF -> ^(ROOT source_item+)
+  ;
 
 source_item
   : func_def
@@ -226,8 +226,8 @@ DEC: DIGIT+ ;
 CHAR: '\'' ~('\'') '\'' ;
 STR: ('"') ('\\' . | ~('\\'|'"'))* ('"') ;
 
-NEWLINE:'\r'? '\n' { SKIP(); };
-WSS: WS+ { SKIP(); };
+NEWLINE:'\r'? '\n' { $channel = HIDDEN; };
+WSS: WS+ { $channel = HIDDEN; };
 
 
 fragment TRUE: 'true';

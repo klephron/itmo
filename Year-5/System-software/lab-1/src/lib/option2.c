@@ -16,7 +16,7 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
   uint32_t exc_offset;
   char *exc_name;
   char exc_msg[256]; // NOTE: limited message size
-                     //
+
 
   if (!(recognizer->type != ANTLR3_TYPE_PARSER &&
         recognizer->type != ANTLR3_TYPE_LEXER)) {
