@@ -102,7 +102,7 @@ build: $(TGTS.BIN)
 
 ### Generate dot files and pdf files from them
 dot/pdf:
-	$(ANTLR) -dfa -nfa -fo $(GRM_GEN_DIR) $(GRMS)
+	$(ANTLR) -dfa -nfa -fo $(GRM_GEN_DIR) $(GRM_RECS)
 	for file in $(GRM_GEN_DIR)/*.dot; do dot -Tpdf "$$file" -o "$${file%.dot}.pdf"; done
 
 ### Run main executable
