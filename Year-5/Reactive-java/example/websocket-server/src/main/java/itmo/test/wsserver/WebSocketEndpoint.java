@@ -16,9 +16,17 @@ public class WebSocketEndpoint {
 
   @OnMessage
   public void onMessage(String message, Session session) {
+    String text;
+
     System.out.println("WebSocket from " + session.getId() + " - " + message);
+
+    if (message.equals("ping")) {
+      text = "pong";
+    } else {
+      text = "Echo: " + message;
+    }
     try {
-      session.getBasicRemote().sendText("Echo: " + message);
+      session.getBasicRemote().sendText(text);
     } catch (Exception e) {
       e.printStackTrace();
     }

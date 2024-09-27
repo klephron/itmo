@@ -13,10 +13,26 @@
 
     <script>
       let websocket = new WebSocket("ws://localhost:5325/ws");
+      let timerId = 0;
+
+      // < 30 seconds
+      function keepAlive(timeout = 1_000) {
+        if (websocket.readyState == websocket.OPEN) {
+          websocket.send("ping");
+        }
+        timerId = setTimeout(keepAlive, timeout);
+      }
+
+      function cancelKeepAlive() {
+        if (timerId) {
+          clearTimeout(timerId);
+        }
+      }
 
       websocket.onopen = function (event) {
         document.getElementById("messages").value +=
           "Connected to WebSocket server\n";
+        keepAlive()
       };
 
       websocket.onmessage = function (event) {
@@ -27,6 +43,7 @@
       websocket.onclose = function (event) {
         document.getElementById("messages").value +=
           "WebSocket connection closed\n";
+        cancelKeepAlive();
       };
 
       function sendMessage() {
