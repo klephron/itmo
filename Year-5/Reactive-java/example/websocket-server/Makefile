@@ -7,3 +7,5 @@ jar:
 clean:
 	mvn clean
 
+dep:
+	mvn dependency:tree
