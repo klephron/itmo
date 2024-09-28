@@ -1,5 +1,7 @@
 import { createEffect, createSignal } from "solid-js";
 
+import Map from "./Map.jsx";
+
 function App() {
   const [getTextAreaText, setTextAreaText] = createSignal("");
   const [getMessageText, setMessageText] = createSignal("");
@@ -46,17 +48,12 @@ function App() {
   }
   return (
     <>
-      <h1>WebSocket Client</h1>
-      <textarea
-        id="messages"
-        rows="10"
-        cols="50"
-        value={getTextAreaText()}
-      ></textarea>
+      <h1>Reactive Java View</h1>
+      <Map width={600} height={400}/>
+      <br />
+      <textarea rows="10" cols="50" value={getTextAreaText()}></textarea>
       <br />
       <input
-        type="text"
-        id="messageInput"
         placeholder="Enter message"
         value={getMessageText()}
         onChange={(e) => setMessageText(e.target.value)}
