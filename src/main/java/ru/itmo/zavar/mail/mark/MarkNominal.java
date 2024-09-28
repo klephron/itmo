@@ -15,7 +15,7 @@ public enum MarkNominal {
     N100(100),
     N150(150),
     N200(200),
-    N250(200),
+    N250(250),
     N500(500);
     private final int value;
 

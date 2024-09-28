@@ -21,9 +21,9 @@
             <version>1.18.34</version>
         </dependency>
         <dependency>
-            <groupId>org.jeasy</groupId>
-            <artifactId>easy-random-core</artifactId>
-            <version>5.0.0</version>
+            <groupId>org.instancio</groupId>
+            <artifactId>instancio-core</artifactId>
+            <version>5.0.2</version>
         </dependency>
     </dependencies>
 

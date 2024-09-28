@@ -1,18 +1,18 @@
 package ru.itmo.zavar.mail;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import ru.itmo.zavar.actor.Actor;
 import ru.itmo.zavar.mail.mark.Mark;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Getter
+@EqualsAndHashCode
+@ToString
 public class Mail {
     private final long id;
     private final String subject;
@@ -22,12 +22,12 @@ public class Mail {
     private final int value;
     @Setter
     private MailStatus status = MailStatus.RAW;
-    private HashSet<Mark> marks;
+    private ArrayList<Mark> marks;
     private LocalDateTime createdAt;
     private LocalDateTime sentAt;
     private LocalDateTime receivedAt;
 
-    public void applyMarks(HashSet<Mark> marks) {
+    public void applyMarks(ArrayList<Mark> marks) {
         if (this.marks == null && marks != null) {
             this.marks = marks;
         } else {
