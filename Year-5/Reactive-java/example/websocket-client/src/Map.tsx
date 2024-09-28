@@ -28,23 +28,26 @@ function Map(props: Props) {
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | null;
 
-  let objects = [
-    {
-      x: 400,
-      y: 30,
-      fill: "green",
-    },
-    {
-      x: 100,
-      y: 200,
-      fill: "red",
-    },
-    {
-      x: 200,
-      y: 30,
-      fill: "blue",
-    },
-  ];
+  let objects = generateObjects(1000)
+
+  function generateObjects(cnt: number) {
+    function getRandomInt(max: number) {
+      return Math.floor(Math.random() * max);
+    }
+
+    const colors = ["red", "green", "blue", "yellow", "white", "purple"];
+    const objs = [];
+
+    for (let i = 0; i < cnt; ++i) {
+      const obj = {
+        "x": getRandomInt(10000),
+        "y": getRandomInt(10000),
+        "color": colors[getRandomInt(colors.length)]
+      }
+      objs.push(obj)
+    }
+    return objs;
+  }
 
   onMount(() => {
     ctx = canvas.getContext("2d");
@@ -162,7 +165,7 @@ function Map(props: Props) {
       ", fps: " +
       fps.toFixed(0) +
       ", ms: " +
-      drawTimeMs.toFixed(3);
+      drawTimeMs.toFixed(0);
 
     const textM = ctx.measureText(text);
 
@@ -182,7 +185,7 @@ function Map(props: Props) {
     for (const object of objects) {
       ctx.beginPath();
       ctx.arc(object.x, object.y, radius, 0, 2 * Math.PI, false);
-      ctx.fillStyle = object.fill;
+      ctx.fillStyle = object.color;
       ctx.fill();
       ctx.strokeStyle = "#003300";
       ctx.stroke();
@@ -199,28 +202,29 @@ function Map(props: Props) {
   }
 
   async function canvasPlayScene(ctx: CanvasRenderingContext2D) {
-    const frameNsMin = 1_000_000 / fpsMax;
+    const frameMsMin = 1_000 / fpsMax;
 
     function sleep(ms: number) {
       return new Promise((r) => setTimeout(r, ms));
     }
 
-    function getUnixNsNow() {
+    function getUnixMsNow() {
       return new Date().getTime();
     }
 
     while (play) {
-      const startTimeNs = getUnixNsNow();
+      const startTimeMs = getUnixMsNow();
 
       canvasDrawScene(ctx);
 
-      const timeNs = getUnixNsNow() - startTimeNs;
-      const timeLimitedNs = Math.max(frameNsMin, timeNs);
+      const timeMs = getUnixMsNow() - startTimeMs;
+      const timeLimitedMs = Math.max(frameMsMin, timeMs);
 
-      drawTimeMs = timeNs / 1000;
-      fps = 1_000_000 / timeLimitedNs;
+      drawTimeMs = timeMs;
+      fps = 1_000 / timeLimitedMs; // NOTE: actual fps may differ
 
-      await sleep((timeLimitedNs - timeNs) / 1000);
+      const waitTimeMs = timeLimitedMs - timeMs;
+      await sleep(waitTimeMs);
     }
   }
 

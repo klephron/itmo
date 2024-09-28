@@ -49,7 +49,7 @@ function App() {
   return (
     <>
       <h1>Reactive Java View</h1>
-      <Map width={600} height={400}/>
+      <Map width={800} height={450}/>
       <br />
       <textarea rows="10" cols="50" value={getTextAreaText()}></textarea>
       <br />
