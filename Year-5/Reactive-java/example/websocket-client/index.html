@@ -6,53 +6,7 @@
     <title>WebSocket Client</title>
   </head>
   <body>
-    <h1>WebSocket Client</h1>
-    <textarea id="messages" rows="10" cols="50" readonly></textarea><br />
-    <input type="text" id="messageInput" placeholder="Enter message" />
-    <button onclick="sendMessage()">Send</button>
-
-    <script>
-      let websocket = new WebSocket("ws://localhost:5325/ws");
-      let timerId = 0;
-
-      // < 30 seconds
-      function keepAlive(timeout = 1_000) {
-        if (websocket.readyState == websocket.OPEN) {
-          websocket.send("ping");
-        }
-        timerId = setTimeout(keepAlive, timeout);
-      }
-
-      function cancelKeepAlive() {
-        if (timerId) {
-          clearTimeout(timerId);
-        }
-      }
-
-      websocket.onopen = function (event) {
-        document.getElementById("messages").value +=
-          "Connected to WebSocket server\n";
-        keepAlive()
-      };
-
-      websocket.onmessage = function (event) {
-        document.getElementById("messages").value +=
-          "Received from server: " + event.data + "\n";
-      };
-
-      websocket.onclose = function (event) {
-        document.getElementById("messages").value +=
-          "WebSocket connection closed\n";
-        cancelKeepAlive();
-      };
-
-      function sendMessage() {
-        let message = document.getElementById("messageInput").value;
-        websocket.send(message);
-        document.getElementById("messages").value +=
-          "Sent to server: " + message + "\n";
-        document.getElementById("messageInput").value = "";
-      }
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>
