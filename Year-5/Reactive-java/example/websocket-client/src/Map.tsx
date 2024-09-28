@@ -2,18 +2,22 @@ import { createEffect, createSignal, onMount } from "solid-js";
 
 // NOTE: set canvas width and height same as width and height of elements
 type Props = {
-  width: number,
-  height: number
-}
+  width: number;
+  height: number;
+};
 
 function Map(props: Props) {
   const zoomFactor = 1.1;
   const zoomMin = 0.2;
   const zoomMax = 5;
+  const fpsMax = 60;
 
   let coordinateX = 0;
   let coordinateY = 0;
   let zoom = 1;
+  let fps = 0;
+  let drawTimeMs = 0;
+  let play = true;
 
   let isDragging = false;
   let dragStartClientX = 0;
@@ -48,7 +52,8 @@ function Map(props: Props) {
       alert("2d is not supported");
       return;
     }
-    canvasDrawScene(ctx);
+
+    canvasPlayScene(ctx);
   });
 
   function onMouseDown(e: MouseEvent) {
@@ -69,10 +74,6 @@ function Map(props: Props) {
 
       coordinateX = dragStartCoordinateX - dragX;
       coordinateY = dragStartCoordinateY - dragY;
-
-      if (ctx != null) {
-        canvasDrawScene(ctx);
-      }
     }
   }
 
@@ -102,10 +103,6 @@ function Map(props: Props) {
 
       coordinateX += diffX;
       coordinateY += diffY;
-
-      if (ctx != null) {
-        canvasDrawScene(ctx);
-      }
     }
   }
 
@@ -145,7 +142,7 @@ function Map(props: Props) {
   }
 
   function canvasDrawCoordinates(ctx: CanvasRenderingContext2D) {
-    const infoWidth = 150;
+    const infoWidth = 250;
     const infoHeight = 30;
 
     let width = canvas.width;
@@ -161,10 +158,14 @@ function Map(props: Props) {
       ", Y: " +
       coordinateY.toFixed(0) +
       ", Z: " +
-      zoom.toFixed(2);
+      zoom.toFixed(2) +
+      ", fps: " +
+      fps.toFixed(0) +
+      ", ms: " +
+      drawTimeMs.toFixed(3);
+
     const textM = ctx.measureText(text);
 
-    // + center text
     const textX = width - infoWidth + (infoWidth - textM.width) / 2;
     const textY = (infoHeight + 7) / 2;
 
@@ -195,6 +196,32 @@ function Map(props: Props) {
     canvasDrawGrid(ctx);
     canvasDrawObjects(ctx);
     canvasDrawCoordinates(ctx);
+  }
+
+  async function canvasPlayScene(ctx: CanvasRenderingContext2D) {
+    const frameNsMin = 1_000_000 / fpsMax;
+
+    function sleep(ms: number) {
+      return new Promise((r) => setTimeout(r, ms));
+    }
+
+    function getUnixNsNow() {
+      return new Date().getTime();
+    }
+
+    while (play) {
+      const startTimeNs = getUnixNsNow();
+
+      canvasDrawScene(ctx);
+
+      const timeNs = getUnixNsNow() - startTimeNs;
+      const timeLimitedNs = Math.max(frameNsMin, timeNs);
+
+      drawTimeMs = timeNs / 1000;
+      fps = 1_000_000 / timeLimitedNs;
+
+      await sleep((timeLimitedNs - timeNs) / 1000);
+    }
   }
 
   return (
