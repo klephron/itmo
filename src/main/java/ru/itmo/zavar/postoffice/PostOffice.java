@@ -19,34 +19,16 @@ public class PostOffice {
     protected final ArrayDeque<Mail> mailsToSend = new ArrayDeque<>();
     protected final ArrayDeque<Mail> mailsReceived = new ArrayDeque<>();
     protected final ArrayDeque<Mail> mailsIntermediary = new ArrayDeque<>();
+    private final List<Integer> sortedNominals = MarkNominal.toValuesList();
 
     public void applyMail(Mail mail) throws MailApplyFailedException {
-        int value = mail.getValue();
+        long value = mail.getValue();
 
         Map<Mark, Long> result = new HashMap<>();
 
-        List<Integer> sortedNominals = MarkNominal.toValuesList();
+        boolean b = tryToApplyMarks(value, result);
 
-        for (Integer nominalValue : sortedNominals) {
-            for (Map.Entry<Mark, Long> entry : marksStorage.entrySet()) {
-                Mark mark = entry.getKey();
-                long availableCount = entry.getValue();
-                if (mark.markNominal().getValue() == nominalValue && availableCount > 0) {
-                    long maxPossible = value / nominalValue;
-                    long countToUse = Math.min(maxPossible, availableCount);
-
-                    if (countToUse > 0) {
-                        result.put(mark, countToUse);
-                        value -= (int) (countToUse * nominalValue);
-                    }
-                    if (value == 0) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (value > 0) {
+        if (!b) {
             throw new MailApplyFailedException("Not enough marks to cover the value of given letter");
         } else {
             result.forEach(this::extractMark);
@@ -55,6 +37,34 @@ public class PostOffice {
         mail.setStatus(MailStatus.CREATED);
         mail.setCreatedAt(LocalDateTime.now());
         mailsToSend.add(mail);
+    }
+
+    private boolean tryToApplyMarks(long value, Map<Mark, Long> result) {
+        if (value == 0) {
+            return true;
+        }
+        for (Integer nominalValue : sortedNominals) {
+            for (Map.Entry<Mark, Long> entry : marksStorage.entrySet()) {
+                Mark mark = entry.getKey();
+                long availableCount = entry.getValue();
+                if (mark.markNominal().getValue() == nominalValue && availableCount > 0) {
+                    long maxPossible = value / nominalValue;
+                    long countToUse = Math.min(maxPossible, availableCount);
+
+                    for (long i = countToUse; i > 0; i--) {
+                        result.put(mark, result.getOrDefault(mark, 0L) + i);
+                        long newValue = value - i * nominalValue;
+
+                        if (tryToApplyMarks(newValue, result)) {
+                            return true;
+                        }
+                        //backtracking
+                        result.put(mark, result.get(mark) - i);
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public void applyAllMails(Set<Mail> mails) {

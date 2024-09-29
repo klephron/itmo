@@ -38,7 +38,7 @@ public final class MailGenerator {
                     }
                 })
                 .onComplete(all(Mail.class), (Mail m) -> {
-                    int value = m.getValue();
+                    long value = m.getValue();
                     List<Integer> sortedNominals = MarkNominal.toValuesList();
                     ArrayList<Mark> result = new ArrayList<>();
 

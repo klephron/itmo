@@ -10,6 +10,7 @@ import java.util.List;
 public enum MarkNominal {
     N1(1),
     N10(10),
+    N20(20),
     N25(25),
     N50(50),
     N100(100),

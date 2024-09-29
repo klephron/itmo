@@ -19,7 +19,7 @@ public class Mail {
     private final Actor sender;
     private final Actor receiver;
     private final MailData mailData;
-    private final int value;
+    private final long value;
     @Setter
     private MailStatus status = MailStatus.RAW;
     private ArrayList<Mark> marks;
