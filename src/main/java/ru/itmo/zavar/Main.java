@@ -1,6 +1,12 @@
 package ru.itmo.zavar;
 
+import ru.itmo.zavar.mail.Mail;
 import ru.itmo.zavar.mail.MailGenerator;
+import ru.itmo.zavar.stats.MailStatistics;
+import ru.itmo.zavar.mail.MailStatus;
+import ru.itmo.zavar.stats.data.ReportContainer;
+
+import java.util.Set;
 
 public class Main {
     public static void main(String[] args) {
@@ -13,6 +19,10 @@ public class Main {
 //        po.putMarks(marks);
 //        po.applyMail(null);
         MailGenerator generator = new MailGenerator();
-        generator.generateMails(10).forEach(System.out::println);
+        Set<Mail> mailSet = generator.generateMails(100);
+        mailSet.forEach(System.out::println);
+        MailStatistics stats = new MailStatistics();
+        ReportContainer<Long> longReportContainer = stats.reportAvailableByStatus(MailStatus.RAW, mailSet);
+        System.out.println(longReportContainer);
     }
 }
