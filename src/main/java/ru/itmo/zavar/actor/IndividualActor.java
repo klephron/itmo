@@ -1,10 +1,12 @@
 package ru.itmo.zavar.actor;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public final class IndividualActor extends Actor {
 
     private final String name;

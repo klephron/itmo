@@ -1,4 +1,4 @@
-package ru.itmo.zavar.stats.collector;
+package ru.itmo.zavar.stats.collector.status;
 
 import ru.itmo.zavar.mail.Mail;
 import ru.itmo.zavar.mail.MailStatus;

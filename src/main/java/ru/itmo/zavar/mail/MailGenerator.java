@@ -68,6 +68,7 @@ public final class MailGenerator {
                             Mark mark = Instancio.of(Mark.class)
                                     .set(field(Mark::markNominal), MarkNominal.valueOf("N" + nominal))
                                     .set(field(Mark::country), m.getSender().getAddress().country())
+                                    .set(field(Mark::name), MarkNominal.valueOf("N" + nominal) + "_" + m.getSender().getAddress().country())
                                     .create();
                             result.add(mark);
                         }
