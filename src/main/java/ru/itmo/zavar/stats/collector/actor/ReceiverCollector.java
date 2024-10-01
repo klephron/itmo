@@ -18,7 +18,7 @@ public class ReceiverCollector implements Collector<Mail, Long[], Long> {
 
     @Override
     public Supplier<Long[]> supplier() {
-        return () -> new Long[] {0L};
+        return () -> new Long[]{0L};
     }
 
     @Override

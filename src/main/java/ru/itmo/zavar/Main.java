@@ -4,10 +4,10 @@ import ru.itmo.zavar.actor.Address;
 import ru.itmo.zavar.actor.IndividualActor;
 import ru.itmo.zavar.mail.Mail;
 import ru.itmo.zavar.mail.MailGenerator;
+import ru.itmo.zavar.mail.MailStatus;
 import ru.itmo.zavar.mail.mark.Mark;
 import ru.itmo.zavar.mail.mark.MarkNominal;
 import ru.itmo.zavar.stats.MailStatistics;
-import ru.itmo.zavar.mail.MailStatus;
 import ru.itmo.zavar.stats.data.ReportContainer;
 
 import java.util.Set;

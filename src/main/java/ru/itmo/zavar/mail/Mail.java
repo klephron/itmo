@@ -6,7 +6,6 @@ import ru.itmo.zavar.mail.mark.Mark;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 @AllArgsConstructor
 @RequiredArgsConstructor
@@ -31,7 +30,7 @@ public class Mail {
         if (this.marks == null && marks != null) {
             this.marks = marks;
         } else {
-           throw new RuntimeException("Marks is already set");
+            throw new RuntimeException("Marks is already set");
         }
     }
 
