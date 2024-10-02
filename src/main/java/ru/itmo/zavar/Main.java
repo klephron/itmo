@@ -17,40 +17,59 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class Main {
     public static void main(String[] args) throws IOException {
 
-        final int[] count = new int[]{50000};
+        final int[] count = new int[]{5000, 15000, 25000, 50000, 100000, 250000};
+        final int[] iterations = new int[]{20, 20, 15, 10, 5, 3};
 
         final MailGenerator generator = new MailGenerator();
         final MailStatistics stats = new MailStatistics();
         final MailStatus statusToCheck = MailStatus.RAW;
         final Mark markToCheck = new Mark(MarkNominal.N500, "Canada", "N500_Canada");
+
         final IndividualActor actorToCheck = new IndividualActor("Alexander", "Stepanov", "Pavlovich",
             new Address("Russia", "Moscow", "Moscow Oblast", "412 Walnut St", "19984"));
 
-        for (int c : count) {
-            for (int i = 0; i < 2; i++) {
-                Set<Mail> mailSet = generator.generateMails(c);
-                ReportContainer<Long> statusReport = stats.reportAvailableByStatus(statusToCheck, mailSet);
-                ReportContainer<Long> markReport = stats.reportAvailableByMark(markToCheck, mailSet);
-                ReportContainer<Long> senderReport = stats.reportBySenderActor(actorToCheck, mailSet);
-                ReportContainer<Long> receiverReport = stats.reportByReceiverActor(actorToCheck, mailSet);
-                System.out.printf("Report %d for %d mails:\n", i, c);
-                System.out.printf("\tCount by status %s:\n", statusToCheck.name());
-                printReport(statusReport);
-                System.out.printf("\tCount by mark %s:\n", markToCheck.name());
-                printReport(markReport);
-                System.out.printf("\tCount by sender %s %s %s:\n", actorToCheck.getName(), actorToCheck.getSurname(), actorToCheck.getPatronymic());
-                printReport(senderReport);
-                System.out.printf("\tCount by receiver %s %s %s:\n", actorToCheck.getName(), actorToCheck.getSurname(), actorToCheck.getPatronymic());
-                printReport(receiverReport);
-                toFile(statusReport, i, c, "Status");
-                toFile(markReport, i, c, "Mark");
-                toFile(senderReport, i, c, "Sender");
-                toFile(receiverReport, i, c, "Receiver");
-            }
+        final ExecutorService executorService = Executors.newCachedThreadPool();
+
+        for (int j = 0; j < count.length; j++) {
+            int finalJ = j;
+            executorService.submit(() -> {
+                System.out.printf("Thread %d for %d mails started\n", finalJ, count[finalJ]);
+                for (int i = 0; i < iterations[finalJ]; i++) {
+                    Set<Mail> mailSet = generator.generateMails(count[finalJ]);
+                    ReportContainer<Long> statusReport = stats.reportAvailableByStatus(statusToCheck, mailSet);
+                    ReportContainer<Long> markReport = stats.reportAvailableByMark(markToCheck, mailSet);
+                    ReportContainer<Long> senderReport = stats.reportBySenderActor(actorToCheck, mailSet);
+                    ReportContainer<Long> receiverReport = stats.reportByReceiverActor(actorToCheck, mailSet);
+                    System.out.printf("Report %d for %d mails:\n", i, count[finalJ]);
+                    System.out.printf("\tCount by status %s:\n", statusToCheck.name());
+                    printReport(statusReport);
+                    System.out.printf("\tCount by mark %s:\n", markToCheck.name());
+                    printReport(markReport);
+                    System.out.printf("\tCount by sender %s %s %s:\n", actorToCheck.getName(), actorToCheck.getSurname(), actorToCheck.getPatronymic());
+                    printReport(senderReport);
+                    System.out.printf("\tCount by receiver %s %s %s:\n", actorToCheck.getName(), actorToCheck.getSurname(), actorToCheck.getPatronymic());
+                    printReport(receiverReport);
+                    try {
+                        toFile(statusReport, i, count[finalJ], "Status");
+                        toFile(markReport, i, count[finalJ], "Mark");
+                        toFile(senderReport, i, count[finalJ], "Sender");
+                        toFile(receiverReport, i, count[finalJ], "Receiver");
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                if (finalJ == count.length - 1) {
+                    executorService.shutdownNow();
+                    executorService.close();
+                    System.exit(0);
+                }
+            });
         }
     }
 
@@ -61,7 +80,7 @@ public final class Main {
         if (Files.notExists(dir.resolve(filename)))
             Files.createFile(dir.resolve(filename));
         BufferedWriter bufferedWriter = Files.newBufferedWriter(dir.resolve(filename), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
-        bufferedWriter.append(new String("%d,%d,%d,%d,%d,%d,%d").formatted(i, container.iterationValue(), container.iterationElapsedTime(),
+        bufferedWriter.append("%d,%d,%d,%d,%d,%d,%d".formatted(i, container.iterationValue(), container.iterationElapsedTime(),
             container.streamApiValue(), container.streamApiElapsedTime(), container.customCollectorValue(), container.customCollectorElapsedTime()));
         bufferedWriter.newLine();
         bufferedWriter.close();
