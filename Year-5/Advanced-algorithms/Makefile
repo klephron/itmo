@@ -1,22 +1,23 @@
 CC := clang++
-FLAGS := -g3 -Wall
+FLAGS := -g3 -O0 -fsanitize=address,undefined,leak -Wall -Wextra
 MKDIR := mkdir -p
 BUILD_DIR := build
 
 SRCS = $(basename $(wildcard *.cpp))
+HDRS = $(wildcard *.hpp)
 TGTS = $(patsubst %.cpp, %, $(SRCS))
 
 DIRS = $(sort $(BUILD_DIR))
 
 
-default: run/task-0
+default: run/task-a
 
 all: $(patsubst %, $(BUILD_DIR)/%, $(TGTS))
 
 
 define make-target-rule
 
-$$(BUILD_DIR)/$(1): $(1).cpp | $$(DIRS)
+$$(BUILD_DIR)/$(1): $(1).cpp $$(HDRS) | $$(DIRS)
 	$$(CC) $$(FLAGS) $$< -o $$@
 
 # build/$(1): $$(BUILD_DIR)/$(1)
