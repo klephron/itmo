@@ -6,7 +6,7 @@
 pip install -r requirements.txt
 ```
 
-Use to generate.
+Use to generate. Searches
 
 ```sh
 python main.py

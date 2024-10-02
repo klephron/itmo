@@ -67,7 +67,7 @@ for batch in subfolders:
             ax.set_xlabel("iteration")
             ax.legend(loc="upper left")
             ax.set_title(f"{index} {batch} - Time")
-            fig.savefig(f"io/{batch}/{index}_{batch}_time.png", bbox_inches="tight")
+            fig.savefig(f"io/{index}_{batch}_time.png", bbox_inches="tight")
             fig.clear()
 
             fig, ax = plt.subplots()
@@ -78,7 +78,7 @@ for batch in subfolders:
             ax.set_xlabel("iteration")
             ax.legend(loc="upper left")
             ax.set_title(f"{index} {batch} - Value")
-            fig.savefig(f"io/{batch}/{index}_{batch}_value.png", bbox_inches="tight")
+            fig.savefig(f"io/{index}_{batch}_value.png", bbox_inches="tight")
             fig.clear()
 
             fig, ax = plt.subplots()
@@ -103,7 +103,7 @@ for batch in subfolders:
             ax.set_title(f"{index} {batch} - Time bubbles")
             ax.tick_params(labelbottom=False, bottom=False)
             fig.savefig(
-                f"io/{batch}/{index}_{batch}_time_bubbles.png", bbox_inches="tight"
+                f"io/{index}_{batch}_time_bubbles.png", bbox_inches="tight"
             )
             fig.clear()
         except FileNotFoundError:
