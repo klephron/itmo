@@ -1,5 +1,5 @@
 CC := clang++
-FLAGS := -g3 -O0 -fsanitize=address,undefined,leak -Wall -Wextra
+FLAGS := -std=c++20 -g3 -O0 -fsanitize=address,undefined,leak -Wall -Wextra -Wpedantic
 MKDIR := mkdir -p
 BUILD_DIR := build
 
@@ -10,7 +10,7 @@ TGTS = $(patsubst %.cpp, %, $(SRCS))
 DIRS = $(sort $(BUILD_DIR))
 
 
-default: run/task-b
+default: run/task-c
 
 all: $(patsubst %, $(BUILD_DIR)/%, $(TGTS))
 
