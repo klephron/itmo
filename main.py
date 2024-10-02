@@ -10,6 +10,8 @@ if __name__ != "__main__":
 IN_SECOND = 10e9
 
 subfolders = [f.name for f in os.scandir("io") if f.is_dir()]
+subfolders.sort(key=lambda x: int(x))
+
 types = ["Mark", "Receiver", "Sender", "Status"]
 header = [
     "i",
@@ -68,7 +70,7 @@ for batch in subfolders:
             ax.legend(loc="upper left")
             ax.set_title(f"{index} {batch} - Time")
             fig.savefig(f"io/{index}_{batch}_time.png", bbox_inches="tight")
-            fig.clear()
+            plt.close()
 
             fig, ax = plt.subplots()
             ax.plot(df_index, df_iter["value"], "r-", label="iter")
@@ -79,7 +81,7 @@ for batch in subfolders:
             ax.legend(loc="upper left")
             ax.set_title(f"{index} {batch} - Value")
             fig.savefig(f"io/{index}_{batch}_value.png", bbox_inches="tight")
-            fig.clear()
+            plt.close()
 
             fig, ax = plt.subplots()
 
@@ -105,11 +107,9 @@ for batch in subfolders:
             fig.savefig(
                 f"io/{index}_{batch}_time_bubbles.png", bbox_inches="tight"
             )
-            fig.clear()
+            plt.close()
         except FileNotFoundError:
             print(f"skipping {fname}")
-        finally:
-            plt.close()
 
 
 # generate avg for each subfolder
@@ -157,5 +157,4 @@ for index in types:
     ax.legend(loc="upper left")
     ax.set_title(f"{index} - Avg time")
     fig.savefig(f"io/{index}_avg_time.png", bbox_inches="tight")
-    fig.clear()
     plt.close()
