@@ -55,7 +55,7 @@ public:
     return toVectorUint(_kstlimit(root, k, limit));
   }
 
-  std::vector<uint64_t> kStLimitAtItem(Item* item, size_t limit) const {
+  std::vector<uint64_t> kStLimitAtItem(const T item, size_t limit) const {
     return toVectorUint(_kstlimit(root, item, limit));
   }
 
@@ -318,19 +318,24 @@ inline int AVLTree<Item*>::_cmp(Item* lsv, Item* rsv) const {
       return 0;
     }
   } else if (lsv->score > rsv->score) {
-    return -1;
-  } else {
     return 1;
+  } else {
+    return -1;
   }
 }
 
 class ItemFeed final {
 private:
-  std::list<Item> items;
   AVLTree<Item*> avl;
-  std::unordered_map<std::uint64_t, Item*> index;
+  std::unordered_map<std::uint64_t, Item*> items;
 
 public:
+  ~ItemFeed() {
+    for (auto it : items) {
+      delete it.second;
+    }
+  }
+
   [[nodiscard]] std::vector<std::uint64_t> GetAtPosition(std::size_t position, std::size_t limit)
       const {
     return avl.kStLimitAtPosition(position, limit);
@@ -338,18 +343,17 @@ public:
 
   [[nodiscard]] std::vector<std::uint64_t> GetAtItemWithId(std::uint64_t uid, std::size_t limit)
       const {
-    return avl.kStLimitAtItem(index.find(uid)->second, limit);
+    return avl.kStLimitAtItem(items.find(uid)->second, limit);
   }
 
   void Add(Item item) {
-    items.push_back(item);
-    Item* itemsItem = &items.back();
+    auto* itemsItem = new Item(item);
+    items.emplace(item.id, itemsItem);
     avl.insert(itemsItem);
-    index.insert({itemsItem->id, itemsItem});
   }
 
   void Update(Item item) {
-    Item* itemsItem = index.find(item.id)->second;
+    Item* itemsItem = items.find(item.id)->second;
 
     avl.remove(itemsItem);
     *itemsItem = item;
@@ -357,30 +361,29 @@ public:
   }
 
   void Remove(std::uint64_t uid) {
-    auto indexIt = index.find(uid);
-    auto itemsIt = itemPtrToItemsIter(indexIt->second);
+    auto itemsIt = items.find(uid);
 
-    avl.remove(indexIt->second);
+    avl.remove(itemsIt->second);
 
+    delete itemsIt->second;
     items.erase(itemsIt);
-    index.erase(indexIt);
   }
 
 private:
   [[nodiscard]] bool Contains(std::uint64_t uid) const {
-    return index.find(uid) != index.end();
+    return items.find(uid) != items.end();
   }
 
   [[nodiscard]] std::size_t Size() const {
     return items.size();
   }
 
-  std::list<Item>::iterator itemPtrToItemsIter(Item* ptr) {
+  /* std::list<Item>::iterator itemPtrToItemsIter(Item* ptr) {
     size_t iterOffset = (size_t) & (*((std::list<void*>::iterator) nullptr));
     std::list<Item>::iterator iter;
     *(intptr_t*)&iter = (intptr_t)ptr - iterOffset;
     return iter;
-  }
+  } */
 };
 
 }  // namespace youndex::express
