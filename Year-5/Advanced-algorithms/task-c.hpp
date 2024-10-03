@@ -32,7 +32,8 @@ struct AVLNode {
   }
 };
 
-struct AVLTree {
+template <typename T>
+class AVLTree final {
 private:
   struct AVLNode* root;
 
@@ -44,10 +45,10 @@ public:
     traverseDelete(root);
   }
 
-  void insert(Item* item) {
+  void insert(T item) {
     this->root = _insert(root, item);
   }
-  void remove(Item* item) {
+  void remove(T item) {
     this->root = _remove(root, item);
   }
   std::vector<uint64_t> kStLimitAtPosition(size_t k, size_t limit) const {
@@ -76,23 +77,10 @@ private:
     return items;
   }
 
-private:
-  int _cmp(const Item* lsv, const Item* rsv) const {
-    if (lsv->score == rsv->score) {
-      if (lsv->id > rsv->id) {
-        return 1;
-      } else if (lsv->id < rsv->id) {
-        return -1;
-      } else {
-        return 0;
-      }
-    } else if (lsv->score > rsv->score) {
-      return -1;
-    } else {
-      return 1;
-    }
-  }
+public:
+  int _cmp(const T lsv, const T rsv) const;
 
+private:
   size_t _height(AVLNode* node) const {
     return node ? node->height : 0;
   }
@@ -161,7 +149,7 @@ private:
     return p;
   }
 
-  AVLNode* _insert(AVLNode* p, Item* k) {
+  AVLNode* _insert(AVLNode* p, T k) {
     if (!p) {
       return new AVLNode(k);
     }
@@ -187,7 +175,7 @@ private:
     return _balance(p);
   }
 
-  AVLNode* _remove(AVLNode* p, Item* k) {
+  AVLNode* _remove(AVLNode* p, T k) {
     if (!p) {
       return 0;
     }
@@ -262,7 +250,7 @@ private:
   }
 
   // NOTE: element should exist
-  std::vector<AVLNode*> _kstlimit(AVLNode* p, Item* item, size_t limit) const {
+  std::vector<AVLNode*> _kstlimit(AVLNode* p, T item, size_t limit) const {
     if (p == nullptr) {
       return std::vector<AVLNode*>();
     }
@@ -319,11 +307,28 @@ private:
   }
 };
 
+template <>
+inline int AVLTree<Item*>::_cmp(Item* lsv, Item* rsv) const {
+  if (lsv->score == rsv->score) {
+    if (lsv->id > rsv->id) {
+      return 1;
+    } else if (lsv->id < rsv->id) {
+      return -1;
+    } else {
+      return 0;
+    }
+  } else if (lsv->score > rsv->score) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
+
 class ItemFeed final {
 private:
-  AVLTree avl;
-  std::unordered_map<std::uint64_t, Item*> index;
   std::list<Item> items;
+  AVLTree<Item*> avl;
+  std::unordered_map<std::uint64_t, Item*> index;
 
 public:
   [[nodiscard]] std::vector<std::uint64_t> GetAtPosition(std::size_t position, std::size_t limit)
@@ -356,6 +361,7 @@ public:
     auto itemsIt = itemPtrToItemsIter(indexIt->second);
 
     avl.remove(indexIt->second);
+
     items.erase(itemsIt);
     index.erase(indexIt);
   }
