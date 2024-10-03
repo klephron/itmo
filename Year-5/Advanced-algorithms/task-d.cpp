@@ -4,7 +4,7 @@
 #define input_open() (fopen("input.txt", "r"))
 #define output_open() (fopen("output.txt", "w"))
 
-#include "helpers.hpp"
+// #include "helpers.hpp"
 
 int main() {
   FILE* input = input_open();
@@ -32,12 +32,27 @@ int main() {
     int op, a, b;
     for (int ri = 0; ri < r; ++ri) {
       fscanf(input, "%d %d %d", &op, &a, &b);
-      if (op == 1) {
-        // handle op 1
-      } else {
-        // handle op 2
+      a--, b--;
+
+      if (op == 1)  // swap a and a+1, a+2 and a+3, ... (even length)
+      {
+        int t;
+        for (int i = a; i < b; i += 2) {
+          t = arr[i];
+          arr[i] = arr[i + 1];
+          arr[i + 1] = t;
+        }
+      } else  // sum [a;b]
+      {
+        int s = 0;
+        for (int i = a; i <= b; ++i) {
+          s += arr[i];
+        }
+        fprintf(output, "%d\n", s);
       }
     }
+
+    fprintf(output, "\n");
 
     free(arr);
   }
