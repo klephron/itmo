@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
-#include <list>
 #include <stack>
 #include <unordered_map>
 #include <vector>
@@ -223,19 +222,13 @@ private:
     }
     AVLNode* cur = p;
     while (k != 0) {
-      if (cur->left) {
-        if (k <= cur->left->size) {
-          stack.push(cur);
-          cur = cur->left;
-        } else {
-          k -= cur->left->size + 1;
-          if (!k) {
-            break;
-          } else {
-            cur = cur->right;
-          }
-        }
+      if (cur->left && k <= cur->left->size) {
+        stack.push(cur);
+        cur = cur->left;
       } else {
+        if (cur->left) {
+          k -= cur->left->size;
+        }
         k -= 1;
         if (!k) {
           stack.push(cur);
@@ -263,15 +256,12 @@ private:
     if (!c) {
       stack.push(p);
     } else {
-      while (!c) {
+      while (c) {
         if (c < 0) {
           stack.push(cur);
           cur = cur->left;
         } else {
           cur = cur->right;
-        }
-        if (cur == nullptr) {
-          std::cout << "nullptr" << std::endl;
         }
         c = _cmp(item, cur->key);
       }
