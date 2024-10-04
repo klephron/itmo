@@ -9,8 +9,8 @@
 struct TreapNode {
   int priority;
   int size;
-  int value;
-  int sum;
+  long value;
+  long sum;
   TreapNode *left, *right;
 };
 
@@ -73,7 +73,7 @@ static void delete_treap(Treap* self) {
   }
 }
 
-static int get_sum(TreapNode* p) {
+static long get_sum(TreapNode* p) {
   return p ? p->sum : 0;
 }
 
@@ -164,7 +164,7 @@ static void print_nodes(TreapNode* p, int l) {
     for (int i = 0; i < l; ++i) {
       printf(" ");
     }
-    printf("|priority=%d\tsize=%d\tvalue=%d\tsum=%d\t\n", p->priority, p->size, p->value, p->sum);
+    printf("|priority=%d\tsize=%d\tvalue=%ld\tsum=%ld\t\n", p->priority, p->size, p->value, p->sum);
     print_nodes(p->right, l + 1);
   }
 }
@@ -213,17 +213,17 @@ static void swap_ranges(Treap* even, Treap* odd, int l, int r) {
   swap_ranges(even, odd, bounds.even_l, bounds.even_r, bounds.odd_l, bounds.odd_r);
 }
 
-static int sum(Treap* self, int l, int r) {
+static long sum(Treap* self, int l, int r) {
   TreapNode *lt, *eq, *gt;
   split(self->root, l, &lt, &gt);
   split(gt, r - l + 1, &eq, &gt);
-  int result = get_sum(eq);
+  long result = get_sum(eq);
   self->root = merge(merge(lt, eq), gt);
   return result;
 }
 
-static int sum(Treap* even, Treap* odd, int l, int r) {
-  int result = 0;
+static long sum(Treap* even, Treap* odd, int l, int r) {
+  long result = 0;
 
   auto bounds = get_bounds(l, r);
   if (bounds.even_l <= bounds.even_r) {
@@ -277,8 +277,8 @@ int main() {
         swap_ranges(treap_even, treap_odd, a, b);
       } else  // sum [a;b]
       {
-        int result = sum(treap_even, treap_odd, a, b);
-        printf("%d\n", result);
+        long result = sum(treap_even, treap_odd, a, b);
+        printf("%ld\n", result);
       }
     }
 
