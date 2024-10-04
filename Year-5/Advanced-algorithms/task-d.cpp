@@ -135,28 +135,28 @@ static void push_back(Treap* self, int value) {
   self->root = merge(self->root, create_node(value));
 }
 
-__attribute__((unused)) static int get(Treap* self, int k) {
-  TreapNode *lt, *eq, *gt;
-  split(self->root, k, &lt, &gt);
-  split(gt, 1, &eq, &gt);
-  int r = eq->value;
-  self->root = merge(merge(lt, eq), gt);
-  return r;
-}
+// static int get(Treap* self, int k) {
+//   TreapNode *lt, *eq, *gt;
+//   split(self->root, k, &lt, &gt);
+//   split(gt, 1, &eq, &gt);
+//   int r = eq->value;
+//   self->root = merge(merge(lt, eq), gt);
+//   return r;
+// }
 
-__attribute__((unused)) static void erase(Treap* self, int k) {
-  TreapNode *lt, *eq, *gt;
-  split(self->root, k, &lt, &gt);
-  split(gt, 1, &eq, &gt);
-  self->root = merge(lt, gt);
-}
+// static void erase(Treap* self, int k) {
+//   TreapNode *lt, *eq, *gt;
+//   split(self->root, k, &lt, &gt);
+//   split(gt, 1, &eq, &gt);
+//   self->root = merge(lt, gt);
+// }
 
-__attribute__((unused)) static void erase_range(Treap* self, int l, int r) {
-  TreapNode *lt, *eq, *gt;
-  split(self->root, l, &lt, &gt);
-  split(gt, r - l + 1, &eq, &gt);
-  self->root = merge(lt, gt);
-}
+// static void erase_range(Treap* self, int l, int r) {
+//   TreapNode *lt, *eq, *gt;
+//   split(self->root, l, &lt, &gt);
+//   split(gt, r - l + 1, &eq, &gt);
+//   self->root = merge(lt, gt);
+// }
 
 static void print_nodes(TreapNode* p, int l) {
   if (p != NULL) {
@@ -190,22 +190,21 @@ static void swap_ranges(Treap* a, Treap* b, int al, int ar, int bl, int br) {
 // if s > e -> don't include
 Bounds get_bounds(int l, int r) {
   int even_l, even_r;
-  {
-    even_l = (l + 1) / 2;
-    even_r = r / 2;
-  }
-
   int odd_l, odd_r;
-  {
-    odd_l = l / 2;
-    odd_r = (r - 1) / 2;
-  }
+
+  l += 2;  // fix near zero bounds, (so r may be -1)
+  r += 2;
+
+  even_l = (l + 1) / 2;
+  even_r = r / 2;
+  odd_l = l / 2;
+  odd_r = (r - 1) / 2;
 
   return {
-      .even_l = even_l,
-      .even_r = even_r,
-      .odd_l = odd_l,
-      .odd_r = odd_r,
+      .even_l = even_l - 1,
+      .even_r = even_r - 1,
+      .odd_l = odd_l - 1,
+      .odd_r = odd_r - 1,
   };
 }
 
