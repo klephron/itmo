@@ -10,7 +10,7 @@ TGTS = $(patsubst %.cpp, %, $(SRCS))
 DIRS = $(sort $(BUILD_DIR))
 
 
-default: run/task-d
+default: run/task-e
 
 all: $(patsubst %, $(BUILD_DIR)/%, $(TGTS))
 
