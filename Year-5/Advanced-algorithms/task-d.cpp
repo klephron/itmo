@@ -1,22 +1,34 @@
 #include <cstdio>
 #include <cstdlib>
 
+// #include "helpers.hpp"
+
 #define input_open() (fopen("input.txt", "r"))
 #define output_open() (fopen("output.txt", "w"))
 
-// #include "helpers.hpp"
-
-static inline void rebuild_tree(int* tree, const int tree_s) {
+static inline void build_tree(int* tree, const int tree_s) {
   for (int i = (tree_s / 2) - 2; i >= 0; --i) {
     tree[i] = tree[2 * i + 1] + tree[2 * i + 2];
   }
 }
 
-static inline int mid_tree(int tl, int tr) {
+static inline int mid_tree(const int tl, const int tr) {
   return tl + (tr - tl) / 2;
 }
 
-static int query_tree_util(int* tree, int i, int tl, int tr, int l, int r) {
+static inline int rebuild_tree_util(int* tree, int i, int tl, int tr, const int l, const int r) {
+  if (tr < l || tl > r) {
+    return tree[i];
+  } else if (tr - tl == 1) {
+    return tree[i] = tree[2 * i + 1] + tree[2 * i + 2];
+  }
+  int mid = mid_tree(tl, tr);
+  int sl = rebuild_tree_util(tree, 2 * i + 1, tl, mid, l, r);
+  int sr = rebuild_tree_util(tree, 2 * i + 2, mid + 1, tr, l, r);
+  return tree[i] = sl + sr;
+}
+
+static int query_tree_util(const int* tree, int i, int tl, int tr, const int l, const int r) {
   if (l <= tl && tr <= r) {
     return tree[i];
   } else if (tr < l || tl > r) {
@@ -26,6 +38,10 @@ static int query_tree_util(int* tree, int i, int tl, int tr, int l, int r) {
     return query_tree_util(tree, 2 * i + 1, tl, mid, l, r) +
            query_tree_util(tree, 2 * i + 2, mid + 1, tr, l, r);
   }
+}
+
+static inline void rebuild_tree(int* tree, int n, int a, int b) {
+  rebuild_tree_util(tree, 0, 0, n - 1, a, b);
 }
 
 // n is 2^k
@@ -71,7 +87,7 @@ int main() {
       for (; i <= tree_s / 2; ++i) {
         arr[i] = 0;
       }
-      rebuild_tree(tree, tree_s);
+      build_tree(tree, tree_s);
     }
 
     int op, a, b;
@@ -88,7 +104,7 @@ int main() {
           arr[i + 1] = t;
         }
         if (a % 2 == 1) {
-          rebuild_tree(tree, tree_s);
+          rebuild_tree(tree, tree_s / 2, a, b);
         }
       } else  // sum [a;b]
       {
