@@ -36,7 +36,12 @@ clean:
 define make-odt-rule
 
 $(1).pdf: $(1).odt
-	$$(LIBREOFFICE) --convert-to pdf $$<
+	$$(LIBREOFFICE)                                                              \
+	--headless                                                                   \
+	"-env:UserInstallation=file:///tmp/libreoffice_convert_$${USER}_odt_$(1)"    \
+	--convert-to pdf:writer_pdf_Export                                           \
+	--outdir $$(HEADERS_DIR)                                                     \
+	$$<
 
 endef
 
@@ -52,16 +57,16 @@ endef
 define make-merge-rule
 
 $$(HEADERS_DIR)/$(1).pdf: $$(HEADERS_DIR)/$(1).odt
-	$$(LIBREOFFICE)                                                          \
-  --headless                                                               \
-  "-env:UserInstallation=file:///tmp/LibreOffice_Conversion_$${USER}_$(1)" \
-  --convert-to pdf:writer_pdf_Export                                       \
-  --outdir $$(HEADERS_DIR)                                                 \
+	$$(LIBREOFFICE)                                                                \
+	--headless                                                                     \
+	"-env:UserInstallation=file:///tmp/libreoffice_convert_$${USER}_merge_$(1)"    \
+	--convert-to pdf:writer_pdf_Export                                             \
+	--outdir $$(HEADERS_DIR)                                                       \
 	$$<
 
 
 $$(MERGED_DIR)/$(1).pdf: $$(HEADERS_DIR)/$(1).pdf $(1).pdf | $$(DIRS)
-	pdfunite $$^ $$@
+	$$(PDFUNITE) $$^ $$@
 
 endef
 
