@@ -19,7 +19,7 @@ HDRS.ODT = $(wildcard $(HEADERS_DIR)/*.odt)
 MERGED_TGTS = $(patsubst $(HEADERS_DIR)/%.odt, $(MERGED_DIR)/%, $(HDRS.ODT))
 
 
-all: build/md
+all: merge
 
 merge: $(patsubst %, %.pdf, $(MERGED_TGTS))
 
