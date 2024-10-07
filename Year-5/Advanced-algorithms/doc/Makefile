@@ -1,6 +1,10 @@
 LIBREOFFICE := libreoffice
 PANDOC := pandoc
 PANDOC_PDF_ENGINE := xelatex
+PDFUNITE := pdfunite
+
+HEADERS_DIR := headers
+MERGED_DIR := merged
 
 SRCS.MD = $(wildcard *.md)
 SRCS.ODT = $(wildcard *.odt)
@@ -8,7 +12,14 @@ SRCS.ODT = $(wildcard *.odt)
 TGTS.MD = $(patsubst %.md, %, $(SRCS.MD))
 TGTS.ODT = $(patsubst %.odt, %, $(SRCS.ODT))
 
+TGTS = $(sort $(TGTS.MD) $(TGTS.ODT))
+
+HDRS.ODT = $(wildcard $(HEADERS_DIR)/*.odt)
+MERGED_TGTS = $(patsubst $(HEADERS_DIR)/%.odt, $(MERGED_DIR)/%, $(HDRS.ODT))
+
 all: build/md
+
+merge: $(patsubst %, %.pdf, $(MERGED_TGTS))
 
 build/md: $(patsubst %, %.pdf, $(TGTS.MD))
 
@@ -31,5 +42,22 @@ $(1).pdf: $(1).md
 
 endef
 
+define make-merge-rule
+
+$$(HEADERS_DIR)/$(1).pdf: $$(HEADERS_DIR)/$(1).odt | $$(DIRS)
+	$$(LIBREOFFICE) --convert-to pdf $$< --outdir $$(HEADERS_DIR)
+
+$$(MERGED_DIR)/$(1).pdf: $$(HEADERS_DIR)/$(1).pdf $(1).pdf
+	pdfunite $$^ $$@
+
+endef
+
 $(foreach target, $(TGTS.ODT), $(eval $(call make-odt-rule,$(target))))
 $(foreach target, $(TGTS.MD), $(eval $(call make-md-rule,$(target))))
+$(foreach target, $(TGTS), $(eval $(call make-merge-rule,$(target))))
+
+DIRS = $(sort $(MERGED_DIR))
+
+$(sort $(DIRS)):
+	$(MKDIR) $(@:dir/%=%)
+
