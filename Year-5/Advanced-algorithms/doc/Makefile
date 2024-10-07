@@ -50,7 +50,13 @@ endef
 define make-merge-rule
 
 $$(HEADERS_DIR)/$(1).pdf: $$(HEADERS_DIR)/$(1).odt
-	$$(LIBREOFFICE) --convert-to pdf $$< --outdir $$(HEADERS_DIR)
+	$$(LIBREOFFICE)                                                          \
+  --headless                                                               \
+  "-env:UserInstallation=file:///tmp/LibreOffice_Conversion_$${USER}_$(1)" \
+  --convert-to pdf:writer_pdf_Export                                       \
+  --outdir $$(HEADERS_DIR)                                                 \
+	$$<
+
 
 $$(MERGED_DIR)/$(1).pdf: $$(HEADERS_DIR)/$(1).pdf $(1).pdf | $$(DIRS)
 	pdfunite $$^ $$@
