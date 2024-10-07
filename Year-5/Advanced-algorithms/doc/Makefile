@@ -43,7 +43,9 @@ endef
 define make-md-rule
 
 $(1).pdf: $(1).md
-	$$(PANDOC) $$< -o $(1).pdf --pdf-engine=$$(PANDOC_PDF_ENGINE) -V mainfont="Liberation Serif" -V geometry:margin=0.5in -V papersize:a4
+	$$(PANDOC) $$< -o $(1).pdf --pdf-engine=$$(PANDOC_PDF_ENGINE) \
+	-V mainfont="Liberation Serif" -V papersize:a4                \
+	-V geometry:margin=0.75in -V geometry:bottom=0.75in -V geometry:top=0.5in
 
 endef
 
