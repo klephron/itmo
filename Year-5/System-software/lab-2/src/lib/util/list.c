@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "util/list.h"
+#include "util/macro.h"
 
 static int list_has_next(list_iter this) {
   if (this->next != NULL) {
@@ -10,22 +11,21 @@ static int list_has_next(list_iter this) {
   return 0;
 }
 
-static void *list_get(p_list this, const void *key) {
+static void *list_get(p_list this, const void *data) {
   for (list_iter it = this->head; it != NULL; it = it->next) {
-    if (this->equals(it->data->key, key)) {
-      return it->data->value;
+    if (this->f_equals(it->data, data)) {
+      return it->data;
     }
   }
   return NULL;
 }
 
-// NOTE: need to recreate object because of memory
-static void list_put(p_list this, const void *key, const void *value) {
+static void list_put(p_list this, void *data) {
   if (this->unique) {
     for (list_iter it = this->head; it != NULL; it = it->next) {
-      if (!this->equals(it->data->key, key)) {
-        this->delete (it->data);
-        it->data = this->new (key, value);
+      if (!this->f_equals(it->data, data)) {
+        this->f_delete(it->data);
+        it->data = this->f_new(data);
         return;
       }
     }
@@ -39,8 +39,8 @@ static void list_put(p_list this, const void *key, const void *value) {
     }
   }
 
-  p_list_entry tail = malloc(sizeof(list_entry));
-  tail->data = this->new (key, value);
+  p_list_entry tail = MALLOC(list_entry);
+  tail->data = this->f_new(data);
   tail->next = NULL;
 
   if (it == NULL) {
@@ -63,17 +63,16 @@ static void list_free(p_list this) {
     list_iter next;
     for (list_iter it = this->head; it != NULL; it = next) {
       next = it->next;
-      this->delete (it->data);
+      this->f_delete(it->data);
       free(it);
     }
     free(this);
   }
 }
 
-p_list list_new(int (*equals)(const void *lsv_key, const void *rsv_key),
-                list_data *(*new)(const void *key, const void *value),
-                void (*delete)(list_data *data), int unique) {
-  p_list this = malloc(sizeof(list));
+p_list list_new(list_func_equals equals, list_func_new new,
+                list_func_delete delete, int unique) {
+  p_list this = MALLOC(list);
 
   this->unique = unique;
 
@@ -83,8 +82,8 @@ p_list list_new(int (*equals)(const void *lsv_key, const void *rsv_key),
   this->free = list_free;
   this->size = list_size;
 
-  this->equals = equals;
-  this->new = new;
-  this->delete = delete;
+  this->f_equals = equals;
+  this->f_new = new;
+  this->f_delete = delete;
   return this;
 }

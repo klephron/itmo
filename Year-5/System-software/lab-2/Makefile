@@ -9,6 +9,7 @@ MKDIR := mkdir -p
 # ANTLR := java -jar lib/antlr-3.5.3-complete.jar
 # ANTLR := java -jar ~/.m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
 ANTLR := java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
+FORMAT := clang-format
 
 SRC_DIR := src
 LIB_DIR := $(SRC_DIR)/lib
@@ -124,6 +125,11 @@ build/test: $(TGTS.TST)
 ### Run all tests
 test: build/test
 	@for file in $(TGTS.TST); do "./$$file"; done
+
+### Format
+format:
+	@$(FORMAT) --verbose -i $(SRCS.LIB) $(HDRS.LIB) $(SRCS.TST)
+	
 
 ### Remove build and target files
 clean:

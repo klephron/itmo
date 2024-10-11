@@ -17,7 +17,6 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
   char *exc_name;
   char exc_msg[256]; // NOTE: limited message size
 
-
   if (!(recognizer->type != ANTLR3_TYPE_PARSER &&
         recognizer->type != ANTLR3_TYPE_LEXER)) {
   }
@@ -66,22 +65,19 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
                                  exc_name, exc_msg);
 
   p_list exc_list = recognizer->state->userp;
-  exc_list->put(exc_list, NULL, exc);
+  exc_list->put(exc_list, exc);
 }
 
 // move
-static list_data *exc_list_new(const void *key, const void *value) {
-  list_data *data = malloc(sizeof(list_data));
-  data->key = (void *)key;
-  data->value = (void *)value;
-  return data;
+static void *exc_list_new(void *_data) {
+  exception *exc = _data;
+  return exc;
 }
 
-static void exc_list_delete(list_data *data) {
-  if (data != NULL) {
-    struct exception_struct *exc = data->value;
+static void exc_list_delete(void *_data) {
+  if (_data != NULL) {
+    exception *exc = _data;
     exc->free(exc);
-    free(data);
   }
 }
 
@@ -99,7 +95,7 @@ option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
   parser->pParser->rec->displayRecognitionError = displayRecognitionError;
 
   p_list exc_list =
-      list_new(list_equals_false, exc_list_new, exc_list_delete, 0);
+      list_new(list_false_equals, exc_list_new, exc_list_delete, 0);
 
   lexer->pLexer->rec->state->userp = exc_list;
   parser->pParser->rec->state->userp = exc_list;
@@ -115,4 +111,3 @@ option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
 
   return r.tree;
 }
-

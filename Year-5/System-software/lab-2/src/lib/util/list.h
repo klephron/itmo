@@ -3,36 +3,31 @@
 #include <stdint.h>
 #include <stdio.h>
 
-struct list_data_struct {
-  void *key;
-  void *value;
-};
-
 struct list_entry_struct {
-  struct list_data_struct *data;
+  void *data;
   struct list_entry_struct *next;
 };
+
+typedef int list_func_equals(const void *lsv, const void *rsv);
+typedef void *list_func_new(void *data);
+typedef void list_func_delete(void *data);
 
 struct list_struct {
   struct list_entry_struct *head;
   int unique;
 
-  void *(*get)(struct list_struct *this, const void *key);
-  void (*put)(struct list_struct *this, const void *key, const void *value);
+  void *(*get)(struct list_struct *this, const void *data);
+  void (*put)(struct list_struct *this, void *data);
   void (*free)(struct list_struct *this);
   size_t (*size)(struct list_struct *this);
 
-  // NOTE: for true OOP may be present in struct instead
-  int (*equals)(const void *lsv_key, const void *rsv_key);
-  struct list_data_struct *(*new)(const void *key, const void *value);
-  void (*delete)(struct list_data_struct *data);
+  list_func_equals *f_equals;
+  list_func_new *f_new;
+  list_func_delete *f_delete;
 };
 
-typedef struct list_data_struct list_data;
 typedef struct list_entry_struct list_entry, *p_list_entry;
 typedef p_list_entry list_iter;
 typedef struct list_struct list, *p_list;
 
-p_list list_new(int (*equals)(const void *lsv_key, const void *rsv_key),
-                list_data *(*new)(const void *key, const void *value),
-                void (*delete)(list_data *data), int unique);
+p_list list_new(list_func_equals, list_func_new, list_func_delete, int unique);

@@ -1,6 +1,5 @@
 #include "exception.h"
 
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +24,8 @@ static void exception_free(struct exception_struct *exc) {
 }
 
 struct exception_struct *exception_new(const char *stream, uint32_t type,
-                                              uint32_t line, uint32_t offset, const char *name,
-                                              const char *message) {
+                                       uint32_t line, uint32_t offset,
+                                       const char *name, const char *message) {
 
   struct exception_struct *exc = calloc(1, sizeof(struct exception_struct));
 
@@ -53,7 +52,8 @@ struct exception_struct *exception_new(const char *stream, uint32_t type,
 
 // <file>: <name> -> <message> \n
 char *exception_to_chars(struct exception_struct *exc) {
-  const char *format_print = "%s: " ANSI_COLOR_RED "%s" ANSI_COLOR_RESET " -> %s\n";
+  const char *format_print =
+      "%s: " ANSI_COLOR_RED "%s" ANSI_COLOR_RESET " -> %s\n";
   const char *format = ": " ANSI_COLOR_RED ANSI_COLOR_RESET " -> \n";
 
   char *exc_stream = "<empty>";
@@ -77,7 +77,6 @@ char *exception_to_chars(struct exception_struct *exc) {
     if (exc->message) {
       exc_message = exc->message;
     }
-
   }
 
   size_t len = 0;
@@ -89,7 +88,6 @@ char *exception_to_chars(struct exception_struct *exc) {
 
     char buf[32];
     buf[0] = '\0';
-
   }
 
   char *str = malloc(len + 1);

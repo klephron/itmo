@@ -93,7 +93,7 @@ int execute(struct args_struct args) {
 
   if (exc_list->size(exc_list) != 0) {
     for (list_iter it = exc_list->head; it != NULL; it = it->next) {
-      char *msg = exception_to_chars(((exception *)it->data->value));
+      char *msg = exception_to_chars(((exception *)it->data));
       fprintf(stderr, "%s", msg);
       free(msg);
     }

@@ -1,5 +1,7 @@
 #include "dot.h"
 
+#include "util/macro.h"
+
 #include "util/list.h"
 #include "util/list_funcs.h"
 #include "util/string.h"
@@ -31,17 +33,17 @@ void dot_ctx_free(struct dot_ctx *ctx) {
 }
 
 struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
-  struct dot_ctx *ctx = malloc(sizeof(struct dot_ctx));
+  struct dot_ctx *ctx = MALLOC(struct dot_ctx);
 
   ctx->graph = strdup(graph);
   ctx->node_style = strdup(node_style);
 
   ctx->id = 0;
 
-  ctx->list_nodes =
-      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 1);
-  ctx->list_edges =
-      list_new(list_string_equals, list_string_string_new, list_string_string_delete, 0);
+  ctx->list_nodes = list_new(list_string_string_equals, list_string_string_new,
+                             list_string_string_delete, 1);
+  ctx->list_edges = list_new(list_string_string_equals, list_string_string_new,
+                             list_string_string_delete, 0);
 
   ctx->free = dot_ctx_free;
 
@@ -57,15 +59,17 @@ size_t dot_len(struct dot_ctx *ctx) {
   len += strlen(ctx->node_style);
 
   for (list_iter it = ctx->list_nodes->head; it != NULL; it = it->next) {
-    len += strlen(it->data->key);
+    string_string *data = it->data;
+    len += strlen(data->key);
     len += strlen("[label=]\n");
-    len += strlen(it->data->value);
+    len += strlen(data->value);
   }
 
   for (list_iter it = ctx->list_edges->head; it != NULL; it = it->next) {
-    len += strlen(it->data->key);
+    string_string *data = it->data;
+    len += strlen(data->key);
     len += strlen(" -> \n");
-    len += strlen(it->data->value);
+    len += strlen(data->value);
   }
 
   len += strlen("}");
@@ -83,16 +87,18 @@ void dot_generate(struct dot_ctx *ctx, char *str) {
   end = stpcpy(end, "]\n");
 
   for (list_iter it = ctx->list_nodes->head; it != NULL; it = it->next) {
-    end = stpcpy(end, it->data->key);
+    string_string *data = it->data;
+    end = stpcpy(end, data->key);
     end = stpcpy(end, "[label=");
-    end = stpcpy(end, it->data->value);
+    end = stpcpy(end, data->value);
     end = stpcpy(end, "]\n");
   }
 
   for (list_iter it = ctx->list_edges->head; it != NULL; it = it->next) {
-    end = stpcpy(end, it->data->key);
+    string_string *data = it->data;
+    end = stpcpy(end, data->key);
     end = stpcpy(end, " -> ");
-    end = stpcpy(end, it->data->value);
+    end = stpcpy(end, data->value);
     end = stpcpy(end, "\n");
   }
 
@@ -128,7 +134,9 @@ size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   char id_s[32];
   sprintf(id_s, "id_%zu", id);
 
-  ctx->list_nodes->put(ctx->list_nodes, id_s, label);
+  string_string data = {.key = id_s, .value = label};
+
+  ctx->list_nodes->put(ctx->list_nodes, &data);
 
   for (size_t i = 0; i < root->getChildCount(root); ++i) {
     pANTLR3_BASE_TREE child = root->getChild(root, i);
@@ -138,7 +146,9 @@ size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
       char child_id_s[32];
       sprintf(child_id_s, "id_%zu", child_id);
 
-      ctx->list_edges->put(ctx->list_edges, id_s, child_id_s);
+      string_string data = {.key = id_s, .value = child_id_s};
+
+      ctx->list_edges->put(ctx->list_edges, &data);
     }
   }
 

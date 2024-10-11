@@ -1,25 +1,35 @@
 #include "util/list_funcs.h"
 
+#include "util/macro.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-int list_string_equals(const void *lsv, const void *rsv) { return strcmp(lsv, rsv); }
-
-int list_equals_false(const void *lsv, const void *rsv) { return 1; }
-
-list_data *list_string_string_new(const void *_lsv, const void *_rsv) {
-  const char *lsv = _lsv;
-  const char *rsv = _rsv;
-
-  list_data *data = malloc(sizeof(list_data));
-  data->key = strdup(lsv);
-  data->value = strdup(rsv);
-
-  return data;
+int list_string_string_equals(const void *_lsv, const void *_rsv) {
+  const string_string *lsv = _lsv;
+  const string_string *rsv = _rsv;
+  return strcmp(lsv->key, rsv->key);
 }
 
-void list_string_string_delete(list_data *data) {
+void *list_string_string_new(void *_data) {
+  string_string *data = _data;
+
+  string_string *new_data = MALLOC(string_string);
+  new_data->key = strdup(data->key);
+  new_data->value = strdup(data->value);
+
+  return new_data;
+}
+
+void list_string_string_delete(void *_data) {
+  string_string *data = _data;
   free(data->key);
   free(data->value);
   free(data);
+}
+
+int list_false_equals(const void *lsv, const void *rsv) {
+  UNUSED(lsv);
+  UNUSED(rsv);
+  return 1;
 }

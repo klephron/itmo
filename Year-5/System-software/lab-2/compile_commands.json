@@ -12,12 +12,12 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/_gen/ExampleLexer.o",
-      "build/lib/_gen/ExampleLexer.c"
+      "build/lib/dot.o",
+      "src/lib/dot.c"
     ],
-    "directory": "/workspaces/system-software/lab-1",
-    "file": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleLexer.c",
-    "output": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleLexer.o"
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/lib/dot.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/dot.o"
   },
   {
     "arguments": [
@@ -32,12 +32,132 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/_gen/ExampleParser.o",
-      "build/lib/_gen/ExampleParser.c"
+      "build/lib/exception.o",
+      "src/lib/exception.c"
     ],
-    "directory": "/workspaces/system-software/lab-1",
-    "file": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleParser.c",
-    "output": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleParser.o"
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/lib/exception.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/exception.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/option2.o",
+      "src/lib/option2.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/lib/option2.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/util/list.o",
+      "src/lib/util/list.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/lib/util/list.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/util/list.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/util/list_funcs.o",
+      "src/lib/util/list_funcs.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/lib/util/list_funcs.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/util/list_funcs.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/util/string.o",
+      "src/lib/util/string.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/lib/util/string.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/util/string.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/_gen/Option2Lexer.o",
+      "build/lib/_gen/Option2Lexer.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Lexer.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Lexer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/_gen/Option2Parser.o",
+      "build/lib/_gen/Option2Parser.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Parser.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Parser.o"
   },
   {
     "arguments": [
@@ -49,16 +169,22 @@
       "-fsanitize=address,undefined,leak",
       "-Wall",
       "-Wextra",
-      "build/lib/_gen/ExampleLexer.o",
-      "build/lib/_gen/ExampleParser.o",
+      "build/lib/dot.o",
+      "build/lib/exception.o",
+      "build/lib/option2.o",
+      "build/lib/util/list.o",
+      "build/lib/util/list_funcs.o",
+      "build/lib/util/string.o",
+      "build/lib/_gen/Option2Lexer.o",
+      "build/lib/_gen/Option2Parser.o",
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
       "build/main",
       "src/main.c"
     ],
-    "directory": "/workspaces/system-software/lab-1",
-    "file": "/workspaces/system-software/lab-1/src/main.c",
-    "output": "/workspaces/system-software/lab-1/build/main"
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/main.c",
+    "output": "/workspaces/system-software/lab-2/build/main"
   }
 ]
