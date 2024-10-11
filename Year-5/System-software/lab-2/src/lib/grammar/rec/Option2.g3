@@ -1,0 +1,241 @@
+grammar Option2;
+
+options {
+  output=AST;
+  language=C;
+  ASTLabelType=pANTLR3_BASE_TREE;
+}
+
+tokens {
+  ROOT;
+  VARS;
+  VAR;
+  PARAMS;
+  PARAM;
+  ARGS;
+  FUNC;
+  ELEMS;
+  RETURNS;
+  BODY;
+  CALLER;
+  INDEXER;
+  CONST_BOOL;
+  CONST_BITS;
+  CONST_HEX;
+  CONST_DEC;
+  CONST_CHAR;
+  CONST_STR;
+}
+
+@headers{
+}
+
+// SOURCES
+source
+  : source_item* EOF -> ^(ROOT source_item*)
+  ;
+
+source_item
+  : func_def
+  ;
+
+
+// TYPES
+type_ref
+  : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
+  | identifier
+  | arr='array' '[' (elems+=',')* ']' 'of' type_ref {
+
+// printf("elems: \%d\n", $elems->size($elems));
+
+// to build tree node
+// (pANTLR3_BASE_TREE)(ADAPTOR->createTypeText(ADAPTOR, ELEMS, (pANTLR3_UINT8) "10"))
+
+    } -> ^('array' ^(type_ref) ^(ELEMS $elems*))
+  ;
+
+
+// FUNCTIONS
+func_def
+  : ls='method' func_signature (func_body | ';') -> ^(FUNC[$ls, "FUNC"] func_signature ^(BODY func_body)? )
+  ;
+
+func_signature
+  : identifier '(' arg_def_list ')' (':' type_ref?) -> identifier arg_def_list ^(RETURNS type_ref?)
+  ;
+
+arg_def_list
+  : ls=arg_def (',' arg_def)*  -> ^(PARAMS arg_def*)
+  |                            -> ^(PARAMS )
+  ;
+
+arg_def
+  : iden=identifier (':' type_ref)? -> ^(PARAM identifier type_ref)
+  ;
+
+func_body
+  : ('var' func_body_var * ) statement_block -> ^(VARS (func_body_var)* ) ^(statement_block)
+  | statement_block -> ^(VARS ) ^(statement_block)
+  ;
+
+func_body_var
+  : ( identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR identifier type_ref?)*
+  ;
+
+
+// STATEMENTS
+statement
+  : statement_if
+  | statement_block
+  | statement_while
+  | statement_do
+  | statement_break
+  | statement_expression
+  ;
+
+statement_if
+  : 'if' expr 'then' st_then=statement ('else' st_else=statement)? -> ^('if' expr $st_then $st_else?)
+  ;
+
+statement_block
+  : 'begin' statement* 'end' ';' -> ^('begin' statement*)
+  ;
+  
+statement_while
+  : 'while' expr 'do' statement -> ^('while' expr statement)
+  ;
+
+statement_do
+  : 'repeat' statement statement_do_condition -> ^('repeat' statement_do_condition statement)
+  ;
+
+statement_do_condition
+  : 'while'^ expr ';'!
+  | 'until'^ expr ';'!
+  ;
+
+statement_break
+  : 'break' ';' -> ^('break')
+  ;
+
+statement_expression
+  : expr ';' -> ^(expr)
+  ;
+
+
+// EXPRESSIONS
+expr
+  : expr_14
+  ;
+
+expr_literal
+  : bool | str | rune | hex | bits | dec
+  ;
+
+// OPERATORS
+expr_15
+  : (expr_14 (',' expr_14)* )? -> expr_14*
+  ;
+
+// tail recursion
+expr_14
+  : expr_12 ('='^ expr_14)?
+  ;
+
+expr_12
+  : expr_11 ('||'^ expr_11)*
+  ;
+
+expr_11
+  : expr_10 ('&&'^ expr_10)*
+  ;
+
+expr_10
+  : expr_9 ('|'^ expr_9)*
+  ;
+
+expr_9
+  : expr_8 ('^'^ expr_8)*
+  ;
+
+expr_8
+  : expr_7 ('&'^ expr_7)*
+  ;
+
+expr_7
+  : expr_6 (('==' | '!=')^ expr_6)*
+  ;
+
+expr_6
+  : expr_5 (('<' | '<=' | '>' | '>=')^ expr_5)*
+  ;
+
+expr_5
+  : expr_4 (('>>' | '<<')^ expr_4)*
+  ;
+
+expr_4
+  : expr_3 (('+' | '-')^ expr_3)*
+  ;
+
+expr_3
+  : expr_2 (('*' | '/' | '%')^ expr_2)*
+  ;
+
+expr_2
+  : ('--' | '++' | '!' | '~' | '+' | '-')^ expr_2
+  | expr_01
+  ;
+
+expr_01
+  : expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
+  ;
+
+caller_indexer
+  : '(' expr_15 ')' -> ^(CALLER ^(ARGS expr_15))
+  | '[' expr_15 ']' -> ^(INDEXER ^(ARGS expr_15))
+  ;
+
+// (priority 0-1) braces or call/index 
+expr_braces_caller_indexer
+  : '('! expr ')'! caller_indexer^?
+  ;
+
+// (priority 0-1) identifier or call/index 
+expr_place_caller_indexer
+  : identifier caller_indexer^?
+  ;
+
+
+// TERMINALS
+identifier: IDENTIFIER;
+
+str: STR -> ^(CONST_STR STR);
+rune: CHAR -> ^(CONST_CHAR CHAR);
+hex: HEX -> ^(CONST_HEX HEX); 
+bits: BITS -> ^(CONST_BITS BITS);
+dec: DEC -> ^(CONST_DEC DEC);
+bool: BOOL -> ^(CONST_BOOL BOOL);
+
+
+BOOL: (TRUE | FALSE) ;
+IDENTIFIER: (ALPHA | SPECIAL) (ALPHA | SPECIAL | DIGIT)* ;
+BITS: '0' ('b'|'B') BINARY_DIGIT+ ;
+HEX: '0'('x'|'X') HEX_DIGIT+ ;
+DEC: DIGIT+ ;
+CHAR: '\'' ~('\'') '\'' ;
+STR: ('"') ('\\' . | ~('\\'|'"'))* ('"') ;
+
+NEWLINE:'\r'? '\n' { $channel = HIDDEN; };
+WSS: WS+ { $channel = HIDDEN; };
+
+
+fragment TRUE: 'true';
+fragment FALSE: 'false';
+fragment ALPHA: ('a'..'z' | 'A'..'Z');
+fragment SPECIAL: ('_');
+fragment DIGIT: ('0'..'9');
+fragment BINARY_DIGIT: ('0' | '1');
+fragment HEX_DIGIT: ('0'..'9' | 'a'..'f' | 'A'..'F');
+fragment WS:(' '|'\t') ;
+

@@ -1,0 +1,64 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/_gen/ExampleLexer.o",
+      "build/lib/_gen/ExampleLexer.c"
+    ],
+    "directory": "/workspaces/system-software/lab-1",
+    "file": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleLexer.c",
+    "output": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleLexer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/_gen/ExampleParser.o",
+      "build/lib/_gen/ExampleParser.c"
+    ],
+    "directory": "/workspaces/system-software/lab-1",
+    "file": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleParser.c",
+    "output": "/workspaces/system-software/lab-1/build/lib/_gen/ExampleParser.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "build/lib/_gen/ExampleLexer.o",
+      "build/lib/_gen/ExampleParser.o",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/main",
+      "src/main.c"
+    ],
+    "directory": "/workspaces/system-software/lab-1",
+    "file": "/workspaces/system-software/lab-1/src/main.c",
+    "output": "/workspaces/system-software/lab-1/build/main"
+  }
+]
