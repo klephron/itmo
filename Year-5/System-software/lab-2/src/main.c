@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <stdio.h>
 
+#include "util/file.h"
 #include "util/list.h"
 #include "util/list_funcs.h"
 #include "util/macro.h"
@@ -127,8 +128,115 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
   }
 }
 
+// filename is not directory
+void ensure_dir_exist(char *filename) {
+  char *dir = dirname(filename);
+  dir_create_p(dir);
+  free(dir);
+}
+
+// ast - ext, dot - file extension
+char *get_ast_dot_output(const struct args_struct *args,
+                         const option2_ast *ast) {
+  char *suffix = ".ast.dot";
+  char *prefix =
+      join_paths(args->output_dir, (const char *)ast->stream->fileName->chars);
+
+  char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
+  sprintf(output, "%s%s", prefix, suffix);
+
+  free(prefix);
+
+  return output;
+}
+
+char *get_c_dot_output(struct args_struct *args, const char *source,
+                       const char *func, const char *ext) {
+  char *suffix = ".dot";
+
+  char *prefix = join_paths(args->output_dir, source);
+
+  char *output =
+      malloc(strlen(prefix) + strlen(func) + strlen(ext) + strlen(suffix) + 3);
+  sprintf(output, "%s.%s.%s%s", prefix, func, ext, suffix);
+
+  free(prefix);
+
+  return output;
+}
+
+char *get_cfg_dot_output(struct args_struct *args, const char *source,
+                         const char *func) {
+  return get_c_dot_output(args, source, func, "cfg");
+}
+
+char *get_cg_dot_output(struct args_struct *args, const char *source,
+                        const char *func) {
+  return get_c_dot_output(args, source, func, "cg");
+}
+
 int execute(struct args_struct *args) {
   int error = 0;
+
+  // stage: build ast
+  p_list asts = option2_ast_build_many(args->input_files);
+
+  for (list_iter it = asts->head; it != NULL; it = it->next) {
+    option2_ast *ast = it->data;
+
+    if (ast->exceptions->size(ast->exceptions) != 0) {
+      for (list_iter it = ast->exceptions->head; it != NULL; it = it->next) {
+        char *msg = exception_to_chars(((exception *)it->data));
+        fprintf(stderr, "%s", msg);
+        free(msg);
+      }
+      error = 1;
+    }
+  }
+
+  // stage: build dot
+  if (!error || args->ignore_errors) {
+    for (list_iter it = asts->head; it != NULL; it = it->next) {
+      option2_ast *ast = it->data;
+
+      dot_string dot = dot_ast(ast->result.tree);
+
+      if (args->tee) {
+        printf("%s\n", dot.chars);
+      }
+
+      char *output = get_ast_dot_output(args, ast);
+      ensure_dir_exist(output);
+
+      FILE *output_fd = fopen(output, "wb");
+      fwrite(dot.chars, dot.len, 1, output_fd);
+      fclose(output_fd);
+
+      free(output);
+      free((void *)dot.chars);
+    }
+  }
+  // stage: build control graphs
+  if (!error || args->ignore_errors) {
+    for (list_iter it = asts->head; it != NULL; it = it->next) {
+      option2_ast *ast = it->data;
+      const char *source = (char *)ast->stream->fileName->chars;
+
+      char *output_cfg = get_cfg_dot_output(args, source, "main");
+      char *output_cg = get_cg_dot_output(args, source, "main");
+
+      ensure_dir_exist(output_cfg);
+      ensure_dir_exist(output_cg);
+
+      printf("cfg: %s\n", output_cfg);
+      printf("cg: %s\n", output_cg);
+
+      free(output_cg);
+      free(output_cfg);
+    }
+  }
+
+  asts->free(asts);
 
   return error && !args->ignore_errors;
 }

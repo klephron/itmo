@@ -4,9 +4,22 @@
 #include "Option2Parser.h"
 #include "util/list.h"
 #include <antlr3.h>
+#include <antlr3interfaces.h>
 
-pANTLR3_BASE_TREE option2_ast(pANTLR3_UINT8 input_file,
-                              pANTLR3_INPUT_STREAM *stream_out,
-                              pOption2Lexer *lexer_out,
-                              pANTLR3_COMMON_TOKEN_STREAM *tokens_out,
-                              pOption2Parser *parser_out, p_list *exc_list_out);
+struct option2_ast {
+  pANTLR3_INPUT_STREAM stream;
+  pOption2Lexer lexer;
+  pANTLR3_COMMON_TOKEN_STREAM tokens;
+  pOption2Parser parser;
+  p_list exceptions;
+
+  Option2Parser_source_return result;
+
+  void (*free)(struct option2_ast *);
+};
+
+typedef struct option2_ast option2_ast;
+
+option2_ast *option2_ast_build(pANTLR3_UINT8 input_file);
+
+p_list option2_ast_build_many(p_list input_files);

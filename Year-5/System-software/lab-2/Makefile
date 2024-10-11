@@ -108,11 +108,11 @@ dot/pdf:
 
 ### Run main executable
 run: build
-	./build/main -i io/input.txt -o io/output.dot
+	./build/main io/input.txt
 
 ### Run main executable and generate dot
 run/pdf: build
-	./build/main -i io/input.txt -o io/output.dot --ignore-errors
+	./build/main io/input.txt --ignore-errors
 	dot -Tpdf io/output.dot -o io/output.pdf
 
 ### Generate dot

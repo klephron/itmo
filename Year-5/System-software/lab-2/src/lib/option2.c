@@ -3,6 +3,7 @@
 #include "exception.h"
 #include "util/list.h"
 #include "util/list_funcs.h"
+#include "util/macro.h"
 #include <antlr3.h>
 #include <antlr3basetree.h>
 
@@ -81,32 +82,58 @@ static void exc_list_delete(void *_data) {
   }
 }
 
-pANTLR3_BASE_TREE
-option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
-            pOption2Lexer *lexer_out, pANTLR3_COMMON_TOKEN_STREAM *tokens_out,
-            pOption2Parser *parser_out, p_list *exc_list_out) {
-  pANTLR3_INPUT_STREAM input = antlr3FileStreamNew(input_file, ANTLR3_ENC_UTF8);
-  pOption2Lexer lexer = Option2LexerNew(input);
-  pANTLR3_COMMON_TOKEN_STREAM tokens =
-      antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lexer));
-  pOption2Parser parser = Option2ParserNew(tokens);
+static void option2_ast_free(struct option2_ast *ast) {
+  if (!ast) {
+    return;
+  }
 
-  lexer->pLexer->rec->displayRecognitionError = displayRecognitionError;
-  parser->pParser->rec->displayRecognitionError = displayRecognitionError;
+  ast->exceptions->free(ast->exceptions);
+  ast->parser->free(ast->parser);
+  ast->tokens->free(ast->tokens);
+  ast->lexer->free(ast->lexer);
+  ast->stream->close(ast->stream);
 
-  p_list exc_list = list_new(list_false_cmp, exc_list_new, exc_list_delete, 0);
+  free(ast);
+}
 
-  lexer->pLexer->rec->state->userp = exc_list;
-  parser->pParser->rec->state->userp = exc_list;
-  Option2Parser_source_return r = parser->source(parser);
-  parser->pParser->rec->state->userp = NULL;
-  lexer->pLexer->rec->state->userp = NULL;
+option2_ast *option2_ast_build(pANTLR3_UINT8 input_file) {
+  option2_ast *ast = MALLOC(option2_ast);
 
-  *parser_out = parser;
-  *tokens_out = tokens;
-  *stream_out = input;
-  *lexer_out = lexer;
-  *exc_list_out = exc_list;
+  ast->stream = antlr3FileStreamNew(input_file, ANTLR3_ENC_UTF8);
+  ast->lexer = Option2LexerNew(ast->stream);
+  ast->tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT,
+                                                 TOKENSOURCE(ast->lexer));
+  ast->parser = Option2ParserNew(ast->tokens);
+  ast->exceptions = list_new(list_false_cmp, exc_list_new, exc_list_delete, 0);
 
-  return r.tree;
+  ast->lexer->pLexer->rec->displayRecognitionError = displayRecognitionError;
+  ast->parser->pParser->rec->displayRecognitionError = displayRecognitionError;
+
+  ast->lexer->pLexer->rec->state->userp = ast->exceptions;
+  ast->parser->pParser->rec->state->userp = ast->exceptions;
+  ast->result = ast->parser->source(ast->parser);
+
+  ast->free = option2_ast_free;
+
+  return ast;
+}
+
+static void *list_option2_new(void *data) {
+  option2_ast *ast = data;
+  return ast;
+}
+
+static void list_option2_delete(void *data) {
+  option2_ast *ast = data;
+  ast->free(ast);
+}
+
+p_list option2_ast_build_many(p_list input_files) {
+  p_list asts =
+      list_new(list_false_cmp, list_option2_new, list_option2_delete, 0);
+  for (list_iter it = input_files->head; it != NULL; it = it->next) {
+    option2_ast *ast = option2_ast_build(it->data);
+    asts->put(asts, ast);
+  }
+  return asts;
 }

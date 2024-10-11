@@ -11,6 +11,5 @@ begin
   a = 4;
   if true then false; else true;
 
-  func123();
-
+  func123()
 end;
