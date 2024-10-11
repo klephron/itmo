@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int list_string_string_equals(const void *_lsv, const void *_rsv) {
+// STRING_STRING
+int list_string_string_cmp(const void *_lsv, const void *_rsv) {
   const string_string *lsv = _lsv;
   const string_string *rsv = _rsv;
   return strcmp(lsv->key, rsv->key);
@@ -28,7 +29,19 @@ void list_string_string_delete(void *_data) {
   free(data);
 }
 
-int list_false_equals(const void *lsv, const void *rsv) {
+// CHARS
+int list_chars_cmp(const void *_lsv, const void *_rsv) {
+  const char *lsv = _lsv;
+  const char *rsv = _rsv;
+  return strcmp(lsv, rsv);
+}
+
+void *list_chars_new(void *_data) { return strdup(_data); }
+
+void list_chars_delete(void *_data) { free(_data); }
+
+// FALSE
+int list_false_cmp(const void *lsv, const void *rsv) {
   UNUSED(lsv);
   UNUSED(rsv);
   return 1;

@@ -94,8 +94,7 @@ option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
   lexer->pLexer->rec->displayRecognitionError = displayRecognitionError;
   parser->pParser->rec->displayRecognitionError = displayRecognitionError;
 
-  p_list exc_list =
-      list_new(list_false_equals, exc_list_new, exc_list_delete, 0);
+  p_list exc_list = list_new(list_false_cmp, exc_list_new, exc_list_delete, 0);
 
   lexer->pLexer->rec->state->userp = exc_list;
   parser->pParser->rec->state->userp = exc_list;

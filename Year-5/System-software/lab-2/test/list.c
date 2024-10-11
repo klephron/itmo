@@ -5,10 +5,10 @@
 #include "util/list_funcs.h"
 
 Test(list, create_delete) {
-  p_list list = list_new(list_string_string_equals, list_string_string_new,
+  p_list list = list_new(list_string_string_cmp, list_string_string_new,
                          list_string_string_delete, 1);
 
-  cr_expect_eq(list->f_equals, list_string_string_equals);
+  cr_expect_eq(list->f_cmp, list_string_string_cmp);
   cr_expect_eq(list->f_new, list_string_string_new);
   cr_expect_eq(list->f_delete, list_string_string_delete);
 
@@ -16,7 +16,7 @@ Test(list, create_delete) {
 }
 
 Test(list, put) {
-  p_list list = list_new(list_string_string_equals, list_string_string_new,
+  p_list list = list_new(list_string_string_cmp, list_string_string_new,
                          list_string_string_delete, 1);
 
   string_string data = {.key = "hello", .value = "world"};
@@ -26,7 +26,7 @@ Test(list, put) {
 }
 
 Test(list, put_put) {
-  p_list list = list_new(list_string_string_equals, list_string_string_new,
+  p_list list = list_new(list_string_string_cmp, list_string_string_new,
                          list_string_string_delete, 1);
 
   string_string data = {.key = "hello", .value = "world"};
@@ -45,7 +45,7 @@ Test(list, put_put) {
 }
 
 Test(list, put_putsame_unique) {
-  p_list list = list_new(list_string_string_equals, list_string_string_new,
+  p_list list = list_new(list_string_string_cmp, list_string_string_new,
                          list_string_string_delete, 1);
 
   string_string data = {.key = "hello", .value = "world"};
@@ -63,7 +63,7 @@ Test(list, put_putsame_unique) {
 }
 
 Test(list, put_putsame) {
-  p_list list = list_new(list_string_string_equals, list_string_string_new,
+  p_list list = list_new(list_string_string_cmp, list_string_string_new,
                          list_string_string_delete, 0);
 
   string_string data = {.key = "hello", .value = "world"};
@@ -81,7 +81,7 @@ Test(list, put_putsame) {
 }
 
 Test(list, put_many) {
-  p_list list = list_new(list_string_string_equals, list_string_string_new,
+  p_list list = list_new(list_string_string_cmp, list_string_string_new,
                          list_string_string_delete, 1);
 
   char key[10];
@@ -105,7 +105,7 @@ Test(list, put_many) {
 }
 
 Test(list, put_many_check) {
-  p_list list = list_new(list_string_string_equals, list_string_string_new,
+  p_list list = list_new(list_string_string_cmp, list_string_string_new,
                          list_string_string_delete, 1);
 
   char key[16];

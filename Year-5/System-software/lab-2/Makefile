@@ -9,7 +9,7 @@ MKDIR := mkdir -p
 # ANTLR := java -jar lib/antlr-3.5.3-complete.jar
 # ANTLR := java -jar ~/.m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
 ANTLR := java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
-FORMAT := clang-format
+FORMAT := clang-format --verbose -i
 
 SRC_DIR := src
 LIB_DIR := $(SRC_DIR)/lib
@@ -128,8 +128,12 @@ test: build/test
 
 ### Format
 format:
-	@$(FORMAT) --verbose -i $(SRCS.LIB) $(HDRS.LIB) $(SRCS.TST)
+	@$(FORMAT) $(SRCS.LIB) $(HDRS.LIB) $(SRCS.TST)
 	
+### Index project
+index:
+	make clean
+	bear -- make build/test
 
 ### Remove build and target files
 clean:

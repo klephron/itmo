@@ -1,46 +1,91 @@
 #include <getopt.h>
 #include <stdio.h>
 
+#include "util/list.h"
+#include "util/list_funcs.h"
+#include "util/macro.h"
+
 #include "dot.h"
 #include "exception.h"
 #include "option2.h"
 
 struct args_struct {
-  char *input_file;
-  char *output_file;
   char *prog_name;
+  p_list input_files;
+  // options
+  char *output_dir;
   int ignore_errors;
   int tee;
+  p_list subroutines;
+  // status
   int code;
   int help;
 };
 
-void usage(char *prog_name) {
-  printf("Usage: %s -i INPUT_FILE -o OUTPUT_FILE [--tee] [--ignore-errors]\n",
-         prog_name);
+struct args_struct *args_new() {
+  struct args_struct *args = MALLOC(struct args_struct);
+
+  args->prog_name = NULL;
+  args->input_files =
+      list_new(list_chars_cmp, list_chars_new, list_chars_delete, 0);
+
+  args->output_dir = ".";
+  args->ignore_errors = 0;
+  args->tee = 0;
+  args->subroutines =
+      list_new(list_chars_cmp, list_chars_new, list_chars_delete, 0);
+
+  args->code = 0;
+  args->help = 0;
+
+  return args;
 }
 
-struct args_struct parse_args(int argc, char *argv[]) {
-  struct args_struct args = {.prog_name = argv[0],
-                             .code = 0,
-                             .help = 0,
-                             .tee = 0,
-                             .ignore_errors = 0,
-                             .input_file = NULL,
-                             .output_file = NULL};
+void args_free(struct args_struct *args) {
+  args->input_files->free(args->input_files);
+  args->subroutines->free(args->subroutines);
+  free(args);
+}
+
+void usage(struct args_struct *args) {
+  int buf_len = 256;
+  char subroutines[buf_len];
+  int offset = 0;
+  for (list_iter it = args->subroutines->head; it != NULL; it = it->next) {
+    offset += snprintf(subroutines + offset, buf_len - offset - 1, "%s,",
+                       (const char *)it->data);
+  }
+  if (offset > 0) {
+    subroutines[offset - 1] = '\0';
+  }
+
+  printf("Usage: %s [options] <file>...\n"
+         "Options:\n"
+         "--tee            - print to file and to stdin (current: %d)\n"
+         "--ignore-errors  - continue execution on errors (current: %d)\n"
+         "-o <directory>   - output directory (current: %s)\n"
+         "-s <subroutine>  - set or add subroutine for call graph generation "
+         "(current: %s)\n",
+         args->prog_name, args->tee, args->ignore_errors, args->output_dir,
+         subroutines);
+}
+
+void parse_args(struct args_struct *args, int argc, char *argv[]) {
+  if (argc > 0) {
+    args->prog_name = argv[0];
+  }
 
   struct option long_options[] = {
-      {"tee", no_argument, &args.tee, 1},
-      {"ignore-errors", no_argument, &args.ignore_errors, 1},
+      {"tee", no_argument, &args->tee, 1},
+      {"ignore-errors", no_argument, &args->ignore_errors, 1},
   };
   int option_index = 0;
-
   int has_next = 1;
 
   while (has_next) {
     unsigned c;
 
-    c = getopt_long(argc, argv, "i:o:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "o:s:h", long_options, &option_index);
 
     switch (c) {
     case EOF:
@@ -51,19 +96,19 @@ struct args_struct parse_args(int argc, char *argv[]) {
         break;
       }
       break;
-    case 'i':
-      args.input_file = optarg;
-      break;
     case 'o':
-      args.output_file = optarg;
+      args->output_dir = optarg;
+      break;
+    case 's':
+      args->subroutines->put(args->subroutines, optarg);
       break;
     case 'h':
-      args.help = 1;
+      args->help = 1;
       has_next = 0;
       break;
     default:
-      args.code = -1;
-      args.help = 1;
+      args->code = -1;
+      args->help = 1;
       has_next = 0;
       break;
     }
@@ -72,80 +117,44 @@ struct args_struct parse_args(int argc, char *argv[]) {
   argc -= optind;
   argv += optind;
 
-  if (argc != 0) {
-    args.code = -1;
-    args.help = 1;
+  for (; argc > 0; --argc, ++argv) {
+    const char *file = argv[0];
+    args->input_files->put(args->input_files, (void *)file);
   }
 
-  return args;
+  if (args->subroutines->size(args->subroutines) == 0) {
+    args->subroutines->put(args->subroutines, "main");
+  }
 }
 
-int execute(struct args_struct args) {
+int execute(struct args_struct *args) {
   int error = 0;
-  pANTLR3_INPUT_STREAM stream;
-  pOption2Lexer lexer;
-  pANTLR3_COMMON_TOKEN_STREAM tokens;
-  pOption2Parser parser;
-  p_list exc_list;
 
-  pANTLR3_BASE_TREE tree = option2_ast((pANTLR3_UINT8)args.input_file, &stream,
-                                       &lexer, &tokens, &parser, &exc_list);
-
-  if (exc_list->size(exc_list) != 0) {
-    for (list_iter it = exc_list->head; it != NULL; it = it->next) {
-      char *msg = exception_to_chars(((exception *)it->data));
-      fprintf(stderr, "%s", msg);
-      free(msg);
-    }
-    error = 1;
-  }
-
-  if (!error || args.ignore_errors) {
-    dot_string dot_string = dot_ast(tree);
-
-    // print to stdout
-    if (args.tee) {
-      printf("%s\n", dot_string.chars);
-    }
-    // write to output file
-    if (args.output_file != NULL) {
-      FILE *output_fd = fopen(args.output_file, "wb");
-      fwrite(dot_string.chars, dot_string.len, 1, output_fd);
-      fclose(output_fd);
-    }
-
-    free((void *)dot_string.chars);
-  }
-
-  exc_list->free(exc_list);
-  parser->free(parser);
-  tokens->free(tokens);
-  lexer->free(lexer);
-  stream->close(stream);
-
-  return error && !args.ignore_errors;
+  return error && !args->ignore_errors;
 }
 
 int main(int argc, char *argv[]) {
-  struct args_struct args = parse_args(argc, argv);
+  int code;
 
-  if (args.help) {
-    usage(args.prog_name);
+  struct args_struct *args = args_new();
+  parse_args(args, argc, argv);
+
+  if (args->help) {
+    usage(args);
   }
 
-  if (!args.help && args.input_file == NULL) {
-    printf("%s: INPUT_FILE is not specified\n", args.prog_name);
-    args.code = -1;
+  if (!args->help && args->input_files->size(args->input_files) == 0) {
+    printf("%s: no input files specified\n", args->prog_name);
+    args->code = -1;
   }
 
-  if (!args.help && args.output_file == NULL) {
-    printf("%s: OUTPUT_FILE is not specified\n", args.prog_name);
-    args.code = -1;
+  if (!args->help && args->code == 0) {
+    args->code = execute(args);
   }
 
-  if (args.code || args.help) {
-    return args.code;
-  }
+  code = args->code;
 
-  return execute(args);
+  args_free(args);
+
+  return code;
 }

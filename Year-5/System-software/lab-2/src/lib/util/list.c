@@ -13,7 +13,7 @@ static int list_has_next(list_iter this) {
 
 static void *list_get(p_list this, const void *data) {
   for (list_iter it = this->head; it != NULL; it = it->next) {
-    if (this->f_equals(it->data, data)) {
+    if (!this->f_cmp(it->data, data)) {
       return it->data;
     }
   }
@@ -23,7 +23,7 @@ static void *list_get(p_list this, const void *data) {
 static void list_put(p_list this, void *data) {
   if (this->unique) {
     for (list_iter it = this->head; it != NULL; it = it->next) {
-      if (!this->f_equals(it->data, data)) {
+      if (!this->f_cmp(it->data, data)) {
         this->f_delete(it->data);
         it->data = this->f_new(data);
         return;
@@ -31,23 +31,16 @@ static void list_put(p_list this, void *data) {
     }
   }
 
-  list_iter it = this->head;
+  p_list_entry entry = MALLOC(list_entry);
+  entry->data = this->f_new(data);
+  entry->next = NULL;
 
-  if (it != NULL) {
-    while (list_has_next(it)) {
-      it = it->next;
-    }
-  }
-
-  p_list_entry tail = MALLOC(list_entry);
-  tail->data = this->f_new(data);
-  tail->next = NULL;
-
-  if (it == NULL) {
-    this->head = tail;
+  if (this->tail == NULL) {
+    this->head = entry;
   } else {
-    it->next = tail;
+    this->tail->next = entry;
   }
+  this->tail = entry;
 }
 
 static size_t list_size(p_list this) {
@@ -70,19 +63,20 @@ static void list_free(p_list this) {
   }
 }
 
-p_list list_new(list_func_equals equals, list_func_new new,
-                list_func_delete delete, int unique) {
+p_list list_new(list_func_cmp cmp, list_func_new new, list_func_delete delete,
+                int unique) {
   p_list this = MALLOC(list);
 
   this->unique = unique;
 
   this->head = NULL;
+  this->tail = NULL;
   this->get = list_get;
   this->put = list_put;
   this->free = list_free;
   this->size = list_size;
 
-  this->f_equals = equals;
+  this->f_cmp = cmp;
   this->f_new = new;
   this->f_delete = delete;
   return this;
