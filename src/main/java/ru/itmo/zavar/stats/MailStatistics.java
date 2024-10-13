@@ -12,7 +12,10 @@ import ru.itmo.zavar.stats.data.ReportContainer;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public final class MailStatistics {
 
@@ -124,7 +127,7 @@ public final class MailStatistics {
                 iterationElapsedTime, streamApiElapsedTime, customCollectorApiTime);
     }
 
-    public ReportContainer<Long> reportByReceiverActor(IndividualActor actor, Set<Mail> mailSet, long delay) throws InterruptedException {
+    public ReportContainer<Long> reportByReceiverActor(IndividualActor actor, Set<Mail> mailSet, long delay, boolean parallel, boolean customSpliterator) throws InterruptedException {
         long iterationValue = 0;
         Instant iterationStart = Instant.now();
         for (Mail mail : mailSet) {
@@ -137,7 +140,18 @@ public final class MailStatistics {
 
         long streamApiValue;
         Instant streamApiStart = Instant.now();
-        streamApiValue = mailSet.stream().filter(mail -> mail.getReceiver().equals(actor)).count();
+        if (!parallel) {
+            streamApiValue = mailSet.stream().filter(mail -> mail.getReceiver().equals(actor)).count();
+        } else {
+            if (!customSpliterator) {
+                streamApiValue = mailSet.parallelStream().filter(mail -> mail.getReceiver().equals(actor)).count();
+            } else {
+                System.out.println("custom");
+                Stream<Mail> mailStream = StreamSupport.stream(new MailSpliterator(new ArrayList<>(mailSet)), true);
+                streamApiValue = mailStream.filter(mail -> mail.getReceiver().equals(actor)).count();
+            }
+
+        }
         Instant streamApiEnd = Instant.now();
         long streamApiElapsedTime = Duration.between(streamApiStart, streamApiEnd).toNanos();
 

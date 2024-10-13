@@ -23,13 +23,11 @@ import java.util.concurrent.Executors;
 public final class Main {
     public static void main(String[] args) throws IOException {
 
-        final int[] count = new int[]{5000, 15000, 25000, 50000, 100000, 250000};
-        final int[] iterations = new int[]{20, 20, 15, 10, 5, 3};
+        final int[] count = new int[]{5000}; //, 15000, 25000, 50000, 100000, 250000
+        final int[] iterations = new int[]{20}; //, 20, 15, 10, 5, 3
 
         final MailGenerator generator = new MailGenerator();
         final MailStatistics stats = new MailStatistics();
-        final MailStatus statusToCheck = MailStatus.RAW;
-        final Mark markToCheck = new Mark(MarkNominal.N500, "Canada", "N500_Canada");
 
         final IndividualActor actorToCheck = new IndividualActor("Alexander", "Stepanov", "Pavlovich",
             new Address("Russia", "Moscow", "Moscow Oblast", "412 Walnut St", "19984"));
@@ -42,23 +40,16 @@ public final class Main {
                 System.out.printf("Thread %d for %d mails started\n", finalJ, count[finalJ]);
                 for (int i = 0; i < iterations[finalJ]; i++) {
                     Set<Mail> mailSet = generator.generateMails(count[finalJ]);
-                    ReportContainer<Long> statusReport = stats.reportAvailableByStatus(statusToCheck, mailSet);
-                    ReportContainer<Long> markReport = stats.reportAvailableByMark(markToCheck, mailSet);
-                    ReportContainer<Long> senderReport = stats.reportBySenderActor(actorToCheck, mailSet);
-                    ReportContainer<Long> receiverReport = stats.reportByReceiverActor(actorToCheck, mailSet);
+                    ReportContainer<Long> receiverReport = null;
+                    try {
+                        receiverReport = stats.reportByReceiverActor(actorToCheck, mailSet, 1000, true, true);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                     System.out.printf("Report %d for %d mails:\n", i, count[finalJ]);
-                    System.out.printf("\tCount by status %s:\n", statusToCheck.name());
-                    printReport(statusReport);
-                    System.out.printf("\tCount by mark %s:\n", markToCheck.name());
-                    printReport(markReport);
-                    System.out.printf("\tCount by sender %s %s %s:\n", actorToCheck.getName(), actorToCheck.getSurname(), actorToCheck.getPatronymic());
-                    printReport(senderReport);
                     System.out.printf("\tCount by receiver %s %s %s:\n", actorToCheck.getName(), actorToCheck.getSurname(), actorToCheck.getPatronymic());
                     printReport(receiverReport);
                     try {
-                        toFile(statusReport, i, count[finalJ], "Status");
-                        toFile(markReport, i, count[finalJ], "Mark");
-                        toFile(senderReport, i, count[finalJ], "Sender");
                         toFile(receiverReport, i, count[finalJ], "Receiver");
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -74,7 +65,7 @@ public final class Main {
     }
 
     private static void toFile(ReportContainer<Long> container, int i, int count, String filename) throws IOException {
-        Path dir = Path.of("C:\\rjdata\\").resolve(String.valueOf(count));
+        Path dir = Path.of("C:\\rjdata2\\").resolve(String.valueOf(count));
         if (Files.notExists(dir))
             Files.createDirectories(dir);
         if (Files.notExists(dir.resolve(filename)))
