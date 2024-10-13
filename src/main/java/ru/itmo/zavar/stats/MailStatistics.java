@@ -124,4 +124,33 @@ public final class MailStatistics {
                 iterationElapsedTime, streamApiElapsedTime, customCollectorApiTime);
     }
 
+    public ReportContainer<Long> reportByReceiverActor(IndividualActor actor, Set<Mail> mailSet, long delay) throws InterruptedException {
+        long iterationValue = 0;
+        Instant iterationStart = Instant.now();
+        for (Mail mail : mailSet) {
+            if (mail.getReceiver().equals(actor)) {
+                iterationValue++;
+            }
+        }
+        Instant iterationEnd = Instant.now();
+        long iterationElapsedTime = Duration.between(iterationStart, iterationEnd).toNanos();
+
+        long streamApiValue;
+        Instant streamApiStart = Instant.now();
+        streamApiValue = mailSet.stream().filter(mail -> mail.getReceiver().equals(actor)).count();
+        Instant streamApiEnd = Instant.now();
+        long streamApiElapsedTime = Duration.between(streamApiStart, streamApiEnd).toNanos();
+
+        long customCollectorValue;
+        Instant customCollectorApiStart = Instant.now();
+        customCollectorValue = mailSet.stream().collect(new ReceiverCollector(actor));
+        Instant customCollectorApiEnd = Instant.now();
+        long customCollectorApiTime = Duration.between(customCollectorApiStart, customCollectorApiEnd).toNanos();
+
+        Thread.sleep(delay);
+
+        return new ReportContainer<>(iterationValue, streamApiValue, customCollectorValue,
+            iterationElapsedTime, streamApiElapsedTime, customCollectorApiTime);
+    }
+
 }
