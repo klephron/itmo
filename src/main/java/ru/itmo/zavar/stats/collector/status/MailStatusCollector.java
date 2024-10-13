@@ -28,7 +28,7 @@ public final class MailStatusCollector implements Collector<Mail, HashMap<MailSt
     @Override
     public BinaryOperator<HashMap<MailStatus, Integer>> combiner() {
         return (map, map2) -> {
-            map.putAll(map2);
+            map2.forEach((mailStatus, integer) -> map.put(mailStatus, integer + map.get(mailStatus)));
             return map;
         };
     }
