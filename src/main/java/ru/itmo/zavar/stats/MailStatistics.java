@@ -146,7 +146,6 @@ public final class MailStatistics {
             if (!customSpliterator) {
                 streamApiValue = mailSet.parallelStream().filter(mail -> mail.getReceiver().equals(actor)).count();
             } else {
-                System.out.println("custom");
                 Stream<Mail> mailStream = StreamSupport.stream(new MailSpliterator(new ArrayList<>(mailSet)), true);
                 streamApiValue = mailStream.filter(mail -> mail.getReceiver().equals(actor)).count();
             }
