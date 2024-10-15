@@ -112,12 +112,12 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/option2_inter.o",
-      "src/lib/option2_inter.c"
+      "build/lib/option2_inter/functions.o",
+      "src/lib/option2_inter/functions.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter.o"
+    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter/functions.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter/functions.o"
   },
   {
     "arguments": [
@@ -132,12 +132,32 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/option2_inter_decl.o",
-      "src/lib/option2_inter_decl.c"
+      "build/lib/option2_inter/types.o",
+      "src/lib/option2_inter/types.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter_decl.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter_decl.o"
+    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter/types.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter/types.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/option2_inter.o",
+      "src/lib/option2_inter.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter.o"
   },
   {
     "arguments": [
@@ -296,8 +316,9 @@
       "build/lib/dot_inter.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
+      "build/lib/option2_inter/functions.o",
+      "build/lib/option2_inter/types.o",
       "build/lib/option2_inter.o",
-      "build/lib/option2_inter_decl.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
@@ -330,8 +351,9 @@
       "build/lib/dot_inter.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
+      "build/lib/option2_inter/functions.o",
+      "build/lib/option2_inter/types.o",
       "build/lib/option2_inter.o",
-      "build/lib/option2_inter_decl.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
@@ -364,8 +386,9 @@
       "build/lib/dot_inter.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
+      "build/lib/option2_inter/functions.o",
+      "build/lib/option2_inter/types.o",
       "build/lib/option2_inter.o",
-      "build/lib/option2_inter_decl.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
@@ -398,8 +421,9 @@
       "build/lib/dot_inter.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
+      "build/lib/option2_inter/functions.o",
+      "build/lib/option2_inter/types.o",
       "build/lib/option2_inter.o",
-      "build/lib/option2_inter_decl.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
@@ -432,8 +456,9 @@
       "build/lib/dot_inter.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
+      "build/lib/option2_inter/functions.o",
+      "build/lib/option2_inter/types.o",
       "build/lib/option2_inter.o",
-      "build/lib/option2_inter_decl.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",

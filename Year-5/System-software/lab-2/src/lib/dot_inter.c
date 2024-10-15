@@ -1,4 +1,5 @@
 #include "dot_inter.h"
+
 #include <stdlib.h>
 
 // TODO: implement

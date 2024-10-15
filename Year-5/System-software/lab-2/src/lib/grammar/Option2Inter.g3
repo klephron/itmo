@@ -8,8 +8,15 @@ options {
 
 
 @header {
-#include "option2_inter_decl.h"
 #include "util/antlr3.h"
+
+#include "option2_inter.h"
+#include "option2_inter/expressions.h"
+#include "option2_inter/functions.h"
+#include "option2_inter/sources.h"
+#include "option2_inter/statements.h"
+#include "option2_inter/terminals.h"
+#include "option2_inter/types.h"
 }
 
 @members {
