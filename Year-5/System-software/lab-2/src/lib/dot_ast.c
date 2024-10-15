@@ -22,7 +22,7 @@ struct dot_ctx {
   void (*free)(struct dot_ctx *);
 };
 
-void dot_ctx_free(struct dot_ctx *ctx) {
+static void dot_ctx_free(struct dot_ctx *ctx) {
   free((void *)ctx->graph);
   free((void *)ctx->node_style);
 
@@ -32,7 +32,7 @@ void dot_ctx_free(struct dot_ctx *ctx) {
   free(ctx);
 }
 
-struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
+static struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
   struct dot_ctx *ctx = MALLOC(struct dot_ctx);
 
   ctx->graph = strdup(graph);
@@ -50,7 +50,7 @@ struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
   return ctx;
 }
 
-size_t dot_len(struct dot_ctx *ctx) {
+static size_t dot_len(struct dot_ctx *ctx) {
   size_t len = 0;
 
   len += strlen(ctx->graph);
@@ -77,7 +77,7 @@ size_t dot_len(struct dot_ctx *ctx) {
   return len;
 }
 
-void dot_generate(struct dot_ctx *ctx, char *str) {
+static void dot_generate(struct dot_ctx *ctx, char *str) {
   str[0] = '\0';
 
   char *end = stpcpy(str, ctx->graph);
@@ -105,7 +105,7 @@ void dot_generate(struct dot_ctx *ctx, char *str) {
   end = stpcpy(end, "}");
 }
 
-size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
+static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   if (root == NULL) {
     return 0;
   }
@@ -155,7 +155,7 @@ size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   return id;
 }
 
-struct dot_ctx *dot_new(pANTLR3_BASE_TREE tree) {
+static struct dot_ctx *dot_new(pANTLR3_BASE_TREE tree) {
   struct dot_ctx *ctx =
       dot_ctx_new("strict digraph AST", "shape=rect, style=filled");
 

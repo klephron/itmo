@@ -1,6 +1,5 @@
 #pragma once
 
-#include <antlr3interfaces.h>
 #include <stdio.h>
 
 struct dot_string_struct {
@@ -9,5 +8,3 @@ struct dot_string_struct {
 };
 
 typedef struct dot_string_struct dot_string;
-
-dot_string dot_ast(pANTLR3_BASE_TREE tree);

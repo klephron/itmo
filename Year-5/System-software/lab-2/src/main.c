@@ -6,9 +6,9 @@
 #include "util/list_funcs.h"
 #include "util/macro.h"
 
-#include "dot.h"
+#include "dot_ast.h"
 #include "exception.h"
-#include "option2.h"
+#include "option2_ast.h"
 
 struct args_struct {
   char *prog_name;
