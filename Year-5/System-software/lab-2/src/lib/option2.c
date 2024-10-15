@@ -7,12 +7,17 @@
 #include <antlr3.h>
 #include <antlr3basetree.h>
 
+struct antlr_userp {
+  p_list exceptions;
+  pANTLR3_UINT8 file_name;
+};
+
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
                                     pANTLR3_UINT8 *_) {
   pANTLR3_EXCEPTION ex;
 
-  char *exc_stream;
-  uint32_t exc_type;
+  enum exception_type exc_type;
+  int exc_subtype;
   uint32_t exc_line;
   uint32_t exc_offset;
   char *exc_name;
@@ -22,15 +27,19 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
         recognizer->type != ANTLR3_TYPE_LEXER)) {
   }
 
-  ex = recognizer->state->exception;
-
-  if (ex->streamName != NULL) {
-    exc_stream = (char *)ex->streamName->to8(ex->streamName)->chars;
-  } else {
-    exc_stream = NULL;
+  switch (recognizer->type) {
+  case ANTLR3_TYPE_LEXER:
+    exc_type = EXCEPTION_LEXER;
+    break;
+  case ANTLR3_TYPE_PARSER:
+    exc_type = EXCEPTION_PARSER;
+    break;
+  default:
+    exc_type = EXCEPTION_UNKNOWN;
   }
 
-  exc_type = ex->type;
+  ex = recognizer->state->exception;
+
   exc_line = ex->line;
   exc_name = ex->message;
 
@@ -45,28 +54,34 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
     ttext = theToken->toString(theToken);
 
     if (theToken->type == ANTLR3_TOKEN_EOF) {
+      exc_subtype = EXCEPTION_PARSER_EOF;
       snprintf(exc_msg, 255, "at <EOF>");
     } else {
+      exc_subtype = EXCEPTION_PARSER_GENERIC;
       snprintf(exc_msg, 255, "near %s",
                ttext == NULL ? (pANTLR3_UINT8) "<empty>" : ttext->chars);
     }
   } else {
     if (recognizer->state) {
+      exc_subtype = EXCEPTION_LEXER_MATCHING;
       snprintf(exc_msg, 255, "error matching from [Line: %d, LinePos: %d]",
                recognizer->state->tokenStartLine,
                recognizer->state->tokenStartCharPositionInLine);
     } else {
+      exc_subtype = EXCEPTION_LEXER_UNKNOWN;
       snprintf(exc_msg, 255,
                "error, dumb implementation, may help [Line: %d, LinePos: %d]",
                exc_line, exc_offset);
     }
   }
 
-  exception *exc = exception_new(exc_stream, exc_type, exc_line, exc_offset,
-                                 exc_name, exc_msg);
+  struct antlr_userp *userp = recognizer->state->userp;
 
-  p_list exc_list = recognizer->state->userp;
-  exc_list->put(exc_list, exc);
+  exception *exc =
+      exception_new(exc_type, exc_subtype, (const char *)userp->file_name,
+                    exc_line, exc_offset, exc_name, exc_msg);
+
+  userp->exceptions->put(userp->exceptions, exc);
 }
 
 // move
@@ -109,9 +124,13 @@ option2_ast *option2_ast_build(pANTLR3_UINT8 input_file) {
   ast->lexer->pLexer->rec->displayRecognitionError = displayRecognitionError;
   ast->parser->pParser->rec->displayRecognitionError = displayRecognitionError;
 
-  ast->lexer->pLexer->rec->state->userp = ast->exceptions;
-  ast->parser->pParser->rec->state->userp = ast->exceptions;
+  struct antlr_userp userp = {ast->exceptions, input_file};
+
+  ast->lexer->pLexer->rec->state->userp = &userp;
+  ast->parser->pParser->rec->state->userp = &userp;
   ast->result = ast->parser->source(ast->parser);
+  ast->lexer->pLexer->rec->state->userp = NULL;
+  ast->parser->pParser->rec->state->userp = NULL;
 
   ast->free = option2_ast_free;
 

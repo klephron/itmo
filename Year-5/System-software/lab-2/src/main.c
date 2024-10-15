@@ -187,7 +187,7 @@ int execute(struct args_struct *args) {
     if (ast->exceptions->size(ast->exceptions) != 0) {
       for (list_iter it = ast->exceptions->head; it != NULL; it = it->next) {
         char *msg = exception_to_chars(((exception *)it->data));
-        fprintf(stderr, "%s", msg);
+        fprintf(stderr, "%s\n", msg);
         free(msg);
       }
       error = 1;
