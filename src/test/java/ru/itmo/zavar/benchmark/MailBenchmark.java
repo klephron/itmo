@@ -18,13 +18,14 @@ public class MailBenchmark {
         private final MailStatistics stats = new MailStatistics();
         private final IndividualActor actorToCheck = new IndividualActor("Alexander", "Stepanov", "Pavlovich",
             new Address("Russia", "Moscow", "Moscow Oblast", "412 Walnut St", "19984"));
-        @Param({"5000", "15000", "25000", "50000", "100000", "250000"})
+        @Param({"5000", "15000", "25000", "50000", "100000"})
         private int count;
         private final int delay = 500;
         private Set<Mail> mailSet;
 
-        @Setup(Level.Invocation)
+        @Setup(Level.Trial)
         public void setup() {
+            System.out.println("\nSetting up mail generator...");
             mailSet = generator.generateMails(count);
         }
 
@@ -33,8 +34,8 @@ public class MailBenchmark {
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Fork(value = 1, warmups = 1)
-    @Warmup(iterations = 2)
+    @Fork(value = 1, warmups = 0)
+    @Warmup(iterations = 1)
     @Measurement(iterations = 3)
     public void statsBenchmarkWithDelayAndWithParallelAndWithSpliterator(BenchmarkState state) {
         try {
@@ -47,8 +48,8 @@ public class MailBenchmark {
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Fork(value = 1, warmups = 1)
-    @Warmup(iterations = 2)
+    @Fork(value = 1, warmups = 0)
+    @Warmup(iterations = 1)
     @Measurement(iterations = 3)
     public void statsBenchmarkWithDelayAndWithParallel(BenchmarkState state) {
         try {
@@ -61,8 +62,8 @@ public class MailBenchmark {
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Fork(value = 1, warmups = 1)
-    @Warmup(iterations = 2)
+    @Fork(value = 1, warmups = 0)
+    @Warmup(iterations = 1)
     @Measurement(iterations = 3)
     public void statsBenchmarkWithDelay(BenchmarkState state) {
         try {
@@ -75,8 +76,8 @@ public class MailBenchmark {
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Fork(value = 1, warmups = 1)
-    @Warmup(iterations = 2)
+    @Fork(value = 1, warmups = 0)
+    @Warmup(iterations = 1)
     @Measurement(iterations = 3)
     public void statsBenchmarkWithoutDelayAndWithParallel(BenchmarkState state) {
         try {
@@ -89,8 +90,8 @@ public class MailBenchmark {
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    @Fork(value = 1, warmups = 1)
-    @Warmup(iterations = 2)
+    @Fork(value = 1, warmups = 0)
+    @Warmup(iterations = 1)
     @Measurement(iterations = 3)
     public void statsBenchmarkWithoutDelay(BenchmarkState state) {
         try {

@@ -1,0 +1,1404 @@
+[
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "5000"
+        },
+        "primaryMetric" : {
+            "score" : 5.072153466666667E8,
+            "scoreError" : 2.308825150260737E7,
+            "scoreConfidence" : [
+                4.8412709516405934E8,
+                5.3030359816927403E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.05924025E8,
+                "50.0" : 5.0726858E8,
+                "90.0" : 5.08453435E8,
+                "95.0" : 5.08453435E8,
+                "99.0" : 5.08453435E8,
+                "99.9" : 5.08453435E8,
+                "99.99" : 5.08453435E8,
+                "99.999" : 5.08453435E8,
+                "99.9999" : 5.08453435E8,
+                "100.0" : 5.08453435E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.08453435E8,
+                    5.05924025E8,
+                    5.0726858E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "15000"
+        },
+        "primaryMetric" : {
+            "score" : 5.09038465E8,
+            "scoreError" : 8918894.620075047,
+            "scoreConfidence" : [
+                5.0011957037992495E8,
+                5.1795735962007505E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.08505355E8,
+                "50.0" : 5.0914426E8,
+                "90.0" : 5.0946578E8,
+                "95.0" : 5.0946578E8,
+                "99.0" : 5.0946578E8,
+                "99.9" : 5.0946578E8,
+                "99.99" : 5.0946578E8,
+                "99.999" : 5.0946578E8,
+                "99.9999" : 5.0946578E8,
+                "100.0" : 5.0946578E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.0946578E8,
+                    5.08505355E8,
+                    5.0914426E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "25000"
+        },
+        "primaryMetric" : {
+            "score" : 5.0879167E8,
+            "scoreError" : 2.0115147024425603E7,
+            "scoreConfidence" : [
+                4.886765229755744E8,
+                5.289068170244256E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.07792225E8,
+                "50.0" : 5.08608375E8,
+                "90.0" : 5.0997441E8,
+                "95.0" : 5.0997441E8,
+                "99.0" : 5.0997441E8,
+                "99.9" : 5.0997441E8,
+                "99.99" : 5.0997441E8,
+                "99.999" : 5.0997441E8,
+                "99.9999" : 5.0997441E8,
+                "100.0" : 5.0997441E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.0997441E8,
+                    5.07792225E8,
+                    5.08608375E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "50000"
+        },
+        "primaryMetric" : {
+            "score" : 5.170148683333333E8,
+            "scoreError" : 1.1356597041624103E7,
+            "scoreConfidence" : [
+                5.056582712917092E8,
+                5.2837146537495744E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.16317085E8,
+                "50.0" : 5.17214355E8,
+                "90.0" : 5.17513165E8,
+                "95.0" : 5.17513165E8,
+                "99.0" : 5.17513165E8,
+                "99.9" : 5.17513165E8,
+                "99.99" : 5.17513165E8,
+                "99.999" : 5.17513165E8,
+                "99.9999" : 5.17513165E8,
+                "100.0" : 5.17513165E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.17214355E8,
+                    5.17513165E8,
+                    5.16317085E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "100000"
+        },
+        "primaryMetric" : {
+            "score" : 5.245351083333333E8,
+            "scoreError" : 2.4412930333006077E7,
+            "scoreConfidence" : [
+                5.001221780003272E8,
+                5.489480386663394E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.22991045E8,
+                "50.0" : 5.2525654E8,
+                "90.0" : 5.2535774E8,
+                "95.0" : 5.2535774E8,
+                "99.0" : 5.2535774E8,
+                "99.9" : 5.2535774E8,
+                "99.99" : 5.2535774E8,
+                "99.999" : 5.2535774E8,
+                "99.9999" : 5.2535774E8,
+                "100.0" : 5.2535774E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.2525654E8,
+                    5.22991045E8,
+                    5.2535774E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "5000"
+        },
+        "primaryMetric" : {
+            "score" : 5.061772383333333E8,
+            "scoreError" : 1.3807372596967302E7,
+            "scoreConfidence" : [
+                4.9236986573636603E8,
+                5.199846109303006E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.0559879E8,
+                "50.0" : 5.05899155E8,
+                "90.0" : 5.0703377E8,
+                "95.0" : 5.0703377E8,
+                "99.0" : 5.0703377E8,
+                "99.9" : 5.0703377E8,
+                "99.99" : 5.0703377E8,
+                "99.999" : 5.0703377E8,
+                "99.9999" : 5.0703377E8,
+                "100.0" : 5.0703377E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.05899155E8,
+                    5.0703377E8,
+                    5.0559879E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "15000"
+        },
+        "primaryMetric" : {
+            "score" : 5.056279583333333E8,
+            "scoreError" : 1.4160773963380897E7,
+            "scoreConfidence" : [
+                4.9146718436995244E8,
+                5.197887322967142E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.04771295E8,
+                "50.0" : 5.05828075E8,
+                "90.0" : 5.06284505E8,
+                "95.0" : 5.06284505E8,
+                "99.0" : 5.06284505E8,
+                "99.9" : 5.06284505E8,
+                "99.99" : 5.06284505E8,
+                "99.999" : 5.06284505E8,
+                "99.9999" : 5.06284505E8,
+                "100.0" : 5.06284505E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.06284505E8,
+                    5.04771295E8,
+                    5.05828075E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "25000"
+        },
+        "primaryMetric" : {
+            "score" : 5.0851995E8,
+            "scoreError" : 2.8618930118983407E7,
+            "scoreConfidence" : [
+                4.799010198810166E8,
+                5.371388801189834E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.0680196E8,
+                "50.0" : 5.0888175E8,
+                "90.0" : 5.0987614E8,
+                "95.0" : 5.0987614E8,
+                "99.0" : 5.0987614E8,
+                "99.9" : 5.0987614E8,
+                "99.99" : 5.0987614E8,
+                "99.999" : 5.0987614E8,
+                "99.9999" : 5.0987614E8,
+                "100.0" : 5.0987614E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.0888175E8,
+                    5.0680196E8,
+                    5.0987614E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "50000"
+        },
+        "primaryMetric" : {
+            "score" : 5.09677885E8,
+            "scoreError" : 1.9635909653197013E7,
+            "scoreConfidence" : [
+                4.90041975346803E8,
+                5.29313794653197E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.08818675E8,
+                "50.0" : 5.09329825E8,
+                "90.0" : 5.10885155E8,
+                "95.0" : 5.10885155E8,
+                "99.0" : 5.10885155E8,
+                "99.9" : 5.10885155E8,
+                "99.99" : 5.10885155E8,
+                "99.999" : 5.10885155E8,
+                "99.9999" : 5.10885155E8,
+                "100.0" : 5.10885155E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.10885155E8,
+                    5.09329825E8,
+                    5.08818675E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "100000"
+        },
+        "primaryMetric" : {
+            "score" : 5.204513483333333E8,
+            "scoreError" : 1.1074838787859567E7,
+            "scoreConfidence" : [
+                5.0937650954547375E8,
+                5.315261871211929E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.1984729E8,
+                "50.0" : 5.2044541E8,
+                "90.0" : 5.21061345E8,
+                "95.0" : 5.21061345E8,
+                "99.0" : 5.21061345E8,
+                "99.9" : 5.21061345E8,
+                "99.99" : 5.21061345E8,
+                "99.999" : 5.21061345E8,
+                "99.9999" : 5.21061345E8,
+                "100.0" : 5.21061345E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.1984729E8,
+                    5.2044541E8,
+                    5.21061345E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallelAndWithSpliterator",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "5000"
+        },
+        "primaryMetric" : {
+            "score" : 5.064946016666667E8,
+            "scoreError" : 7085365.542088601,
+            "scoreConfidence" : [
+                4.9940923612457806E8,
+                5.135799672087553E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.06106505E8,
+                "50.0" : 5.0649405E8,
+                "90.0" : 5.0688325E8,
+                "95.0" : 5.0688325E8,
+                "99.0" : 5.0688325E8,
+                "99.9" : 5.0688325E8,
+                "99.99" : 5.0688325E8,
+                "99.999" : 5.0688325E8,
+                "99.9999" : 5.0688325E8,
+                "100.0" : 5.0688325E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.0688325E8,
+                    5.06106505E8,
+                    5.0649405E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallelAndWithSpliterator",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "15000"
+        },
+        "primaryMetric" : {
+            "score" : 5.070386916666667E8,
+            "scoreError" : 6084281.148243012,
+            "scoreConfidence" : [
+                5.009544105184237E8,
+                5.131229728149097E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.0671219E8,
+                "50.0" : 5.0702511E8,
+                "90.0" : 5.07378775E8,
+                "95.0" : 5.07378775E8,
+                "99.0" : 5.07378775E8,
+                "99.9" : 5.07378775E8,
+                "99.99" : 5.07378775E8,
+                "99.999" : 5.07378775E8,
+                "99.9999" : 5.07378775E8,
+                "100.0" : 5.07378775E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.0702511E8,
+                    5.0671219E8,
+                    5.07378775E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallelAndWithSpliterator",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "25000"
+        },
+        "primaryMetric" : {
+            "score" : 5.08139995E8,
+            "scoreError" : 1.145631805237061E7,
+            "scoreConfidence" : [
+                4.966836769476294E8,
+                5.195963130523706E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.0743641E8,
+                "50.0" : 5.08339935E8,
+                "90.0" : 5.0864364E8,
+                "95.0" : 5.0864364E8,
+                "99.0" : 5.0864364E8,
+                "99.9" : 5.0864364E8,
+                "99.99" : 5.0864364E8,
+                "99.999" : 5.0864364E8,
+                "99.9999" : 5.0864364E8,
+                "100.0" : 5.0864364E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.0864364E8,
+                    5.0743641E8,
+                    5.08339935E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallelAndWithSpliterator",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "50000"
+        },
+        "primaryMetric" : {
+            "score" : 5.126680166666667E8,
+            "scoreError" : 3.1465798971516684E7,
+            "scoreConfidence" : [
+                4.8120221769515E8,
+                5.441338156381834E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.1158539E8,
+                "50.0" : 5.1176168E8,
+                "90.0" : 5.1465698E8,
+                "95.0" : 5.1465698E8,
+                "99.0" : 5.1465698E8,
+                "99.9" : 5.1465698E8,
+                "99.99" : 5.1465698E8,
+                "99.999" : 5.1465698E8,
+                "99.9999" : 5.1465698E8,
+                "100.0" : 5.1465698E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.1158539E8,
+                    5.1465698E8,
+                    5.1176168E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithDelayAndWithParallelAndWithSpliterator",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "100000"
+        },
+        "primaryMetric" : {
+            "score" : 5.235202416666667E8,
+            "scoreError" : 1.69840903276883E7,
+            "scoreConfidence" : [
+                5.065361513389784E8,
+                5.40504331994355E8
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.2294053E8,
+                "50.0" : 5.23026115E8,
+                "90.0" : 5.2459408E8,
+                "95.0" : 5.2459408E8,
+                "99.0" : 5.2459408E8,
+                "99.9" : 5.2459408E8,
+                "99.99" : 5.2459408E8,
+                "99.999" : 5.2459408E8,
+                "99.9999" : 5.2459408E8,
+                "100.0" : 5.2459408E8
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    5.2294053E8,
+                    5.2459408E8,
+                    5.23026115E8
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "5000"
+        },
+        "primaryMetric" : {
+            "score" : 286005.0488585696,
+            "scoreError" : 32156.401098859733,
+            "scoreConfidence" : [
+                253848.64775970986,
+                318161.4499574293
+            ],
+            "scorePercentiles" : {
+                "0.0" : 284143.258363151,
+                "50.0" : 286223.859930194,
+                "90.0" : 287648.0282823638,
+                "95.0" : 287648.0282823638,
+                "99.0" : 287648.0282823638,
+                "99.9" : 287648.0282823638,
+                "99.99" : 287648.0282823638,
+                "99.999" : 287648.0282823638,
+                "99.9999" : 287648.0282823638,
+                "100.0" : 287648.0282823638
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    286223.859930194,
+                    287648.0282823638,
+                    284143.258363151
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "15000"
+        },
+        "primaryMetric" : {
+            "score" : 865606.4459422758,
+            "scoreError" : 64127.61224849785,
+            "scoreConfidence" : [
+                801478.8336937779,
+                929734.0581907737
+            ],
+            "scorePercentiles" : {
+                "0.0" : 863513.8960814776,
+                "50.0" : 863640.8263607349,
+                "90.0" : 869664.6153846154,
+                "95.0" : 869664.6153846154,
+                "99.0" : 869664.6153846154,
+                "99.9" : 869664.6153846154,
+                "99.99" : 869664.6153846154,
+                "99.999" : 869664.6153846154,
+                "99.9999" : 869664.6153846154,
+                "100.0" : 869664.6153846154
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    863640.8263607349,
+                    869664.6153846154,
+                    863513.8960814776
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "25000"
+        },
+        "primaryMetric" : {
+            "score" : 1412571.1355010408,
+            "scoreError" : 93791.25481504471,
+            "scoreConfidence" : [
+                1318779.880685996,
+                1506362.3903160857
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1407378.4790553837,
+                "50.0" : 1412676.0231442282,
+                "90.0" : 1417658.9043035107,
+                "95.0" : 1417658.9043035107,
+                "99.0" : 1417658.9043035107,
+                "99.9" : 1417658.9043035107,
+                "99.99" : 1417658.9043035107,
+                "99.999" : 1417658.9043035107,
+                "99.9999" : 1417658.9043035107,
+                "100.0" : 1417658.9043035107
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    1412676.0231442282,
+                    1417658.9043035107,
+                    1407378.4790553837
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "50000"
+        },
+        "primaryMetric" : {
+            "score" : 4694078.17457081,
+            "scoreError" : 1073973.3072352826,
+            "scoreConfidence" : [
+                3620104.867335527,
+                5768051.481806093
+            ],
+            "scorePercentiles" : {
+                "0.0" : 4626856.284658041,
+                "50.0" : 4718950.329877474,
+                "90.0" : 4736427.909176916,
+                "95.0" : 4736427.909176916,
+                "99.0" : 4736427.909176916,
+                "99.9" : 4736427.909176916,
+                "99.99" : 4736427.909176916,
+                "99.999" : 4736427.909176916,
+                "99.9999" : 4736427.909176916,
+                "100.0" : 4736427.909176916
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    4626856.284658041,
+                    4736427.909176916,
+                    4718950.329877474
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelay",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "100000"
+        },
+        "primaryMetric" : {
+            "score" : 1.8888658098803025E7,
+            "scoreError" : 923638.5723323268,
+            "scoreConfidence" : [
+                1.79650195264707E7,
+                1.981229667113535E7
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.883479736842105E7,
+                "50.0" : 1.8895905094339624E7,
+                "90.0" : 1.8935271833648395E7,
+                "95.0" : 1.8935271833648395E7,
+                "99.0" : 1.8935271833648395E7,
+                "99.9" : 1.8935271833648395E7,
+                "99.99" : 1.8935271833648395E7,
+                "99.999" : 1.8935271833648395E7,
+                "99.9999" : 1.8935271833648395E7,
+                "100.0" : 1.8935271833648395E7
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    1.8935271833648395E7,
+                    1.883479736842105E7,
+                    1.8895905094339624E7
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "5000"
+        },
+        "primaryMetric" : {
+            "score" : 252445.58235217512,
+            "scoreError" : 43238.24077028771,
+            "scoreConfidence" : [
+                209207.3415818874,
+                295683.82312246284
+            ],
+            "scorePercentiles" : {
+                "0.0" : 249718.2573545924,
+                "50.0" : 253613.4532556372,
+                "90.0" : 254005.03644629568,
+                "95.0" : 254005.03644629568,
+                "99.0" : 254005.03644629568,
+                "99.9" : 254005.03644629568,
+                "99.99" : 254005.03644629568,
+                "99.999" : 254005.03644629568,
+                "99.9999" : 254005.03644629568,
+                "100.0" : 254005.03644629568
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    253613.4532556372,
+                    254005.03644629568,
+                    249718.2573545924
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "15000"
+        },
+        "primaryMetric" : {
+            "score" : 672025.2023172401,
+            "scoreError" : 16896.25016857323,
+            "scoreConfidence" : [
+                655128.9521486668,
+                688921.4524858133
+            ],
+            "scorePercentiles" : {
+                "0.0" : 671027.281260476,
+                "50.0" : 672191.2193483373,
+                "90.0" : 672857.1063429071,
+                "95.0" : 672857.1063429071,
+                "99.0" : 672857.1063429071,
+                "99.9" : 672857.1063429071,
+                "99.99" : 672857.1063429071,
+                "99.999" : 672857.1063429071,
+                "99.9999" : 672857.1063429071,
+                "100.0" : 672857.1063429071
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    671027.281260476,
+                    672191.2193483373,
+                    672857.1063429071
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "25000"
+        },
+        "primaryMetric" : {
+            "score" : 1127501.148352547,
+            "scoreError" : 110609.41702288801,
+            "scoreConfidence" : [
+                1016891.7313296591,
+                1238110.5653754352
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1123513.1971720345,
+                "50.0" : 1124512.0885293786,
+                "90.0" : 1134478.159356228,
+                "95.0" : 1134478.159356228,
+                "99.0" : 1134478.159356228,
+                "99.9" : 1134478.159356228,
+                "99.99" : 1134478.159356228,
+                "99.999" : 1134478.159356228,
+                "99.9999" : 1134478.159356228,
+                "100.0" : 1134478.159356228
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    1123513.1971720345,
+                    1134478.159356228,
+                    1124512.0885293786
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "50000"
+        },
+        "primaryMetric" : {
+            "score" : 3246033.163067701,
+            "scoreError" : 251077.58272919588,
+            "scoreConfidence" : [
+                2994955.580338505,
+                3497110.7457968965
+            ],
+            "scorePercentiles" : {
+                "0.0" : 3230141.7043253714,
+                "50.0" : 3253970.5003248863,
+                "90.0" : 3253987.2845528456,
+                "95.0" : 3253987.2845528456,
+                "99.0" : 3253987.2845528456,
+                "99.9" : 3253987.2845528456,
+                "99.99" : 3253987.2845528456,
+                "99.999" : 3253987.2845528456,
+                "99.9999" : 3253987.2845528456,
+                "100.0" : 3253987.2845528456
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    3253970.5003248863,
+                    3253987.2845528456,
+                    3230141.7043253714
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "ru.itmo.zavar.benchmark.MailBenchmark.statsBenchmarkWithoutDelayAndWithParallel",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "C:\\Users\\yarus\\.jdks\\corretto-22.0.2\\bin\\java.exe",
+        "jvmArgs" : [
+            "-javaagent:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\lib\\idea_rt.jar=18596:E:\\JetBrains\\IntelliJ IDEA 2024.2.3\\bin",
+            "-Dfile.encoding=UTF-8",
+            "-Dsun.stdout.encoding=UTF-8",
+            "-Dsun.stderr.encoding=UTF-8"
+        ],
+        "jdkVersion" : "22.0.2",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "22.0.2+9-FR",
+        "warmupIterations" : 1,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "count" : "100000"
+        },
+        "primaryMetric" : {
+            "score" : 1.3010283303768812E7,
+            "scoreError" : 1430466.6183523927,
+            "scoreConfidence" : [
+                1.1579816685416419E7,
+                1.4440749922121204E7
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.2925809548387097E7,
+                "50.0" : 1.3024305591677504E7,
+                "90.0" : 1.308073477124183E7,
+                "95.0" : 1.308073477124183E7,
+                "99.0" : 1.308073477124183E7,
+                "99.9" : 1.308073477124183E7,
+                "99.99" : 1.308073477124183E7,
+                "99.999" : 1.308073477124183E7,
+                "99.9999" : 1.308073477124183E7,
+                "100.0" : 1.308073477124183E7
+            },
+            "scoreUnit" : "ns/op",
+            "rawData" : [
+                [
+                    1.308073477124183E7,
+                    1.2925809548387097E7,
+                    1.3024305591677504E7
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    }
+]
+
+
