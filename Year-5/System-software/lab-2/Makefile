@@ -97,7 +97,7 @@ $(TARGET_TST_DIR)/%: $(TST_DIR)/%.c $(OBJS) | $(DIRS)
 
 ### Generate antlr3 source and header files from grammar rules
 grammar: $(SRCS.GRM) $(HDRS.GRM)
-	
+
 ### Build executable
 build: $(TGTS.BIN)
 
@@ -111,13 +111,9 @@ run: build
 	./build/main io/input.txt
 
 ### Run main executable and generate dot
-run/pdf: build
+run/ast: build
 	./build/main io/input.txt --ignore-errors
-	dot -Tpdf io/output.dot -o io/output.pdf
-
-### Generate dot
-pdf:
-	dot -Tpdf io/output.dot -o io/output.pdf
+	dot -Tpdf io/input.txt.ast.dot -o io/input.txt.ast.pdf
 
 ### Build tests
 build/test: $(TGTS.TST)
@@ -129,7 +125,7 @@ test: build/test
 ### Format
 format:
 	@$(FORMAT) $(SRCS.LIB) $(HDRS.LIB) $(SRCS.TST)
-	
+
 ### Index project
 index:
 	make clean
@@ -139,7 +135,7 @@ index:
 clean:
 	rm -rf $(BUILD_DIR)
 
-### Help 
+### Help
 help:
 	@printf "Targets:\n"
 	@awk '/^[a-zA-Z\-_0-9%:\\]+/ { \
@@ -154,7 +150,7 @@ help:
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST) | sort -u
 
-### For makefile testing 
+### For makefile testing
 echo:
 	@echo $(SRCS)
 	@echo $(HDRS)

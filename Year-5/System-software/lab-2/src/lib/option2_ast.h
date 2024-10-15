@@ -23,3 +23,5 @@ typedef struct option2_ast option2_ast;
 option2_ast *option2_ast_build(pANTLR3_UINT8 input_file);
 
 p_list option2_ast_build_many(p_list input_files);
+
+const char *option2_ast_filename(const option2_ast *ast);

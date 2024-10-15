@@ -156,3 +156,7 @@ p_list option2_ast_build_many(p_list input_files) {
   }
   return asts;
 }
+
+const char *option2_ast_filename(const option2_ast *ast) {
+  return (const char *)ast->stream->fileName->chars;
+}

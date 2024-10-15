@@ -8,18 +8,19 @@ options {
 
 
 @header {
-#include "util/list.h"
+#include "option2_inter_decl.h"
+#include "util/antlr3.h"
 }
 
 @members {
-  p_list subroutines;
-  p_list exceptions;
 }
 
 
 // SOURCES
 source
   @init {
+    struct option2_inter_userp *userp = ANTLR3_USERP();
+    printf("exceptions: \%d\n", userp->inter->exceptions->size(userp->inter->exceptions));
     // memory = list_new();
     printf("list constucted\n");
 
@@ -32,7 +33,7 @@ source
   ;
 
 source_item
-  : func_def
+  : type_ref
   ;
 
 
@@ -40,158 +41,157 @@ source_item
 type_ref
   : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
   | identifier
-  |  ^('array' ^(type_ref) ^(ELEMS ','))
+  |  ^('array' type_ref ^(ELEMS ','*))
   ;
 
 
-// FUNCTIONS
-func_def
-  : ^(FUNC func_signature ^(BODY func_body)?)
-  ;
-
-func_signature
-  : identifier arg_def_list ^(RETURNS type_ref?)
-  ;
-
-arg_def_list
-  : ^(PARAMS identifier type_ref)
-  ;
-
-arg_def
-  : ^(PARAM identifier type_ref)
-  ;
-
-func_body
-  : ^(VARS (func_body_var)* ) ^(statement_block)
-  | ^(VARS ) ^(statement_block)
-  ;
-
-func_body_var
-  : ^(VAR identifier type_ref?)*
-  ;
-
-
-// STATEMENTS
-statement
-  : statement_if
-  | statement_block
-  | statement_while
-  | statement_do
-  | statement_break
-  | statement_expression
-  ;
-
-statement_if
-  : ^('if' expr $st_then $st_else?)
-  ;
-
-statement_block
-  : ^('begin' statement*)
-  ;
-
-statement_while
-  : ^('while' expr statement)
-  ;
-
-statement_do
-  : ^('repeat' statement_do_condition statement)
-  ;
-
-statement_do_condition
-  : ^('while' expr)
-  | ^('until' expr)
-  ;
-
-statement_break
-  : 'break'
-  ;
-
-statement_expression
-  : ^(expr)
-  ;
-
-
-// EXPRESSIONS
-expr
-  : expr_14
-  ;
-
-expr_literal
-  : bool | str | rune | hex | bits | dec
-  ;
-
-
-// OPERATORS
-expr_15
-  : expr_14*
-  ;
-
-expr_14
-  : expr_12 ('='^ expr_14)?
-  ;
-
-expr_12
-  : expr_11 ('||'^ expr_11)*
-  ;
-
-expr_11
-  : expr_10 ('&&'^ expr_10)*
-  ;
-
-expr_10
-  : expr_9 ('|'^ expr_9)*
-  ;
-
-expr_9
-  : expr_8 ('^'^ expr_8)*
-  ;
-
-expr_8
-  : expr_7 ('&'^ expr_7)*
-  ;
-
-expr_7
-  : expr_6 (('==' | '!=')^ expr_6)*
-  ;
-
-expr_6
-  : expr_5 (('<' | '<=' | '>' | '>=')^ expr_5)*
-  ;
-
-expr_5
-  : expr_4 (('>>' | '<<')^ expr_4)*
-  ;
-
-expr_4
-  : expr_3 (('+' | '-')^ expr_3)*
-  ;
-
-expr_3
-  : expr_2 (('*' | '/' | '%')^ expr_2)*
-  ;
-
-expr_2
-  : ('--' | '++' | '!' | '~' | '+' | '-')^ expr_2
-  | expr_01
-  ;
-
-expr_01
-  : expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
-  ;
-
-caller_indexer
-  : ^(CALLER ^(ARGS expr_15))
-  | ^(INDEXER ^(ARGS expr_15))
-  ;
-
-expr_braces_caller_indexer
-  : '('! expr ')'! caller_indexer^?
-  ;
-
-expr_place_caller_indexer
-  : identifier caller_indexer^?
-  ;
-
+// // FUNCTIONS
+// func_def
+//   : ^(FUNC func_signature ^(BODY func_body)?)
+//   ;
+//
+// func_signature
+//   : identifier arg_def_list ^(RETURNS type_ref?)
+//   ;
+//
+// arg_def_list
+//   : ^(PARAMS identifier type_ref)
+//   ;
+//
+// arg_def
+//   : ^(PARAM identifier type_ref)
+//   ;
+//
+// func_body
+//   : ^(VARS (func_body_var)* ) ^(statement_block)
+//   | ^(VARS ) ^(statement_block)
+//   ;
+//
+// func_body_var
+//   : ^(VAR identifier type_ref?)*
+//   ;
+//
+//
+// // STATEMENTS
+// statement
+//   : statement_if
+//   | statement_block
+//   | statement_while
+//   | statement_do
+//   | statement_break
+//   | statement_expression
+//   ;
+//
+// statement_if
+//   : ^('if' expr $st_then $st_else?)
+//   ;
+//
+// statement_block
+//   : ^('begin' statement*)
+//   ;
+//
+// statement_while
+//   : ^('while' expr statement)
+//   ;
+//
+// statement_do
+//   : ^('repeat' statement_do_condition statement)
+//   ;
+//
+// statement_do_condition
+//   : ^('while' expr)
+//   | ^('until' expr)
+//   ;
+//
+// statement_break
+//   : 'break'
+//   ;
+//
+// statement_expression
+//   : ^(expr)
+//   ;
+//
+//
+// // EXPRESSIONS
+// expr
+//   : expr_14
+//   ;
+//
+// expr_literal
+//   : bool | str | rune | hex | bits | dec
+//   ;
+//
+//
+// // OPERATORS
+// expr_15
+//   : expr_14*
+//   ;
+//
+// expr_14
+//   : expr_12 ('='^ expr_14)?
+//   ;
+//
+// expr_12
+//   : expr_11 ('||'^ expr_11)*
+//   ;
+//
+// expr_11
+//   : expr_10 ('&&'^ expr_10)*
+//   ;
+//
+// expr_10
+//   : expr_9 ('|'^ expr_9)*
+//   ;
+//
+// expr_9
+//   : expr_8 ('^'^ expr_8)*
+//   ;
+//
+// expr_8
+//   : expr_7 ('&'^ expr_7)*
+//   ;
+//
+// expr_7
+//   : expr_6 (('==' | '!=')^ expr_6)*
+//   ;
+//
+// expr_6
+//   : expr_5 (('<' | '<=' | '>' | '>=')^ expr_5)*
+//   ;
+//
+// expr_5
+//   : expr_4 (('>>' | '<<')^ expr_4)*
+//   ;
+//
+// expr_4
+//   : expr_3 (('+' | '-')^ expr_3)*
+//   ;
+//
+// expr_3
+//   : expr_2 (('*' | '/' | '%')^ expr_2)*
+//   ;
+//
+// expr_2
+//   : ('--' | '++' | '!' | '~' | '+' | '-')^ expr_2
+//   | expr_01
+//   ;
+//
+// expr_01
+//   : expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
+//   ;
+//
+// caller_indexer
+//   : ^(CALLER ^(ARGS expr_15))
+//   | ^(INDEXER ^(ARGS expr_15))
+//   ;
+//
+// expr_braces_caller_indexer
+//   : '('! expr ')'! caller_indexer^?
+//   ;
+//
+// expr_place_caller_indexer
+//   : identifier caller_indexer^?
+//   ;
 
 // TERMINALS
 identifier: IDENTIFIER;

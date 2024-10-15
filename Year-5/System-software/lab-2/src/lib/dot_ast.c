@@ -1,4 +1,4 @@
-#include "dot.h"
+#include "dot_ast.h"
 
 #include "util/macro.h"
 
@@ -164,7 +164,8 @@ static struct dot_ctx *dot_new(pANTLR3_BASE_TREE tree) {
   return ctx;
 }
 
-dot_string dot_ast(pANTLR3_BASE_TREE tree) {
+dot_string *dot_ast(const option2_ast *ast) {
+  pANTLR3_BASE_TREE tree = ast->result.tree;
   struct dot_ctx *ctx = dot_new(tree);
 
   size_t len = dot_len(ctx);
@@ -176,5 +177,5 @@ dot_string dot_ast(pANTLR3_BASE_TREE tree) {
 
   ctx->free(ctx);
 
-  return (dot_string){.len = len, .chars = chars};
+  return dot_string_new(chars, len);
 }

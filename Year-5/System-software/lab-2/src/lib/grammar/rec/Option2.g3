@@ -36,7 +36,7 @@ source
   ;
 
 source_item
-  : func_def
+  : type_ref
   ;
 
 
@@ -100,7 +100,7 @@ statement_if
 statement_block
   : 'begin' statement* 'end' ';' -> ^('begin' statement*)
   ;
-  
+
 statement_while
   : 'while' expr 'do' statement -> ^('while' expr statement)
   ;
@@ -196,12 +196,12 @@ caller_indexer
   | '[' expr_15 ']' -> ^(INDEXER ^(ARGS expr_15))
   ;
 
-// (priority 0-1) braces or call/index 
+// (priority 0-1) braces or call/index
 expr_braces_caller_indexer
   : '('! expr ')'! caller_indexer^?
   ;
 
-// (priority 0-1) identifier or call/index 
+// (priority 0-1) identifier or call/index
 expr_place_caller_indexer
   : identifier caller_indexer^?
   ;
@@ -212,7 +212,7 @@ identifier: IDENTIFIER;
 
 str: STR -> ^(CONST_STR STR);
 rune: CHAR -> ^(CONST_CHAR CHAR);
-hex: HEX -> ^(CONST_HEX HEX); 
+hex: HEX -> ^(CONST_HEX HEX);
 bits: BITS -> ^(CONST_BITS BITS);
 dec: DEC -> ^(CONST_DEC DEC);
 bool: BOOL -> ^(CONST_BOOL BOOL);
@@ -238,4 +238,3 @@ fragment DIGIT: ('0'..'9');
 fragment BINARY_DIGIT: ('0' | '1');
 fragment HEX_DIGIT: ('0'..'9' | 'a'..'f' | 'A'..'F');
 fragment WS:(' '|'\t') ;
-

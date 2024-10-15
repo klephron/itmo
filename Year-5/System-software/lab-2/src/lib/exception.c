@@ -94,9 +94,9 @@ static char *exception_unknown_to_chars(const struct exception_struct *exc) {
 }
 
 static char *exception_lexer_to_chars(const struct exception_struct *exc) {
-  const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
-                                      "(L%d): %s\n" ANSI_COLOR_BLUE
-                                      "  -->" ANSI_COLOR_RESET " %s:%d:%d";
+  const char *format =
+      ANSI_COLOR_RED "error" ANSI_COLOR_RESET "(L%d): %s\n" ANSI_COLOR_BLUE
+                     "  -->" ANSI_COLOR_RESET " %s:%d:%d";
 
   char *exc_stream = "<empty>";
   char *exc_message = "<empty>";
@@ -121,8 +121,8 @@ static char *exception_lexer_to_chars(const struct exception_struct *exc) {
   char *str = malloc(len + 1);
   str[0] = '\0';
 
-  sprintf(str, format, exc->subtype, exc_message, exc_stream,
-          exc->line, exc->offset);
+  sprintf(str, format, exc->subtype, exc_message, exc_stream, exc->line,
+          exc->offset);
 
   assert(len >= strlen(str));
 
@@ -172,9 +172,9 @@ static char *exception_parser_to_chars(const struct exception_struct *exc) {
 }
 
 static char *exception_inter_to_chars(const struct exception_struct *exc) {
-  const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
-                                      "(I%d): %s\n" ANSI_COLOR_BLUE
-                                      "  -->" ANSI_COLOR_RESET " %s:%d:%d";
+  const char *format =
+      ANSI_COLOR_RED "error" ANSI_COLOR_RESET "(I%d): %s\n" ANSI_COLOR_BLUE
+                     "  -->" ANSI_COLOR_RESET " %s:%d:%d";
 
   char *exc_stream = "<empty>";
   char *exc_message = "<empty>";
@@ -199,14 +199,13 @@ static char *exception_inter_to_chars(const struct exception_struct *exc) {
   char *str = malloc(len + 1);
   str[0] = '\0';
 
-  sprintf(str, format, exc->subtype, exc_message, exc_stream,
-          exc->line, exc->offset);
+  sprintf(str, format, exc->subtype, exc_message, exc_stream, exc->line,
+          exc->offset);
 
   assert(len >= strlen(str));
 
   return str;
 }
-
 
 char *exception_to_chars(const struct exception_struct *exc) {
   switch (exc->type) {

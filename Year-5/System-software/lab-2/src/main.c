@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <stdio.h>
 
+#include "dot_inter.h"
 #include "util/file.h"
 #include "util/list.h"
 #include "util/list_funcs.h"
@@ -9,6 +10,7 @@
 #include "dot_ast.h"
 #include "exception.h"
 #include "option2_ast.h"
+#include "option2_inter.h"
 
 struct args_struct {
   char *prog_name;
@@ -129,7 +131,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
 }
 
 // filename is not directory
-void ensure_dir_exist(char *filename) {
+void ensure_dir_exist(const char *filename) {
   char *dir = dirname(filename);
   dir_create_p(dir);
   free(dir);
@@ -140,7 +142,7 @@ char *get_ast_dot_output(const struct args_struct *args,
                          const option2_ast *ast) {
   char *suffix = ".ast.dot";
   char *prefix =
-      join_paths(args->output_dir, (const char *)ast->stream->fileName->chars);
+      join_paths(args->output_dir, option2_ast_filename(ast));
 
   char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
   sprintf(output, "%s%s", prefix, suffix);
@@ -175,65 +177,92 @@ char *get_cg_dot_output(struct args_struct *args, const char *source,
   return get_c_dot_output(args, source, func, "cg");
 }
 
+int has_subroutine(struct args_struct *args, const char *subroutine) {
+  return args->subroutines->get(args->subroutines, subroutine) != NULL;
+}
+
+void print_exceptions(struct args_struct *_, const p_list exceptions) {
+  for (list_iter it = exceptions->head; it != NULL; it = it->next) {
+    char *msg = exception_to_chars(((exception *)it->data));
+    fprintf(stderr, "%s\n", msg);
+    free(msg);
+  }
+}
+
+void write_dot(struct args_struct *args, const dot_string *dot,
+               const char *output) {
+  if (args->tee) {
+    printf("%s\n", dot->chars);
+  }
+  ensure_dir_exist(output);
+  FILE *output_fd = fopen(output, "wb");
+  fwrite(dot->chars, dot->len, 1, output_fd);
+  fclose(output_fd);
+}
+
 int execute(struct args_struct *args) {
   int error = 0;
 
-  // stage: build ast
+  // stage: build ast + handle exceptions
   p_list asts = option2_ast_build_many(args->input_files);
 
   for (list_iter it = asts->head; it != NULL; it = it->next) {
     option2_ast *ast = it->data;
-
     if (ast->exceptions->size(ast->exceptions) != 0) {
-      for (list_iter it = ast->exceptions->head; it != NULL; it = it->next) {
-        char *msg = exception_to_chars(((exception *)it->data));
-        fprintf(stderr, "%s\n", msg);
-        free(msg);
-      }
+      print_exceptions(args, ast->exceptions);
       error = 1;
     }
   }
 
-  // stage: build dot
+  // stage: ast dot
   if (!error || args->ignore_errors) {
     for (list_iter it = asts->head; it != NULL; it = it->next) {
       option2_ast *ast = it->data;
 
-      dot_string dot = dot_ast(ast->result.tree);
-
-      if (args->tee) {
-        printf("%s\n", dot.chars);
-      }
-
+      dot_string *dot = dot_ast(ast);
       char *output = get_ast_dot_output(args, ast);
-      ensure_dir_exist(output);
-
-      FILE *output_fd = fopen(output, "wb");
-      fwrite(dot.chars, dot.len, 1, output_fd);
-      fclose(output_fd);
-
+      write_dot(args, dot, output);
       free(output);
-      free((void *)dot.chars);
+      dot->free(dot);
     }
   }
-  // stage: build control graphs
+
+  // stage: build cfg + handle exceptions
+  option2_inter *inter = NULL;
+
   if (!error || args->ignore_errors) {
-    for (list_iter it = asts->head; it != NULL; it = it->next) {
-      option2_ast *ast = it->data;
-      const char *source = (char *)ast->stream->fileName->chars;
-
-      char *output_cfg = get_cfg_dot_output(args, source, "main");
-      char *output_cg = get_cg_dot_output(args, source, "main");
-
-      ensure_dir_exist(output_cfg);
-      ensure_dir_exist(output_cg);
-
-      printf("cfg: %s\n", output_cfg);
-      printf("cg: %s\n", output_cg);
-
-      free(output_cg);
-      free(output_cfg);
+    inter = option2_inter_build(asts);
+    if (inter->exceptions->size(inter->exceptions) != 0) {
+      print_exceptions(args, inter->exceptions);
+      error = 1;
     }
+  }
+
+  // stage: cfg and cg dots
+  if (!error || args->ignore_errors) {
+    for (list_iter it = inter->subroutines->head; it != NULL; it = it->next) {
+      option2_inter_subroutine *sub = it->data;
+      const char *sub_name = sub->signature->name;
+      const char *source = (char *)sub->file_name;
+
+      dot_string *dot_cfg = dot_inter_cfg(inter, sub);
+      char *output_cfg = get_cfg_dot_output(args, source, sub_name);
+      write_dot(args, dot_cfg, output_cfg);
+      free(output_cfg);
+      dot_cfg->free(dot_cfg);
+
+      if (has_subroutine(args, sub_name)) {
+        dot_string *dot_cg = dot_inter_cg(inter, sub);
+        char *output_cg = get_cg_dot_output(args, source, sub_name);
+        write_dot(args, dot_cg, output_cg);
+        free(output_cg);
+        dot_cg->free(dot_cg);
+      }
+    }
+  }
+
+  if (inter != NULL) {
+    inter->free(inter);
   }
 
   asts->free(asts);
