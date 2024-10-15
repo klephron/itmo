@@ -10,13 +10,14 @@ options {
 @header {
 #include "util/antlr3.h"
 
-#include "option2_inter.h"
 #include "option2_inter/expressions.h"
 #include "option2_inter/functions.h"
 #include "option2_inter/sources.h"
 #include "option2_inter/statements.h"
 #include "option2_inter/terminals.h"
 #include "option2_inter/types.h"
+#include "option2_inter/userp.h"
+#include "option2_inter.h"
 }
 
 @members {

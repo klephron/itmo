@@ -1,7 +1,7 @@
 #include "option2_inter/functions.h"
 
-#include <stdlib.h>
 #include "util/macro.h"
+#include <stdlib.h>
 
 static void signature_free(option2_inter_signature *data) {
   free(data->name);

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "option2_inter.h"
 #include "option2_inter/types.h"
+#include "option2_inter/userp.h"
 #include "util/list.h"
 
 struct option2_inter_signature {
@@ -19,7 +19,6 @@ struct option2_inter_subroutine {
 
 typedef struct option2_inter_subroutine option2_inter_subroutine;
 typedef struct option2_inter_signature option2_inter_signature;
-
 
 void option2_inter_subroutine_free(option2_inter_subroutine *data);
 

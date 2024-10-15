@@ -3,7 +3,6 @@
 #include "util/macro.h"
 #include <stdlib.h>
 
-
 static void inter_t_base_free_in(struct option2_inter_t_base *base) {
   UNUSED(base);
 }
