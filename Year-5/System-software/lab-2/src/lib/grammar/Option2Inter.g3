@@ -17,7 +17,6 @@ options {
 #include "option2_inter/terminals.h"
 #include "option2_inter/types.h"
 #include "option2_inter/userp.h"
-#include "option2_inter.h"
 }
 
 @members {
