@@ -1,0 +1,230 @@
+tree grammar Option2Pass1_Declarations;
+
+options {
+  language = C;
+  tokenVocab = Option2;
+  ASTLabelType = pANTLR3_BASE_TREE;
+}
+
+
+@header {
+#include "util/antlr3.h"
+#include "option2_ir/expressions.h"
+#include "option2_ir/functions.h"
+#include "option2_ir/sources.h"
+#include "option2_ir/statements.h"
+#include "option2_ir/terminals.h"
+#include "option2_ir/types.h"
+#include "option2_ir/userp.h"
+}
+
+@members {
+}
+
+
+// SOURCES
+source
+  @init {
+    struct option2_inter_userp *userp = ANTLR3_USERP();
+    printf("pass-1 started\n");
+
+  }
+  @after {
+    // memory->free(memory);
+    printf("pass-1 ended\n");
+  }
+  : ^(ROOT source_item*)
+  ;
+
+source_item
+  : func_def
+  ;
+
+
+// TYPES
+type_ref
+  : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
+  | identifier
+  |  ^('array' type_ref ^(ELEMS ','*))
+  ;
+
+
+// FUNCTIONS
+func_def
+  : ^(FUNC func_signature (^(BODY func_body))? )
+  ;
+
+func_signature
+  : identifier arg_def_list ^(RETURNS type_ref?)
+  ;
+
+arg_def_list
+  : ^(PARAMS arg_def*)
+  ;
+
+arg_def
+  : ^(PARAM identifier type_ref)
+  ;
+
+// TODO: skip reading of whole BODY subtree
+func_body
+  : ^(VARS func_body_var*) statement_block
+  ;
+
+func_body_var
+  : ^(VAR identifier type_ref?)
+  ;
+
+
+//STATEMENTS
+statement
+  : statement_if
+  | statement_block
+  | statement_while
+  | statement_do
+  | statement_break
+  | statement_expression
+  ;
+
+statement_if
+  : ^('if' expr statement statement?)
+  ;
+
+statement_block
+  : ^('begin' statement*)
+  ;
+
+statement_while
+  : ^('while' expr statement)
+  ;
+
+statement_do
+  : ^('repeat' statement_do_condition statement)
+  ;
+
+statement_do_condition
+  : ^('while' expr)
+  | ^('until' expr)
+  ;
+
+statement_break
+  : 'break'
+  ;
+
+statement_expression
+  : expr
+  ;
+
+
+// EXPRESSIONS
+expr
+  : expr_14
+  | expr_12
+  | expr_11
+  | expr_10
+  | expr_9
+  | expr_8
+  | expr_7
+  | expr_6
+  | expr_5
+  | expr_4
+  | expr_3
+  | expr_2
+  | expr_caller
+  | expr_indexer
+  | expr_literal
+  | expr_identifier
+  ;
+
+
+// OPERATORS
+expr_15
+  : expr*
+  ;
+
+expr_14
+  : ^('=' expr expr)
+  ;
+
+expr_12
+  : ^('||' expr expr)
+  ;
+
+expr_11
+  : ^('&&' expr expr)
+  ;
+
+expr_10
+  : ^('|' expr expr)
+  ;
+
+expr_9
+  : ^('^' expr expr)
+  ;
+
+expr_8
+  : ^('&' expr expr)
+  ;
+
+expr_7
+  : ^('==' expr expr)
+  | ^('!=' expr expr)
+  ;
+
+expr_6
+  : ^('<' expr expr)
+  | ^('<=' expr expr)
+  | ^('>' expr expr)
+  | ^('>=' expr expr)
+  ;
+
+expr_5
+  : ^('<<' expr expr)
+  | ^('>>' expr expr)
+  ;
+
+expr_4
+  : ^('+' expr expr?)
+  | ^('-' expr expr?)
+  ;
+
+expr_3
+  : ^('*' expr expr)
+  | ^('/' expr expr)
+  | ^('%' expr expr)
+  ;
+
+// NOTE: excluding unary +/-
+expr_2
+  : ^('--' expr)
+  | ^('++' expr)
+  | ^('!' expr)
+  | ^('~' expr)
+  ;
+
+expr_caller
+  : ^(CALLER ^(ARGS expr_15) expr)
+  ;
+
+expr_indexer
+  : ^(INDEXER ^(ARGS expr_15) expr)
+  ;
+
+expr_literal
+  : bool | str | rune | hex | bits | dec
+  ;
+
+expr_identifier
+  : identifier
+  ;
+
+
+// TERMINALS
+identifier: IDENTIFIER;
+
+str: ^(CONST_STR STR);
+rune: ^(CONST_CHAR CHAR);
+hex: ^(CONST_HEX HEX);
+bits: ^(CONST_BITS BITS);
+dec: ^(CONST_DEC DEC);
+bool: ^(CONST_BOOL BOOL);

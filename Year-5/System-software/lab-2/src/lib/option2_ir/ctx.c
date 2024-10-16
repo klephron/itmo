@@ -1,21 +1,22 @@
-#include "option2_inter/ctx.h"
+#include "option2_ir/ctx.h"
 
 #include "exception.h"
-#include "option2_inter/functions.h"
+#include "option2_ir/functions.h"
 #include "util/list_funcs.h"
 #include "util/macro.h"
 #include <stdlib.h>
 
+
 // move
 static void *sub_list_new(void *_data) {
-  option2_inter_subroutine *exc = _data;
+  option2_ir_subroutine *exc = _data;
   return exc;
 }
 
 static void sub_list_delete(void *_data) {
   if (_data != NULL) {
-    option2_inter_subroutine *exc = _data;
-    option2_inter_subroutine_free(exc);
+    option2_ir_subroutine *exc = _data;
+    option2_ir_subroutine_free(exc);
   }
 }
 
@@ -32,7 +33,7 @@ static void exc_list_delete(void *_data) {
   }
 }
 
-static void inter_free(option2_inter *inter) {
+static void inter_free(option2_ir_ctx *inter) {
   if (inter != NULL) {
     inter->subroutines->free(inter->subroutines);
     inter->exceptions->free(inter->exceptions);
@@ -40,8 +41,8 @@ static void inter_free(option2_inter *inter) {
   }
 }
 
-option2_inter *option2_inter_new() {
-  option2_inter *inter = MALLOC(option2_inter);
+option2_ir_ctx *option2_ir_ctx_new() {
+  option2_ir_ctx *inter = MALLOC(option2_ir_ctx);
   inter->subroutines =
       list_new(list_false_cmp, sub_list_new, sub_list_delete, 0);
   inter->exceptions =

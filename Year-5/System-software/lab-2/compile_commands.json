@@ -52,12 +52,12 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/dot_inter.o",
-      "src/lib/dot_inter.c"
+      "build/lib/dot_ir.o",
+      "src/lib/dot_ir.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/src/lib/dot_inter.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/dot_inter.o"
+    "file": "/workspaces/system-software/lab-2/src/lib/dot_ir.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/dot_ir.o"
   },
   {
     "arguments": [
@@ -112,12 +112,12 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/option2_inter/ctx.o",
-      "src/lib/option2_inter/ctx.c"
+      "build/lib/option2_ir/ctx.o",
+      "src/lib/option2_ir/ctx.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter/ctx.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter/ctx.o"
+    "file": "/workspaces/system-software/lab-2/src/lib/option2_ir/ctx.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2_ir/ctx.o"
   },
   {
     "arguments": [
@@ -132,12 +132,12 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/option2_inter/functions.o",
-      "src/lib/option2_inter/functions.c"
+      "build/lib/option2_ir/functions.o",
+      "src/lib/option2_ir/functions.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter/functions.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter/functions.o"
+    "file": "/workspaces/system-software/lab-2/src/lib/option2_ir/functions.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2_ir/functions.o"
   },
   {
     "arguments": [
@@ -152,12 +152,12 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/option2_inter/types.o",
-      "src/lib/option2_inter/types.c"
+      "build/lib/option2_ir/types.o",
+      "src/lib/option2_ir/types.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter/types.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter/types.o"
+    "file": "/workspaces/system-software/lab-2/src/lib/option2_ir/types.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2_ir/types.o"
   },
   {
     "arguments": [
@@ -172,12 +172,12 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/option2_inter.o",
-      "src/lib/option2_inter.c"
+      "build/lib/option2_ir.o",
+      "src/lib/option2_ir.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/src/lib/option2_inter.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/option2_inter.o"
+    "file": "/workspaces/system-software/lab-2/src/lib/option2_ir.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/option2_ir.o"
   },
   {
     "arguments": [
@@ -272,12 +272,32 @@
       "-Ibuild/lib/_gen",
       "-Isrc/lib",
       "-o",
-      "build/lib/_gen/Option2Inter.o",
-      "build/lib/_gen/Option2Inter.c"
+      "build/lib/_gen/Option2Pass1_Declarations.o",
+      "build/lib/_gen/Option2Pass1_Declarations.c"
     ],
     "directory": "/workspaces/system-software/lab-2",
-    "file": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Inter.c",
-    "output": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Inter.o"
+    "file": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Pass1_Declarations.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Pass1_Declarations.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g3",
+      "-O0",
+      "-m64",
+      "-fsanitize=address,undefined,leak",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "-Ibuild/lib/_gen",
+      "-Isrc/lib",
+      "-o",
+      "build/lib/_gen/Option2Pass2_IR.o",
+      "build/lib/_gen/Option2Pass2_IR.c"
+    ],
+    "directory": "/workspaces/system-software/lab-2",
+    "file": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Pass2_IR.c",
+    "output": "/workspaces/system-software/lab-2/build/lib/_gen/Option2Pass2_IR.o"
   },
   {
     "arguments": [
@@ -333,18 +353,19 @@
       "-Isrc/lib",
       "build/lib/dot_ast.o",
       "build/lib/dot.o",
-      "build/lib/dot_inter.o",
+      "build/lib/dot_ir.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
-      "build/lib/option2_inter/ctx.o",
-      "build/lib/option2_inter/functions.o",
-      "build/lib/option2_inter/types.o",
-      "build/lib/option2_inter.o",
+      "build/lib/option2_ir/ctx.o",
+      "build/lib/option2_ir/functions.o",
+      "build/lib/option2_ir/types.o",
+      "build/lib/option2_ir.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
       "build/lib/util/string.o",
-      "build/lib/_gen/Option2Inter.o",
+      "build/lib/_gen/Option2Pass1_Declarations.o",
+      "build/lib/_gen/Option2Pass2_IR.o",
       "build/lib/_gen/Option2Lexer.o",
       "build/lib/_gen/Option2Parser.o",
       "-o",
@@ -369,18 +390,19 @@
       "-Isrc/lib",
       "build/lib/dot_ast.o",
       "build/lib/dot.o",
-      "build/lib/dot_inter.o",
+      "build/lib/dot_ir.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
-      "build/lib/option2_inter/ctx.o",
-      "build/lib/option2_inter/functions.o",
-      "build/lib/option2_inter/types.o",
-      "build/lib/option2_inter.o",
+      "build/lib/option2_ir/ctx.o",
+      "build/lib/option2_ir/functions.o",
+      "build/lib/option2_ir/types.o",
+      "build/lib/option2_ir.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
       "build/lib/util/string.o",
-      "build/lib/_gen/Option2Inter.o",
+      "build/lib/_gen/Option2Pass1_Declarations.o",
+      "build/lib/_gen/Option2Pass2_IR.o",
       "build/lib/_gen/Option2Lexer.o",
       "build/lib/_gen/Option2Parser.o",
       "-o",
@@ -405,18 +427,19 @@
       "-Isrc/lib",
       "build/lib/dot_ast.o",
       "build/lib/dot.o",
-      "build/lib/dot_inter.o",
+      "build/lib/dot_ir.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
-      "build/lib/option2_inter/ctx.o",
-      "build/lib/option2_inter/functions.o",
-      "build/lib/option2_inter/types.o",
-      "build/lib/option2_inter.o",
+      "build/lib/option2_ir/ctx.o",
+      "build/lib/option2_ir/functions.o",
+      "build/lib/option2_ir/types.o",
+      "build/lib/option2_ir.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
       "build/lib/util/string.o",
-      "build/lib/_gen/Option2Inter.o",
+      "build/lib/_gen/Option2Pass1_Declarations.o",
+      "build/lib/_gen/Option2Pass2_IR.o",
       "build/lib/_gen/Option2Lexer.o",
       "build/lib/_gen/Option2Parser.o",
       "-o",
@@ -441,18 +464,19 @@
       "-Isrc/lib",
       "build/lib/dot_ast.o",
       "build/lib/dot.o",
-      "build/lib/dot_inter.o",
+      "build/lib/dot_ir.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
-      "build/lib/option2_inter/ctx.o",
-      "build/lib/option2_inter/functions.o",
-      "build/lib/option2_inter/types.o",
-      "build/lib/option2_inter.o",
+      "build/lib/option2_ir/ctx.o",
+      "build/lib/option2_ir/functions.o",
+      "build/lib/option2_ir/types.o",
+      "build/lib/option2_ir.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
       "build/lib/util/string.o",
-      "build/lib/_gen/Option2Inter.o",
+      "build/lib/_gen/Option2Pass1_Declarations.o",
+      "build/lib/_gen/Option2Pass2_IR.o",
       "build/lib/_gen/Option2Lexer.o",
       "build/lib/_gen/Option2Parser.o",
       "-o",
@@ -477,18 +501,19 @@
       "-Isrc/lib",
       "build/lib/dot_ast.o",
       "build/lib/dot.o",
-      "build/lib/dot_inter.o",
+      "build/lib/dot_ir.o",
       "build/lib/exception.o",
       "build/lib/option2_ast.o",
-      "build/lib/option2_inter/ctx.o",
-      "build/lib/option2_inter/functions.o",
-      "build/lib/option2_inter/types.o",
-      "build/lib/option2_inter.o",
+      "build/lib/option2_ir/ctx.o",
+      "build/lib/option2_ir/functions.o",
+      "build/lib/option2_ir/types.o",
+      "build/lib/option2_ir.o",
       "build/lib/util/file.o",
       "build/lib/util/list.o",
       "build/lib/util/list_funcs.o",
       "build/lib/util/string.o",
-      "build/lib/_gen/Option2Inter.o",
+      "build/lib/_gen/Option2Pass1_Declarations.o",
+      "build/lib/_gen/Option2Pass2_IR.o",
       "build/lib/_gen/Option2Lexer.o",
       "build/lib/_gen/Option2Parser.o",
       "-o",

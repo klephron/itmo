@@ -1,7 +1,7 @@
 #include <getopt.h>
 #include <stdio.h>
 
-#include "dot_inter.h"
+#include "dot_ir.h"
 #include "util/file.h"
 #include "util/list.h"
 #include "util/list_funcs.h"
@@ -10,7 +10,7 @@
 #include "dot_ast.h"
 #include "exception.h"
 #include "option2_ast.h"
-#include "option2_inter.h"
+#include "option2_ir.h"
 
 struct args_struct {
   char *prog_name;
@@ -228,10 +228,10 @@ int execute(struct args_struct *args) {
   }
 
   // stage: build cfg + handle exceptions
-  option2_inter *inter = NULL;
+  option2_ir_ctx *inter = NULL;
 
   if (!error || args->ignore_errors) {
-    inter = option2_inter_build(asts);
+    inter = option2_ir_build(asts);
     if (inter->exceptions->size(inter->exceptions) != 0) {
       print_exceptions(args, inter->exceptions);
       error = 1;
@@ -241,7 +241,7 @@ int execute(struct args_struct *args) {
   // stage: cfg and cg dots
   if (!error || args->ignore_errors) {
     for (list_iter it = inter->subroutines->head; it != NULL; it = it->next) {
-      option2_inter_subroutine *sub = it->data;
+      option2_ir_subroutine *sub = it->data;
       const char *sub_name = sub->signature->name;
       const char *source = (char *)sub->file_name;
 
