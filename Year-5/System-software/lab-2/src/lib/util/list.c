@@ -4,13 +4,6 @@
 #include "util/list.h"
 #include "util/macro.h"
 
-static int list_has_next(list_iter this) {
-  if (this->next != NULL) {
-    return 1;
-  }
-  return 0;
-}
-
 static void *list_get(p_list this, const void *data) {
   for (list_iter it = this->head; it != NULL; it = it->next) {
     if (!this->f_cmp(it->data, data)) {
@@ -20,12 +13,17 @@ static void *list_get(p_list this, const void *data) {
   return NULL;
 }
 
+static void list_replace(struct list_struct *this, list_iter it, void *data) {
+  this->f_delete(it->data);
+  it->data = this->f_new(data);
+}
+
+
 static void list_put(p_list this, void *data) {
   if (this->unique) {
     for (list_iter it = this->head; it != NULL; it = it->next) {
       if (!this->f_cmp(it->data, data)) {
-        this->f_delete(it->data);
-        it->data = this->f_new(data);
+        list_replace(this, it, data);
         return;
       }
     }
@@ -73,6 +71,7 @@ p_list list_new(list_func_cmp cmp, list_func_new new, list_func_delete delete,
   this->tail = NULL;
   this->get = list_get;
   this->put = list_put;
+  this->replace = list_replace;
   this->free = list_free;
   this->size = list_size;
 

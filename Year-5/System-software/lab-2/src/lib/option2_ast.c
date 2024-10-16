@@ -12,16 +12,31 @@ struct antlr_userp {
   pANTLR3_UINT8 file_name;
 };
 
+struct exception_helper {
+  enum exception_type type;
+  int subtype;
+  char *stream;
+  uint32_t line;
+  uint32_t offset;
+  char *name;
+};
+
+static exception *exception_new_helper(struct exception_helper *helper,
+                                       char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  exception *exc =
+      exception_new_v(helper->type, helper->subtype, helper->stream,
+                      helper->line, helper->offset, helper->name, format, args);
+  va_end(args);
+  return exc;
+}
+
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
                                     pANTLR3_UINT8 *_) {
   pANTLR3_EXCEPTION ex;
 
-  enum exception_type exc_type;
-  int exc_subtype;
-  uint32_t exc_line;
-  uint32_t exc_offset;
-  char *exc_name;
-  char exc_msg[256]; // NOTE: limited message size
+  struct exception_helper exh;
 
   if (!(recognizer->type != ANTLR3_TYPE_PARSER &&
         recognizer->type != ANTLR3_TYPE_LEXER)) {
@@ -29,57 +44,59 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
 
   switch (recognizer->type) {
   case ANTLR3_TYPE_LEXER:
-    exc_type = EXCEPTION_LEXER;
+    exh.type = EXCEPTION_LEXER;
     break;
   case ANTLR3_TYPE_PARSER:
-    exc_type = EXCEPTION_PARSER;
+    exh.type = EXCEPTION_PARSER;
     break;
   default:
-    exc_type = EXCEPTION_UNKNOWN;
+    exh.type = EXCEPTION_UNKNOWN;
   }
 
   ex = recognizer->state->exception;
 
-  exc_line = ex->line;
-  exc_name = ex->message;
+  exh.line = ex->line;
+  exh.name = ex->message;
 
   pANTLR3_COMMON_TOKEN theToken;
   pANTLR3_STRING ttext;
 
-  exc_offset = recognizer->state->exception->charPositionInLine;
+  exh.offset = recognizer->state->exception->charPositionInLine;
 
   theToken = (pANTLR3_COMMON_TOKEN)(recognizer->state->exception->token);
+  exception *exc;
+
+  struct antlr_userp *userp = recognizer->state->userp;
+  exh.stream = (char *)userp->file_name;
 
   if (theToken) {
     ttext = theToken->toString(theToken);
 
     if (theToken->type == ANTLR3_TOKEN_EOF) {
-      exc_subtype = EXCEPTION_PARSER_EOF;
-      snprintf(exc_msg, 255, "at <EOF>");
+      exh.subtype = EXCEPTION_PARSER_EOF;
+
+      exc = exception_new_helper(&exh, "at <EOF>");
     } else {
-      exc_subtype = EXCEPTION_PARSER_GENERIC;
-      snprintf(exc_msg, 255, "near %s",
-               ttext == NULL ? (pANTLR3_UINT8) "<empty>" : ttext->chars);
+      exh.subtype = EXCEPTION_PARSER_GENERIC;
+      exc = exception_new_helper(&exh, "near %s",
+                                 ttext == NULL ? (pANTLR3_UINT8) "<empty>"
+                                               : ttext->chars);
     }
   } else {
     if (recognizer->state) {
-      exc_subtype = EXCEPTION_LEXER_MATCHING;
-      snprintf(exc_msg, 255, "error matching from [Line: %d, LinePos: %d]",
-               recognizer->state->tokenStartLine,
-               recognizer->state->tokenStartCharPositionInLine);
+      exh.subtype = EXCEPTION_LEXER_MATCHING;
+      exc = exception_new_helper(
+          &exh, "error matching from [Line: %d, LinePos: %d]",
+          recognizer->state->tokenStartLine,
+          recognizer->state->tokenStartCharPositionInLine);
+
     } else {
-      exc_subtype = EXCEPTION_LEXER_UNKNOWN;
-      snprintf(exc_msg, 255,
-               "error, dumb implementation, may help [Line: %d, LinePos: %d]",
-               exc_line, exc_offset);
+      exh.subtype = EXCEPTION_LEXER_UNKNOWN;
+      exc = exception_new_helper(
+          &exh, "error, dumb implementation, may help [Line: %d, LinePos: %d]",
+          exh.line, exh.offset);
     }
   }
-
-  struct antlr_userp *userp = recognizer->state->userp;
-
-  exception *exc =
-      exception_new(exc_type, exc_subtype, (const char *)userp->file_name,
-                    exc_line, exc_offset, exc_name, exc_msg);
 
   userp->exceptions->put(userp->exceptions, exc);
 }

@@ -228,7 +228,7 @@ int execute(struct args_struct *args) {
   }
 
   // stage: build cfg + handle exceptions
-  option2_ir_ctx *inter = NULL;
+  ir_ctx *inter = NULL;
 
   if (!error || args->ignore_errors) {
     inter = option2_ir_build(asts);
@@ -241,7 +241,7 @@ int execute(struct args_struct *args) {
   // stage: cfg and cg dots
   if (!error || args->ignore_errors) {
     for (list_iter it = inter->subroutines->head; it != NULL; it = it->next) {
-      option2_ir_subroutine *sub = it->data;
+      ir_subroutine *sub = it->data;
       const char *sub_name = sub->signature->name;
       const char *source = (char *)sub->file_name;
 

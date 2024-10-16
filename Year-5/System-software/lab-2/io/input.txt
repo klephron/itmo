@@ -1,4 +1,4 @@
-method fun123():
+method fun123(arg1: custom_1, arg2: example, arg3: int, arg4: string, arg5: array [,,,] of bool):
 begin
   if true then true; else false;
 

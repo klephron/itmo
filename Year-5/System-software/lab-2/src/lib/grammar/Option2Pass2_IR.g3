@@ -8,14 +8,13 @@ options {
 
 
 @header {
-#include "util/antlr3.h"
-#include "option2_ir/expressions.h"
-#include "option2_ir/functions.h"
-#include "option2_ir/sources.h"
-#include "option2_ir/statements.h"
-#include "option2_ir/terminals.h"
-#include "option2_ir/types.h"
-#include "option2_ir/userp.h"
+#include "ir/expressions.h"
+#include "ir/functions.h"
+#include "ir/sources.h"
+#include "ir/statements.h"
+#include "ir/terminals.h"
+#include "ir/types.h"
+#include "ir/userp.h"
 }
 
 @members {
@@ -25,15 +24,9 @@ options {
 // SOURCES
 source
   @init {
-    struct option2_ir_userp *userp = ANTLR3_USERP();
-    printf("exceptions: \%d\n", userp->ctx->exceptions->size(userp->ctx->exceptions));
-    // memory = list_new();
-    printf("list constucted\n");
 
   }
   @after {
-    // memory->free(memory);
-    printf("list destructed\n");
   }
   : ^(ROOT source_item*)
   ;

@@ -8,14 +8,14 @@ options {
 
 
 @header {
-#include "util/antlr3.h"
-#include "option2_ir/expressions.h"
-#include "option2_ir/functions.h"
-#include "option2_ir/sources.h"
-#include "option2_ir/statements.h"
-#include "option2_ir/terminals.h"
-#include "option2_ir/types.h"
-#include "option2_ir/userp.h"
+#include "util/log.h"
+#include "ir/expressions.h"
+#include "ir/functions.h"
+#include "ir/sources.h"
+#include "ir/statements.h"
+#include "ir/terminals.h"
+#include "ir/types.h"
+#include "ir/userp.h"
 }
 
 @members {
@@ -25,44 +25,57 @@ options {
 // SOURCES
 source
   @init {
-    struct option2_inter_userp *userp = ANTLR3_USERP();
-    printf("pass-1 started\n");
 
   }
   @after {
-    // memory->free(memory);
-    printf("pass-1 ended\n");
   }
   : ^(ROOT source_item*)
   ;
 
 source_item
-  : func_def
+  : func_def {
+    ir_ctx *_ctx = ANTLR3_USERP()->ctx;
+  }
   ;
 
 
 // TYPES
-type_ref
-  : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
-  | identifier
-  |  ^('array' type_ref ^(ELEMS ','*))
+type_ref returns [ir_t_base *v]
+  : 'bool'  { $v = ir_t_base_new(IR_T_BOOL); }
+  | 'byte'  { $v = ir_t_base_new(IR_T_BYTE); }
+  | 'int'   { $v = ir_t_base_new(IR_T_INT); }
+  | 'uint'  { $v = ir_t_base_new(IR_T_UINT); }
+  | 'long'  { $v = ir_t_base_new(IR_T_LONG); }
+  | 'ulong' { $v = ir_t_base_new(IR_T_ULONG); }
+  | 'char'  { $v = ir_t_base_new(IR_T_CHAR); }
+  | 'string'{ $v = ir_t_base_new(IR_T_STRING); }
+
+  | identifier {
+    $v = (ir_t_base *) ir_term_id_to_t_custom($identifier.v);
+  }
+
+  |  ^('array' et=type_ref ^(ELEMS  ','*)) {
+    size_t dimension = $ELEMS->children->size($ELEMS->children) + 1;
+    $v = (ir_t_base *) ir_t_array_new(dimension, $et.v);
+  }
   ;
 
 
 // FUNCTIONS
-func_def
-  : ^(FUNC func_signature (^(BODY func_body))? )
+func_def returns [ir_subroutine *v]
+  : ^(FUNC func_signature (^(BODY func_body))? ) {
+  }
   ;
 
-func_signature
+func_signature returns [ir_signature *v]
   : identifier arg_def_list ^(RETURNS type_ref?)
   ;
 
-arg_def_list
+arg_def_list returns [p_list *v]
   : ^(PARAMS arg_def*)
   ;
 
-arg_def
+arg_def returns [ir_t_base *v]
   : ^(PARAM identifier type_ref)
   ;
 
@@ -220,7 +233,11 @@ expr_identifier
 
 
 // TERMINALS
-identifier: IDENTIFIER;
+identifier returns [ir_term_id *v]
+  : ID=IDENTIFIER {
+    const char * chars = (const char *) $ID->getText($ID)->to8($ID->getText($ID))->chars;
+    $v = ir_term_id_new(chars);
+  };
 
 str: ^(CONST_STR STR);
 rune: ^(CONST_CHAR CHAR);

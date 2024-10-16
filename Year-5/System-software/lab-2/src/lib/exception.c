@@ -1,6 +1,7 @@
 #include "exception.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +51,29 @@ struct exception_struct *exception_new(enum exception_type type, int subtype,
 
   return exc;
 };
+
+struct exception_struct *exception_new_v(enum exception_type type, int subtype,
+                                         const char *stream, uint32_t line,
+                                         uint32_t offset, const char *name,
+                                         const char *format, va_list args) {
+  char message[256]; // message size
+  message[0] = '\0';
+  vsnprintf(message, 255, format, args);
+  return exception_new(type, subtype, stream, line, offset, name, message);
+}
+
+struct exception_struct *exception_new_f(enum exception_type type, int subtype,
+                                         const char *stream, uint32_t line,
+                                         uint32_t offset, const char *name,
+                                         const char *format, ...) {
+  struct exception_struct *exc;
+  va_list args;
+  va_start(args, format);
+  exc =
+      exception_new_v(type, subtype, stream, line, offset, name, format, args);
+  va_end(args);
+  return exc;
+}
 
 static char *exception_unknown_to_chars(const struct exception_struct *exc) {
   const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
@@ -171,7 +195,7 @@ static char *exception_parser_to_chars(const struct exception_struct *exc) {
   return str;
 }
 
-static char *exception_inter_to_chars(const struct exception_struct *exc) {
+static char *exception_ir_to_chars(const struct exception_struct *exc) {
   const char *format =
       ANSI_COLOR_RED "error" ANSI_COLOR_RESET "(I%d): %s\n" ANSI_COLOR_BLUE
                      "  -->" ANSI_COLOR_RESET " %s:%d:%d";
@@ -213,8 +237,8 @@ char *exception_to_chars(const struct exception_struct *exc) {
     return exception_lexer_to_chars(exc);
   case EXCEPTION_PARSER:
     return exception_parser_to_chars(exc);
-  case EXCEPTION_INTER:
-    return exception_inter_to_chars(exc);
+  case EXCEPTION_IR:
+    return exception_ir_to_chars(exc);
   default:
     return exception_unknown_to_chars(exc);
   }

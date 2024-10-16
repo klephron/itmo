@@ -2,13 +2,13 @@
 
 #include "Option2Pass1_Declarations.h"
 #include "Option2Pass2_IR.h"
+#include "ir/userp.h"
 #include "option2_ast.h"
-#include "option2_ir/userp.h"
 
 #include <stdlib.h>
 
-option2_ir_ctx *option2_ir_build(const p_list ast) {
-  option2_ir_ctx *ctx = option2_ir_ctx_new();
+ir_ctx *option2_ir_build(const p_list ast) {
+  ir_ctx *ctx = ir_ctx_new();
 
   for (list_iter it = ast->head; it != NULL; it = it->next) {
     option2_ast *ast = it->data;
@@ -16,7 +16,7 @@ option2_ir_ctx *option2_ir_build(const p_list ast) {
     pANTLR3_COMMON_TREE_NODE_STREAM nodes =
         antlr3CommonTreeNodeStreamNewTree(ast->result.tree, ANTLR3_SIZE_HINT);
 
-    option2_ir_userp userp = {ctx, option2_ast_filename(ast)};
+    ir_userp userp = {ctx, option2_ast_filename(ast)};
 
     pOption2Pass1_Declarations pass1 = Option2Pass1_DeclarationsNew(nodes);
     pass1->pTreeParser->rec->state->userp = &userp;
