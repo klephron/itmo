@@ -18,7 +18,6 @@ static void list_replace(struct list_struct *this, list_iter it, void *data) {
   it->data = this->f_new(data);
 }
 
-
 static void list_put(p_list this, void *data) {
   if (this->unique) {
     for (list_iter it = this->head; it != NULL; it = it->next) {

@@ -10,11 +10,10 @@ options {
 @header {
 #include "ir/expressions.h"
 #include "ir/functions.h"
-#include "ir/sources.h"
 #include "ir/statements.h"
 #include "ir/terminals.h"
 #include "ir/types.h"
-#include "ir/userp.h"
+#include "ir/pass2.h"
 }
 
 @members {

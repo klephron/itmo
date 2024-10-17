@@ -128,10 +128,6 @@ expr
   : expr_14
   ;
 
-expr_literal
-  : bool | str | rune | hex | bits | dec
-  ;
-
 // OPERATORS
 expr_15
   : (expr_14 (',' expr_14)* )? -> expr_14*
@@ -198,12 +194,16 @@ caller_indexer
 
 // (priority 0-1) braces or call/index
 expr_braces_caller_indexer
-  : '('! expr ')'! caller_indexer^?
+  : '('! expr ')'! (caller_indexer^)*
   ;
 
 // (priority 0-1) identifier or call/index
 expr_place_caller_indexer
-  : identifier caller_indexer^?
+  : identifier (caller_indexer^)*
+  ;
+
+expr_literal
+  : bool | str | rune | hex | bits | dec
   ;
 
 

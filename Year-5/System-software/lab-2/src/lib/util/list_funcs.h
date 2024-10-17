@@ -18,3 +18,5 @@ list_func_new list_chars_new;
 list_func_delete list_chars_delete;
 
 list_func_cmp list_false_cmp;
+
+list_func_new list_move_new;

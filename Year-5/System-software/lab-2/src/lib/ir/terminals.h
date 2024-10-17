@@ -33,7 +33,12 @@ typedef struct ir_term_base ir_term_base;
 typedef struct ir_term_lit ir_term_lit;
 typedef struct ir_term_id ir_term_id;
 
-void ir_term_free(struct ir_term_base *generic);
+void ir_term_lit_free(ir_term_lit *lit);
 
+void ir_term_id_free(ir_term_id *id);
 ir_term_id *ir_term_id_new(const char *);
+int ir_term_id_equals(const ir_term_id *lsv, const ir_term_id *rsv);
+
 ir_t_custom *ir_term_id_to_t_custom(ir_term_id *id);
+
+void ir_term_free(struct ir_term_base *generic);

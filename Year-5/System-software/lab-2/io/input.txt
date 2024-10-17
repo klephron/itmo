@@ -1,7 +1,4 @@
-method fun123(arg1: custom_1, arg2: example, arg3: int, arg4: string, arg5: array [,,,] of bool):
+method fun123():
 begin
-  if true then true; else false;
-
-  a = 4;
-  if true then false; else true;
+  (fun1[arg1])(arg2, arg3)[arg4];
 end;

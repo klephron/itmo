@@ -11,11 +11,10 @@ options {
 #include "util/log.h"
 #include "ir/expressions.h"
 #include "ir/functions.h"
-#include "ir/sources.h"
 #include "ir/statements.h"
 #include "ir/terminals.h"
 #include "ir/types.h"
-#include "ir/userp.h"
+#include "ir/pass1.h"
 }
 
 @members {
@@ -24,17 +23,12 @@ options {
 
 // SOURCES
 source
-  @init {
-
-  }
-  @after {
-  }
   : ^(ROOT source_item*)
   ;
 
 source_item
   : func_def {
-    ir_ctx *_ctx = ANTLR3_USERP()->ctx;
+    ir_pass1_subroutine_add(IR_PASS1_ANTLR3_USERP(), $func_def.v);
   }
   ;
 
@@ -54,9 +48,9 @@ type_ref returns [ir_t_base *v]
     $v = (ir_t_base *) ir_term_id_to_t_custom($identifier.v);
   }
 
-  |  ^('array' et=type_ref ^(ELEMS  ','*)) {
+  |  ^('array' tr=type_ref ^(ELEMS  ','*)) {
     size_t dimension = $ELEMS->children->size($ELEMS->children) + 1;
-    $v = (ir_t_base *) ir_t_array_new(dimension, $et.v);
+    $v = (ir_t_base *) ir_t_array_new(dimension, $tr.v);
   }
   ;
 
@@ -64,19 +58,35 @@ type_ref returns [ir_t_base *v]
 // FUNCTIONS
 func_def returns [ir_subroutine *v]
   : ^(FUNC func_signature (^(BODY func_body))? ) {
+    $v = ir_pass1_subroutine_new(IR_PASS1_ANTLR3_USERP(), $func_signature.v);
   }
   ;
 
 func_signature returns [ir_signature *v]
-  : identifier arg_def_list ^(RETURNS type_ref?)
+  @init {
+    void *ret_v = NULL;
+  }
+  : id=identifier al=arg_def_list ^(RETURNS (r=type_ref { ret_v = $r.v; })?) {
+    $v = ir_signature_new(ir_term_id_new($id.v), $al.v, ret_v);
+  }
   ;
 
-arg_def_list returns [p_list *v]
-  : ^(PARAMS arg_def*)
+arg_def_list returns [p_list v]
+  @init {
+    p_list params = ir_param_list_new();
+  }
+  @after {
+    $v = params;
+  }
+  : ^(PARAMS (arg_def {
+    ir_pass1_param_add(IR_PASS1_ANTLR3_USERP(), params, $arg_def.v);
+    })*)
   ;
 
-arg_def returns [ir_t_base *v]
-  : ^(PARAM identifier type_ref)
+arg_def returns [ir_param *v]
+  : ^(PARAM id=identifier type_ref) {
+    $v = ir_param_new(ir_term_id_new($id.v), $type_ref.v);
+  }
   ;
 
 // TODO: skip reading of whole BODY subtree
@@ -233,10 +243,9 @@ expr_identifier
 
 
 // TERMINALS
-identifier returns [ir_term_id *v]
+identifier returns [const char *v]
   : ID=IDENTIFIER {
-    const char * chars = (const char *) $ID->getText($ID)->to8($ID->getText($ID))->chars;
-    $v = ir_term_id_new(chars);
+    $v = (const char *) $ID->getText($ID)->to8($ID->getText($ID))->chars;
   };
 
 str: ^(CONST_STR STR);

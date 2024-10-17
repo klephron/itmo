@@ -46,3 +46,6 @@ int list_false_cmp(const void *lsv, const void *rsv) {
   UNUSED(rsv);
   return 1;
 }
+
+// MOVE
+void *list_move_new(void *data) { return data; }

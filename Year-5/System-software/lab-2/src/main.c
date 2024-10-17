@@ -242,7 +242,7 @@ int execute(struct args_struct *args) {
   if (!error || args->ignore_errors) {
     for (list_iter it = inter->subroutines->head; it != NULL; it = it->next) {
       ir_subroutine *sub = it->data;
-      const char *sub_name = sub->signature->name;
+      const char *sub_name = sub->signature->id->name;
       const char *source = (char *)sub->file_name;
 
       dot_string *dot_cfg = dot_inter_cfg(inter, sub);

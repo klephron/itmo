@@ -16,26 +16,6 @@ static void ir_t_base_free(ir_t_base *base) {
   }
 }
 
-static void ir_t_array_free(ir_t_base *base) {
-  struct ir_t_array *array = (struct ir_t_array *)base;
-  if (array != NULL) {
-    ir_t_base_free_in(&array->base);
-    ir_t_free(array->elem_type);
-    free(array);
-  }
-}
-
-void ir_t_free(ir_t_base *generic) {
-  if (generic != NULL) {
-    switch (generic->type) {
-    case IR_T_ARRAY:
-      ir_t_array_free(generic);
-    default:
-      ir_t_base_free(generic);
-    }
-  }
-}
-
 static void ir_t_base_init(ir_t_base *self, ir_t_enum type) {
   self->type = type;
 }
@@ -77,6 +57,16 @@ ir_t_base *ir_t_base_new(ir_t_enum type) {
   return self;
 }
 
+// ARRAY
+static void ir_t_array_free(ir_t_base *base) {
+  struct ir_t_array *array = (struct ir_t_array *)base;
+  if (array != NULL) {
+    ir_t_base_free_in(&array->base);
+    ir_t_free(array->elem_type);
+    free(array);
+  }
+}
+
 ir_t_array *ir_t_array_new(size_t dimensions, ir_t_base *elem_type) {
   ir_t_array *self = MALLOC(ir_t_array);
   ir_t_base_init(&self->base, IR_T_ARRAY);
@@ -87,12 +77,25 @@ ir_t_array *ir_t_array_new(size_t dimensions, ir_t_base *elem_type) {
   return self;
 }
 
+// CUSTOM
 ir_t_custom *ir_t_custom_new(char *name) {
   ir_t_custom *self = MALLOC(ir_t_custom);
   ir_t_base_init(&self->base, IR_T_CUSTOM);
   self->name = name;
   debug("created custom name=%s", name);
   return self;
+}
+
+// GENERIC
+void ir_t_free(ir_t_base *generic) {
+  if (generic != NULL) {
+    switch (generic->type) {
+    case IR_T_ARRAY:
+      ir_t_array_free(generic);
+    default:
+      ir_t_base_free(generic);
+    }
+  }
 }
 
 int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
@@ -116,3 +119,5 @@ int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
   }
   return 1;
 }
+
+const char *ir_t_type_str(ir_t_base *type) { return ttstr(type->type); }

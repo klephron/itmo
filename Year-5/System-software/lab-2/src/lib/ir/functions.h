@@ -1,16 +1,16 @@
 #pragma once
 
+#include "ir/terminals.h"
 #include "ir/types.h"
-#include "ir/userp.h"
 #include "util/list.h"
 
 struct ir_param {
   ir_t_base *type;
-  char *name;
+  ir_term_id *id;
 };
 
 struct ir_signature {
-  char *name;
+  ir_term_id *id;
   p_list params; // ir_param
   ir_t_base *ret;
 };
@@ -33,7 +33,7 @@ enum ir_subroutine_cmp_enum {
   IR_SUBROUTINE_CMP_NULL = 0b1,
   IR_SUBROUTINE_CMP_RET = 0b10,
   IR_SUBROUTINE_CMP_PARAMS = 0b100,
-  IR_SUBROUTINE_CMP_NAME = 0b1000,
+  IR_SUBROUTINE_CMP_ID = 0b1000,
 };
 
 typedef struct ir_param ir_param;
@@ -42,11 +42,13 @@ typedef struct ir_signature ir_signature;
 typedef enum ir_subroutine_status_enum ir_subroutine_status_enum;
 typedef enum ir_subroutine_cmp_enum ir_subroutine_cmp_enum;
 
+ir_param *ir_param_new(ir_term_id *id, ir_t_base *type);
+p_list ir_param_list_new();
+
+ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret);
+
 void ir_subroutine_free(ir_subroutine *data);
-
-ir_signature *ir_signature_new(char *name, p_list params, ir_t_base *ret);
-ir_subroutine *ir_subroutine_new(const struct ir_userp *userp, ir_signature *signature,
+ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
                                  void *blocks, p_list operations);
-
 ir_subroutine_status_enum ir_subroutine_status(const ir_subroutine *subroutine);
 int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv);

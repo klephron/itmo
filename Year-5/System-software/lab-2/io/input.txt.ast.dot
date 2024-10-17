@@ -4,91 +4,37 @@ id_1[label=< <FONT POINT-SIZE="16"><b>ROOT</b></FONT><br/><FONT POINT-SIZE="12">
 id_2[label=< <FONT POINT-SIZE="16"><b>FUNC</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 0</FONT> >]
 id_3[label=< <FONT POINT-SIZE="16"><b>fun123</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 7</FONT> >]
 id_4[label=< <FONT POINT-SIZE="16"><b>PARAMS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_5[label=< <FONT POINT-SIZE="16"><b>PARAM</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_6[label=< <FONT POINT-SIZE="16"><b>arg1</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 14</FONT> >]
-id_7[label=< <FONT POINT-SIZE="16"><b>custom_1</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 20</FONT> >]
-id_8[label=< <FONT POINT-SIZE="16"><b>PARAM</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_9[label=< <FONT POINT-SIZE="16"><b>arg2</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 30</FONT> >]
-id_10[label=< <FONT POINT-SIZE="16"><b>example</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 36</FONT> >]
-id_11[label=< <FONT POINT-SIZE="16"><b>PARAM</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_12[label=< <FONT POINT-SIZE="16"><b>arg3</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 45</FONT> >]
-id_13[label=< <FONT POINT-SIZE="16"><b>int</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 51</FONT> >]
-id_14[label=< <FONT POINT-SIZE="16"><b>PARAM</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_15[label=< <FONT POINT-SIZE="16"><b>arg4</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 56</FONT> >]
-id_16[label=< <FONT POINT-SIZE="16"><b>string</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 62</FONT> >]
-id_17[label=< <FONT POINT-SIZE="16"><b>PARAM</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_18[label=< <FONT POINT-SIZE="16"><b>arg5</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 70</FONT> >]
-id_19[label=< <FONT POINT-SIZE="16"><b>array</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 76</FONT> >]
-id_20[label=< <FONT POINT-SIZE="16"><b>bool</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 91</FONT> >]
-id_21[label=< <FONT POINT-SIZE="16"><b>ELEMS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_22[label=< <FONT POINT-SIZE="16"><b>,</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 83</FONT> >]
-id_23[label=< <FONT POINT-SIZE="16"><b>,</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 84</FONT> >]
-id_24[label=< <FONT POINT-SIZE="16"><b>,</b></FONT><br/><FONT POINT-SIZE="12">Line: 1, Pos: 85</FONT> >]
-id_25[label=< <FONT POINT-SIZE="16"><b>RETURNS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_26[label=< <FONT POINT-SIZE="16"><b>BODY</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_27[label=< <FONT POINT-SIZE="16"><b>VARS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_28[label=< <FONT POINT-SIZE="16"><b>begin</b></FONT><br/><FONT POINT-SIZE="12">Line: 2, Pos: 0</FONT> >]
-id_29[label=< <FONT POINT-SIZE="16"><b>if</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 2</FONT> >]
-id_30[label=< <FONT POINT-SIZE="16"><b>CONST_BOOL</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_31[label=< <FONT POINT-SIZE="16"><b>true</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 5</FONT> >]
-id_32[label=< <FONT POINT-SIZE="16"><b>CONST_BOOL</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_33[label=< <FONT POINT-SIZE="16"><b>true</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 15</FONT> >]
-id_34[label=< <FONT POINT-SIZE="16"><b>CONST_BOOL</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_35[label=< <FONT POINT-SIZE="16"><b>false</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 26</FONT> >]
-id_36[label=< <FONT POINT-SIZE="16"><b>=</b></FONT><br/><FONT POINT-SIZE="12">Line: 5, Pos: 4</FONT> >]
-id_37[label=< <FONT POINT-SIZE="16"><b>a</b></FONT><br/><FONT POINT-SIZE="12">Line: 5, Pos: 2</FONT> >]
-id_38[label=< <FONT POINT-SIZE="16"><b>CONST_DEC</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_39[label=< <FONT POINT-SIZE="16"><b>4</b></FONT><br/><FONT POINT-SIZE="12">Line: 5, Pos: 6</FONT> >]
-id_40[label=< <FONT POINT-SIZE="16"><b>if</b></FONT><br/><FONT POINT-SIZE="12">Line: 6, Pos: 2</FONT> >]
-id_41[label=< <FONT POINT-SIZE="16"><b>CONST_BOOL</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_42[label=< <FONT POINT-SIZE="16"><b>true</b></FONT><br/><FONT POINT-SIZE="12">Line: 6, Pos: 5</FONT> >]
-id_43[label=< <FONT POINT-SIZE="16"><b>CONST_BOOL</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_44[label=< <FONT POINT-SIZE="16"><b>false</b></FONT><br/><FONT POINT-SIZE="12">Line: 6, Pos: 15</FONT> >]
-id_45[label=< <FONT POINT-SIZE="16"><b>CONST_BOOL</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
-id_46[label=< <FONT POINT-SIZE="16"><b>true</b></FONT><br/><FONT POINT-SIZE="12">Line: 6, Pos: 27</FONT> >]
+id_5[label=< <FONT POINT-SIZE="16"><b>RETURNS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_6[label=< <FONT POINT-SIZE="16"><b>BODY</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_7[label=< <FONT POINT-SIZE="16"><b>VARS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_8[label=< <FONT POINT-SIZE="16"><b>begin</b></FONT><br/><FONT POINT-SIZE="12">Line: 2, Pos: 0</FONT> >]
+id_9[label=< <FONT POINT-SIZE="16"><b>INDEXER</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_10[label=< <FONT POINT-SIZE="16"><b>ARGS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_11[label=< <FONT POINT-SIZE="16"><b>arg4</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 27</FONT> >]
+id_12[label=< <FONT POINT-SIZE="16"><b>CALLER</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_13[label=< <FONT POINT-SIZE="16"><b>ARGS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_14[label=< <FONT POINT-SIZE="16"><b>arg2</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 15</FONT> >]
+id_15[label=< <FONT POINT-SIZE="16"><b>arg3</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 21</FONT> >]
+id_16[label=< <FONT POINT-SIZE="16"><b>INDEXER</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_17[label=< <FONT POINT-SIZE="16"><b>ARGS</b></FONT><br/><FONT POINT-SIZE="12">Line: 0, Pos: 0</FONT> >]
+id_18[label=< <FONT POINT-SIZE="16"><b>arg1</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 8</FONT> >]
+id_19[label=< <FONT POINT-SIZE="16"><b>fun1</b></FONT><br/><FONT POINT-SIZE="12">Line: 3, Pos: 3</FONT> >]
 id_2 -> id_3
-id_5 -> id_6
-id_5 -> id_7
-id_4 -> id_5
-id_8 -> id_9
-id_8 -> id_10
-id_4 -> id_8
-id_11 -> id_12
-id_11 -> id_13
-id_4 -> id_11
-id_14 -> id_15
-id_14 -> id_16
-id_4 -> id_14
-id_17 -> id_18
-id_19 -> id_20
-id_21 -> id_22
-id_21 -> id_23
-id_21 -> id_24
-id_19 -> id_21
-id_17 -> id_19
-id_4 -> id_17
 id_2 -> id_4
-id_2 -> id_25
-id_26 -> id_27
-id_30 -> id_31
-id_29 -> id_30
-id_32 -> id_33
-id_29 -> id_32
-id_34 -> id_35
-id_29 -> id_34
-id_28 -> id_29
-id_36 -> id_37
-id_38 -> id_39
-id_36 -> id_38
-id_28 -> id_36
-id_41 -> id_42
-id_40 -> id_41
-id_43 -> id_44
-id_40 -> id_43
-id_45 -> id_46
-id_40 -> id_45
-id_28 -> id_40
-id_26 -> id_28
-id_2 -> id_26
+id_2 -> id_5
+id_6 -> id_7
+id_10 -> id_11
+id_9 -> id_10
+id_13 -> id_14
+id_13 -> id_15
+id_12 -> id_13
+id_17 -> id_18
+id_16 -> id_17
+id_16 -> id_19
+id_12 -> id_16
+id_9 -> id_12
+id_8 -> id_9
+id_6 -> id_8
+id_2 -> id_6
 id_1 -> id_2
 }
