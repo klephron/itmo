@@ -7,7 +7,8 @@ enum exception_type {
   EXCEPTION_UNKNOWN = 0,
   EXCEPTION_LEXER = 1,
   EXCEPTION_PARSER = 2,
-  EXCEPTION_IR = 3,
+  EXCEPTION_TREE = 3,
+  EXCEPTION_IR = 4,
 };
 
 enum exception_subtype_lexer {
@@ -19,6 +20,11 @@ enum exception_subtype_parser {
   EXCEPTION_PARSER_UNKNOWN = 0,
   EXCEPTION_PARSER_EOF = 1,
   EXCEPTION_PARSER_GENERIC = 2,
+};
+
+enum exception_subtype_tree {
+  EXCEPTION_TREE_UNKNOWN = 0,
+  EXCEPTION_TREE_UNEXPECTED_NODE = 1,
 };
 
 enum exception_subtype_ir {

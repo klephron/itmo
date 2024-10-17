@@ -19,8 +19,8 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
   pANTLR3_BASE_TREE theBaseTree;
 
   struct exception_helper exh;
-  exh.type = EXCEPTION_IR;
-  exh.subtype = EXCEPTION_IR_UNKNOWN;
+  exh.type = EXCEPTION_TREE;
+  exh.subtype = EXCEPTION_TREE_UNEXPECTED_NODE;
   exh.line = 0;
   exh.offset = 0;
   exh.name = recognizer->state->exception->message;

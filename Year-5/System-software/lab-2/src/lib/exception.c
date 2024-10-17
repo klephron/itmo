@@ -195,6 +195,48 @@ static char *exception_parser_to_chars(const struct exception_struct *exc) {
   return str;
 }
 
+static char *exception_tree_to_chars(const struct exception_struct *exc) {
+  const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
+                                      "(T%d): %s -> %s\n" ANSI_COLOR_BLUE
+                                      "  -->" ANSI_COLOR_RESET " %s";
+
+  char *exc_stream = "<empty>";
+  char *exc_message = "<empty>";
+  char *exc_name = "<empty>";
+
+  {
+    if (exc->stream) {
+      exc_stream = exc->stream;
+    }
+
+    if (exc->message) {
+      exc_message = exc->message;
+    }
+
+    if (exc->name) {
+      exc_name = exc->name;
+    }
+  }
+
+  size_t len = 0;
+  {
+    len += strlen(format);
+    len += strlen(exc_stream);
+    len += strlen(exc_message);
+    len += strlen(exc_name);
+  }
+
+  char *str = malloc(len + 1);
+  str[0] = '\0';
+
+  sprintf(str, format, exc->subtype, exc_name, exc_message, exc_stream,
+          exc->line, exc->offset);
+
+  assert(len >= strlen(str));
+
+  return str;
+}
+
 static char *exception_ir_to_chars(const struct exception_struct *exc) {
   const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
                                       "(I%d): %s -> %s\n" ANSI_COLOR_BLUE
@@ -243,6 +285,8 @@ char *exception_to_chars(const struct exception_struct *exc) {
     return exception_lexer_to_chars(exc);
   case EXCEPTION_PARSER:
     return exception_parser_to_chars(exc);
+  case EXCEPTION_TREE:
+    return exception_tree_to_chars(exc);
   case EXCEPTION_IR:
     return exception_ir_to_chars(exc);
   default:
