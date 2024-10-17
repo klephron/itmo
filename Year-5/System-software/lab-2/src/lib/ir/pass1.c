@@ -18,10 +18,14 @@ ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *pass1,
 int ir_pass1_subroutine_add(ir_pass1 *pass1, ir_subroutine *subroutine) {
   ir_ctx *ctx = pass1->ctx;
 
+  int ret = 0;
+
   for (list_iter it = ctx->subroutines->head; it != NULL; it = it->next) {
     ir_subroutine *lsv = it->data;
     int cmp = ir_subroutine_cmp(lsv, subroutine);
-    int status = ir_subroutine_status(lsv);
+
+    debug("compare subroutines: %s %s = %d", lsv->signature->id->name,
+          subroutine->signature->id->name, cmp);
 
     if ((cmp & IR_SUBROUTINE_CMP_ID) != 0) { // is names are different
       continue;
@@ -31,29 +35,29 @@ int ir_pass1_subroutine_add(ir_pass1 *pass1, ir_subroutine *subroutine) {
       exception *ex = exception_new_f(
           EXCEPTION_IR, EXCEPTION_IR_FUNCTION_OVERLOADING,
           subroutine->file_name, 0, 0, "function overloading is not allowed",
-          "previous definition in %s %d:%d", lsv->file_name, 0, 0);
+          "previous definition of %s in %s %d:%d",
+          subroutine->signature->id->name, lsv->file_name, 0, 0);
       ir_ctx_add_exception(ctx, ex);
-      return 0;
-    }
-
-    if (status == IR_SUBROUTINE_STATUS_DEFINITION) {
-      // TODO: may replace 0-s with actual location
-      exception *ex = exception_new_f(
-          EXCEPTION_IR, EXCEPTION_IR_FUNCTION_REDEFINITION,
-          subroutine->file_name, 0, 0, "function redefinition",
-          "previous definition in %s %d:%d", lsv->file_name, 0, 0);
-      ir_ctx_add_exception(ctx, ex);
-      return 0;
+      ret = -1;
+      break;
     }
 
     ctx->subroutines->replace(ctx->subroutines, it, subroutine);
     debug("replaced subroutine %s", subroutine->signature->id->name);
-    return 1;
+    ret = 1;
+    break;
   }
 
-  ctx->subroutines->put(ctx->subroutines, subroutine);
-  debug("added subroutine %s", subroutine->signature->id->name);
-  return 1;
+  if (ret == 0) {
+    ctx->subroutines->put(ctx->subroutines, subroutine);
+    ret = 1;
+    debug("added subroutine %s", subroutine->signature->id->name);
+  } else if (ret == -1) {
+    ir_subroutine_free(subroutine);
+    ret = 0;
+  }
+
+  return ret;
 }
 
 int ir_pass1_param_add(ir_pass1 *pass1, p_list list, ir_param *param) {

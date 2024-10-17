@@ -1,8 +1,9 @@
-method fun123():
+method fun123(arg3: bool): array [,,] of int
 begin
-  (fun1[arg1])(arg2, arg3)[arg4];
-  (fun1[arg1])(arg2, arg3)[arg4];
-  (fun1[arg1])(arg2, arg3)[arg4];
-  (fun1[arg1])(arg2, arg3)[arg4];
-  (fun1[arg1])arg2, arg3)[arg4];
 end;
+
+method fun123(arg3: int):;
+
+method fun1234(arg3: int):;
+
+method fun1234(arg3: int, arg5):;

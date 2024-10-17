@@ -109,9 +109,10 @@ void ir_t_free(ir_t_base *generic) {
   }
 }
 
+// if both types are not null and different -> not equal
 int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
   if (lsv == NULL || rsv == NULL) {
-    return 0;
+    return 1;
   }
   if (lsv->type != rsv->type) {
     return 0;
@@ -131,4 +132,9 @@ int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
   return 1;
 }
 
-const char *ir_t_type_str(ir_t_base *type) { return ttstr(type->type); }
+const char *ir_t_type_str(ir_t_base *type) {
+  if (type == NULL) {
+    return "<null>";
+  }
+  return ttstr(type->type);
+}

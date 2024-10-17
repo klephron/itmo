@@ -56,11 +56,7 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret) {
   ir_signature *self = MALLOC(ir_signature);
   self->id = id;
   self->params = params;
-  if (ret == NULL) {
-    self->ret = ir_t_base_new(IR_T_VOID);
-  } else {
-    self->ret = ret;
-  }
+  self->ret = ret;
   debug("created signature %s with params=%zu and ret=%s", self->id->name,
         self->params->size(self->params), ir_t_type_str(self->ret));
   return self;
@@ -117,7 +113,7 @@ int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {
     cmp |= IR_SUBROUTINE_CMP_ID;
   }
 
-  if (!ir_t_equals(lsv_s->ret, lsv_s->ret)) {
+  if (!ir_t_equals(lsv_s->ret, rsv_s->ret)) {
     cmp |= IR_SUBROUTINE_CMP_RET;
   }
 
