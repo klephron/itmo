@@ -5,6 +5,7 @@ rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(su
 CC := gcc
 # -fsanitize=thread
 # -fsanitize=address,undefined,leak -Wall -Wextra
+# -DNDEBUG
 FLAGS := -g3 -O0 -m64 -fsanitize=address,undefined,leak -Wall -Wextra
 MKDIR := mkdir -p
 # ANTLR := java -jar lib/antlr-3.5.3-complete.jar

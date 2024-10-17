@@ -50,13 +50,6 @@ ir_term_id *ir_term_id_new(const char *str) {
   return id;
 }
 
-ir_t_custom *ir_term_id_to_t_custom(ir_term_id *id) {
-  ir_t_custom *custom = ir_t_custom_new(id->name);
-  ir_term_base_free_in(&id->base);
-  free(id);
-  return custom;
-}
-
 int ir_term_id_equals(const ir_term_id *lsv, const ir_term_id *rsv) {
   return !strcmp(lsv->name, rsv->name);
 }

@@ -78,11 +78,20 @@ ir_t_array *ir_t_array_new(size_t dimensions, ir_t_base *elem_type) {
 }
 
 // CUSTOM
-ir_t_custom *ir_t_custom_new(char *name) {
+static void ir_t_custom_free(ir_t_base *base) {
+  struct ir_t_custom *custom = (struct ir_t_custom *)base;
+  if (custom != NULL) {
+    ir_t_base_free_in(&custom->base);
+    free(custom->name);
+    free(custom);
+  }
+}
+
+ir_t_custom *ir_t_custom_new(const char *name) {
   ir_t_custom *self = MALLOC(ir_t_custom);
   ir_t_base_init(&self->base, IR_T_CUSTOM);
-  self->name = name;
-  debug("created custom name=%s", name);
+  self->name = strdup(name);
+  debug("created custom name=%s", self->name);
   return self;
 }
 
@@ -91,9 +100,11 @@ void ir_t_free(ir_t_base *generic) {
   if (generic != NULL) {
     switch (generic->type) {
     case IR_T_ARRAY:
-      ir_t_array_free(generic);
+      return ir_t_array_free(generic);
+    case IR_T_CUSTOM:
+      return ir_t_custom_free(generic);
     default:
-      ir_t_base_free(generic);
+      return ir_t_base_free(generic);
     }
   }
 }

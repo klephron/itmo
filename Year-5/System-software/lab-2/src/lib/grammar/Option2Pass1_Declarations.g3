@@ -45,7 +45,7 @@ type_ref returns [ir_t_base *v]
   | 'string'{ $v = ir_t_base_new(IR_T_STRING); }
 
   | identifier {
-      $v = (ir_t_base *) ir_term_id_to_t_custom($identifier.v);
+      $v = (ir_t_base *) ir_t_custom_new($identifier.v);
     }
 
   | ^('array' tr=type_ref ^(ELEMS  ','*)) {
@@ -84,8 +84,11 @@ arg_def_list returns [p_list v]
   ;
 
 arg_def returns [ir_param *v]
-  : ^(PARAM id=identifier type_ref) {
-      $v = ir_param_new(ir_term_id_new($id.v), $type_ref.v);
+  @init {
+    void *type_ref_v = NULL;
+  }
+  : ^(PARAM id=identifier (type_ref { type_ref_v = $type_ref.v; })?) {
+      $v = ir_param_new(ir_term_id_new($id.v), type_ref_v);
     }
   ;
 

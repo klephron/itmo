@@ -57,7 +57,7 @@ arg_def_list
   ;
 
 arg_def
-  : ^(PARAM identifier type_ref)
+  : ^(PARAM identifier type_ref?)
   ;
 
 func_body

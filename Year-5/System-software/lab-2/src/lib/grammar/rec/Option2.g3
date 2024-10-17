@@ -70,7 +70,7 @@ arg_def_list
   ;
 
 arg_def
-  : iden=identifier (':' type_ref)? -> ^(PARAM identifier type_ref)
+  : iden=identifier (':' type_ref)? -> ^(PARAM identifier type_ref?)
   ;
 
 func_body

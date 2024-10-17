@@ -9,8 +9,12 @@
 
 // PARAM
 void ir_param_free(ir_param *self) {
-  ir_term_free((ir_term_base *)self->id);
-  ir_t_free(self->type);
+  debug("before param free %p", self);
+  if (self != NULL) {
+    ir_term_free((ir_term_base *)self->id);
+    ir_t_free(self->type);
+    free(self);
+  }
 }
 
 ir_param *ir_param_new(ir_term_id *id, ir_t_base *type) {
