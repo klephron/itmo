@@ -3,6 +3,12 @@
 #include "util/log.h"
 #include "util/macro.h"
 
+void ir_pass1_init(ir_pass1 *pass1, struct ir_ctx *ctx, const char *file_name) {
+  pass1->base.kind = IR_PASS_1;
+  pass1->ctx = ctx;
+  pass1->file_name = file_name;
+}
+
 ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *pass1,
                                        ir_signature *signature) {
   return ir_subroutine_new(pass1->file_name, signature, NULL, NULL);

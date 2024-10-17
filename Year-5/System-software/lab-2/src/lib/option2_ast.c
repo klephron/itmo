@@ -12,26 +12,6 @@ struct antlr_userp {
   pANTLR3_UINT8 file_name;
 };
 
-struct exception_helper {
-  enum exception_type type;
-  int subtype;
-  char *stream;
-  uint32_t line;
-  uint32_t offset;
-  char *name;
-};
-
-static exception *exception_new_helper(struct exception_helper *helper,
-                                       char *format, ...) {
-  va_list args;
-  va_start(args, format);
-  exception *exc =
-      exception_new_v(helper->type, helper->subtype, helper->stream,
-                      helper->line, helper->offset, helper->name, format, args);
-  va_end(args);
-  return exc;
-}
-
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
                                     pANTLR3_UINT8 *_) {
   pANTLR3_EXCEPTION ex;
@@ -75,24 +55,24 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
     if (theToken->type == ANTLR3_TOKEN_EOF) {
       exh.subtype = EXCEPTION_PARSER_EOF;
 
-      exc = exception_new_helper(&exh, "at <EOF>");
+      exc = exception_new_from_helper(&exh, "at <EOF>");
     } else {
       exh.subtype = EXCEPTION_PARSER_GENERIC;
-      exc = exception_new_helper(&exh, "near %s",
-                                 ttext == NULL ? (pANTLR3_UINT8) "<empty>"
-                                               : ttext->chars);
+      exc = exception_new_from_helper(&exh, "near %s",
+                                      ttext == NULL ? (pANTLR3_UINT8) "<empty>"
+                                                    : ttext->chars);
     }
   } else {
     if (recognizer->state) {
       exh.subtype = EXCEPTION_LEXER_MATCHING;
-      exc = exception_new_helper(
+      exc = exception_new_from_helper(
           &exh, "error matching from [Line: %d, LinePos: %d]",
           recognizer->state->tokenStartLine,
           recognizer->state->tokenStartCharPositionInLine);
 
     } else {
       exh.subtype = EXCEPTION_LEXER_UNKNOWN;
-      exc = exception_new_helper(
+      exc = exception_new_from_helper(
           &exh, "error, dumb implementation, may help [Line: %d, LinePos: %d]",
           exh.line, exh.offset);
     }

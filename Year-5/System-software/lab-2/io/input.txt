@@ -1,4 +1,8 @@
 method fun123():
 begin
   (fun1[arg1])(arg2, arg3)[arg4];
+  (fun1[arg1])(arg2, arg3)[arg4];
+  (fun1[arg1])(arg2, arg3)[arg4];
+  (fun1[arg1])(arg2, arg3)[arg4];
+  (fun1[arg1])arg2, arg3)[arg4];
 end;

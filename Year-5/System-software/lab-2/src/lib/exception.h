@@ -40,6 +40,15 @@ struct exception_struct {
   void (*free)(struct exception_struct *);
 };
 
+struct exception_helper {
+  enum exception_type type;
+  int subtype;
+  char *stream;
+  uint32_t line;
+  uint32_t offset;
+  char *name;
+};
+
 typedef struct exception_struct exception;
 
 struct exception_struct *exception_new(enum exception_type type, int subtype,
@@ -56,3 +65,7 @@ struct exception_struct *exception_new_f(enum exception_type type, int subtype,
                                          const char *format, ...);
 
 char *exception_to_chars(const struct exception_struct *exc);
+
+struct exception_struct *
+exception_new_from_helper(const struct exception_helper *helper, char *format,
+                          ...);
