@@ -25,6 +25,13 @@ ir_param *ir_param_new(ir_term_id *id, ir_t_base *type) {
   return self;
 }
 
+const char *ir_param_name(const ir_param *self) {
+  if (self && self->id) {
+    return self->id->name;
+  }
+  return "<null>";
+}
+
 static int container_cmp_ir_param(const void *_lsv, const void *_rsv) {
   const ir_param *lsv = _lsv;
   const ir_param *rsv = _rsv;
@@ -84,7 +91,7 @@ ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
   self->file_name = strdup((char *)file_name);
   self->blocks = blocks;
   self->operations = operations;
-  debug("created subroutine %s file=%s", signature->id->name, file_name);
+  debug("created subroutine %s file=%s", ir_subroutine_name(self), file_name);
   return self;
 }
 
@@ -96,6 +103,13 @@ ir_subroutine_status_enum ir_subroutine_status(const ir_subroutine *self) {
   } else {
     return IR_SUBROUTINE_STATUS_DEFINITION;
   }
+}
+
+const char *ir_subroutine_name(const ir_subroutine *self) {
+  if (self && self->signature && self->signature->id) {
+    return self->signature->id->name;
+  }
+  return "<null>";
 }
 
 int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {

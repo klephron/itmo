@@ -22,7 +22,6 @@ struct list_struct {
   /* if unique is set and element is found then replaces it,
    * otherwise pushes back */
   void (*put)(struct list_struct *self, void *data);
-
   list_it (*find)(struct list_struct *self, const void *data);
   void (*insert)(struct list_struct *self, list_it it, void *data);
   size_t (*size)(struct list_struct *self);

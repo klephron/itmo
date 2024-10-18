@@ -242,8 +242,8 @@ int execute(struct args_struct *args) {
   if (!error || args->ignore_errors) {
     for (list_it it = ir->subroutines->head; it; it = it->next) {
       ir_subroutine *sub = it->data;
-      const char *sub_name = sub->signature->id->name;
-      const char *source = (char *)sub->file_name;
+      const char *sub_name = ir_subroutine_name(sub);
+      const char *source = sub->file_name;
 
       dot_string *dot_cfg = dot_ir_cfg(ir, sub);
       char *output_cfg = get_cfg_dot_output(args, source, sub_name);

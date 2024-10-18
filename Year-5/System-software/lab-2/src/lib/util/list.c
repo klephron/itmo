@@ -74,8 +74,8 @@ p_list list_new(container_f_cmp cmp, container_f_new new,
   self->tail = NULL;
   self->get = list_get;
   self->put = list_put;
-  self->insert = list_insert;
   self->find = list_find;
+  self->insert = list_insert;
   self->size = list_size;
 
   self->free = list_free;
