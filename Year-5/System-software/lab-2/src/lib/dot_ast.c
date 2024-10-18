@@ -42,10 +42,10 @@ static struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
 
   ctx->list_nodes =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 1);
+               container_delete_string_string);
   ctx->list_edges =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 0);
+               container_delete_string_string);
 
   ctx->free = dot_ctx_free;
 
@@ -138,7 +138,8 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
 
   string_string data = {.key = id_s, .value = label};
 
-  ctx->list_nodes->put(ctx->list_nodes, &data);
+  list_it it = ctx->list_nodes->find(ctx->list_nodes, &data);
+  ctx->list_nodes->insert(ctx->list_nodes, it, &data);
 
   for (size_t i = 0; i < root->getChildCount(root); ++i) {
     pANTLR3_BASE_TREE child = root->getChild(root, i);
@@ -150,7 +151,7 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
 
       string_string data = {.key = id_s, .value = child_id_s};
 
-      ctx->list_edges->put(ctx->list_edges, &data);
+      ctx->list_edges->push_back(ctx->list_edges, &data);
     }
   }
 

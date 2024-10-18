@@ -4,7 +4,7 @@
 #include "util/list.h"
 #include "util/macro.h"
 
-static list_it list_find(struct list_struct *self, const void *data) {
+static list_it list_find(const struct list_struct *self, const void *data) {
   for (list_it it = self->head; it; it = it->next) {
     if (!self->f_cmp(it->data, data)) {
       return it;
@@ -13,25 +13,7 @@ static list_it list_find(struct list_struct *self, const void *data) {
   return NULL;
 }
 
-static void list_insert(struct list_struct *self, list_it it, void *data) {
-  self->f_delete(it->data);
-  it->data = self->f_new(data);
-}
-
-static void *list_get(p_list self, const void *data) {
-  list_it it = list_find(self, data);
-  return it ? it->data : NULL;
-}
-
-static void list_put(p_list self, void *data) {
-  if (self->unique) {
-    list_it it = list_find(self, data);
-    if (it) {
-      list_insert(self, it, data);
-      return;
-    }
-  }
-
+static void list_push_back(p_list self, void *data) {
   list_entry *entry = MALLOC(list_entry);
   entry->data = self->f_new(data);
   entry->next = NULL;
@@ -44,7 +26,16 @@ static void list_put(p_list self, void *data) {
   self->tail = entry;
 }
 
-static size_t list_size(p_list self) {
+static void list_insert(struct list_struct *self, list_it it, void *data) {
+  if (it) {
+    self->f_delete(it->data);
+    it->data = self->f_new(data);
+  } else {
+    list_push_back(self, data);
+  }
+}
+
+static size_t list_size(const struct list_struct *self) {
   size_t size = 0;
   for (list_it it = self->head; it; it = it->next) {
     ++size;
@@ -65,15 +56,12 @@ static void list_free(p_list self) {
 }
 
 p_list list_new(container_f_cmp cmp, container_f_new new,
-                container_f_delete delete, int unique) {
+                container_f_delete delete) {
   p_list self = MALLOC(list);
-
-  self->unique = unique;
 
   self->head = NULL;
   self->tail = NULL;
-  self->get = list_get;
-  self->put = list_put;
+  self->push_back = list_push_back;
   self->find = list_find;
   self->insert = list_insert;
   self->size = list_size;

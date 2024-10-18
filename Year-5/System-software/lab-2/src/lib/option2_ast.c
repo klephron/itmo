@@ -78,7 +78,7 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
     }
   }
 
-  userp->exceptions->put(userp->exceptions, exc);
+  userp->exceptions->push_back(userp->exceptions, exc);
 }
 
 // move
@@ -117,7 +117,7 @@ option2_ast *option2_ast_build(pANTLR3_UINT8 input_file) {
                                                  TOKENSOURCE(ast->lexer));
   ast->parser = Option2ParserNew(ast->tokens);
   ast->exceptions =
-      list_new(container_cmp_false, container_new_exc, container_delete_exc, 0);
+      list_new(container_cmp_false, container_new_exc, container_delete_exc);
 
   ast->lexer->pLexer->rec->displayRecognitionError = displayRecognitionError;
   ast->parser->pParser->rec->displayRecognitionError = displayRecognitionError;
@@ -147,10 +147,10 @@ static void container_delete_option2(void *data) {
 
 p_list option2_ast_build_many(p_list input_files) {
   p_list asts = list_new(container_cmp_false, container_new_option2,
-                         container_delete_option2, 0);
+                         container_delete_option2);
   for (list_it it = input_files->head; it != NULL; it = it->next) {
     option2_ast *ast = option2_ast_build(it->data);
-    asts->put(asts, ast);
+    asts->push_back(asts, ast);
   }
   return asts;
 }

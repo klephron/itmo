@@ -40,15 +40,15 @@ static void ir_ctx_free(ir_ctx *self) {
 }
 
 void ir_ctx_add_exception(ir_ctx *self, exception *ex) {
-  self->exceptions->put(self->exceptions, ex);
+  self->exceptions->push_back(self->exceptions, ex);
 }
 
 ir_ctx *ir_ctx_new() {
   ir_ctx *ctx = MALLOC(ir_ctx);
   ctx->subroutines =
-      list_new(container_cmp_sub, container_new_move, container_delete_sub, 0);
-  ctx->exceptions = list_new(container_cmp_false, container_new_move,
-                             container_delete_exc, 0);
+      list_new(container_cmp_sub, container_new_move, container_delete_sub);
+  ctx->exceptions =
+      list_new(container_cmp_false, container_new_move, container_delete_exc);
   ctx->free = ir_ctx_free;
   return ctx;
 }

@@ -30,13 +30,13 @@ struct args_struct *args_new() {
 
   args->prog_name = NULL;
   args->input_files = list_new(container_cmp_chars, container_new_chars,
-                               container_delete_chars, 0);
+                               container_delete_chars);
 
   args->output_dir = ".";
   args->ignore_errors = 0;
   args->tee = 0;
   args->subroutines = list_new(container_cmp_chars, container_new_chars,
-                               container_delete_chars, 0);
+                               container_delete_chars);
 
   args->code = 0;
   args->help = 0;
@@ -103,7 +103,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
       args->output_dir = optarg;
       break;
     case 's':
-      args->subroutines->put(args->subroutines, optarg);
+      args->subroutines->push_back(args->subroutines, optarg);
       break;
     case 'h':
       args->help = 1;
@@ -122,11 +122,11 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
 
   for (; argc > 0; --argc, ++argv) {
     const char *file = argv[0];
-    args->input_files->put(args->input_files, (void *)file);
+    args->input_files->push_back(args->input_files, (void *)file);
   }
 
   if (args->subroutines->size(args->subroutines) == 0) {
-    args->subroutines->put(args->subroutines, "main");
+    args->subroutines->push_back(args->subroutines, "main");
   }
 }
 
@@ -177,7 +177,7 @@ char *get_cg_dot_output(struct args_struct *args, const char *source,
 }
 
 int has_subroutine(struct args_struct *args, const char *subroutine) {
-  return !!args->subroutines->get(args->subroutines, subroutine);
+  return !!args->subroutines->find(args->subroutines, subroutine);
 }
 
 void print_exceptions(struct args_struct *args, const p_list exceptions) {

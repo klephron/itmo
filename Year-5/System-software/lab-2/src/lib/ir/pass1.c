@@ -49,7 +49,7 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
   }
 
   if (ret == 0) {
-    ctx->subroutines->put(ctx->subroutines, sub);
+    ctx->subroutines->push_back(ctx->subroutines, sub);
     ret = 1;
     debug("added subroutine %s", ir_subroutine_name(sub));
   } else if (ret == -1) {
@@ -62,7 +62,7 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
 
 int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param) {
   UNUSED(self);
-  list->put(list, param);
+  list->push_back(list, param);
   debug("param_list added param %s", ir_param_name(param));
   return 1;
 }

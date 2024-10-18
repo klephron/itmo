@@ -7,7 +7,7 @@
 Test(list, create_delete) {
   p_list list =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 1);
+               container_delete_string_string);
 
   cr_expect_eq(list->f_cmp, container_cmp_string_string);
   cr_expect_eq(list->f_new, container_new_string_string);
@@ -16,27 +16,27 @@ Test(list, create_delete) {
   list->free(list);
 }
 
-Test(list, put) {
+Test(list, push_back) {
   p_list list =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 1);
+               container_delete_string_string);
 
   string_string data = {.key = "hello", .value = "world"};
 
-  list->put(list, &data);
+  list->push_back(list, &data);
   list->free(list);
 }
 
-Test(list, put_put) {
+Test(list, push_back2) {
   p_list list =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 1);
+               container_delete_string_string);
 
   string_string data = {.key = "hello", .value = "world"};
-  list->put(list, &data);
+  list->push_back(list, &data);
   data.key = "hello2";
   data.value = "world2";
-  list->put(list, &data);
+  list->push_back(list, &data);
 
   int cnt = 0;
   for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
@@ -47,15 +47,15 @@ Test(list, put_put) {
   list->free(list);
 }
 
-Test(list, put_putsame_unique) {
+Test(list, find_insert) {
   p_list list =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 1);
+               container_delete_string_string);
 
   string_string data = {.key = "hello", .value = "world"};
-  list->put(list, &data);
+  list->push_back(list, &data);
   data.value = "world2";
-  list->put(list, &data);
+  list->insert(list, list->find(list, &data), &data);
 
   int cnt = 0;
   for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
@@ -66,15 +66,15 @@ Test(list, put_putsame_unique) {
   list->free(list);
 }
 
-Test(list, put_putsame) {
+Test(list, push_push) {
   p_list list =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 0);
+               container_delete_string_string);
 
   string_string data = {.key = "hello", .value = "world"};
-  list->put(list, &data);
+  list->push_back(list, &data);
   data.value = "world2";
-  list->put(list, &data);
+  list->push_back(list, &data);
 
   int cnt = 0;
   for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
@@ -88,7 +88,7 @@ Test(list, put_putsame) {
 Test(list, put_many) {
   p_list list =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 1);
+               container_delete_string_string);
 
   char key[10];
   char value[10];
@@ -98,7 +98,7 @@ Test(list, put_many) {
   for (int i = 0; i < 1000; ++i) {
     sprintf(key, "%d", i);
     sprintf(value, "%d", i + 1000);
-    list->put(list, &data);
+    list->push_back(list, &data);
   }
 
   int cnt = 0;
@@ -113,7 +113,7 @@ Test(list, put_many) {
 Test(list, put_many_check) {
   p_list list =
       list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string, 1);
+               container_delete_string_string);
 
   char key[16];
   char value[16];
@@ -123,7 +123,7 @@ Test(list, put_many_check) {
   for (int i = 0; i < 1000; ++i) {
     sprintf(key, "%d", i);
     sprintf(value, "%d", i + 1000);
-    list->put(list, &data);
+    list->push_back(list, &data);
   }
 
   int cnt = 0;

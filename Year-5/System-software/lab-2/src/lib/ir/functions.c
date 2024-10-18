@@ -45,7 +45,7 @@ static void container_delete_ir_param(void *data) {
 
 p_list ir_param_list_new() {
   p_list list = list_new(container_cmp_ir_param, container_new_move,
-                         container_delete_ir_param, 0);
+                         container_delete_ir_param);
   return list;
 }
 
