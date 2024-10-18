@@ -4,8 +4,8 @@
 
 struct ir_pass2 {
   struct ir_pass_base base;
-  struct ir_ctx *ctx;
-  const char *file_name;
+  struct ir_ctx      *ctx;
+  const char         *file_name;
 };
 
 typedef struct ir_pass2 ir_pass2;

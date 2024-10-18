@@ -7,11 +7,11 @@
 #include <antlr3interfaces.h>
 
 struct option2_ast {
-  pANTLR3_INPUT_STREAM stream;
-  pOption2Lexer lexer;
+  pANTLR3_INPUT_STREAM        stream;
+  pOption2Lexer               lexer;
   pANTLR3_COMMON_TOKEN_STREAM tokens;
-  pOption2Parser parser;
-  p_list exceptions;
+  pOption2Parser              parser;
+  p_list                      exceptions;
 
   Option2Parser_source_return result;
 

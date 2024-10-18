@@ -1,33 +1,29 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdio.h>
-
 #include "util/container.h"
+#include <stddef.h>
 
-struct list_entry_struct {
-  void *data;
-  struct list_entry_struct *next;
+struct list_entry {
+  void              *data;
+  struct list_entry *next;
 };
 
-typedef struct list_entry_struct list_entry, *list_it;
+typedef struct list_entry list_entry, *list_it;
 
-struct list_struct {
-  struct list_entry_struct *head;
-  struct list_entry_struct *tail;
+struct list {
+  struct list_entry *head;
+  struct list_entry *tail;
 
-  void (*push_back)(struct list_struct *self, void *data);
-  list_it (*find)(const struct list_struct *self, const void *data);
-  void (*insert)(struct list_struct *self, list_it it, void *data);
-  size_t (*size)(const struct list_struct *self);
-
-  void (*free)(struct list_struct *self);
-
-  container_f_cmp *f_cmp;
-  container_f_new *f_new;
+  container_f_cmp    *f_cmp;
+  container_f_new    *f_new;
   container_f_delete *f_delete;
 };
 
-typedef struct list_struct list, *p_list;
+typedef struct list list, *p_list;
 
-p_list list_new(container_f_cmp, container_f_new, container_f_delete);
+p_list  list_new(container_f_cmp, container_f_new, container_f_delete);
+void    list_free(list *self);
+void    list_push_back(list *self, void *data);
+list_it list_find(const list *self, const void *data);
+void    list_insert(list *self, list_it it, void *data);
+size_t  list_size(const list *self);

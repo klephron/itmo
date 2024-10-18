@@ -8,7 +8,7 @@
 
 #include "util/colors.h"
 
-static void exception_free(struct exception_struct *exc) {
+void exception_free(struct exception *exc) {
   if (exc) {
     if (exc->stream) {
       free(exc->stream);
@@ -26,13 +26,12 @@ static void exception_free(struct exception_struct *exc) {
   }
 }
 
-struct exception_struct *exception_new(enum exception_type type, int subtype,
-                                       const char *stream, uint32_t line,
-                                       uint32_t offset, const char *name,
-                                       const char *message) {
+struct exception *exception_new(enum exception_type type, int subtype,
+                                const char *stream, uint32_t line,
+                                uint32_t offset, const char *name,
+                                const char *message) {
 
-  struct exception_struct *exc = calloc(1, sizeof(struct exception_struct));
-  exc->free = exception_free;
+  struct exception *exc = calloc(1, sizeof(struct exception));
 
   exc->type = type;
   exc->subtype = subtype;
@@ -54,22 +53,22 @@ struct exception_struct *exception_new(enum exception_type type, int subtype,
   return exc;
 };
 
-struct exception_struct *exception_new_v(enum exception_type type, int subtype,
-                                         const char *stream, uint32_t line,
-                                         uint32_t offset, const char *name,
-                                         const char *format, va_list args) {
+struct exception *exception_new_v(enum exception_type type, int subtype,
+                                  const char *stream, uint32_t line,
+                                  uint32_t offset, const char *name,
+                                  const char *format, va_list args) {
   char message[256]; // message size
   message[0] = '\0';
   vsnprintf(message, 255, format, args);
   return exception_new(type, subtype, stream, line, offset, name, message);
 }
 
-struct exception_struct *exception_new_f(enum exception_type type, int subtype,
-                                         const char *stream, uint32_t line,
-                                         uint32_t offset, const char *name,
-                                         const char *format, ...) {
-  struct exception_struct *exc;
-  va_list args;
+struct exception *exception_new_f(enum exception_type type, int subtype,
+                                  const char *stream, uint32_t line,
+                                  uint32_t offset, const char *name,
+                                  const char *format, ...) {
+  struct exception *exc;
+  va_list           args;
   va_start(args, format);
   exc =
       exception_new_v(type, subtype, stream, line, offset, name, format, args);
@@ -77,7 +76,7 @@ struct exception_struct *exception_new_f(enum exception_type type, int subtype,
   return exc;
 }
 
-static char *exception_unknown_to_chars(const struct exception_struct *exc) {
+static char *exception_unknown_to_chars(const struct exception *exc) {
   const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
                                       "(U%d): %s -> %s\n" ANSI_COLOR_BLUE
                                       "  -->" ANSI_COLOR_RESET " %s:%d:%d";
@@ -119,7 +118,7 @@ static char *exception_unknown_to_chars(const struct exception_struct *exc) {
   return str;
 }
 
-static char *exception_lexer_to_chars(const struct exception_struct *exc) {
+static char *exception_lexer_to_chars(const struct exception *exc) {
   const char *format =
       ANSI_COLOR_RED "error" ANSI_COLOR_RESET "(L%d): %s\n" ANSI_COLOR_BLUE
                      "  -->" ANSI_COLOR_RESET " %s:%d:%d";
@@ -155,7 +154,7 @@ static char *exception_lexer_to_chars(const struct exception_struct *exc) {
   return str;
 }
 
-static char *exception_parser_to_chars(const struct exception_struct *exc) {
+static char *exception_parser_to_chars(const struct exception *exc) {
   const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
                                       "(P%d): %s -> %s\n" ANSI_COLOR_BLUE
                                       "  -->" ANSI_COLOR_RESET " %s:%d:%d";
@@ -197,7 +196,7 @@ static char *exception_parser_to_chars(const struct exception_struct *exc) {
   return str;
 }
 
-static char *exception_tree_to_chars(const struct exception_struct *exc) {
+static char *exception_tree_to_chars(const struct exception *exc) {
   const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
                                       "(T%d): %s -> %s\n" ANSI_COLOR_BLUE
                                       "  -->" ANSI_COLOR_RESET " %s";
@@ -239,7 +238,7 @@ static char *exception_tree_to_chars(const struct exception_struct *exc) {
   return str;
 }
 
-static char *exception_ir_to_chars(const struct exception_struct *exc) {
+static char *exception_ir_to_chars(const struct exception *exc) {
   const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
                                       "(I%d): %s -> %s\n" ANSI_COLOR_BLUE
                                       "  -->" ANSI_COLOR_RESET " %s:%d:%d";
@@ -281,7 +280,7 @@ static char *exception_ir_to_chars(const struct exception_struct *exc) {
   return str;
 }
 
-char *exception_to_chars(const struct exception_struct *exc) {
+char *exception_to_chars(const struct exception *exc) {
   switch (exc->type) {
   case EXCEPTION_LEXER:
     return exception_lexer_to_chars(exc);
@@ -296,12 +295,12 @@ char *exception_to_chars(const struct exception_struct *exc) {
   }
 }
 
-struct exception_struct *
+struct exception *
 exception_new_from_helper(const struct exception_helper *helper, char *format,
                           ...) {
   va_list args;
   va_start(args, format);
-  struct exception_struct *exc =
+  struct exception *exc =
       exception_new_v(helper->type, helper->subtype, helper->stream,
                       helper->line, helper->offset, helper->name, format, args);
   va_end(args);

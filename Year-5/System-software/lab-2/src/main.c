@@ -45,8 +45,8 @@ struct args_struct *args_new() {
 }
 
 void args_free(struct args_struct *args) {
-  args->input_files->free(args->input_files);
-  args->subroutines->free(args->subroutines);
+  list_free(args->input_files);
+  list_free(args->subroutines);
   free(args);
 }
 
@@ -103,7 +103,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
       args->output_dir = optarg;
       break;
     case 's':
-      args->subroutines->push_back(args->subroutines, optarg);
+      list_push_back(args->subroutines, optarg);
       break;
     case 'h':
       args->help = 1;
@@ -122,11 +122,11 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
 
   for (; argc > 0; --argc, ++argv) {
     const char *file = argv[0];
-    args->input_files->push_back(args->input_files, (void *)file);
+    list_push_back(args->input_files, (void *)file);
   }
 
-  if (args->subroutines->size(args->subroutines) == 0) {
-    args->subroutines->push_back(args->subroutines, "main");
+  if (list_size(args->subroutines) == 0) {
+    list_push_back(args->subroutines, "main");
   }
 }
 
@@ -177,7 +177,7 @@ char *get_cg_dot_output(struct args_struct *args, const char *source,
 }
 
 int has_subroutine(struct args_struct *args, const char *subroutine) {
-  return !!args->subroutines->find(args->subroutines, subroutine);
+  return !!list_find(args->subroutines, subroutine);
 }
 
 void print_exceptions(struct args_struct *args, const p_list exceptions) {
@@ -208,7 +208,7 @@ int execute(struct args_struct *args) {
 
   for (list_it it = asts->head; it; it = it->next) {
     option2_ast *ast = it->data;
-    if (ast->exceptions->size(ast->exceptions) != 0) {
+    if (list_size(ast->exceptions) != 0) {
       print_exceptions(args, ast->exceptions);
       error = 1;
     }
@@ -223,7 +223,7 @@ int execute(struct args_struct *args) {
       char *output = get_ast_dot_output(args, ast);
       write_dot(args, dot, output);
       free(output);
-      dot->free(dot);
+      dot_string_free(dot);
     }
   }
 
@@ -232,7 +232,7 @@ int execute(struct args_struct *args) {
 
   if (!error || args->ignore_errors) {
     ir = option2_ir_build(asts);
-    if (ir->exceptions->size(ir->exceptions)) {
+    if (list_size(ir->exceptions)) {
       print_exceptions(args, ir->exceptions);
       error = 1;
     }
@@ -249,23 +249,20 @@ int execute(struct args_struct *args) {
       char *output_cfg = get_cfg_dot_output(args, source, sub_name);
       write_dot(args, dot_cfg, output_cfg);
       free(output_cfg);
-      dot_cfg->free(dot_cfg);
+      dot_string_free(dot_cfg);
 
       if (has_subroutine(args, sub_name)) {
         dot_string *dot_cg = dot_ir_cg(ir, sub);
         char *output_cg = get_cg_dot_output(args, source, sub_name);
         write_dot(args, dot_cg, output_cg);
         free(output_cg);
-        dot_cg->free(dot_cg);
+        dot_string_free(dot_cg);
       }
     }
   }
 
-  if (ir) {
-    ir->free(ir);
-  }
-
-  asts->free(asts);
+  ir_ctx_free(ir);
+  list_free(asts);
 
   return error && !args->ignore_errors;
 }
@@ -280,7 +277,7 @@ int main(int argc, char *argv[]) {
     usage(args);
   }
 
-  if (!args->help && args->input_files->size(args->input_files) == 0) {
+  if (!args->help && list_size(args->input_files) == 0) {
     printf("%s: no input files specified\n", args->prog_name);
     args->code = -1;
   }

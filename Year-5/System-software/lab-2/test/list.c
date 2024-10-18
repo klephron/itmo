@@ -13,7 +13,7 @@ Test(list, create_delete) {
   cr_expect_eq(list->f_new, container_new_string_string);
   cr_expect_eq(list->f_delete, container_delete_string_string);
 
-  list->free(list);
+  list_free(list);
 }
 
 Test(list, push_back) {
@@ -23,8 +23,8 @@ Test(list, push_back) {
 
   string_string data = {.key = "hello", .value = "world"};
 
-  list->push_back(list, &data);
-  list->free(list);
+  list_push_back(list, &data);
+  list_free(list);
 }
 
 Test(list, push_back2) {
@@ -33,10 +33,10 @@ Test(list, push_back2) {
                container_delete_string_string);
 
   string_string data = {.key = "hello", .value = "world"};
-  list->push_back(list, &data);
+  list_push_back(list, &data);
   data.key = "hello2";
   data.value = "world2";
-  list->push_back(list, &data);
+  list_push_back(list, &data);
 
   int cnt = 0;
   for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
@@ -44,7 +44,7 @@ Test(list, push_back2) {
 
   cr_expect_eq(2, cnt);
 
-  list->free(list);
+  list_free(list);
 }
 
 Test(list, find_insert) {
@@ -53,9 +53,9 @@ Test(list, find_insert) {
                container_delete_string_string);
 
   string_string data = {.key = "hello", .value = "world"};
-  list->push_back(list, &data);
+  list_push_back(list, &data);
   data.value = "world2";
-  list->insert(list, list->find(list, &data), &data);
+  list_insert(list, list_find(list, &data), &data);
 
   int cnt = 0;
   for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
@@ -63,7 +63,7 @@ Test(list, find_insert) {
 
   cr_expect_eq(1, cnt);
 
-  list->free(list);
+  list_free(list);
 }
 
 Test(list, push_push) {
@@ -72,9 +72,9 @@ Test(list, push_push) {
                container_delete_string_string);
 
   string_string data = {.key = "hello", .value = "world"};
-  list->push_back(list, &data);
+  list_push_back(list, &data);
   data.value = "world2";
-  list->push_back(list, &data);
+  list_push_back(list, &data);
 
   int cnt = 0;
   for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
@@ -82,7 +82,7 @@ Test(list, push_push) {
 
   cr_expect_eq(2, cnt);
 
-  list->free(list);
+  list_free(list);
 }
 
 Test(list, put_many) {
@@ -98,7 +98,7 @@ Test(list, put_many) {
   for (int i = 0; i < 1000; ++i) {
     sprintf(key, "%d", i);
     sprintf(value, "%d", i + 1000);
-    list->push_back(list, &data);
+    list_push_back(list, &data);
   }
 
   int cnt = 0;
@@ -107,7 +107,7 @@ Test(list, put_many) {
 
   cr_expect_eq(1000, cnt);
 
-  list->free(list);
+  list_free(list);
 }
 
 Test(list, put_many_check) {
@@ -123,7 +123,7 @@ Test(list, put_many_check) {
   for (int i = 0; i < 1000; ++i) {
     sprintf(key, "%d", i);
     sprintf(value, "%d", i + 1000);
-    list->push_back(list, &data);
+    list_push_back(list, &data);
   }
 
   int cnt = 0;
@@ -138,5 +138,5 @@ Test(list, put_many_check) {
 
   cr_expect_eq(1000, cnt);
 
-  list->free(list);
+  list_free(list);
 }

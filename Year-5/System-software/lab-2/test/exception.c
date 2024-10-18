@@ -4,15 +4,15 @@
 Test(exception, basic) {
   exception *exc = exception_new(0, 0, "ordinary/file", 1000, 50, "exception",
                                  "ordinary error");
-  char *msg = exception_to_chars(exc);
+  char      *msg = exception_to_chars(exc);
   free(msg);
-  exc->free(exc);
+  exception_free(exc);
 }
 
 Test(exception, basic2) {
   exception *exc = exception_new(0, 0, "ordinary/file", 1000, 50, "exception",
                                  "ordinary error");
-  char *msg = exception_to_chars(exc);
+  char      *msg = exception_to_chars(exc);
   free(msg);
-  exc->free(exc);
+  exception_free(exc);
 }

@@ -53,7 +53,7 @@ p_list ir_param_list_new() {
 static void signature_free(ir_signature *self) {
   if (self) {
     ir_term_free((ir_term_base *)self->id);
-    self->params->free(self->params);
+    list_free(self->params);
     ir_t_free(self->ret);
     free(self);
   }
@@ -65,7 +65,7 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret) {
   self->params = params;
   self->ret = ret;
   debug("created signature %s with params=%zu and ret=%s", self->id->name,
-        self->params->size(self->params), ir_t_type_str(self->ret));
+        list_size(self->params), ir_t_type_str(self->ret));
   return self;
 }
 
@@ -78,7 +78,7 @@ void ir_subroutine_free(ir_subroutine *self) {
       // TODO: free data blocks
     }
     if (self->operations) {
-      self->operations->free(self->operations);
+      list_free(self->operations);
     }
     free(self);
   }
@@ -130,8 +130,8 @@ int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {
     cmp |= IR_SUBROUTINE_CMP_RET;
   }
 
-  int lsv_pc = lsv_s->params->size(lsv_s->params);
-  int rsv_pc = rsv_s->params->size(rsv_s->params);
+  int lsv_pc = list_size(lsv_s->params);
+  int rsv_pc = list_size(rsv_s->params);
 
   if (lsv_pc != rsv_pc) {
     cmp |= IR_SUBROUTINE_CMP_PARAMS;

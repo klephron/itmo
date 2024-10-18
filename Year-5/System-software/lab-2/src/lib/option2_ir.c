@@ -11,11 +11,11 @@
 #include <stdlib.h>
 
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
-                                    pANTLR3_UINT8 *_) {
+                                    pANTLR3_UINT8          *_) {
   struct ir_pass_base *pass = recognizer->state->userp;
-  exception *exc = NULL;
+  exception           *exc = NULL;
 
-  pANTLR3_STRING ttext;
+  pANTLR3_STRING    ttext;
   pANTLR3_BASE_TREE theBaseTree;
 
   struct exception_helper exh;

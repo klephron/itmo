@@ -8,12 +8,12 @@
 #include <antlr3basetree.h>
 
 struct antlr_userp {
-  p_list exceptions;
+  p_list        exceptions;
   pANTLR3_UINT8 file_name;
 };
 
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
-                                    pANTLR3_UINT8 *_) {
+                                    pANTLR3_UINT8          *_) {
   pANTLR3_EXCEPTION ex;
 
   struct exception_helper exh;
@@ -39,7 +39,7 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
   exh.name = ex->message;
 
   pANTLR3_COMMON_TOKEN theToken;
-  pANTLR3_STRING ttext;
+  pANTLR3_STRING       ttext;
 
   exh.offset = recognizer->state->exception->charPositionInLine;
 
@@ -78,7 +78,7 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
     }
   }
 
-  userp->exceptions->push_back(userp->exceptions, exc);
+  list_push_back(userp->exceptions, exc);
 }
 
 // move
@@ -90,7 +90,7 @@ static void *container_new_exc(void *_data) {
 static void container_delete_exc(void *_data) {
   if (_data) {
     exception *exc = _data;
-    exc->free(exc);
+    exception_free(exc);
   }
 }
 
@@ -99,7 +99,7 @@ static void option2_ast_free(struct option2_ast *ast) {
     return;
   }
 
-  ast->exceptions->free(ast->exceptions);
+  list_free(ast->exceptions);
   ast->parser->free(ast->parser);
   ast->tokens->free(ast->tokens);
   ast->lexer->free(ast->lexer);
@@ -150,7 +150,7 @@ p_list option2_ast_build_many(p_list input_files) {
                          container_delete_option2);
   for (list_it it = input_files->head; it != NULL; it = it->next) {
     option2_ast *ast = option2_ast_build(it->data);
-    asts->push_back(asts, ast);
+    list_push_back(asts, ast);
   }
   return asts;
 }

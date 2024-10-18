@@ -122,7 +122,7 @@ build/test: $(TGTS.TST)
 
 ### Run all tests
 test: build/test
-	@for file in $(TGTS.TST); do "./$$file"; done
+	for file in $(TGTS.TST); do "./$$file"; done
 
 ### Format
 format:

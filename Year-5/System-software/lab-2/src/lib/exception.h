@@ -34,44 +34,43 @@ enum exception_subtype_ir {
   EXCEPTION_IR_FUNCTION_PARAMETER_DUPLICATION = 3,
 };
 
-struct exception_struct {
+struct exception {
   enum exception_type type;
-  int subtype;
-  char *stream;
-  uint32_t line;
-  uint32_t offset;
-  char *name;
-  char *message;
-
-  void (*free)(struct exception_struct *);
+  int                 subtype;
+  char               *stream;
+  uint32_t            line;
+  uint32_t            offset;
+  char               *name;
+  char               *message;
 };
 
 struct exception_helper {
   enum exception_type type;
-  int subtype;
-  char *stream;
-  uint32_t line;
-  uint32_t offset;
-  char *name;
+  int                 subtype;
+  char               *stream;
+  uint32_t            line;
+  uint32_t            offset;
+  char               *name;
 };
 
-typedef struct exception_struct exception;
+typedef struct exception        exception;
+typedef struct exception_helper exception_helper;
 
-struct exception_struct *exception_new(enum exception_type type, int subtype,
-                                       const char *stream, uint32_t line,
-                                       uint32_t offset, const char *name,
-                                       const char *message);
-struct exception_struct *exception_new_v(enum exception_type type, int subtype,
-                                         const char *stream, uint32_t line,
-                                         uint32_t offset, const char *name,
-                                         const char *format, va_list args);
-struct exception_struct *exception_new_f(enum exception_type type, int subtype,
-                                         const char *stream, uint32_t line,
-                                         uint32_t offset, const char *name,
-                                         const char *format, ...);
+exception        *exception_new(enum exception_type type, int subtype,
+                                const char *stream, uint32_t line, uint32_t offset,
+                                const char *name, const char *message);
+exception        *exception_new_v(enum exception_type type, int subtype,
+                                  const char *stream, uint32_t line, uint32_t offset,
+                                  const char *name, const char *format, va_list args);
+struct exception *exception_new_f(enum exception_type type, int subtype,
+                                  const char *stream, uint32_t line,
+                                  uint32_t offset, const char *name,
+                                  const char *format, ...);
 
-char *exception_to_chars(const struct exception_struct *exc);
+void exception_free(exception *exc);
 
-struct exception_struct *
+char *exception_to_chars(const struct exception *exc);
+
+struct exception *
 exception_new_from_helper(const struct exception_helper *helper, char *format,
                           ...);

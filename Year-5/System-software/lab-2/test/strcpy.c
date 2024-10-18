@@ -2,7 +2,7 @@
 #include <string.h>
 
 Test(strcpy, test) {
-  char buf[50];
+  char        buf[50];
   const char *a = "four";
 
   char *end = stpcpy(buf, a);

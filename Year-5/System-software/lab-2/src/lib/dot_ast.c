@@ -26,8 +26,8 @@ static void dot_ctx_free(struct dot_ctx *self) {
   free((void *)self->graph);
   free((void *)self->node_style);
 
-  self->list_nodes->free(self->list_nodes);
-  self->list_edges->free(self->list_edges);
+  list_free(self->list_nodes);
+  list_free(self->list_edges);
 
   free(self);
 }
@@ -112,7 +112,7 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
     return 0;
   }
 
-  char label[256];
+  char                 label[256];
   pANTLR3_COMMON_TOKEN root_token = root->getToken(root);
   if (root_token == NULL) {
     printf("root is nil\n");
@@ -133,17 +133,17 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   }
 
   size_t id = ++ctx->id;
-  char id_s[32];
+  char   id_s[32];
   sprintf(id_s, "id_%zu", id);
 
   string_string data = {.key = id_s, .value = label};
 
-  list_it it = ctx->list_nodes->find(ctx->list_nodes, &data);
-  ctx->list_nodes->insert(ctx->list_nodes, it, &data);
+  list_it it = list_find(ctx->list_nodes, &data);
+  list_insert(ctx->list_nodes, it, &data);
 
   for (size_t i = 0; i < root->getChildCount(root); ++i) {
     pANTLR3_BASE_TREE child = root->getChild(root, i);
-    size_t child_id = dot_dfs(ctx, child);
+    size_t            child_id = dot_dfs(ctx, child);
 
     if (child_id != 0) {
       char child_id_s[32];
@@ -151,7 +151,7 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
 
       string_string data = {.key = id_s, .value = child_id_s};
 
-      ctx->list_edges->push_back(ctx->list_edges, &data);
+      list_push_back(ctx->list_edges, &data);
     }
   }
 
@@ -169,10 +169,10 @@ static struct dot_ctx *dot_new(pANTLR3_BASE_TREE tree) {
 
 dot_string *dot_ast(const option2_ast *ast) {
   pANTLR3_BASE_TREE tree = ast->result.tree;
-  struct dot_ctx *ctx = dot_new(tree);
+  struct dot_ctx   *ctx = dot_new(tree);
 
   size_t len = dot_len(ctx);
-  char *chars = malloc(len + 1);
+  char  *chars = malloc(len + 1);
 
   dot_generate(ctx, chars);
 

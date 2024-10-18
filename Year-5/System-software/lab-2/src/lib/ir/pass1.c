@@ -10,7 +10,7 @@ void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx, const char *file_name) {
 }
 
 ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *self,
-                                       ir_signature *signature) {
+                                       ir_signature   *signature) {
   return ir_subroutine_new(self->file_name, signature, NULL, NULL);
 }
 
@@ -22,7 +22,7 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
 
   for (list_it it = ctx->subroutines->head; it; it = it->next) {
     ir_subroutine *lsv = it->data;
-    int cmp = ir_subroutine_cmp(lsv, sub);
+    int            cmp = ir_subroutine_cmp(lsv, sub);
 
     debug("compare subroutines: %s %s = %d", ir_subroutine_name(lsv),
           ir_subroutine_name(sub), cmp);
@@ -42,14 +42,14 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
       break;
     }
 
-    ctx->subroutines->insert(ctx->subroutines, it, sub);
+    list_insert(ctx->subroutines, it, sub);
     debug("replaced subroutine %s", ir_subroutine_name(sub));
     ret = 1;
     break;
   }
 
   if (ret == 0) {
-    ctx->subroutines->push_back(ctx->subroutines, sub);
+    list_push_back(ctx->subroutines, sub);
     ret = 1;
     debug("added subroutine %s", ir_subroutine_name(sub));
   } else if (ret == -1) {
@@ -62,7 +62,7 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
 
 int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param) {
   UNUSED(self);
-  list->push_back(list, param);
+  list_push_back(list, param);
   debug("param_list added param %s", ir_param_name(param));
   return 1;
 }
