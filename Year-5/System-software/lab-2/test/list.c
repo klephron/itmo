@@ -1,23 +1,25 @@
 #include <criterion/criterion.h>
 #include <stdio.h>
 
+#include "util/container_funcs.h"
 #include "util/list.h"
-#include "util/list_funcs.h"
 
 Test(list, create_delete) {
-  p_list list = list_new(list_string_string_cmp, list_string_string_new,
-                         list_string_string_delete, 1);
+  p_list list =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 1);
 
-  cr_expect_eq(list->f_cmp, list_string_string_cmp);
-  cr_expect_eq(list->f_new, list_string_string_new);
-  cr_expect_eq(list->f_delete, list_string_string_delete);
+  cr_expect_eq(list->f_cmp, container_cmp_string_string);
+  cr_expect_eq(list->f_new, container_new_string_string);
+  cr_expect_eq(list->f_delete, container_delete_string_string);
 
   list->free(list);
 }
 
 Test(list, put) {
-  p_list list = list_new(list_string_string_cmp, list_string_string_new,
-                         list_string_string_delete, 1);
+  p_list list =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 1);
 
   string_string data = {.key = "hello", .value = "world"};
 
@@ -26,8 +28,9 @@ Test(list, put) {
 }
 
 Test(list, put_put) {
-  p_list list = list_new(list_string_string_cmp, list_string_string_new,
-                         list_string_string_delete, 1);
+  p_list list =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 1);
 
   string_string data = {.key = "hello", .value = "world"};
   list->put(list, &data);
@@ -45,8 +48,9 @@ Test(list, put_put) {
 }
 
 Test(list, put_putsame_unique) {
-  p_list list = list_new(list_string_string_cmp, list_string_string_new,
-                         list_string_string_delete, 1);
+  p_list list =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 1);
 
   string_string data = {.key = "hello", .value = "world"};
   list->put(list, &data);
@@ -63,8 +67,9 @@ Test(list, put_putsame_unique) {
 }
 
 Test(list, put_putsame) {
-  p_list list = list_new(list_string_string_cmp, list_string_string_new,
-                         list_string_string_delete, 0);
+  p_list list =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 0);
 
   string_string data = {.key = "hello", .value = "world"};
   list->put(list, &data);
@@ -81,8 +86,9 @@ Test(list, put_putsame) {
 }
 
 Test(list, put_many) {
-  p_list list = list_new(list_string_string_cmp, list_string_string_new,
-                         list_string_string_delete, 1);
+  p_list list =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 1);
 
   char key[10];
   char value[10];
@@ -105,8 +111,9 @@ Test(list, put_many) {
 }
 
 Test(list, put_many_check) {
-  p_list list = list_new(list_string_string_cmp, list_string_string_new,
-                         list_string_string_delete, 1);
+  p_list list =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 1);
 
   char key[16];
   char value[16];

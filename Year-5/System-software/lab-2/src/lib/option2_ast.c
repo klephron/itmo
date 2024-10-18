@@ -1,8 +1,8 @@
 #include "option2_ast.h"
 #include "assert.h"
 #include "exception.h"
+#include "util/container_funcs.h"
 #include "util/list.h"
-#include "util/list_funcs.h"
 #include "util/macro.h"
 #include <antlr3.h>
 #include <antlr3basetree.h>
@@ -82,12 +82,12 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
 }
 
 // move
-static void *exc_list_new(void *_data) {
+static void *container_new_exc(void *_data) {
   exception *exc = _data;
   return exc;
 }
 
-static void exc_list_delete(void *_data) {
+static void container_delete_exc(void *_data) {
   if (_data != NULL) {
     exception *exc = _data;
     exc->free(exc);
@@ -116,7 +116,8 @@ option2_ast *option2_ast_build(pANTLR3_UINT8 input_file) {
   ast->tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT,
                                                  TOKENSOURCE(ast->lexer));
   ast->parser = Option2ParserNew(ast->tokens);
-  ast->exceptions = list_new(list_false_cmp, exc_list_new, exc_list_delete, 0);
+  ast->exceptions =
+      list_new(container_cmp_false, container_new_exc, container_delete_exc, 0);
 
   ast->lexer->pLexer->rec->displayRecognitionError = displayRecognitionError;
   ast->parser->pParser->rec->displayRecognitionError = displayRecognitionError;
@@ -134,19 +135,19 @@ option2_ast *option2_ast_build(pANTLR3_UINT8 input_file) {
   return ast;
 }
 
-static void *list_option2_new(void *data) {
+static void *container_new_option2(void *data) {
   option2_ast *ast = data;
   return ast;
 }
 
-static void list_option2_delete(void *data) {
+static void container_delete_option2(void *data) {
   option2_ast *ast = data;
   ast->free(ast);
 }
 
 p_list option2_ast_build_many(p_list input_files) {
-  p_list asts =
-      list_new(list_false_cmp, list_option2_new, list_option2_delete, 0);
+  p_list asts = list_new(container_cmp_false, container_new_option2,
+                         container_delete_option2, 0);
   for (list_iter it = input_files->head; it != NULL; it = it->next) {
     option2_ast *ast = option2_ast_build(it->data);
     asts->put(asts, ast);

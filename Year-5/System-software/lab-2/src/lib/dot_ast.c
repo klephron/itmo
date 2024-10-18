@@ -2,8 +2,8 @@
 
 #include "util/macro.h"
 
+#include "util/container_funcs.h"
 #include "util/list.h"
-#include "util/list_funcs.h"
 #include "util/string.h"
 
 #include <antlr3.h>
@@ -40,10 +40,12 @@ static struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
 
   ctx->id = 0;
 
-  ctx->list_nodes = list_new(list_string_string_cmp, list_string_string_new,
-                             list_string_string_delete, 1);
-  ctx->list_edges = list_new(list_string_string_cmp, list_string_string_new,
-                             list_string_string_delete, 0);
+  ctx->list_nodes =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 1);
+  ctx->list_edges =
+      list_new(container_cmp_string_string, container_new_string_string,
+               container_delete_string_string, 0);
 
   ctx->free = dot_ctx_free;
 

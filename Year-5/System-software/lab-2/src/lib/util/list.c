@@ -60,8 +60,8 @@ static void list_free(p_list this) {
   }
 }
 
-p_list list_new(list_func_cmp cmp, list_func_new new, list_func_delete delete,
-                int unique) {
+p_list list_new(container_f_cmp cmp, container_f_new new,
+                container_f_delete delete, int unique) {
   p_list this = MALLOC(list);
 
   this->unique = unique;

@@ -1,7 +1,7 @@
 #include "ir/functions.h"
 
 #include "ir/terminals.h"
-#include "util/list_funcs.h"
+#include "util/container_funcs.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <stdlib.h>
@@ -25,20 +25,20 @@ ir_param *ir_param_new(ir_term_id *id, ir_t_base *type) {
   return self;
 }
 
-int list_ir_param_cmp(const void *_lsv, const void *_rsv) {
+static int container_cmp_ir_param(const void *_lsv, const void *_rsv) {
   const ir_param *lsv = _lsv;
   const ir_param *rsv = _rsv;
   return !ir_term_id_equals(lsv->id, rsv->id);
 }
 
-void list_ir_param_delete(void *data) {
+static void container_delete_ir_param(void *data) {
   ir_param *self = data;
   ir_param_free(self);
 }
 
 p_list ir_param_list_new() {
-  p_list list =
-      list_new(list_false_cmp, list_move_new, list_ir_param_delete, 0);
+  p_list list = list_new(container_cmp_ir_param, container_new_move,
+                         container_delete_ir_param, 0);
   return list;
 }
 

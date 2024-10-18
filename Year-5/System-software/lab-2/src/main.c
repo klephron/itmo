@@ -2,9 +2,9 @@
 #include <stdio.h>
 
 #include "dot_ir.h"
+#include "util/container_funcs.h"
 #include "util/file.h"
 #include "util/list.h"
-#include "util/list_funcs.h"
 #include "util/macro.h"
 
 #include "dot_ast.h"
@@ -29,14 +29,14 @@ struct args_struct *args_new() {
   struct args_struct *args = MALLOC(struct args_struct);
 
   args->prog_name = NULL;
-  args->input_files =
-      list_new(list_chars_cmp, list_chars_new, list_chars_delete, 0);
+  args->input_files = list_new(container_cmp_chars, container_new_chars,
+                               container_delete_chars, 0);
 
   args->output_dir = ".";
   args->ignore_errors = 0;
   args->tee = 0;
-  args->subroutines =
-      list_new(list_chars_cmp, list_chars_new, list_chars_delete, 0);
+  args->subroutines = list_new(container_cmp_chars, container_new_chars,
+                               container_delete_chars, 0);
 
   args->code = 0;
   args->help = 0;
@@ -141,8 +141,7 @@ void ensure_dir_exist(const char *filename) {
 char *get_ast_dot_output(const struct args_struct *args,
                          const option2_ast *ast) {
   char *suffix = ".ast.dot";
-  char *prefix =
-      join_paths(args->output_dir, option2_ast_filename(ast));
+  char *prefix = join_paths(args->output_dir, option2_ast_filename(ast));
 
   char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
   sprintf(output, "%s%s", prefix, suffix);
@@ -228,31 +227,31 @@ int execute(struct args_struct *args) {
   }
 
   // stage: build cfg + handle exceptions
-  ir_ctx *inter = NULL;
+  ir_ctx *ir = NULL;
 
   if (!error || args->ignore_errors) {
-    inter = option2_ir_build(asts);
-    if (inter->exceptions->size(inter->exceptions) != 0) {
-      print_exceptions(args, inter->exceptions);
+    ir = option2_ir_build(asts);
+    if (ir->exceptions->size(ir->exceptions) != 0) {
+      print_exceptions(args, ir->exceptions);
       error = 1;
     }
   }
 
   // stage: cfg and cg dots
   if (!error || args->ignore_errors) {
-    for (list_iter it = inter->subroutines->head; it != NULL; it = it->next) {
+    for (list_iter it = ir->subroutines->head; it != NULL; it = it->next) {
       ir_subroutine *sub = it->data;
       const char *sub_name = sub->signature->id->name;
       const char *source = (char *)sub->file_name;
 
-      dot_string *dot_cfg = dot_inter_cfg(inter, sub);
+      dot_string *dot_cfg = dot_ir_cfg(ir, sub);
       char *output_cfg = get_cfg_dot_output(args, source, sub_name);
       write_dot(args, dot_cfg, output_cfg);
       free(output_cfg);
       dot_cfg->free(dot_cfg);
 
       if (has_subroutine(args, sub_name)) {
-        dot_string *dot_cg = dot_inter_cg(inter, sub);
+        dot_string *dot_cg = dot_ir_cg(ir, sub);
         char *output_cg = get_cg_dot_output(args, source, sub_name);
         write_dot(args, dot_cg, output_cg);
         free(output_cg);
@@ -261,8 +260,8 @@ int execute(struct args_struct *args) {
     }
   }
 
-  if (inter != NULL) {
-    inter->free(inter);
+  if (ir != NULL) {
+    ir->free(ir);
   }
 
   asts->free(asts);
