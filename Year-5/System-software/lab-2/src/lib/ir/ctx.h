@@ -1,12 +1,13 @@
 #pragma once
 
 #include "exception.h"
+#include "util/hashset.h"
 #include "util/list.h"
 
 // created before passes/stages
 struct ir_ctx {
-  p_list subroutines; // inter_subroutine
-  p_list exceptions;  // exception
+  p_hashset subroutines; // ir_subroutine
+  p_list    exceptions;  // exception
 };
 
 typedef struct ir_ctx ir_ctx;

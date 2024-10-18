@@ -7,3 +7,18 @@ method fun123(arg3: int):;
 method fun1234(arg3: int):;
 
 method fun1234(arg3: int, arg5):;
+
+method fun123(arg3, arg3):
+begin
+  if true then true; else false;
+  a = 4;
+  if true then false; else true;
+end;
+
+method fun1():
+begin
+  if true then true; else false;
+  a = 4;
+
+  func123();
+end;

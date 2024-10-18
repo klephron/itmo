@@ -13,12 +13,12 @@
 #include "option2_ir.h"
 
 struct args_struct {
-  char *prog_name;
+  char  *prog_name;
   p_list input_files;
   // options
-  char *output_dir;
-  int ignore_errors;
-  int tee;
+  char  *output_dir;
+  int    ignore_errors;
+  int    tee;
   p_list subroutines;
   // status
   int code;
@@ -51,9 +51,9 @@ void args_free(struct args_struct *args) {
 }
 
 void usage(struct args_struct *args) {
-  int buf_len = 256;
+  int  buf_len = 256;
   char subroutines[buf_len];
-  int offset = 0;
+  int  offset = 0;
   for (list_it it = args->subroutines->head; it; it = it->next) {
     offset += snprintf(subroutines + offset, buf_len - offset - 1, "%s,",
                        (const char *)it->data);
@@ -139,7 +139,7 @@ void ensure_dir_exist(const char *filename) {
 
 // ast - ext, dot - file extension
 char *get_ast_dot_output(const struct args_struct *args,
-                         const option2_ast *ast) {
+                         const option2_ast        *ast) {
   char *suffix = ".ast.dot";
   char *prefix = join_paths(args->output_dir, option2_ast_filename(ast));
 
@@ -220,7 +220,7 @@ int execute(struct args_struct *args) {
       option2_ast *ast = it->data;
 
       dot_string *dot = dot_ast(ast);
-      char *output = get_ast_dot_output(args, ast);
+      char       *output = get_ast_dot_output(args, ast);
       write_dot(args, dot, output);
       free(output);
       dot_string_free(dot);
@@ -240,20 +240,21 @@ int execute(struct args_struct *args) {
 
   // stage: cfg and cg dots
   if (!error || args->ignore_errors) {
-    for (list_it it = ir->subroutines->head; it; it = it->next) {
-      ir_subroutine *sub = it->data;
-      const char *sub_name = ir_subroutine_name(sub);
-      const char *source = sub->file_name;
+    for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
+         it.next(&it)) {
+      ir_subroutine *sub = it.get(&it);
+      const char    *sub_name = ir_subroutine_name(sub);
+      const char    *source = sub->file_name;
 
       dot_string *dot_cfg = dot_ir_cfg(ir, sub);
-      char *output_cfg = get_cfg_dot_output(args, source, sub_name);
+      char       *output_cfg = get_cfg_dot_output(args, source, sub_name);
       write_dot(args, dot_cfg, output_cfg);
       free(output_cfg);
       dot_string_free(dot_cfg);
 
       if (has_subroutine(args, sub_name)) {
         dot_string *dot_cg = dot_ir_cg(ir, sub);
-        char *output_cg = get_cg_dot_output(args, source, sub_name);
+        char       *output_cg = get_cg_dot_output(args, source, sub_name);
         write_dot(args, dot_cg, output_cg);
         free(output_cg);
         dot_string_free(dot_cg);

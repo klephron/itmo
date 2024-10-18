@@ -32,10 +32,12 @@ const char *ir_param_name(const ir_param *self) {
   return "<null>";
 }
 
-static int container_cmp_ir_param(const void *_lsv, const void *_rsv) {
-  const ir_param *lsv = _lsv;
-  const ir_param *rsv = _rsv;
+int ir_param_cmp(const ir_param *lsv, const ir_param *rsv) {
   return !ir_term_id_equals(lsv->id, rsv->id);
+}
+
+static int container_cmp_ir_param(const void *lsv, const void *rsv) {
+  return ir_param_cmp(lsv, rsv);
 }
 
 static void container_delete_ir_param(void *data) {
@@ -77,20 +79,16 @@ void ir_subroutine_free(ir_subroutine *self) {
     if (self->blocks) {
       // TODO: free data blocks
     }
-    if (self->operations) {
-      list_free(self->operations);
-    }
     free(self);
   }
 }
 
 ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
-                                 void *blocks, p_list operations) {
+                                 void *blocks) {
   ir_subroutine *self = MALLOC(ir_subroutine);
   self->signature = signature;
   self->file_name = strdup((char *)file_name);
   self->blocks = blocks;
-  self->operations = operations;
   debug("created subroutine %s file=%s", ir_subroutine_name(self), file_name);
   return self;
 }
@@ -123,7 +121,7 @@ int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {
   int cmp = IR_SUBROUTINE_CMP_SAME;
 
   if (!ir_term_id_equals(lsv_s->id, rsv_s->id)) {
-    cmp |= IR_SUBROUTINE_CMP_ID;
+    cmp |= IR_SUBROUTINE_CMP_NAME;
   }
 
   if (!ir_t_equals(lsv_s->ret, rsv_s->ret)) {

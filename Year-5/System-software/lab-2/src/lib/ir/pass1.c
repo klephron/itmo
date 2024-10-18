@@ -11,53 +11,65 @@ void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx, const char *file_name) {
 
 ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *self,
                                        ir_signature   *signature) {
-  return ir_subroutine_new(self->file_name, signature, NULL, NULL);
+  return ir_subroutine_new(self->file_name, signature, NULL);
 }
 
-// TODO: maybe later allow overloading
+static int ir_pass1_subroutine_validate(ir_pass1 *self, ir_subroutine *sub) {
+  p_list params = sub->signature->params;
+  for (list_it it = params->head; it; it = it->next) {
+    for (list_it it2 = it->next; it2; it2 = it2->next) {
+      if (!ir_param_cmp(it->data, it2->data)) {
+        exception *ex = exception_new_f(
+            EXCEPTION_IR, EXCEPTION_IR_FUNCTION_PARAMETER_DUPLICATION,
+            sub->file_name, 0, 0, "function parameter duplication",
+            "function %s parameter %s is duplicated", ir_subroutine_name(sub),
+            ir_param_name(it->data));
+        ir_ctx_add_exception(self->ctx, ex);
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+
+// TODO: maybe later allow overloading (will require multiset)
 int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
+  int     ok = 1;
   ir_ctx *ctx = self->ctx;
 
-  int ret = 0;
-
-  for (list_it it = ctx->subroutines->head; it; it = it->next) {
-    ir_subroutine *lsv = it->data;
-    int            cmp = ir_subroutine_cmp(lsv, sub);
-
-    debug("compare subroutines: %s %s = %d", ir_subroutine_name(lsv),
-          ir_subroutine_name(sub), cmp);
-
-    if (cmp & IR_SUBROUTINE_CMP_ID) { // is names are different
-      continue;
-    }
-
-    if (cmp != IR_SUBROUTINE_CMP_SAME) {
-      exception *ex = exception_new_f(
-          EXCEPTION_IR, EXCEPTION_IR_FUNCTION_OVERLOADING, sub->file_name, 0, 0,
-          "function overloading is not allowed",
-          "previous definition of %s in %s:%d:%d", ir_subroutine_name(sub),
-          lsv->file_name, 0, 0);
-      ir_ctx_add_exception(ctx, ex);
-      ret = -1;
-      break;
-    }
-
-    list_insert(ctx->subroutines, it, sub);
-    debug("replaced subroutine %s", ir_subroutine_name(sub));
-    ret = 1;
-    break;
+  if (!ir_pass1_subroutine_validate(self, sub)) {
+    ok = 0;
   }
 
-  if (ret == 0) {
-    list_push_back(ctx->subroutines, sub);
-    ret = 1;
-    debug("added subroutine %s", ir_subroutine_name(sub));
-  } else if (ret == -1) {
+  if (ok) {
+    hashset_it it = hashset_find(ctx->subroutines, sub);
+
+    if (it.end(&it)) {
+      hashset_insert(ctx->subroutines, sub);
+      debug("added subroutine %s", ir_subroutine_name(sub));
+    } else {
+      ir_subroutine *lsv = it.get(&it);
+      int            cmp = ir_subroutine_cmp(lsv, sub);
+
+      if (cmp == IR_SUBROUTINE_CMP_SAME) {
+        hashset_insert(ctx->subroutines, sub);
+        debug("replaced subroutine %s", ir_subroutine_name(sub));
+      } else {
+        exception *ex = exception_new_f(
+            EXCEPTION_IR, EXCEPTION_IR_FUNCTION_OVERLOADING, sub->file_name, 0,
+            0, "function overloading", "previous definition of %s in %s:%d:%d",
+            ir_subroutine_name(sub), lsv->file_name, 0, 0);
+        ir_ctx_add_exception(ctx, ex);
+        ok = 0;
+      }
+    }
+  }
+
+  if (!ok) {
     ir_subroutine_free(sub);
-    ret = 0;
   }
 
-  return ret;
+  return ok;
 }
 
 int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param) {
