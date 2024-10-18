@@ -180,7 +180,8 @@ int has_subroutine(struct args_struct *args, const char *subroutine) {
   return args->subroutines->get(args->subroutines, subroutine) != NULL;
 }
 
-void print_exceptions(struct args_struct *_, const p_list exceptions) {
+void print_exceptions(struct args_struct *args, const p_list exceptions) {
+  UNUSED(args);
   for (list_iter it = exceptions->head; it != NULL; it = it->next) {
     char *msg = exception_to_chars(((exception *)it->data));
     fprintf(stderr, "%s\n", msg);

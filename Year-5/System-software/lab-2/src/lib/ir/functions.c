@@ -43,12 +43,12 @@ p_list ir_param_list_new() {
 }
 
 // SIGNATURE
-static void signature_free(ir_signature *data) {
-  if (data != NULL) {
-    ir_term_free((ir_term_base *)data->id);
-    data->params->free(data->params);
-    ir_t_free(data->ret);
-    free(data);
+static void signature_free(ir_signature *self) {
+  if (self != NULL) {
+    ir_term_free((ir_term_base *)self->id);
+    self->params->free(self->params);
+    ir_t_free(self->ret);
+    free(self);
   }
 }
 
@@ -63,17 +63,17 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret) {
 }
 
 // SUBROUTINE
-void ir_subroutine_free(ir_subroutine *data) {
-  if (data != NULL) {
-    signature_free(data->signature);
-    free(data->file_name);
-    if (data->blocks) {
+void ir_subroutine_free(ir_subroutine *self) {
+  if (self != NULL) {
+    signature_free(self->signature);
+    free(self->file_name);
+    if (self->blocks) {
       // TODO: free data blocks
     }
-    if (data->operations) {
-      data->operations->free(data->operations);
+    if (self->operations) {
+      self->operations->free(self->operations);
     }
-    free(data);
+    free(self);
   }
 }
 
@@ -88,11 +88,10 @@ ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
   return self;
 }
 
-ir_subroutine_status_enum
-ir_subroutine_status(const ir_subroutine *subroutine) {
-  if (subroutine == NULL) {
+ir_subroutine_status_enum ir_subroutine_status(const ir_subroutine *self) {
+  if (self == NULL) {
     return IR_SUBROUTINE_STATUS_ABSENT;
-  } else if (subroutine->blocks == NULL) { //  operations should be not NULL
+  } else if (self->blocks == NULL) { //  operations should be not NULL
     return IR_SUBROUTINE_STATUS_DECLARATION;
   } else {
     return IR_SUBROUTINE_STATUS_DEFINITION;

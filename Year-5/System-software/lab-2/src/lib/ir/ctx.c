@@ -30,17 +30,17 @@ static void container_delete_exc(void *_data) {
   }
 }
 
-static void ir_ctx_free(ir_ctx *ctx) {
+static void ir_ctx_free(ir_ctx *self) {
   debug("ctx free");
-  if (ctx != NULL) {
-    ctx->subroutines->free(ctx->subroutines);
-    ctx->exceptions->free(ctx->exceptions);
-    free(ctx);
+  if (self != NULL) {
+    self->subroutines->free(self->subroutines);
+    self->exceptions->free(self->exceptions);
+    free(self);
   }
 }
 
-void ir_ctx_add_exception(ir_ctx *ctx, exception *ex) {
-  ctx->exceptions->put(ctx->exceptions, ex);
+void ir_ctx_add_exception(ir_ctx *self, exception *ex) {
+  self->exceptions->put(self->exceptions, ex);
 }
 
 ir_ctx *ir_ctx_new() {

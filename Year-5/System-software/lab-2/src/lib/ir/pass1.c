@@ -3,20 +3,20 @@
 #include "util/log.h"
 #include "util/macro.h"
 
-void ir_pass1_init(ir_pass1 *pass1, struct ir_ctx *ctx, const char *file_name) {
-  pass1->base.kind = IR_PASS_1;
-  pass1->ctx = ctx;
-  pass1->file_name = file_name;
+void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx, const char *file_name) {
+  self->base.kind = IR_PASS_1;
+  self->ctx = ctx;
+  self->file_name = file_name;
 }
 
-ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *pass1,
+ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *self,
                                        ir_signature *signature) {
-  return ir_subroutine_new(pass1->file_name, signature, NULL, NULL);
+  return ir_subroutine_new(self->file_name, signature, NULL, NULL);
 }
 
 // TODO: maybe later allow overloading
-int ir_pass1_subroutine_add(ir_pass1 *pass1, ir_subroutine *subroutine) {
-  ir_ctx *ctx = pass1->ctx;
+int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *subroutine) {
+  ir_ctx *ctx = self->ctx;
 
   int ret = 0;
 
@@ -60,8 +60,8 @@ int ir_pass1_subroutine_add(ir_pass1 *pass1, ir_subroutine *subroutine) {
   return ret;
 }
 
-int ir_pass1_param_add(ir_pass1 *pass1, p_list list, ir_param *param) {
-  UNUSED(pass1);
+int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param) {
+  UNUSED(self);
   list->put(list, param);
   debug("param_list added param %s", param->id->name);
   return 1;

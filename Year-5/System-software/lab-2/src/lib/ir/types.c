@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void ir_t_base_free_in(ir_t_base *base) { UNUSED(base); }
+static void ir_t_base_free_in(ir_t_base *self) { UNUSED(self); }
 
-static void ir_t_base_free(ir_t_base *base) {
-  if (base != NULL) {
-    ir_t_base_free_in(base);
-    free(base);
+static void ir_t_base_free(ir_t_base *self) {
+  if (self != NULL) {
+    ir_t_base_free_in(self);
+    free(self);
   }
 }
 
@@ -58,8 +58,8 @@ ir_t_base *ir_t_base_new(ir_t_enum type) {
 }
 
 // ARRAY
-static void ir_t_array_free(ir_t_base *base) {
-  struct ir_t_array *array = (struct ir_t_array *)base;
+static void ir_t_array_free(ir_t_base *self) {
+  struct ir_t_array *array = (struct ir_t_array *)self;
   if (array != NULL) {
     ir_t_base_free_in(&array->base);
     ir_t_free(array->elem_type);
@@ -78,8 +78,8 @@ ir_t_array *ir_t_array_new(size_t dimensions, ir_t_base *elem_type) {
 }
 
 // CUSTOM
-static void ir_t_custom_free(ir_t_base *base) {
-  struct ir_t_custom *custom = (struct ir_t_custom *)base;
+static void ir_t_custom_free(ir_t_base *self) {
+  struct ir_t_custom *custom = (struct ir_t_custom *)self;
   if (custom != NULL) {
     ir_t_base_free_in(&custom->base);
     free(custom->name);
@@ -132,9 +132,9 @@ int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
   return 1;
 }
 
-const char *ir_t_type_str(ir_t_base *type) {
-  if (type == NULL) {
+const char *ir_t_type_str(ir_t_base *self) {
+  if (self == NULL) {
     return "<null>";
   }
-  return ttstr(type->type);
+  return ttstr(self->type);
 }

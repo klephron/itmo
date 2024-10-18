@@ -22,14 +22,14 @@ struct dot_ctx {
   void (*free)(struct dot_ctx *);
 };
 
-static void dot_ctx_free(struct dot_ctx *ctx) {
-  free((void *)ctx->graph);
-  free((void *)ctx->node_style);
+static void dot_ctx_free(struct dot_ctx *self) {
+  free((void *)self->graph);
+  free((void *)self->node_style);
 
-  ctx->list_nodes->free(ctx->list_nodes);
-  ctx->list_edges->free(ctx->list_edges);
+  self->list_nodes->free(self->list_nodes);
+  self->list_edges->free(self->list_edges);
 
-  free(ctx);
+  free(self);
 }
 
 static struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {

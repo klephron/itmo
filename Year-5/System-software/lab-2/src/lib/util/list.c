@@ -4,78 +4,78 @@
 #include "util/list.h"
 #include "util/macro.h"
 
-static void *list_get(p_list this, const void *data) {
-  for (list_iter it = this->head; it != NULL; it = it->next) {
-    if (!this->f_cmp(it->data, data)) {
+static void *list_get(p_list self, const void *data) {
+  for (list_iter it = self->head; it != NULL; it = it->next) {
+    if (!self->f_cmp(it->data, data)) {
       return it->data;
     }
   }
   return NULL;
 }
 
-static void list_replace(struct list_struct *this, list_iter it, void *data) {
-  this->f_delete(it->data);
-  it->data = this->f_new(data);
+static void list_replace(struct list_struct *self, list_iter it, void *data) {
+  self->f_delete(it->data);
+  it->data = self->f_new(data);
 }
 
-static void list_put(p_list this, void *data) {
-  if (this->unique) {
-    for (list_iter it = this->head; it != NULL; it = it->next) {
-      if (!this->f_cmp(it->data, data)) {
-        list_replace(this, it, data);
+static void list_put(p_list self, void *data) {
+  if (self->unique) {
+    for (list_iter it = self->head; it != NULL; it = it->next) {
+      if (!self->f_cmp(it->data, data)) {
+        list_replace(self, it, data);
         return;
       }
     }
   }
 
   p_list_entry entry = MALLOC(list_entry);
-  entry->data = this->f_new(data);
+  entry->data = self->f_new(data);
   entry->next = NULL;
 
-  if (this->tail == NULL) {
-    this->head = entry;
+  if (self->tail == NULL) {
+    self->head = entry;
   } else {
-    this->tail->next = entry;
+    self->tail->next = entry;
   }
-  this->tail = entry;
+  self->tail = entry;
 }
 
-static size_t list_size(p_list this) {
+static size_t list_size(p_list self) {
   size_t size = 0;
-  for (list_iter it = this->head; it != NULL; it = it->next) {
+  for (list_iter it = self->head; it != NULL; it = it->next) {
     ++size;
   }
   return size;
 }
 
-static void list_free(p_list this) {
-  if (this != NULL) {
+static void list_free(p_list self) {
+  if (self != NULL) {
     list_iter next;
-    for (list_iter it = this->head; it != NULL; it = next) {
+    for (list_iter it = self->head; it != NULL; it = next) {
       next = it->next;
-      this->f_delete(it->data);
+      self->f_delete(it->data);
       free(it);
     }
-    free(this);
+    free(self);
   }
 }
 
 p_list list_new(container_f_cmp cmp, container_f_new new,
                 container_f_delete delete, int unique) {
-  p_list this = MALLOC(list);
+  p_list self = MALLOC(list);
 
-  this->unique = unique;
+  self->unique = unique;
 
-  this->head = NULL;
-  this->tail = NULL;
-  this->get = list_get;
-  this->put = list_put;
-  this->replace = list_replace;
-  this->free = list_free;
-  this->size = list_size;
+  self->head = NULL;
+  self->tail = NULL;
+  self->get = list_get;
+  self->put = list_put;
+  self->replace = list_replace;
+  self->free = list_free;
+  self->size = list_size;
 
-  this->f_cmp = cmp;
-  this->f_new = new;
-  this->f_delete = delete;
-  return this;
+  self->f_cmp = cmp;
+  self->f_new = new;
+  self->f_delete = delete;
+  return self;
 }

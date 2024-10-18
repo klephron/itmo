@@ -18,11 +18,11 @@ struct list_struct {
   struct list_entry_struct *tail;
   int unique;
 
-  void *(*get)(struct list_struct *this, const void *data);
-  void (*put)(struct list_struct *this, void *data);
-  void (*free)(struct list_struct *this);
-  void (*replace)(struct list_struct *this, list_iter it, void *data);
-  size_t (*size)(struct list_struct *this);
+  void *(*get)(struct list_struct *self, const void *data);
+  void (*put)(struct list_struct *self, void *data);
+  void (*free)(struct list_struct *self);
+  void (*replace)(struct list_struct *self, list_iter it, void *data);
+  size_t (*size)(struct list_struct *self);
 
   container_f_cmp *f_cmp;
   container_f_new *f_new;
