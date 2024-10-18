@@ -41,11 +41,11 @@ static struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
   ctx->id = 0;
 
   ctx->list_nodes =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+      list_new(container_cmp_chars_chars, container_new_chars_chars,
+               container_delete_chars_chars);
   ctx->list_edges =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+      list_new(container_cmp_chars_chars, container_new_chars_chars,
+               container_delete_chars_chars);
 
   ctx->free = dot_ctx_free;
 
@@ -61,14 +61,14 @@ static size_t dot_len(struct dot_ctx *ctx) {
   len += strlen(ctx->node_style);
 
   for (list_it it = ctx->list_nodes->head; it; it = it->next) {
-    string_string *data = it->data;
+    chars_chars *data = it->data;
     len += strlen(data->key);
     len += strlen("[label=]\n");
     len += strlen(data->value);
   }
 
   for (list_it it = ctx->list_edges->head; it; it = it->next) {
-    string_string *data = it->data;
+    chars_chars *data = it->data;
     len += strlen(data->key);
     len += strlen(" -> \n");
     len += strlen(data->value);
@@ -89,7 +89,7 @@ static void dot_generate(struct dot_ctx *ctx, char *str) {
   end = stpcpy(end, "]\n");
 
   for (list_it it = ctx->list_nodes->head; it; it = it->next) {
-    string_string *data = it->data;
+    chars_chars *data = it->data;
     end = stpcpy(end, data->key);
     end = stpcpy(end, "[label=");
     end = stpcpy(end, data->value);
@@ -97,7 +97,7 @@ static void dot_generate(struct dot_ctx *ctx, char *str) {
   }
 
   for (list_it it = ctx->list_edges->head; it; it = it->next) {
-    string_string *data = it->data;
+    chars_chars *data = it->data;
     end = stpcpy(end, data->key);
     end = stpcpy(end, " -> ");
     end = stpcpy(end, data->value);
@@ -136,7 +136,7 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   char   id_s[32];
   sprintf(id_s, "id_%zu", id);
 
-  string_string data = {.key = id_s, .value = label};
+  chars_chars data = {.key = id_s, .value = label};
 
   list_it it = list_find(ctx->list_nodes, &data);
   list_insert(ctx->list_nodes, it, &data);
@@ -149,7 +149,7 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
       char child_id_s[32];
       sprintf(child_id_s, "id_%zu", child_id);
 
-      string_string data = {.key = id_s, .value = child_id_s};
+      chars_chars data = {.key = id_s, .value = child_id_s};
 
       list_push_back(ctx->list_edges, &data);
     }

@@ -3,16 +3,16 @@
 #include "util/container.h"
 #include <stddef.h>
 
-struct list_entry {
-  void              *data;
-  struct list_entry *next;
+struct list_node {
+  void             *data;
+  struct list_node *next;
 };
 
-typedef struct list_entry list_entry, *list_it;
+typedef struct list_node list_node, *list_it;
 
 struct list {
-  struct list_entry *head;
-  struct list_entry *tail;
+  struct list_node *head;
+  struct list_node *tail;
 
   container_f_cmp    *f_cmp;
   container_f_new    *f_new;

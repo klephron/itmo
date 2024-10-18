@@ -5,34 +5,31 @@
 #include "util/list.h"
 
 Test(list, create_delete) {
-  p_list list =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
 
-  cr_expect_eq(list->f_cmp, container_cmp_string_string);
-  cr_expect_eq(list->f_new, container_new_string_string);
-  cr_expect_eq(list->f_delete, container_delete_string_string);
+  cr_expect_eq(list->f_cmp, container_cmp_chars_chars);
+  cr_expect_eq(list->f_new, container_new_chars_chars);
+  cr_expect_eq(list->f_delete, container_delete_chars_chars);
 
   list_free(list);
 }
 
 Test(list, push_back) {
-  p_list list =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
 
-  string_string data = {.key = "hello", .value = "world"};
+  chars_chars data = {.key = "hello", .value = "world"};
 
   list_push_back(list, &data);
   list_free(list);
 }
 
 Test(list, push_back2) {
-  p_list list =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
 
-  string_string data = {.key = "hello", .value = "world"};
+  chars_chars data = {.key = "hello", .value = "world"};
   list_push_back(list, &data);
   data.key = "hello2";
   data.value = "world2";
@@ -48,11 +45,10 @@ Test(list, push_back2) {
 }
 
 Test(list, find_insert) {
-  p_list list =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
 
-  string_string data = {.key = "hello", .value = "world"};
+  chars_chars data = {.key = "hello", .value = "world"};
   list_push_back(list, &data);
   data.value = "world2";
   list_insert(list, list_find(list, &data), &data);
@@ -67,11 +63,10 @@ Test(list, find_insert) {
 }
 
 Test(list, push_push) {
-  p_list list =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
 
-  string_string data = {.key = "hello", .value = "world"};
+  chars_chars data = {.key = "hello", .value = "world"};
   list_push_back(list, &data);
   data.value = "world2";
   list_push_back(list, &data);
@@ -86,14 +81,13 @@ Test(list, push_push) {
 }
 
 Test(list, put_many) {
-  p_list list =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
 
   char key[10];
   char value[10];
 
-  string_string data = {.key = key, .value = value};
+  chars_chars data = {.key = key, .value = value};
 
   for (int i = 0; i < 1000; ++i) {
     sprintf(key, "%d", i);
@@ -111,14 +105,13 @@ Test(list, put_many) {
 }
 
 Test(list, put_many_check) {
-  p_list list =
-      list_new(container_cmp_string_string, container_new_string_string,
-               container_delete_string_string);
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
 
   char key[16];
   char value[16];
 
-  string_string data = {.key = key, .value = value};
+  chars_chars data = {.key = key, .value = value};
 
   for (int i = 0; i < 1000; ++i) {
     sprintf(key, "%d", i);
@@ -128,7 +121,7 @@ Test(list, put_many_check) {
 
   int cnt = 0;
   for (list_it it = list->head; it != NULL; it = it->next, ++cnt) {
-    string_string *data = it->data;
+    chars_chars *data = it->data;
     sprintf(key, "%d", cnt);
     sprintf(value, "%d", cnt + 1000);
 

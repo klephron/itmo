@@ -40,16 +40,16 @@ list_it list_find(const struct list *self, const void *data) {
 }
 
 void list_push_back(p_list self, void *data) {
-  list_entry *entry = MALLOC(list_entry);
-  entry->data = self->f_new(data);
-  entry->next = NULL;
+  list_node *node = MALLOC(list_node);
+  node->data = self->f_new(data);
+  node->next = NULL;
 
   if (self->tail) {
-    self->tail->next = entry;
+    self->tail->next = node;
   } else {
-    self->head = entry;
+    self->head = node;
   }
-  self->tail = entry;
+  self->tail = node;
 }
 
 void list_insert(struct list *self, list_it it, void *data) {

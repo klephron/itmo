@@ -1,14 +1,15 @@
 #include "util/container_funcs.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 // CMP
-int container_cmp_string_string(const void *_lsv, const void *_rsv) {
-  const string_string *lsv = _lsv;
-  const string_string *rsv = _rsv;
+int container_cmp_chars_chars(const void *_lsv, const void *_rsv) {
+  const chars_chars *lsv = _lsv;
+  const chars_chars *rsv = _rsv;
   return strcmp(lsv->key, rsv->key);
 }
 
@@ -25,10 +26,10 @@ int container_cmp_false(const void *lsv, const void *rsv) {
 }
 
 // NEW
-void *container_new_string_string(void *_data) {
-  string_string *data = _data;
+void *container_new_chars_chars(void *_data) {
+  chars_chars *data = _data;
 
-  string_string *new_data = MALLOC(string_string);
+  chars_chars *new_data = MALLOC(chars_chars);
   new_data->key = strdup(data->key);
   new_data->value = strdup(data->value);
 
@@ -40,11 +41,29 @@ void *container_new_chars(void *_data) { return strdup(_data); }
 void *container_new_move(void *data) { return data; }
 
 // DELETE
-void container_delete_string_string(void *_data) {
-  string_string *data = _data;
+void container_delete_chars_chars(void *_data) {
+  chars_chars *data = _data;
   free(data->key);
   free(data->value);
   free(data);
 }
 
 void container_delete_chars(void *_data) { free(_data); }
+
+// HASH
+size_t container_hash_chars(void *_data) {
+  const size_t pow = 757;
+  size_t       hash = 353;
+
+  char *kc = _data;
+  while (*kc != '\0') {
+    hash = hash * pow + *kc++;
+  }
+
+  return hash;
+}
+
+size_t container_hash_chars_chars(void *_data) {
+  chars_chars *data = _data;
+  return container_hash_chars(data->key);
+}
