@@ -39,7 +39,7 @@ Test(list, put_put) {
   list->put(list, &data);
 
   int cnt = 0;
-  for (list_iter it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
     ;
 
   cr_expect_eq(2, cnt);
@@ -58,7 +58,7 @@ Test(list, put_putsame_unique) {
   list->put(list, &data);
 
   int cnt = 0;
-  for (list_iter it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
     ;
 
   cr_expect_eq(1, cnt);
@@ -77,7 +77,7 @@ Test(list, put_putsame) {
   list->put(list, &data);
 
   int cnt = 0;
-  for (list_iter it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
     ;
 
   cr_expect_eq(2, cnt);
@@ -102,7 +102,7 @@ Test(list, put_many) {
   }
 
   int cnt = 0;
-  for (list_iter it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
     ;
 
   cr_expect_eq(1000, cnt);
@@ -127,7 +127,7 @@ Test(list, put_many_check) {
   }
 
   int cnt = 0;
-  for (list_iter it = list->head; it != NULL; it = it->next, ++cnt) {
+  for (list_it it = list->head; it != NULL; it = it->next, ++cnt) {
     string_string *data = it->data;
     sprintf(key, "%d", cnt);
     sprintf(value, "%d", cnt + 1000);

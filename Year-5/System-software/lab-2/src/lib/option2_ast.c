@@ -88,7 +88,7 @@ static void *container_new_exc(void *_data) {
 }
 
 static void container_delete_exc(void *_data) {
-  if (_data != NULL) {
+  if (_data) {
     exception *exc = _data;
     exc->free(exc);
   }
@@ -148,7 +148,7 @@ static void container_delete_option2(void *data) {
 p_list option2_ast_build_many(p_list input_files) {
   p_list asts = list_new(container_cmp_false, container_new_option2,
                          container_delete_option2, 0);
-  for (list_iter it = input_files->head; it != NULL; it = it->next) {
+  for (list_it it = input_files->head; it != NULL; it = it->next) {
     option2_ast *ast = option2_ast_build(it->data);
     asts->put(asts, ast);
   }

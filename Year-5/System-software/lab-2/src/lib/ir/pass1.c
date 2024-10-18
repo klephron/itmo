@@ -20,7 +20,7 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *subroutine) {
 
   int ret = 0;
 
-  for (list_iter it = ctx->subroutines->head; it != NULL; it = it->next) {
+  for (list_it it = ctx->subroutines->head; it; it = it->next) {
     ir_subroutine *lsv = it->data;
     int cmp = ir_subroutine_cmp(lsv, subroutine);
 
@@ -42,7 +42,7 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *subroutine) {
       break;
     }
 
-    ctx->subroutines->replace(ctx->subroutines, it, subroutine);
+    ctx->subroutines->insert(ctx->subroutines, it, subroutine);
     debug("replaced subroutine %s", subroutine->signature->id->name);
     ret = 1;
     break;

@@ -47,7 +47,7 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
     break;
   }
 
-  if (exc == NULL) {
+  if (!exc) {
     return;
   }
 
@@ -64,7 +64,7 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
 ir_ctx *option2_ir_build(const p_list ast) {
   ir_ctx *ctx = ir_ctx_new();
 
-  for (list_iter it = ast->head; it != NULL; it = it->next) {
+  for (list_it it = ast->head; it; it = it->next) {
     option2_ast *ast = it->data;
 
     pANTLR3_COMMON_TREE_NODE_STREAM nodes =

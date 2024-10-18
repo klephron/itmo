@@ -54,7 +54,7 @@ void usage(struct args_struct *args) {
   int buf_len = 256;
   char subroutines[buf_len];
   int offset = 0;
-  for (list_iter it = args->subroutines->head; it != NULL; it = it->next) {
+  for (list_it it = args->subroutines->head; it; it = it->next) {
     offset += snprintf(subroutines + offset, buf_len - offset - 1, "%s,",
                        (const char *)it->data);
   }
@@ -95,7 +95,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
       has_next = 0;
       break;
     case 0:
-      if (long_options[option_index].flag != 0) {
+      if (long_options[option_index].flag) {
         break;
       }
       break;
@@ -177,12 +177,12 @@ char *get_cg_dot_output(struct args_struct *args, const char *source,
 }
 
 int has_subroutine(struct args_struct *args, const char *subroutine) {
-  return args->subroutines->get(args->subroutines, subroutine) != NULL;
+  return !!args->subroutines->get(args->subroutines, subroutine);
 }
 
 void print_exceptions(struct args_struct *args, const p_list exceptions) {
   UNUSED(args);
-  for (list_iter it = exceptions->head; it != NULL; it = it->next) {
+  for (list_it it = exceptions->head; it; it = it->next) {
     char *msg = exception_to_chars(((exception *)it->data));
     fprintf(stderr, "%s\n", msg);
     free(msg);
@@ -206,7 +206,7 @@ int execute(struct args_struct *args) {
   // stage: build ast + handle exceptions
   p_list asts = option2_ast_build_many(args->input_files);
 
-  for (list_iter it = asts->head; it != NULL; it = it->next) {
+  for (list_it it = asts->head; it; it = it->next) {
     option2_ast *ast = it->data;
     if (ast->exceptions->size(ast->exceptions) != 0) {
       print_exceptions(args, ast->exceptions);
@@ -216,7 +216,7 @@ int execute(struct args_struct *args) {
 
   // stage: ast dot
   if (!error || args->ignore_errors) {
-    for (list_iter it = asts->head; it != NULL; it = it->next) {
+    for (list_it it = asts->head; it; it = it->next) {
       option2_ast *ast = it->data;
 
       dot_string *dot = dot_ast(ast);
@@ -232,7 +232,7 @@ int execute(struct args_struct *args) {
 
   if (!error || args->ignore_errors) {
     ir = option2_ir_build(asts);
-    if (ir->exceptions->size(ir->exceptions) != 0) {
+    if (ir->exceptions->size(ir->exceptions)) {
       print_exceptions(args, ir->exceptions);
       error = 1;
     }
@@ -240,7 +240,7 @@ int execute(struct args_struct *args) {
 
   // stage: cfg and cg dots
   if (!error || args->ignore_errors) {
-    for (list_iter it = ir->subroutines->head; it != NULL; it = it->next) {
+    for (list_it it = ir->subroutines->head; it; it = it->next) {
       ir_subroutine *sub = it->data;
       const char *sub_name = sub->signature->id->name;
       const char *source = (char *)sub->file_name;
@@ -261,7 +261,7 @@ int execute(struct args_struct *args) {
     }
   }
 
-  if (ir != NULL) {
+  if (ir) {
     ir->free(ir);
   }
 

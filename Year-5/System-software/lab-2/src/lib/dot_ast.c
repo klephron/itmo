@@ -60,14 +60,14 @@ static size_t dot_len(struct dot_ctx *ctx) {
   len += strlen("node []\n");
   len += strlen(ctx->node_style);
 
-  for (list_iter it = ctx->list_nodes->head; it != NULL; it = it->next) {
+  for (list_it it = ctx->list_nodes->head; it; it = it->next) {
     string_string *data = it->data;
     len += strlen(data->key);
     len += strlen("[label=]\n");
     len += strlen(data->value);
   }
 
-  for (list_iter it = ctx->list_edges->head; it != NULL; it = it->next) {
+  for (list_it it = ctx->list_edges->head; it; it = it->next) {
     string_string *data = it->data;
     len += strlen(data->key);
     len += strlen(" -> \n");
@@ -88,7 +88,7 @@ static void dot_generate(struct dot_ctx *ctx, char *str) {
   end = stpcpy(end, ctx->node_style);
   end = stpcpy(end, "]\n");
 
-  for (list_iter it = ctx->list_nodes->head; it != NULL; it = it->next) {
+  for (list_it it = ctx->list_nodes->head; it; it = it->next) {
     string_string *data = it->data;
     end = stpcpy(end, data->key);
     end = stpcpy(end, "[label=");
@@ -96,7 +96,7 @@ static void dot_generate(struct dot_ctx *ctx, char *str) {
     end = stpcpy(end, "]\n");
   }
 
-  for (list_iter it = ctx->list_edges->head; it != NULL; it = it->next) {
+  for (list_it it = ctx->list_edges->head; it; it = it->next) {
     string_string *data = it->data;
     end = stpcpy(end, data->key);
     end = stpcpy(end, " -> ");
@@ -108,7 +108,7 @@ static void dot_generate(struct dot_ctx *ctx, char *str) {
 }
 
 static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
-  if (root == NULL) {
+  if (!root) {
     return 0;
   }
 

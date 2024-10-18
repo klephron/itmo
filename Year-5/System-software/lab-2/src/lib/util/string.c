@@ -41,12 +41,12 @@ char *escape_html(const char *str) {
       break;
     }
 
-    if (after == NULL) {
+    if (after) {
+      end = stpcpy(end, after);
+    } else {
       end[0] = str[i];
       end[1] = '\0';
       end += 1;
-    } else {
-      end = stpcpy(end, after);
     }
   }
 

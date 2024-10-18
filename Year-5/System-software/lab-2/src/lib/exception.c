@@ -9,19 +9,21 @@
 #include "util/colors.h"
 
 static void exception_free(struct exception_struct *exc) {
-  if (exc->stream) {
-    free(exc->stream);
-  }
+  if (exc) {
+    if (exc->stream) {
+      free(exc->stream);
+    }
 
-  if (exc->name) {
-    free(exc->name);
-  }
+    if (exc->name) {
+      free(exc->name);
+    }
 
-  if (exc->message) {
-    free(exc->message);
-  }
+    if (exc->message) {
+      free(exc->message);
+    }
 
-  free(exc);
+    free(exc);
+  }
 }
 
 struct exception_struct *exception_new(enum exception_type type, int subtype,

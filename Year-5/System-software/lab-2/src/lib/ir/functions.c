@@ -10,7 +10,7 @@
 // PARAM
 void ir_param_free(ir_param *self) {
   debug("before param free %p", self);
-  if (self != NULL) {
+  if (self) {
     ir_term_free((ir_term_base *)self->id);
     ir_t_free(self->type);
     free(self);
@@ -44,7 +44,7 @@ p_list ir_param_list_new() {
 
 // SIGNATURE
 static void signature_free(ir_signature *self) {
-  if (self != NULL) {
+  if (self) {
     ir_term_free((ir_term_base *)self->id);
     self->params->free(self->params);
     ir_t_free(self->ret);
@@ -64,7 +64,7 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret) {
 
 // SUBROUTINE
 void ir_subroutine_free(ir_subroutine *self) {
-  if (self != NULL) {
+  if (self) {
     signature_free(self->signature);
     free(self->file_name);
     if (self->blocks) {
@@ -89,9 +89,9 @@ ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
 }
 
 ir_subroutine_status_enum ir_subroutine_status(const ir_subroutine *self) {
-  if (self == NULL) {
+  if (!self) {
     return IR_SUBROUTINE_STATUS_ABSENT;
-  } else if (self->blocks == NULL) { //  operations should be not NULL
+  } else if (!self->blocks) {
     return IR_SUBROUTINE_STATUS_DECLARATION;
   } else {
     return IR_SUBROUTINE_STATUS_DEFINITION;
@@ -99,7 +99,7 @@ ir_subroutine_status_enum ir_subroutine_status(const ir_subroutine *self) {
 }
 
 int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {
-  if (lsv == NULL || rsv == NULL) {
+  if (!lsv || !rsv) {
     return IR_SUBROUTINE_CMP_NULL;
   }
   // compare signature
@@ -122,8 +122,8 @@ int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {
   if (lsv_pc != rsv_pc) {
     cmp |= IR_SUBROUTINE_CMP_PARAMS;
   } else {
-    for (list_iter lpi = lsv_s->params->head, rpi = rsv_s->params->head;
-         lpi != NULL; lpi = lpi->next, rpi = rpi->next) {
+    for (list_it lpi = lsv_s->params->head, rpi = rsv_s->params->head; lpi;
+         lpi = lpi->next, rpi = rpi->next) {
 
       ir_param *lp = lpi->data;
       ir_param *rp = rpi->data;

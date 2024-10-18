@@ -1,14 +1,13 @@
 #include "ir/terminals.h"
 #include "util/log.h"
 #include "util/macro.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 static void ir_term_base_free_in(ir_term_base *self) { UNUSED(self); }
 
 static void ir_term_base_free(ir_term_base *self) {
-  if (self != NULL) {
+  if (self) {
     ir_term_base_free_in(self);
     free(self);
   }
@@ -21,7 +20,7 @@ static void ir_term_base_init(ir_term_base *self, ir_term_enum kind) {
 // LIT
 void ir_term_lit_free(ir_term_lit *self) {
   debug("lit free %p %d", self, self->type);
-  if (self != NULL) {
+  if (self) {
     if (self->type == IR_T_STRING && self->u.v_str) {
       free(self->u.v_str);
     }
@@ -33,7 +32,7 @@ void ir_term_lit_free(ir_term_lit *self) {
 // ID
 void ir_term_id_free(ir_term_id *self) {
   debug("id free %p %s", self, self->name);
-  if (self != NULL) {
+  if (self) {
     if (self->name) {
       free(self->name);
     }

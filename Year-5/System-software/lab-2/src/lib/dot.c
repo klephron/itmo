@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 static void dot_string_free(dot_string *str) {
-  if (str != NULL) {
+  if (str) {
     if (str->chars) {
       free(str->chars);
     }

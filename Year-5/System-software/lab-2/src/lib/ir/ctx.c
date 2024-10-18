@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 static void container_delete_sub(void *_data) {
-  if (_data != NULL) {
+  if (_data) {
     debug("subroutine free");
     ir_subroutine *sub = _data;
     ir_subroutine_free(sub);
@@ -23,7 +23,7 @@ static int container_cmp_sub(const void *_lsv, const void *_rsv) {
 }
 
 static void container_delete_exc(void *_data) {
-  if (_data != NULL) {
+  if (_data) {
     debug("exception free");
     exception *exc = _data;
     exc->free(exc);
@@ -32,7 +32,7 @@ static void container_delete_exc(void *_data) {
 
 static void ir_ctx_free(ir_ctx *self) {
   debug("ctx free");
-  if (self != NULL) {
+  if (self) {
     self->subroutines->free(self->subroutines);
     self->exceptions->free(self->exceptions);
     free(self);

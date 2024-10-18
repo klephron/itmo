@@ -10,7 +10,7 @@
 static void ir_t_base_free_in(ir_t_base *self) { UNUSED(self); }
 
 static void ir_t_base_free(ir_t_base *self) {
-  if (self != NULL) {
+  if (self) {
     ir_t_base_free_in(self);
     free(self);
   }
@@ -60,7 +60,7 @@ ir_t_base *ir_t_base_new(ir_t_enum type) {
 // ARRAY
 static void ir_t_array_free(ir_t_base *self) {
   struct ir_t_array *array = (struct ir_t_array *)self;
-  if (array != NULL) {
+  if (array) {
     ir_t_base_free_in(&array->base);
     ir_t_free(array->elem_type);
     free(array);
@@ -80,7 +80,7 @@ ir_t_array *ir_t_array_new(size_t dimensions, ir_t_base *elem_type) {
 // CUSTOM
 static void ir_t_custom_free(ir_t_base *self) {
   struct ir_t_custom *custom = (struct ir_t_custom *)self;
-  if (custom != NULL) {
+  if (custom) {
     ir_t_base_free_in(&custom->base);
     free(custom->name);
     free(custom);
@@ -97,7 +97,7 @@ ir_t_custom *ir_t_custom_new(const char *name) {
 
 // GENERIC
 void ir_t_free(ir_t_base *generic) {
-  if (generic != NULL) {
+  if (generic) {
     switch (generic->type) {
     case IR_T_ARRAY:
       return ir_t_array_free(generic);
@@ -111,7 +111,7 @@ void ir_t_free(ir_t_base *generic) {
 
 // if both types are not null and different -> not equal
 int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
-  if (lsv == NULL || rsv == NULL) {
+  if (!lsv || !rsv) {
     return 1;
   }
   if (lsv->type != rsv->type) {
@@ -133,8 +133,8 @@ int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
 }
 
 const char *ir_t_type_str(ir_t_base *self) {
-  if (self == NULL) {
-    return "<null>";
+  if (self) {
+    return ttstr(self->type);
   }
-  return ttstr(self->type);
+  return "<null>";
 }
