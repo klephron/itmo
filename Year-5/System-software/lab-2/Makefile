@@ -1,7 +1,5 @@
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
-.DEFAULT_GOAL := build
-
 CC := gcc
 # -fsanitize=thread
 # -fsanitize=address,undefined,leak -Wall -Wextra
@@ -66,10 +64,15 @@ TGTS.TST = $(patsubst $(TST_DIR)/%.c,$(TARGET_TST_DIR)/%, $(SRCS.TST))
 
 # directories with trailing slash to be created
 DIRS = $(sort $(dir $(OBJS)) $(dir $(OBJS.BIN)) $(dir $(TGTS.BIN)) $(dir $(TGTS.TST)))
+
+
+.DEFAULT_GOAL := build
+.PNONY := grammar build dot/pdf run run/ast build/test test format index clean help echo
+
+
 # create directories
 $(sort $(DIRS)):
 	$(MKDIR) $(@:dir/%=%)
-
 
 # generate grammar files and objects for recognizers (parser and lexer)
 $(GRM_GEN_DIR)/%Lexer.c $(GRM_GEN_DIR)/%Parser.c $(GRM_GEN_DIR)/%Lexer.h $(GRM_GEN_DIR)/%Parser.h $(GRM_GEN_DIR)/%.tokens: $(GRM_REC_DIR)/%.g3 | $(DIRS)
@@ -86,7 +89,6 @@ $(GRM_GEN_DIR)/%.c $(GRM_GEN_DIR)/%.h $(GRM_GEN_DIR)/%.tokens: $(GRM_DIR)/%.g3 |
 # compile object files excluding generated
 $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
-
 
 # compile targets
 $(TARGET_DIR)/%: $(BIN_DIR)/%.c $(OBJS) | $(DIRS)
@@ -122,7 +124,7 @@ build/test: $(TGTS.TST)
 
 ### Run all tests
 test: build/test
-	for file in $(TGTS.TST); do "./$$file"; done
+	@for file in $(TGTS.TST); do "./$$file"; done;
 
 ### Format
 format:
@@ -165,7 +167,3 @@ echo:
 	@echo $(SRCS.BIN)
 	@echo $(HDRS.BIN)
 	@echo $(TGTS.BIN)
-
-
-# .PHONY: help clean test run dot/pdf build grammar
-# k
