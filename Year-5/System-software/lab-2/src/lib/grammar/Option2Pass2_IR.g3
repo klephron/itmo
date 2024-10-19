@@ -209,25 +209,25 @@ expr_2 returns [ir_expr_base *v]
   | ^('~' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_BITWISE_NOT); }
   ;
 
-expr_caller returns [ir_expr_call *v]
+expr_caller returns [ir_expr_base *v]
   : ^(CALLER ^(ARGS args=expr_15) expr) {
     $v = ir_pass2_expr_call_new(IR_PASS2_ANTLR3_USERP(), $expr.v, $args.v);
   }
   ;
 
-expr_indexer returns [ir_expr_index *v]
+expr_indexer returns [ir_expr_base *v]
   : ^(INDEXER ^(ARGS args=expr_15) expr) {
     $v = ir_pass2_expr_index_new(IR_PASS2_ANTLR3_USERP(), $expr.v, $args.v);
   }
   ;
 
-expr_literal returns [ir_expr_lit *v]
+expr_literal returns [ir_expr_base *v]
   : (id=bool | id=str | id=rune | id=hex | id=bits | id=dec) {
     $v = ir_pass2_expr_lit_new(IR_PASS2_ANTLR3_USERP(), $id.v);
   }
   ;
 
-expr_identifier returns [ir_expr_id *v]
+expr_identifier returns [ir_expr_base *v]
   : identifier {
       $v = ir_pass2_expr_id_new(IR_PASS2_ANTLR3_USERP(), $identifier.v);
     }

@@ -172,29 +172,31 @@ ir_term_id *ir_pass2_term_id_new(ir_pass2 *self, const char *id) {
 }
 
 // TODO: types
-ir_expr_id *ir_pass2_expr_id_new(ir_pass2 *self, const ir_term_id *id) {
+ir_expr_base *ir_pass2_expr_id_new(ir_pass2 *self, const ir_term_id *id) {
   UNUSED(self);
-  return ir_expr_id_new(id);
+
+  return (ir_expr_base *)ir_expr_unary_new((ir_expr_base *)ir_expr_id_new(id),
+                                           IR_EXPR_UNARY_LOAD);
 }
 
 // TODO: types
-ir_expr_lit *ir_pass2_expr_lit_new(ir_pass2 *self, ir_term_lit *lit) {
+ir_expr_base *ir_pass2_expr_lit_new(ir_pass2 *self, ir_term_lit *lit) {
   UNUSED(self);
-  return ir_expr_lit_new(lit);
+  return (ir_expr_base *)ir_expr_lit_new(lit);
 }
 
 // TODO: types
-ir_expr_index *ir_pass2_expr_index_new(ir_pass2 *self, ir_expr_base *indexed,
-                                       p_list args) {
+ir_expr_base *ir_pass2_expr_index_new(ir_pass2 *self, ir_expr_base *indexed,
+                                      p_list args) {
   UNUSED(self);
-  return ir_expr_index_new(indexed, args);
+  return (ir_expr_base *)ir_expr_index_new(indexed, args);
 }
 
 // TODO: types
-ir_expr_call *ir_pass2_expr_call_new(ir_pass2 *self, ir_expr_base *callee,
+ir_expr_base *ir_pass2_expr_call_new(ir_pass2 *self, ir_expr_base *callee,
                                      p_list args) {
   UNUSED(self);
-  return ir_expr_call_new(callee, args);
+  return (ir_expr_base *)ir_expr_call_new(callee, args);
 }
 
 // TODO: types

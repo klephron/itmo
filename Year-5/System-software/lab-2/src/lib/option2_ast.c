@@ -13,7 +13,9 @@ struct antlr_userp {
 };
 
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
-                                    pANTLR3_UINT8          *_) {
+                                    pANTLR3_UINT8          *token) {
+  UNUSED(token);
+
   pANTLR3_EXCEPTION ex;
 
   struct exception_helper exh;

@@ -7,11 +7,14 @@
 #include "ir/pass1.h"
 #include "ir/pass2.h"
 #include "option2_ast.h"
+#include "util/macro.h"
 
 #include <stdlib.h>
 
 static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
-                                    pANTLR3_UINT8          *_) {
+                                    pANTLR3_UINT8          *token) {
+  UNUSED(token);
+
   struct ir_pass_base *pass = recognizer->state->userp;
   exception           *exc = NULL;
 
