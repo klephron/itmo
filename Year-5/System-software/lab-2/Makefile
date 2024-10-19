@@ -155,6 +155,29 @@ help:
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST) | sort -u
 
-### For makefile testing
-echo:
-	@echo flags: $(FLAGS)
+### Echo variables
+echo/vars:
+	@echo MKDIR=$(MKDIR)
+	@echo ANTLR=$(ANTLR)
+	@echo FORMAT=$(FORMAT)
+	@echo CC=$(CC)
+	@echo
+	@echo FLAGS_NDEBUG=$(FLAGS_NDEBUG)
+	@echo FLAGS_SANITIZE=$(FLAGS_SANITIZE)
+	@echo FLAGS=$(FLAGS)
+	@echo LIBS=$(LIBS)
+	@echo
+	@echo SRC_DIR=$(SRC_DIR)
+	@echo LIB_DIR=$(LIB_DIR)
+	@echo GRM_DIR=$(GRM_DIR)
+	@echo GRM_REC_DIR=$(GRM_REC_DIR)
+	@echo INC_DIR=$(INC_DIR)
+	@echo TST_DIR=$(TST_DIR)
+	@echo
+	@echo BUILD_DIR=$(BUILD_DIR)
+	@echo BUILD_LIB_DIR=$(BUILD_LIB_DIR)
+	@echo GRM_GEN_DIR=$(GRM_GEN_DIR)
+	@echo OBJ_DIR=$(OBJ_DIR)
+	@echo
+	@echo TARGET_DIR=$(TARGET_DIR)
+	@echo TARGET_TST_DIR=$(TARGET_TST_DIR)
