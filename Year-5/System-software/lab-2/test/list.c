@@ -1,7 +1,7 @@
 #include <criterion/criterion.h>
 #include <stdio.h>
 
-#include "util/container_funcs.h"
+#include "util/container_util.h"
 #include "util/list.h"
 
 Test(list, create_delete) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ir/types.h"
+#include "ir/type.h"
 
 enum ir_term_enum {
   IR_TERM_UNKNOWN = 0,

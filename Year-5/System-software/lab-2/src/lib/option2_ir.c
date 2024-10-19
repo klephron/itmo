@@ -1,6 +1,6 @@
 #include "option2_ir.h"
 
-#include "Option2Pass1_Declarations.h"
+#include "Option2Pass1_GlobalSymbolResolution.h"
 #include "Option2Pass2_IR.h"
 #include "exception.h"
 #include "ir/pass.h"
@@ -72,7 +72,8 @@ ir_ctx *option2_ir_build(const p_list ast) {
 
     ir_pass1 pass1_userp;
     ir_pass1_init(&pass1_userp, ctx, option2_ast_filename(ast));
-    pOption2Pass1_Declarations pass1 = Option2Pass1_DeclarationsNew(nodes);
+    pOption2Pass1_GlobalSymbolResolution pass1 =
+        Option2Pass1_GlobalSymbolResolutionNew(nodes);
     pass1->pTreeParser->rec->displayRecognitionError = displayRecognitionError;
     pass1->pTreeParser->rec->state->userp = &pass1_userp;
     pass1->source(pass1);

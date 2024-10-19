@@ -1,8 +1,8 @@
 #include "ir/ctx.h"
 
 #include "exception.h"
-#include "ir/functions.h"
-#include "util/container_funcs.h"
+#include "ir/function.h"
+#include "util/container_util.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <assert.h>

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ir/terminals.h"
-#include "ir/types.h"
+#include "ir/terminal.h"
 #include "util/list.h"
 
 struct ir_param {

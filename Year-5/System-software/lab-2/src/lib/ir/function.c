@@ -1,7 +1,7 @@
-#include "ir/functions.h"
+#include "ir/function.h"
 
-#include "ir/terminals.h"
-#include "util/container_funcs.h"
+#include "ir/terminal.h"
+#include "util/container_util.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <stdlib.h>

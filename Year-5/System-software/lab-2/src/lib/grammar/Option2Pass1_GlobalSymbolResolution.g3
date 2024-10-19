@@ -1,4 +1,4 @@
-tree grammar Option2Pass1_Declarations;
+tree grammar Option2Pass1_GlobalSymbolResolution;
 
 options {
   language = C;
@@ -9,11 +9,11 @@ options {
 
 @header {
 #include "util/log.h"
-#include "ir/expressions.h"
-#include "ir/functions.h"
-#include "ir/statements.h"
-#include "ir/terminals.h"
-#include "ir/types.h"
+#include "ir/expression.h"
+#include "ir/function.h"
+#include "ir/statement.h"
+#include "ir/terminal.h"
+#include "ir/type.h"
 #include "ir/pass1.h"
 }
 

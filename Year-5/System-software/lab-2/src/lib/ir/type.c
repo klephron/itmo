@@ -1,4 +1,4 @@
-#include "ir/types.h"
+#include "ir/type.h"
 
 #include "util/log.h"
 #include "util/macro.h"

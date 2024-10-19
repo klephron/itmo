@@ -1,4 +1,4 @@
-#include "ir/terminals.h"
+#include "ir/terminal.h"
 #include <criterion/criterion.h>
 
 Test(ir_terminals, id) {

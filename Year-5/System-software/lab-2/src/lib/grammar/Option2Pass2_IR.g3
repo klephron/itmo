@@ -8,11 +8,11 @@ options {
 
 
 @header {
-#include "ir/expressions.h"
-#include "ir/functions.h"
-#include "ir/statements.h"
-#include "ir/terminals.h"
-#include "ir/types.h"
+#include "ir/expression.h"
+#include "ir/function.h"
+#include "ir/statement.h"
+#include "ir/terminal.h"
+#include "ir/type.h"
 #include "ir/pass2.h"
 }
 

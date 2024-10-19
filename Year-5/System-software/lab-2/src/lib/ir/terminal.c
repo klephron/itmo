@@ -1,4 +1,4 @@
-#include "ir/terminals.h"
+#include "ir/terminal.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <stdlib.h>

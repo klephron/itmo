@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ir/ctx.h"
-#include "ir/functions.h"
+#include "ir/function.h"
 #include "ir/pass.h"
 
 struct ir_pass1 {

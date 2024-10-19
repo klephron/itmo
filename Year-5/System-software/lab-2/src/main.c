@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "dot_ir.h"
-#include "util/container_funcs.h"
+#include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
 #include "util/macro.h"
