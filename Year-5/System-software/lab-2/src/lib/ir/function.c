@@ -67,7 +67,7 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret) {
   self->params = params;
   self->ret = ret;
   debug("created signature %s with params=%zu and ret=%s", self->id->name,
-        list_size(self->params), ir_t_type_str(self->ret));
+        list_size(self->params), ir_t_str(self->ret));
   return self;
 }
 

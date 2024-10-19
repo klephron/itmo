@@ -132,9 +132,11 @@ int ir_t_equals(ir_t_base *lsv, ir_t_base *rsv) {
   return 1;
 }
 
-const char *ir_t_type_str(ir_t_base *self) {
+const char *ir_t_str(ir_t_base *self) {
   if (self) {
     return ttstr(self->type);
   }
   return "<null>";
 }
+
+const char *ir_ttstr(ir_t_enum self) { return ttstr(self); }

@@ -52,3 +52,21 @@ char *escape_html(const char *str) {
 
   return out;
 }
+
+int string_all_char_in_symbols(const char *str, const char *symbols) {
+  size_t n = strlen(str);
+  size_t m = strlen(symbols);
+  for (size_t i = 0; i < n; ++i) {
+    int found = 0;
+    for (size_t j = 0; j < m; ++j) {
+      if (str[i] == symbols[j]) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      return 0;
+    }
+  }
+  return 1;
+}

@@ -12,15 +12,17 @@ struct ir_term_base {
   enum ir_term_enum kind;
 };
 
+union ir_term_lit_v {
+  long  v_int;
+  char *v_str;
+  char  v_char;
+  int   v_bool;
+};
+
 struct ir_term_lit {
   struct ir_term_base base;
   enum ir_t_enum      type;
-  union value {
-    int   v_int;
-    char *v_str;
-    char  v_char;
-    int   v_bool;
-  } u;
+  union ir_term_lit_v u;
 };
 
 struct ir_term_id {
@@ -30,10 +32,12 @@ struct ir_term_id {
 
 typedef enum ir_term_enum   ir_term_enum;
 typedef struct ir_term_base ir_term_base;
+typedef union ir_term_lit_v ir_term_lit_v;
 typedef struct ir_term_lit  ir_term_lit;
 typedef struct ir_term_id   ir_term_id;
 
-void ir_term_lit_free(ir_term_lit *self);
+void         ir_term_lit_free(ir_term_lit *self);
+ir_term_lit *ir_term_lit_new(ir_t_enum type, ir_term_lit_v v);
 
 void        ir_term_id_free(ir_term_id *self);
 ir_term_id *ir_term_id_new(const char *);

@@ -1,24 +1,25 @@
 method fun123(arg3: bool): array [,,] of int
 begin
-end;
-
-method fun123(arg3: int):;
-
-method fun1234(arg3: int):;
-
-method fun1234(arg3: int, arg5):;
-
-method fun123(arg3, arg3):
-begin
-  if true then true; else false;
-  a = 4;
-  if true then false; else true;
-end;
-
-method fun1():
-begin
-  if true then true; else false;
-  a = 4;
-
-  func123();
+  1;2;3;4;
+  a = (4 + 5);
+  true; "true"; '1'; 0xfba; 0b1100; 0b00; 1;
+  (a1 + a2)(a2);
+  (a3(a4(a5, a6(), a7), a7(a8)));
+  (a1)[a4[a5,a6,a7]];
+  a8[];
+  a = b;
+  a || b;
+  a && b;
+  a | b;
+  a ^ b;
+  a & b;
+  a == b != c;
+  a < b <= c > d >= e;
+  a << b >> c;
+  a + b - c;
+  a * b / c % d;
+  !a;~a;+a;-a;
+  a < b << (c + d);
+  a || b && c != d >= e;
+  (a || b) && (c != d) >= e;
 end;

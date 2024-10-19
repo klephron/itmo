@@ -44,4 +44,5 @@ ir_t_custom *ir_t_custom_new(const char *name);
 void ir_t_free(struct ir_t_base *generic);
 int  ir_t_equals(ir_t_base *lsv, ir_t_base *rsv);
 
-const char *ir_t_type_str(ir_t_base *type);
+const char *ir_t_str(ir_t_base *type);
+const char *ir_ttstr(ir_t_enum type);

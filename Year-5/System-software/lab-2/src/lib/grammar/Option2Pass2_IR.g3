@@ -203,21 +203,46 @@ expr_indexer
   : ^(INDEXER ^(ARGS expr_15) expr)
   ;
 
-expr_literal
-  : bool | str | rune | hex | bits | dec
+expr_literal returns [ir_expr_lit *v]
+  : (id=bool | id=str | id=rune | id=hex | id=bits | id=dec) {
+    $v = ir_expr_lit_new($id.v);
+  }
   ;
 
-expr_identifier
-  : identifier
+expr_identifier returns [ir_expr_id *v]
+  : identifier {
+      $v = ir_expr_id_new($identifier.v);
+    }
   ;
 
 
 // TERMINALS
-identifier: IDENTIFIER;
+identifier returns [ir_term_id *v]
+  : id=IDENTIFIER {
+    $v = ir_term_id_new(IR_PASS2_CHARS($id));
+  };
 
-str: ^(CONST_STR STR);
-rune: ^(CONST_CHAR CHAR);
-hex: ^(CONST_HEX HEX);
-bits: ^(CONST_BITS BITS);
-dec: ^(CONST_DEC DEC);
-bool: ^(CONST_BOOL BOOL);
+str returns [ir_term_lit *v]
+  : ^(CONST_STR id=STR) {
+    $v = ir_pass2_str(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+  };
+rune returns [ir_term_lit *v]
+  : ^(CONST_CHAR id=CHAR) {
+    $v = ir_pass2_rune(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+  };
+hex returns [ir_term_lit *v]
+  : ^(CONST_HEX id=HEX) {
+    $v = ir_pass2_hex(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+  };
+bits returns [ir_term_lit *v]
+  : ^(CONST_BITS id=BITS) {
+    $v = ir_pass2_bits(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+  };
+dec returns [ir_term_lit *v]
+  : ^(CONST_DEC id=DEC) {
+    $v = ir_pass2_dec(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+  };
+bool returns [ir_term_lit *v]
+  : ^(CONST_BOOL id=BOOL) {
+    $v = ir_pass2_bool(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+  };

@@ -29,6 +29,15 @@ void ir_term_lit_free(ir_term_lit *self) {
   }
 }
 
+ir_term_lit *ir_term_lit_new(ir_t_enum type, ir_term_lit_v v) {
+  ir_term_lit *self = MALLOC(ir_term_lit);
+  ir_term_base_init(&self->base, IR_TERM_LITERAL);
+  self->type = type;
+  self->u = v;
+  debug("created term_lit %p type=%s", self, ir_ttstr(type));
+  return self;
+}
+
 // ID
 void ir_term_id_free(ir_term_id *self) {
   debug("id free %p %s", self, self->name);
