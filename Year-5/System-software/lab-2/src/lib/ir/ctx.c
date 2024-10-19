@@ -10,7 +10,7 @@
 
 static void container_delete_sub(void *_data) {
   if (_data) {
-    debug("subroutine free");
+    /*debug("subroutine free");*/
     ir_subroutine *sub = _data;
     ir_subroutine_free(sub);
   }
@@ -30,14 +30,14 @@ static int container_cmp_sub(const void *_lsv, const void *_rsv) {
 
 static void container_delete_exc(void *_data) {
   if (_data) {
-    debug("exception free");
+    /*debug("exception free");*/
     exception *exc = _data;
     exception_free(exc);
   }
 }
 
 void ir_ctx_free(ir_ctx *self) {
-  debug("ctx free");
+  /*debug("ctx free");*/
   if (self) {
     hashset_free(self->subroutines);
     list_free(self->exceptions);

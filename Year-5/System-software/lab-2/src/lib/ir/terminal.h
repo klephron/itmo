@@ -2,11 +2,7 @@
 
 #include "ir/type.h"
 
-enum ir_term_enum {
-  IR_TERM_UNKNOWN = 0,
-  IR_TERM_LITERAL = 1,
-  IR_TERM_IDENTIFIER = 2
-};
+enum ir_term_enum { IR_TERM_UNKNOWN, IR_TERM_LITERAL, IR_TERM_IDENTIFIER };
 
 struct ir_term_base {
   enum ir_term_enum kind;

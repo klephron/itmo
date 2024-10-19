@@ -53,7 +53,7 @@ static char *ttstr(ir_t_enum type) {
 ir_t_base *ir_t_base_new(ir_t_enum type) {
   ir_t_base *self = MALLOC(ir_t_base);
   ir_t_base_init(self, type);
-  debug("created base type=%s", ttstr(self->type));
+  // debug("created base type=%s", ttstr(self->type));
   return self;
 }
 
@@ -72,8 +72,8 @@ ir_t_array *ir_t_array_new(size_t dimensions, ir_t_base *elem_type) {
   ir_t_base_init(&self->base, IR_T_ARRAY);
   self->dimensions = dimensions;
   self->elem_type = elem_type;
-  debug("created array elem_type=%s,dimensions=%d",
-        ttstr(self->elem_type->type), self->dimensions);
+  // debug("created array elem_type=%s,dimensions=%d",
+  //       ttstr(self->elem_type->type), self->dimensions);
   return self;
 }
 
@@ -91,7 +91,7 @@ ir_t_custom *ir_t_custom_new(const char *name) {
   ir_t_custom *self = MALLOC(ir_t_custom);
   ir_t_base_init(&self->base, IR_T_CUSTOM);
   self->name = strdup(name);
-  debug("created custom name=%s", self->name);
+  // debug("created custom name=%s", self->name);
   return self;
 }
 

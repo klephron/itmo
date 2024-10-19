@@ -3,18 +3,18 @@
 #include <stddef.h>
 
 enum ir_t_enum {
-  IR_T_UNKNOWN = 0,
-  IR_T_BOOL = 1,
-  IR_T_BYTE = 2,
-  IR_T_INT = 3,
-  IR_T_UINT = 4,
-  IR_T_LONG = 5,
-  IR_T_ULONG = 6,
-  IR_T_CHAR = 7,
-  IR_T_STRING = 8,
-  IR_T_VOID = 9,
-  IR_T_ARRAY = 10,
-  IR_T_CUSTOM = 11,
+  IR_T_UNKNOWN,
+  IR_T_BOOL,
+  IR_T_BYTE,
+  IR_T_INT,
+  IR_T_UINT,
+  IR_T_LONG,
+  IR_T_ULONG,
+  IR_T_CHAR,
+  IR_T_STRING,
+  IR_T_VOID,
+  IR_T_ARRAY,
+  IR_T_CUSTOM,
 };
 
 struct ir_t_base {

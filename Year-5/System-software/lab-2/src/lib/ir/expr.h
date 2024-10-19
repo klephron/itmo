@@ -4,50 +4,52 @@
 #include "util/list.h"
 
 enum ir_expr_enum {
-  IR_EXPR_UNKNOWN = 0,
-  IR_EXPR_UNARY = 1,
-  IR_EXPR_BINARY = 2,
-  IR_EXPR_LITERAL = 3,
-  IR_EXPR_IDENTIFIER = 4,
-  IR_EXPR_CALL = 5,
-  IR_EXPR_INDEX = 6,
+  IR_EXPR_UNKNOWN,
+  IR_EXPR_UNARY,
+  IR_EXPR_BINARY,
+  IR_EXPR_LITERAL,
+  IR_EXPR_IDENTIFIER,
+  IR_EXPR_CALL,
+  IR_EXPR_INDEX,
 };
 
 enum ir_expr_unary_enum {
-  IR_EXPR_UNARY_UNKNOWN = 0,
-  IR_EXPR_UNARY_PLUS = 1,
-  IR_EXPR_UNARY_MINUS = 2,
-  IR_EXPR_UNARY_INC = 3,
-  IR_EXPR_UNARY_DEC = 4,
-  IR_EXPR_UNARY_LOGICAL_NOT = 5,
-  IR_EXPR_UNARY_BITWISE_NOT = 6,
+  IR_EXPR_UNARY_UNKNOWN,
+  IR_EXPR_UNARY_PLUS,
+  IR_EXPR_UNARY_MINUS,
+  IR_EXPR_UNARY_LOGICAL_NOT,
+  IR_EXPR_UNARY_BITWISE_NOT,
+  IR_EXPR_UNARY_LOAD,
+  IR_EXPR_UNARY_INC,
+  IR_EXPR_UNARY_DEC
 };
 
 enum ir_expr_binary_enum {
-  IR_EXPR_BINARY_UNKNOWN = 0,
-  IR_EXPR_BINARY_ASSIGN = 1,
-  IR_EXPR_BINARY_LOGICAL_OR = 2,
-  IR_EXPR_BINARY_LOGICAL_AND = 3,
-  IR_EXPR_BINARY_BITWISE_OR = 4,
-  IR_EXPR_BINARY_BITWISE_XOR = 5,
-  IR_EXPR_BINARY_BITWISE_AND = 6,
-  IR_EXPR_BINARY_EQUALS = 7,
-  IR_EXPR_BINARY_NOT_EQUALS = 8,
-  IR_EXPR_BINARY_LESS = 9,
-  IR_EXPR_BINARY_LESS_EQUALS = 10,
-  IR_EXPR_BINARY_GREATER = 11,
-  IR_EXPR_BINARY_GREATER_EQUALS = 12,
-  IR_EXPR_BINARY_BITWISE_SHIFT_LEFT = 13,
-  IR_EXPR_BINARY_BITWISE_SHIFT_RIGHT = 14,
-  IR_EXPR_BINARY_ADD = 15,
-  IR_EXPR_BINARY_SUB = 16,
-  IR_EXPR_BINARY_MUL = 17,
-  IR_EXPR_BINARY_DIV = 18,
-  IR_EXPR_BINARY_MOD = 19,
+  IR_EXPR_BINARY_UNKNOWN,
+  IR_EXPR_BINARY_ASSIGN,
+  IR_EXPR_BINARY_LOGICAL_OR,
+  IR_EXPR_BINARY_LOGICAL_AND,
+  IR_EXPR_BINARY_BITWISE_OR,
+  IR_EXPR_BINARY_BITWISE_XOR,
+  IR_EXPR_BINARY_BITWISE_AND,
+  IR_EXPR_BINARY_EQUALS,
+  IR_EXPR_BINARY_NOT_EQUALS,
+  IR_EXPR_BINARY_LESS,
+  IR_EXPR_BINARY_LESS_EQUALS,
+  IR_EXPR_BINARY_GREATER,
+  IR_EXPR_BINARY_GREATER_EQUALS,
+  IR_EXPR_BINARY_BITWISE_SHIFT_LEFT,
+  IR_EXPR_BINARY_BITWISE_SHIFT_RIGHT,
+  IR_EXPR_BINARY_ADD,
+  IR_EXPR_BINARY_SUB,
+  IR_EXPR_BINARY_MUL,
+  IR_EXPR_BINARY_DIV,
+  IR_EXPR_BINARY_MOD,
 };
 
 struct ir_expr_base {
   enum ir_expr_enum kind;
+  enum ir_t_enum    type;
 };
 
 struct ir_expr_unary {
@@ -88,6 +90,7 @@ struct ir_expr_index {
 typedef enum ir_expr_enum        ir_expr_enum;
 typedef enum ir_expr_unary_enum  ir_expr_unary_enum;
 typedef enum ir_expr_binary_enum ir_expr_binary_enum;
+typedef enum ir_expr_id_enum     ir_expr_id_enum;
 typedef struct ir_expr_base      ir_expr_base;
 typedef struct ir_expr_unary     ir_expr_unary;
 typedef struct ir_expr_binary    ir_expr_binary;
@@ -106,3 +109,5 @@ ir_expr_lit    *ir_expr_lit_new(ir_term_lit *lit);
 ir_expr_id     *ir_expr_id_new(const ir_term_id *id);
 ir_expr_call   *ir_expr_call_new(ir_expr_base *callee, p_list args);
 ir_expr_index  *ir_expr_index_new(ir_expr_base *indexed, p_list args);
+
+p_list ir_expr_list_new();

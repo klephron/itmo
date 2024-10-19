@@ -1,6 +1,7 @@
 #include "pass2.h"
 #include "exception.h"
 #include "ir/ctx.h"
+#include "ir/expr.h"
 #include "ir/type.h"
 #include "util/log.h"
 #include "util/macro.h"
@@ -163,6 +164,109 @@ ir_term_lit *ir_pass2_bool(ir_pass2 *self, const char *str) {
   debug("pass2 bool=%d", u.v_bool);
 
   return ir_term_lit_new(IR_T_BOOL, u);
+}
+
+ir_term_id *ir_pass2_term_id_new(ir_pass2 *self, const char *id) {
+  UNUSED(self);
+  return ir_term_id_new(id);
+}
+
+// TODO: types
+ir_expr_id *ir_pass2_expr_id_new(ir_pass2 *self, const ir_term_id *id) {
+  UNUSED(self);
+  return ir_expr_id_new(id);
+}
+
+// TODO: types
+ir_expr_lit *ir_pass2_expr_lit_new(ir_pass2 *self, ir_term_lit *lit) {
+  UNUSED(self);
+  return ir_expr_lit_new(lit);
+}
+
+// TODO: types
+ir_expr_index *ir_pass2_expr_index_new(ir_pass2 *self, ir_expr_base *indexed,
+                                       p_list args) {
+  UNUSED(self);
+  return ir_expr_index_new(indexed, args);
+}
+
+// TODO: types
+ir_expr_call *ir_pass2_expr_call_new(ir_pass2 *self, ir_expr_base *callee,
+                                     p_list args) {
+  UNUSED(self);
+  return ir_expr_call_new(callee, args);
+}
+
+// TODO: types
+ir_expr_base *ir_pass2_expr_unary_new(ir_pass2 *self, ir_expr_base *first,
+                                      ir_expr_unary_enum op) {
+  debug("creating unary expression with op=%d", op);
+
+  switch (op) {
+  case IR_EXPR_UNARY_DEC:
+  case IR_EXPR_UNARY_INC: {
+    if (!first) {
+      exception *ex =
+          exception_new_f(EXCEPTION_IR, EXCEPTION_IR_NULL, self->file_name, 0,
+                          0, "null expression", "unary expression is <null>");
+      ir_ctx_add_exception(self->ctx, ex);
+      goto error;
+    }
+    if (first->kind != IR_EXPR_IDENTIFIER) {
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, EXCEPTION_IR_RVALUE_ASSIGNMENT, self->file_name, 0, 0,
+          "rvalue assignment", "cannot assign to rvalue");
+      ir_ctx_add_exception(self->ctx, ex);
+      goto error;
+    }
+
+    ir_term_lit_v u;
+    u.v_int = 1;
+
+    ir_expr_base *second;
+    if (op == IR_EXPR_UNARY_INC) {
+      second = (ir_expr_base *)ir_expr_binary_new(
+          first, (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
+          IR_EXPR_BINARY_ADD);
+    } else {
+      second = (ir_expr_base *)ir_expr_binary_new(
+          first, (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
+          IR_EXPR_BINARY_SUB);
+    }
+    return (ir_expr_base *)ir_expr_binary_new(first, second,
+                                              IR_EXPR_BINARY_ASSIGN);
+  }
+  case IR_EXPR_UNKNOWN:
+    error("unknown unary expression type=%d", op);
+    goto error;
+  default:
+    return (ir_expr_base *)ir_expr_unary_new(first, op);
+  }
+
+error:
+  ir_expr_free(first);
+  return NULL;
+}
+
+ir_expr_base *ir_pass2_expr_binary_new(ir_pass2 *self, ir_expr_base *first,
+                                       ir_expr_base       *second,
+                                       ir_expr_binary_enum op) {
+  UNUSED(self);
+
+  error("creating binary expression type=%d", op);
+
+  switch (op) {
+  case IR_EXPR_BINARY_UNKNOWN:
+    error("unknown binary expression type=%d", op);
+    goto error;
+  default:
+    return (ir_expr_base *)ir_expr_binary_new(first, second, op);
+  }
+
+error:
+  ir_expr_free(first);
+  ir_expr_free(second);
+  return NULL;
 }
 
 // int status = ir_subroutine_status(lsv);

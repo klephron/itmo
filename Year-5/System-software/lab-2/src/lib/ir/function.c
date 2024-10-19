@@ -21,7 +21,7 @@ ir_param *ir_param_new(ir_term_id *id, ir_t_base *type) {
   ir_param *self = MALLOC(ir_param);
   self->type = type;
   self->id = id;
-  debug("created param %s", id->name);
+  /*debug("created param %s", id->name);*/
   return self;
 }
 
@@ -66,8 +66,8 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret) {
   self->id = id;
   self->params = params;
   self->ret = ret;
-  debug("created signature %s with params=%zu and ret=%s", self->id->name,
-        list_size(self->params), ir_t_str(self->ret));
+  // debug("created signature %s with params=%zu and ret=%s", self->id->name,
+  //       list_size(self->params), ir_t_str(self->ret));
   return self;
 }
 
@@ -89,7 +89,8 @@ ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
   self->signature = signature;
   self->file_name = strdup((char *)file_name);
   self->blocks = blocks;
-  debug("created subroutine %s file=%s", ir_subroutine_name(self), file_name);
+  // debug("created subroutine %s file=%s", ir_subroutine_name(self),
+  // file_name);
   return self;
 }
 

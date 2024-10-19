@@ -1,10 +1,6 @@
 #pragma once
 
-enum ir_block_enum {
-  IR_BLOCK_UNKNOWN = 0,
-  IR_BLOCK_NEXT = 1,
-  IR_BLOCK_COND = 2
-};
+enum ir_block_enum { IR_BLOCK_UNKNOWN, IR_BLOCK_NEXT, IR_BLOCK_COND };
 
 struct ir_block_base {
   enum ir_block_enum kind;
