@@ -60,22 +60,24 @@ static void ir_expr_index_free(ir_expr_index *self) {
 }
 
 void ir_expr_free(ir_expr_base *generic) {
-  switch (generic->kind) {
-  case IR_EXPR_UNARY:
-    return ir_expr_unary_free((ir_expr_unary *)generic);
-  case IR_EXPR_BINARY:
-    return ir_expr_binary_free((ir_expr_binary *)generic);
-  case IR_EXPR_LITERAL:
-    return ir_expr_lit_free((ir_expr_lit *)generic);
-  case IR_EXPR_IDENTIFIER:
-    return ir_expr_id_free((ir_expr_id *)generic);
-  case IR_EXPR_CALL:
-    return ir_expr_call_free((ir_expr_call *)generic);
-  case IR_EXPR_INDEX:
-    return ir_expr_index_free((ir_expr_index *)generic);
-  default:
-    error("unknown expression is freed");
-    return ir_expr_base_free_in(generic);
+  if (generic) {
+    switch (generic->kind) {
+    case IR_EXPR_UNARY:
+      return ir_expr_unary_free((ir_expr_unary *)generic);
+    case IR_EXPR_BINARY:
+      return ir_expr_binary_free((ir_expr_binary *)generic);
+    case IR_EXPR_LITERAL:
+      return ir_expr_lit_free((ir_expr_lit *)generic);
+    case IR_EXPR_IDENTIFIER:
+      return ir_expr_id_free((ir_expr_id *)generic);
+    case IR_EXPR_CALL:
+      return ir_expr_call_free((ir_expr_call *)generic);
+    case IR_EXPR_INDEX:
+      return ir_expr_index_free((ir_expr_index *)generic);
+    default:
+      error("unknown expression is freed");
+      return ir_expr_base_free_in(generic);
+    }
   }
 }
 
