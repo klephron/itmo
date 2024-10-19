@@ -1,70 +1,71 @@
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
-CC := gcc
-# -fsanitize=thread
-# -fsanitize=address,undefined,leak -Wall -Wextra
-# -DNDEBUG
-FLAGS := -g3 -O0 -m64 -fsanitize=address,undefined,leak -Wall -Wextra
-MKDIR := mkdir -p
-# ANTLR := java -jar lib/antlr-3.5.3-complete.jar
-# ANTLR := java -jar ~/.m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
-ANTLR := java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
-FORMAT := clang-format --verbose -i
+MKDIR          ?= mkdir -p
+ANTLR          ?= java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
+FORMAT         ?= clang-format --verbose -i
+CC             ?= gcc
 
-SRC_DIR := src
-LIB_DIR := $(SRC_DIR)/lib
-GRM_DIR := $(LIB_DIR)/grammar
-GRM_REC_DIR := $(GRM_DIR)/rec
-BIN_DIR := $(SRC_DIR)
-TST_DIR := test
+FLAGS_NDEBUG   ?= -DNDEBUG
+FLAGS_SANITIZE ?= -fsanitize=address,undefined,leak
+FLAGS          ?= -g3 -O0 -m64 -Wall -Wextra $(FLAGS_SANITIZE) $(FLAGS_NDEBUG)
+LIBS           ?= antlr3c
 
-BUILD_DIR := build
-BUILD_LIB_DIR := $(BUILD_DIR)/lib
-GRM_GEN_DIR := $(BUILD_LIB_DIR)/_gen
-OBJ_DIR := $(BUILD_LIB_DIR)
+SRC_DIR     ?= src
+LIB_DIR     ?= $(SRC_DIR)/lib
+GRM_DIR     ?= $(LIB_DIR)/grammar
+GRM_REC_DIR ?= $(GRM_DIR)/rec
+BIN_DIR     ?= $(SRC_DIR)
+TST_DIR     ?= test
 
-TARGET_DIR := $(BUILD_DIR)
-TARGET_TST_DIR := $(BUILD_DIR)/test
+BUILD_DIR     ?= build
+BUILD_LIB_DIR ?= $(BUILD_DIR)/lib
+GRM_GEN_DIR   ?= $(BUILD_LIB_DIR)/_gen
+OBJ_DIR       ?= $(BUILD_LIB_DIR)
+
+TARGET_DIR     ?= $(BUILD_DIR)
+TARGET_TST_DIR ?= $(BUILD_DIR)/test
+
 
 # library files
-GRMS = $(wildcard $(GRM_DIR)/*.g3)
-SRCS.GRM = $(patsubst $(GRM_DIR)/%.g3,$(GRM_GEN_DIR)/%.c, $(GRMS))
-HDRS.GRM = $(patsubst %.c,%.h,$(SRCS.GRM))
-OBJS.GRM = $(patsubst %.c,%.o,$(SRCS.GRM))
+GRMS := $(wildcard $(GRM_DIR)/*.g3)
+SRCS.GRM := $(patsubst $(GRM_DIR)/%.g3,$(GRM_GEN_DIR)/%.c, $(GRMS))
+HDRS.GRM := $(patsubst %.c,%.h,$(SRCS.GRM))
+OBJS.GRM := $(patsubst %.c,%.o,$(SRCS.GRM))
 
-GRM_RECS = $(call rwildcard,$(GRM_REC_DIR), *.g3)
-SRCS.GRM_REC = $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%Lexer.c, $(GRM_RECS))
-SRCS.GRM_REC +=$(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%Parser.c, $(GRM_RECS))
-HDRS.GRM_REC = $(patsubst %.c,%.h,$(SRCS.GRM_REC))
-OBJS.GRM_REC = $(patsubst %.c,%.o,$(SRCS.GRM_REC))
-TKNS.GRM_REC = $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%.tokens, $(GRM_RECS))
+GRM_RECS := $(call rwildcard,$(GRM_REC_DIR), *.g3)
+SRCS.GRM_REC := $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%Lexer.c, $(GRM_RECS)) \
+							 $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%Parser.c, $(GRM_RECS))
+HDRS.GRM_REC := $(patsubst %.c,%.h,$(SRCS.GRM_REC))
+OBJS.GRM_REC := $(patsubst %.c,%.o,$(SRCS.GRM_REC))
+TKNS.GRM_REC := $(patsubst $(GRM_REC_DIR)/%.g3,$(GRM_GEN_DIR)/%.tokens, $(GRM_RECS))
 # without generated files
-SRCS.LIB = $(call rwildcard,$(LIB_DIR),*.c)
-HDRS.LIB = $(call rwildcard,$(LIB_DIR), *.h)
-OBJS.LIB = $(patsubst %.c, $(OBJ_DIR)/%.o, $(patsubst $(LIB_DIR)/%, %, $(SRCS.LIB)))
+SRCS.LIB := $(call rwildcard,$(LIB_DIR),*.c)
+HDRS.LIB := $(call rwildcard,$(LIB_DIR), *.h)
+OBJS.LIB := $(patsubst %.c, $(OBJ_DIR)/%.o, $(patsubst $(LIB_DIR)/%, %, $(SRCS.LIB)))
 # all library files
-SRCS = $(SRCS.LIB) $(SRCS.GRM) $(SRCS.GRM_REC)
-HDRS = $(HDRS.LIB) $(HDRS.GRM) $(HDRS.GRM_REC)
-OBJS = $(OBJS.LIB) $(OBJS.GRM) $(OBJS.GRM_REC)
+SRCS := $(SRCS.LIB) $(SRCS.GRM) $(SRCS.GRM_REC)
+HDRS := $(HDRS.LIB) $(HDRS.GRM) $(HDRS.GRM_REC)
+OBJS := $(OBJS.LIB) $(OBJS.GRM) $(OBJS.GRM_REC)
 # absolute imports
+INCLUDE_LIBS := $(LIBS)
 INCLUDE_DIRS := $(LIB_DIR) $(GRM_GEN_DIR)
-INCLUDE_LIBS = antlr3c
-INCS = $(patsubst %,-I%,$(sort $(INCLUDE_DIRS))) $(patsubst %,-l%,$(sort $(INCLUDE_LIBS)))
-# prevent deletion
-.PRECIOUS: $(HDRS) $(SRCS) $(OBJS)
+INCS := $(patsubst %,-I%,$(sort $(INCLUDE_DIRS))) $(patsubst %,-l%,$(sort $(INCLUDE_LIBS)))
 
 # executable files
-SRCS.BIN = $(filter-out $(SRCS.LIB),$(call rwildcard,$(BIN_DIR),*.c))
-HDRS.BIN = $(filter-out $(HDRS.LIB),$(call rwildcard,$(BIN_DIR), *.h))
-TGTS.BIN = $(patsubst $(BIN_DIR)/%.c,$(TARGET_DIR)/%,$(SRCS.BIN))
+SRCS.BIN := $(filter-out $(SRCS.LIB),$(call rwildcard,$(BIN_DIR),*.c))
+HDRS.BIN := $(filter-out $(HDRS.LIB),$(call rwildcard,$(BIN_DIR), *.h))
+TGTS.BIN := $(patsubst $(BIN_DIR)/%.c,$(TARGET_DIR)/%,$(SRCS.BIN))
 
 # test files
-SRCS.TST = $(call rwildcard,$(TST_DIR),*.c)
-TGTS.TST = $(patsubst $(TST_DIR)/%.c,$(TARGET_TST_DIR)/%, $(SRCS.TST))
+SRCS.TST := $(call rwildcard,$(TST_DIR),*.c)
+TGTS.TST := $(patsubst $(TST_DIR)/%.c,$(TARGET_TST_DIR)/%, $(SRCS.TST))
 
 # directories with trailing slash to be created
-DIRS = $(sort $(dir $(OBJS)) $(dir $(OBJS.BIN)) $(dir $(TGTS.BIN)) $(dir $(TGTS.TST)))
+DIRS := $(sort $(dir $(OBJS)) $(dir $(OBJS.BIN)) $(dir $(TGTS.BIN)) $(dir $(TGTS.TST)))
 
+
+# prevent deletion
+.PRECIOUS: $(HDRS) $(SRCS) $(OBJS) $(TKNS.GRM_REC)
 
 .DEFAULT_GOAL := build
 .PNONY := grammar build dot/pdf run run/ast build/test test format index clean help echo
@@ -156,14 +157,4 @@ help:
 
 ### For makefile testing
 echo:
-	@echo $(SRCS)
-	@echo $(HDRS)
-	@echo $(OBJS)
-	@echo $(DIRS)
-	@echo $(SRCS)
-	@echo $(HDRS)
-	@echo $(OBJS)
-	@echo $(INCS)
-	@echo $(SRCS.BIN)
-	@echo $(HDRS.BIN)
-	@echo $(TGTS.BIN)
+	@echo flags: $(FLAGS)
