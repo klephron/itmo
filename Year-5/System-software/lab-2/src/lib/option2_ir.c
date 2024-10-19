@@ -70,6 +70,7 @@ ir_ctx *option2_ir_build(const p_list ast) {
     pANTLR3_COMMON_TREE_NODE_STREAM nodes =
         antlr3CommonTreeNodeStreamNewTree(ast->result.tree, ANTLR3_SIZE_HINT);
 
+    debug("----------------------------PASS1----------------------------");
     ir_pass1 pass1_userp;
     ir_pass1_init(&pass1_userp, ctx, option2_ast_filename(ast));
     pOption2Pass1_GlobalSymbolResolution pass1 =
@@ -78,7 +79,9 @@ ir_ctx *option2_ir_build(const p_list ast) {
     pass1->pTreeParser->rec->state->userp = &pass1_userp;
     pass1->source(pass1);
     pass1->pTreeParser->rec->state->userp = NULL;
+    debug("----------------------------PASS1----------------------------");
 
+    debug("----------------------------PASS2----------------------------");
     ir_pass2 pass2_userp;
     ir_pass2_init(&pass2_userp, ctx, option2_ast_filename(ast));
     pOption2Pass2_IR pass2 = Option2Pass2_IRNew(nodes);
@@ -86,6 +89,7 @@ ir_ctx *option2_ir_build(const p_list ast) {
     pass2->pTreeParser->rec->state->userp = &pass2_userp;
     pass2->source(pass2);
     pass2->pTreeParser->rec->state->userp = NULL;
+    debug("----------------------------PASS2----------------------------");
 
     pass2->free(pass2);
     pass1->free(pass1);

@@ -9,7 +9,7 @@ options {
 
 @header {
 #include "util/log.h"
-#include "ir/expression.h"
+#include "ir/expr.h"
 #include "ir/function.h"
 #include "ir/statement.h"
 #include "ir/terminal.h"
