@@ -62,6 +62,11 @@ void list_push_front(p_list self, void *data) {
   }
 }
 
+void *list_front(p_list self) { return self->head ? self->head->data : NULL; }
+
+void *list_back(p_list self) { return self->tail ? self->tail->data : NULL; }
+
+// won't free data
 void *list_pop_front(p_list self) {
   list_node *node = self->head;
   self->head = node->next;

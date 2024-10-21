@@ -78,6 +78,8 @@ void ir_pass2_body_before(ir_pass2 *self);
 void ir_pass2_body_after(ir_pass2 *self);
 void ir_pass2_block_before(ir_pass2 *self);
 void ir_pass2_block_after(ir_pass2 *self);
+void ir_pass2_if_before(ir_pass2 *self);
+void ir_pass2_if_after(ir_pass2 *self);
 void ir_pass2_while_before(ir_pass2 *self);
 void ir_pass2_while_after(ir_pass2 *self);
 void ir_pass2_do_before(ir_pass2 *self);
@@ -85,7 +87,7 @@ void ir_pass2_do_after(ir_pass2 *self);
 void ir_pass2_break_before(ir_pass2 *self);
 void ir_pass2_break_after(ir_pass2 *self);
 void ir_pass2_expression_before(ir_pass2 *self);
-void ir_pass2_expression_after(ir_pass2 *self);
+void ir_pass2_expression_after(ir_pass2 *self, ir_expr_base *expr);
 
 #define IR_PASS2_ANTLR3_USERP()                                                \
   ((ir_pass2 *)ctx->pTreeParser->rec->state->userp)

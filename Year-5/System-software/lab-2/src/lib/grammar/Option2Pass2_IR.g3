@@ -138,7 +138,13 @@ statement_if
   : ^('if' expr statement statement?)
   ;
 
-statement_block returns [ir_block_base *v]
+statement_block
+  @init {
+    ir_pass2_block_before(IR_PASS2_ANTLR3_USERP());
+  }
+  @after {
+    ir_pass2_block_after(IR_PASS2_ANTLR3_USERP());
+  }
   : ^('begin' statement*)
   ;
 
@@ -156,11 +162,24 @@ statement_do_condition
   ;
 
 statement_break
+  @init {
+    ir_pass2_break_before(IR_PASS2_ANTLR3_USERP());
+  }
+  @after {
+    ir_pass2_break_after(IR_PASS2_ANTLR3_USERP());
+  }
   : 'break'
   ;
 
 statement_expression
-  : expr
+  @init {
+    ir_pass2_expression_before(IR_PASS2_ANTLR3_USERP());
+    ir_expr_base *expr_v = NULL;
+  }
+  @after {
+    ir_pass2_expression_after(IR_PASS2_ANTLR3_USERP(), expr_v);
+  }
+  : expr { expr_v = $expr.v; }
   ;
 
 
