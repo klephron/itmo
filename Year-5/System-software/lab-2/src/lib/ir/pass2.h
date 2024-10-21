@@ -13,7 +13,6 @@ struct ir_pass2 {
   scope_stack         scope_stack;
   p_list              break_stack;
   ir_block_base      *graph;
-  ir_block_base      *prev;
 };
 
 typedef struct ir_pass2 ir_pass2;

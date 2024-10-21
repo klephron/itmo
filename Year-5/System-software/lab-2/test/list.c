@@ -133,3 +133,22 @@ Test(list, put_many_check) {
 
   list_free(list);
 }
+
+Test(list, push_front) {
+  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                         container_delete_chars_chars);
+
+  char *key1 = "key1";
+  char *value1 = "value1";
+
+  chars_chars data = {.key = key1, .value = value1};
+
+  list_push_front(list, &data);
+
+  chars_chars *data_in = list_front(list);
+
+  cr_expect_str_eq(key1, data_in->key);
+  cr_expect_str_eq(value1, data_in->value);
+
+  list_free(list);
+}

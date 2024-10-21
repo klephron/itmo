@@ -66,10 +66,6 @@ Test(hashset, iterate_empty) {
   size_t cnt = 0;
   for (hashset_it it = hashset_begin(hashset); !it.end(&it); it.next(&it)) {
     it.get(&it);
-
-    if (cnt % 100 == 0) {
-      debug("got element on cnt=%zu k=%s,v=%s", cnt, v->key, v->value);
-    }
     cnt += 1;
   }
 
