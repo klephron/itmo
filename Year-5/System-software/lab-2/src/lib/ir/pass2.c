@@ -477,32 +477,32 @@ void ir_pass2_body_before(ir_pass2 *self) {
 
   ir_scope *scope = ir_scope_new(IR_SCOPE_FUNCTION, begin, end, cur);
   ir_scope_stack_push(self->scope_stack, scope);
-  debug("current scope: %p, begin=%p, end=%p, prev=%p", scope, scope->begin,
-        scope->end, scope->cur);
+  // debug("scope body pushed");
 
   self->graph = begin;
 
   list_push_front(self->break_stack, end);
+  // debug("break_stack pushed");
 }
 
 void ir_pass2_body_build(ir_pass2 *self, ir_scope *child) {
+  list_pop_front(self->break_stack);
+  // debug("break_stack popped");
+  list_free(self->break_stack);
+  // debug("break_stack freed");
+
   ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
 
-  // update block
   scope->cur = child->end;
   ir_scope_free(child);
 
-  list_pop_front(self->break_stack);
-
-  // update itself
-  debug("%p -> %p", scope->cur, scope->end);
+  // debug("%p -> %p", scope->cur, scope->end);
   ir_block_set_next(scope->cur, scope->end);
   scope->cur = scope->end;
 
-  list_free(self->break_stack);
-
+  // debug("scope body popped");
   ir_scope_free(scope);
-  debug("popped function scope");
+  // debug("scope body freed");
 }
 
 // BLOCK
@@ -510,38 +510,38 @@ void ir_pass2_block_before(ir_pass2 *self) {
   ir_scope *parent = ir_scope_stack_top(self->scope_stack);
 
   ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
-
   ir_scope *scope = ir_scope_new(IR_SCOPE_BLOCK, parent->cur, end, parent->cur);
 
   ir_scope_stack_push(self->scope_stack, scope);
+  // debug("scope block pushed");
 
   list_push_front(self->break_stack, end);
-
-  debug("pushed block scope");
+  // debug("break_stack pushed");
 }
 
 ir_scope *ir_pass2_block_build(ir_pass2 *self, p_list scopes) {
+  list_pop_front(self->break_stack);
+  // debug("break_stack popped");
+
   ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
 
   // append child scopes
   for (list_it it = scopes->head; it; it = it->next) {
     ir_scope *child = it->data;
-    debug("linking_inside: %p -> %p", scope->cur, child->begin);
+    // debug("linking_inside: %p -> %p", scope->cur, child->begin);
     ir_block_set_next(scope->cur, child->begin);
     scope->cur = child->end;
   }
   list_free(scopes);
 
-  list_pop_front(self->break_stack);
-
   // update itself
-  debug("%p -> %p", scope->cur, scope->end);
+  // debug("%p -> %p", scope->cur, scope->end);
   ir_block_set_next(scope->cur, scope->end);
   scope->cur = scope->end;
 
   scope->begin = ir_block_get_next(scope->begin);
 
-  debug("block scope ended");
+  // debug("scope block popped");
   return scope;
 }
 
@@ -581,7 +581,7 @@ ir_scope *ir_pass2_break_build(ir_pass2 *self) {
                                          ir_pass2_expr_true());
   ir_scope      *scope = ir_scope_new(IR_SCOPE_INLINE, (ir_block_base *)cur,
                                       (ir_block_base *)cur, (ir_block_base *)cur);
-  debug("break scope %p", scope);
+  // debug("scope break %p", scope);
   return scope;
 }
 
@@ -592,6 +592,6 @@ ir_scope *ir_pass2_expression_build(ir_pass2 *self, ir_expr_base *expr) {
   ir_block_base *cur = (ir_block_base *)ir_block_next_new(NULL, expr);
   ir_scope      *scope = ir_scope_new(IR_SCOPE_INLINE, (ir_block_base *)cur,
                                       (ir_block_base *)cur, (ir_block_base *)cur);
-  debug("expression scope %p", scope);
+  // debug("scope expression %p", scope);
   return scope;
 }
