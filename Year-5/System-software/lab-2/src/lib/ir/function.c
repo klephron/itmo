@@ -8,8 +8,8 @@
 #include <string.h>
 
 // PARAM
-void ir_param_free(ir_param *self) {
-  // debug("before param free %p", self);
+void ir_var_free(ir_var *self) {
+  // debug("before var free %p", self);
   if (self) {
     ir_term_free((ir_term_base *)self->id);
     ir_t_free(self->type);
@@ -17,38 +17,48 @@ void ir_param_free(ir_param *self) {
   }
 }
 
-ir_param *ir_param_new(ir_term_id *id, ir_t_base *type) {
-  ir_param *self = MALLOC(ir_param);
+ir_var *ir_var_new(ir_term_id *id, ir_t_base *type) {
+  ir_var *self = MALLOC(ir_var);
   self->type = type;
   self->id = id;
-  /*debug("created param %s", id->name);*/
+  /*debug("created var %s", id->name);*/
   return self;
 }
 
-const char *ir_param_name(const ir_param *self) {
+const char *ir_var_name(const ir_var *self) {
   if (self && self->id) {
     return self->id->name;
   }
   return "<null>";
 }
 
-int ir_param_cmp(const ir_param *lsv, const ir_param *rsv) {
+int ir_var_cmp(const ir_var *lsv, const ir_var *rsv) {
   return !ir_term_id_equals(lsv->id, rsv->id);
 }
 
-static int container_cmp_ir_param(const void *lsv, const void *rsv) {
-  return ir_param_cmp(lsv, rsv);
+static int container_cmp_ir_var(const void *lsv, const void *rsv) {
+  return ir_var_cmp(lsv, rsv);
 }
 
-static void container_delete_ir_param(void *data) {
-  ir_param *self = data;
-  ir_param_free(self);
+static void container_delete_ir_var(void *data) {
+  ir_var *self = data;
+  ir_var_free(self);
 }
 
-p_list ir_param_list_new() {
-  p_list list = list_new(container_cmp_ir_param, container_new_move,
-                         container_delete_ir_param);
+p_list ir_var_list_new() {
+  p_list list = list_new(container_cmp_ir_var, container_new_move,
+                         container_delete_ir_var);
   return list;
+}
+
+static size_t container_hash_vars(void *_data) {
+  ir_var *var = _data;
+  return container_hash_chars(var->id->name);
+}
+
+p_hashset ir_var_hashset_new() {
+  return hashset_new(container_cmp_ir_var, container_new_move,
+                     container_delete_ir_var, container_hash_vars);
 }
 
 // SIGNATURE
@@ -76,28 +86,26 @@ void ir_subroutine_free(ir_subroutine *self) {
   if (self) {
     signature_free(self->signature);
     free(self->file_name);
-    if (self->blocks) {
-      // TODO: free data blocks
-    }
+    ir_block_graph_free(self->cfg);
+    hashset_free(self->vars);
     free(self);
   }
 }
 
 ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
-                                 void *blocks) {
+                                 void *blocks, p_hashset vars) {
   ir_subroutine *self = MALLOC(ir_subroutine);
   self->signature = signature;
   self->file_name = strdup((char *)file_name);
-  self->blocks = blocks;
-  // debug("created subroutine %s file=%s", ir_subroutine_name(self),
-  // file_name);
+  self->cfg = blocks;
+  self->vars = vars;
   return self;
 }
 
 ir_subroutine_status_enum ir_subroutine_status(const ir_subroutine *self) {
   if (!self) {
     return IR_SUBROUTINE_STATUS_ABSENT;
-  } else if (!self->blocks) {
+  } else if (!self->cfg) {
     return IR_SUBROUTINE_STATUS_DECLARATION;
   } else {
     return IR_SUBROUTINE_STATUS_DEFINITION;
@@ -138,8 +146,8 @@ int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {
     for (list_it lpi = lsv_s->params->head, rpi = rsv_s->params->head; lpi;
          lpi = lpi->next, rpi = rpi->next) {
 
-      ir_param *lp = lpi->data;
-      ir_param *rp = rpi->data;
+      ir_var *lp = lpi->data;
+      ir_var *rp = rpi->data;
 
       if (!ir_t_equals(lp->type, rp->type)) {
         cmp |= IR_SUBROUTINE_CMP_PARAMS;

@@ -26,8 +26,10 @@ ir_t_base *ir_pass1_t_custom_new(ir_pass1 *self, const char *name);
 ir_t_base *ir_pass1_t_array_new(ir_pass1 *self, size_t dimension,
                                 ir_t_base *type);
 
-ir_param *ir_pass1_param_new(ir_pass1 *self, ir_term_id *id, ir_t_base *type);
-int       ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param);
+ir_var *ir_pass1_param_new(ir_pass1 *self, ir_term_id *id, ir_t_base *type);
+
+p_list ir_pass1_params_new(ir_pass1 *self);
+int    ir_pass1_param_add(ir_pass1 *self, p_list list, ir_var *param);
 
 ir_signature *ir_pass1_signature_new(ir_pass1 *self, ir_term_id *id,
                                      p_list params, ir_t_base *ret);

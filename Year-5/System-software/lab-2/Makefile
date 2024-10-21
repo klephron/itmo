@@ -117,7 +117,7 @@ run: build
 
 ### Run main executable and generate dot
 run/ast: build
-	./build/main io/input.txt --ignore-errors
+	./build/main io/input.txt --ignore-errors || true
 	dot -Tpdf io/input.txt.ast.dot -o io/input.txt.ast.pdf
 
 ### Build tests

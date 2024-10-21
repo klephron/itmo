@@ -46,3 +46,5 @@ int  ir_t_equals(ir_t_base *lsv, ir_t_base *rsv);
 
 const char *ir_t_str(ir_t_base *type);
 const char *ir_ttstr(ir_t_enum type);
+
+ir_t_base *ir_t_copy(ir_t_base *type);

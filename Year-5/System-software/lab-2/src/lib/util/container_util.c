@@ -49,6 +49,8 @@ void container_delete_chars_chars(void *_data) {
 
 void container_delete_chars(void *_data) { free(_data); }
 
+void container_delete_false(void *_data) { UNUSED(_data); }
+
 // HASH
 size_t container_hash_chars(void *_data) {
   const size_t pow = 757;

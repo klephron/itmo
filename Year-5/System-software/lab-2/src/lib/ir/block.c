@@ -59,3 +59,9 @@ ir_block_cond *ir_block_cond_new(ir_block_base *jz, ir_block_base *je,
   self->cond = cond;
   return self;
 }
+
+void ir_block_graph_free(ir_block_base *root) {
+  debug("free block graph");
+  if (root) {
+  }
+}

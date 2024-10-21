@@ -53,3 +53,4 @@ void       hashset_free(p_hashset self);
 hashset_it hashset_find(p_hashset self, void *data);
 void       hashset_insert(p_hashset self, void *data);
 hashset_it hashset_begin(p_hashset self);
+void       hashset_replace(p_hashset self, hashset_it it, void *data);

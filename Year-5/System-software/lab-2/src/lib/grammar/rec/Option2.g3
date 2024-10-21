@@ -79,7 +79,7 @@ func_body
   ;
 
 func_body_var
-  : ( identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR identifier type_ref?)*
+  : ( identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR type_ref? identifier*)
   ;
 
 

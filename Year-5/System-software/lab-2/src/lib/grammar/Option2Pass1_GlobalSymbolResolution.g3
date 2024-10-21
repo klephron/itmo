@@ -71,17 +71,16 @@ func_signature returns [ir_signature *v]
 
 arg_def_list returns [p_list v]
   @init {
-    p_list params = ir_param_list_new();
-  }
-  @after {
-    $v = params;
+    p_list params = ir_pass1_params_new(IR_PASS1_ANTLR3_USERP());
   }
   : ^(PARAMS (arg_def {
       ir_pass1_param_add(IR_PASS1_ANTLR3_USERP(), params, $arg_def.v);
-    })*)
+    })*) {
+    $v = params;
+  }
   ;
 
-arg_def returns [ir_param *v]
+arg_def returns [ir_var *v]
   @init {
     void *type_ref_v = NULL;
   }
@@ -95,8 +94,9 @@ func_body
   : ^(VARS func_body_var*) statement_block
   ;
 
+// free because not used
 func_body_var
-  : ^(VAR identifier type_ref?)
+  : ^(VAR (type_ref { ir_t_free($type_ref.v); })? identifier*)
   ;
 
 

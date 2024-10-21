@@ -1,8 +1,7 @@
 #include "pass2.h"
 #include "exception.h"
 #include "ir/ctx.h"
-#include "ir/expr.h"
-#include "ir/type.h"
+#include "util/container_util.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <errno.h>
@@ -271,15 +270,179 @@ error:
   return NULL;
 }
 
-// int status = ir_subroutine_status(lsv);
+ir_t_base *ir_pass2_t_bool_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_BOOL);
+}
+ir_t_base *ir_pass2_t_byte_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_BYTE);
+}
+ir_t_base *ir_pass2_t_int_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_INT);
+}
+ir_t_base *ir_pass2_t_uint_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_UINT);
+}
+ir_t_base *ir_pass2_t_long_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_LONG);
+}
+ir_t_base *ir_pass2_t_ulong_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_ULONG);
+}
+ir_t_base *ir_pass2_t_char_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_CHAR);
+}
+ir_t_base *ir_pass2_t_string_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_STRING);
+}
+ir_t_base *ir_pass2_t_custom_new(ir_pass2 *self, ir_term_id *id) {
+  UNUSED(self);
+  ir_t_base *r = (ir_t_base *)ir_t_custom_new(id->name);
+  ir_term_id_free(id);
+  return r;
+}
+ir_t_base *ir_pass2_t_array_new(ir_pass2 *self, size_t dimension,
+                                ir_t_base *type) {
+  UNUSED(self);
+  return (ir_t_base *)ir_t_array_new(dimension, type);
+}
 
-// if (status == IR_SUBROUTINE_STATUS_DEFINITION) {
-//   // TODO: may replace 0-s with actual location
-//   exception *ex = exception_new_f(
-//       EXCEPTION_IR, EXCEPTION_IR_FUNCTION_REDEFINITION,
-//       subroutine->file_name, 0, 0, "function redefinition",
-//       "previous definition in %s %d:%d", lsv->file_name, 0, 0);
-//   ir_ctx_add_exception(ctx, ex);
-//   ret = -1;
-//   break;
-// }
+ir_var *ir_pass2_param_new(ir_pass2 *self, ir_term_id *id, ir_t_base *type) {
+  UNUSED(self);
+  return ir_var_new(id, type);
+}
+
+p_list ir_pass2_params_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_var_list_new();
+}
+
+int ir_pass2_param_add(ir_pass2 *self, p_list list, ir_var *var) {
+  UNUSED(self);
+  list_push_back(list, var);
+  debug("param_list added param %s", ir_var_name(var));
+  return 1;
+}
+
+ir_signature *ir_pass2_signature_new(ir_pass2 *self, ir_term_id *id,
+                                     p_list vars, ir_t_base *ret) {
+  UNUSED(self);
+  return ir_signature_new(id, vars, ret);
+}
+
+p_list ir_pass2_ids_new(ir_pass2 *self) {
+  UNUSED(self);
+  return list_new(container_cmp_false, container_new_move,
+                  container_delete_false);
+}
+
+void ir_pass2_id_add(ir_pass2 *self, p_list list, ir_term_id *id) {
+  UNUSED(self);
+  list_push_back(list, id);
+}
+
+p_list ir_pass2_var_new(ir_pass2 *self, p_list ids, ir_t_base *type) {
+  UNUSED(self);
+  p_list vars =
+      list_new(container_cmp_false, container_new_move, container_delete_false);
+  if (ids->head) {
+    ir_var *first = ir_var_new(ids->head->data, type);
+    list_push_back(vars, first);
+
+    for (list_it it = ids->head->next; it; it = it->next) {
+      ir_var *var = ir_var_new(it->data, ir_t_copy(type));
+      list_push_back(vars, var);
+    }
+  } else {
+    ir_t_free(type);
+  }
+  list_free(ids);
+  return vars;
+}
+
+p_hashset ir_pass2_vars_new(ir_pass2 *self) {
+  UNUSED(self);
+  return ir_var_hashset_new();
+}
+
+int ir_pass2_vars_add(ir_pass2 *self, p_hashset hashset, p_list vars) {
+  UNUSED(self);
+  for (list_it it = vars->head; it; it = it->next) {
+    // TODO: check for duplication
+    hashset_insert(hashset, it->data);
+    debug("var_hashset added var %s, size=%d", ir_var_name(it->data),
+          hashset->size);
+  }
+  list_free(vars);
+  return 1;
+}
+
+ir_subroutine *ir_pass2_subroutine_new(const ir_pass2 *self,
+                                       ir_signature   *signature,
+                                       ir_block_base *cfg, p_hashset vars) {
+  UNUSED(self);
+  ir_subroutine *sub = ir_subroutine_new(self->file_name, signature, cfg, vars);
+  debug("var_hashset replaced");
+  return sub;
+}
+
+// TODO: validate vars and args
+static int ir_pass1_subroutine_validate(ir_pass2 *self, ir_subroutine *sub) {
+  UNUSED(self);
+  UNUSED(sub);
+  return 1;
+}
+
+int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
+  int     ok = 1;
+  ir_ctx *ctx = self->ctx;
+
+  if (!ir_pass1_subroutine_validate(self, sub)) {
+    ok = 0;
+  }
+
+  hashset_it it;
+
+  if (ok) {
+    debug("size of subroutines: %zu", ctx->subroutines->size);
+    it = hashset_find(ctx->subroutines, sub);
+    if (it.end(&it)) {
+      error("subroutine is not found %s", ir_subroutine_name(sub));
+      ok = 0;
+    };
+  }
+
+  if (ok) {
+    ir_subroutine *lsv = it.get(&it);
+
+    ir_subroutine_status_enum lsv_status = ir_subroutine_status(lsv);
+    ir_subroutine_status_enum sub_status = ir_subroutine_status(sub);
+
+    if (lsv_status == IR_SUBROUTINE_STATUS_DEFINITION &&
+        sub_status == IR_SUBROUTINE_STATUS_DEFINITION) {
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, EXCEPTION_IR_FUNCTION_REDEFINITION, sub->file_name, 0,
+          0, "function redefinition", "previous definition in %s %d:%d",
+          lsv->file_name, 0, 0);
+      ir_ctx_add_exception(ctx, ex);
+      ok = 0;
+    }
+  }
+
+  if (ok) {
+    hashset_replace(ctx->subroutines, it, sub);
+    debug("subroutine replaced");
+  } else {
+    ir_subroutine_free(sub);
+  }
+
+  return ok;
+  // int status = ir_subroutine_status(lsv);
+}

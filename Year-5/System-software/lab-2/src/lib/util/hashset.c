@@ -137,6 +137,11 @@ void hashset_insert(p_hashset self, void *data) {
   self->size += 1;
 }
 
+void hashset_replace(p_hashset self, hashset_it it, void *data) {
+  self->f_delete(it.node->data);
+  it.node->data = self->f_new(data);
+}
+
 hashset_it hashset_begin(p_hashset self) {
   for (size_t i = 0; i < self->capacity; ++i) {
     hashset_bucket *bucket = self->buckets + i;

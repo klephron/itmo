@@ -140,3 +140,19 @@ const char *ir_t_str(ir_t_base *self) {
 }
 
 const char *ir_ttstr(ir_t_enum self) { return ttstr(self); }
+
+ir_t_base *ir_t_copy(ir_t_base *self) {
+  if (!self) {
+    return NULL;
+  }
+  switch (self->type) {
+  case IR_T_ARRAY:
+    return (ir_t_base *)ir_t_array_new(
+        ((ir_t_array *)self)->dimensions,
+        ir_t_copy(((ir_t_array *)self)->elem_type));
+  case IR_T_CUSTOM:
+    return (ir_t_base *)ir_t_custom_new(((ir_t_custom *)self)->name);
+  default:
+    return ir_t_base_new(self->type);
+  }
+}

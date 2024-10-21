@@ -41,6 +41,7 @@ ir_t_base *ir_pass1_t_string_new(ir_pass1 *self) {
   UNUSED(self);
   return ir_t_base_new(IR_T_STRING);
 }
+
 ir_t_base *ir_pass1_t_custom_new(ir_pass1 *self, const char *name) {
   UNUSED(self);
   return (ir_t_base *)ir_t_custom_new(name);
@@ -51,15 +52,20 @@ ir_t_base *ir_pass1_t_array_new(ir_pass1 *self, size_t dimension,
   return (ir_t_base *)ir_t_array_new(dimension, type);
 }
 
-ir_param *ir_pass1_param_new(ir_pass1 *self, ir_term_id *id, ir_t_base *type) {
+ir_var *ir_pass1_param_new(ir_pass1 *self, ir_term_id *id, ir_t_base *type) {
   UNUSED(self);
-  return ir_param_new(id, type);
+  return ir_var_new(id, type);
 }
 
-int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param) {
+p_list ir_pass1_params_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_var_list_new();
+}
+
+int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_var *param) {
   UNUSED(self);
   list_push_back(list, param);
-  debug("param_list added param %s", ir_param_name(param));
+  debug("param_list added param %s", ir_var_name(param));
   return 1;
 }
 
@@ -72,19 +78,19 @@ ir_signature *ir_pass1_signature_new(ir_pass1 *self, ir_term_id *id,
 ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *self,
                                        ir_signature   *signature) {
   UNUSED(self);
-  return ir_subroutine_new(self->file_name, signature, NULL);
+  return ir_subroutine_new(self->file_name, signature, NULL, NULL);
 }
 
 static int ir_pass1_subroutine_validate(ir_pass1 *self, ir_subroutine *sub) {
   p_list params = sub->signature->params;
   for (list_it it = params->head; it; it = it->next) {
     for (list_it it2 = it->next; it2; it2 = it2->next) {
-      if (!ir_param_cmp(it->data, it2->data)) {
+      if (!ir_var_cmp(it->data, it2->data)) {
         exception *ex = exception_new_f(
             EXCEPTION_IR, EXCEPTION_IR_FUNCTION_PARAMETER_DUPLICATION,
             sub->file_name, 0, 0, "function parameter duplication",
             "function %s parameter %s is duplicated", ir_subroutine_name(sub),
-            ir_param_name(it->data));
+            ir_var_name(it->data));
         ir_ctx_add_exception(self->ctx, ex);
         return 0;
       }
