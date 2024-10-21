@@ -101,14 +101,8 @@ func_body returns [p_hashset v]
     p_hashset vars = ir_pass2_vars_new(IR_PASS2_ANTLR3_USERP());
     ir_pass2_body_before(IR_PASS2_ANTLR3_USERP());
   }
-  @after {
-    ir_pass2_body_after(IR_PASS2_ANTLR3_USERP());
-  }
-  : ^(VARS (func_body_var {
-      ir_pass2_vars_add(IR_PASS2_ANTLR3_USERP(), vars, $func_body_var.v);
-    })*) statement_block {
-      $v = vars;
-  }
+  : ^(VARS (func_body_var { ir_pass2_vars_add(IR_PASS2_ANTLR3_USERP(), vars, $func_body_var.v); })*) { $v = vars; }
+      (st=statement_block { ir_pass2_body_build(IR_PASS2_ANTLR3_USERP(), $st.v); })
   ;
 
 func_body_var returns [p_list v]
@@ -125,34 +119,37 @@ func_body_var returns [p_list v]
 
 
 //STATEMENTS
-statement
-  : statement_if
-  | statement_block
-  | statement_while
-  | statement_do
-  | statement_break
-  | statement_expression
+statement returns [ir_scope *v]
+  : (st=statement_if
+  | st=statement_block
+  | st=statement_while
+  | st=statement_do
+  | st=statement_break
+  | st=statement_expression) { $v = $st.v; }
   ;
 
-statement_if
+statement_if returns [ir_scope *v]
+  @init {
+    ir_pass2_if_before(IR_PASS2_ANTLR3_USERP());
+  }
   : ^('if' expr statement statement?)
   ;
 
-statement_block
+statement_block returns [ir_scope *v]
   @init {
     ir_pass2_block_before(IR_PASS2_ANTLR3_USERP());
+    p_list scopes = ir_pass2_scope_list_new(IR_PASS2_ANTLR3_USERP());
   }
-  @after {
-    ir_pass2_block_after(IR_PASS2_ANTLR3_USERP());
+  : ^('begin' (statement { ir_pass2_scope_add(IR_PASS2_ANTLR3_USERP(), scopes, $statement.v); })*) {
+    $v =  ir_pass2_block_build(IR_PASS2_ANTLR3_USERP(), scopes);
   }
-  : ^('begin' statement*)
   ;
 
-statement_while
+statement_while returns [ir_scope *v]
   : ^('while' expr statement)
   ;
 
-statement_do
+statement_do returns [ir_scope *v]
   : ^('repeat' statement_do_condition statement)
   ;
 
@@ -161,25 +158,23 @@ statement_do_condition
   | ^('until' expr)
   ;
 
-statement_break
+statement_break returns [ir_scope *v]
   @init {
     ir_pass2_break_before(IR_PASS2_ANTLR3_USERP());
   }
-  @after {
-    ir_pass2_break_after(IR_PASS2_ANTLR3_USERP());
+  : 'break' {
+    $v = ir_pass2_break_build(IR_PASS2_ANTLR3_USERP());
   }
-  : 'break'
   ;
 
-statement_expression
+statement_expression returns [ir_scope *v]
   @init {
     ir_pass2_expression_before(IR_PASS2_ANTLR3_USERP());
     ir_expr_base *expr_v = NULL;
   }
-  @after {
-    ir_pass2_expression_after(IR_PASS2_ANTLR3_USERP(), expr_v);
+  : expr {
+    $v = ir_pass2_expression_build(IR_PASS2_ANTLR3_USERP(), $expr.v);
   }
-  : expr { expr_v = $expr.v; }
   ;
 
 

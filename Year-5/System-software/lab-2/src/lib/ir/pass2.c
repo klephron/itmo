@@ -453,6 +453,20 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
   return ok;
 }
 
+static void container_delete_scope(void *_data) { ir_scope_free(_data); }
+
+p_list ir_pass2_scope_list_new(ir_pass2 *self) {
+  UNUSED(self);
+  return list_new(container_cmp_false, container_new_move,
+                  container_delete_scope);
+}
+
+void ir_pass2_scope_add(ir_pass2 *self, p_list list, ir_scope *scope) {
+  UNUSED(self);
+  list_push_back(list, scope);
+}
+
+// BODY
 void ir_pass2_body_before(ir_pass2 *self) {
   self->break_stack =
       list_new(container_cmp_false, container_new_move, container_delete_false);
@@ -461,99 +475,123 @@ void ir_pass2_body_before(ir_pass2 *self) {
   ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
   ir_block_base *cur = begin;
 
-  ir_scope_stack_push(self->scope_stack, IR_SCOPE_FUNCTION, begin, end);
-  ir_scope *root = ir_scope_stack_top(self->scope_stack);
-  root->prev = cur;
+  ir_scope *scope = ir_scope_new(IR_SCOPE_FUNCTION, begin, end, cur);
+  ir_scope_stack_push(self->scope_stack, scope);
+  debug("current scope: %p, begin=%p, end=%p, prev=%p", scope, scope->begin,
+        scope->end, scope->cur);
 
   self->graph = begin;
-  debug("current scope: %p, begin=%p, end=%p, prev=%p", root, root->begin,
-        root->end, root->prev);
 
   list_push_front(self->break_stack, end);
 }
 
-void ir_pass2_body_after(ir_pass2 *self) {
-  ir_scope      *scope = ir_scope_stack_pop(self->scope_stack);
-  ir_block_base *end = list_pop_front(self->break_stack);
+void ir_pass2_body_build(ir_pass2 *self, ir_scope *child) {
+  ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
 
-  debug("%p -> %p", scope->prev, end);
-  ir_block_set_next(scope->prev, end);
-  scope->prev = end;
+  // update block
+  scope->cur = child->end;
+  ir_scope_free(child);
+
+  list_pop_front(self->break_stack);
+
+  // update itself
+  debug("%p -> %p", scope->cur, scope->end);
+  ir_block_set_next(scope->cur, scope->end);
+  scope->cur = scope->end;
+
+  list_free(self->break_stack);
 
   ir_scope_free(scope);
   debug("popped function scope");
-
-  list_free(self->break_stack);
 }
 
+// BLOCK
 void ir_pass2_block_before(ir_pass2 *self) {
   ir_scope *parent = ir_scope_stack_top(self->scope_stack);
-  // debug("parent scope: %p, begin=%p, end=%p, prev=%p", parent, parent->begin,
-  // parent->end, parent->prev);
 
   ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
 
-  ir_scope_stack_push(self->scope_stack, IR_SCOPE_BLOCK, parent->prev, end);
-  ir_scope *scope = ir_scope_stack_top(self->scope_stack);
-  scope->prev = scope->begin;
+  ir_scope *scope = ir_scope_new(IR_SCOPE_BLOCK, parent->cur, end, parent->cur);
+
+  ir_scope_stack_push(self->scope_stack, scope);
 
   list_push_front(self->break_stack, end);
 
   debug("pushed block scope");
 }
 
-void ir_pass2_block_after(ir_pass2 *self) {
+ir_scope *ir_pass2_block_build(ir_pass2 *self, p_list scopes) {
   ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
 
-  ir_block_base *end = list_pop_front(self->break_stack);
+  // append child scopes
+  for (list_it it = scopes->head; it; it = it->next) {
+    ir_scope *child = it->data;
+    debug("linking_inside: %p -> %p", scope->cur, child->begin);
+    ir_block_set_next(scope->cur, child->begin);
+    scope->cur = child->end;
+  }
+  list_free(scopes);
 
-  debug("%p -> %p", scope->prev, end);
-  ir_block_set_next(scope->prev, end);
-  scope->prev = end;
+  list_pop_front(self->break_stack);
 
-  // when leaving current block -> update parent
-  ir_scope *parent = ir_scope_stack_top(self->scope_stack);
-  parent->prev = end;
+  // update itself
+  debug("%p -> %p", scope->cur, scope->end);
+  ir_block_set_next(scope->cur, scope->end);
+  scope->cur = scope->end;
 
-  ir_scope_free(scope);
+  scope->begin = ir_block_get_next(scope->begin);
+
+  debug("block scope ended");
+  return scope;
 }
 
-void ir_pass2_if_before(ir_pass2 *self) {}
+// IF
+void ir_pass2_if_before(ir_pass2 *self) {
+  // ir_scope *parent = ir_scope_stack_top(self->scope_stack);
 
-void ir_pass2_if_after(ir_pass2 *self) {}
+  // ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
+  // ir_scope_stack_push(self->scope_stack, IR_SCOPE_BLOCK, parent->prev, end);
+  // ir_scope *scope = ir_scope_stack_top(self->scope_stack);
+  // scope->prev = scope->begin;
+}
 
+ir_scope *ir_pass2_if_build(ir_pass2 *self) { return NULL; }
+
+// WHILE
 void ir_pass2_while_before(ir_pass2 *self) {}
 
-void ir_pass2_while_after(ir_pass2 *self) {}
+ir_scope *ir_pass2_while_build(ir_pass2 *self) { return NULL; }
 
+// DO
 void ir_pass2_do_before(ir_pass2 *self) {}
 
-void ir_pass2_do_after(ir_pass2 *self) {}
+ir_scope *ir_pass2_do_build(ir_pass2 *self) { return NULL; }
 
-void ir_pass2_break_before(ir_pass2 *self) { UNUSED(self); }
-
+// BREAK
 static ir_expr_base *ir_pass2_expr_true() {
   ir_term_lit_v v;
   v.v_bool = 1;
   return (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_BOOL, v));
 }
 
-void ir_pass2_break_after(ir_pass2 *self) {
-  ir_scope *parent = ir_scope_stack_top(self->scope_stack);
+void ir_pass2_break_before(ir_pass2 *self) { UNUSED(self); }
 
+ir_scope *ir_pass2_break_build(ir_pass2 *self) {
   ir_block_cond *cur = ir_block_cond_new(NULL, list_front(self->break_stack),
                                          ir_pass2_expr_true());
-  ir_block_set_next(parent->prev, (ir_block_base *)cur);
-  parent->prev = (ir_block_base *)cur;
+  ir_scope      *scope = ir_scope_new(IR_SCOPE_INLINE, (ir_block_base *)cur,
+                                      (ir_block_base *)cur, (ir_block_base *)cur);
+  debug("break scope %p", scope);
+  return scope;
 }
 
 void ir_pass2_expression_before(ir_pass2 *self) { UNUSED(self); }
 
-void ir_pass2_expression_after(ir_pass2 *self, ir_expr_base *expr) {
-  ir_scope *parent = ir_scope_stack_top(self->scope_stack);
-
+ir_scope *ir_pass2_expression_build(ir_pass2 *self, ir_expr_base *expr) {
+  UNUSED(self);
   ir_block_base *cur = (ir_block_base *)ir_block_next_new(NULL, expr);
-
-  ir_block_set_next(parent->prev, (ir_block_base *)cur);
-  parent->prev = (ir_block_base *)cur;
+  ir_scope      *scope = ir_scope_new(IR_SCOPE_INLINE, (ir_block_base *)cur,
+                                      (ir_block_base *)cur, (ir_block_base *)cur);
+  debug("expression scope %p", scope);
+  return scope;
 }

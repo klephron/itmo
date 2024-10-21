@@ -121,3 +121,19 @@ void ir_block_set_next(ir_block_base *self, ir_block_base *next) {
     }
   }
 }
+
+ir_block_base *ir_block_get_next(ir_block_base *self) {
+  if (self) {
+    switch (self->kind) {
+    case IR_BLOCK_NEXT:
+      return ((ir_block_next *)self)->next;
+      break;
+    case IR_BLOCK_COND:
+      return ((ir_block_cond *)self)->jz;
+      break;
+    default:
+      error("unknown block type");
+    }
+  }
+  return NULL;
+}

@@ -73,20 +73,24 @@ ir_subroutine *ir_pass2_subroutine_new(const ir_pass2 *self,
                                        ir_signature *signature, p_hashset vars);
 int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *subroutine);
 
+p_list ir_pass2_scope_list_new(ir_pass2 *self);
+void   ir_pass2_scope_add(ir_pass2 *self, p_list list, ir_scope *scope);
+
 void ir_pass2_body_before(ir_pass2 *self);
-void ir_pass2_body_after(ir_pass2 *self);
-void ir_pass2_block_before(ir_pass2 *self);
-void ir_pass2_block_after(ir_pass2 *self);
-void ir_pass2_if_before(ir_pass2 *self);
-void ir_pass2_if_after(ir_pass2 *self);
-void ir_pass2_while_before(ir_pass2 *self);
-void ir_pass2_while_after(ir_pass2 *self);
-void ir_pass2_do_before(ir_pass2 *self);
-void ir_pass2_do_after(ir_pass2 *self);
-void ir_pass2_break_before(ir_pass2 *self);
-void ir_pass2_break_after(ir_pass2 *self);
-void ir_pass2_expression_before(ir_pass2 *self);
-void ir_pass2_expression_after(ir_pass2 *self, ir_expr_base *expr);
+void ir_pass2_body_build(ir_pass2 *self, ir_scope *child);
+
+void      ir_pass2_block_before(ir_pass2 *self);
+ir_scope *ir_pass2_block_build(ir_pass2 *self, p_list scopes);
+void      ir_pass2_if_before(ir_pass2 *self);
+ir_scope *ir_pass2_if_build(ir_pass2 *self);
+void      ir_pass2_while_before(ir_pass2 *self);
+ir_scope *ir_pass2_while_build(ir_pass2 *self);
+void      ir_pass2_do_before(ir_pass2 *self);
+ir_scope *ir_pass2_do_build(ir_pass2 *self);
+void      ir_pass2_break_before(ir_pass2 *self);
+ir_scope *ir_pass2_break_build(ir_pass2 *self);
+void      ir_pass2_expression_before(ir_pass2 *self);
+ir_scope *ir_pass2_expression_build(ir_pass2 *self, ir_expr_base *expr);
 
 #define IR_PASS2_ANTLR3_USERP()                                                \
   ((ir_pass2 *)ctx->pTreeParser->rec->state->userp)
