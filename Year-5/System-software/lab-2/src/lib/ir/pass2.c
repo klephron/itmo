@@ -1,6 +1,7 @@
 #include "pass2.h"
 #include "exception.h"
 #include "ir/ctx.h"
+#include "ir/scope.h"
 #include "util/container_util.h"
 #include "util/log.h"
 #include "util/macro.h"
@@ -50,7 +51,12 @@ void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx, const char *file_name) {
   self->base.kind = IR_PASS_2;
   self->ctx = ctx;
   self->file_name = file_name;
+  self->scope_stack = ir_scope_stack_new();
+  self->break_stack = NULL;
+  self->graph = NULL;
 }
+
+void ir_pass2_deinit(ir_pass2 *self) { ir_scope_stack_free(self->scope_stack); }
 
 ir_term_lit *ir_pass2_str(ir_pass2 *self, const char *str) {
   debug("pass2 creating str %s", str);
@@ -386,9 +392,10 @@ int ir_pass2_vars_add(ir_pass2 *self, p_hashset hashset, p_list vars) {
 
 ir_subroutine *ir_pass2_subroutine_new(const ir_pass2 *self,
                                        ir_signature   *signature,
-                                       ir_block_base *cfg, p_hashset vars) {
+                                       p_hashset       vars) {
   UNUSED(self);
-  ir_subroutine *sub = ir_subroutine_new(self->file_name, signature, cfg, vars);
+  ir_subroutine *sub =
+      ir_subroutine_new(self->file_name, signature, self->graph, vars);
   debug("var_hashset replaced");
   return sub;
 }
@@ -444,5 +451,44 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
   }
 
   return ok;
-  // int status = ir_subroutine_status(lsv);
 }
+
+void ir_pass2_body_before(ir_pass2 *self) {
+  ir_scope_stack_push(self->scope_stack, IR_SCOPE_FUNCTION);
+  self->break_stack =
+      list_new(container_cmp_false, container_new_move, container_delete_false);
+  self->graph = (ir_block_base *)ir_block_next_new(NULL, NULL);
+  self->prev = self->graph;
+  list_push_front(self->break_stack, ir_block_next_new(NULL, NULL));
+  debug("pushed function scope");
+}
+
+void ir_pass2_body_after(ir_pass2 *self) {
+  debug("popped function scope");
+  ir_scope_enum type = ir_scope_stack_pop(self->scope_stack);
+  if (type != IR_SCOPE_FUNCTION) {
+    error("popped scope %d, expected %d", type, IR_SCOPE_FUNCTION);
+  }
+  ir_block_set_next(self->prev, list_pop_front(self->break_stack));
+  list_free(self->break_stack);
+}
+
+void ir_pass2_block_before(ir_pass2 *self) {}
+
+void ir_pass2_block_after(ir_pass2 *self) {}
+
+void ir_pass2_while_before(ir_pass2 *self) {}
+
+void ir_pass2_while_after(ir_pass2 *self) {}
+
+void ir_pass2_do_before(ir_pass2 *self) {}
+
+void ir_pass2_do_after(ir_pass2 *self) {}
+
+void ir_pass2_break_before(ir_pass2 *self) {}
+
+void ir_pass2_break_after(ir_pass2 *self) {}
+
+void ir_pass2_expression_before(ir_pass2 *self) {}
+
+void ir_pass2_expression_after(ir_pass2 *self) {}

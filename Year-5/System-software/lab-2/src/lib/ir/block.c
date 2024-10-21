@@ -16,6 +16,8 @@ void ir_block_cond_free(ir_block_cond *self) {
     ir_block_free(self->je);
     ir_block_free(self->jz);
     ir_expr_free(self->cond);
+    free(self);
+    debug("freed cond block");
   }
 }
 
@@ -24,6 +26,8 @@ void ir_block_next_free(ir_block_next *self) {
     ir_block_base_free_in(&self->base);
     ir_block_free(self->next);
     ir_expr_free(self->expr);
+    free(self);
+    debug("freed next block");
   }
 }
 
@@ -60,8 +64,60 @@ ir_block_cond *ir_block_cond_new(ir_block_base *jz, ir_block_base *je,
   return self;
 }
 
+static void ir_block_graph_to_tree(ir_block_base *_root) {
+  _root->status = IR_BLOCK_STATUS_UNTIED;
+  switch (_root->kind) {
+  case IR_BLOCK_NEXT: {
+    ir_block_next *root = (ir_block_next *)_root;
+
+    if (root->next && root->next->status != IR_BLOCK_STATUS_UNTIED) {
+      ir_block_graph_to_tree(root->next);
+    } else {
+      root->next = NULL;
+    }
+    break;
+  }
+  case IR_BLOCK_COND: {
+    ir_block_cond *root = (ir_block_cond *)_root;
+
+    if (root->jz && root->jz->status != IR_BLOCK_STATUS_UNTIED) {
+      ir_block_graph_to_tree(root->jz);
+    } else {
+      root->jz = NULL;
+    }
+
+    if (root->je && root->je->status != IR_BLOCK_STATUS_UNTIED) {
+      ir_block_graph_to_tree(root->je);
+    } else {
+      root->je = NULL;
+    }
+    break;
+  }
+  default:
+    error("unknown block type");
+  }
+}
+
 void ir_block_graph_free(ir_block_base *root) {
-  debug("free block graph");
+  debug("beginning free block graph");
   if (root) {
+    ir_block_graph_to_tree(root);
+  }
+  ir_block_free(root);
+  debug("freed block graph");
+}
+
+void ir_block_set_next(ir_block_base *self, ir_block_base *next) {
+  if (self) {
+    switch (self->kind) {
+    case IR_BLOCK_NEXT:
+      ((ir_block_next *)self)->next = next;
+      break;
+    case IR_BLOCK_COND:
+      ((ir_block_cond *)self)->jz = next;
+      break;
+    default:
+      error("unknown block type");
+    }
   }
 }

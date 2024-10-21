@@ -37,3 +37,5 @@ ir_block_cond *ir_block_cond_new(ir_block_base *jz, ir_block_base *je,
                                  ir_expr_base *cond);
 
 void ir_block_graph_free(ir_block_base *root);
+
+void ir_block_set_next(ir_block_base *self, ir_block_base *next);

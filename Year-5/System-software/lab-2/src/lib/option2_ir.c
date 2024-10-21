@@ -92,6 +92,7 @@ ir_ctx *option2_ir_build(const p_list ast) {
     pass2->pTreeParser->rec->state->userp = &pass2_userp;
     pass2->source(pass2);
     pass2->pTreeParser->rec->state->userp = NULL;
+    ir_pass2_deinit(&pass2_userp);
     debug("----------------------------PASS2----------------------------");
 
     pass2->free(pass2);

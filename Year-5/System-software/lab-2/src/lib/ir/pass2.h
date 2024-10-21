@@ -3,17 +3,23 @@
 #include "ir/expr.h"
 #include "ir/function.h"
 #include "ir/pass.h"
+#include "ir/scope.h"
 #include "ir/terminal.h"
 
 struct ir_pass2 {
   struct ir_pass_base base;
   struct ir_ctx      *ctx;
   const char         *file_name;
+  scope_stack         scope_stack;
+  p_list              break_stack;
+  ir_block_base      *graph;
+  ir_block_base      *prev;
 };
 
 typedef struct ir_pass2 ir_pass2;
 
 void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx, const char *file_name);
+void ir_pass2_deinit(ir_pass2 *self);
 
 ir_term_lit *ir_pass2_str(ir_pass2 *self, const char *str);
 ir_term_lit *ir_pass2_rune(ir_pass2 *self, const char *str);
@@ -65,9 +71,21 @@ p_hashset ir_pass2_vars_new(ir_pass2 *self);
 int       ir_pass2_vars_add(ir_pass2 *self, p_hashset hashset, p_list vars);
 
 ir_subroutine *ir_pass2_subroutine_new(const ir_pass2 *self,
-                                       ir_signature   *signature,
-                                       ir_block_base *cfg, p_hashset vars);
+                                       ir_signature *signature, p_hashset vars);
 int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *subroutine);
+
+void ir_pass2_body_before(ir_pass2 *self);
+void ir_pass2_body_after(ir_pass2 *self);
+void ir_pass2_block_before(ir_pass2 *self);
+void ir_pass2_block_after(ir_pass2 *self);
+void ir_pass2_while_before(ir_pass2 *self);
+void ir_pass2_while_after(ir_pass2 *self);
+void ir_pass2_do_before(ir_pass2 *self);
+void ir_pass2_do_after(ir_pass2 *self);
+void ir_pass2_break_before(ir_pass2 *self);
+void ir_pass2_break_after(ir_pass2 *self);
+void ir_pass2_expression_before(ir_pass2 *self);
+void ir_pass2_expression_after(ir_pass2 *self);
 
 #define IR_PASS2_ANTLR3_USERP()                                                \
   ((ir_pass2 *)ctx->pTreeParser->rec->state->userp)

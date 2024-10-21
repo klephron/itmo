@@ -52,6 +52,27 @@ void list_push_back(p_list self, void *data) {
   self->tail = node;
 }
 
+void list_push_front(p_list self, void *data) {
+  list_node *node = MALLOC(list_node);
+  node->data = self->f_new(data);
+  node->next = self->head;
+  self->head = node;
+  if (!self->tail) {
+    self->tail = node;
+  }
+}
+
+void *list_pop_front(p_list self) {
+  list_node *node = self->head;
+  self->head = node->next;
+  if (!self->head) {
+    self->tail = NULL;
+  }
+  void *data = node->data;
+  free(node);
+  return data;
+}
+
 void list_insert(struct list *self, list_it it, void *data) {
   if (it) {
     self->f_delete(it->data);
