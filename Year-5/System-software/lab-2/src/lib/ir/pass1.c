@@ -9,8 +9,69 @@ void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx, const char *file_name) {
   self->file_name = file_name;
 }
 
+ir_t_base *ir_pass1_t_bool_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_BOOL);
+}
+ir_t_base *ir_pass1_t_byte_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_BYTE);
+}
+ir_t_base *ir_pass1_t_int_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_INT);
+}
+ir_t_base *ir_pass1_t_uint_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_UINT);
+}
+ir_t_base *ir_pass1_t_long_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_LONG);
+}
+ir_t_base *ir_pass1_t_ulong_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_ULONG);
+}
+ir_t_base *ir_pass1_t_char_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_CHAR);
+}
+ir_t_base *ir_pass1_t_string_new(ir_pass1 *self) {
+  UNUSED(self);
+  return ir_t_base_new(IR_T_STRING);
+}
+ir_t_base *ir_pass1_t_custom_new(ir_pass1 *self, const char *name) {
+  UNUSED(self);
+  return (ir_t_base *)ir_t_custom_new(name);
+}
+ir_t_base *ir_pass1_t_array_new(ir_pass1 *self, size_t dimension,
+                                ir_t_base *type) {
+  UNUSED(self);
+  return (ir_t_base *)ir_t_array_new(dimension, type);
+}
+
+ir_param *ir_pass1_param_new(ir_pass1 *self, ir_term_id *id, ir_t_base *type) {
+  UNUSED(self);
+  return ir_param_new(id, type);
+}
+
+int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param) {
+  UNUSED(self);
+  list_push_back(list, param);
+  debug("param_list added param %s", ir_param_name(param));
+  return 1;
+}
+
+ir_signature *ir_pass1_signature_new(ir_pass1 *self, ir_term_id *id,
+                                     p_list params, ir_t_base *ret) {
+  UNUSED(self);
+  return ir_signature_new(id, params, ret);
+}
+
 ir_subroutine *ir_pass1_subroutine_new(const ir_pass1 *self,
                                        ir_signature   *signature) {
+  UNUSED(self);
   return ir_subroutine_new(self->file_name, signature, NULL);
 }
 
@@ -70,11 +131,4 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
   }
 
   return ok;
-}
-
-int ir_pass1_param_add(ir_pass1 *self, p_list list, ir_param *param) {
-  UNUSED(self);
-  list_push_back(list, param);
-  debug("param_list added param %s", ir_param_name(param));
-  return 1;
 }

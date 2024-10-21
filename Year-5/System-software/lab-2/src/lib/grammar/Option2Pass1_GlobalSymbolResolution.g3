@@ -33,23 +33,23 @@ source_item
 
 // TYPES
 type_ref returns [ir_t_base *v]
-  : 'bool'  { $v = ir_t_base_new(IR_T_BOOL); }
-  | 'byte'  { $v = ir_t_base_new(IR_T_BYTE); }
-  | 'int'   { $v = ir_t_base_new(IR_T_INT); }
-  | 'uint'  { $v = ir_t_base_new(IR_T_UINT); }
-  | 'long'  { $v = ir_t_base_new(IR_T_LONG); }
-  | 'ulong' { $v = ir_t_base_new(IR_T_ULONG); }
-  | 'char'  { $v = ir_t_base_new(IR_T_CHAR); }
-  | 'string'{ $v = ir_t_base_new(IR_T_STRING); }
+  : 'bool'  { $v = ir_pass1_t_bool_new(IR_PASS1_ANTLR3_USERP()); }
+  | 'byte'  { $v = ir_pass1_t_byte_new(IR_PASS1_ANTLR3_USERP()); }
+  | 'int'   { $v = ir_pass1_t_int_new(IR_PASS1_ANTLR3_USERP()); }
+  | 'uint'  { $v = ir_pass1_t_uint_new(IR_PASS1_ANTLR3_USERP()); }
+  | 'long'  { $v = ir_pass1_t_long_new(IR_PASS1_ANTLR3_USERP()); }
+  | 'ulong' { $v = ir_pass1_t_ulong_new(IR_PASS1_ANTLR3_USERP()); }
+  | 'char'  { $v = ir_pass1_t_char_new(IR_PASS1_ANTLR3_USERP()); }
+  | 'string'{ $v = ir_pass1_t_string_new(IR_PASS1_ANTLR3_USERP()); }
 
   | identifier {
-      $v = (ir_t_base *) ir_t_custom_new($identifier.v);
-    }
+    $v = ir_pass1_t_custom_new(IR_PASS1_ANTLR3_USERP(), $identifier.v);
+  }
 
   | ^('array' tr=type_ref ^(ELEMS  ','*)) {
-      size_t dimension = $ELEMS->children->size($ELEMS->children) + 1;
-      $v = (ir_t_base *) ir_t_array_new(dimension, $tr.v);
-    }
+    size_t dimension = IR_PASS1_SIZE($ELEMS) + 1;
+    $v = ir_pass1_t_array_new(IR_PASS1_ANTLR3_USERP(), dimension, $tr.v);
+  }
   ;
 
 
@@ -65,7 +65,7 @@ func_signature returns [ir_signature *v]
     void *ret_v = NULL;
   }
   : id=identifier al=arg_def_list ^(RETURNS (r=type_ref { ret_v = $r.v; })?) {
-      $v = ir_signature_new(ir_term_id_new($id.v), $al.v, ret_v);
+      $v = ir_pass1_signature_new(IR_PASS1_ANTLR3_USERP(), ir_term_id_new($id.v), $al.v, ret_v);
     }
   ;
 
@@ -86,7 +86,7 @@ arg_def returns [ir_param *v]
     void *type_ref_v = NULL;
   }
   : ^(PARAM id=identifier (type_ref { type_ref_v = $type_ref.v; })?) {
-      $v = ir_param_new(ir_term_id_new($id.v), type_ref_v);
+      $v = ir_pass1_param_new(IR_PASS1_ANTLR3_USERP(), ir_term_id_new($id.v), type_ref_v);
     }
   ;
 
@@ -246,7 +246,7 @@ expr_identifier
 // TERMINALS
 identifier returns [const char *v]
   : id=IDENTIFIER {
-      $v = (const char *) $id->getText($id)->to8($id->getText($id))->chars;
+      $v = IR_PASS1_CHARS($id);
     };
 
 str: ^(CONST_STR STR);
