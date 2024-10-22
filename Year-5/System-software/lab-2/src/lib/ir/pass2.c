@@ -576,14 +576,67 @@ ir_scope *ir_pass2_if_build(ir_pass2 *self, ir_expr_base *expr,
 }
 
 // WHILE
-void ir_pass2_while_before(ir_pass2 *self) {}
+void ir_pass2_while_before(ir_pass2 *self) {
+  ir_scope *parent = ir_scope_stack_top(self->scope_stack);
 
-ir_scope *ir_pass2_while_build(ir_pass2 *self) { return NULL; }
+  ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
+  ir_scope *scope = ir_scope_new(IR_SCOPE_BLOCK, parent->cur, end, parent->cur);
+
+  ir_scope_stack_push(self->scope_stack, scope);
+  list_push_front(self->break_stack, end);
+}
+
+ir_scope *ir_pass2_while_build(ir_pass2 *self, ir_expr_base *expr,
+                               ir_scope *s_child) {
+  list_pop_front(self->break_stack);
+
+  ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
+
+  ir_block_base *cur =
+      (ir_block_base *)ir_block_cond_new(s_child->begin, scope->end, expr);
+
+  ir_block_set_next(s_child->end, cur);
+  ir_scope_free(s_child);
+
+  ir_block_set_next(scope->begin, cur);
+  scope->begin = cur;
+
+  return scope;
+}
 
 // DO
-void ir_pass2_do_before(ir_pass2 *self) {}
+void ir_pass2_do_before(ir_pass2 *self) {
+  ir_scope *parent = ir_scope_stack_top(self->scope_stack);
 
-ir_scope *ir_pass2_do_build(ir_pass2 *self) { return NULL; }
+  ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
+  ir_scope *scope = ir_scope_new(IR_SCOPE_BLOCK, parent->cur, end, parent->cur);
+
+  ir_scope_stack_push(self->scope_stack, scope);
+  list_push_front(self->break_stack, end);
+}
+
+ir_scope *ir_pass2_do_build(ir_pass2 *self, ir_expr_base *expr, int p,
+                            ir_scope *s_child) {
+  list_pop_front(self->break_stack);
+
+  ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
+
+  ir_block_base *cur;
+  if (p) {
+    cur = (ir_block_base *)ir_block_cond_new(scope->end, s_child->begin, expr);
+  } else {
+    cur = (ir_block_base *)ir_block_cond_new(s_child->begin, scope->end, expr);
+  }
+
+  ir_block_set_next(s_child->end, cur);
+
+  ir_block_set_next(scope->begin, s_child->begin);
+  scope->begin = cur;
+
+  ir_scope_free(s_child);
+
+  return scope;
+}
 
 // BREAK
 static ir_expr_base *ir_pass2_expr_true() {

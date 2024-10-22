@@ -58,7 +58,6 @@ type_ref returns [ir_t_base *v]
 func_def returns [ir_subroutine *v]
   @init {
     p_hashset func_body_v = NULL;
-    ir_block_base *func_body_s = NULL;
   }
   : ^(FUNC func_signature (^(BODY func_body {
       func_body_v = $func_body.v;
@@ -149,16 +148,26 @@ statement_block returns [ir_scope *v]
   ;
 
 statement_while returns [ir_scope *v]
-  : ^('while' expr statement)
+  @init {
+    ir_pass2_while_before(IR_PASS2_ANTLR3_USERP());
+  }
+  : ^('while' expr statement) {
+    $v = ir_pass2_while_build(IR_PASS2_ANTLR3_USERP(), $expr.v, $statement.v);
+  }
   ;
 
 statement_do returns [ir_scope *v]
-  : ^('repeat' statement_do_condition statement)
+  @init {
+    ir_pass2_do_before(IR_PASS2_ANTLR3_USERP());
+  }
+  : ^('repeat' cond=statement_do_condition statement) {
+    $v = ir_pass2_do_build(IR_PASS2_ANTLR3_USERP(), $cond.v, $cond.p, $statement.v);
+  }
   ;
 
-statement_do_condition
-  : ^('while' expr)
-  | ^('until' expr)
+statement_do_condition returns [ir_expr_base *v, int p]
+  : ^('while' expr) { $v = $expr.v; $p = 1; }
+  | ^('until' expr) { $v = $expr.v; $p = 0; }
   ;
 
 statement_break returns [ir_scope *v]
@@ -173,7 +182,6 @@ statement_break returns [ir_scope *v]
 statement_expression returns [ir_scope *v]
   @init {
     ir_pass2_expression_before(IR_PASS2_ANTLR3_USERP());
-    ir_expr_base *expr_v = NULL;
   }
   : expr {
     $v = ir_pass2_expression_build(IR_PASS2_ANTLR3_USERP(), $expr.v);
