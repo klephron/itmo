@@ -13,24 +13,41 @@ struct dot_expr_edge {
   size_t id_to;
 };
 
-struct dot_statement_edge {
+struct dot_block_edge {
   size_t id_from;
   size_t id_to;
   char  *label;
   char  *color;
 };
 
-struct dot_statement {
-  ir_block_base *ptr;
-  size_t         id;
-  size_t         expr_cnt;
-  p_list         expr_edges;
+struct dot_block {
+  const ir_block_base *ptr;
+  size_t               id;
+  size_t               expr_cnt;
+  p_list               expr_edges;
 };
 
 struct dot_ctx_cfg {
   size_t    cnt;
-  p_hashset blocks;
-  p_list    statement_edges;
+  p_hashset blocks; // visited
+  p_list    block_edges;
+};
+
+struct dot_subroutine {
+  const ir_subroutine *ptr;
+  size_t               id;
+  p_hashset            blocks; // visited
+};
+
+struct dot_subroutine_edge {
+  size_t id_from;
+  size_t id_to;
+};
+
+struct dot_ctx_cg {
+  size_t    cnt;
+  p_hashset subroutines;
+  p_list    subroutine_edges;
 };
 
 // DOT_EXPR
@@ -45,14 +62,14 @@ static struct dot_expr_edge *dot_expr_edge_new(size_t id_from, size_t id_to) {
 
 static void container_delete_expr_edge(void *self) { dot_expr_edge_free(self); }
 
-// DOT_STATEMENT
-static void dot_statement_free(struct dot_statement *self) {
+// DOT_block
+static void dot_block_free(struct dot_block *self) {
   list_free(self->expr_edges);
   free(self);
 }
 
-static struct dot_statement *dot_statement_new(ir_block_base *ptr, size_t id) {
-  struct dot_statement *self = MALLOC(struct dot_statement);
+static struct dot_block *dot_block_new(ir_block_base *ptr, size_t id) {
+  struct dot_block *self = MALLOC(struct dot_block);
   self->ptr = ptr;
   self->id = id;
   self->expr_cnt = 0;
@@ -61,24 +78,22 @@ static struct dot_statement *dot_statement_new(ir_block_base *ptr, size_t id) {
   return self;
 }
 
-static int container_cmp_dot_statement(const void *_lsv, const void *_rsv) {
-  const struct dot_statement *lsv = _lsv;
-  const struct dot_statement *rsv = _rsv;
+static int container_cmp_dot_block(const void *_lsv, const void *_rsv) {
+  const struct dot_block *lsv = _lsv;
+  const struct dot_block *rsv = _rsv;
   return container_cmp_ptr(lsv->ptr, rsv->ptr);
 }
 
-static size_t container_hash_dot_statement(const void *_lsv) {
-  const struct dot_statement *lsv = _lsv;
+static size_t container_hash_dot_block(const void *_lsv) {
+  const struct dot_block *lsv = _lsv;
   return container_hash_ptr(lsv->ptr);
 }
-static void container_delete_dot_statement(void *_data) {
-  dot_statement_free(_data);
-}
+static void container_delete_dot_block(void *_data) { dot_block_free(_data); }
 
-// DOT_STATEMENT_EDGE
-static struct dot_statement_edge *
-dot_statement_edge_new(size_t id_from, size_t id_to, char *label, char *color) {
-  struct dot_statement_edge *self = MALLOC(struct dot_statement_edge);
+// DOT_block_EDGE
+static struct dot_block_edge *dot_block_edge_new(size_t id_from, size_t id_to,
+                                                 char *label, char *color) {
+  struct dot_block_edge *self = MALLOC(struct dot_block_edge);
   self->id_to = id_to;
   self->id_from = id_from;
   self->label = label;
@@ -86,12 +101,10 @@ dot_statement_edge_new(size_t id_from, size_t id_to, char *label, char *color) {
   return self;
 }
 
-static void dot_statement_edge_free(struct dot_statement_edge *self) {
-  free(self);
-}
+static void dot_block_edge_free(struct dot_block_edge *self) { free(self); }
 
-static void container_delete_statement_edge(void *_data) {
-  dot_statement_edge_free(_data);
+static void container_delete_block_edge(void *_data) {
+  dot_block_edge_free(_data);
 }
 
 // CFG
@@ -99,23 +112,23 @@ static struct dot_ctx_cfg *ctx_cfg_new() {
   struct dot_ctx_cfg *cfg = MALLOC(struct dot_ctx_cfg);
   cfg->cnt = 0;
   cfg->blocks =
-      hashset_new(container_cmp_dot_statement, container_new_move,
-                  container_delete_dot_statement, container_hash_dot_statement);
-  cfg->statement_edges = list_new(container_cmp_ptr, container_new_move,
-                                  container_delete_statement_edge);
+      hashset_new(container_cmp_dot_block, container_new_move,
+                  container_delete_dot_block, container_hash_dot_block);
+  cfg->block_edges = list_new(container_cmp_ptr, container_new_move,
+                              container_delete_block_edge);
   return cfg;
 }
 
 static void ctx_cfg_free(struct dot_ctx_cfg *cfg) {
   cfg->cnt = 0;
   hashset_free(cfg->blocks);
-  list_free(cfg->statement_edges);
+  list_free(cfg->block_edges);
   free(cfg);
 }
 
-static size_t cfg_traverse_expr_traverse(struct dot_statement *st,
-                                         string_buffer        *buffer,
-                                         ir_expr_base         *expr) {
+static size_t cfg_traverse_expr_traverse(struct dot_block *st,
+                                         string_buffer    *buffer,
+                                         ir_expr_base     *expr) {
   char buf[64];
 
   if (!expr) {
@@ -245,8 +258,8 @@ static size_t cfg_traverse_expr_traverse(struct dot_statement *st,
   return id;
 }
 
-static void cfg_traverse_expr_link(struct dot_statement *st,
-                                   string_buffer        *buffer) {
+static void cfg_traverse_expr_link(struct dot_block *st,
+                                   string_buffer    *buffer) {
   char buf[128];
 
   for (list_it it = st->expr_edges->head; it; it = it->next) {
@@ -257,7 +270,7 @@ static void cfg_traverse_expr_link(struct dot_statement *st,
   }
 }
 
-static void cfg_traverse_expr(struct dot_statement *st, string_buffer *buffer,
+static void cfg_traverse_expr(struct dot_block *st, string_buffer *buffer,
                               ir_expr_base *root) {
   char buf[64];
 
@@ -277,9 +290,8 @@ static void cfg_traverse_expr(struct dot_statement *st, string_buffer *buffer,
   string_buffer_append(buffer, "}\n");
 
   if (expr_id) {
-    snprintf(buf, sizeof(buf) - 1,
-             "statement_%zu -> expr_%zu_%zu[style=invis];", st->id, st->id,
-             expr_id);
+    snprintf(buf, sizeof(buf) - 1, "block_%zu -> expr_%zu_%zu[style=invis];",
+             st->id, st->id, expr_id);
     string_buffer_append(buffer, buf);
   }
 }
@@ -292,24 +304,22 @@ static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
     return 0;
   }
 
-  hashset_it it =
-      hashset_find(cfg->blocks, &(struct dot_statement){.ptr = root});
+  hashset_it it = hashset_find(cfg->blocks, &(struct dot_block){.ptr = root});
 
   if (!it.end(&it)) {
-    return ((struct dot_statement *)it.get(&it))->id;
+    return ((struct dot_block *)it.get(&it))->id;
   }
 
-  struct dot_statement *st;
+  struct dot_block *st;
   {
-    size_t statement_id = ++cfg->cnt;
-    st = dot_statement_new(root, statement_id);
+    size_t block_id = ++cfg->cnt;
+    st = dot_block_new(root, block_id);
   }
 
   hashset_insert(cfg->blocks, st);
 
   string_buffer_append(buffer, "subgraph ");
   snprintf(buf, sizeof(buf) - 1, "cluster_%zu", st->id);
-
   string_buffer_append(buffer, buf);
   string_buffer_append(buffer, " {\n"
                                "style=\"filled,solid\";\n"
@@ -318,7 +328,7 @@ static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
                                "fillcolor=lightgray;\n"
                                "\n");
 
-  snprintf(buf, sizeof(buf) - 1, "statement_%zu", st->id);
+  snprintf(buf, sizeof(buf) - 1, "block_%zu", st->id);
   string_buffer_append(buffer, buf);
   string_buffer_append(buffer, "[shape=plaintext]\n"
                                "\n");
@@ -345,8 +355,8 @@ static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
     size_t child_id =
         cfg_traverse(cfg, buffer, ((ir_block_next *)root)->next, v_expr);
     if (child_id) {
-      list_push_back(cfg->statement_edges,
-                     dot_statement_edge_new(st->id, child_id, "", "black"));
+      list_push_back(cfg->block_edges,
+                     dot_block_edge_new(st->id, child_id, "", "black"));
     }
     break;
   }
@@ -354,17 +364,15 @@ static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
     size_t child_jz_id =
         cfg_traverse(cfg, buffer, ((ir_block_cond *)root)->jz, v_expr);
     if (child_jz_id) {
-      list_push_back(
-          cfg->statement_edges,
-          dot_statement_edge_new(st->id, child_jz_id, "False", "blue"));
+      list_push_back(cfg->block_edges,
+                     dot_block_edge_new(st->id, child_jz_id, "False", "blue"));
     }
 
     size_t child_je_id =
         cfg_traverse(cfg, buffer, ((ir_block_cond *)root)->je, v_expr);
     if (child_je_id) {
-      list_push_back(
-          cfg->statement_edges,
-          dot_statement_edge_new(st->id, child_je_id, "True", "red"));
+      list_push_back(cfg->block_edges,
+                     dot_block_edge_new(st->id, child_je_id, "True", "red"));
     }
 
     break;
@@ -378,10 +386,10 @@ static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
 
 static void cfg_link(struct dot_ctx_cfg *cfg, string_buffer *buffer) {
   char buf[256];
-  for (list_it it = cfg->statement_edges->head; it; it = it->next) {
-    struct dot_statement_edge *edge = it->data;
-    snprintf(buf, sizeof(buf) - 1, "statement_%zu -> statement_%zu",
-             edge->id_from, edge->id_to);
+  for (list_it it = cfg->block_edges->head; it; it = it->next) {
+    struct dot_block_edge *edge = it->data;
+    snprintf(buf, sizeof(buf) - 1, "block_%zu -> block_%zu", edge->id_from,
+             edge->id_to);
     string_buffer_append(buffer, buf);
 
     if (strlen(edge->label)) {
@@ -434,9 +442,146 @@ dot_string *dot_ir_cfg(const ir_ctx *ctx, const ir_subroutine *sub,
 }
 
 // CG
+static int container_cmp_dot_subroutine(const void *_lsv, const void *_rsv) {
+  const struct dot_subroutine *lsv = _lsv;
+  const struct dot_subroutine *rsv = _rsv;
+  return container_cmp_ptr(lsv->ptr, rsv->ptr);
+}
+
+static size_t container_hash_dot_subroutine(const void *_lsv) {
+  const struct dot_subroutine *lsv = _lsv;
+  return container_hash_ptr(lsv->ptr);
+}
+
+static struct dot_subroutine *dot_subroutine_new(const ir_subroutine *sub,
+                                                 size_t               id) {
+  struct dot_subroutine *self = MALLOC(struct dot_subroutine);
+  self->ptr = sub;
+  self->id = id;
+  self->blocks =
+      hashset_new(container_cmp_dot_block, container_new_move,
+                  container_delete_dot_block, container_hash_dot_block);
+  return self;
+}
+
+static void dot_subroutine_free(struct dot_subroutine *self) {
+  hashset_free(self->blocks);
+  free(self);
+}
+
+static void container_delete_dot_subroutine(void *_lsv) {
+  dot_subroutine_free(_lsv);
+}
+
+static struct dot_subroutine_edge *dot_subroutine_edge_new(size_t id_from,
+                                                           size_t id_to) {
+  struct dot_subroutine_edge *self = MALLOC(struct dot_subroutine_edge);
+  self->id_from = id_from;
+  self->id_to = id_to;
+  return self;
+}
+
+static void dot_subroutine_edge_free(struct dot_subroutine_edge *self) {
+  free(self);
+}
+
+static void container_delete_dot_subroutine_edge(void *self) {
+  dot_subroutine_edge_free(self);
+}
+
+static struct dot_ctx_cg *ctx_cg_new() {
+  struct dot_ctx_cg *cg = MALLOC(struct dot_ctx_cg);
+
+  cg->cnt = 0;
+  cg->subroutines = hashset_new(
+      container_cmp_dot_subroutine, container_new_move,
+      container_delete_dot_subroutine, container_hash_dot_subroutine);
+  cg->subroutine_edges = list_new(container_cmp_false, container_new_move,
+                                  container_delete_dot_subroutine_edge);
+  return cg;
+}
+
+static void ctx_cg_free(struct dot_ctx_cg *self) {
+  hashset_free(self->subroutines);
+  list_free(self->subroutine_edges);
+  free(self);
+}
+
+// TODO: implement
+static void cg_traverse_exprs(struct dot_block *dbl, string_buffer *buffer,
+                              const ir_ctx *ctx, const ir_expr_base *expr) {}
+
+// TODO: implement
+static void cg_traverse_blocks(struct dot_subroutine *dsub,
+                               string_buffer *buffer, const ir_ctx *ctx,
+                               const ir_block_base *root) {
+  if (!root) {
+    return;
+  }
+}
+
+static size_t cg_traverse(struct dot_ctx_cg *cg, string_buffer *buffer,
+                          const ir_ctx *ctx, const ir_subroutine *sub) {
+  char buf[64];
+  if (!sub) {
+    return 0;
+  }
+
+  hashset_it it = hashset_find(
+      cg->subroutines, &(struct dot_subroutine){.ptr = (ir_subroutine *)sub});
+
+  if (!it.end(&it)) {
+    return ((struct dot_subroutine *)it.get(&it))->id;
+  }
+
+  struct dot_subroutine *dsub;
+  {
+    size_t sub_id = ++cg->cnt;
+    dsub = dot_subroutine_new(sub, sub_id);
+  }
+
+  hashset_insert(cg->subroutines, dsub);
+
+  snprintf(buf, sizeof(buf) - 1, "subroutine_%zu;\n", dsub->id);
+  string_buffer_append(buffer, buf);
+
+  // find function calls in blocks
+  cg_traverse_blocks(dsub, buffer, ctx, sub->cfg);
+
+  return dsub->id;
+}
+
+static void cg_link(struct dot_ctx_cg *cg, string_buffer *buffer) {
+  char buf[256];
+  for (list_it it = cg->subroutine_edges->head; it; it = it->next) {
+    struct dot_subroutine_edge *edge = it->data;
+    snprintf(buf, sizeof(buf) - 1, "subroutine_%zu -> subroutine_%zu;\n",
+             edge->id_from, edge->id_to);
+    string_buffer_append(buffer, buf);
+  }
+}
+
 dot_string *dot_ir_cg(const ir_ctx *ctx, const ir_subroutine *sub) {
-  size_t len = 10;
-  char  *chars = malloc(len);
+  string_buffer *buffer = string_buffer_new(0, 0);
+
+  struct dot_ctx_cg *cg = ctx_cg_new();
+
+  string_buffer_append(
+      buffer, "strict digraph G {\n"
+              "compound=true;\n"
+              "graph [pad=\"0\",nodesep=\"1\",ranksep=\"0.75\",splines=true];\n"
+              "node [shape=rect, style=filled];\n"
+              "\n");
+
+  cg_traverse(cg, buffer, ctx, sub);
+  cg_link(cg, buffer);
+
+  string_buffer_append(buffer, "}");
+
+  ctx_cg_free(cg);
+
+  size_t len = string_buffer_size(buffer) / sizeof(char);
+  char  *chars = string_buffer_detach(buffer);
 
   return dot_string_new(chars, len);
 }
