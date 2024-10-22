@@ -593,7 +593,7 @@ ir_scope *ir_pass2_while_build(ir_pass2 *self, ir_expr_base *expr,
   ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
 
   ir_block_base *cur =
-      (ir_block_base *)ir_block_cond_new(s_child->begin, scope->end, expr);
+      (ir_block_base *)ir_block_cond_new(scope->end, s_child->begin, expr);
 
   ir_block_set_next(s_child->end, cur);
   ir_scope_free(s_child);
@@ -631,7 +631,7 @@ ir_scope *ir_pass2_do_build(ir_pass2 *self, ir_expr_base *expr, int p,
   ir_block_set_next(s_child->end, cur);
 
   ir_block_set_next(scope->begin, s_child->begin);
-  scope->begin = cur;
+  scope->begin = s_child->begin;
 
   ir_scope_free(s_child);
 

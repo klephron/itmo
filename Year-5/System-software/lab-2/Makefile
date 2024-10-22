@@ -116,9 +116,9 @@ run: build
 	./build/main io/input.txt
 
 ### Run main executable and generate dot
-run/ast: build
+run/pdf: build
 	./build/main io/input.txt --ignore-errors || true
-	dot -Tpdf io/input.txt.ast.dot -o io/input.txt.ast.pdf
+	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
 
 ### Build tests
 build/test: $(TGTS.TST)

@@ -1,19 +1,11 @@
-method fun123(arg1: array [,,] of int):
-var
-  a : custom1;
-  b : string;
-  c,d : array [,,] of int;
-  e : array [,,] of int;
-  f,g ;
+method main(arg1: array [,,] of int):
 begin
   repeat begin
-    break;
-    break;
-    break;
-    begin
-      a = 4;
-      b = 10;
-      c = 12;
-    end;
-  end; until true;
+    a = 15;
+    b = 10;
+    c = 15;
+  end;
+  while true;
+  a = 15;
+  b = 15;
 end;

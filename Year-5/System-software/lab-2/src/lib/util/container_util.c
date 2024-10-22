@@ -2,6 +2,7 @@
 
 #include "util/macro.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,6 +23,16 @@ int container_cmp_false(const void *lsv, const void *rsv) {
   UNUSED(lsv);
   UNUSED(rsv);
   return 1;
+}
+
+int container_cmp_ptr(const void *lsv, const void *rsv) {
+  if (lsv == rsv) {
+    return 0;
+  } else if (lsv < rsv) {
+    return 1;
+  } else {
+    return -1;
+  }
 }
 
 // NEW
@@ -52,11 +63,11 @@ void container_delete_chars(void *_data) { free(_data); }
 void container_delete_false(void *_data) { UNUSED(_data); }
 
 // HASH
-size_t container_hash_chars(void *_data) {
+size_t container_hash_chars(const void *_data) {
   const size_t pow = 757;
   size_t       hash = 353;
 
-  char *kc = _data;
+  const char *kc = _data;
   while (*kc != '\0') {
     hash = hash * pow + *kc++;
   }
@@ -64,7 +75,9 @@ size_t container_hash_chars(void *_data) {
   return hash;
 }
 
-size_t container_hash_chars_chars(void *_data) {
-  chars_chars *data = _data;
+size_t container_hash_chars_chars(const void *_data) {
+  const chars_chars *data = _data;
   return container_hash_chars(data->key);
 }
+
+size_t container_hash_ptr(const void *_data) { return (intptr_t)_data; }

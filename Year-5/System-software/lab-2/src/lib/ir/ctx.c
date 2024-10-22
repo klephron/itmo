@@ -16,8 +16,8 @@ static void container_delete_sub(void *_data) {
   }
 }
 
-static size_t container_hash_sub(void *_data) {
-  ir_subroutine *sub = _data;
+static size_t container_hash_sub(const void *_data) {
+  const ir_subroutine *sub = _data;
   return container_hash_chars((void *)ir_subroutine_name(sub));
 }
 

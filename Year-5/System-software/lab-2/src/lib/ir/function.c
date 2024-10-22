@@ -51,8 +51,8 @@ p_list ir_var_list_new() {
   return list;
 }
 
-static size_t container_hash_vars(void *_data) {
-  ir_var *var = _data;
+static size_t container_hash_vars(const void *_data) {
+  const ir_var *var = _data;
   return container_hash_chars(var->id->name);
 }
 
