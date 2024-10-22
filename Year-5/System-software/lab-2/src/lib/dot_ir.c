@@ -275,14 +275,15 @@ static void cfg_traverse_expr(struct dot_statement *st, string_buffer *buffer,
   string_buffer_append(buffer, "}\n");
 
   if (expr_id) {
-    snprintf(buf, sizeof(buf) - 1, "statement_%zu -> expr_%zu_1[style=invis];",
-             st->id, st->id);
+    snprintf(buf, sizeof(buf) - 1,
+             "statement_%zu -> expr_%zu_%zu[style=invis];", st->id, st->id,
+             expr_id);
     string_buffer_append(buffer, buf);
   }
 }
 
 static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
-                           ir_block_base *root) {
+                           ir_block_base *root, int v_expr) {
   char buf[64];
 
   if (!root) {
@@ -320,24 +321,27 @@ static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
   string_buffer_append(buffer, "[shape=plaintext]\n"
                                "\n");
 
-  switch (root->kind) {
-  case IR_BLOCK_NEXT: {
-    cfg_traverse_expr(st, buffer, ((ir_block_next *)root)->expr);
-    break;
-  }
-  case IR_BLOCK_COND: {
-    cfg_traverse_expr(st, buffer, ((ir_block_cond *)root)->cond);
-    break;
-  }
-  default:
-    error("unknown expression type");
+  if (v_expr) {
+    switch (root->kind) {
+    case IR_BLOCK_NEXT: {
+      cfg_traverse_expr(st, buffer, ((ir_block_next *)root)->expr);
+      break;
+    }
+    case IR_BLOCK_COND: {
+      cfg_traverse_expr(st, buffer, ((ir_block_cond *)root)->cond);
+      break;
+    }
+    default:
+      error("unknown expression type");
+    }
   }
 
   string_buffer_append(buffer, "}\n\n");
 
   switch (root->kind) {
   case IR_BLOCK_NEXT: {
-    size_t child_id = cfg_traverse(cfg, buffer, ((ir_block_next *)root)->next);
+    size_t child_id =
+        cfg_traverse(cfg, buffer, ((ir_block_next *)root)->next, v_expr);
     if (child_id) {
       list_push_back(cfg->statement_edges,
                      dot_statement_edge_new(st->id, child_id, "", "black"));
@@ -345,14 +349,16 @@ static size_t cfg_traverse(struct dot_ctx_cfg *cfg, string_buffer *buffer,
     break;
   }
   case IR_BLOCK_COND: {
-    size_t child_jz_id = cfg_traverse(cfg, buffer, ((ir_block_cond *)root)->jz);
+    size_t child_jz_id =
+        cfg_traverse(cfg, buffer, ((ir_block_cond *)root)->jz, v_expr);
     if (child_jz_id) {
       list_push_back(
           cfg->statement_edges,
           dot_statement_edge_new(st->id, child_jz_id, "False", "blue"));
     }
 
-    size_t child_je_id = cfg_traverse(cfg, buffer, ((ir_block_cond *)root)->je);
+    size_t child_je_id =
+        cfg_traverse(cfg, buffer, ((ir_block_cond *)root)->je, v_expr);
     if (child_je_id) {
       list_push_back(
           cfg->statement_edges,
@@ -396,7 +402,8 @@ static void cfg_link(struct dot_ctx_cfg *cfg, string_buffer *buffer) {
   string_buffer_append(buffer, "\n");
 }
 
-dot_string *dot_ir_cfg(const ir_ctx *ctx, const ir_subroutine *sub) {
+dot_string *dot_ir_cfg(const ir_ctx *ctx, const ir_subroutine *sub,
+                       int v_expr) {
   UNUSED(ctx);
 
   struct dot_ctx_cfg *cfg = ctx_cfg_new();
@@ -410,7 +417,7 @@ dot_string *dot_ir_cfg(const ir_ctx *ctx, const ir_subroutine *sub) {
               "node [shape=rect, style=filled];\n"
               "\n");
 
-  cfg_traverse(cfg, buffer, sub->cfg);
+  cfg_traverse(cfg, buffer, sub->cfg, v_expr);
   cfg_link(cfg, buffer);
 
   string_buffer_append(buffer, "}");

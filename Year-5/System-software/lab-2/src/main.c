@@ -20,6 +20,7 @@ struct args_struct {
   char  *output_dir;
   int    ignore_errors;
   int    tee;
+  int    cfg_add_expr;
   p_list subroutines;
   // status
   int code;
@@ -35,6 +36,7 @@ struct args_struct *args_new() {
 
   args->output_dir = ".";
   args->ignore_errors = 0;
+  args->cfg_add_expr = 0;
   args->tee = 0;
   args->subroutines = list_new(container_cmp_chars, container_new_chars,
                                container_delete_chars);
@@ -63,15 +65,17 @@ void usage(struct args_struct *args) {
     subroutines[offset - 1] = '\0';
   }
 
-  printf("Usage: %s [options] <file>...\n"
-         "Options:\n"
-         "--tee            - print to file and to stdin (current: %d)\n"
-         "--ignore-errors  - continue execution on errors (current: %d)\n"
-         "-o <directory>   - output directory (current: %s)\n"
-         "-s <subroutine>  - set or add subroutine for call graph generation "
-         "(current: %s)\n",
-         args->prog_name, args->tee, args->ignore_errors, args->output_dir,
-         subroutines);
+  printf(
+      "Usage: %s [options] <file>...\n"
+      "Options:\n"
+      "--tee            - print to file and to stdin (current: %d)\n"
+      "--ignore-errors  - continue execution on errors (current: %d)\n"
+      "--cfg-add-expr   - add expressions to control flow graph (current: %d)\n"
+      "-o <directory>   - output directory (current: %s)\n"
+      "-s <subroutine>  - set or add subroutine for call graph generation"
+      "(current: %s)\n",
+      args->prog_name, args->tee, args->ignore_errors, args->cfg_add_expr,
+      args->output_dir, subroutines);
 }
 
 void parse_args(struct args_struct *args, int argc, char *argv[]) {
@@ -82,6 +86,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
   struct option long_options[] = {
       {"tee", no_argument, &args->tee, 1},
       {"ignore-errors", no_argument, &args->ignore_errors, 1},
+      {"cfg-add-expr", no_argument, &args->cfg_add_expr, 1},
   };
   int option_index = 0;
   int has_next = 1;
@@ -247,7 +252,7 @@ int execute(struct args_struct *args) {
       const char    *sub_name = ir_subroutine_name(sub);
       const char    *source = sub->file_name;
 
-      dot_string *dot_cfg = dot_ir_cfg(ir, sub);
+      dot_string *dot_cfg = dot_ir_cfg(ir, sub, args->cfg_add_expr);
       char       *output_cfg = get_cfg_dot_output(args, source, sub_name);
       write_dot(args, dot_cfg, output_cfg);
       free(output_cfg);
@@ -269,7 +274,8 @@ int execute(struct args_struct *args) {
       if (!it.end(&it)) {
         ir_subroutine *sub = it.get(&it);
         dot_string    *dot_cg = dot_ir_cg(ir, sub);
-        char *output_cg = get_cg_dot_output(args, sub->file_name, ir_subroutine_name(sub));
+        char          *output_cg =
+            get_cg_dot_output(args, sub->file_name, ir_subroutine_name(sub));
         write_dot(args, dot_cg, output_cg);
         free(output_cg);
         dot_string_free(dot_cg);

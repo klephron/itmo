@@ -117,7 +117,7 @@ run: build
 
 ### Run main executable and generate dot
 run/pdf: build
-	./build/main io/input.txt --ignore-errors || true
+	./build/main io/input.txt --ignore-errors --cfg-add-expr || true
 	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
 
 ### Build tests
