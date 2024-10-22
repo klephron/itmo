@@ -82,7 +82,8 @@ void ir_pass2_body_build(ir_pass2 *self, ir_scope *child);
 void      ir_pass2_block_before(ir_pass2 *self);
 ir_scope *ir_pass2_block_build(ir_pass2 *self, p_list scopes);
 void      ir_pass2_if_before(ir_pass2 *self);
-ir_scope *ir_pass2_if_build(ir_pass2 *self);
+ir_scope *ir_pass2_if_build(ir_pass2 *self, ir_expr_base *expr,
+                            ir_scope *s_then, ir_scope *s_else);
 void      ir_pass2_while_before(ir_pass2 *self);
 ir_scope *ir_pass2_while_build(ir_pass2 *self);
 void      ir_pass2_do_before(ir_pass2 *self);

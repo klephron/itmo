@@ -131,8 +131,11 @@ statement returns [ir_scope *v]
 statement_if returns [ir_scope *v]
   @init {
     ir_pass2_if_before(IR_PASS2_ANTLR3_USERP());
+    ir_scope *else_st_v = NULL;
   }
-  : ^('if' expr statement statement?)
+  : ^('if' expr then_st=statement (else_st=statement { else_st_v = $else_st.v; })?) {
+    $v = ir_pass2_if_build(IR_PASS2_ANTLR3_USERP(), $expr.v, $then_st.v, else_st_v);
+  }
   ;
 
 statement_block returns [ir_scope *v]

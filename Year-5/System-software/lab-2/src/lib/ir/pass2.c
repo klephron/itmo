@@ -547,15 +547,33 @@ ir_scope *ir_pass2_block_build(ir_pass2 *self, p_list scopes) {
 
 // IF
 void ir_pass2_if_before(ir_pass2 *self) {
-  // ir_scope *parent = ir_scope_stack_top(self->scope_stack);
+  ir_scope *parent = ir_scope_stack_top(self->scope_stack);
 
-  // ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
-  // ir_scope_stack_push(self->scope_stack, IR_SCOPE_BLOCK, parent->prev, end);
-  // ir_scope *scope = ir_scope_stack_top(self->scope_stack);
-  // scope->prev = scope->begin;
+  ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
+  ir_scope *scope = ir_scope_new(IR_SCOPE_BLOCK, parent->cur, end, parent->cur);
+
+  ir_scope_stack_push(self->scope_stack, scope);
 }
 
-ir_scope *ir_pass2_if_build(ir_pass2 *self) { return NULL; }
+ir_scope *ir_pass2_if_build(ir_pass2 *self, ir_expr_base *expr,
+                            ir_scope *s_then, ir_scope *s_else) {
+  ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
+
+  ir_block_base *cur = (ir_block_base *)ir_block_cond_new(
+      s_else ? s_else->begin : scope->end, s_then->begin, expr);
+
+  ir_block_set_next(s_then->end, scope->end);
+  ir_scope_free(s_then);
+  if (s_else) {
+    ir_block_set_next(s_else->end, scope->end);
+    ir_scope_free(s_else);
+  }
+
+  ir_block_set_next(scope->begin, cur);
+  scope->begin = cur;
+
+  return scope;
+}
 
 // WHILE
 void ir_pass2_while_before(ir_pass2 *self) {}
