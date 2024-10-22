@@ -1,3 +1,4 @@
+#include "util/colors.h"
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -14,7 +15,8 @@ int _debug(const char *fname, int lineno, const char *fxname, const char *fmt,
 
 int _info(const char *fname, int lineno, const char *fxname, const char *fmt,
           ...) {
-  printf("[info %s:%d:%s]: ", fname, lineno, fxname);
+  printf("[" ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET " %s:%d:%s]: ", fname,
+         lineno, fxname);
   va_list args;
   va_start(args, fmt);
   vprintf(fmt, args);
@@ -25,7 +27,8 @@ int _info(const char *fname, int lineno, const char *fxname, const char *fmt,
 
 int _error(const char *fname, int lineno, const char *fxname, const char *fmt,
            ...) {
-  printf("[error %s:%d:%s]: ", fname, lineno, fxname);
+  printf("[" ANSI_COLOR_RED "error" ANSI_COLOR_RESET " %s:%d:%s]: ", fname,
+         lineno, fxname);
   va_list args;
   va_start(args, fmt);
   vprintf(fmt, args);

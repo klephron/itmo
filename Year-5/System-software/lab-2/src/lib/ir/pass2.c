@@ -260,7 +260,7 @@ ir_expr_base *ir_pass2_expr_binary_new(ir_pass2 *self, ir_expr_base *first,
                                        ir_expr_binary_enum op) {
   UNUSED(self);
 
-  error("creating binary expression type=%d", op);
+  debug("creating binary expression type=%d", op);
 
   switch (op) {
   case IR_EXPR_BINARY_UNKNOWN:
