@@ -53,7 +53,7 @@ void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx, const char *file_name) {
   self->file_name = file_name;
   self->scope_stack = ir_scope_stack_new();
   self->break_stack = NULL;
-  self->graph = NULL;
+  self->cfg = NULL;
 }
 
 void ir_pass2_deinit(ir_pass2 *self) { ir_scope_stack_free(self->scope_stack); }
@@ -390,12 +390,11 @@ int ir_pass2_vars_add(ir_pass2 *self, p_hashset hashset, p_list vars) {
   return 1;
 }
 
-ir_subroutine *ir_pass2_subroutine_new(const ir_pass2 *self,
-                                       ir_signature   *signature,
-                                       p_hashset       vars) {
+ir_subroutine *ir_pass2_subroutine_new(ir_pass2 *self, ir_signature *signature,
+                                       p_hashset vars, ir_block_base *cfg) {
   UNUSED(self);
-  ir_subroutine *sub =
-      ir_subroutine_new(self->file_name, signature, self->graph, vars);
+  ir_subroutine *sub = ir_subroutine_new(self->file_name, signature, cfg, vars);
+
   debug("var_hashset replaced");
   return sub;
 }
@@ -476,19 +475,21 @@ void ir_pass2_body_before(ir_pass2 *self) {
   ir_block_base *cur = begin;
 
   ir_scope *scope = ir_scope_new(IR_SCOPE_FUNCTION, begin, end, cur);
+
   ir_scope_stack_push(self->scope_stack, scope);
   // debug("scope body pushed");
 
-  self->graph = begin;
+  self->cfg = begin;
 
   list_push_front(self->break_stack, end);
   // debug("break_stack pushed");
 }
 
-void ir_pass2_body_build(ir_pass2 *self, ir_scope *child) {
+ir_block_base *ir_pass2_body_build(ir_pass2 *self, ir_scope *child) {
   list_pop_front(self->break_stack);
   // debug("break_stack popped");
   list_free(self->break_stack);
+  self->break_stack = NULL;
   // debug("break_stack freed");
 
   ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
@@ -503,6 +504,10 @@ void ir_pass2_body_build(ir_pass2 *self, ir_scope *child) {
   // debug("scope body popped");
   ir_scope_free(scope);
   // debug("scope body freed");
+
+  ir_block_base *cfg = self->cfg;
+  self->cfg = NULL;
+  return cfg;
 }
 
 // BLOCK

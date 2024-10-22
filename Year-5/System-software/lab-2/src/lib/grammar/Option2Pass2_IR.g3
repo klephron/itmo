@@ -58,11 +58,13 @@ type_ref returns [ir_t_base *v]
 func_def returns [ir_subroutine *v]
   @init {
     p_hashset func_body_v = NULL;
+    ir_block_base *func_body_cfg = NULL;
   }
   : ^(FUNC func_signature (^(BODY func_body {
       func_body_v = $func_body.v;
+      func_body_cfg = $func_body.cfg;
     }))? ) {
-      $v = ir_pass2_subroutine_new(IR_PASS2_ANTLR3_USERP(), $func_signature.v, func_body_v);
+      $v = ir_pass2_subroutine_new(IR_PASS2_ANTLR3_USERP(), $func_signature.v, func_body_v, func_body_cfg);
     }
   ;
 
@@ -95,13 +97,17 @@ arg_def returns [ir_var *v]
     }
   ;
 
-func_body returns [p_hashset v]
+func_body returns [p_hashset v, ir_block_base *cfg]
   @init {
     p_hashset vars = ir_pass2_vars_new(IR_PASS2_ANTLR3_USERP());
+    ir_block_base *cfg = NULL;
     ir_pass2_body_before(IR_PASS2_ANTLR3_USERP());
   }
-  : ^(VARS (func_body_var { ir_pass2_vars_add(IR_PASS2_ANTLR3_USERP(), vars, $func_body_var.v); })*) { $v = vars; }
-      (st=statement_block { ir_pass2_body_build(IR_PASS2_ANTLR3_USERP(), $st.v); })
+  : ^(VARS (func_body_var { ir_pass2_vars_add(IR_PASS2_ANTLR3_USERP(), vars, $func_body_var.v); })*)
+      (st=statement_block { cfg = ir_pass2_body_build(IR_PASS2_ANTLR3_USERP(), $st.v); }) {
+        $v = vars;
+        $cfg = cfg;
+      }
   ;
 
 func_body_var returns [p_list v]
@@ -211,11 +217,8 @@ expr returns [ir_expr_base *v]
 
 
 // OPERATORS
-expr_15 returns [p_list v]
-  @init {
-    p_list args = ir_expr_list_new();
-  }
-  : (expr { list_push_back(args, $expr.v); })* { $v = args; }
+expr_15 [p_list args]
+  : (expr { list_push_back($args, $expr.v); })*
   ;
 
 expr_14 returns [ir_expr_base *v]
@@ -294,14 +297,20 @@ expr_2 returns [ir_expr_base *v]
   ;
 
 expr_caller returns [ir_expr_base *v]
-  : ^(CALLER ^(ARGS args=expr_15) expr) {
-    $v = ir_pass2_expr_call_new(IR_PASS2_ANTLR3_USERP(), $expr.v, $args.v);
+  @init {
+    p_list args = ir_expr_list_new();
+  }
+  : ^(CALLER ^(ARGS expr_15[args]) expr) {
+    $v = ir_pass2_expr_call_new(IR_PASS2_ANTLR3_USERP(), $expr.v, args);
   }
   ;
 
 expr_indexer returns [ir_expr_base *v]
-  : ^(INDEXER ^(ARGS args=expr_15) expr) {
-    $v = ir_pass2_expr_index_new(IR_PASS2_ANTLR3_USERP(), $expr.v, $args.v);
+  @init {
+    p_list args = ir_expr_list_new();
+  }
+  : ^(INDEXER ^(ARGS expr_15[args]) expr) {
+    $v = ir_pass2_expr_index_new(IR_PASS2_ANTLR3_USERP(), $expr.v, args);
   }
   ;
 
