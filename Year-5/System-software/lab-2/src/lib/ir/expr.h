@@ -111,3 +111,6 @@ ir_expr_call   *ir_expr_call_new(ir_expr_base *callee, p_list args);
 ir_expr_index  *ir_expr_index_new(ir_expr_base *indexed, p_list args);
 
 p_list ir_expr_list_new();
+
+const char *ir_expr_unary_ttstr(ir_expr_unary_enum type);
+const char *ir_expr_binary_ttstr(ir_expr_binary_enum type);

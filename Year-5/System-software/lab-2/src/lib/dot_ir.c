@@ -133,34 +133,36 @@ static size_t cfg_traverse_expr_traverse(struct dot_statement *st,
   switch (expr->kind) {
   case IR_EXPR_UNARY: {
     ir_expr_unary *unary = (ir_expr_unary *)expr;
-    snprintf(buf, sizeof(buf) - 1, "label=\"unary,op=%d\"", unary->op);
+    snprintf(buf, sizeof(buf) - 1, "label=\"%s\"",
+             ir_expr_unary_ttstr(unary->op));
     break;
   }
   case IR_EXPR_BINARY: {
     ir_expr_binary *binary = (ir_expr_binary *)expr;
-    snprintf(buf, sizeof(buf) - 1, "label=\"binary,op=%d\"", binary->op);
+    snprintf(buf, sizeof(buf) - 1, "label=\"%s\"",
+             ir_expr_binary_ttstr(binary->op));
     break;
   }
   case IR_EXPR_LITERAL: {
     ir_expr_lit *lit = (ir_expr_lit *)expr;
-    snprintf(buf, sizeof(buf) - 1, "label=\"lit,type=%d\"", lit->lit->type);
+    snprintf(buf, sizeof(buf) - 1, "label=\"%s\"", ir_ttstr(lit->lit->type));
     break;
   }
   case IR_EXPR_IDENTIFIER: {
     ir_expr_id *id = (ir_expr_id *)expr;
-    snprintf(buf, sizeof(buf) - 1, "label=\"lit,name=%s\"", id->id->name);
+    snprintf(buf, sizeof(buf) - 1, "label=\"%s\"", id->id->name);
     break;
   }
   case IR_EXPR_CALL: {
     ir_expr_call *call = (ir_expr_call *)expr;
     UNUSED(call);
-    snprintf(buf, sizeof(buf) - 1, "label=\"call\"");
+    snprintf(buf, sizeof(buf) - 1, "label=\"CALL\"");
     break;
   }
   case IR_EXPR_INDEX: {
     ir_expr_index *index = (ir_expr_index *)expr;
     UNUSED(index);
-    snprintf(buf, sizeof(buf) - 1, "label=\"index\"");
+    snprintf(buf, sizeof(buf) - 1, "label=\"INDEX\"");
     break;
   }
   default:
@@ -392,9 +394,10 @@ static void cfg_link(struct dot_ctx_cfg *cfg, string_buffer *buffer) {
                edge->color, edge->id_from, edge->id_to, escaped_label);
       free(escaped_label);
     } else {
-      snprintf(buf, sizeof(buf) - 1,
-               "[color=%s,ltail=cluster_%zu,lhead=cluster_%zu];\n", edge->color,
-               edge->id_from, edge->id_to);
+      snprintf(
+          buf, sizeof(buf) - 1,
+          "[color=%s,ltail=cluster_%zu,lhead=cluster_%zu,labelfloat=true];\n",
+          edge->color, edge->id_from, edge->id_to);
     }
 
     string_buffer_append(buffer, buf);
@@ -413,7 +416,7 @@ dot_string *dot_ir_cfg(const ir_ctx *ctx, const ir_subroutine *sub,
   string_buffer_append(
       buffer, "strict digraph G {\n"
               "compound=true;\n"
-              "graph [pad=\"0\",nodesep=\"1\",ranksep=\"1\",splines=true];\n"
+              "graph [pad=\"0\",nodesep=\"1\",ranksep=\"0.75\",splines=true];\n"
               "node [shape=rect, style=filled];\n"
               "\n");
 
