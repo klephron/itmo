@@ -85,7 +85,9 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret) {
 void ir_subroutine_free(ir_subroutine *self) {
   if (self) {
     signature_free(self->signature);
-    free(self->file_name);
+    if (self->file_name) {
+      free(self->file_name);
+    }
     ir_block_graph_free(self->cfg);
     hashset_free(self->vars);
     free(self);
@@ -96,7 +98,7 @@ ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
                                  void *blocks, p_hashset vars) {
   ir_subroutine *self = MALLOC(ir_subroutine);
   self->signature = signature;
-  self->file_name = strdup((char *)file_name);
+  self->file_name = file_name ? strdup((char *)file_name) : NULL;
   self->cfg = blocks;
   self->vars = vars;
   return self;
@@ -137,21 +139,24 @@ int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv) {
     cmp |= IR_SUBROUTINE_CMP_RET;
   }
 
-  int lsv_pc = list_size(lsv_s->params);
-  int rsv_pc = list_size(rsv_s->params);
+  // don't check params if NULL
+  if (lsv_s->params && rsv_s->params) {
+    int lsv_pc = list_size(lsv_s->params);
+    int rsv_pc = list_size(rsv_s->params);
 
-  if (lsv_pc != rsv_pc) {
-    cmp |= IR_SUBROUTINE_CMP_PARAMS;
-  } else {
-    for (list_it lpi = lsv_s->params->head, rpi = rsv_s->params->head; lpi;
-         lpi = lpi->next, rpi = rpi->next) {
+    if (lsv_pc != rsv_pc) {
+      cmp |= IR_SUBROUTINE_CMP_PARAMS;
+    } else {
+      for (list_it lpi = lsv_s->params->head, rpi = rsv_s->params->head; lpi;
+           lpi = lpi->next, rpi = rpi->next) {
 
-      ir_var *lp = lpi->data;
-      ir_var *rp = rpi->data;
+        ir_var *lp = lpi->data;
+        ir_var *rp = rpi->data;
 
-      if (!ir_t_equals(lp->type, rp->type)) {
-        cmp |= IR_SUBROUTINE_CMP_PARAMS;
-        break;
+        if (!ir_t_equals(lp->type, rp->type)) {
+          cmp |= IR_SUBROUTINE_CMP_PARAMS;
+          break;
+        }
       }
     }
   }

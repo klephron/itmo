@@ -5,6 +5,7 @@
 #include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
+#include "util/log.h"
 #include "util/macro.h"
 
 #include "dot_ast.h"
@@ -238,7 +239,7 @@ int execute(struct args_struct *args) {
     }
   }
 
-  // stage: cfg and cg dots
+  // stage: build cfg for each function
   if (!error || args->ignore_errors) {
     for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
          it.next(&it)) {
@@ -251,14 +252,32 @@ int execute(struct args_struct *args) {
       write_dot(args, dot_cfg, output_cfg);
       free(output_cfg);
       dot_string_free(dot_cfg);
+    }
+  }
 
-      if (has_subroutine(args, sub_name)) {
-        dot_string *dot_cg = dot_ir_cg(ir, sub);
-        char       *output_cg = get_cg_dot_output(args, source, sub_name);
+  // stage: build cg for selected functions
+  if (!error || args->ignore_errors) {
+    for (list_it it = args->subroutines->head; it; it = it->next) {
+      const char *sub_name = it->data;
+
+      ir_subroutine *sub_args = ir_subroutine_new(
+          NULL, ir_signature_new(ir_term_id_new(sub_name), NULL, NULL), NULL,
+          NULL);
+
+      hashset_it it = hashset_find(ir->subroutines, sub_args);
+
+      if (!it.end(&it)) {
+        ir_subroutine *sub = it.get(&it);
+        dot_string    *dot_cg = dot_ir_cg(ir, sub);
+        char *output_cg = get_cg_dot_output(args, sub->file_name, ir_subroutine_name(sub));
         write_dot(args, dot_cg, output_cg);
         free(output_cg);
         dot_string_free(dot_cg);
+      } else {
+        info("function %s is not found", sub_name);
       }
+
+      ir_subroutine_free(sub_args);
     }
   }
 

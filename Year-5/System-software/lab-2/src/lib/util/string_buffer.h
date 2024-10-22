@@ -19,3 +19,4 @@ void           string_buffer_free(string_buffer *self);
 void           string_buffer_append(string_buffer *self, const char *data);
 char          *string_buffer_data(string_buffer *self);
 char          *string_buffer_detach(string_buffer *self);
+size_t         string_buffer_size(string_buffer *self);

@@ -31,7 +31,7 @@ string_buffer *string_buffer_new(int capacity, double growth_factor) {
 
 static void string_buffer_resize(string_buffer *self) {
   size_t new_capacity = self->capacity * self->growth_factor;
-  size_t size = (((intptr_t)self->cur) - ((intptr_t)self->data));
+  size_t size = string_buffer_size(self);
 
   if (new_capacity < self->capacity) {
     error("string_buffer new_capacity is less than previous");
@@ -44,7 +44,7 @@ static void string_buffer_resize(string_buffer *self) {
 
 void string_buffer_append(string_buffer *self, const char *data) {
   size_t data_size = strlen(data) * sizeof(char);
-  size_t size = (((intptr_t)self->cur) - ((intptr_t)self->data));
+  size_t size = string_buffer_size(self);
 
   while (size + data_size >= self->capacity) {
     string_buffer_resize(self);
@@ -63,4 +63,8 @@ char *string_buffer_detach(string_buffer *self) {
     free(self);
   }
   return data;
+}
+
+size_t string_buffer_size(string_buffer *self) {
+  return (((intptr_t)self->cur) - ((intptr_t)self->data));
 }
