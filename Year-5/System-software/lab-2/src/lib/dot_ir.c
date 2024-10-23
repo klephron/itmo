@@ -68,7 +68,7 @@ static void dot_block_free(struct dot_block *self) {
   free(self);
 }
 
-static struct dot_block *dot_block_new(ir_block_base *ptr, size_t id) {
+static struct dot_block *dot_block_new(const ir_block_base *ptr, size_t id) {
   struct dot_block *self = MALLOC(struct dot_block);
   self->ptr = ptr;
   self->id = id;
@@ -507,28 +507,151 @@ static void ctx_cg_free(struct dot_ctx_cg *self) {
   free(self);
 }
 
-// TODO: implement
-static void cg_traverse_exprs(struct dot_block *dbl, string_buffer *buffer,
-                              const ir_ctx *ctx, const ir_expr_base *expr) {}
+static size_t cg_traverse(struct dot_ctx_cg *ctx_cg, string_buffer *buffer,
+                          const ir_ctx *ctx, const ir_subroutine *sub);
 
-// TODO: implement
-static void cg_traverse_blocks(struct dot_subroutine *dsub,
-                               string_buffer *buffer, const ir_ctx *ctx,
-                               const ir_block_base *root) {
-  if (!root) {
+static void cg_traverse_expr(struct dot_ctx_cg     *ctx_cg,
+                             struct dot_subroutine *dsub, string_buffer *buffer,
+                             const ir_ctx *ctx, const ir_expr_base *expr) {
+  if (!expr) {
     return;
+  }
+
+  switch (expr->kind) {
+  case IR_EXPR_UNARY: {
+    ir_expr_unary *unary = (ir_expr_unary *)expr;
+    cg_traverse_expr(ctx_cg, dsub, buffer, ctx, unary->first);
+    break;
+  }
+  case IR_EXPR_BINARY: {
+    ir_expr_binary *binary = (ir_expr_binary *)expr;
+    cg_traverse_expr(ctx_cg, dsub, buffer, ctx, binary->first);
+    cg_traverse_expr(ctx_cg, dsub, buffer, ctx, binary->second);
+    break;
+  }
+  case IR_EXPR_LITERAL: {
+    ir_expr_lit *lit = (ir_expr_lit *)expr;
+    UNUSED(lit);
+    break;
+  }
+  case IR_EXPR_IDENTIFIER: {
+    ir_expr_id *id = (ir_expr_id *)expr;
+    UNUSED(id);
+    break;
+  }
+  case IR_EXPR_CALL: {
+    ir_expr_call *call = (ir_expr_call *)expr;
+
+    ir_expr_base *sub = call->callee;
+    if (sub->kind != IR_EXPR_UNARY) {
+      info("expression kind is not unary");
+      break;
+    }
+
+    ir_expr_unary *sub_un = (ir_expr_unary *)sub;
+    if (sub_un->op != IR_EXPR_UNARY_LOAD) {
+      info("expression op is not load");
+      break;
+    }
+
+    ir_expr_base *sub_base = sub_un->first;
+    if (sub_base->kind != IR_EXPR_IDENTIFIER) {
+      error("expression under load is not identifier");
+      break;
+    }
+
+    ir_expr_id *sub_id = (ir_expr_id *)sub_base;
+
+    ir_subroutine *sub_new = ir_subroutine_new(
+        NULL, ir_signature_new(ir_term_id_new(sub_id->id->name), NULL, NULL),
+        NULL, NULL);
+
+    hashset_it it = hashset_find(ctx->subroutines, sub_new);
+    ir_subroutine_free(sub_new);
+
+    if (it.end(&it)) {
+      debug("subroutine %s doesn't exist", sub_id->id->name);
+      break;
+    }
+
+    ir_subroutine *sub_ctx = it.get(&it);
+    size_t         child = cg_traverse(ctx_cg, buffer, ctx, sub_ctx);
+
+    if (child) {
+      list_push_back(ctx_cg->subroutine_edges,
+                     dot_subroutine_edge_new(dsub->id, child));
+    }
+  }
+  case IR_EXPR_INDEX: {
+    ir_expr_index *index = (ir_expr_index *)expr;
+    cg_traverse_expr(ctx_cg, dsub, buffer, ctx, index->indexed);
+    for (list_it it = index->args->head; it; it = it->next) {
+      ir_expr_base *arg = it->data;
+      cg_traverse_expr(ctx_cg, dsub, buffer, ctx, arg);
+    }
+    break;
+  }
+  default:
+    error("unknown expression kind");
   }
 }
 
-static size_t cg_traverse(struct dot_ctx_cg *cg, string_buffer *buffer,
+static void cg_traverse_block(struct dot_ctx_cg     *ctx_cg,
+                              struct dot_subroutine *dsub,
+                              string_buffer *buffer, const ir_ctx *ctx,
+                              const ir_block_base *root) {
+  if (!root) {
+    return;
+  }
+
+  hashset_it it = hashset_find(dsub->blocks, &(struct dot_block){.ptr = root});
+
+  if (!it.end(&it)) {
+    return;
+  }
+
+  // searches by ptr
+  struct dot_block *dbl = dot_block_new(root, 0);
+  hashset_insert(dsub->blocks, dbl);
+
+  // traverse current block
+  switch (root->kind) {
+  case IR_BLOCK_NEXT: {
+    cg_traverse_expr(ctx_cg, dsub, buffer, ctx, ((ir_block_next *)root)->expr);
+    break;
+  }
+  case IR_BLOCK_COND: {
+    cg_traverse_expr(ctx_cg, dsub, buffer, ctx, ((ir_block_cond *)root)->cond);
+    break;
+  }
+  default:
+    error("unknown expression type");
+  }
+
+  // traverse other blocks
+  switch (root->kind) {
+  case IR_BLOCK_NEXT:
+    cg_traverse_block(ctx_cg, dsub, buffer, ctx, ((ir_block_next *)root)->next);
+    break;
+  case IR_BLOCK_COND:
+    cg_traverse_block(ctx_cg, dsub, buffer, ctx, ((ir_block_cond *)root)->jz);
+    cg_traverse_block(ctx_cg, dsub, buffer, ctx, ((ir_block_cond *)root)->je);
+    break;
+  default:
+    error("unknown block type %d", root->kind);
+  }
+}
+
+static size_t cg_traverse(struct dot_ctx_cg *ctx_cg, string_buffer *buffer,
                           const ir_ctx *ctx, const ir_subroutine *sub) {
   char buf[64];
   if (!sub) {
     return 0;
   }
 
-  hashset_it it = hashset_find(
-      cg->subroutines, &(struct dot_subroutine){.ptr = (ir_subroutine *)sub});
+  hashset_it it =
+      hashset_find(ctx_cg->subroutines,
+                   &(struct dot_subroutine){.ptr = (ir_subroutine *)sub});
 
   if (!it.end(&it)) {
     return ((struct dot_subroutine *)it.get(&it))->id;
@@ -536,23 +659,24 @@ static size_t cg_traverse(struct dot_ctx_cg *cg, string_buffer *buffer,
 
   struct dot_subroutine *dsub;
   {
-    size_t sub_id = ++cg->cnt;
+    size_t sub_id = ++ctx_cg->cnt;
     dsub = dot_subroutine_new(sub, sub_id);
   }
 
-  hashset_insert(cg->subroutines, dsub);
+  hashset_insert(ctx_cg->subroutines, dsub);
 
-  snprintf(buf, sizeof(buf) - 1, "subroutine_%zu;\n", dsub->id);
+  snprintf(buf, sizeof(buf) - 1, "subroutine_%zu[label=%s];\n", dsub->id,
+           ir_subroutine_name(sub));
   string_buffer_append(buffer, buf);
 
   // find function calls in blocks
-  cg_traverse_blocks(dsub, buffer, ctx, sub->cfg);
+  cg_traverse_block(ctx_cg, dsub, buffer, ctx, sub->cfg);
 
   return dsub->id;
 }
 
 static void cg_link(struct dot_ctx_cg *cg, string_buffer *buffer) {
-  char buf[256];
+  char buf[64];
   for (list_it it = cg->subroutine_edges->head; it; it = it->next) {
     struct dot_subroutine_edge *edge = it->data;
     snprintf(buf, sizeof(buf) - 1, "subroutine_%zu -> subroutine_%zu;\n",

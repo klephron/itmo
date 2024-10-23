@@ -17,7 +17,6 @@ void ir_block_cond_free(ir_block_cond *self) {
     ir_block_free(self->jz);
     ir_expr_free(self->cond);
     free(self);
-    debug("freed cond block");
   }
 }
 
@@ -27,7 +26,6 @@ void ir_block_next_free(ir_block_next *self) {
     ir_block_free(self->next);
     ir_expr_free(self->expr);
     free(self);
-    debug("freed next block");
   }
 }
 
@@ -99,12 +97,10 @@ static void ir_block_graph_to_tree(ir_block_base *_root) {
 }
 
 void ir_block_graph_free(ir_block_base *root) {
-  debug("beginning free block graph");
   if (root) {
     ir_block_graph_to_tree(root);
   }
   ir_block_free(root);
-  debug("freed block graph");
 }
 
 void ir_block_set_next(ir_block_base *self, ir_block_base *next) {
