@@ -74,3 +74,26 @@ void ir_term_free(struct ir_term_base *generic) {
     return ir_term_base_free(generic);
   }
 }
+
+ir_term_base *ir_term_copy(struct ir_term_base *generic) {
+  if (!generic) {
+    return NULL;
+  }
+  switch (generic->kind) {
+  case IR_TERM_LITERAL: {
+    ir_term_lit  *lit = (ir_term_lit *)generic;
+    ir_term_lit_v v = lit->u;
+    if (lit->type == IR_T_STRING && v.v_str) {
+      v.v_str = strdup(v.v_str);
+    }
+    return (ir_term_base *)ir_term_lit_new(lit->type, v);
+  }
+  case IR_TERM_IDENTIFIER: {
+    ir_term_id *id = (ir_term_id *)generic;
+    return (ir_term_base *)ir_term_id_new(id->name);
+  }
+  default:
+    error("unknown term type to copy");
+    return NULL;
+  }
+}

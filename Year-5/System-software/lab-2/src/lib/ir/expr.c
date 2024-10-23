@@ -226,3 +226,53 @@ const char *ir_expr_binary_ttstr(ir_expr_binary_enum type) {
     return "UNKNOWN";
   }
 }
+
+ir_expr_base *ir_expr_copy(ir_expr_base *generic) {
+  if (!generic) {
+    return NULL;
+  }
+  switch (generic->kind) {
+  case IR_EXPR_UNARY: {
+    ir_expr_unary *unary = (ir_expr_unary *)generic;
+    return (ir_expr_base *)ir_expr_unary_new(ir_expr_copy(unary->first),
+                                             unary->op);
+  }
+  case IR_EXPR_BINARY: {
+    ir_expr_binary *binary = (ir_expr_binary *)generic;
+    return (ir_expr_base *)ir_expr_binary_new(
+        ir_expr_copy(binary->first), ir_expr_copy(binary->second), binary->op);
+  }
+  case IR_EXPR_LITERAL: {
+    ir_expr_lit *lit = (ir_expr_lit *)generic;
+    return (ir_expr_base *)ir_expr_lit_new(
+        (ir_term_lit *)ir_term_copy((ir_term_base *)lit->lit));
+  }
+  case IR_EXPR_IDENTIFIER: {
+    ir_expr_id *id = (ir_expr_id *)generic;
+    return (ir_expr_base *)ir_expr_id_new(
+        (ir_term_id *)ir_term_copy((ir_term_base *)id->id));
+  }
+  case IR_EXPR_CALL: {
+    ir_expr_call *call = (ir_expr_call *)generic;
+    p_list        args =
+        list_new(call->args->f_cmp, call->args->f_new, call->args->f_delete);
+    for (list_it it = call->args->head; it; it = it->next) {
+      list_push_back(args, ir_expr_copy(it->data));
+    }
+    return (ir_expr_base *)ir_expr_call_new(ir_expr_copy(call->callee), args);
+  }
+  case IR_EXPR_INDEX: {
+    ir_expr_index *index = (ir_expr_index *)generic;
+    p_list         args =
+        list_new(index->args->f_cmp, index->args->f_new, index->args->f_delete);
+    for (list_it it = index->args->head; it; it = it->next) {
+      list_push_back(args, ir_expr_copy(it->data));
+    }
+    return (ir_expr_base *)ir_expr_index_new(ir_expr_copy(index->indexed),
+                                             args);
+  }
+  default:
+    error("unknown expr to copy");
+    return NULL;
+  }
+}

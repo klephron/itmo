@@ -99,8 +99,6 @@ typedef struct ir_expr_id        ir_expr_id;
 typedef struct ir_expr_call      ir_expr_call;
 typedef struct ir_expr_index     ir_expr_index;
 
-void ir_expr_free(ir_expr_base *generic);
-
 ir_expr_unary  *ir_expr_unary_new(ir_expr_base           *first,
                                   enum ir_expr_unary_enum op);
 ir_expr_binary *ir_expr_binary_new(ir_expr_base *first, ir_expr_base *second,
@@ -114,3 +112,6 @@ p_list ir_expr_list_new();
 
 const char *ir_expr_unary_ttstr(ir_expr_unary_enum type);
 const char *ir_expr_binary_ttstr(ir_expr_binary_enum type);
+
+void          ir_expr_free(ir_expr_base *generic);
+ir_expr_base *ir_expr_copy(ir_expr_base *generic);

@@ -240,7 +240,7 @@ ir_expr_base *ir_pass2_expr_unary_new(ir_pass2 *self, ir_expr_base *first,
           (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
           IR_EXPR_BINARY_SUB);
     }
-    return (ir_expr_base *)ir_expr_binary_new(first, second,
+    return (ir_expr_base *)ir_expr_binary_new(ir_expr_copy(first), second,
                                               IR_EXPR_BINARY_ASSIGN);
   }
   case IR_EXPR_UNKNOWN:

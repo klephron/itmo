@@ -39,4 +39,5 @@ void        ir_term_id_free(ir_term_id *self);
 ir_term_id *ir_term_id_new(const char *);
 int         ir_term_id_equals(const ir_term_id *lsv, const ir_term_id *rsv);
 
-void ir_term_free(struct ir_term_base *generic);
+void          ir_term_free(struct ir_term_base *generic);
+ir_term_base *ir_term_copy(struct ir_term_base *generic);
