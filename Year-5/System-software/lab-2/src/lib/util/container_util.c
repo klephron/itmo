@@ -80,4 +80,7 @@ size_t container_hash_chars_chars(const void *_data) {
   return container_hash_chars(data->key);
 }
 
-size_t container_hash_ptr(const void *_data) { return (intptr_t)_data; }
+size_t container_hash_ptr(const void *_data) {
+  uintptr_t ad = (uintptr_t)_data;
+  return (size_t)((13 * ad) ^ (ad >> 15));
+}

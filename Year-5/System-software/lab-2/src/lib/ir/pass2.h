@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ir/expr.h"
-#include "ir/function.h"
 #include "ir/pass.h"
 #include "ir/scope.h"
+#include "ir/subroutine.h"
 #include "ir/terminal.h"
 
 struct ir_pass2 {

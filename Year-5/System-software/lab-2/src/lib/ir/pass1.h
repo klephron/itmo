@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ir/ctx.h"
-#include "ir/function.h"
 #include "ir/pass.h"
+#include "ir/subroutine.h"
 
 struct ir_pass1 {
   struct ir_pass_base base;

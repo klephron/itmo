@@ -1,4 +1,4 @@
-#include "ir/function.h"
+#include "ir/subroutine.h"
 
 #include "ir/terminal.h"
 #include "util/container_util.h"

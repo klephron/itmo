@@ -51,12 +51,30 @@ void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx, const char *file_name) {
   self->base.kind = IR_PASS_2;
   self->ctx = ctx;
   self->file_name = file_name;
+
   self->scope_stack = ir_scope_stack_new();
+  ir_scope *global = ir_scope_new(IR_SCOPE_GLOBAL, NULL, NULL, NULL);
+  ir_scope_stack_push(self->scope_stack, global);
+  // insert subroutines in global scope
+  for (hashset_it it = hashset_begin(ctx->subroutines); !it.end(&it);
+       it.next(&it)) {
+    ir_subroutine *sub = it.get(&it);
+    ir_scope_symbol_add_sub(global, sub);
+  }
+
   self->break_stack = NULL;
   self->cfg = NULL;
 }
 
-void ir_pass2_deinit(ir_pass2 *self) { ir_scope_stack_free(self->scope_stack); }
+void ir_pass2_deinit(ir_pass2 *self) {
+  ir_scope *scope = ir_scope_stack_pop(self->scope_stack);
+  if (scope->type != IR_SCOPE_GLOBAL) {
+    error("expected global scope when deiniting");
+  }
+  ir_scope_free(scope);
+
+  ir_scope_stack_free(self->scope_stack);
+}
 
 ir_term_lit *ir_pass2_str(ir_pass2 *self, const char *str) {
   debug("pass2 creating str %s", str);
@@ -462,8 +480,18 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
   }
 
   if (ok) {
+    ir_scope *scope = ir_scope_stack_top(self->scope_stack);
+
+    if (scope->type != IR_SCOPE_GLOBAL) {
+      error("expected global scope to replace symbol %s",
+            ir_subroutine_name(sub));
+    } else {
+      ir_scope_symbol_add_sub(scope, sub);
+    }
+
     hashset_replace(ctx->subroutines, it, sub);
     debug("replaced subroutine %s", ir_subroutine_name(sub));
+
   } else {
     ir_subroutine_free(sub);
   }
@@ -493,7 +521,7 @@ void ir_pass2_body_before(ir_pass2 *self) {
   ir_block_base *end = (ir_block_base *)ir_block_next_new(NULL, NULL);
   ir_block_base *cur = begin;
 
-  ir_scope *scope = ir_scope_new(IR_SCOPE_FUNCTION, begin, end, cur);
+  ir_scope *scope = ir_scope_new(IR_SCOPE_SUBROUTINE, begin, end, cur);
 
   ir_scope_stack_push(self->scope_stack, scope);
   // debug("scope body pushed");
