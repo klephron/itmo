@@ -29,9 +29,9 @@ enum exception_subtype_tree {
 
 enum exception_subtype_ir {
   EXCEPTION_IR_UNKNOWN,
-  EXCEPTION_IR_FUNCTION_REDEFINITION,
-  EXCEPTION_IR_FUNCTION_OVERLOADING,
-  EXCEPTION_IR_FUNCTION_PARAMETER_DUPLICATION,
+  EXCEPTION_IR_SUBROUTINE_REDEFINITION,
+  EXCEPTION_IR_SUBROUTINE_OVERLOADING,
+  EXCEPTION_IR_SUBROUTINE_PARAMETER_DUPLICATION,
   EXCEPTION_IR_CHAR_VALIDATION,
   EXCEPTION_IR_HEX_VALIDATION,
   EXCEPTION_IR_BITS_VALIDATION,
@@ -40,6 +40,7 @@ enum exception_subtype_ir {
   EXCEPTION_IR_RVALUE_ASSIGNMENT,
   EXCEPTION_IR_NULL,
   EXCEPTION_IR_SYMBOL_REDEFINITION,
+  EXCEPTION_IR_SYMBOL_UNDEFINED,
 };
 
 struct exception {
@@ -82,3 +83,5 @@ char *exception_to_chars(const struct exception *exc);
 struct exception *
 exception_new_from_helper(const struct exception_helper *helper, char *format,
                           ...);
+
+const char *exception_subtype_ir_str(enum exception_subtype_ir ir);

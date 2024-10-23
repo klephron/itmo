@@ -306,3 +306,35 @@ exception_new_from_helper(const struct exception_helper *helper, char *format,
   va_end(args);
   return exc;
 }
+
+const char *exception_subtype_ir_str(enum exception_subtype_ir type) {
+  switch (type) {
+  case EXCEPTION_IR_SUBROUTINE_REDEFINITION:
+    return "subroutine redefinition";
+  case EXCEPTION_IR_SUBROUTINE_OVERLOADING:
+    return "subroutine overloading";
+  case EXCEPTION_IR_SUBROUTINE_PARAMETER_DUPLICATION:
+    return "subroutine parameter duplication";
+  case EXCEPTION_IR_CHAR_VALIDATION:
+    return "char validation";
+  case EXCEPTION_IR_HEX_VALIDATION:
+    return "hex validation";
+  case EXCEPTION_IR_BITS_VALIDATION:
+    return "bits validation";
+  case EXCEPTION_IR_DEC_VALIDATION:
+    return "dec validation";
+  case EXCEPTION_IR_BOOL_VALIDATION:
+    return "bool validation";
+  case EXCEPTION_IR_RVALUE_ASSIGNMENT:
+    return "rvalue assignment";
+  case EXCEPTION_IR_NULL:
+    return "null";
+  case EXCEPTION_IR_SYMBOL_REDEFINITION:
+    return "symbol redefinition";
+  case EXCEPTION_IR_SYMBOL_UNDEFINED:
+    return "symbol undefined";
+  case EXCEPTION_IR_UNKNOWN:
+  default:
+    return "unknown";
+  }
+}

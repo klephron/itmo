@@ -89,8 +89,9 @@ ir_term_lit *ir_pass2_rune(ir_pass2 *self, const char *str) {
   debug("pass2 creating rune %s", str);
   // NOTE: checked by lexer
   if (strlen(str) != 3 && str[0] != '\'' && str[2] != '\'') {
-    exception *ex = exception_new_f(EXCEPTION_IR, EXCEPTION_IR_CHAR_VALIDATION,
-                                    self->file_name, 0, 0, "char validation",
+    const int  subtype = EXCEPTION_IR_CHAR_VALIDATION;
+    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                    0, exception_subtype_ir_str(subtype),
                                     "char %s not valid", str);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
@@ -109,9 +110,10 @@ ir_term_lit *ir_pass2_hex(ir_pass2 *self, const char *str) {
   u.v_int = ir_pass2_integer(str + 2, 16, &errstr);
 
   if (errstr) {
+    const int  subtype = EXCEPTION_IR_HEX_VALIDATION;
     exception *ex =
-        exception_new_f(EXCEPTION_IR, EXCEPTION_IR_HEX_VALIDATION,
-                        self->file_name, 0, 0, "hex validation", errstr);
+        exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0, 0,
+                        exception_subtype_ir_str(subtype), errstr);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
@@ -131,9 +133,10 @@ ir_term_lit *ir_pass2_bits(ir_pass2 *self, const char *str) {
   u.v_int = ir_pass2_integer(str + 2, 2, &errstr);
 
   if (errstr) {
+    const int  subtype = EXCEPTION_IR_BITS_VALIDATION;
     exception *ex =
-        exception_new_f(EXCEPTION_IR, EXCEPTION_IR_BITS_VALIDATION,
-                        self->file_name, 0, 0, "bits validation", errstr);
+        exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0, 0,
+                        exception_subtype_ir_str(subtype), errstr);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
@@ -153,9 +156,10 @@ ir_term_lit *ir_pass2_dec(ir_pass2 *self, const char *str) {
   u.v_int = ir_pass2_integer(str, 10, &errstr);
 
   if (errstr) {
+    const int  subtype = EXCEPTION_IR_DEC_VALIDATION;
     exception *ex =
-        exception_new_f(EXCEPTION_IR, EXCEPTION_IR_DEC_VALIDATION,
-                        self->file_name, 0, 0, "dec validation", errstr);
+        exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0, 0,
+                        exception_subtype_ir_str(subtype), errstr);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
@@ -177,8 +181,9 @@ ir_term_lit *ir_pass2_bool(ir_pass2 *self, const char *str) {
   } else if (!strcmp("false", str)) {
     u.v_bool = 0;
   } else {
-    exception *ex = exception_new_f(EXCEPTION_IR, EXCEPTION_IR_BOOL_VALIDATION,
-                                    self->file_name, 0, 0, "bool validation",
+    const int  subtype = EXCEPTION_IR_BOOL_VALIDATION;
+    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                    0, exception_subtype_ir_str(subtype),
                                     "%s is invalid", str);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
@@ -197,6 +202,13 @@ ir_term_id *ir_pass2_term_id_new(ir_pass2 *self, const char *id) {
 // TODO: types
 ir_expr_base *ir_pass2_expr_id_new(ir_pass2 *self, const ir_term_id *id) {
   UNUSED(self);
+  if (!ir_scope_stack_find_symbol(self->scope_stack, id)) {
+    const int  subtype = EXCEPTION_IR_SYMBOL_UNDEFINED;
+    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                    0, exception_subtype_ir_str(subtype),
+                                    "symbol %s is undefined", id->name);
+    ir_ctx_add_exception(self->ctx, ex);
+  }
   return (ir_expr_base *)ir_expr_id_new(id);
 }
 
@@ -229,16 +241,18 @@ ir_expr_base *ir_pass2_expr_unary_new(ir_pass2 *self, ir_expr_base *first,
   case IR_EXPR_UNARY_DEC:
   case IR_EXPR_UNARY_INC: {
     if (!first) {
-      exception *ex =
-          exception_new_f(EXCEPTION_IR, EXCEPTION_IR_NULL, self->file_name, 0,
-                          0, "null expression", "unary expression is <null>");
+      const int  subtype = EXCEPTION_IR_NULL;
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                      0, exception_subtype_ir_str(subtype),
+                                      "unary expression is <null>");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
     if (first->kind != IR_EXPR_IDENTIFIER) {
-      exception *ex = exception_new_f(
-          EXCEPTION_IR, EXCEPTION_IR_RVALUE_ASSIGNMENT, self->file_name, 0, 0,
-          "rvalue assignment", "cannot assign to rvalue");
+      const int  subtype = EXCEPTION_IR_NULL;
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                      0, exception_subtype_ir_str(subtype),
+                                      "cannot assign to rvalue");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
@@ -290,16 +304,18 @@ ir_expr_base *ir_pass2_expr_binary_new(ir_pass2 *self, ir_expr_base *first,
     goto error;
   case IR_EXPR_BINARY_ASSIGN: {
     if (!first) {
-      exception *ex =
-          exception_new_f(EXCEPTION_IR, EXCEPTION_IR_NULL, self->file_name, 0,
-                          0, "null expression", "assigning value to <null>");
+      const int  subtype = EXCEPTION_IR_NULL;
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                      0, exception_subtype_ir_str(subtype),
+                                      "assigning value to <null>");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
     if (first->kind != IR_EXPR_IDENTIFIER) {
-      exception *ex = exception_new_f(
-          EXCEPTION_IR, EXCEPTION_IR_RVALUE_ASSIGNMENT, self->file_name, 0, 0,
-          "rvalue assignment", "cannot assign to rvalue");
+      const int  subtype = EXCEPTION_IR_RVALUE_ASSIGNMENT;
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                      0, exception_subtype_ir_str(subtype),
+                                      "cannot assign to rvalue");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
@@ -468,10 +484,11 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
 
     if (lsv_status == IR_SUBROUTINE_STATUS_DEFINITION &&
         sub_status == IR_SUBROUTINE_STATUS_DEFINITION) {
-      exception *ex = exception_new_f(
-          EXCEPTION_IR, EXCEPTION_IR_FUNCTION_REDEFINITION, sub->file_name, 0,
-          0, "function redefinition", "previous definition in %s %d:%d",
-          lsv->file_name, 0, 0);
+      const int  subtype = EXCEPTION_IR_SUBROUTINE_REDEFINITION;
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, sub->file_name, 0,
+                                      0, exception_subtype_ir_str(subtype),
+                                      "previous definition in %s %d:%d",
+                                      lsv->file_name, 0, 0);
       ir_ctx_add_exception(ctx, ex);
       ok = 0;
     }
@@ -530,9 +547,10 @@ void ir_pass2_body_before(ir_pass2 *self, ir_signature *sign, p_list vars) {
     ir_term_id *k = ir_scope_symbol_k_var(param);
 
     if (ir_scope_stack_find_symbol(self->scope_stack, k)) {
-      exception *ex = exception_new_f(
-          EXCEPTION_IR, EXCEPTION_IR_SYMBOL_REDEFINITION, self->file_name, 0, 0,
-          "symbol redefinition", "symbol param %s is duplicated", k->name);
+      const int  subtype = EXCEPTION_IR_SYMBOL_REDEFINITION;
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                      0, exception_subtype_ir_str(subtype),
+                                      "symbol param %s is duplicated", k->name);
       ir_ctx_add_exception(self->ctx, ex);
     } else {
       ir_scope_symbol_add_var(scope, param);
@@ -543,9 +561,10 @@ void ir_pass2_body_before(ir_pass2 *self, ir_signature *sign, p_list vars) {
     ir_term_id *k = ir_scope_symbol_k_var(var);
 
     if (ir_scope_stack_find_symbol(self->scope_stack, k)) {
-      exception *ex = exception_new_f(
-          EXCEPTION_IR, EXCEPTION_IR_SYMBOL_REDEFINITION, self->file_name, 0, 0,
-          "symbol redefinition", "symbol arg %s is duplicated", k->name);
+      const int  subtype = EXCEPTION_IR_SYMBOL_REDEFINITION;
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
+                                      0, exception_subtype_ir_str(subtype),
+                                      "symbol arg %s is duplicated", k->name);
       ir_ctx_add_exception(self->ctx, ex);
     } else {
       ir_scope_symbol_add_var(scope, var);

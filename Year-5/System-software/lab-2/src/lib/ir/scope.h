@@ -34,7 +34,7 @@ struct ir_scope_symbol_var {
 };
 
 struct ir_scope_symbol_kv {
-  ir_term_id                  *k;
+  const ir_term_id            *k;
   struct ir_scope_symbol_base *v;
 };
 
@@ -82,7 +82,8 @@ ir_term_id *ir_scope_symbol_k_var(ir_var *var);
 void ir_scope_symbol_add(ir_scope *scope, ir_scope_symbol_kv *kv);
 void ir_scope_symbol_add_sub(ir_scope *scope, ir_subroutine *sub);
 void ir_scope_symbol_add_var(ir_scope *scope, ir_var *var);
-ir_scope_symbol_base *ir_scope_symbol_find(ir_scope *scope, ir_term_id *id);
+ir_scope_symbol_base *ir_scope_symbol_find(ir_scope         *scope,
+                                           const ir_term_id *id);
 
 scope_stack ir_scope_stack_new();
 void        ir_scope_stack_free(scope_stack stack);
@@ -90,5 +91,5 @@ void        ir_scope_stack_push(scope_stack stack, ir_scope *scope);
 ir_scope   *ir_scope_stack_pop(scope_stack stack);
 ir_scope   *ir_scope_stack_top(scope_stack stack);
 
-ir_scope_symbol_base *ir_scope_stack_find_symbol(scope_stack stack,
-                                                 ir_term_id *id);
+ir_scope_symbol_base *ir_scope_stack_find_symbol(scope_stack       stack,
+                                                 const ir_term_id *id);

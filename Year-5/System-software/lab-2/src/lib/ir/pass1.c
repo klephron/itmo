@@ -86,11 +86,12 @@ static int ir_pass1_subroutine_validate(ir_pass1 *self, ir_subroutine *sub) {
   for (list_it it = params->head; it; it = it->next) {
     for (list_it it2 = it->next; it2; it2 = it2->next) {
       if (!ir_var_cmp(it->data, it2->data)) {
-        exception *ex = exception_new_f(
-            EXCEPTION_IR, EXCEPTION_IR_FUNCTION_PARAMETER_DUPLICATION,
-            sub->file_name, 0, 0, "function parameter duplication",
-            "function %s parameter %s is duplicated", ir_subroutine_name(sub),
-            ir_var_name(it->data));
+        const int  subtype = EXCEPTION_IR_SUBROUTINE_PARAMETER_DUPLICATION;
+        exception *ex =
+            exception_new_f(EXCEPTION_IR, subtype, sub->file_name, 0, 0,
+                            exception_subtype_ir_str(subtype),
+                            "function %s parameter %s is duplicated",
+                            ir_subroutine_name(sub), ir_var_name(it->data));
         ir_ctx_add_exception(self->ctx, ex);
         return 0;
       }
@@ -122,10 +123,12 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *sub) {
         hashset_insert(ctx->subroutines, sub);
         debug("replaced subroutine %s", ir_subroutine_name(sub));
       } else {
-        exception *ex = exception_new_f(
-            EXCEPTION_IR, EXCEPTION_IR_FUNCTION_OVERLOADING, sub->file_name, 0,
-            0, "function overloading", "previous definition of %s in %s:%d:%d",
-            ir_subroutine_name(sub), lsv->file_name, 0, 0);
+        const int  subtype = EXCEPTION_IR_SUBROUTINE_OVERLOADING;
+        exception *ex =
+            exception_new_f(EXCEPTION_IR, subtype, sub->file_name, 0, 0,
+                            exception_subtype_ir_str(subtype),
+                            "previous definition of %s in %s:%d:%d",
+                            ir_subroutine_name(sub), lsv->file_name, 0, 0);
         ir_ctx_add_exception(ctx, ex);
         ok = 0;
       }

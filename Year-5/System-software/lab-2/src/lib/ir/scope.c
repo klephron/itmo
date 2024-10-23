@@ -148,7 +148,8 @@ void ir_scope_symbol_add_var(ir_scope *scope, ir_var *var) {
   ir_scope_symbol_add(scope, kv);
 }
 
-ir_scope_symbol_base *ir_scope_symbol_find(ir_scope *scope, ir_term_id *id) {
+ir_scope_symbol_base *ir_scope_symbol_find(ir_scope         *scope,
+                                           const ir_term_id *id) {
   hashset_it it = hashset_find(scope->symbols, &(ir_scope_symbol_kv){.k = id});
   if (!it.end(&it)) {
     return ((ir_scope_symbol_kv *)it.get(&it))->v;
@@ -184,8 +185,8 @@ ir_scope *ir_scope_stack_top(scope_stack stack) {
   return list_front(stack.list);
 }
 
-ir_scope_symbol_base *ir_scope_stack_find_symbol(scope_stack stack,
-                                                 ir_term_id *id) {
+ir_scope_symbol_base *ir_scope_stack_find_symbol(scope_stack       stack,
+                                                 const ir_term_id *id) {
   ir_scope_symbol_base *sym = NULL;
   for (list_it it = stack.list->head; it; it = it->next) {
     sym = ir_scope_symbol_find(it->data, id);
