@@ -66,17 +66,17 @@ void   ir_pass2_id_add(ir_pass2 *self, p_list list, ir_term_id *id);
 
 p_list ir_pass2_var_new(ir_pass2 *self, p_list ids, ir_t_base *type);
 
-p_hashset ir_pass2_vars_new(ir_pass2 *self);
-int       ir_pass2_vars_add(ir_pass2 *self, p_hashset hashset, p_list vars);
+p_list ir_pass2_vars_new(ir_pass2 *self);
+int    ir_pass2_vars_add(ir_pass2 *self, p_list hashset, p_list vars);
 
 ir_subroutine *ir_pass2_subroutine_new(ir_pass2 *self, ir_signature *signature,
-                                       p_hashset vars, ir_block_base *cfg);
+                                       p_list vars, ir_block_base *cfg);
 int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *subroutine);
 
 p_list ir_pass2_scope_list_new(ir_pass2 *self);
 void   ir_pass2_scope_add(ir_pass2 *self, p_list list, ir_scope *scope);
 
-void           ir_pass2_body_before(ir_pass2 *self);
+void ir_pass2_body_before(ir_pass2 *self, ir_signature *sign, p_list vars);
 ir_block_base *ir_pass2_body_build(ir_pass2 *self, ir_scope *child);
 
 void      ir_pass2_block_before(ir_pass2 *self);

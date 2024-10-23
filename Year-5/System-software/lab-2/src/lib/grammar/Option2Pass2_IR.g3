@@ -57,10 +57,10 @@ type_ref returns [ir_t_base *v]
 // FUNCTIONS
 func_def returns [ir_subroutine *v]
   @init {
-    p_hashset func_body_v = NULL;
+    p_list func_body_v = NULL;
     ir_block_base *func_body_cfg = NULL;
   }
-  : ^(FUNC func_signature (^(BODY func_body {
+  : ^(FUNC func_signature (^(BODY func_body[$func_signature.v] {
       func_body_v = $func_body.v;
       func_body_cfg = $func_body.cfg;
     }))? ) {
@@ -97,13 +97,13 @@ arg_def returns [ir_var *v]
     }
   ;
 
-func_body returns [p_hashset v, ir_block_base *cfg]
+func_body  [ir_signature *sign] returns [p_list v, ir_block_base *cfg]
   @init {
-    p_hashset vars = ir_pass2_vars_new(IR_PASS2_ANTLR3_USERP());
+    p_list vars = ir_pass2_vars_new(IR_PASS2_ANTLR3_USERP());
     ir_block_base *cfg = NULL;
-    ir_pass2_body_before(IR_PASS2_ANTLR3_USERP());
   }
-  : ^(VARS (func_body_var { ir_pass2_vars_add(IR_PASS2_ANTLR3_USERP(), vars, $func_body_var.v); })*)
+  : ^(VARS (func_body_var { ir_pass2_vars_add(IR_PASS2_ANTLR3_USERP(), vars, $func_body_var.v); })* )
+      { ir_pass2_body_before(IR_PASS2_ANTLR3_USERP(), sign, vars); }
       (st=statement_block { cfg = ir_pass2_body_build(IR_PASS2_ANTLR3_USERP(), $st.v); }) {
         $v = vars;
         $cfg = cfg;

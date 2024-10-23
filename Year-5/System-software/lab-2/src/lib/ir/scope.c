@@ -46,38 +46,11 @@ ir_scope *ir_scope_new(ir_scope_enum type, ir_block_base *begin,
   return self;
 }
 
-static void container_delete_scope(void *data) {
-  ir_scope *scope = data;
-  ir_scope_free(scope);
-}
-
-scope_stack ir_scope_stack_new() {
-  return (scope_stack){
-      .list = list_new(container_cmp_false, container_new_move,
-                       container_delete_scope),
-  };
-}
-
-void ir_scope_stack_free(scope_stack stack) { return list_free(stack.list); }
-
-void ir_scope_stack_push(scope_stack stack, ir_scope *scope) {
-  list_push_front(stack.list, scope);
-}
-
-ir_scope *ir_scope_stack_pop(scope_stack stack) {
-  ir_scope *scope = list_pop_front(stack.list);
-  return scope;
-}
-
-ir_scope *ir_scope_stack_top(scope_stack stack) {
-  return list_front(stack.list);
-}
-
 // SYMBOLS
 static int container_cmp_scope_symbol_kv(const void *_lsv, const void *_rsv) {
   const ir_scope_symbol_kv *lsv = _lsv;
   const ir_scope_symbol_kv *rsv = _rsv;
-  return ir_term_id_equals(lsv->k, rsv->k);
+  return !ir_term_id_equals(lsv->k, rsv->k);
 }
 
 static size_t container_hash_scope_symbol_kv(const void *_lsv) {
@@ -151,6 +124,11 @@ void ir_scope_symbol_kv_free(ir_scope_symbol_kv *kv) {
   }
 }
 
+ir_term_id *ir_scope_symbol_k_sub(ir_subroutine *sub) {
+  return sub->signature->id;
+}
+ir_term_id *ir_scope_symbol_k_var(ir_var *sub) { return sub->id; }
+
 void ir_scope_symbol_add(ir_scope *scope, ir_scope_symbol_kv *kv) {
   hashset_insert(scope->symbols, kv);
   debug("added symbol %s to scope %s", kv->k->name, scope_ttstr(scope->type));
@@ -158,13 +136,15 @@ void ir_scope_symbol_add(ir_scope *scope, ir_scope_symbol_kv *kv) {
 
 void ir_scope_symbol_add_sub(ir_scope *scope, ir_subroutine *sub) {
   ir_scope_symbol_kv *kv = ir_scope_symbol_kv_new(
-      sub->signature->id, (ir_scope_symbol_base *)ir_scope_symbol_sub_new(sub));
+      ir_scope_symbol_k_sub(sub),
+      (ir_scope_symbol_base *)ir_scope_symbol_sub_new(sub));
   ir_scope_symbol_add(scope, kv);
 }
 
 void ir_scope_symbol_add_var(ir_scope *scope, ir_var *var) {
   ir_scope_symbol_kv *kv = ir_scope_symbol_kv_new(
-      var->id, (ir_scope_symbol_base *)ir_scope_symbol_var_new(var));
+      ir_scope_symbol_k_var(var),
+      (ir_scope_symbol_base *)ir_scope_symbol_var_new(var));
   ir_scope_symbol_add(scope, kv);
 }
 
@@ -174,4 +154,44 @@ ir_scope_symbol_base *ir_scope_symbol_find(ir_scope *scope, ir_term_id *id) {
     return ((ir_scope_symbol_kv *)it.get(&it))->v;
   }
   return NULL;
+}
+
+// SCOPE STACK
+static void container_delete_scope(void *data) {
+  ir_scope *scope = data;
+  ir_scope_free(scope);
+}
+
+scope_stack ir_scope_stack_new() {
+  return (scope_stack){
+      .list = list_new(container_cmp_false, container_new_move,
+                       container_delete_scope),
+  };
+}
+
+void ir_scope_stack_free(scope_stack stack) { return list_free(stack.list); }
+
+void ir_scope_stack_push(scope_stack stack, ir_scope *scope) {
+  list_push_front(stack.list, scope);
+}
+
+ir_scope *ir_scope_stack_pop(scope_stack stack) {
+  ir_scope *scope = list_pop_front(stack.list);
+  return scope;
+}
+
+ir_scope *ir_scope_stack_top(scope_stack stack) {
+  return list_front(stack.list);
+}
+
+ir_scope_symbol_base *ir_scope_stack_find_symbol(scope_stack stack,
+                                                 ir_term_id *id) {
+  ir_scope_symbol_base *sym = NULL;
+  for (list_it it = stack.list->head; it; it = it->next) {
+    sym = ir_scope_symbol_find(it->data, id);
+    if (sym) {
+      break;
+    }
+  }
+  return sym;
 }

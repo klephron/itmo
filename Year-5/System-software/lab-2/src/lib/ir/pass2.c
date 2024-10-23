@@ -413,25 +413,23 @@ p_list ir_pass2_var_new(ir_pass2 *self, p_list ids, ir_t_base *type) {
   return vars;
 }
 
-p_hashset ir_pass2_vars_new(ir_pass2 *self) {
+p_list ir_pass2_vars_new(ir_pass2 *self) {
   UNUSED(self);
-  return ir_var_hashset_new();
+  return ir_var_list_new();
 }
 
-int ir_pass2_vars_add(ir_pass2 *self, p_hashset hashset, p_list vars) {
+int ir_pass2_vars_add(ir_pass2 *self, p_list vars, p_list vars1) {
   UNUSED(self);
-  for (list_it it = vars->head; it; it = it->next) {
-    // TODO: check for duplication
-    hashset_insert(hashset, it->data);
-    // debug("var_hashset added var %s, size=%d", ir_var_name(it->data),
-    //       hashset->size);
+
+  for (list_it it = vars1->head; it; it = it->next) {
+    list_push_back(vars, it->data);
   }
-  list_free(vars);
+  list_free(vars1);
   return 1;
 }
 
 ir_subroutine *ir_pass2_subroutine_new(ir_pass2 *self, ir_signature *signature,
-                                       p_hashset vars, ir_block_base *cfg) {
+                                       p_list vars, ir_block_base *cfg) {
   UNUSED(self);
   ir_subroutine *sub = ir_subroutine_new(self->file_name, signature, cfg, vars);
   return sub;
@@ -499,6 +497,7 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
   return ok;
 }
 
+// SCOPES
 static void container_delete_scope(void *_data) { ir_scope_free(_data); }
 
 p_list ir_pass2_scope_list_new(ir_pass2 *self) {
@@ -513,7 +512,7 @@ void ir_pass2_scope_add(ir_pass2 *self, p_list list, ir_scope *scope) {
 }
 
 // BODY
-void ir_pass2_body_before(ir_pass2 *self) {
+void ir_pass2_body_before(ir_pass2 *self, ir_signature *sign, p_list vars) {
   self->break_stack =
       list_new(container_cmp_false, container_new_move, container_delete_false);
 
@@ -525,6 +524,33 @@ void ir_pass2_body_before(ir_pass2 *self) {
 
   ir_scope_stack_push(self->scope_stack, scope);
   // debug("scope body pushed");
+
+  for (list_it it = sign->params->head; it; it = it->next) {
+    ir_var     *param = it->data;
+    ir_term_id *k = ir_scope_symbol_k_var(param);
+
+    if (ir_scope_stack_find_symbol(self->scope_stack, k)) {
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, EXCEPTION_IR_SYMBOL_REDEFINITION, self->file_name, 0, 0,
+          "symbol redefinition", "symbol param %s is duplicated", k->name);
+      ir_ctx_add_exception(self->ctx, ex);
+    } else {
+      ir_scope_symbol_add_var(scope, param);
+    }
+  }
+  for (list_it it = vars->head; it; it = it->next) {
+    ir_var     *var = it->data;
+    ir_term_id *k = ir_scope_symbol_k_var(var);
+
+    if (ir_scope_stack_find_symbol(self->scope_stack, k)) {
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, EXCEPTION_IR_SYMBOL_REDEFINITION, self->file_name, 0, 0,
+          "symbol redefinition", "symbol arg %s is duplicated", k->name);
+      ir_ctx_add_exception(self->ctx, ex);
+    } else {
+      ir_scope_symbol_add_var(scope, var);
+    }
+  }
 
   self->cfg = begin;
 

@@ -20,7 +20,7 @@ struct ir_subroutine {
   struct ir_signature *signature;
   char                *file_name;
   ir_block_base       *cfg;
-  p_hashset            vars;
+  p_list               vars;
 };
 
 enum ir_subroutine_status_enum {
@@ -54,7 +54,7 @@ ir_signature *ir_signature_new(ir_term_id *id, p_list params, ir_t_base *ret);
 
 void           ir_subroutine_free(ir_subroutine *self);
 ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
-                                 void *blocks, p_hashset vars);
+                                 void *blocks, p_list vars);
 ir_subroutine_status_enum ir_subroutine_status(const ir_subroutine *self);
 const char               *ir_subroutine_name(const ir_subroutine *self);
 int ir_subroutine_cmp(const ir_subroutine *lsv, const ir_subroutine *rsv);

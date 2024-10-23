@@ -89,13 +89,13 @@ void ir_subroutine_free(ir_subroutine *self) {
       free(self->file_name);
     }
     ir_block_graph_free(self->cfg);
-    hashset_free(self->vars);
+    list_free(self->vars);
     free(self);
   }
 }
 
 ir_subroutine *ir_subroutine_new(const char *file_name, ir_signature *signature,
-                                 void *blocks, p_hashset vars) {
+                                 void *blocks, p_list vars) {
   ir_subroutine *self = MALLOC(ir_subroutine);
   self->signature = signature;
   self->file_name = file_name ? strdup((char *)file_name) : NULL;
