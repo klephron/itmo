@@ -76,32 +76,32 @@ void ir_pass2_deinit(ir_pass2 *self) {
   ir_scope_stack_free(self->scope_stack);
 }
 
-ir_term_lit *ir_pass2_str(ir_pass2 *self, const char *str) {
+ir_term_lit *ir_pass2_str(ir_pass2 *self, ir_loc loc, const char *str) {
   debug("pass2 creating str %s", str);
   UNUSED(self);
 
   ir_term_lit_v u;
   u.v_str = strdup(str);
-  return ir_term_lit_new(IR_T_STRING, u);
+  return ir_term_lit_new(loc, IR_T_STRING, u);
 }
 
-ir_term_lit *ir_pass2_rune(ir_pass2 *self, const char *str) {
+ir_term_lit *ir_pass2_rune(ir_pass2 *self, ir_loc loc, const char *str) {
   debug("pass2 creating rune %s", str);
   // NOTE: checked by lexer
   if (strlen(str) != 3 && str[0] != '\'' && str[2] != '\'') {
     const int  subtype = EXCEPTION_IR_CHAR_VALIDATION;
-    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                    0, exception_subtype_ir_str(subtype),
-                                    "char %s not valid", str);
+    exception *ex = exception_new_f(
+        EXCEPTION_IR, subtype, self->file_name, loc.line, loc.pos_start,
+        exception_subtype_ir_str(subtype), "char %s not valid", str);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
   ir_term_lit_v u;
   u.v_char = str[1];
-  return ir_term_lit_new(IR_T_CHAR, u);
+  return ir_term_lit_new(loc, IR_T_CHAR, u);
 }
 
-ir_term_lit *ir_pass2_hex(ir_pass2 *self, const char *str) {
+ir_term_lit *ir_pass2_hex(ir_pass2 *self, ir_loc loc, const char *str) {
   UNUSED(self);
   debug("pass2 creating hex %s", str);
 
@@ -111,9 +111,9 @@ ir_term_lit *ir_pass2_hex(ir_pass2 *self, const char *str) {
 
   if (errstr) {
     const int  subtype = EXCEPTION_IR_HEX_VALIDATION;
-    exception *ex =
-        exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0, 0,
-                        exception_subtype_ir_str(subtype), errstr);
+    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name,
+                                    loc.line, loc.pos_start,
+                                    exception_subtype_ir_str(subtype), errstr);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
@@ -121,10 +121,10 @@ ir_term_lit *ir_pass2_hex(ir_pass2 *self, const char *str) {
   debug("pass2 hex=%d", u.v_int);
 
   // TODO: calculate optimal type
-  return ir_term_lit_new(IR_T_LONG, u);
+  return ir_term_lit_new(loc, IR_T_LONG, u);
 }
 
-ir_term_lit *ir_pass2_bits(ir_pass2 *self, const char *str) {
+ir_term_lit *ir_pass2_bits(ir_pass2 *self, ir_loc loc, const char *str) {
   UNUSED(self);
   debug("pass2 creating bits %s", str);
 
@@ -134,9 +134,9 @@ ir_term_lit *ir_pass2_bits(ir_pass2 *self, const char *str) {
 
   if (errstr) {
     const int  subtype = EXCEPTION_IR_BITS_VALIDATION;
-    exception *ex =
-        exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0, 0,
-                        exception_subtype_ir_str(subtype), errstr);
+    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name,
+                                    loc.line, loc.pos_start,
+                                    exception_subtype_ir_str(subtype), errstr);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
@@ -144,10 +144,10 @@ ir_term_lit *ir_pass2_bits(ir_pass2 *self, const char *str) {
   debug("pass2 bits=%d", u.v_int);
 
   // TODO: calculate optimal type
-  return ir_term_lit_new(IR_T_LONG, u);
+  return ir_term_lit_new(loc, IR_T_LONG, u);
 }
 
-ir_term_lit *ir_pass2_dec(ir_pass2 *self, const char *str) {
+ir_term_lit *ir_pass2_dec(ir_pass2 *self, ir_loc loc, const char *str) {
   UNUSED(self);
   debug("pass2 creating dec %s", str);
 
@@ -157,9 +157,9 @@ ir_term_lit *ir_pass2_dec(ir_pass2 *self, const char *str) {
 
   if (errstr) {
     const int  subtype = EXCEPTION_IR_DEC_VALIDATION;
-    exception *ex =
-        exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0, 0,
-                        exception_subtype_ir_str(subtype), errstr);
+    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name,
+                                    loc.line, loc.pos_start,
+                                    exception_subtype_ir_str(subtype), errstr);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
@@ -167,10 +167,10 @@ ir_term_lit *ir_pass2_dec(ir_pass2 *self, const char *str) {
   debug("pass2 dec=%d", u.v_int);
 
   // TODO: calculate optimal type
-  return ir_term_lit_new(IR_T_LONG, u);
+  return ir_term_lit_new(loc, IR_T_LONG, u);
 }
 
-ir_term_lit *ir_pass2_bool(ir_pass2 *self, const char *str) {
+ir_term_lit *ir_pass2_bool(ir_pass2 *self, ir_loc loc, const char *str) {
   UNUSED(self);
   debug("pass2 creating bool %s", str);
 
@@ -182,21 +182,21 @@ ir_term_lit *ir_pass2_bool(ir_pass2 *self, const char *str) {
     u.v_bool = 0;
   } else {
     const int  subtype = EXCEPTION_IR_BOOL_VALIDATION;
-    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                    0, exception_subtype_ir_str(subtype),
-                                    "%s is invalid", str);
+    exception *ex = exception_new_f(
+        EXCEPTION_IR, subtype, self->file_name, loc.line, loc.pos_start,
+        exception_subtype_ir_str(subtype), "%s is invalid", str);
     ir_ctx_add_exception(self->ctx, ex);
     return NULL;
   }
 
   debug("pass2 bool=%d", u.v_bool);
 
-  return ir_term_lit_new(IR_T_BOOL, u);
+  return ir_term_lit_new(loc, IR_T_BOOL, u);
 }
 
-ir_term_id *ir_pass2_term_id_new(ir_pass2 *self, const char *id) {
+ir_term_id *ir_pass2_term_id_new(ir_pass2 *self, ir_loc loc, const char *id) {
   UNUSED(self);
-  return ir_term_id_new(id);
+  return ir_term_id_new(loc, id);
 }
 
 // TODO: types
@@ -204,8 +204,9 @@ ir_expr_base *ir_pass2_expr_id_new(ir_pass2 *self, const ir_term_id *id) {
   UNUSED(self);
   if (!ir_scope_stack_find_symbol(self->scope_stack, id)) {
     const int  subtype = EXCEPTION_IR_SYMBOL_UNDEFINED;
-    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                    0, exception_subtype_ir_str(subtype),
+    exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name,
+                                    id->base.loc.line, id->base.loc.pos_start,
+                                    exception_subtype_ir_str(subtype),
                                     "symbol %s is undefined", id->name);
     ir_ctx_add_exception(self->ctx, ex);
   }
@@ -234,7 +235,7 @@ ir_expr_base *ir_pass2_expr_call_new(ir_pass2 *self, ir_expr_base *callee,
 
 // TODO: types
 ir_expr_base *ir_pass2_expr_unary_new(ir_pass2 *self, ir_expr_base *first,
-                                      ir_expr_unary_enum op) {
+                                      ir_expr_unary_enum op, ir_loc op_loc) {
   debug("creating unary expression with op=%d", op);
 
   switch (op) {
@@ -242,17 +243,17 @@ ir_expr_base *ir_pass2_expr_unary_new(ir_pass2 *self, ir_expr_base *first,
   case IR_EXPR_UNARY_INC: {
     if (!first) {
       const int  subtype = EXCEPTION_IR_NULL;
-      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                      0, exception_subtype_ir_str(subtype),
-                                      "unary expression is <null>");
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, subtype, self->file_name, op_loc.line, op_loc.pos_start,
+          exception_subtype_ir_str(subtype), "unary expression is <null>");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
     if (first->kind != IR_EXPR_IDENTIFIER) {
       const int  subtype = EXCEPTION_IR_NULL;
-      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                      0, exception_subtype_ir_str(subtype),
-                                      "cannot assign to rvalue");
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, subtype, self->file_name, op_loc.line, op_loc.pos_start,
+          exception_subtype_ir_str(subtype), "cannot assign to rvalue");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
@@ -263,23 +264,25 @@ ir_expr_base *ir_pass2_expr_unary_new(ir_pass2 *self, ir_expr_base *first,
     ir_expr_base *second;
     if (op == IR_EXPR_UNARY_INC) {
       second = (ir_expr_base *)ir_expr_binary_new(
-          (ir_expr_base *)ir_expr_unary_new(first, IR_EXPR_UNARY_LOAD),
-          (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
-          IR_EXPR_BINARY_ADD);
+          (ir_expr_base *)ir_expr_unary_new(first, IR_EXPR_UNARY_LOAD, op_loc),
+          (ir_expr_base *)ir_expr_lit_new(
+              ir_term_lit_new((ir_loc){}, IR_T_LONG, u)),
+          IR_EXPR_BINARY_ADD, op_loc);
     } else {
       second = (ir_expr_base *)ir_expr_binary_new(
-          (ir_expr_base *)ir_expr_unary_new(first, IR_EXPR_UNARY_LOAD),
-          (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
-          IR_EXPR_BINARY_SUB);
+          (ir_expr_base *)ir_expr_unary_new(first, IR_EXPR_UNARY_LOAD, op_loc),
+          (ir_expr_base *)ir_expr_lit_new(
+              ir_term_lit_new((ir_loc){}, IR_T_LONG, u)),
+          IR_EXPR_BINARY_SUB, op_loc);
     }
     return (ir_expr_base *)ir_expr_binary_new(ir_expr_copy(first), second,
-                                              IR_EXPR_BINARY_ASSIGN);
+                                              IR_EXPR_BINARY_ASSIGN, op_loc);
   }
   case IR_EXPR_UNKNOWN:
     error("unknown unary expression type=%d", op);
     goto error;
   default:
-    return (ir_expr_base *)ir_expr_unary_new(first, op);
+    return (ir_expr_base *)ir_expr_unary_new(first, op, op_loc);
   }
 
 error:
@@ -289,13 +292,14 @@ error:
 
 ir_expr_base *ir_pass2_expr_binary_new(ir_pass2 *self, ir_expr_base *first,
                                        ir_expr_base       *second,
-                                       ir_expr_binary_enum op) {
+                                       ir_expr_binary_enum op, ir_loc op_loc) {
   UNUSED(self);
 
   debug("creating binary expression type=%d", op);
 
   if (second->kind == IR_EXPR_IDENTIFIER) {
-    second = (ir_expr_base *)ir_expr_unary_new(second, IR_EXPR_UNARY_LOAD);
+    second =
+        (ir_expr_base *)ir_expr_unary_new(second, IR_EXPR_UNARY_LOAD, op_loc);
   }
 
   switch (op) {
@@ -305,17 +309,17 @@ ir_expr_base *ir_pass2_expr_binary_new(ir_pass2 *self, ir_expr_base *first,
   case IR_EXPR_BINARY_ASSIGN: {
     if (!first) {
       const int  subtype = EXCEPTION_IR_NULL;
-      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                      0, exception_subtype_ir_str(subtype),
-                                      "assigning value to <null>");
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, subtype, self->file_name, op_loc.line, op_loc.pos_start,
+          exception_subtype_ir_str(subtype), "assigning value to <null>");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
     if (first->kind != IR_EXPR_IDENTIFIER) {
       const int  subtype = EXCEPTION_IR_RVALUE_ASSIGNMENT;
-      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                      0, exception_subtype_ir_str(subtype),
-                                      "cannot assign to rvalue");
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, subtype, self->file_name, op_loc.line, op_loc.pos_start,
+          exception_subtype_ir_str(subtype), "cannot assign to rvalue");
       ir_ctx_add_exception(self->ctx, ex);
       goto error;
     }
@@ -325,7 +329,7 @@ ir_expr_base *ir_pass2_expr_binary_new(ir_pass2 *self, ir_expr_base *first,
     break;
   }
 
-  return (ir_expr_base *)ir_expr_binary_new(first, second, op);
+  return (ir_expr_base *)ir_expr_binary_new(first, second, op, op_loc);
 
 error:
   ir_expr_free(first);
@@ -484,11 +488,15 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
 
     if (lsv_status == IR_SUBROUTINE_STATUS_DEFINITION &&
         sub_status == IR_SUBROUTINE_STATUS_DEFINITION) {
-      const int  subtype = EXCEPTION_IR_SUBROUTINE_REDEFINITION;
-      exception *ex = exception_new_f(EXCEPTION_IR, subtype, sub->file_name, 0,
-                                      0, exception_subtype_ir_str(subtype),
-                                      "previous definition in %s %d:%d",
-                                      lsv->file_name, 0, 0);
+      const int    subtype = EXCEPTION_IR_SUBROUTINE_REDEFINITION;
+      const size_t line = sub->signature->id->base.loc.line;
+      const size_t offset = sub->signature->id->base.loc.pos_start;
+      const size_t prev_line = lsv->signature->id->base.loc.line;
+      const size_t prev_offset = lsv->signature->id->base.loc.pos_start;
+      exception   *ex = exception_new_f(
+            EXCEPTION_IR, subtype, sub->file_name, line, offset,
+            exception_subtype_ir_str(subtype), "previous definition in %s %d:%d",
+            lsv->file_name, prev_line, prev_offset);
       ir_ctx_add_exception(ctx, ex);
       ok = 0;
     }
@@ -548,8 +556,9 @@ void ir_pass2_body_before(ir_pass2 *self, ir_signature *sign, p_list vars) {
 
     if (ir_scope_stack_find_symbol(self->scope_stack, k)) {
       const int  subtype = EXCEPTION_IR_SYMBOL_REDEFINITION;
-      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                      0, exception_subtype_ir_str(subtype),
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name,
+                                      k->base.loc.line, k->base.loc.pos_start,
+                                      exception_subtype_ir_str(subtype),
                                       "symbol param %s is duplicated", k->name);
       ir_ctx_add_exception(self->ctx, ex);
     } else {
@@ -562,8 +571,9 @@ void ir_pass2_body_before(ir_pass2 *self, ir_signature *sign, p_list vars) {
 
     if (ir_scope_stack_find_symbol(self->scope_stack, k)) {
       const int  subtype = EXCEPTION_IR_SYMBOL_REDEFINITION;
-      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name, 0,
-                                      0, exception_subtype_ir_str(subtype),
+      exception *ex = exception_new_f(EXCEPTION_IR, subtype, self->file_name,
+                                      k->base.loc.line, k->base.loc.pos_start,
+                                      exception_subtype_ir_str(subtype),
                                       "symbol arg %s is duplicated", k->name);
       ir_ctx_add_exception(self->ctx, ex);
     } else {
@@ -739,7 +749,8 @@ ir_scope *ir_pass2_do_build(ir_pass2 *self, ir_expr_base *expr, int p,
 static ir_expr_base *ir_pass2_expr_true() {
   ir_term_lit_v v;
   v.v_bool = 1;
-  return (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_BOOL, v));
+  return (ir_expr_base *)ir_expr_lit_new(
+      ir_term_lit_new((ir_loc){}, IR_T_BOOL, v));
 }
 
 void ir_pass2_break_before(ir_pass2 *self) { UNUSED(self); }

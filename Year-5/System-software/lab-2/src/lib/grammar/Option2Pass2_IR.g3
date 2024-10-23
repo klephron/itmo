@@ -9,6 +9,7 @@ options {
 
 @header {
 #include "util/log.h"
+#include "ir/antlr3.h"
 #include "ir/expr.h"
 #include "ir/subroutine.h"
 #include "ir/terminal.h"
@@ -48,7 +49,7 @@ type_ref returns [ir_t_base *v]
   }
 
   | ^('array' tr=type_ref ^(ELEMS  ','*)) {
-    size_t dimension = IR_PASS2_SIZE($ELEMS) + 2;
+    size_t dimension = IR_ANTLR3_SIZE($ELEMS) + 2;
     $v = ir_pass2_t_array_new(IR_PASS2_ANTLR3_USERP(), dimension, $tr.v);
   }
   ;
@@ -222,78 +223,78 @@ expr_15 [p_list args]
   ;
 
 expr_14 returns [ir_expr_base *v]
-  : ^('=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_ASSIGN); }
+  : ^(id='=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_ASSIGN, ir_loc_antlr3($id)); }
   ;
 
 expr_12 returns [ir_expr_base *v]
-  : ^('||' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LOGICAL_OR); }
+  : ^(id='||' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LOGICAL_OR, ir_loc_antlr3($id)); }
   ;
 
 expr_11 returns [ir_expr_base *v]
-  : ^('&&' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LOGICAL_AND); }
+  : ^(id='&&' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LOGICAL_AND, ir_loc_antlr3($id)); }
   ;
 
 expr_10 returns [ir_expr_base *v]
-  : ^('|' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_OR); }
+  : ^(id='|' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_OR, ir_loc_antlr3($id)); }
   ;
 
 expr_9 returns [ir_expr_base *v]
-  : ^('^' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_XOR); }
+  : ^(id='^' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_XOR, ir_loc_antlr3($id)); }
   ;
 
 expr_8  returns [ir_expr_base *v]
-  : ^('&' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_AND); }
+  : ^(id='&' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_AND, ir_loc_antlr3($id)); }
   ;
 
 expr_7 returns [ir_expr_base *v]
-  : ^('==' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_EQUALS); }
-  | ^('!=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_NOT_EQUALS); }
+  : ^(id='==' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_EQUALS, ir_loc_antlr3($id)); }
+  | ^(id='!=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_NOT_EQUALS, ir_loc_antlr3($id)); }
   ;
 
 expr_6 returns [ir_expr_base *v]
-  : ^('<' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LESS); }
-  | ^('<=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LESS_EQUALS); }
-  | ^('>' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_GREATER); }
-  | ^('>=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_GREATER_EQUALS); }
+  : ^(id='<' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LESS, ir_loc_antlr3($id)); }
+  | ^(id='<=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_LESS_EQUALS, ir_loc_antlr3($id)); }
+  | ^(id='>' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_GREATER, ir_loc_antlr3($id)); }
+  | ^(id='>=' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_GREATER_EQUALS, ir_loc_antlr3($id)); }
   ;
 
 expr_5 returns [ir_expr_base *v]
-  : ^('<<' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_SHIFT_LEFT); }
-  | ^('>>' e2=expr e1=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_SHIFT_RIGHT); }
+  : ^(id='<<' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_SHIFT_LEFT, ir_loc_antlr3($id)); }
+  | ^(id='>>' e2=expr e1=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_BITWISE_SHIFT_RIGHT, ir_loc_antlr3($id)); }
   ;
 
 expr_4 returns [ir_expr_base *v]
   @init {
     void *e2_v = NULL;
   }
-  : ^('+' e1=expr (e2=expr {e2_v = $e2.v;})?) {
+  : ^(id='+' e1=expr (e2=expr {e2_v = $e2.v;})?) {
     if (e2_v) {
-      $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, e2_v, IR_EXPR_BINARY_ADD);
+      $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, e2_v, IR_EXPR_BINARY_ADD, ir_loc_antlr3($id));
     } else {
-      $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, IR_EXPR_UNARY_PLUS);
+      $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, IR_EXPR_UNARY_PLUS, ir_loc_antlr3($id));
     }
   }
-  | ^('-' e1=expr (e2=expr {e2_v = $e2.v;})?) {
+  | ^(id='-' e1=expr (e2=expr {e2_v = $e2.v;})?) {
     if (e2_v) {
-      $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, e2_v, IR_EXPR_BINARY_SUB);
+      $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, e2_v, IR_EXPR_BINARY_SUB, ir_loc_antlr3($id));
     } else {
-      $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, IR_EXPR_UNARY_MINUS);
+      $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, IR_EXPR_UNARY_MINUS, ir_loc_antlr3($id));
     }
   }
   ;
 
 expr_3 returns [ir_expr_base *v]
-  : ^('*' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_MUL); }
-  | ^('/' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_DIV); }
-  | ^('%' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_MOD); }
+  : ^(id='*' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_MUL, ir_loc_antlr3($id)); }
+  | ^(id='/' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_DIV, ir_loc_antlr3($id)); }
+  | ^(id='%' e1=expr e2=expr) { $v = ir_pass2_expr_binary_new(IR_PASS2_ANTLR3_USERP(), $e1.v, $e2.v, IR_EXPR_BINARY_MOD, ir_loc_antlr3($id)); }
   ;
 
 // NOTE: excluding unary +/-
 expr_2 returns [ir_expr_base *v]
-  : ^('--' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_DEC); }
-  | ^('++' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_INC); }
-  | ^('!' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_LOGICAL_NOT); }
-  | ^('~' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_BITWISE_NOT); }
+  : ^(id='--' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_DEC, ir_loc_antlr3($id)); }
+  | ^(id='++' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_INC, ir_loc_antlr3($id)); }
+  | ^(id='!' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_LOGICAL_NOT, ir_loc_antlr3($id)); }
+  | ^(id='~' expr) { $v = ir_pass2_expr_unary_new(IR_PASS2_ANTLR3_USERP(), $expr.v, IR_EXPR_UNARY_BITWISE_NOT, ir_loc_antlr3($id)); }
   ;
 
 expr_caller returns [ir_expr_base *v]
@@ -330,30 +331,30 @@ expr_identifier returns [ir_expr_base *v]
 // TERMINALS
 identifier returns [ir_term_id *v]
   : id=IDENTIFIER {
-    $v = ir_pass2_term_id_new(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+    $v = ir_pass2_term_id_new(IR_PASS2_ANTLR3_USERP(), ir_loc_antlr3($id), IR_ANTLR3_CHARS($id));
   };
 
 str returns [ir_term_lit *v]
   : ^(CONST_STR id=STR) {
-    $v = ir_pass2_str(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+    $v = ir_pass2_str(IR_PASS2_ANTLR3_USERP(), ir_loc_antlr3($id), IR_ANTLR3_CHARS($id));
   };
 rune returns [ir_term_lit *v]
   : ^(CONST_CHAR id=CHAR) {
-    $v = ir_pass2_rune(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+    $v = ir_pass2_rune(IR_PASS2_ANTLR3_USERP(), ir_loc_antlr3($id), IR_ANTLR3_CHARS($id));
   };
 hex returns [ir_term_lit *v]
   : ^(CONST_HEX id=HEX) {
-    $v = ir_pass2_hex(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+    $v = ir_pass2_hex(IR_PASS2_ANTLR3_USERP(), ir_loc_antlr3($id), IR_ANTLR3_CHARS($id));
   };
 bits returns [ir_term_lit *v]
   : ^(CONST_BITS id=BITS) {
-    $v = ir_pass2_bits(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+    $v = ir_pass2_bits(IR_PASS2_ANTLR3_USERP(), ir_loc_antlr3($id), IR_ANTLR3_CHARS($id));
   };
 dec returns [ir_term_lit *v]
   : ^(CONST_DEC id=DEC) {
-    $v = ir_pass2_dec(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+    $v = ir_pass2_dec(IR_PASS2_ANTLR3_USERP(), ir_loc_antlr3($id), IR_ANTLR3_CHARS($id));
   };
 bool returns [ir_term_lit *v]
   : ^(CONST_BOOL id=BOOL) {
-    $v = ir_pass2_bool(IR_PASS2_ANTLR3_USERP(), IR_PASS2_CHARS($id));
+    $v = ir_pass2_bool(IR_PASS2_ANTLR3_USERP(), ir_loc_antlr3($id), IR_ANTLR3_CHARS($id));
   };

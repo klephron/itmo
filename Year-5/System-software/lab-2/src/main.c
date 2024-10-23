@@ -266,8 +266,9 @@ int execute(struct args_struct *args) {
       const char *sub_name = it->data;
 
       ir_subroutine *sub_args = ir_subroutine_new(
-          NULL, ir_signature_new(ir_term_id_new(sub_name), NULL, NULL), NULL,
-          NULL);
+          NULL,
+          ir_signature_new(ir_term_id_new((ir_loc){}, sub_name), NULL, NULL),
+          NULL, NULL);
 
       hashset_it it = hashset_find(ir->subroutines, sub_args);
 

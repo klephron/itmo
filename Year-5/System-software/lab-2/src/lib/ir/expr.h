@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ir/loc.h"
 #include "ir/terminal.h"
 #include "util/list.h"
 
@@ -55,12 +56,14 @@ struct ir_expr_base {
 struct ir_expr_unary {
   struct ir_expr_base     base;
   enum ir_expr_unary_enum op;
+  ir_loc                  op_loc;
   struct ir_expr_base    *first;
 };
 
 struct ir_expr_binary {
   struct ir_expr_base      base;
   enum ir_expr_binary_enum op;
+  ir_loc                   op_loc;
   struct ir_expr_base     *first;
   struct ir_expr_base     *second;
 };
@@ -100,9 +103,9 @@ typedef struct ir_expr_call      ir_expr_call;
 typedef struct ir_expr_index     ir_expr_index;
 
 ir_expr_unary  *ir_expr_unary_new(ir_expr_base           *first,
-                                  enum ir_expr_unary_enum op);
+                                  enum ir_expr_unary_enum op, ir_loc op_loc);
 ir_expr_binary *ir_expr_binary_new(ir_expr_base *first, ir_expr_base *second,
-                                   enum ir_expr_binary_enum op);
+                                   enum ir_expr_binary_enum op, ir_loc op_loc);
 ir_expr_lit    *ir_expr_lit_new(ir_term_lit *lit);
 ir_expr_id     *ir_expr_id_new(const ir_term_id *id);
 ir_expr_call   *ir_expr_call_new(ir_expr_base *callee, p_list args);

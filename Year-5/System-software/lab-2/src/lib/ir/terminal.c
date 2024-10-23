@@ -13,8 +13,10 @@ static void ir_term_base_free(ir_term_base *self) {
   }
 }
 
-static void ir_term_base_init(ir_term_base *self, ir_term_enum kind) {
+static void ir_term_base_init(ir_term_base *self, ir_term_enum kind,
+                              ir_loc loc) {
   self->kind = kind;
+  self->loc = loc;
 }
 
 // LIT
@@ -29,9 +31,9 @@ void ir_term_lit_free(ir_term_lit *self) {
   }
 }
 
-ir_term_lit *ir_term_lit_new(ir_t_enum type, ir_term_lit_v v) {
+ir_term_lit *ir_term_lit_new(ir_loc loc, ir_t_enum type, ir_term_lit_v v) {
   ir_term_lit *self = MALLOC(ir_term_lit);
-  ir_term_base_init(&self->base, IR_TERM_LITERAL);
+  ir_term_base_init(&self->base, IR_TERM_LITERAL, loc);
   self->type = type;
   self->u = v;
   /*debug("created term_lit %p type=%s", self, ir_ttstr(type));*/
@@ -50,9 +52,9 @@ void ir_term_id_free(ir_term_id *self) {
   }
 }
 
-ir_term_id *ir_term_id_new(const char *str) {
+ir_term_id *ir_term_id_new(ir_loc loc, const char *str) {
   ir_term_id *self = MALLOC(ir_term_id);
-  ir_term_base_init(&self->base, IR_TERM_IDENTIFIER);
+  ir_term_base_init(&self->base, IR_TERM_IDENTIFIER, loc);
   self->name = strdup(str);
   /*debug("created term_id %p %s", self, self->name);*/
   return self;
@@ -86,11 +88,11 @@ ir_term_base *ir_term_copy(struct ir_term_base *generic) {
     if (lit->type == IR_T_STRING && v.v_str) {
       v.v_str = strdup(v.v_str);
     }
-    return (ir_term_base *)ir_term_lit_new(lit->type, v);
+    return (ir_term_base *)ir_term_lit_new(generic->loc, lit->type, v);
   }
   case IR_TERM_IDENTIFIER: {
     ir_term_id *id = (ir_term_id *)generic;
-    return (ir_term_base *)ir_term_id_new(id->name);
+    return (ir_term_base *)ir_term_id_new(generic->loc, id->name);
   }
   default:
     error("unknown term type to copy");

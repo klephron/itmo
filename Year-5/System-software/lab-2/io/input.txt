@@ -1,28 +1,8 @@
-method fun1():
-begin
-  fun3();
-end;
-
-method fun2():;
-
-method fun3():
-begin
-  begin
-    fun4();
-    break;
-  end;
-  fun1();
-  fun2();
-end;
-
-method fun4():
-begin
-  fun4();
-  fun1();
-  fun2();
-end;
-
 method main():
+var
+  a : int;
 begin
-  ++a;
+  a = 4;
+  a = 10;
+  b = a;
 end;

@@ -86,29 +86,33 @@ static void ir_expr_base_init(ir_expr_base *base, ir_expr_enum kind) {
   base->type = IR_T_UNKNOWN;
 }
 
-static void ir_expr_unary_init(ir_expr_unary *unary, ir_expr_unary_enum op) {
+static void ir_expr_unary_init(ir_expr_unary *unary, ir_expr_unary_enum op,
+                               ir_loc op_loc) {
   unary->op = op;
+  unary->op_loc = op_loc;
   ir_expr_base_init(&unary->base, IR_EXPR_UNARY);
 }
 
-static void ir_expr_binary_init(ir_expr_binary     *binary,
-                                ir_expr_binary_enum op) {
+static void ir_expr_binary_init(ir_expr_binary *binary, ir_expr_binary_enum op,
+                                ir_loc op_loc) {
   binary->op = op;
+  binary->op_loc = op_loc;
   ir_expr_base_init(&binary->base, IR_EXPR_BINARY);
 }
 
-ir_expr_unary *ir_expr_unary_new(ir_expr_base *first, ir_expr_unary_enum op) {
+ir_expr_unary *ir_expr_unary_new(ir_expr_base *first, ir_expr_unary_enum op,
+                                 ir_loc loc) {
   ir_expr_unary *self = MALLOC(ir_expr_unary);
-  ir_expr_unary_init(self, op);
+  ir_expr_unary_init(self, op, loc);
   /*debug("created expr_unary op=%d", op);*/
   self->first = first;
   return self;
 }
 
 ir_expr_binary *ir_expr_binary_new(ir_expr_base *first, ir_expr_base *second,
-                                   ir_expr_binary_enum op) {
+                                   ir_expr_binary_enum op, ir_loc loc) {
   ir_expr_binary *self = MALLOC(ir_expr_binary);
-  ir_expr_binary_init(self, op);
+  ir_expr_binary_init(self, op, loc);
   self->first = first;
   self->second = second;
   /*debug("created expr_binary op=%d", op);*/
@@ -235,12 +239,13 @@ ir_expr_base *ir_expr_copy(ir_expr_base *generic) {
   case IR_EXPR_UNARY: {
     ir_expr_unary *unary = (ir_expr_unary *)generic;
     return (ir_expr_base *)ir_expr_unary_new(ir_expr_copy(unary->first),
-                                             unary->op);
+                                             unary->op, unary->op_loc);
   }
   case IR_EXPR_BINARY: {
     ir_expr_binary *binary = (ir_expr_binary *)generic;
-    return (ir_expr_base *)ir_expr_binary_new(
-        ir_expr_copy(binary->first), ir_expr_copy(binary->second), binary->op);
+    return (ir_expr_base *)ir_expr_binary_new(ir_expr_copy(binary->first),
+                                              ir_expr_copy(binary->second),
+                                              binary->op, binary->op_loc);
   }
   case IR_EXPR_LITERAL: {
     ir_expr_lit *lit = (ir_expr_lit *)generic;

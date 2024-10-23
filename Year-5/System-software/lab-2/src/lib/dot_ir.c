@@ -1,4 +1,5 @@
 #include "dot_ir.h"
+#include "ir/loc.h"
 #include "util/container_util.h"
 #include "util/log.h"
 #include "util/macro.h"
@@ -551,7 +552,9 @@ static void cg_traverse_expr(struct dot_ctx_cg     *ctx_cg,
     ir_expr_id *sub_id = (ir_expr_id *)sub_base;
 
     ir_subroutine *sub_new = ir_subroutine_new(
-        NULL, ir_signature_new(ir_term_id_new(sub_id->id->name), NULL, NULL),
+        NULL,
+        ir_signature_new(ir_term_id_new((ir_loc){}, sub_id->id->name), NULL,
+                         NULL),
         NULL, NULL);
 
     hashset_it it = hashset_find(ctx->subroutines, sub_new);

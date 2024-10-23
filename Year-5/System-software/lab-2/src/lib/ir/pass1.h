@@ -40,8 +40,3 @@ int ir_pass1_subroutine_add(ir_pass1 *self, ir_subroutine *subroutine);
 
 #define IR_PASS1_ANTLR3_USERP()                                                \
   ((ir_pass1 *)ctx->pTreeParser->rec->state->userp)
-
-#define IR_PASS1_CHARS(id)                                                     \
-  ((const char *)id->getText(id)->to8(id->getText(id))->chars)
-
-#define IR_PASS1_SIZE(id) ((size_t)id->children->size(id->children))
