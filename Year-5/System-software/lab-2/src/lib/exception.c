@@ -238,10 +238,11 @@ static char *exception_tree_to_chars(const struct exception *exc) {
   return str;
 }
 
+// TODO: include line and offset in exception (needs to update IR metadata)
 static char *exception_ir_to_chars(const struct exception *exc) {
-  const char *format = ANSI_COLOR_RED "error" ANSI_COLOR_RESET
-                                      "(I%d): %s -> %s\n" ANSI_COLOR_BLUE
-                                      "  -->" ANSI_COLOR_RESET " %s:%d:%d";
+  const char *format = ANSI_COLOR_RED
+      "error" ANSI_COLOR_RESET "(I%d): %s -> %s\n" ANSI_COLOR_BLUE
+      "  -->" ANSI_COLOR_RESET " %s (somewhere)";
 
   char *exc_stream = "<empty>";
   char *exc_message = "<empty>";
@@ -272,8 +273,7 @@ static char *exception_ir_to_chars(const struct exception *exc) {
   char *str = malloc(len + 1);
   str[0] = '\0';
 
-  sprintf(str, format, exc->subtype, exc_name, exc_message, exc_stream,
-          exc->line, exc->offset);
+  sprintf(str, format, exc->subtype, exc_name, exc_message, exc_stream);
 
   assert(len >= strlen(str));
 

@@ -179,9 +179,7 @@ ir_term_id *ir_pass2_term_id_new(ir_pass2 *self, const char *id) {
 // TODO: types
 ir_expr_base *ir_pass2_expr_id_new(ir_pass2 *self, const ir_term_id *id) {
   UNUSED(self);
-
-  return (ir_expr_base *)ir_expr_unary_new((ir_expr_base *)ir_expr_id_new(id),
-                                           IR_EXPR_UNARY_LOAD);
+  return (ir_expr_base *)ir_expr_id_new(id);
 }
 
 // TODO: types
@@ -233,11 +231,13 @@ ir_expr_base *ir_pass2_expr_unary_new(ir_pass2 *self, ir_expr_base *first,
     ir_expr_base *second;
     if (op == IR_EXPR_UNARY_INC) {
       second = (ir_expr_base *)ir_expr_binary_new(
-          first, (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
+          (ir_expr_base *)ir_expr_unary_new(first, IR_EXPR_UNARY_LOAD),
+          (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
           IR_EXPR_BINARY_ADD);
     } else {
       second = (ir_expr_base *)ir_expr_binary_new(
-          first, (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
+          (ir_expr_base *)ir_expr_unary_new(first, IR_EXPR_UNARY_LOAD),
+          (ir_expr_base *)ir_expr_lit_new(ir_term_lit_new(IR_T_LONG, u)),
           IR_EXPR_BINARY_SUB);
     }
     return (ir_expr_base *)ir_expr_binary_new(first, second,
@@ -262,13 +262,36 @@ ir_expr_base *ir_pass2_expr_binary_new(ir_pass2 *self, ir_expr_base *first,
 
   debug("creating binary expression type=%d", op);
 
+  if (second->kind == IR_EXPR_IDENTIFIER) {
+    second = (ir_expr_base *)ir_expr_unary_new(second, IR_EXPR_UNARY_LOAD);
+  }
+
   switch (op) {
   case IR_EXPR_BINARY_UNKNOWN:
     error("unknown binary expression type=%d", op);
     goto error;
-  default:
-    return (ir_expr_base *)ir_expr_binary_new(first, second, op);
+  case IR_EXPR_BINARY_ASSIGN: {
+    if (!first) {
+      exception *ex =
+          exception_new_f(EXCEPTION_IR, EXCEPTION_IR_NULL, self->file_name, 0,
+                          0, "null expression", "assigning value to <null>");
+      ir_ctx_add_exception(self->ctx, ex);
+      goto error;
+    }
+    if (first->kind != IR_EXPR_IDENTIFIER) {
+      exception *ex = exception_new_f(
+          EXCEPTION_IR, EXCEPTION_IR_RVALUE_ASSIGNMENT, self->file_name, 0, 0,
+          "rvalue assignment", "cannot assign to rvalue");
+      ir_ctx_add_exception(self->ctx, ex);
+      goto error;
+    }
+    break;
   }
+  default:
+    break;
+  }
+
+  return (ir_expr_base *)ir_expr_binary_new(first, second, op);
 
 error:
   ir_expr_free(first);
@@ -333,7 +356,6 @@ p_list ir_pass2_params_new(ir_pass2 *self) {
 int ir_pass2_param_add(ir_pass2 *self, p_list list, ir_var *var) {
   UNUSED(self);
   list_push_back(list, var);
-  debug("param_list added param %s", ir_var_name(var));
   return 1;
 }
 
@@ -383,8 +405,8 @@ int ir_pass2_vars_add(ir_pass2 *self, p_hashset hashset, p_list vars) {
   for (list_it it = vars->head; it; it = it->next) {
     // TODO: check for duplication
     hashset_insert(hashset, it->data);
-    debug("var_hashset added var %s, size=%d", ir_var_name(it->data),
-          hashset->size);
+    // debug("var_hashset added var %s, size=%d", ir_var_name(it->data),
+    //       hashset->size);
   }
   list_free(vars);
   return 1;
@@ -394,8 +416,6 @@ ir_subroutine *ir_pass2_subroutine_new(ir_pass2 *self, ir_signature *signature,
                                        p_hashset vars, ir_block_base *cfg) {
   UNUSED(self);
   ir_subroutine *sub = ir_subroutine_new(self->file_name, signature, cfg, vars);
-
-  debug("var_hashset replaced");
   return sub;
 }
 
@@ -417,7 +437,6 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
   hashset_it it;
 
   if (ok) {
-    debug("size of subroutines: %zu", ctx->subroutines->size);
     it = hashset_find(ctx->subroutines, sub);
     if (it.end(&it)) {
       error("subroutine is not found %s", ir_subroutine_name(sub));
@@ -444,7 +463,7 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
 
   if (ok) {
     hashset_replace(ctx->subroutines, it, sub);
-    debug("subroutine replaced");
+    debug("replaced subroutine %s", ir_subroutine_name(sub));
   } else {
     ir_subroutine_free(sub);
   }

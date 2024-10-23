@@ -542,19 +542,7 @@ static void cg_traverse_expr(struct dot_ctx_cg     *ctx_cg,
   case IR_EXPR_CALL: {
     ir_expr_call *call = (ir_expr_call *)expr;
 
-    ir_expr_base *sub = call->callee;
-    if (sub->kind != IR_EXPR_UNARY) {
-      info("expression kind is not unary");
-      break;
-    }
-
-    ir_expr_unary *sub_un = (ir_expr_unary *)sub;
-    if (sub_un->op != IR_EXPR_UNARY_LOAD) {
-      info("expression op is not load");
-      break;
-    }
-
-    ir_expr_base *sub_base = sub_un->first;
+    ir_expr_base *sub_base = call->callee;
     if (sub_base->kind != IR_EXPR_IDENTIFIER) {
       error("expression under load is not identifier");
       break;
@@ -581,6 +569,7 @@ static void cg_traverse_expr(struct dot_ctx_cg     *ctx_cg,
       list_push_back(ctx_cg->subroutine_edges,
                      dot_subroutine_edge_new(dsub->id, child));
     }
+    break;
   }
   case IR_EXPR_INDEX: {
     ir_expr_index *index = (ir_expr_index *)expr;
