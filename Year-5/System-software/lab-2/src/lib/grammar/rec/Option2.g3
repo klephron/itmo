@@ -25,6 +25,7 @@ tokens {
   CONST_DEC;
   CONST_CHAR;
   CONST_STR;
+  TYPE;
 }
 
 @headers{
@@ -42,16 +43,9 @@ source_item
 
 // TYPES
 type_ref
-  : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
-  | identifier
-  | arr='array' '[' (elems+=',')* ']' 'of' type_ref {
-
-// printf("elems: \%d\n", $elems->size($elems));
-
-// to build tree node
-// (pANTLR3_BASE_TREE)(ADAPTOR->createTypeText(ADAPTOR, ELEMS, (pANTLR3_UINT8) "10"))
-
-    } -> ^('array' ^(type_ref) ^(ELEMS $elems*))
+  : (tr='bool' | tr='byte' | tr='int' | tr='uint' | tr='long' | tr='ulong' | tr='char' | tr='string') -> ^(TYPE $tr)
+  | identifier -> ^(TYPE identifier)
+  | 'array' '[' (elems+=',')* ']' 'of' type_ref -> ^(TYPE ^('array' ^(type_ref) ^(ELEMS $elems*)))
   ;
 
 

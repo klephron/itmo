@@ -67,38 +67,58 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
 ir_ctx *option2_ir_build(const p_list ast) {
   ir_ctx *ctx = ir_ctx_new();
 
+  debug("----------------------------PASS1----------------------------");
+  ir_pass1 pass1_userp;
+  ir_pass1_init(&pass1_userp, ctx);
+
   for (list_it it = ast->head; it; it = it->next) {
     option2_ast *ast = it->data;
+
+    pass1_userp.file_name = option2_ast_filename(ast);
 
     pANTLR3_COMMON_TREE_NODE_STREAM nodes =
         antlr3CommonTreeNodeStreamNewTree(ast->result.tree, ANTLR3_SIZE_HINT);
 
-    debug("----------------------------PASS1----------------------------");
-    ir_pass1 pass1_userp;
-    ir_pass1_init(&pass1_userp, ctx, option2_ast_filename(ast));
     pOption2Pass1_GlobalSymbolResolution pass1 =
         Option2Pass1_GlobalSymbolResolutionNew(nodes);
+
     pass1->pTreeParser->rec->displayRecognitionError = displayRecognitionError;
     pass1->pTreeParser->rec->state->userp = &pass1_userp;
     pass1->source(pass1);
     pass1->pTreeParser->rec->state->userp = NULL;
-    debug("----------------------------PASS1----------------------------");
 
-    debug("----------------------------PASS2----------------------------");
-    ir_pass2 pass2_userp;
-    ir_pass2_init(&pass2_userp, ctx, option2_ast_filename(ast));
+    pass1->free(pass1);
+    nodes->free(nodes);
+  }
+
+  ir_pass1_deinit(&pass1_userp);
+  debug("----------------------------PASS1----------------------------");
+
+  debug("----------------------------PASS2----------------------------");
+  ir_pass2 pass2_userp;
+  ir_pass2_init(&pass2_userp, ctx);
+
+  for (list_it it = ast->head; it; it = it->next) {
+    option2_ast *ast = it->data;
+
+    pass2_userp.file_name = option2_ast_filename(ast);
+
+    pANTLR3_COMMON_TREE_NODE_STREAM nodes =
+        antlr3CommonTreeNodeStreamNewTree(ast->result.tree, ANTLR3_SIZE_HINT);
+
     pOption2Pass2_IR pass2 = Option2Pass2_IRNew(nodes);
+
     pass2->pTreeParser->rec->displayRecognitionError = displayRecognitionError;
     pass2->pTreeParser->rec->state->userp = &pass2_userp;
     pass2->source(pass2);
     pass2->pTreeParser->rec->state->userp = NULL;
-    ir_pass2_deinit(&pass2_userp);
-    debug("----------------------------PASS2----------------------------");
 
     pass2->free(pass2);
-    pass1->free(pass1);
     nodes->free(nodes);
   }
+
+  ir_pass2_deinit(&pass2_userp);
+  debug("----------------------------PASS2----------------------------");
 
   return ctx;
 }

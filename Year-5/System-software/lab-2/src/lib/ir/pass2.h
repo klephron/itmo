@@ -17,7 +17,7 @@ struct ir_pass2 {
 
 typedef struct ir_pass2 ir_pass2;
 
-void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx, const char *file_name);
+void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx);
 void ir_pass2_deinit(ir_pass2 *self);
 
 ir_term_lit *ir_pass2_str(ir_pass2 *self, ir_loc loc, const char *str);

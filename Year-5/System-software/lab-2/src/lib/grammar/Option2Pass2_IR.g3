@@ -35,21 +35,21 @@ source_item
 
 // TYPES
 type_ref returns [ir_t_base *v]
-  : 'bool'  { $v = ir_pass2_t_bool_new(IR_PASS2_ANTLR3_USERP()); }
-  | 'byte'  { $v = ir_pass2_t_byte_new(IR_PASS2_ANTLR3_USERP()); }
-  | 'int'   { $v = ir_pass2_t_int_new(IR_PASS2_ANTLR3_USERP()); }
-  | 'uint'  { $v = ir_pass2_t_uint_new(IR_PASS2_ANTLR3_USERP()); }
-  | 'long'  { $v = ir_pass2_t_long_new(IR_PASS2_ANTLR3_USERP()); }
-  | 'ulong' { $v = ir_pass2_t_ulong_new(IR_PASS2_ANTLR3_USERP()); }
-  | 'char'  { $v = ir_pass2_t_char_new(IR_PASS2_ANTLR3_USERP()); }
-  | 'string'{ $v = ir_pass2_t_string_new(IR_PASS2_ANTLR3_USERP()); }
+  : ^(TYPE 'bool')  { $v = ir_pass2_t_bool_new(IR_PASS2_ANTLR3_USERP()); }
+  | ^(TYPE 'byte')  { $v = ir_pass2_t_byte_new(IR_PASS2_ANTLR3_USERP()); }
+  | ^(TYPE 'int')   { $v = ir_pass2_t_int_new(IR_PASS2_ANTLR3_USERP()); }
+  | ^(TYPE 'uint')  { $v = ir_pass2_t_uint_new(IR_PASS2_ANTLR3_USERP()); }
+  | ^(TYPE 'long')  { $v = ir_pass2_t_long_new(IR_PASS2_ANTLR3_USERP()); }
+  | ^(TYPE 'ulong') { $v = ir_pass2_t_ulong_new(IR_PASS2_ANTLR3_USERP()); }
+  | ^(TYPE 'char')  { $v = ir_pass2_t_char_new(IR_PASS2_ANTLR3_USERP()); }
+  | ^(TYPE 'string'){ $v = ir_pass2_t_string_new(IR_PASS2_ANTLR3_USERP()); }
 
-  | identifier {
+  | ^(TYPE identifier) {
     $v = ir_pass2_t_custom_new(IR_PASS2_ANTLR3_USERP(), $identifier.v);
   }
 
-  | ^('array' tr=type_ref ^(ELEMS  ','*)) {
-    size_t dimension = IR_ANTLR3_SIZE($ELEMS) + 2;
+  | ^(TYPE ^('array' tr=type_ref ^(ELEMS  ','*))) {
+    size_t dimension = IR_ANTLR3_SIZE($ELEMS) + 1;
     $v = ir_pass2_t_array_new(IR_PASS2_ANTLR3_USERP(), dimension, $tr.v);
   }
   ;

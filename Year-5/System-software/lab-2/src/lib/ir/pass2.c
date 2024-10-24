@@ -47,10 +47,9 @@ static long ir_pass2_integer(const char *str, int base, char **err_str_out) {
   return number;
 }
 
-void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx, const char *file_name) {
+void ir_pass2_init(ir_pass2 *self, struct ir_ctx *ctx) {
   self->base.kind = IR_PASS_2;
   self->ctx = ctx;
-  self->file_name = file_name;
 
   self->scope_stack = ir_scope_stack_new();
   ir_scope *global = ir_scope_new(IR_SCOPE_GLOBAL, NULL, NULL, NULL);
@@ -494,9 +493,9 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
       const size_t prev_line = lsv->signature->id->base.loc.line;
       const size_t prev_offset = lsv->signature->id->base.loc.pos_start;
       exception   *ex = exception_new_f(
-            EXCEPTION_IR, subtype, sub->file_name, line, offset,
-            exception_subtype_ir_str(subtype), "previous definition in %s %d:%d",
-            lsv->file_name, prev_line, prev_offset);
+          EXCEPTION_IR, subtype, sub->file_name, line, offset,
+          exception_subtype_ir_str(subtype), "previous definition in %s %d:%d",
+          lsv->file_name, prev_line, prev_offset);
       ir_ctx_add_exception(ctx, ex);
       ok = 0;
     }
@@ -622,12 +621,10 @@ void ir_pass2_block_before(ir_pass2 *self) {
   ir_scope_stack_push(self->scope_stack, scope);
   // debug("scope block pushed");
 
-  list_push_front(self->break_stack, end);
   // debug("break_stack pushed");
 }
 
 ir_scope *ir_pass2_block_build(ir_pass2 *self, p_list scopes) {
-  list_pop_front(self->break_stack);
   // debug("break_stack popped");
 
   ir_scope *scope = ir_scope_stack_pop(self->scope_stack);

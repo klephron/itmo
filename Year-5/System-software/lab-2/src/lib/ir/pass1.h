@@ -12,7 +12,8 @@ struct ir_pass1 {
 
 typedef struct ir_pass1 ir_pass1;
 
-void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx, const char *file_name);
+void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx);
+void ir_pass1_deinit(ir_pass1 *self);
 
 ir_t_base *ir_pass1_t_bool_new(ir_pass1 *self);
 ir_t_base *ir_pass1_t_byte_new(ir_pass1 *self);

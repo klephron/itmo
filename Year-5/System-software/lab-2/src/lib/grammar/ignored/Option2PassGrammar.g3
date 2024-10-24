@@ -26,9 +26,9 @@ source_item
 
 // TYPES
 type_ref
-  : 'bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'
-  | identifier
-  |  ^('array' type_ref ^(ELEMS ','*))
+  : ^(TYPE ('bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string'))
+  | ^(TYPE identifier)
+  |  ^(TYPE ^('array' type_ref ^(ELEMS ','*)))
   ;
 
 

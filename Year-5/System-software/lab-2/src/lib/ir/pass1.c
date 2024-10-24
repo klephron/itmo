@@ -3,11 +3,12 @@
 #include "util/log.h"
 #include "util/macro.h"
 
-void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx, const char *file_name) {
+void ir_pass1_init(ir_pass1 *self, struct ir_ctx *ctx) {
   self->base.kind = IR_PASS_1;
   self->ctx = ctx;
-  self->file_name = file_name;
 }
+
+void ir_pass1_deinit(ir_pass1 *self) { self->ctx = NULL; }
 
 ir_t_base *ir_pass1_t_bool_new(ir_pass1 *self) {
   UNUSED(self);

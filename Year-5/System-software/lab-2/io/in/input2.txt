@@ -1,14 +1,10 @@
-method fun123():
+method fun3():
 begin
-  if true then true; else false;
-  a = 4;
-  if true then false; else true;
+  fun3();
+  fun4();
 end;
 
-method fun1():
+method fun4():
 begin
-  if true then true; else false;
-  a = 4
-
-  func123();
+  fun1();
 end;

@@ -545,7 +545,7 @@ static void cg_traverse_expr(struct dot_ctx_cg     *ctx_cg,
 
     ir_expr_base *sub_base = call->callee;
     if (sub_base->kind != IR_EXPR_IDENTIFIER) {
-      error("expression under load is not identifier");
+      debug("expression under load is not identifier");
       break;
     }
 
