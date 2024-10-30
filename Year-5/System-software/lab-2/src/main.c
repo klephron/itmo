@@ -68,7 +68,7 @@ void usage(struct args_struct *args) {
   printf(
       "Usage: %s [options] <file>...\n"
       "Options:\n"
-      "--tee            - print to file and to stdin (current: %d)\n"
+      "--tee            - print to file and to stdout (current: %d)\n"
       "--ignore-errors  - continue execution on errors (current: %d)\n"
       "--cfg-add-expr   - add expressions to control flow graph (current: %d)\n"
       "-o <directory>   - output directory (current: %s)\n"
