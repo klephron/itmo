@@ -1,18 +1,31 @@
-[tool.pyright]
-exclude = [".venv"]
-venvPath = "."
-venv = ".venv"
-
 [tool.poetry]
 name = "data-simulator"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+package-mode = false
+
+[tool.pyright]
+exclude = [".venv"]
+venvPath = "."
+venv = ".venv"
+
+[tool.mypy]
+files = "src"
+ignore_missing_imports = true
+strict = true
+disallow_untyped_defs = true
 
 [tool.poetry.dependencies]
 python = "^3.12"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+# black = "^24.10.0"
+# mypy = "^1.13.0"
+# ruff = "^0.7.1"
+# pyright = "^1.1.387"
 
 [build-system]
 requires = ["poetry-core"]
