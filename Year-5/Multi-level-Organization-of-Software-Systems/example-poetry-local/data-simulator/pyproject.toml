@@ -19,6 +19,7 @@ disallow_untyped_defs = true
 
 [tool.poetry.dependencies]
 python = "^3.12"
+model = { path = "../model" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
