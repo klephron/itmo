@@ -3,7 +3,7 @@
 
 Test(strcpy, test) {
   char buf[50];
-  const char * a = "four";
+  const char *a = "four";
 
   char *end = stpcpy(buf, a);
 
@@ -14,5 +14,4 @@ Test(strcpy, test) {
   end = stpcpy(end, a);
 
   cr_expect_str_eq("fourfourfourfour", buf);
-
 }

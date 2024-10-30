@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-int list_string_equals(const void *lsv, const void *rsv) { return strcmp(lsv, rsv); }
+int list_string_equals(const void *lsv, const void *rsv) {
+  return strcmp(lsv, rsv);
+}
 
 int list_equals_false(const void *lsv, const void *rsv) { return 1; }
 

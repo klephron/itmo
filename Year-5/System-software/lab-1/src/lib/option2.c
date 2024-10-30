@@ -17,7 +17,6 @@ static void displayRecognitionError(pANTLR3_BASE_RECOGNIZER recognizer,
   char *exc_name;
   char exc_msg[256]; // NOTE: limited message size
 
-
   if (!(recognizer->type != ANTLR3_TYPE_PARSER &&
         recognizer->type != ANTLR3_TYPE_LEXER)) {
   }
@@ -115,4 +114,3 @@ option2_ast(pANTLR3_UINT8 input_file, pANTLR3_INPUT_STREAM *stream_out,
 
   return r.tree;
 }
-
