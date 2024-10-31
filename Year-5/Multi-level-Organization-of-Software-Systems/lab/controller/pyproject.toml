@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "controller"
+version = "0.1.0"
+description = ""
+authors = []
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+pydantic = "^2.9.2"
+mypy = "^1.13.0"
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+plugins = [
+  "pydantic.mypy"
+]
+ignore_missing_imports = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
