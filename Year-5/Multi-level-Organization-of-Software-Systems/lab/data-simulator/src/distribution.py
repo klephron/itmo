@@ -6,9 +6,9 @@ def distribution_const(value: float) -> float:
     return value
 
 
-def distribution_linear(rng: random.Random, a: float, b: float) -> float:
-    return rng.uniform(a, b)
+def distribution_uniform(rng: random.Random, min: float, max: float) -> float:
+    return rng.uniform(min, max)
 
 
-def distribution_exp(rng: random.Random, a: float) -> float:
-    return -math.log(rng.random()) / a
+def distribution_exponential(rng: random.Random, min: float, mean: float) -> float:
+    return min + (-math.log(rng.random())) * (mean - min)

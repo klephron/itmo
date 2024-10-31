@@ -5,11 +5,11 @@ Message = dict[str, float]
 
 
 class Device:
-    id: int
+    id: str
     values: dict[str, Value]
     interval: Value
 
-    def __init__(self, id: int, interval: Value, values: dict[str, Value]):
+    def __init__(self, id: str, interval: Value, values: dict[str, Value]):
         self.id = id
         self.interval = interval
         self.values = values

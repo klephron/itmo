@@ -11,10 +11,10 @@ def __config_parse_value(elem: Any) -> Value:
 
     if elem["type"] == "CONST":
         return ValueConst(float(elem["value"]))
-    elif elem["type"] == "LINEAR":
-        return ValueLinear(float(elem["a"]), float(elem["b"]))
+    elif elem["type"] == "UNIFORM":
+        return ValueLinear(float(elem["min"]), float(elem["max"]))
     elif elem["type"] == "EXPONENTIAL":
-        return ValueExponential(float(elem["a"]))
+        return ValueExponential(float(elem.get("min", 0)), float(elem["mean"]))
     else:
         raise ValueError("unknown value", elem)
 
@@ -30,7 +30,7 @@ def __config_parse_values(elem: Any) -> dict[str, Value]:
 
 def __config_parse_device(elem: dict[Any, Any]) -> Device:
     return Device(
-        int(elem["id"]),
+        elem["id"],
         __config_parse_value(elem["interval"]),
         __config_parse_values(elem.get("values", {})),
     )

@@ -1,20 +1,42 @@
 from collections import namedtuple
+from threading import Timer
 from typing import Any
 from config import config_load_devices
 from simulation import Simulation
 from device import Device, Message
-import os
+from sortedcontainers import SortedDict
 import json
+import os
 import signal
 
 from value import Value, ValueConst, ValueExponential, ValueLinear
 
-simulation: Simulation
-
 InputParams = namedtuple("InputArgs", ["devices_cnt", "devices_freq", "json_path"])
+
+statistics = SortedDict()
+statistics_interval = 1
+
+
+def statistics_print():
+    global statistics_timer, statistics, statistics_interval
+
+    for k, v in statistics.items():
+        print(f"{k}: avg={v["sum"] / v["cnt"]}")
+    print()
+
+    statistics_timer = Timer(statistics_interval, statistics_print)
+    statistics_timer.start()
 
 
 def on_message(device: Device, message: Message, time: float) -> None:
+    if device.id not in statistics:
+        statistics[device.id] = {"cnt": 1, "sum": time, "last": time}
+    else:
+        stat = statistics[device.id]
+        stat["cnt"] += 1
+        stat["sum"] += time - stat["last"]
+        stat["last"] = time
+
     print("[", time, "]", ": id=", device.id, ",", json.dumps(message), sep="")
 
 
@@ -38,7 +60,7 @@ def devices_generic(cnt: int, freq: float) -> list[Device]:
     for i in range(1, cnt + 1):
         devices.append(
             Device(
-                i,
+                f"device/{i}",
                 ValueConst(interval),
                 values_generic(),
             )
@@ -69,6 +91,8 @@ def process_params() -> InputParams:
 
 
 if __name__ == "__main__":
+    global statistics_timer
+
     signal.signal(signal.SIGINT, signal_siginit)
 
     params = process_params()
@@ -80,4 +104,10 @@ if __name__ == "__main__":
 
     simulation = Simulation(devices, on_message)
     simulation.start()
+
+    # statistics_timer = Timer(statistics_interval, statistics_print)
+    # statistics_timer.start()
+
     simulation.join()
+
+    # statistics_timer.cancel()

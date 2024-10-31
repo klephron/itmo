@@ -1,7 +1,7 @@
 import random
 from typing import Callable
 
-from distribution import distribution_const, distribution_exp, distribution_linear
+from distribution import distribution_const, distribution_exponential, distribution_uniform
 
 
 class Value:
@@ -24,10 +24,10 @@ class ValueConst(Value):
 
 
 class ValueLinear(Value):
-    def __init__(self, a: float, b: float, seed: int | None = None) -> None:
-        super().__init__(seed, lambda rng: distribution_linear(rng, a, b))
+    def __init__(self, min: float, max: float, seed: int | None = None) -> None:
+        super().__init__(seed, lambda rng: distribution_uniform(rng, min, max))
 
 
 class ValueExponential(Value):
-    def __init__(self, a: float, seed: int | None = None) -> None:
-        super().__init__(seed, lambda rng: distribution_exp(rng, a))
+    def __init__(self, min: float, mean: float = 0, seed: int | None = None) -> None:
+        super().__init__(seed, lambda rng: distribution_exponential(rng, min, mean))
