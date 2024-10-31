@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "interval": {
+      "type": "CONST",
+      "value": 4
+    },
+    "values": {
+      "a": {
+        "type": "CONST",
+        "value": 4
+      },
+      "b": {
+        "type": "LINEAR",
+        "a": 4,
+        "b": 15
+      },
+      "c": {
+        "type": "EXPONENTIAL",
+        "a": 2
+      }
+    }
+  },
+  {
+    "id": 2,
+    "interval": {
+      "type": "LINEAR",
+      "a": 4,
+      "b": 15
+    }
+  },
+  {
+    "id": 3,
+    "interval": {
+      "type": "EXPONENTIAL",
+      "a": 2
+    }
+  },
+  {
+    "id": 4,
+    "interval": {
+      "type": "CONST",
+      "value": 4
+    }
+  }
+]

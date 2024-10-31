@@ -1,11 +1,17 @@
+from collections import namedtuple
 from typing import Any
-from simulation import Device, Message, Simulation
+from config import config_load_devices
+from simulation import Simulation
+from device import Device, Message
+import os
 import json
 import signal
 
-from value import ValueConst, ValueExponential, ValueLinear
+from value import Value, ValueConst, ValueExponential, ValueLinear
 
 simulation: Simulation
+
+InputParams = namedtuple("InputArgs", ["devices_cnt", "devices_freq", "json_path"])
 
 
 def on_message(device: Device, message: Message, time: float) -> None:
@@ -17,19 +23,61 @@ def signal_siginit(*_: Any) -> None:
     print("simulation terminated")
 
 
+def values_generic() -> dict[str, Value]:
+    return {
+        "a": ValueExponential(10),
+        "b": ValueExponential(1),
+        "c": ValueConst(3),
+        "d": ValueLinear(0, 10),
+    }
+
+
+def devices_generic(cnt: int, freq: float) -> list[Device]:
+    devices: list[Device] = []
+    interval: float = 1 / freq
+    for i in range(1, cnt + 1):
+        devices.append(
+            Device(
+                i,
+                ValueConst(interval),
+                values_generic(),
+            )
+        )
+
+    return devices
+
+
+def process_params() -> InputParams:
+    if (os.environ.get("SIMULATOR_JSON_PATH") is not None) and (
+        os.environ.get("SIMULATOR_DEVICES_CNT") is not None
+        or os.environ.get("SIMULATOR_DEVICES_FREQ") is not None
+    ):
+        raise ValueError(
+            "set only SIMULATOR_JSON_PATH or (SIMULATOR_DEVICES_CNT,SIMULATOR_DEVICES_FREQ)"
+        )
+
+    try:
+        devices_cnt = int(os.environ.get("SIMULATOR_DEVICES_CNT", "10"))
+        devices_freq = float(os.environ.get("SIMULATOR_DEVICES_FREQ", "5"))
+        json_path = os.environ.get("SIMULATOR_JSON_PATH")
+    except ValueError:
+        raise ValueError("Look in process_params() for valid argument passing")
+
+    return InputParams(
+        devices_cnt=devices_cnt, devices_freq=devices_freq, json_path=json_path
+    )
+
+
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_siginit)
 
-    simulation = Simulation(
-        [
-            Device(1, ValueExponential(1), {"a": ValueLinear(3, 6)}),
-            Device(2, ValueLinear(0, 2), {"a": ValueLinear(3, 6)}),
-            Device(3, ValueLinear(0, 2), {"a": ValueLinear(3, 6)}),
-            Device(4, ValueConst(3), {"a": ValueLinear(3, 6)}),
-            Device(5, ValueConst(3), {"a": ValueLinear(3, 6)}),
-        ],
-        on_message,
-    )
+    params = process_params()
+
+    if params.json_path is not None:
+        devices = config_load_devices(params.json_path)
+    else:
+        devices = devices_generic(params.devices_cnt, params.devices_freq)
+
+    simulation = Simulation(devices, on_message)
     simulation.start()
     simulation.join()
-    print("end")
