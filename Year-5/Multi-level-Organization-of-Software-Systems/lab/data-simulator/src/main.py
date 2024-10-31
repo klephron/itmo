@@ -11,13 +11,14 @@ import signal
 
 from value import Value, ValueConst, ValueExponential, ValueLinear
 
-InputParams = namedtuple("InputArgs", ["devices_cnt", "devices_freq", "json_path"])
+InputParams = namedtuple("InputParams", ["devices_cnt", "devices_freq", "json_path"])
 
 statistics = SortedDict()
+statistics_timer: Timer
 statistics_interval = 1
 
 
-def statistics_print():
+def statistics_print() -> None:
     global statistics_timer, statistics, statistics_interval
 
     for k, v in statistics.items():
@@ -91,8 +92,6 @@ def process_params() -> InputParams:
 
 
 if __name__ == "__main__":
-    global statistics_timer
-
     signal.signal(signal.SIGINT, signal_siginit)
 
     params = process_params()

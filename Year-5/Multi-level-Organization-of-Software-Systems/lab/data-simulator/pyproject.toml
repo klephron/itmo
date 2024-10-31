@@ -20,6 +20,7 @@ warn_redundant_casts = true
 plugins = [
   "pydantic.mypy"
 ]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core"]
