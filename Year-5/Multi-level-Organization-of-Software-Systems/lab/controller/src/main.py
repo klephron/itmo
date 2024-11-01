@@ -53,7 +53,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             received_data = json.loads(post_data)
 
-            mongo_devices.insert_one({"id": device_id, "body": received_data})
+            mongo_devices.insert_one({"id": device_id, "data": received_data})
             requests.post(params.rule_engine_url + "/devices/" + device_id, json=received_data)
 
             response = {"msg": "ok"}

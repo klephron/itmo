@@ -26,6 +26,27 @@ mongo_database: Database[Any]
 mongo_rules: Collection[Any]
 
 
+def get_device_rules(
+    device_id: str, device_data: dict[Any, Any]
+) -> list[dict[Any, Any]]:
+    rules: list[dict[Any, Any]] = []
+
+    if "exponential_0_10" in device_data:
+        value = device_data["exponential_0_10"]
+        if value > 20:
+            rules.append(
+                {
+                    "group": "devices",
+                    "device_id": device_id,
+                    "attribute": "exponential_0_10",
+                    "value": value,
+                    "msg": "value > 20",
+                }
+            )
+
+    return rules
+
+
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         if self.path.startswith("/devices/"):
@@ -47,11 +68,15 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
 
+        device_id = self.path[len(prefix) :]
+
         try:
             received_data = json.loads(post_data)
-            mongo_rules.insert_one(
-                {"device_id": self.path[len(prefix) :], "body": received_data}
-            )
+
+            rules = get_device_rules(device_id, received_data)
+            if len(rules) > 0:
+                mongo_rules.insert_many(rules)
+
             response = {"msg": "ok"}
         except json.JSONDecodeError:
             response = {"error": "Invalid JSON"}
