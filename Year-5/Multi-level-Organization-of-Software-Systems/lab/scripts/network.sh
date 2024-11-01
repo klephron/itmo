@@ -48,7 +48,7 @@ case "$1" in
     name
     ;;
   *)
-    echo "unknown command"
+    echo "Usage $0: {create|rm|connect|disconnect|inspect|name}"
     exit 1
     ;;
 esac

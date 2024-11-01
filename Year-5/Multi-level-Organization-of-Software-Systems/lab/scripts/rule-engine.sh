@@ -57,7 +57,7 @@ case "$1" in
     recreate
     ;;
   *)
-    echo "unknown command"
+    echo "Usage $0: {start|stop|inspect|restart|rm|name|recreate}"
     exit 1
     ;;
 esac

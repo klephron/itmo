@@ -44,7 +44,7 @@ case "$1" in
     recreate
     ;;
   *)
-    echo "unknown command"
+    echo "Usage $0: {create|destroy|recreate}"
     exit 1
     ;;
 esac
