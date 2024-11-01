@@ -13,6 +13,9 @@ create() {
   bash $script_dir/mongo.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/mongo.sh name)
 
+  bash $script_dir/rabbitmq.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/rabbitmq.sh name)
+
   bash $script_dir/rule-engine.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/rule-engine.sh name)
 
@@ -32,6 +35,9 @@ destroy() {
 
   bash $script_dir/rule-engine.sh stop
   bash $script_dir/rule-engine.sh rm
+
+  bash $script_dir/rabbitmq.sh stop
+  bash $script_dir/rabbitmq.sh rm
 
   bash $script_dir/mongo.sh stop
   bash $script_dir/mongo.sh rm
