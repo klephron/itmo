@@ -1,9 +1,35 @@
 [
   {
-    "id": "4",
+    "id": "1",
     "interval": {
       "type": "CONST",
       "value": 0.000014
+    },
+    "values": {
+      "const_10": {
+        "type": "CONST",
+        "value": 0.000014
+      },
+      "uniform_0_10": {
+        "type": "UNIFORM",
+        "min": 0,
+        "max": 10
+      },
+      "exponential_0_5": {
+        "type": "EXPONENTIAL",
+        "min": 0,
+        "mean": 5
+      },
+      "exponential_10_5": {
+        "type": "EXPONENTIAL",
+        "min": 10,
+        "mean": 5
+      },
+      "exponential_0_10": {
+        "type": "EXPONENTIAL",
+        "min": 0,
+        "mean": 10
+      }
     }
   }
 ]

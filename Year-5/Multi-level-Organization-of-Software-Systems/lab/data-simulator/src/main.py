@@ -37,9 +37,9 @@ delay_iter: int = 0
 def statistics_print() -> None:
     global statistics_timer, statistics, statistics_interval
 
+    print("statistics:")
     for k, v in statistics.items():
-        print(f"{k}: avg={v["sum"] / v["cnt"]}")
-    print()
+        print(f"  {k}: interval.average:\t{v["sum"] / v["cnt"] :.6f}")
 
     statistics_timer = Timer(params.statistics_interval, statistics_print)
     statistics_timer.start()
@@ -64,7 +64,9 @@ def on_message(device: Device, message: Message, time: float, delay: float) -> N
             delay_diff = delay - delay_last
 
             if delay > params.delay_check_threshold:
-                print(f"warn: current delay {delay_last :.3f}+{delay_diff :.3f}")
+                print(
+                    f"warn: current simulation delay {delay_last :.3f}+{delay_diff :.3f}"
+                )
 
             delay_last = delay
 
