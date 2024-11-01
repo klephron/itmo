@@ -13,6 +13,9 @@ create() {
   bash $script_dir/mongo.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/mongo.sh name)
 
+  bash $script_dir/rule-engine.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/rule-engine.sh name)
+
   bash $script_dir/controller.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/controller.sh name)
 
@@ -26,6 +29,9 @@ destroy() {
 
   bash $script_dir/controller.sh stop
   bash $script_dir/controller.sh rm
+
+  bash $script_dir/rule-engine.sh stop
+  bash $script_dir/rule-engine.sh rm
 
   bash $script_dir/mongo.sh stop
   bash $script_dir/mongo.sh rm

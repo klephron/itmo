@@ -6,11 +6,13 @@ from typing import Any
 from collections import namedtuple
 import os
 from pymongo import MongoClient
+from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
+import requests
 
 InputParams = namedtuple(
     "InputParams",
-    ["mongo_url", "mongo_username", "mongo_password"],
+    ["mongo_url", "mongo_username", "mongo_password", "rule_engine_url"],
 )
 
 ROUTES = [("/")]
@@ -20,8 +22,9 @@ params: InputParams
 httpd_port: int = 8080
 httpd: HTTPServer
 
-mongo_client: MongoClient
-mongo_database: Database
+mongo_client: MongoClient[Any]
+mongo_database: Database[Any]
+mongo_devices: Collection[Any]
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -35,7 +38,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def log_message(self, format: Any, *args: Any) -> None:
         return
 
-    def __handle_devices(self, prefix) -> None:
+    def __handle_devices(self, prefix: str) -> None:
         global mongo_devices
 
         self.send_response(200)
@@ -45,11 +48,14 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
 
+        device_id = self.path[len(prefix) :]
+
         try:
             received_data = json.loads(post_data)
-            mongo_devices.insert_one(
-                {"id": self.path[len(prefix) :], "body": received_data}
-            )
+
+            mongo_devices.insert_one({"id": device_id, "body": received_data})
+            requests.post(params.rule_engine_url + "/devices/" + device_id, json=received_data)
+
             response = {"msg": "ok"}
         except json.JSONDecodeError:
             response = {"error": "Invalid JSON"}
@@ -69,10 +75,14 @@ def process_params() -> InputParams:
     if os.environ.get("CONTROLLER_MONGO_URL") is None:
         raise ValueError("not set CONTROLLER_MONGO_URL")
 
+    if os.environ.get("CONTROLLER_RULE_ENGINE_URL") is None:
+        raise ValueError("not set CONTROLLER_RULE_ENGINE_URL")
+
     try:
         mongo_url = os.environ.get("CONTROLLER_MONGO_URL")
         mongo_username = os.environ.get("CONTROLLER_MONGO_USERNAME", "root")
         mongo_password = os.environ.get("CONTROLLER_MONGO_PASSWORD", "root")
+        rule_engine_url = os.environ.get("CONTROLLER_RULE_ENGINE_URL")
 
     except ValueError:
         raise ValueError("Look in process_params() for valid argument passing")
@@ -81,6 +91,7 @@ def process_params() -> InputParams:
         mongo_url=mongo_url,
         mongo_username=mongo_username,
         mongo_password=mongo_password,
+        rule_engine_url=rule_engine_url,
     )
 
 
