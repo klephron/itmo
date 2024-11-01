@@ -21,8 +21,8 @@ restart() {
   docker restart $container_name
 }
 
-status() {
-  echo "status"
+inspect() {
+  docker inspect $container_name
 }
 
 rm() {
@@ -36,8 +36,8 @@ case "$1" in
   stop)
     stop
     ;;
-  status)
-    status
+  inspect)
+    inspect
     ;;
   restart)
     restart
@@ -46,7 +46,7 @@ case "$1" in
     rm
     ;;
   *)
-    echo "Usage: $0 {start|stop|status|restart}"
+    echo "unknown command"
     exit 1
     ;;
 esac

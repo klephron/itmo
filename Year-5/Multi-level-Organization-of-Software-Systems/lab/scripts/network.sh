@@ -41,7 +41,7 @@ case "$1" in
     inspect
     ;;
   *)
-    echo "Usage: $0 {start|stop|status|restart}"
+    echo "unknown command"
     exit 1
     ;;
 esac
