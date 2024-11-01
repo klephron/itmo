@@ -12,6 +12,16 @@ httpd: HTTPServer
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
+        if self.path.startswith("/devices"):
+            self.__handle_devices()
+            return
+
+        self.__handle_unknown_route()
+
+    def log_message(self, format: Any, *args: Any):
+        return
+
+    def __handle_devices(self):
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
@@ -22,14 +32,19 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             received_data = json.loads(post_data)
             print(self.path, received_data)
-            response = {"message": "ok"}
+            response = {"msg": "ok"}
         except json.JSONDecodeError:
             response = {"error": "Invalid JSON"}
 
         self.wfile.write(json.dumps(response).encode("utf-8"))
 
-    def log_message(self, format: Any, *args: Any):
-        return
+    def __handle_unknown_route(self):
+        self.send_response(404)
+        self.end_headers()
+
+        response = {"error": "unknown route"}
+
+        self.wfile.write(json.dumps(response).encode("utf-8"))
 
 
 def httpd_shutdown() -> None:

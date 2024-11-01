@@ -72,7 +72,13 @@ def on_message(device: Device, message: Message, time: float, delay: float) -> N
             delay_last = delay
 
     try:
-        requests.post(params.controller_url + f"/devices/{device.id}", json=message)
+        resp = requests.post(
+            params.controller_url + f"/devices/{device.id}", json=message
+        )
+        if resp.status_code != 200:
+            print(
+                f"error: received code {resp.status_code} with content '{resp.content.decode("utf-8")}'"
+            )
     except (
         requests.exceptions.InvalidSchema,
         requests.exceptions.ConnectionError,
