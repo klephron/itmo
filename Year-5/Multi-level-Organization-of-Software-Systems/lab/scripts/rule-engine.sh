@@ -28,6 +28,12 @@ name() {
   echo $container_name
 }
 
+recreate() {
+  stop
+  rm
+  start
+}
+
 case "$1" in
   start)
     start
@@ -46,6 +52,9 @@ case "$1" in
     ;;
   name)
     name
+    ;;
+  recreate)
+    recreate
     ;;
   *)
     echo "unknown command"

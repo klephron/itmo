@@ -6,6 +6,7 @@ container="mops-controller:latest"
 start() {
   docker run --name $container_name \
     -p 9001:8080 \
+    -e CONTROLLER_MONGO_URL="mongodb://mops-mongo:27017/" \
     -d $container
 }
 
@@ -29,6 +30,12 @@ name() {
   echo $container_name
 }
 
+recreate() {
+  stop
+  rm
+  start
+}
+
 case "$1" in
   start)
     start
@@ -47,6 +54,9 @@ case "$1" in
     ;;
   name)
     name
+    ;;
+  recreate)
+    recreate
     ;;
   *)
     echo "unknown command"

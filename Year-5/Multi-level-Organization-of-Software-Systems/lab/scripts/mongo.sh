@@ -8,6 +8,7 @@ mongo_root_password="root"
 
 start() {
   docker run --name $container_name \
+    -p 9011:27017 \
     -e MONGO_INITDB_ROOT_USERNAME="$mongo_root_username" \
     -e MONGO_INITDB_ROOT_PASSWORD="$mongo_root_password" \
     -d $container
@@ -33,6 +34,12 @@ name() {
   echo $container_name
 }
 
+recreate() {
+  stop
+  rm
+  start
+}
+
 case "$1" in
   start)
     start
@@ -51,6 +58,9 @@ case "$1" in
     ;;
   name)
     name
+    ;;
+  recreate)
+    recreate
     ;;
   *)
     echo "unknown command"
