@@ -73,11 +73,6 @@ def on_message(device: Device, message: Message, time: float, delay: float) -> N
     # print(f"[{time :.3f},delay={delay :.3f}],", json.dumps(message), sep="")
 
 
-def signal_terminate(*_: Any) -> None:
-    simulation.terminate()
-    print("simulation terminated")
-
-
 def values_generic() -> dict[str, Value]:
     return {
         "const_10": ValueConst(10),
@@ -140,6 +135,11 @@ def process_params() -> InputParams:
         statistics_enable=statistics_enable,
         statistics_interval=statistics_interval,
     )
+
+
+def signal_terminate(*_: Any) -> None:
+    simulation.terminate()
+    print("simulation terminated")
 
 
 if __name__ == "__main__":

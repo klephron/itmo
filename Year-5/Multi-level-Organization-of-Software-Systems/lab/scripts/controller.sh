@@ -5,6 +5,7 @@ container="mops-controller:latest"
 
 start() {
   docker run --name $container_name \
+    -p 9001:8080 \
     -d $container
 }
 
