@@ -23,7 +23,7 @@ class ValueConst(Value):
         super().__init__(None, lambda _: distribution_const(value))
 
 
-class ValueLinear(Value):
+class ValueUniform(Value):
     def __init__(self, min: float, max: float, seed: int | None = None) -> None:
         super().__init__(seed, lambda rng: distribution_uniform(rng, min, max))
 

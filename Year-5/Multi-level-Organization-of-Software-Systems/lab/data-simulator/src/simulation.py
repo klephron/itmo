@@ -4,20 +4,23 @@ from threading import Timer
 from typing import Tuple
 
 from device import Device, Message
+from util import get_timestamp_now
 
 
 class Simulation:
     queue: PriorityQueue[Tuple[float, Device]]
     devices: list[Device]
-    on_message: Callable[[Device, Message, float], None]
+    on_message: Callable[[Device, Message, float, float], None]
     is_running: bool
-    current_time: float
+    current_interval: float
+    start_timestamp: float
+    current_delay: float
     timer: Timer | None
 
     def __init__(
         self,
         devices: list[Device],
-        on_message: Callable[[Device, Message, float], None],
+        on_message: Callable[[Device, Message, float, float], None],
     ) -> None:
         self.queue = PriorityQueue()
         self.devices = devices
@@ -30,7 +33,8 @@ class Simulation:
             self.queue.put((interval, device))
 
         self.is_running = True
-        self.current_time = 0
+        self.current_interval = 0
+        self.start_timestamp = get_timestamp_now()
         self.__continue()
 
     def stop(self, wait: bool | None = True) -> None:
@@ -56,11 +60,13 @@ class Simulation:
             self.timer.start()
 
     def __next(self) -> None:
+        self.current_delay = -self.__next_timeout()
+
         current_time, device = self.queue.get()
         message = device.get_message()
 
-        self.current_time = current_time
-        self.on_message(device, message, self.current_time)
+        self.on_message(device, message, current_time, self.current_delay)
+        self.current_interval = current_time
         self.queue.task_done()
 
         if self.is_running:
@@ -70,4 +76,4 @@ class Simulation:
         self.__continue()
 
     def __next_timeout(self) -> float:
-        return self.queue.queue[0][0] - self.current_time
+        return self.queue.queue[0][0] - (get_timestamp_now() - self.start_timestamp)

@@ -9,13 +9,29 @@ import json
 import os
 import signal
 
-from value import Value, ValueConst, ValueExponential, ValueLinear
+from value import Value, ValueConst, ValueExponential, ValueUniform
 
-InputParams = namedtuple("InputParams", ["devices_cnt", "devices_freq", "json_path"])
+InputParams = namedtuple(
+    "InputParams",
+    [
+        "devices_cnt",
+        "devices_freq",
+        "json_path",
+        "delay_check_enable",
+        "delay_check_iters",
+        "delay_check_threshold",
+        "statistics_enable",
+        "statistics_interval",
+    ],
+)
+
+params: InputParams
 
 statistics = SortedDict()
-statistics_timer: Timer
-statistics_interval = 1
+statistics_timer: Timer | None = None
+
+delay_last: float = 0
+delay_iter: int = 0
 
 
 def statistics_print() -> None:
@@ -25,20 +41,34 @@ def statistics_print() -> None:
         print(f"{k}: avg={v["sum"] / v["cnt"]}")
     print()
 
-    statistics_timer = Timer(statistics_interval, statistics_print)
+    statistics_timer = Timer(params.statistics_interval, statistics_print)
     statistics_timer.start()
 
 
-def on_message(device: Device, message: Message, time: float) -> None:
-    if device.id not in statistics:
-        statistics[device.id] = {"cnt": 1, "sum": time, "last": time}
-    else:
-        stat = statistics[device.id]
-        stat["cnt"] += 1
-        stat["sum"] += time - stat["last"]
-        stat["last"] = time
+def on_message(device: Device, message: Message, time: float, delay: float) -> None:
+    global params, delay_last, delay_iter
 
-    print("[", time, "]", ": id=", device.id, ",", json.dumps(message), sep="")
+    if params.statistics_enable:
+        if device.id not in statistics:
+            statistics[device.id] = {"cnt": 1, "sum": time, "last": time}
+        else:
+            stat = statistics[device.id]
+            stat["cnt"] += 1
+            stat["sum"] += time - stat["last"]
+            stat["last"] = time
+
+    if params.delay_check_enable:
+        delay_iter = (delay_iter + 1) % params.delay_check_iters
+
+        if delay_iter == 0:
+            delay_diff = delay - delay_last
+
+            if delay > params.delay_check_threshold:
+                print(f"warn: current delay {delay_last :.3f}+{delay_diff :.3f}")
+
+            delay_last = delay
+
+    # print(f"[{time :.3f},delay={delay :.3f}],", json.dumps(message), sep="")
 
 
 def signal_terminate(*_: Any) -> None:
@@ -48,10 +78,11 @@ def signal_terminate(*_: Any) -> None:
 
 def values_generic() -> dict[str, Value]:
     return {
-        "a": ValueExponential(10),
-        "b": ValueExponential(1),
-        "c": ValueConst(3),
-        "d": ValueLinear(0, 10),
+        "const_10": ValueConst(10),
+        "uniform_0_10": ValueUniform(0, 10),
+        "exponential_0_5": ValueExponential(0, 5),
+        "exponential_10_5": ValueExponential(10, 5),
+        "exponential_0_10": ValueExponential(0, 10),
     }
 
 
@@ -83,11 +114,29 @@ def process_params() -> InputParams:
         devices_cnt = int(os.environ.get("SIMULATOR_DEVICES_CNT", "10"))
         devices_freq = float(os.environ.get("SIMULATOR_DEVICES_FREQ", "5"))
         json_path = os.environ.get("SIMULATOR_JSON_PATH")
+        delay_check_enable = bool(
+            os.environ.get("SIMULATOR_DELAY_CHECK_ENABLE", "True")
+        )
+        delay_check_iters = int(os.environ.get("SIMULATOR_DELAY_CHECK_ITER", "1000"))
+        delay_check_threshold = float(
+            os.environ.get("SIMULATOR_DELAY_CHECK_THRESHOLD", "1")
+        )
+        statistics_enable = bool(os.environ.get("SIMULATOR_STATISTICS_ENABLE", "True"))
+        statistics_interval = float(
+            os.environ.get("SIMULATOR_STATISTICS_INTERVAL", "1")
+        )
     except ValueError:
         raise ValueError("Look in process_params() for valid argument passing")
 
     return InputParams(
-        devices_cnt=devices_cnt, devices_freq=devices_freq, json_path=json_path
+        devices_cnt=devices_cnt,
+        devices_freq=devices_freq,
+        json_path=json_path,
+        delay_check_enable=delay_check_enable,
+        delay_check_iters=delay_check_iters,
+        delay_check_threshold=delay_check_threshold,
+        statistics_enable=statistics_enable,
+        statistics_interval=statistics_interval,
     )
 
 
@@ -105,9 +154,11 @@ if __name__ == "__main__":
     simulation = Simulation(devices, on_message)
     simulation.start()
 
-    # statistics_timer = Timer(statistics_interval, statistics_print)
-    # statistics_timer.start()
+    if params.statistics_enable:
+        statistics_timer = Timer(params.statistics_interval, statistics_print)
+        statistics_timer.start()
 
     simulation.join()
 
-    # statistics_timer.cancel()
+    if params.statistics_enable and statistics_timer is not None:
+        statistics_timer.cancel()

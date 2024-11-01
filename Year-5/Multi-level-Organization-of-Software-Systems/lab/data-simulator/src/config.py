@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 from device import Device
-from value import Value, ValueConst, ValueExponential, ValueLinear
+from value import Value, ValueConst, ValueExponential, ValueUniform
 
 
 def __config_parse_value(elem: Any) -> Value:
@@ -12,7 +12,7 @@ def __config_parse_value(elem: Any) -> Value:
     if elem["type"] == "CONST":
         return ValueConst(float(elem["value"]))
     elif elem["type"] == "UNIFORM":
-        return ValueLinear(float(elem["min"]), float(elem["max"]))
+        return ValueUniform(float(elem["min"]), float(elem["max"]))
     elif elem["type"] == "EXPONENTIAL":
         return ValueExponential(float(elem.get("min", 0)), float(elem["mean"]))
     else:
