@@ -41,34 +41,48 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def __handle_devices(self, prefix: str) -> None:
         global mongo_devices
 
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
-
         device_id = self.path[len(prefix) :]
 
         try:
             received_data = json.loads(post_data)
 
-            mongo_devices.insert_one({"id": device_id, "data": received_data})
-            requests.post(params.rule_engine_url + "/devices/" + device_id, json=received_data)
+            if not self.__validate_devices(received_data):
+                response = {"error": "bad request"}
+                self.send_response(400)
+            else:
+                mongo_devices.insert_one({"id": device_id, "data": received_data})
 
-            response = {"msg": "ok"}
+                requests.post(
+                    params.rule_engine_url + "/devices/" + device_id, json=received_data
+                )
+
+                response = {"msg": "ok"}
+                self.send_response(200)
+
         except json.JSONDecodeError:
             response = {"error": "Invalid JSON"}
+            self.send_response(415)
 
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
         self.wfile.write(json.dumps(response).encode("utf-8"))
 
     def __handle_unknown_route(self) -> None:
+        self.send_header("Content-Type", "application/json")
         self.send_response(404)
         self.end_headers()
+        self.wfile.write(json.dumps({"error": "unknown route"}).encode("utf-8"))
 
-        response = {"error": "unknown route"}
+    def __validate_devices(self, data: dict[Any, Any]) -> bool:
+        for k, v in data.items():
+            if not isinstance(k, str):
+                return False
+            if not (isinstance(v, float) or isinstance(v, int)):
+                return False
 
-        self.wfile.write(json.dumps(response).encode("utf-8"))
+        return True
 
 
 def process_params() -> InputParams:

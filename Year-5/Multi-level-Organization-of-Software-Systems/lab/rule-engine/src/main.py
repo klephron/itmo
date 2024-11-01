@@ -44,13 +44,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def __handle_devices(self, prefix: str) -> None:
         global mongo_rules
 
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
-
         device_id = self.path[len(prefix) :]
 
         try:
@@ -63,18 +58,20 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 mongo_rules.insert_many(rules)
 
             response = {"msg": "ok"}
+            self.send_response(200)
         except json.JSONDecodeError:
             response = {"error": "Invalid JSON"}
+            self.send_response(415)
 
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
         self.wfile.write(json.dumps(response).encode("utf-8"))
 
     def __handle_unknown_route(self) -> None:
         self.send_response(404)
+        self.send_header("Content-Type", "application/json")
         self.end_headers()
-
-        response = {"error": "unknown route"}
-
-        self.wfile.write(json.dumps(response).encode("utf-8"))
+        self.wfile.write(json.dumps({"error": "unknown route"}).encode("utf-8"))
 
 
 def process_params() -> InputParams:
