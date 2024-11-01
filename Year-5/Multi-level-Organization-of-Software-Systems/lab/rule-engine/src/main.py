@@ -8,6 +8,8 @@ import os
 from pymongo import MongoClient
 from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
+import datetime
+from rule import RuleCtx
 
 InputParams = namedtuple(
     "InputParams",
@@ -21,30 +23,11 @@ params: InputParams
 httpd_port: int = 8080
 httpd: HTTPServer
 
+rule_ctx = RuleCtx()
+
 mongo_client: MongoClient[Any]
 mongo_database: Database[Any]
 mongo_rules: Collection[Any]
-
-
-def get_device_rules(
-    device_id: str, device_data: dict[Any, Any]
-) -> list[dict[Any, Any]]:
-    rules: list[dict[Any, Any]] = []
-
-    if "exponential_0_10" in device_data:
-        value = device_data["exponential_0_10"]
-        if value > 20:
-            rules.append(
-                {
-                    "group": "devices",
-                    "device_id": device_id,
-                    "attribute": "exponential_0_10",
-                    "value": value,
-                    "msg": "value > 20",
-                }
-            )
-
-    return rules
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -73,7 +56,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             received_data = json.loads(post_data)
 
-            rules = get_device_rules(device_id, received_data)
+            rules = rule_ctx.get_device(
+                device_id, received_data, datetime.datetime.now()
+            )
             if len(rules) > 0:
                 mongo_rules.insert_many(rules)
 
@@ -132,6 +117,11 @@ if __name__ == "__main__":
     )
     mongo_database = mongo_client["mops"]
     mongo_rules = mongo_database["rules"]
+    mongo_rules.create_index(
+        {
+            "time": 1,
+        }
+    )
 
     server_address = ("", httpd_port)
     httpd = HTTPServer(server_address, HTTPRequestHandler)
