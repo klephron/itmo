@@ -41,7 +41,7 @@ def on_message(device: Device, message: Message, time: float) -> None:
     print("[", time, "]", ": id=", device.id, ",", json.dumps(message), sep="")
 
 
-def signal_siginit(*_: Any) -> None:
+def signal_terminate(*_: Any) -> None:
     simulation.terminate()
     print("simulation terminated")
 
@@ -92,7 +92,8 @@ def process_params() -> InputParams:
 
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_siginit)
+    signal.signal(signal.SIGINT, signal_terminate)
+    signal.signal(signal.SIGTERM, signal_terminate)
 
     params = process_params()
 
