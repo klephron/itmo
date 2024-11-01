@@ -5,6 +5,7 @@ container="mops-data-simulator:latest"
 
 start() {
   docker run --name $container_name \
+    -e SIMULATOR_CONTROLLER_URL="http://mops-controller:8080" \
     -d $container
 }
 
@@ -24,6 +25,10 @@ rm() {
   docker rm $container_name
 }
 
+name() {
+  echo $container_name
+}
+
 case "$1" in
   start)
     start
@@ -39,6 +44,9 @@ case "$1" in
     ;;
   rm)
     rm
+    ;;
+  name)
+    name
     ;;
   *)
     echo "unknown command"

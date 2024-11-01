@@ -24,6 +24,10 @@ inspect() {
   docker network inspect $network_name
 }
 
+name() {
+  echo $network_name
+}
+
 case "$1" in
   create)
     create
@@ -39,6 +43,9 @@ case "$1" in
     ;;
   inspect)
     inspect
+    ;;
+  name)
+    name
     ;;
   *)
     echo "unknown command"

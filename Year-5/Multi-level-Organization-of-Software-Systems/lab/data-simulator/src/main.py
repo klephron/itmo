@@ -5,7 +5,7 @@ from config import config_load_devices
 from simulation import Simulation
 from device import Device, Message
 from sortedcontainers import SortedDict
-import json
+import requests
 import os
 import signal
 
@@ -22,6 +22,7 @@ InputParams = namedtuple(
         "delay_check_threshold",
         "statistics_enable",
         "statistics_interval",
+        "controller_url",
     ],
 )
 
@@ -35,7 +36,7 @@ delay_iter: int = 0
 
 
 def statistics_print() -> None:
-    global statistics_timer, statistics, statistics_interval
+    global params, statistics_timer, statistics
 
     print("statistics:")
     for k, v in statistics.items():
@@ -70,7 +71,14 @@ def on_message(device: Device, message: Message, time: float, delay: float) -> N
 
             delay_last = delay
 
-    # print(f"[{time :.3f},delay={delay :.3f}],", json.dumps(message), sep="")
+    try:
+        requests.post(params.controller_url + f"/devices/{device.id}", json=message)
+    except (
+        requests.exceptions.InvalidSchema,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.ConnectTimeout,
+    ) as e:
+        print("error: ", repr(e))
 
 
 def values_generic() -> dict[str, Value]:
@@ -89,7 +97,7 @@ def devices_generic(cnt: int, freq: float) -> list[Device]:
     for i in range(1, cnt + 1):
         devices.append(
             Device(
-                f"device/{i}",
+                f"{i}",
                 ValueConst(interval),
                 values_generic(),
             )
@@ -107,6 +115,9 @@ def process_params() -> InputParams:
             "set only SIMULATOR_JSON_PATH or (SIMULATOR_DEVICES_CNT,SIMULATOR_DEVICES_FREQ)"
         )
 
+    if os.environ.get("SIMULATOR_CONTROLLER_URL") is None:
+        raise ValueError("not set SIMULATOR_CONTROLLER_URL")
+
     try:
         devices_cnt = int(os.environ.get("SIMULATOR_DEVICES_CNT", "10"))
         devices_freq = float(os.environ.get("SIMULATOR_DEVICES_FREQ", "5"))
@@ -122,6 +133,8 @@ def process_params() -> InputParams:
         statistics_interval = float(
             os.environ.get("SIMULATOR_STATISTICS_INTERVAL", "1")
         )
+        controller_url = os.environ.get("SIMULATOR_CONTROLLER_URL")
+
     except ValueError:
         raise ValueError("Look in process_params() for valid argument passing")
 
@@ -134,12 +147,18 @@ def process_params() -> InputParams:
         delay_check_threshold=delay_check_threshold,
         statistics_enable=statistics_enable,
         statistics_interval=statistics_interval,
+        controller_url=controller_url,
     )
 
 
 def signal_terminate(*_: Any) -> None:
+    global simulation, statistics_timer
+
     simulation.terminate()
-    print("simulation terminated")
+
+    if statistics_timer is not None:
+        statistics_timer.cancel()
+        statistics_timer = None
 
 
 if __name__ == "__main__":

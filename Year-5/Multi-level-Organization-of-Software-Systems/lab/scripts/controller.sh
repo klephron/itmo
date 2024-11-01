@@ -25,6 +25,10 @@ rm() {
   docker rm $container_name
 }
 
+name() {
+  echo $container_name
+}
+
 case "$1" in
   start)
     start
@@ -40,6 +44,9 @@ case "$1" in
     ;;
   rm)
     rm
+    ;;
+  name)
+    name
     ;;
   *)
     echo "unknown command"

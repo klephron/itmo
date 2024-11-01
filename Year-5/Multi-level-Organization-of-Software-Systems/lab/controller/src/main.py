@@ -21,11 +21,15 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
         try:
             received_data = json.loads(post_data)
-            response = {"message": "Data received successfully", "data": received_data}
+            print(self.path, received_data)
+            response = {"message": "ok"}
         except json.JSONDecodeError:
             response = {"error": "Invalid JSON"}
 
         self.wfile.write(json.dumps(response).encode("utf-8"))
+
+    def log_message(self, format: Any, *args: Any):
+        return
 
 
 def httpd_shutdown() -> None:
