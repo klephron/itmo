@@ -9,7 +9,7 @@ class RuleCtx:
         self.device_uniform_0_10_cnt_gt_2: dict[str, int] = {}
         pass
 
-    def get_device(
+    def get_for_device(
         self, device_id: str, device_data: dict[Any, Any], time: datetime
     ) -> list[Rule]:
         rules: list[Rule] = []

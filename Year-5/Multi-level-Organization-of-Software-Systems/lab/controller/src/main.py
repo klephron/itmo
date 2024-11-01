@@ -1,18 +1,20 @@
 import json
+import os
 import signal
+import time
+from collections import namedtuple
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from socket import gaierror
 from threading import Thread
 from typing import Any
-from collections import namedtuple
-import os
+import datetime
+
+import pika
 from pika.adapters.blocking_connection import BlockingChannel
+from pika.exceptions import AMQPConnectionError, ConnectionWrongStateError
 from pymongo import MongoClient
 from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
-import time
-from socket import gaierror
-from pika.exceptions import ConnectionWrongStateError
-import pika
 
 InputParams = namedtuple(
     "InputParams",
@@ -36,11 +38,12 @@ httpd: HTTPServer
 mongo_client: MongoClient[Any]
 mongo_database: Database[Any]
 mongo_devices: Collection[Any]
+mongo_index_created = False
+mongo_connect_timeout = 0.5
 
 rabbitmq_conn: pika.BlockingConnection | None = None
 rabbitmq_channel: BlockingChannel
 rabbitmq_queue = "controller2rule-engine"
-rabbitmq_connected: bool = False
 rabbitmq_connect_timeout = 0.5
 
 
@@ -69,12 +72,21 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 response = {"error": "bad request"}
                 self.send_response(400)
             else:
-                mongo_devices.insert_one({"id": device_id, "data": received_data})
+                time = datetime.datetime.now()
+                mongo_devices.insert_one(
+                    {"id": device_id, "time": time, "data": received_data}
+                )
 
                 rabbitmq_channel.basic_publish(
                     exchange="",
                     routing_key=rabbitmq_queue,
-                    body=json.dumps({"device_id": device_id, "data": received_data}),
+                    body=json.dumps(
+                        {
+                            "device_id": device_id,
+                            "time": time.timestamp(),
+                            "data": received_data,
+                        }
+                    ),
                 )
 
                 response = {"msg": "ok"}
@@ -153,8 +165,18 @@ if __name__ == "__main__":
     )
     mongo_database = mongo_client["mops"]
     mongo_devices = mongo_database["devices"]
+    while not mongo_index_created:
+        try:
+            mongo_devices.create_index(
+                {
+                    "time": 1,
+                }
+            )
+            mongo_index_created = True
+        except BaseException as e:
+            print(e)
+            time.sleep(mongo_connect_timeout)
 
-    rabbitmq_conn = None
     while rabbitmq_conn is None:
         try:
             rabbitmq_conn = pika.BlockingConnection(
@@ -167,7 +189,7 @@ if __name__ == "__main__":
             )
             rabbitmq_channel = rabbitmq_conn.channel()
             rabbitmq_channel.queue_declare(queue=rabbitmq_queue)
-        except ConnectionWrongStateError as e:
+        except (ConnectionWrongStateError, AMQPConnectionError) as e:
             print(f"error: {repr(e)}")
             time.sleep(rabbitmq_connect_timeout)
         except gaierror as e:

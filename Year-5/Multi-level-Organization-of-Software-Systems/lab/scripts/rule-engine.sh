@@ -7,6 +7,7 @@ start() {
   docker run --name $container_name \
     -p 9021:8080 \
     -e RULE_ENGINE_MONGO_URL="mongodb://mops-mongo:27017/" \
+    -e RULE_ENGINE_RABBITMQ_HOST="mops-rabbitmq" \
     -d $container
 }
 
