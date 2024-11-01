@@ -1,14 +1,16 @@
-from collections import namedtuple
-from threading import Timer
-from typing import Any
-from config import config_load_devices
-from simulation import Simulation
-from device import Device, Message
-from sortedcontainers import SortedDict
-import requests
 import os
 import signal
+from collections import namedtuple
+from concurrent.futures import Future, ThreadPoolExecutor
+from threading import Semaphore, Timer
+from typing import Any
 
+import requests
+from sortedcontainers import SortedDict
+
+from config import config_load_devices
+from device import Device, Message
+from simulation import Simulation
 from value import Value, ValueConst, ValueExponential, ValueUniform
 
 InputParams = namedtuple(
@@ -34,6 +36,10 @@ statistics_timer: Timer | None = None
 delay_last: float = 0
 delay_iter: int = 0
 
+pool = ThreadPoolExecutor()
+print(f"info: thread pool workers: {pool._max_workers}")
+pool_semaphore = Semaphore(pool._max_workers * 2)
+
 
 def statistics_print() -> None:
     global params, statistics_timer, statistics
@@ -44,6 +50,30 @@ def statistics_print() -> None:
 
     statistics_timer = Timer(params.statistics_interval, statistics_print)
     statistics_timer.start()
+
+
+def on_message_post(url: str, json: Any) -> requests.Response | None:
+    try:
+        return requests.post(url, json=json)
+    except (
+        requests.exceptions.InvalidSchema,
+        requests.exceptions.MissingSchema,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.ConnectTimeout,
+    ) as e:
+        print(f"error: {e}")
+    except BaseException as e:
+        print(f"error: unknown {e}")
+    return None
+
+
+def on_message_response(future: Future[requests.Response | None]) -> None:
+    response = future.result()
+    if response is not None and response.status_code != 200:
+        print(
+            f"error: received code {response.status_code} with content '{response.content.decode("utf-8")}'"
+        )
+    pool_semaphore.release()
 
 
 def on_message(device: Device, message: Message, time: float, delay: float) -> None:
@@ -71,21 +101,10 @@ def on_message(device: Device, message: Message, time: float, delay: float) -> N
 
             delay_last = delay
 
-    try:
-        resp = requests.post(
-            params.controller_url + f"/devices/{device.id}", json=message
-        )
-        if resp.status_code != 200:
-            print(
-                f"error: received code {resp.status_code} with content '{resp.content.decode("utf-8")}'"
-            )
-    except (
-        requests.exceptions.InvalidSchema,
-        requests.exceptions.MissingSchema,
-        requests.exceptions.ConnectionError,
-        requests.exceptions.ConnectTimeout,
-    ) as e:
-        print("error: ", repr(e))
+    pool_semaphore.acquire()
+    pool.submit(
+        on_message_post, params.controller_url + f"/devices/{device.id}", message
+    ).add_done_callback(on_message_response)
 
 
 def values_generic() -> dict[str, Value]:

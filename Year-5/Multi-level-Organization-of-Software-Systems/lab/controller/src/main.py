@@ -199,10 +199,10 @@ if __name__ == "__main__":
     server_address = ("", httpd_port)
     httpd = HTTPServer(server_address, HTTPRequestHandler)
 
-    print(f"Starting HTTP server on port {httpd_port}...")
+    print(f"info: starting HTTP server on port {httpd_port}...")
     httpd.serve_forever(poll_interval=0.5)
-    print("Terminated HTTP server")
+    print("info: terminated HTTP server")
 
     if rabbitmq_conn is not None:
         rabbitmq_conn.close()
-        print("Closed rabbitmq connection")
+        print("info: closed rabbitmq connection")

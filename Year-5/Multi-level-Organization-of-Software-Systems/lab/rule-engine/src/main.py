@@ -175,4 +175,8 @@ if __name__ == "__main__":
         auto_ack=True,
     )
     rabbitmq_channel.start_consuming()
-    print("Stopped consumer")
+    print("info: stopped rabbitmq consumer")
+
+    if rabbitmq_conn is not None:
+        rabbitmq_conn.close()
+        print("info: closed rabbitmq connection")
