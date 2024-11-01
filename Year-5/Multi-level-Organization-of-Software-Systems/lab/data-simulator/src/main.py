@@ -81,6 +81,7 @@ def on_message(device: Device, message: Message, time: float, delay: float) -> N
             )
     except (
         requests.exceptions.InvalidSchema,
+        requests.exceptions.MissingSchema,
         requests.exceptions.ConnectionError,
         requests.exceptions.ConnectTimeout,
     ) as e:
@@ -128,14 +129,16 @@ def process_params() -> InputParams:
         devices_cnt = int(os.environ.get("SIMULATOR_DEVICES_CNT", "10"))
         devices_freq = float(os.environ.get("SIMULATOR_DEVICES_FREQ", "5"))
         json_path = os.environ.get("SIMULATOR_JSON_PATH")
-        delay_check_enable = bool(
-            os.environ.get("SIMULATOR_DELAY_CHECK_ENABLE", "True")
+        delay_check_enable = (
+            os.environ.get("SIMULATOR_DELAY_CHECK_ENABLE", "true").lower() == "true"
         )
         delay_check_iters = int(os.environ.get("SIMULATOR_DELAY_CHECK_ITER", "1000"))
         delay_check_threshold = float(
             os.environ.get("SIMULATOR_DELAY_CHECK_THRESHOLD", "1")
         )
-        statistics_enable = bool(os.environ.get("SIMULATOR_STATISTICS_ENABLE", "True"))
+        statistics_enable = (
+            os.environ.get("SIMULATOR_STATISTICS_ENABLE", "false").lower() == "true"
+        )
         statistics_interval = float(
             os.environ.get("SIMULATOR_STATISTICS_INTERVAL", "1")
         )
