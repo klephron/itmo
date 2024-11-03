@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import signal
@@ -7,7 +8,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from socket import gaierror
 from threading import Thread
 from typing import Any
-import datetime
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
@@ -30,21 +30,21 @@ InputParams = namedtuple(
 
 ROUTES = [("/")]
 
-params: InputParams
+PARAMS: InputParams
 
-httpd_port: int = 8080
-httpd: HTTPServer
+HTTPD_PORT: int = 8080
+HTTPD: HTTPServer
 
-mongo_client: MongoClient[Any]
-mongo_database: Database[Any]
-mongo_devices: Collection[Any]
-mongo_index_created = False
-mongo_connect_timeout = 0.5
+MONGO_CLIENT: MongoClient[Any]
+MONGO_DATABASE: Database[Any]
+MONGO_DEVICES: Collection[Any]
+MONGO_INDEX_CREATED = False
+MONGO_CONNECT_TIMEOUT = 0.5
 
-rabbitmq_conn: pika.BlockingConnection | None = None
-rabbitmq_channel: BlockingChannel
-rabbitmq_queue = "controller2rule-engine"
-rabbitmq_connect_timeout = 0.5
+RABBITMQ_CONN: pika.BlockingConnection | None = None
+RABBITMQ_CHANNEL: BlockingChannel
+RABBITMQ_QUEUE = "controller2rule-engine"
+RABBITMQ_CONNECT_TIMEOUT = 0.5
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -59,7 +59,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return
 
     def __handle_devices(self, prefix: str) -> None:
-        global mongo_devices
+        global MONGO_DEVICES
 
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
@@ -73,13 +73,13 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
             else:
                 time = datetime.datetime.now()
-                mongo_devices.insert_one(
+                MONGO_DEVICES.insert_one(
                     {"id": device_id, "time": time, "data": received_data}
                 )
 
-                rabbitmq_channel.basic_publish(
+                RABBITMQ_CHANNEL.basic_publish(
                     exchange="",
-                    routing_key=rabbitmq_queue,
+                    routing_key=RABBITMQ_QUEUE,
                     body=json.dumps(
                         {
                             "device_id": device_id,
@@ -145,64 +145,72 @@ def process_params() -> InputParams:
 
 
 def httpd_shutdown() -> None:
-    global httpd
-    httpd.shutdown()
+    global HTTPD
+    HTTPD.shutdown()
 
 
 def signal_terminate(*_: Any) -> None:
     thread = Thread(target=httpd_shutdown)
     thread.start()
 
+def main() -> None:
+    global PARAMS
+    global MONGO_CLIENT, MONGO_DATABASE, MONGO_DEVICES, MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
+    global RABBITMQ_CONN, RABBITMQ_CHANNEL, RABBITMQ_QUEUE, RABBITMQ_CONNECT_TIMEOUT
+    global HTTPD, HTTPD_PORT
 
-if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_terminate)
     signal.signal(signal.SIGTERM, signal_terminate)
 
-    params = process_params()
+    PARAMS = process_params()
 
-    mongo_client = MongoClient(
-        params.mongo_url, username=params.mongo_username, password=params.mongo_password
+    MONGO_CLIENT = MongoClient(
+        PARAMS.mongo_url, username=PARAMS.mongo_username, password=PARAMS.mongo_password
     )
-    mongo_database = mongo_client["mops"]
-    mongo_devices = mongo_database["devices"]
-    while not mongo_index_created:
+    MONGO_DATABASE = MONGO_CLIENT["mops"]
+    MONGO_DEVICES = MONGO_DATABASE["devices"]
+    while not MONGO_INDEX_CREATED:
         try:
-            mongo_devices.create_index(
+            MONGO_DEVICES.create_index(
                 {
                     "time": 1,
                 }
             )
-            mongo_index_created = True
+            MONGO_INDEX_CREATED = True
         except BaseException as e:
             print(e)
-            time.sleep(mongo_connect_timeout)
+            time.sleep(MONGO_CONNECT_TIMEOUT)
 
-    while rabbitmq_conn is None:
+    while RABBITMQ_CONN is None:
         try:
-            rabbitmq_conn = pika.BlockingConnection(
+            RABBITMQ_CONN = pika.BlockingConnection(
                 pika.ConnectionParameters(
-                    host=params.rabbitmq_host,
+                    host=PARAMS.rabbitmq_host,
                     credentials=pika.PlainCredentials(
-                        params.rabbitmq_username, params.rabbitmq_password
+                        PARAMS.rabbitmq_username, PARAMS.rabbitmq_password
                     ),
                 ),
             )
-            rabbitmq_channel = rabbitmq_conn.channel()
-            rabbitmq_channel.queue_declare(queue=rabbitmq_queue)
+            RABBITMQ_CHANNEL = RABBITMQ_CONN.channel()
+            RABBITMQ_CHANNEL.queue_declare(queue=RABBITMQ_QUEUE)
         except (ConnectionWrongStateError, AMQPConnectionError) as e:
             print(f"error: {repr(e)}")
-            time.sleep(rabbitmq_connect_timeout)
+            time.sleep(RABBITMQ_CONNECT_TIMEOUT)
         except gaierror as e:
             print(f"error: {repr(e)}")
-            time.sleep(rabbitmq_connect_timeout)
+            time.sleep(RABBITMQ_CONNECT_TIMEOUT)
 
-    server_address = ("", httpd_port)
-    httpd = HTTPServer(server_address, HTTPRequestHandler)
+    server_address = ("", HTTPD_PORT)
+    HTTPD = HTTPServer(server_address, HTTPRequestHandler)
 
-    print(f"info: starting HTTP server on port {httpd_port}...")
-    httpd.serve_forever(poll_interval=0.5)
+    print(f"info: starting HTTP server on port {HTTPD_PORT}...")
+    HTTPD.serve_forever(poll_interval=0.5)
     print("info: terminated HTTP server")
 
-    if rabbitmq_conn is not None:
-        rabbitmq_conn.close()
+    if RABBITMQ_CONN is not None:
+        RABBITMQ_CONN.close()
         print("info: closed rabbitmq connection")
+
+
+if __name__ == "__main__":
+    main()

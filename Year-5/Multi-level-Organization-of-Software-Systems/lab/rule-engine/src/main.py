@@ -4,12 +4,9 @@ import os
 import signal
 import time
 from collections import namedtuple
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from socket import gaierror
-from threading import Thread
 from typing import Any
 
-from bson import timestamp
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import AMQPConnectionError, ConnectionWrongStateError
@@ -33,21 +30,21 @@ InputParams = namedtuple(
 
 ROUTES = [("/")]
 
-params: InputParams
+PARAMS: InputParams
 
-rule_ctx = RuleCtx()
+RULE_CTX = RuleCtx()
 
-mongo_client: MongoClient[Any]
-mongo_database: Database[Any]
-mongo_rules: Collection[Any]
-mongo_connect_timeout = 0.5
-mongo_index_created = False
+MONGO_CLIENT: MongoClient[Any]
+MONGO_DATABASE: Database[Any]
+MONGO_RULES: Collection[Any]
+MONGO_CONNECT_TIMEOUT = 0.5
+MONGO_INDEX_CREATED = False
 
-rabbitmq_conn: pika.BlockingConnection | None = None
-rabbitmq_channel: BlockingChannel | None = None
-rabbitmq_queue = "controller2rule-engine"
-rabbitmq_connect_timeout = 0.5
-rabbitmq_consumer_tag: Any | None = None
+RABBITMQ_CONN: pika.BlockingConnection | None = None
+RABBITMQ_CHANNEL: BlockingChannel | None = None
+RABBITMQ_QUEUE = "controller2rule-engine"
+RABBITMQ_CONNECT_TIMEOUT = 0.5
+RABBITMQ_CONSUMER_TAG: Any | None = None
 
 
 def rabbitmq_controller_on_message(
@@ -81,11 +78,11 @@ def rabbitmq_controller_on_message(
         return
     data = received_data["data"]
 
-    rules = rule_ctx.get_for_device(
+    rules = RULE_CTX.get_for_device(
         device_id, data, datetime.datetime.fromtimestamp(time)
     )
     if len(rules) > 0:
-        mongo_rules.insert_many(rules)
+        MONGO_RULES.insert_many(rules)
 
 
 def process_params() -> InputParams:
@@ -117,66 +114,76 @@ def process_params() -> InputParams:
 
 
 def signal_terminate(*_: Any) -> None:
-    if rabbitmq_channel is not None and rabbitmq_consumer_tag is not None:
-        rabbitmq_channel.basic_cancel(rabbitmq_consumer_tag)
+    global RABBITMQ_CHANNEL, RABBITMQ_CONSUMER_TAG
+
+    if RABBITMQ_CHANNEL is not None and RABBITMQ_CONSUMER_TAG is not None:
+        RABBITMQ_CHANNEL.basic_cancel(RABBITMQ_CONSUMER_TAG)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    global PARAMS
+    global MONGO_CLIENT, MONGO_DATABASE, MONGO_RULES, MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
+    global RABBITMQ_CONN, RABBITMQ_CHANNEL, RABBITMQ_QUEUE, RABBITMQ_CONNECT_TIMEOUT, RABBITMQ_CONSUMER_TAG
+
     signal.signal(signal.SIGINT, signal_terminate)
     signal.signal(signal.SIGTERM, signal_terminate)
 
-    params = process_params()
+    PARAMS = process_params()
 
-    mongo_client = MongoClient(
-        params.mongo_url, username=params.mongo_username, password=params.mongo_password
+    MONGO_CLIENT = MongoClient(
+        PARAMS.mongo_url, username=PARAMS.mongo_username, password=PARAMS.mongo_password
     )
-    mongo_database = mongo_client["mops"]
-    mongo_rules = mongo_database["rules"]
+    MONGO_DATABASE = MONGO_CLIENT["mops"]
+    MONGO_RULES = MONGO_DATABASE["rules"]
 
-    while not mongo_index_created:
+    while not MONGO_INDEX_CREATED:
         try:
-            mongo_rules.create_index(
+            MONGO_RULES.create_index(
                 {
                     "time": 1,
                 }
             )
-            mongo_index_created = True
+            MONGO_INDEX_CREATED = True
         except BaseException as e:
             print(e)
-            time.sleep(mongo_connect_timeout)
+            time.sleep(MONGO_CONNECT_TIMEOUT)
 
-    while rabbitmq_conn is None:
+    while RABBITMQ_CONN is None:
         try:
-            rabbitmq_conn = pika.BlockingConnection(
+            RABBITMQ_CONN = pika.BlockingConnection(
                 pika.ConnectionParameters(
-                    host=params.rabbitmq_host,
+                    host=PARAMS.rabbitmq_host,
                     credentials=pika.PlainCredentials(
-                        params.rabbitmq_username, params.rabbitmq_password
+                        PARAMS.rabbitmq_username, PARAMS.rabbitmq_password
                     ),
                 ),
             )
-            rabbitmq_channel = rabbitmq_conn.channel()
-            rabbitmq_channel.queue_declare(queue=rabbitmq_queue)
+            RABBITMQ_CHANNEL = RABBITMQ_CONN.channel()
+            RABBITMQ_CHANNEL.queue_declare(queue=RABBITMQ_QUEUE)
 
         except (ConnectionWrongStateError, AMQPConnectionError) as e:
             print(f"error: {repr(e)}")
-            time.sleep(rabbitmq_connect_timeout)
+            time.sleep(RABBITMQ_CONNECT_TIMEOUT)
         except gaierror as e:
             print(f"error: {repr(e)}")
-            time.sleep(rabbitmq_connect_timeout)
+            time.sleep(RABBITMQ_CONNECT_TIMEOUT)
 
-    if rabbitmq_channel is None:
+    if RABBITMQ_CHANNEL is None:
         print("error: rabbitmq_channel is None")
         exit(-1)
 
-    rabbitmq_consumer_tag = rabbitmq_channel.basic_consume(
-        queue=rabbitmq_queue,
+    RABBITMQ_CONSUMER_TAG = RABBITMQ_CHANNEL.basic_consume(
+        queue=RABBITMQ_QUEUE,
         on_message_callback=rabbitmq_controller_on_message,
         auto_ack=True,
     )
-    rabbitmq_channel.start_consuming()
+    RABBITMQ_CHANNEL.start_consuming()
     print("info: stopped rabbitmq consumer")
 
-    if rabbitmq_conn is not None:
-        rabbitmq_conn.close()
+    if RABBITMQ_CONN is not None:
+        RABBITMQ_CONN.close()
         print("info: closed rabbitmq connection")
+
+
+if __name__ == "__main__":
+    main()

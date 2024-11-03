@@ -28,28 +28,29 @@ InputParams = namedtuple(
     ],
 )
 
-params: InputParams
+PARAMS: InputParams
 
-statistics = SortedDict()
-statistics_timer: Timer | None = None
+STATISTICS = SortedDict()
+STATISTICS_TIMER: Timer | None = None
 
-delay_last: float = 0
-delay_iter: int = 0
+DELAY_LAST: float = 0
+DELAY_ITER: int = 0
 
-pool = ThreadPoolExecutor()
-print(f"info: thread pool workers: {pool._max_workers}")
-pool_semaphore = Semaphore(pool._max_workers * 2)
+POOL = ThreadPoolExecutor()
+POOL_SEMAPHORE = Semaphore(POOL._max_workers * 2)
+
+SIMULATION: Simulation
 
 
 def statistics_print() -> None:
-    global params, statistics_timer, statistics
+    global PARAMS, STATISTICS_TIMER, STATISTICS
 
     print("statistics:")
-    for k, v in statistics.items():
+    for k, v in STATISTICS.items():
         print(f"  {k}: interval.average:\t{v["sum"] / v["cnt"] :.6f}")
 
-    statistics_timer = Timer(params.statistics_interval, statistics_print)
-    statistics_timer.start()
+    STATISTICS_TIMER = Timer(PARAMS.statistics_interval, statistics_print)
+    STATISTICS_TIMER.start()
 
 
 def on_message_post(url: str, json: Any) -> requests.Response | None:
@@ -73,37 +74,37 @@ def on_message_response(future: Future[requests.Response | None]) -> None:
         print(
             f"error: received code {response.status_code} with content '{response.content.decode("utf-8")}'"
         )
-    pool_semaphore.release()
+    POOL_SEMAPHORE.release()
 
 
 def on_message(device: Device, message: Message, time: float, delay: float) -> None:
-    global params, delay_last, delay_iter
+    global PARAMS, DELAY_LAST, DELAY_ITER
 
-    if params.statistics_enable:
-        if device.id not in statistics:
-            statistics[device.id] = {"cnt": 1, "sum": time, "last": time}
+    if PARAMS.statistics_enable:
+        if device.id not in STATISTICS:
+            STATISTICS[device.id] = {"cnt": 1, "sum": time, "last": time}
         else:
-            stat = statistics[device.id]
+            stat = STATISTICS[device.id]
             stat["cnt"] += 1
             stat["sum"] += time - stat["last"]
             stat["last"] = time
 
-    if params.delay_check_enable:
-        delay_iter = (delay_iter + 1) % params.delay_check_iters
+    if PARAMS.delay_check_enable:
+        DELAY_ITER = (DELAY_ITER + 1) % PARAMS.delay_check_iters
 
-        if delay_iter == 0:
-            delay_diff = delay - delay_last
+        if DELAY_ITER == 0:
+            delay_diff = delay - DELAY_LAST
 
-            if delay > params.delay_check_threshold:
+            if delay > PARAMS.delay_check_threshold:
                 print(
-                    f"warn: current simulation delay {delay_last :.3f}+{delay_diff :.3f}"
+                    f"warn: current simulation delay {DELAY_LAST :.3f}+{delay_diff :.3f}"
                 )
 
-            delay_last = delay
+            DELAY_LAST = delay
 
-    pool_semaphore.acquire()
-    pool.submit(
-        on_message_post, params.controller_url + f"/devices/{device.id}", message
+    POOL_SEMAPHORE.acquire()
+    POOL.submit(
+        on_message_post, PARAMS.controller_url + f"/devices/{device.id}", message
     ).add_done_callback(on_message_response)
 
 
@@ -180,34 +181,42 @@ def process_params() -> InputParams:
 
 
 def signal_terminate(*_: Any) -> None:
-    global simulation, statistics_timer
+    global SIMULATION, STATISTICS_TIMER
 
-    simulation.terminate()
+    SIMULATION.terminate()
 
-    if statistics_timer is not None:
-        statistics_timer.cancel()
-        statistics_timer = None
+    if STATISTICS_TIMER is not None:
+        STATISTICS_TIMER.cancel()
+        STATISTICS_TIMER = None
 
 
-if __name__ == "__main__":
+def main() -> None:
+    global POOL, PARAMS, SIMULATION, STATISTICS_TIMER
+
+    print(f"info: thread pool workers: {POOL._max_workers}")
+
     signal.signal(signal.SIGINT, signal_terminate)
     signal.signal(signal.SIGTERM, signal_terminate)
 
-    params = process_params()
+    PARAMS = process_params()
 
-    if params.json_path is not None:
-        devices = config_load_devices(params.json_path)
+    if PARAMS.json_path is not None:
+        devices = config_load_devices(PARAMS.json_path)
     else:
-        devices = devices_generic(params.devices_cnt, params.devices_freq)
+        devices = devices_generic(PARAMS.devices_cnt, PARAMS.devices_freq)
 
-    simulation = Simulation(devices, on_message)
-    simulation.start()
+    SIMULATION = Simulation(devices, on_message)
+    SIMULATION.start()
 
-    if params.statistics_enable:
-        statistics_timer = Timer(params.statistics_interval, statistics_print)
-        statistics_timer.start()
+    if PARAMS.statistics_enable:
+        STATISTICS_TIMER = Timer(PARAMS.statistics_interval, statistics_print)
+        STATISTICS_TIMER.start()
 
-    simulation.join()
+    SIMULATION.join()
 
-    if params.statistics_enable and statistics_timer is not None:
-        statistics_timer.cancel()
+    if PARAMS.statistics_enable and STATISTICS_TIMER is not None:
+        STATISTICS_TIMER.cancel()
+
+
+if __name__ == "__main__":
+    main()
