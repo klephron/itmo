@@ -175,24 +175,13 @@ def process_params() -> InputParams:
     )
 
 
-def httpd_shutdown() -> None:
-    global HTTPD
-    HTTPD.shutdown()
-
-
 def signal_terminate(*_: Any) -> None:
-    thread = Thread(target=httpd_shutdown)
-    thread.start()
+    Thread(target=lambda: HTTPD.shutdown()).start()
 
 
 def main() -> None:
     global PARAMS
-    global \
-        MONGO_CLIENT, \
-        MONGO_DATABASE, \
-        MONGO_DEVICES, \
-        MONGO_INDEX_CREATED, \
-        MONGO_CONNECT_TIMEOUT
+    global MONGO_CLIENT, MONGO_DATABASE, MONGO_DEVICES, MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
     global RABBITMQ_CONN, RABBITMQ_CHANNEL, RABBITMQ_QUEUE, RABBITMQ_CONNECT_TIMEOUT
     global HTTPD, HTTPD_PORT
 

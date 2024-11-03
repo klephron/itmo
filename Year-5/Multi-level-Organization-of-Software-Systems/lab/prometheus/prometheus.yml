@@ -8,3 +8,9 @@ scrape_configs:
     static_configs:
       - targets:
           - mops-controller:8080
+  - job_name: "mops-rule-engine"
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - mops-rule-engine:8080
