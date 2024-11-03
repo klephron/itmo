@@ -4,11 +4,14 @@ script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 container_name="mops-prometheus"
 container="prom/prometheus:v2.55.0"
+container_volume_data="mops-prometheus-data"
 
 start() {
+  docker volume create $container_volume_data
   docker run --name $container_name \
     -p 9041:9090 \
     -v  $script_dir/../prometheus/:/etc/prometheus/\
+    -v $container_volume_data:/prometheus/ \
     -d $container
 }
 
@@ -26,6 +29,10 @@ inspect() {
 
 rm() {
   docker rm $container_name
+}
+
+rm-volumes() {
+  docker volume rm $container_volume_data
 }
 
 name() {
@@ -53,6 +60,9 @@ case "$1" in
     ;;
   rm)
     rm
+    ;;
+  rm-volumes)
+    rm-volumes
     ;;
   name)
     name

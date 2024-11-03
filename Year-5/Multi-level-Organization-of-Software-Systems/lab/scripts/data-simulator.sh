@@ -4,9 +4,10 @@ container_name="mops-data-simulator"
 container="mops-data-simulator:latest"
 
 start() {
+  # max around 650 RPS
   docker run --name $container_name \
     -e SIMULATOR_CONTROLLER_URL="http://mops-controller:8080" \
-    -e SIMULATOR_DEVICES_CNT=50 \
+    -e SIMULATOR_DEVICES_CNT=5 \
     -e SIMULATOR_DEVICES_FREQ=10 \
     -d $container
 }

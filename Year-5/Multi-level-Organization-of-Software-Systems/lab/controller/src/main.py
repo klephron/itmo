@@ -7,7 +7,7 @@ from collections import namedtuple
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socket import gaierror
 from threading import Thread
-from typing import Any
+from typing import Any, Tuple
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
@@ -15,6 +15,7 @@ from pika.exceptions import AMQPConnectionError, ConnectionWrongStateError
 from pymongo import MongoClient
 from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest, Counter
 
 InputParams = namedtuple(
     "InputParams",
@@ -46,31 +47,50 @@ RABBITMQ_CHANNEL: BlockingChannel
 RABBITMQ_QUEUE = "controller2rule-engine"
 RABBITMQ_CONNECT_TIMEOUT = 0.5
 
+PROMETHEUS_REQUEST_COUNTER = Counter(
+    "request_count", "Total number of requests", ("path", "method", "status_code")
+)
+
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         if self.path.startswith("/devices/"):
-            self.__handle_devices("/devices/")
-            return
+            path, code = self.__handle_devices("/devices/")
+        else:
+            path, code = self.__handle_unknown_route()
 
-        self.__handle_unknown_route()
+        PROMETHEUS_REQUEST_COUNTER.labels(
+            path=path, method="POST", status_code=code
+        ).inc()
+
+    def do_GET(self) -> None:
+        if self.path == "/metrics":
+            path, code = self.__handle_metrics("/metrics")
+        else:
+            path, code = self.__handle_unknown_route()
+
+        PROMETHEUS_REQUEST_COUNTER.labels(
+            path=path, method="GET", status_code=code
+        ).inc()
 
     def log_message(self, format: Any, *args: Any) -> None:
         return
 
-    def __handle_devices(self, prefix: str) -> None:
-        global MONGO_DEVICES
+    def __handle_devices(self, prefix: str) -> Tuple[str, int]:
+        global MONGO_DEVICES, RABBITMQ_CHANNEL, RABBITMQ_QUEUE
 
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         device_id = self.path[len(prefix) :]
+
+        code = 200
 
         try:
             received_data = json.loads(post_data)
 
             if not self.__validate_devices(received_data):
                 response = {"error": "bad request"}
-                self.send_response(400)
+                code = 400
             else:
                 time = datetime.datetime.now()
                 MONGO_DEVICES.insert_one(
@@ -90,21 +110,16 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 )
 
                 response = {"msg": "ok"}
-                self.send_response(200)
 
         except json.JSONDecodeError:
             response = {"error": "Invalid JSON"}
-            self.send_response(415)
+            code = 415
 
+        self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(response).encode("utf-8"))
-
-    def __handle_unknown_route(self) -> None:
-        self.send_header("Content-Type", "application/json")
-        self.send_response(404)
-        self.end_headers()
-        self.wfile.write(json.dumps({"error": "unknown route"}).encode("utf-8"))
+        return (prefix, code)
 
     def __validate_devices(self, data: dict[Any, Any]) -> bool:
         for k, v in data.items():
@@ -114,6 +129,22 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 return False
 
         return True
+
+    def __handle_metrics(self, prefix: str) -> Tuple[str, int]:
+        code = 200
+        self.send_response(code)
+        self.send_header("Content-Type", CONTENT_TYPE_LATEST)
+        self.end_headers()
+        self.wfile.write(generate_latest())
+        return (prefix, code)
+
+    def __handle_unknown_route(self) -> Tuple[str, int]:
+        code = 404
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({"error": "unknown route"}).encode("utf-8"))
+        return ("/404", code)
 
 
 def process_params() -> InputParams:
@@ -153,9 +184,15 @@ def signal_terminate(*_: Any) -> None:
     thread = Thread(target=httpd_shutdown)
     thread.start()
 
+
 def main() -> None:
     global PARAMS
-    global MONGO_CLIENT, MONGO_DATABASE, MONGO_DEVICES, MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
+    global \
+        MONGO_CLIENT, \
+        MONGO_DATABASE, \
+        MONGO_DEVICES, \
+        MONGO_INDEX_CREATED, \
+        MONGO_CONNECT_TIMEOUT
     global RABBITMQ_CONN, RABBITMQ_CHANNEL, RABBITMQ_QUEUE, RABBITMQ_CONNECT_TIMEOUT
     global HTTPD, HTTPD_PORT
 
