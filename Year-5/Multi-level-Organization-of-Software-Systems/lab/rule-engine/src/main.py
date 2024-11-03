@@ -15,7 +15,7 @@ from pika.exceptions import AMQPConnectionError, ConnectionWrongStateError
 from pymongo import MongoClient
 from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
 from rule import RuleCtx
 
@@ -57,6 +57,24 @@ PROMETHEUS_REQUEST_COUNTER = Counter(
 )
 PROMETHEUS_RABBITMQ_REQUEST_COUNTER = Counter(
     "rabbitmq_request_count", "Total number of rabbitmq requests", ("queue", "status")
+)
+PROMETHEUS_RABBITMQ_RESPONSE_TIME_HIST = Histogram(
+    "rabbitmq_response_time_seconds",
+    "Histogram for tracking request response times",
+    ("queue", "status"),
+    buckets=(
+        0.00001,
+        0.000025,
+        0.0001,
+        0.00025,
+        0.001,
+        0.0025,
+        0.01,
+        0.025,
+        0.1,
+        0.25,
+        1.0,
+    ),
 )
 
 
@@ -133,22 +151,26 @@ def rabbitmq_device_parse(
 def rabbitmq_controller_on_message(
     ch: BlockingChannel, method: Any, properties: Any, body: str | bytes
 ) -> None:
+    start_time = datetime.datetime.now()
     ok, parse_data = rabbitmq_device_parse(body)
 
-    if not ok or parse_data is None:
-        PROMETHEUS_RABBITMQ_REQUEST_COUNTER.labels(
-            queue=RABBITMQ_QUEUE, status="BAD_FORMAT"
-        ).inc()
-        return
+    if ok and parse_data is not None:
+        device_id, time, data = parse_data
+        rules = RULE_CTX.get_for_device(
+            device_id, data, datetime.datetime.fromtimestamp(time)
+        )
+        if len(rules) > 0:
+            MONGO_RULES.insert_many(rules)
 
-    device_id, time, data = parse_data
-    rules = RULE_CTX.get_for_device(
-        device_id, data, datetime.datetime.fromtimestamp(time)
-    )
-    if len(rules) > 0:
-        MONGO_RULES.insert_many(rules)
+    status = "OK" if ok else "BAD_FORMAT"
 
-    PROMETHEUS_RABBITMQ_REQUEST_COUNTER.labels(queue=RABBITMQ_QUEUE, status="OK").inc()
+    PROMETHEUS_RABBITMQ_REQUEST_COUNTER.labels(
+        queue=RABBITMQ_QUEUE, status=status
+    ).inc()
+
+    PROMETHEUS_RABBITMQ_RESPONSE_TIME_HIST.labels(
+        queue=RABBITMQ_QUEUE, status=status
+    ).observe((datetime.datetime.now() - start_time).total_seconds())
 
 
 def process_params() -> InputParams:

@@ -15,7 +15,7 @@ from pika.exceptions import AMQPConnectionError, ConnectionWrongStateError
 from pymongo import MongoClient
 from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest, Counter
+from prometheus_client import CONTENT_TYPE_LATEST, Summary, generate_latest, Counter
 
 InputParams = namedtuple(
     "InputParams",
@@ -50,10 +50,17 @@ RABBITMQ_CONNECT_TIMEOUT = 0.5
 PROMETHEUS_REQUEST_COUNTER = Counter(
     "request_count", "Total number of requests", ("path", "method", "status_code")
 )
+PROMETHEUS_RESPONSE_TIME = Summary(
+    "response_time_seconds",
+    "Summary for tracking request response times",
+    ("path", "method", "status_code"),
+)
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
+        start_time = datetime.datetime.now()
+
         if self.path.startswith("/devices/"):
             path, code = self.__handle_devices("/devices/")
         else:
@@ -63,7 +70,13 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             path=path, method="POST", status_code=code
         ).inc()
 
+        PROMETHEUS_RESPONSE_TIME.labels(
+            path=path, method="POST", status_code=code
+        ).observe((datetime.datetime.now() - start_time).total_seconds())
+
     def do_GET(self) -> None:
+        start_time = datetime.datetime.now()
+
         if self.path == "/metrics":
             path, code = self.__handle_metrics("/metrics")
         else:
@@ -72,6 +85,10 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         PROMETHEUS_REQUEST_COUNTER.labels(
             path=path, method="GET", status_code=code
         ).inc()
+
+        PROMETHEUS_RESPONSE_TIME.labels(
+            path=path, method="GET", status_code=code
+        ).observe((datetime.datetime.now() - start_time).total_seconds())
 
     def log_message(self, format: Any, *args: Any) -> None:
         return
