@@ -10,8 +10,14 @@ recreate() {
 create() {
   bash $script_dir/network.sh create
 
+  bash $script_dir/prometheus.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/prometheus.sh name)
+
   bash $script_dir/mongo.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/mongo.sh name)
+
+  bash $script_dir/grafana.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/grafana.sh name)
 
   bash $script_dir/rabbitmq.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/rabbitmq.sh name)
@@ -39,8 +45,14 @@ destroy() {
   bash $script_dir/rabbitmq.sh stop
   bash $script_dir/rabbitmq.sh rm
 
+  bash $script_dir/grafana.sh stop
+  bash $script_dir/grafana.sh rm
+
   bash $script_dir/mongo.sh stop
   bash $script_dir/mongo.sh rm
+
+  bash $script_dir/prometheus.sh stop
+  bash $script_dir/prometheus.sh rm
 
   bash $script_dir/network.sh rm
 }
