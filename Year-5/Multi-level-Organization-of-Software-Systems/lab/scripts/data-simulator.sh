@@ -1,5 +1,7 @@
 #!/bin/bash
 
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 container_name="mops-data-simulator"
 container="mops-data-simulator:latest"
 

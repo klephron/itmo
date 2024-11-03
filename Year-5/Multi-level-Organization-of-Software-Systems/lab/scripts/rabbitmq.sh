@@ -1,5 +1,7 @@
 #!/bin/bash
 
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 container_name="mops-rabbitmq"
 container="rabbitmq:4.0.3-management"
 

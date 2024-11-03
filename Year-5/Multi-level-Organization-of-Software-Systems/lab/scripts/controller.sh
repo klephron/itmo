@@ -1,10 +1,15 @@
 #!/bin/bash
 
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 container_name="mops-controller"
 container="mops-controller:latest"
 
 start() {
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9001:8080 \
     -e CONTROLLER_MONGO_URL="mongodb://mops-mongo:27017/" \
     -e CONTROLLER_RABBITMQ_HOST="mops-rabbitmq" \

@@ -10,6 +10,13 @@ recreate() {
 create() {
   bash $script_dir/network.sh create
 
+  bash $script_dir/logstash.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/logstash.sh name)
+  bash $script_dir/elasticsearch.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/elasticsearch.sh name)
+  bash $script_dir/kibana.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/kibana.sh name)
+
   bash $script_dir/prometheus.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/prometheus.sh name)
 
@@ -53,6 +60,13 @@ destroy() {
 
   bash $script_dir/prometheus.sh stop
   bash $script_dir/prometheus.sh rm
+
+  bash $script_dir/kibana.sh stop
+  bash $script_dir/kibana.sh rm
+  bash $script_dir/elasticsearch.sh stop
+  bash $script_dir/elasticsearch.sh rm
+  bash $script_dir/logstash.sh stop
+  bash $script_dir/logstash.sh rm
 
   bash $script_dir/network.sh rm
 }
