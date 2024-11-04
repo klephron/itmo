@@ -23,9 +23,9 @@ InputParams = namedtuple(
         "mongo_url",
         "mongo_username",
         "mongo_password",
-        "rabbitmq_host",
-        "rabbitmq_username",
-        "rabbitmq_password",
+        "mq_host",
+        "mq_username",
+        "mq_password",
     ],
 )
 
@@ -42,10 +42,10 @@ MONGO_DEVICES: Collection[Any]
 MONGO_INDEX_CREATED = False
 MONGO_CONNECT_TIMEOUT = 0.5
 
-RABBITMQ_CONN: pika.BlockingConnection | None = None
-RABBITMQ_CHANNEL: BlockingChannel
-RABBITMQ_QUEUE = "controller2rule-engine"
-RABBITMQ_CONNECT_TIMEOUT = 0.5
+MQ_CONN: pika.BlockingConnection | None = None
+MQ_CHANNEL: BlockingChannel
+MQ_QUEUE = "controller2rule-engine"
+MQ_CONNECT_TIMEOUT = 0.5
 
 PROMETHEUS_REQUEST_COUNTER = Counter(
     "request_count", "Total number of requests", ("path", "method", "status_code")
@@ -94,7 +94,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         return
 
     def __handle_devices(self, prefix: str) -> Tuple[str, int]:
-        global MONGO_DEVICES, RABBITMQ_CHANNEL, RABBITMQ_QUEUE
+        global MONGO_DEVICES, MQ_CHANNEL, MQ_QUEUE
 
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
@@ -114,9 +114,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                     {"id": device_id, "time": time, "data": received_data}
                 )
 
-                RABBITMQ_CHANNEL.basic_publish(
+                MQ_CHANNEL.basic_publish(
                     exchange="",
-                    routing_key=RABBITMQ_QUEUE,
+                    routing_key=MQ_QUEUE,
                     body=json.dumps(
                         {
                             "device_id": device_id,
@@ -168,16 +168,16 @@ def process_params() -> InputParams:
     if os.environ.get("CONTROLLER_MONGO_URL") is None:
         raise ValueError("not set CONTROLLER_MONGO_URL")
 
-    if os.environ.get("CONTROLLER_RABBITMQ_HOST") is None:
-        raise ValueError("not set CONTROLLER_RABBITMQ_HOST")
+    if os.environ.get("CONTROLLER_MQ_HOST") is None:
+        raise ValueError("not set CONTROLLER_MQ_HOST")
 
     try:
         mongo_url = os.environ.get("CONTROLLER_MONGO_URL")
         mongo_username = os.environ.get("CONTROLLER_MONGO_USERNAME", "root")
         mongo_password = os.environ.get("CONTROLLER_MONGO_PASSWORD", "root")
-        rabbitmq_host = os.environ.get("CONTROLLER_RABBITMQ_HOST")
-        rabbitmq_username = os.environ.get("CONTROLLER_RABBITMQ_USERNAME", "root")
-        rabbitmq_password = os.environ.get("CONTROLLER_RABBITMQ_PASSWORD", "root")
+        mq_host = os.environ.get("CONTROLLER_MQ_HOST")
+        mq_username = os.environ.get("CONTROLLER_MQ_USERNAME", "root")
+        mq_password = os.environ.get("CONTROLLER_MQ_PASSWORD", "root")
 
     except ValueError:
         raise ValueError("Look in process_params() for valid argument passing")
@@ -186,9 +186,9 @@ def process_params() -> InputParams:
         mongo_url=mongo_url,
         mongo_username=mongo_username,
         mongo_password=mongo_password,
-        rabbitmq_host=rabbitmq_host,
-        rabbitmq_username=rabbitmq_username,
-        rabbitmq_password=rabbitmq_password,
+        mq_host=mq_host,
+        mq_username=mq_username,
+        mq_password=mq_password,
     )
 
 
@@ -199,7 +199,7 @@ def signal_terminate(*_: Any) -> None:
 def main() -> None:
     global PARAMS
     global MONGO_CLIENT, MONGO_DATABASE, MONGO_DEVICES, MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
-    global RABBITMQ_CONN, RABBITMQ_CHANNEL, RABBITMQ_QUEUE, RABBITMQ_CONNECT_TIMEOUT
+    global MQ_CONN, MQ_CHANNEL, MQ_QUEUE, MQ_CONNECT_TIMEOUT
     global HTTPD, HTTPD_PORT
 
     signal.signal(signal.SIGINT, signal_terminate)
@@ -224,24 +224,24 @@ def main() -> None:
             print(e)
             time.sleep(MONGO_CONNECT_TIMEOUT)
 
-    while RABBITMQ_CONN is None:
+    while MQ_CONN is None:
         try:
-            RABBITMQ_CONN = pika.BlockingConnection(
+            MQ_CONN = pika.BlockingConnection(
                 pika.ConnectionParameters(
-                    host=PARAMS.rabbitmq_host,
+                    host=PARAMS.mq_host,
                     credentials=pika.PlainCredentials(
-                        PARAMS.rabbitmq_username, PARAMS.rabbitmq_password
+                        PARAMS.mq_username, PARAMS.mq_password
                     ),
                 ),
             )
-            RABBITMQ_CHANNEL = RABBITMQ_CONN.channel()
-            RABBITMQ_CHANNEL.queue_declare(queue=RABBITMQ_QUEUE)
+            MQ_CHANNEL = MQ_CONN.channel()
+            MQ_CHANNEL.queue_declare(queue=MQ_QUEUE)
         except (ConnectionWrongStateError, AMQPConnectionError) as e:
             print(f"error: {repr(e)}")
-            time.sleep(RABBITMQ_CONNECT_TIMEOUT)
+            time.sleep(MQ_CONNECT_TIMEOUT)
         except gaierror as e:
             print(f"error: {repr(e)}")
-            time.sleep(RABBITMQ_CONNECT_TIMEOUT)
+            time.sleep(MQ_CONNECT_TIMEOUT)
 
     server_address = ("", HTTPD_PORT)
     HTTPD = HTTPServer(server_address, HTTPRequestHandler)
@@ -250,9 +250,9 @@ def main() -> None:
     HTTPD.serve_forever(poll_interval=0.5)
     print("info: terminated HTTP server")
 
-    if RABBITMQ_CONN is not None:
-        RABBITMQ_CONN.close()
-        print("info: closed rabbitmq connection")
+    if MQ_CONN is not None:
+        MQ_CONN.close()
+        print("info: closed mq connection")
 
 
 if __name__ == "__main__":
