@@ -19,6 +19,10 @@ start() {
     -v $container_volume_data:/usr/share/elasticsearch/data/ \
     -d $container
 
+  commands;
+}
+
+commands() {
   echo docker exec -it $container_name \
    /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic
   echo docker exec -it $container_name \
@@ -80,6 +84,9 @@ case "$1" in
   start)
     start
     ;;
+  commands)
+    commands
+    ;;
   stop)
     stop
     ;;
@@ -102,7 +109,7 @@ case "$1" in
     recreate
     ;;
   *)
-    echo "Usage $0: {start|stop|inspect|restart|rm|rm-volumes|name|recreate}"
+    echo "Usage $0: {start|commands|stop|inspect|restart|rm|rm-volumes|name|recreate}"
     exit 1
     ;;
 esac

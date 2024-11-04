@@ -22,6 +22,8 @@ create() {
 
   bash $script_dir/mongo.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/mongo.sh name)
+  bash $script_dir/mongo-exporter.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/mongo-exporter.sh name)
 
   bash $script_dir/grafana.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/grafana.sh name)
@@ -55,6 +57,8 @@ destroy() {
   bash $script_dir/grafana.sh stop
   bash $script_dir/grafana.sh rm
 
+  bash $script_dir/mongo-exporter.sh stop
+  bash $script_dir/mongo-exporter.sh rm
   bash $script_dir/mongo.sh stop
   bash $script_dir/mongo.sh rm
 
