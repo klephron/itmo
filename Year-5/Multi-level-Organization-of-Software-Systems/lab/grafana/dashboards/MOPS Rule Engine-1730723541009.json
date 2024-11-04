@@ -192,7 +192,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(rate(rabbitmq_response_time_seconds_bucket[$__interval])) by (le)",
+          "expr": "sum(rate(mq_response_time_seconds_bucket[$__interval])) by (le)",
           "format": "heatmap",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
@@ -214,13 +214,13 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "MOPS Rule Engine",
   "uid": "de2tqfzyqokjkb",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
