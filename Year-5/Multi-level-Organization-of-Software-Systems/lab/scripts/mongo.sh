@@ -9,8 +9,6 @@ mongo_root_username="root"
 mongo_root_password="root"
 
 start() {
-  logstash_host=$(bash $script_dir/logstash.sh name)
-
   docker run --name $container_name \
     --log-driver=gelf \
     --log-opt gelf-address=udp://127.0.0.1:9081 \

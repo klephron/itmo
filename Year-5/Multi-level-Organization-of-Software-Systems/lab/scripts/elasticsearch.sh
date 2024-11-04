@@ -26,9 +26,7 @@ start() {
   echo "Or configure manually:"
   echo docker exec -it $container_name \
    /usr/share/elasticsearch/bin/elasticsearch-reset-password -u kibana_system
-
   # create user/role for logstash
-  echo ""
   echo curl -u elastic:password \
     -X PUT "http://localhost:9061/_security/role/logstash_writer_role" -H \
     'Content-Type: application/json' -d '{
