@@ -88,6 +88,9 @@ PROMETHEUS_MQ_RESPONSE_TIME_HIST = Histogram(
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
+    def log_message(self, format: Any, *args: Any) -> None:
+        return
+
     def do_GET(self) -> None:
         if self.path == "/metrics":
             path, code = self.__handle_metrics("/metrics")
@@ -97,9 +100,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         PROMETHEUS_REQUEST_COUNTER.labels(
             path=path, method="GET", status_code=code
         ).inc()
-
-    def log_message(self, format: Any, *args: Any) -> None:
-        return
 
     def __handle_metrics(self, prefix: str) -> Tuple[str, int]:
         code = 200

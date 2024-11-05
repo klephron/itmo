@@ -85,6 +85,9 @@ class RequestException(Exception):
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
+    def log_message(self, format: Any, *args: Any) -> None:
+        return
+
     def do_POST(self) -> None:
         global MONGO_CONN_IS_AVAILABLE, MQ_CONN_IS_AVAILABLE
 
@@ -142,9 +145,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         PROMETHEUS_RESPONSE_TIME.labels(
             path=path, method="GET", status_code=code
         ).observe((datetime.datetime.now() - start_time).total_seconds())
-
-    def log_message(self, format: Any, *args: Any) -> None:
-        return
 
     def __handle_devices(self, prefix: str) -> Tuple[str, int]:
         global MONGO_DEVICES, MONGO_INSERT_TIMEOUT_DELAY, MQ_CHANNEL, MQ_RULE_ENGINE_QUEUE
