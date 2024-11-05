@@ -3,24 +3,21 @@ import json
 import os
 import signal
 import time
+import uuid
 from collections import namedtuple
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socket import gaierror
 from threading import Thread
 from time import sleep
 from typing import Any, Tuple
-import asyncio
 
 import pika
-from pika.adapters import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import (
     AMQPChannelError,
     AMQPConnectionError,
-    ChannelWrongStateError,
     ConnectionWrongStateError,
     NackError,
-    StreamLostError,
 )
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Summary, generate_latest
 from pymongo import MongoClient
@@ -158,6 +155,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         time = None
         code = None
         response = None
+        obj_uuid = None
 
         try:
             data = json.loads(post_data)
@@ -175,12 +173,14 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
         if not error:
             time = datetime.datetime.now()
+            obj_uuid = uuid.uuid4()
             try:
                 MQ_CHANNEL.basic_publish(
                     exchange="",
                     routing_key=MQ_RULE_ENGINE_QUEUE,
                     body=json.dumps(
                         {
+                            "uuid4": str(obj_uuid),
                             "device_id": device_id,
                             "time": time.timestamp(),
                             "data": data,
@@ -198,10 +198,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if not error:
             assert data is not None
             assert time is not None
+            assert obj_uuid is not None
 
             delay = MONGO_INSERT_TIMEOUT_DELAY
             max_delay = MONGO_INSERT_TIMEOUT_DELAY * MONGO_INSERT_RETRY_CNT
-            document = self.__get_devices_data(device_id, time, data)
+            document = self.__get_devices_data(obj_uuid, device_id, time, data)
 
             while True:
                 if delay > max_delay:
@@ -210,7 +211,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                     )
                     try:
                         self.__publish_mongo_delayed(
-                            self.__get_devices_data(device_id, time, data),
+                            self.__get_devices_data(obj_uuid, device_id, time, data),
                             "timeout exceeded",
                         )
                         break
@@ -223,7 +224,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                         )
 
                 try:
-                    MONGO_DEVICES.insert_one(document)
+                    MONGO_DEVICES.replace_one(
+                        {"_id": document["_id"]}, document, upsert=True
+                    )
                     break
                 except ExecutionTimeout as e:
                     print(f"warn: execution timeout {repr(e)}")
@@ -258,6 +261,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def __publish_mongo_delayed(self, data: dict[Any, Any], error: str) -> None:
         data["time"] = datetime.datetime.timestamp(data["time"])
+        data["uuid"] = str(data["uuid"])
         insert_data = {}
         insert_data["mongo_error"] = error
         insert_data["data"] = data
@@ -266,9 +270,13 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         )
 
     def __get_devices_data(
-        self, device_id: str, time: datetime.datetime, data: dict[Any, Any]
+        self,
+        obj_uuid: uuid.UUID,
+        device_id: str,
+        time: datetime.datetime,
+        data: dict[Any, Any],
     ) -> dict[Any, Any]:
-        return {"device_id": device_id, "time": time, "data": data}
+        return {"_id": obj_uuid, "device_id": device_id, "time": time, "data": data}
 
     def __handle_metrics(self, prefix: str) -> Tuple[str, int]:
         code = 200
@@ -338,6 +346,7 @@ def mongo_reconnect():
         connectTimeoutMS=1000,
         socketTimeoutMS=1000,
         serverSelectionTimeoutMS=1000,
+        uuidRepresentation="standard",
     )
     database = client["mops"]
     devices = database["devices"]

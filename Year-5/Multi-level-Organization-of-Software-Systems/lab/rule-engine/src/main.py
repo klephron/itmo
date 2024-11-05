@@ -8,6 +8,7 @@ import time
 from collections import namedtuple
 from socket import gaierror
 from typing import Any, Tuple
+from uuid import UUID
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
@@ -120,7 +121,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
 def mq_device_parse(
     body: bytes | str,
-) -> Tuple[bool, Tuple[str, float, dict[Any, Any]] | None]:
+) -> Tuple[bool, Tuple[UUID, str, float, dict[Any, Any]] | None]:
     if isinstance(body, bytes):
         body = body.decode("utf-8")
 
@@ -154,7 +155,17 @@ def mq_device_parse(
     if not isinstance(data, dict):
         return (False, None)
 
-    return (True, (device_id, time, data))
+    if "uuid4" not in received_data:
+        print("warn: uuid4 is not present")
+        return (False, None)
+
+    try:
+        uuid = UUID(received_data["uuid4"])
+    except (ValueError, TypeError) as e:
+        print(f"warn: {repr(e)}")
+        return (False, None)
+
+    return (True, (uuid, device_id, time, data))
 
 
 def mq_controller_on_message(
@@ -164,16 +175,16 @@ def mq_controller_on_message(
     ok, parse_data = mq_device_parse(body)
 
     if ok and parse_data is not None:
-        device_id, time, data = parse_data
+        uuid, device_id, time, data = parse_data
         rules = RULE_CTX.get_for_device(
-            device_id, data, datetime.datetime.fromtimestamp(time)
+            uuid, device_id, data, datetime.datetime.fromtimestamp(time)
         )
         # try insert to mongo after connection is established
         ok = False
-        if len(rules) > 0:
+        for rule in rules:
             while not ok:
                 try:
-                    MONGO_RULES.insert_many(rules)
+                    MONGO_RULES.replace_one({"_id": rule["_id"]}, rule, upsert=True)
                     ok = True
                 except ServerSelectionTimeoutError as e:
                     print(f"error: {repr(e)}, trying to reconnect...")
@@ -237,6 +248,7 @@ def mongo_reconnect() -> None:
         connectTimeoutMS=1000,
         socketTimeoutMS=1000,
         serverSelectionTimeoutMS=1000,
+        uuidRepresentation="standard",
     )
     database = client["mops"]
     rules = database["rules"]
