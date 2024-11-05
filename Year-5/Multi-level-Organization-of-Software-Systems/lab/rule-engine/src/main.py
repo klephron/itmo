@@ -46,6 +46,7 @@ MONGO_INDEX_CREATED = False
 MQ_CONN: pika.BlockingConnection | None = None
 MQ_CHANNEL: BlockingChannel | None = None
 MQ_QUEUE = "controller2rule-engine"
+MQ_QUEUE_MAX_LENGTH = 1000
 MQ_CONNECT_TIMEOUT = 0.5
 MQ_CONSUMER_TAG: Any | None = None
 
@@ -247,7 +248,7 @@ def main() -> None:
                 }
             )
             MONGO_INDEX_CREATED = True
-        except BaseException as e:
+        except Exception as e:
             print(e)
             time.sleep(MONGO_CONNECT_TIMEOUT)
 
@@ -262,7 +263,13 @@ def main() -> None:
                 ),
             )
             MQ_CHANNEL = MQ_CONN.channel()
-            MQ_CHANNEL.queue_declare(queue=MQ_QUEUE)
+            MQ_CHANNEL.queue_declare(
+                queue=MQ_QUEUE,
+                arguments={
+                    "x-max-length": MQ_QUEUE_MAX_LENGTH,
+                    "x-overflow": "reject-publish",
+                },
+            )
 
         except (ConnectionWrongStateError, AMQPConnectionError) as e:
             print(f"error: {repr(e)}")
