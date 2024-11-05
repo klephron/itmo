@@ -76,10 +76,11 @@ PROMETHEUS_RESPONSE_TIME = Summary(
 
 
 class RequestException(Exception):
-    def __init__(self, prefix: str, code: int, e: Exception) -> None:
+    def __init__(self, prefix: str, code: int, e: Exception, msg: str) -> None:
         self.prefix = prefix
         self.code = code
         self.e = e
+        self.msg = msg
         super().__init__()
 
 
@@ -90,8 +91,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         start_time = datetime.datetime.now()
         path = None
         code = None
-
-        print("is mongo available: ?", MONGO_CONN_IS_AVAILABLE)
 
         if not MONGO_CONN_IS_AVAILABLE or not MQ_CONN_IS_AVAILABLE:
             self.send_response(503)
@@ -111,6 +110,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             except RequestException as e:
                 path = e.prefix
                 code = e.code
+                print(f"error: {e.msg}")
                 try:
                     raise e.e
                 except ServerSelectionTimeoutError:
@@ -193,7 +193,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 code = 503
                 error = True
             except Exception as e:
-                raise RequestException(prefix, 503, e)
+                raise RequestException(prefix, 503, e, "can't publish to mq_channel")
 
         if not error:
             assert data is not None
@@ -215,8 +215,12 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                         )
                         break
                     except Exception as e:
-                        print("error: can't insert in queue, desynced")
-                        raise RequestException(prefix, 503, e)
+                        raise RequestException(
+                            prefix,
+                            503,
+                            e,
+                            "can't publish in mq_channel, system is desynced",
+                        )
 
                 try:
                     MONGO_DEVICES.insert_one(document)
@@ -227,7 +231,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                     delay += MONGO_INSERT_TIMEOUT_DELAY
                 except Exception as e:
                     print("connection exception")
-                    raise RequestException(prefix, 503, e)
+                    raise RequestException(prefix, 503, e, "can't connect to mongo")
 
         if not error:
             response = {"msg": "ok"}

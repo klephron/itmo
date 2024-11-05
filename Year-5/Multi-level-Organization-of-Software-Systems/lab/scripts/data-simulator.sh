@@ -10,7 +10,7 @@ start() {
   docker run --name $container_name \
     -e SIMULATOR_CONTROLLER_URL="http://mops-controller:8080" \
     -e SIMULATOR_DEVICES_CNT=5 \
-    -e SIMULATOR_DEVICES_FREQ=10 \
+    -e SIMULATOR_DEVICES_FREQ=1 \
     -d $container
 }
 

@@ -6,10 +6,10 @@ container_name="mops-rule-engine"
 container="mops-rule-engine:latest"
 
 start() {
+    # --log-driver=gelf \
+    # --log-opt gelf-address=udp://127.0.0.1:9081 \
+    # --log-opt tag="$container_name" \
   docker run --name $container_name \
-    --log-driver=gelf \
-    --log-opt gelf-address=udp://127.0.0.1:9081 \
-    --log-opt tag="$container_name" \
     -p 9021:8080 \
     -e RULE_ENGINE_MONGO_URL="mongodb://mops-mongo:27017/" \
     -e RULE_ENGINE_MQ_HOST="mops-rabbitmq" \

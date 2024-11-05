@@ -11,8 +11,13 @@ from typing import Any, Tuple
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.exceptions import AMQPConnectionError, ConnectionWrongStateError
+from pika.exceptions import (
+    AMQPConnectionError,
+    ConnectionClosedByBroker,
+    ConnectionWrongStateError,
+)
 from pymongo import MongoClient
+from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
@@ -41,14 +46,17 @@ MONGO_CLIENT: MongoClient[Any]
 MONGO_DATABASE: Database[Any]
 MONGO_RULES: Collection[Any]
 MONGO_CONNECT_TIMEOUT = 0.5
-MONGO_INDEX_CREATED = False
+MONGO_CONN_IS_AVAILABLE = False
+MONGO_CONN_STARTED = False
 
-MQ_CONN: pika.BlockingConnection | None = None
-MQ_CHANNEL: BlockingChannel | None = None
+MQ_CONN: pika.BlockingConnection
+MQ_CHANNEL: BlockingChannel | None
 MQ_QUEUE = "controller2rule-engine"
 MQ_QUEUE_MAX_LENGTH = 1000
 MQ_CONNECT_TIMEOUT = 0.5
 MQ_CONSUMER_TAG: Any | None = None
+MQ_CONN_IS_AVAILABLE = False
+MQ_CONN_STARTED = False
 
 HTTPD_PORT = 8080
 HTTPD: HTTPServer
@@ -160,8 +168,18 @@ def mq_controller_on_message(
         rules = RULE_CTX.get_for_device(
             device_id, data, datetime.datetime.fromtimestamp(time)
         )
+        # try insert to mongo after connection is established
+        ok = False
         if len(rules) > 0:
-            MONGO_RULES.insert_many(rules)
+            while not ok:
+                try:
+                    MONGO_RULES.insert_many(rules)
+                    ok = True
+                except ServerSelectionTimeoutError as e:
+                    print(f"error: {repr(e)}, trying to reconnect...")
+                    mongo_reconnect()
+
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
     status = "OK" if ok else "BAD_FORMAT"
 
@@ -200,6 +218,98 @@ def process_params() -> InputParams:
     )
 
 
+def mongo_reconnect() -> None:
+    global PARAMS
+    global MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
+    global MONGO_CLIENT, MONGO_DATABASE, MONGO_RULES, MONGO_CONN_IS_AVAILABLE, MONGO_CONN_STARTED
+
+    if MONGO_CONN_STARTED:
+        return
+
+    MONGO_CONN_STARTED = True
+    MONGO_CONN_IS_AVAILABLE = False
+
+    print("info: establishing mongo connection...")
+    client: MongoClient[Any] = MongoClient(
+        PARAMS.mongo_url,
+        username=PARAMS.mongo_username,
+        password=PARAMS.mongo_password,
+        connectTimeoutMS=1000,
+        socketTimeoutMS=1000,
+        serverSelectionTimeoutMS=1000,
+    )
+    database = client["mops"]
+    rules = database["rules"]
+
+    index_created = False
+    while not index_created:
+        try:
+            rules.create_index({"time": 1})
+            index_created = True
+        except Exception as e:
+            print(e)
+            time.sleep(MONGO_CONNECT_TIMEOUT)
+
+    MONGO_CLIENT, MONGO_DATABASE, MONGO_RULES = client, database, rules
+    MONGO_CONN_IS_AVAILABLE = True
+    MONGO_CONN_STARTED = False
+    print("info: established mongo connection")
+
+
+def mq_reconnect() -> None:
+    global PARAMS
+    global MQ_RULE_ENGINE_QUEUE, MQ_CONNECT_TIMEOUT
+    global MQ_CONN, MQ_CHANNEL, MQ_CONN_STARTED, MQ_CONN_IS_AVAILABLE, MQ_CONSUMER_TAG
+
+    if MQ_CONN_STARTED:
+        return
+
+    MQ_CONN_STARTED = True
+    MQ_CONN_IS_AVAILABLE = False
+
+    print("info: establishing mqtt connection...")
+    mq_conn = None
+    mq_channel = None
+
+    while mq_channel is None:
+        try:
+            mq_conn = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=PARAMS.mq_host,
+                    credentials=pika.PlainCredentials(
+                        PARAMS.mq_username, PARAMS.mq_password
+                    ),
+                ),
+            )
+            mq_channel = mq_conn.channel()
+            mq_channel.queue_declare(
+                queue=MQ_QUEUE,
+                arguments={
+                    "x-max-length": MQ_QUEUE_MAX_LENGTH,
+                    "x-overflow": "reject-publish",
+                },
+            )
+            mq_channel.confirm_delivery()
+        except (ConnectionWrongStateError, AMQPConnectionError) as e:
+            print(f"error: {repr(e)}")
+            time.sleep(MQ_CONNECT_TIMEOUT)
+        except gaierror as e:
+            print(f"error: {repr(e)}")
+            time.sleep(MQ_CONNECT_TIMEOUT)
+
+    mq_consumer_tag = mq_channel.basic_consume(
+        queue=MQ_QUEUE, on_message_callback=mq_controller_on_message, auto_ack=False
+    )
+
+    assert mq_conn is not None
+    assert mq_channel is not None
+
+    MQ_CONN, MQ_CHANNEL, MQ_CONSUMER_TAG = mq_conn, mq_channel, mq_consumer_tag
+    MQ_CONN_IS_AVAILABLE = True
+    MQ_CONN_STARTED = False
+    print("info: established mqtt connection")
+
+
 def serve_httpd() -> None:
     global HTTPD, HTTPD_PORT
 
@@ -218,13 +328,15 @@ def signal_terminate(*_: Any) -> None:
 
     if MQ_CHANNEL is not None and MQ_CONSUMER_TAG is not None:
         MQ_CHANNEL.basic_cancel(MQ_CONSUMER_TAG)
+        MQ_CHANNEL.close()
+        MQ_CHANNEL = None
+        print("info: closed mq connection")
 
     httpd_thread.join()
 
 
 def main() -> None:
     global PARAMS
-    global MONGO_CLIENT, MONGO_DATABASE, MONGO_RULES, MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
     global MQ_CONN, MQ_CHANNEL, MQ_QUEUE, MQ_CONNECT_TIMEOUT, MQ_CONSUMER_TAG
     global HTTPD, HTTPD_PORT
     global PROMETHEUS_HTTP_PORT
@@ -234,70 +346,23 @@ def main() -> None:
 
     PARAMS = process_params()
 
-    MONGO_CLIENT = MongoClient(
-        PARAMS.mongo_url, username=PARAMS.mongo_username, password=PARAMS.mongo_password
-    )
-    MONGO_DATABASE = MONGO_CLIENT["mops"]
-    MONGO_RULES = MONGO_DATABASE["rules"]
+    mongo_reconnect()
+    mq_reconnect()
 
-    while not MONGO_INDEX_CREATED:
-        try:
-            MONGO_RULES.create_index(
-                {
-                    "time": 1,
-                }
-            )
-            MONGO_INDEX_CREATED = True
-        except Exception as e:
-            print(e)
-            time.sleep(MONGO_CONNECT_TIMEOUT)
+    assert MQ_CHANNEL is not None
 
-    while MQ_CONN is None:
-        try:
-            MQ_CONN = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    host=PARAMS.mq_host,
-                    credentials=pika.PlainCredentials(
-                        PARAMS.mq_username, PARAMS.mq_password
-                    ),
-                ),
-            )
-            MQ_CHANNEL = MQ_CONN.channel()
-            MQ_CHANNEL.queue_declare(
-                queue=MQ_QUEUE,
-                arguments={
-                    "x-max-length": MQ_QUEUE_MAX_LENGTH,
-                    "x-overflow": "reject-publish",
-                },
-            )
-
-        except (ConnectionWrongStateError, AMQPConnectionError) as e:
-            print(f"error: {repr(e)}")
-            time.sleep(MQ_CONNECT_TIMEOUT)
-        except gaierror as e:
-            print(f"error: {repr(e)}")
-            time.sleep(MQ_CONNECT_TIMEOUT)
-
-    if MQ_CHANNEL is None:
-        print("error: mq_channel is None")
-        exit(-1)
-
-    MQ_CONSUMER_TAG = MQ_CHANNEL.basic_consume(
-        queue=MQ_QUEUE,
-        on_message_callback=mq_controller_on_message,
-        auto_ack=True,
-    )
     print(f"info: created basic_consume {MQ_QUEUE}")
 
     Thread(target=serve_httpd).start()
 
-    print("info: starting consuming...")
-    MQ_CHANNEL.start_consuming()
-    print("info: stopped mq consumer")
-
-    if MQ_CONN is not None:
-        MQ_CONN.close()
-        print("info: closed mq connection")
+    while MQ_CHANNEL is not None:
+        try:
+            print("info: starting consuming...")
+            MQ_CHANNEL.start_consuming()
+            print("info: stopped mq consumer")
+        except ConnectionClosedByBroker as e:
+            print(f"error: {repr(e)}")
+            mq_reconnect()
 
 
 if __name__ == "__main__":
