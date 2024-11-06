@@ -1,5 +1,6 @@
 import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import zlib
 import json
 import os
 import signal
@@ -252,8 +253,8 @@ def rule_ctx_load() -> None:
 
     prefix = "rules:device_uniform_0_10_cnt_gt_2:"
     for key in redis_client.scan_iter(match=f"{prefix}*"):
-        device_id = key[len(prefix) :]
-        device_queue = hash(device_id) % PARAMS.mq_queues
+        device_id: str = key[len(prefix) :]
+        device_queue = zlib.crc32(device_id.encode('utf-8')) % PARAMS.mq_queues
         if (device_queue % PARAMS.mq_consumers) + 1 == PARAMS.mq_index:
             value = redis_client.get(key)
 

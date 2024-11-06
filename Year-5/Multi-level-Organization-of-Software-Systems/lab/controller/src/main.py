@@ -3,6 +3,7 @@ import json
 import os
 import signal
 import time
+import zlib
 import uuid
 from collections import namedtuple
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -175,7 +176,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if not error:
             time = datetime.datetime.now()
             obj_uuid = uuid.uuid4()
-            queue_index = hash(device_id) % PARAMS.mq_queues + 1
+            queue_index = zlib.crc32(device_id.encode('utf-8')) % PARAMS.mq_queues + 1
             try:
                 MQ_CHANNEL.basic_publish(
                     exchange="",
