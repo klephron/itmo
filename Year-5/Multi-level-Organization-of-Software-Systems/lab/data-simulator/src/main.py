@@ -18,6 +18,7 @@ InputParams = namedtuple(
     [
         "devices_cnt",
         "devices_freq",
+        "devices_offset",
         "json_path",
         "delay_check_enable",
         "delay_check_iters",
@@ -118,13 +119,13 @@ def values_generic() -> dict[str, Value]:
     }
 
 
-def devices_generic(cnt: int, freq: float) -> list[Device]:
+def devices_generic(cnt: int, freq: float, offset: int) -> list[Device]:
     devices: list[Device] = []
     interval: float = 1 / freq
     for i in range(1, cnt + 1):
         devices.append(
             Device(
-                f"{i}",
+                f"{i + offset}",
                 ValueConst(interval),
                 values_generic(),
             )
@@ -148,6 +149,7 @@ def process_params() -> InputParams:
     try:
         devices_cnt = int(os.environ.get("SIMULATOR_DEVICES_CNT", "10"))
         devices_freq = float(os.environ.get("SIMULATOR_DEVICES_FREQ", "5"))
+        devices_offset = int(os.environ.get("SIMULATOR_DEVICES_OFFSET", "0"))
         json_path = os.environ.get("SIMULATOR_JSON_PATH")
         delay_check_enable = (
             os.environ.get("SIMULATOR_DELAY_CHECK_ENABLE", "true").lower() == "true"
@@ -170,6 +172,7 @@ def process_params() -> InputParams:
     return InputParams(
         devices_cnt=devices_cnt,
         devices_freq=devices_freq,
+        devices_offset=devices_offset,
         json_path=json_path,
         delay_check_enable=delay_check_enable,
         delay_check_iters=delay_check_iters,
@@ -203,7 +206,7 @@ def main() -> None:
     if PARAMS.json_path is not None:
         devices = config_load_devices(PARAMS.json_path)
     else:
-        devices = devices_generic(PARAMS.devices_cnt, PARAMS.devices_freq)
+        devices = devices_generic(PARAMS.devices_cnt, PARAMS.devices_freq, PARAMS.devices_offset)
 
     SIMULATION = Simulation(devices, on_message)
     SIMULATION.start()

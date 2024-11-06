@@ -1,16 +1,18 @@
 #!/bin/bash
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+index="${2:-1}"
 
-container_name="mops-data-simulator"
+container_name="mops-data-simulator-$index"
 container="mops-data-simulator:latest"
 
 start() {
   # max around 650 RPS
   docker run --name $container_name \
-    -e SIMULATOR_CONTROLLER_URL="http://mops-controller:8080" \
+    -e SIMULATOR_CONTROLLER_URL="http://mops-controller-$index:8080" \
     -e SIMULATOR_DEVICES_CNT=5 \
     -e SIMULATOR_DEVICES_FREQ=1 \
+    -e SIMULATOR_DEVICES_OFFSET=$(( 5 * index - 5 )) \
     -d $container
 }
 

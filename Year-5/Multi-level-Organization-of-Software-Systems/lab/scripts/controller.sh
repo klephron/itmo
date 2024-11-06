@@ -1,8 +1,10 @@
 #!/bin/bash
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+queues="${2:-1}"
+index="${3:-1}"
 
-container_name="mops-controller"
+container_name="mops-controller-$index"
 container="mops-controller:latest"
 
 start() {
@@ -10,9 +12,10 @@ start() {
     # --log-opt gelf-address=udp://127.0.0.1:9081 \
     # --log-opt tag="$container_name" \
   docker run --name $container_name \
-    -p 9001:8080 \
+    -p "900$index:8080" \
     -e CONTROLLER_MONGO_URL="mongodb://mops-mongo:27017/" \
     -e CONTROLLER_MQ_HOST="mops-rabbitmq" \
+    -e CONTROLLER_MQ_QUEUES=$queues \
     -d $container
 }
 

@@ -34,6 +34,7 @@ InputParams = namedtuple(
         "mq_host",
         "mq_username",
         "mq_password",
+        "mq_queues",
     ],
 )
 
@@ -55,7 +56,7 @@ MONGO_CONN_STARTED = False
 
 MQ_CONN: pika.BlockingConnection | None = None
 MQ_CHANNEL: BlockingChannel
-MQ_RULE_ENGINE_QUEUE = "controller2rule-engine"
+MQ_RULE_ENGINE_QUEUE_PREFIX = "controller2rule-engine"
 MQ_MONGO_DELAYED_QUEUE = "controller2mongo-delayed"
 MQ_QUEUE_MAX_LENGTH = 1000
 MQ_CONNECT_TIMEOUT = 0.5
@@ -144,7 +145,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         ).observe((datetime.datetime.now() - start_time).total_seconds())
 
     def __handle_devices(self, prefix: str) -> Tuple[str, int]:
-        global MONGO_DEVICES, MONGO_INSERT_TIMEOUT_DELAY, MQ_CHANNEL, MQ_RULE_ENGINE_QUEUE
+        global MONGO_DEVICES, MONGO_INSERT_TIMEOUT_DELAY, MQ_CHANNEL, MQ_RULE_ENGINE_QUEUE_PREFIX
 
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
@@ -174,10 +175,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         if not error:
             time = datetime.datetime.now()
             obj_uuid = uuid.uuid4()
+            queue_index = hash(device_id) % PARAMS.mq_queues + 1
             try:
                 MQ_CHANNEL.basic_publish(
                     exchange="",
-                    routing_key=MQ_RULE_ENGINE_QUEUE,
+                    routing_key=f"{MQ_RULE_ENGINE_QUEUE_PREFIX}.{PARAMS.mq_queues}.{queue_index}",
                     body=json.dumps(
                         {
                             "uuid4": str(obj_uuid),
@@ -262,7 +264,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def __publish_mongo_delayed(self, data: dict[Any, Any], error: str) -> None:
         data["time"] = datetime.datetime.timestamp(data["time"])
         data["uuid"] = str(data["uuid"])
-        insert_data = {}
+        insert_data: dict[Any, Any] = {}
         insert_data["mongo_error"] = error
         insert_data["data"] = data
         MQ_CHANNEL.basic_publish(
@@ -309,6 +311,7 @@ def process_params() -> InputParams:
         mq_host = os.environ.get("CONTROLLER_MQ_HOST")
         mq_username = os.environ.get("CONTROLLER_MQ_USERNAME", "root")
         mq_password = os.environ.get("CONTROLLER_MQ_PASSWORD", "root")
+        mq_queues = int(os.environ.get("CONTROLLER_MQ_QUEUES", "1"))
 
     except ValueError:
         raise ValueError("Look in process_params() for valid argument passing")
@@ -320,6 +323,7 @@ def process_params() -> InputParams:
         mq_host=mq_host,
         mq_username=mq_username,
         mq_password=mq_password,
+        mq_queues=mq_queues,
     )
 
 
@@ -327,7 +331,7 @@ def signal_terminate(*_: Any) -> None:
     Thread(target=lambda: HTTPD.shutdown()).start()
 
 
-def mongo_reconnect():
+def mongo_reconnect() -> None:
     global PARAMS
     global MONGO_INDEX_CREATED, MONGO_CONNECT_TIMEOUT
     global MONGO_CLIENT, MONGO_DATABASE, MONGO_DEVICES, MONGO_CONN_IS_AVAILABLE, MONGO_CONN_STARTED
@@ -339,7 +343,7 @@ def mongo_reconnect():
     MONGO_CONN_IS_AVAILABLE = False
 
     print("info: establishing mongo connection...")
-    client = MongoClient(
+    client: MongoClient[Any] = MongoClient(
         PARAMS.mongo_url,
         username=PARAMS.mongo_username,
         password=PARAMS.mongo_password,
@@ -366,9 +370,10 @@ def mongo_reconnect():
     print("info: established mongo connection")
 
 
-def mq_reconnect():
+def mq_reconnect() -> None:
     global PARAMS
-    global MQ_RULE_ENGINE_QUEUE, MQ_CONNECT_TIMEOUT, MQ_CONN, MQ_CHANNEL, MQ_CONN_STARTED, MQ_CONN_IS_AVAILABLE
+    global MQ_CONN_STARTED, MQ_CONN_IS_AVAILABLE
+    global MQ_CONN, MQ_CHANNEL, MQ_RULE_ENGINE_QUEUE_PREFIX, MQ_CONNECT_TIMEOUT
 
     if MQ_CONN_STARTED:
         return
@@ -379,7 +384,7 @@ def mq_reconnect():
     print("info: establishing mqtt connection...")
     mq_conn = None
     mq_channel = None
-    while mq_conn is None:
+    while True:
         try:
             mq_conn = pika.BlockingConnection(
                 pika.ConnectionParameters(
@@ -390,17 +395,19 @@ def mq_reconnect():
                 ),
             )
             mq_channel = mq_conn.channel()
-            mq_channel.queue_declare(
-                queue=MQ_RULE_ENGINE_QUEUE,
-                arguments={
-                    "x-max-length": MQ_QUEUE_MAX_LENGTH,
-                    "x-overflow": "reject-publish",
-                },
-            )
+            for i in range(1, PARAMS.mq_queues + 1):
+                mq_channel.queue_declare(
+                    queue=f"{MQ_RULE_ENGINE_QUEUE_PREFIX}.{PARAMS.mq_queues}.{i}",
+                    arguments={
+                        "x-max-length": MQ_QUEUE_MAX_LENGTH,
+                        "x-overflow": "reject-publish",
+                    },
+                )
             mq_channel.queue_declare(
                 queue=MQ_MONGO_DELAYED_QUEUE,
             )
             mq_channel.confirm_delivery()
+            break
         except (ConnectionWrongStateError, AMQPConnectionError) as e:
             print(f"error: {repr(e)}")
             time.sleep(MQ_CONNECT_TIMEOUT)

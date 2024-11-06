@@ -34,6 +34,9 @@ InputParams = namedtuple(
         "mq_host",
         "mq_username",
         "mq_password",
+        "mq_queues",
+        "mq_consumers",
+        "mq_index",
     ],
 )
 
@@ -52,10 +55,10 @@ MONGO_CONN_STARTED = False
 
 MQ_CONN: pika.BlockingConnection
 MQ_CHANNEL: BlockingChannel | None
-MQ_QUEUE = "controller2rule-engine"
+MQ_QUEUE_PREFIX = "controller2rule-engine"
 MQ_QUEUE_MAX_LENGTH = 1000
 MQ_CONNECT_TIMEOUT = 0.5
-MQ_CONSUMER_TAG: Any | None = None
+MQ_TAGS: list[Any]
 MQ_CONN_IS_AVAILABLE = False
 MQ_CONN_STARTED = False
 
@@ -194,11 +197,11 @@ def mq_controller_on_message(
 
     status = "OK" if ok else "BAD_FORMAT"
 
-    PROMETHEUS_MQ_REQUEST_COUNTER.labels(queue=MQ_QUEUE, status=status).inc()
+    PROMETHEUS_MQ_REQUEST_COUNTER.labels(queue=method.routing_key, status=status).inc()
 
-    PROMETHEUS_MQ_RESPONSE_TIME_HIST.labels(queue=MQ_QUEUE, status=status).observe(
-        (datetime.datetime.now() - start_time).total_seconds()
-    )
+    PROMETHEUS_MQ_RESPONSE_TIME_HIST.labels(
+        queue=method.routing_key, status=status
+    ).observe((datetime.datetime.now() - start_time).total_seconds())
 
 
 def process_params() -> InputParams:
@@ -215,6 +218,9 @@ def process_params() -> InputParams:
         mq_host = os.environ.get("RULE_ENGINE_MQ_HOST")
         mq_username = os.environ.get("RULE_ENGINE_MQ_USERNAME", "root")
         mq_password = os.environ.get("RULE_ENGINE_MQ_PASSWORD", "root")
+        mq_queues = int(os.environ.get("RULE_ENGINE_MQ_QUEUES", "1"))
+        mq_consumers = int(os.environ.get("RULE_ENGINE_MQ_CONSUMERS", "1"))
+        mq_index = int(os.environ.get("RULE_ENGINE_MQ_INDEX", "0"))
 
     except ValueError:
         raise ValueError("Look in process_params() for valid argument passing")
@@ -226,6 +232,9 @@ def process_params() -> InputParams:
         mq_host=mq_host,
         mq_username=mq_username,
         mq_password=mq_password,
+        mq_queues=mq_queues,
+        mq_consumers=mq_consumers,
+        mq_index=mq_index,
     )
 
 
@@ -271,7 +280,7 @@ def mongo_reconnect() -> None:
 def mq_reconnect() -> None:
     global PARAMS
     global MQ_RULE_ENGINE_QUEUE, MQ_CONNECT_TIMEOUT
-    global MQ_CONN, MQ_CHANNEL, MQ_CONN_STARTED, MQ_CONN_IS_AVAILABLE, MQ_CONSUMER_TAG
+    global MQ_CONN, MQ_CHANNEL, MQ_CONN_STARTED, MQ_CONN_IS_AVAILABLE, MQ_TAGS
 
     if MQ_CONN_STARTED:
         return
@@ -283,7 +292,7 @@ def mq_reconnect() -> None:
     mq_conn = None
     mq_channel = None
 
-    while mq_channel is None:
+    while True:
         try:
             mq_conn = pika.BlockingConnection(
                 pika.ConnectionParameters(
@@ -294,14 +303,16 @@ def mq_reconnect() -> None:
                 ),
             )
             mq_channel = mq_conn.channel()
-            mq_channel.queue_declare(
-                queue=MQ_QUEUE,
-                arguments={
-                    "x-max-length": MQ_QUEUE_MAX_LENGTH,
-                    "x-overflow": "reject-publish",
-                },
-            )
+            for i in range(PARAMS.mq_queues):
+                mq_channel.queue_declare(
+                    queue=f"{MQ_QUEUE_PREFIX}.{PARAMS.mq_queues}.{i + 1}",
+                    arguments={
+                        "x-max-length": MQ_QUEUE_MAX_LENGTH,
+                        "x-overflow": "reject-publish",
+                    },
+                )
             mq_channel.confirm_delivery()
+            break
         except (ConnectionWrongStateError, AMQPConnectionError) as e:
             print(f"error: {repr(e)}")
             time.sleep(MQ_CONNECT_TIMEOUT)
@@ -309,14 +320,21 @@ def mq_reconnect() -> None:
             print(f"error: {repr(e)}")
             time.sleep(MQ_CONNECT_TIMEOUT)
 
-    mq_consumer_tag = mq_channel.basic_consume(
-        queue=MQ_QUEUE, on_message_callback=mq_controller_on_message, auto_ack=False
-    )
+    mq_tags = []
+    for i in range(PARAMS.mq_index - 1, PARAMS.mq_queues, PARAMS.mq_consumers):
+        mq_tags.append(
+            mq_channel.basic_consume(
+                queue=f"{MQ_QUEUE_PREFIX}.{PARAMS.mq_queues}.{i + 1}",
+                on_message_callback=mq_controller_on_message,
+                auto_ack=False,
+            )
+        )
+        print(f"info: consuming from queue {i + 1}")
 
     assert mq_conn is not None
     assert mq_channel is not None
 
-    MQ_CONN, MQ_CHANNEL, MQ_CONSUMER_TAG = mq_conn, mq_channel, mq_consumer_tag
+    MQ_CONN, MQ_CHANNEL, MQ_TAGS = mq_conn, mq_channel, mq_tags
     MQ_CONN_IS_AVAILABLE = True
     MQ_CONN_STARTED = False
     print("info: established mqtt connection")
@@ -333,13 +351,14 @@ def serve_httpd() -> None:
 
 
 def signal_terminate(*_: Any) -> None:
-    global HTTPD, MQ_CHANNEL, MQ_CONSUMER_TAG
+    global HTTPD, MQ_CHANNEL, MQ_TAGS
 
     httpd_thread = Thread(target=lambda: HTTPD.shutdown())
     httpd_thread.start()
 
-    if MQ_CHANNEL is not None and MQ_CONSUMER_TAG is not None:
-        MQ_CHANNEL.basic_cancel(MQ_CONSUMER_TAG)
+    if MQ_CHANNEL is not None:
+        for tag in MQ_TAGS:
+            MQ_CHANNEL.basic_cancel(tag)
         MQ_CHANNEL.close()
         MQ_CHANNEL = None
         print("info: closed mq connection")
@@ -349,7 +368,7 @@ def signal_terminate(*_: Any) -> None:
 
 def main() -> None:
     global PARAMS
-    global MQ_CONN, MQ_CHANNEL, MQ_QUEUE, MQ_CONNECT_TIMEOUT, MQ_CONSUMER_TAG
+    global MQ_CONN, MQ_CHANNEL, MQ_QUEUE, MQ_CONNECT_TIMEOUT, MQ_TAGS
     global HTTPD, HTTPD_PORT
     global PROMETHEUS_HTTP_PORT
 
@@ -362,8 +381,6 @@ def main() -> None:
     mq_reconnect()
 
     assert MQ_CHANNEL is not None
-
-    print(f"info: created basic_consume {MQ_QUEUE}")
 
     Thread(target=serve_httpd).start()
 
