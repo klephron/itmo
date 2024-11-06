@@ -1,14 +1,38 @@
 from typing import Any
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import uuid
+import json
 
 Rule = dict[Any, Any]
+
 
 @dataclass
 class CumulativeRecord:
     cnt: int
     history: set[uuid.UUID]
+
+
+class CumulativeRecordJSONEncoder(json.JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, CumulativeRecord):
+            record_dict = asdict(o)
+            record_dict["history"] = [str(uuid) for uuid in record_dict["history"]]
+            return record_dict
+        elif isinstance(o, uuid.UUID):
+            return str(o)
+        elif isinstance(o, set):
+            return list(o)
+        return super().default(o)
+
+
+def decode_cumulative_record(dct: dict[Any, Any]) -> CumulativeRecord:
+    if "cnt" in dct and "history" in dct:
+        # Convert the list of UUID strings back to a set of UUIDs
+        dct["history"] = {uuid.UUID(uuid_str) for uuid_str in dct["history"]}
+        return CumulativeRecord(**dct)
+    raise json.JSONDecodeError("cumulative decode error", "", 0)
+
 
 class RuleCtx:
     def __init__(self) -> None:
@@ -44,7 +68,9 @@ class RuleCtx:
             self.device_uniform_0_10_cnt_gt_2[device_id] = CumulativeRecord(0, set())
             return
 
-        record = self.device_uniform_0_10_cnt_gt_2.setdefault(device_id, CumulativeRecord(0, set()))
+        record = self.device_uniform_0_10_cnt_gt_2.setdefault(
+            device_id, CumulativeRecord(0, set())
+        )
 
         if device_uuid in record.history:
             print(f"info: uuid {device_uuid} already in {device_id} history")

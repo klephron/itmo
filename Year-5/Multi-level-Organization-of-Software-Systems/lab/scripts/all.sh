@@ -14,6 +14,9 @@ recreate() {
 create() {
   bash $script_dir/network.sh create
 
+  bash $script_dir/redis.sh start
+  bash $script_dir/network.sh connect $(bash $script_dir/redis.sh name)
+
   bash $script_dir/logstash.sh start
   bash $script_dir/network.sh connect $(bash $script_dir/logstash.sh name)
   bash $script_dir/elasticsearch.sh start
@@ -87,6 +90,9 @@ destroy() {
   bash $script_dir/elasticsearch.sh rm
   bash $script_dir/logstash.sh stop
   bash $script_dir/logstash.sh rm
+
+  bash $script_dir/redis.sh stop
+  bash $script_dir/redis.sh rm
 
   bash $script_dir/network.sh rm
 }

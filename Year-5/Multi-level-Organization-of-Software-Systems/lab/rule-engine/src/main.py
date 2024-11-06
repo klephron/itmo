@@ -22,8 +22,9 @@ from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.synchronous.collection import Collection
 from pymongo.synchronous.database import Database
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+import redis
 
-from rule import RuleCtx
+from rule import CumulativeRecordJSONEncoder, RuleCtx, decode_cumulative_record
 
 InputParams = namedtuple(
     "InputParams",
@@ -37,6 +38,7 @@ InputParams = namedtuple(
         "mq_queues",
         "mq_consumers",
         "mq_index",
+        "redis_host",
     ],
 )
 
@@ -44,7 +46,7 @@ ROUTES = [("/")]
 
 PARAMS: InputParams
 
-RULE_CTX = RuleCtx()
+RULE_CTX: RuleCtx
 
 MONGO_CLIENT: MongoClient[Any]
 MONGO_DATABASE: Database[Any]
@@ -211,6 +213,9 @@ def process_params() -> InputParams:
     if os.environ.get("RULE_ENGINE_MQ_HOST") is None:
         raise ValueError("not set RULE_ENGINE_MQ_HOST")
 
+    if os.environ.get("RULE_ENGINE_REDIS_HOST") is None:
+        raise ValueError("not set RULE_ENGINE_REDIS_HOST")
+
     try:
         mongo_url = os.environ.get("RULE_ENGINE_MONGO_URL")
         mongo_username = os.environ.get("RULE_ENGINE_MONGO_USERNAME", "root")
@@ -221,6 +226,7 @@ def process_params() -> InputParams:
         mq_queues = int(os.environ.get("RULE_ENGINE_MQ_QUEUES", "1"))
         mq_consumers = int(os.environ.get("RULE_ENGINE_MQ_CONSUMERS", "1"))
         mq_index = int(os.environ.get("RULE_ENGINE_MQ_INDEX", "0"))
+        redis_host = os.environ.get("RULE_ENGINE_REDIS_HOST")
 
     except ValueError:
         raise ValueError("Look in process_params() for valid argument passing")
@@ -235,7 +241,44 @@ def process_params() -> InputParams:
         mq_queues=mq_queues,
         mq_consumers=mq_consumers,
         mq_index=mq_index,
+        redis_host=redis_host,
     )
+
+
+def rule_ctx_load() -> None:
+    global RULE_CTX, PARAMS
+    RULE_CTX = RuleCtx()
+    redis_client = redis.Redis(host=PARAMS.redis_host, db=0, decode_responses=True)
+
+    prefix = "rules:device_uniform_0_10_cnt_gt_2:"
+    for key in redis_client.scan_iter(match=f"{prefix}*"):
+        device_id = key[len(prefix) :]
+        device_queue = hash(device_id) % PARAMS.mq_queues
+        if (device_queue % PARAMS.mq_consumers) + 1 == PARAMS.mq_index:
+            value = redis_client.get(key)
+
+            assert type(value) is str
+            value = json.loads(value, object_hook=decode_cumulative_record)
+            RULE_CTX.device_uniform_0_10_cnt_gt_2[device_id] = value
+            print(
+                f"info: loaded {key} {json.dumps(value, cls=CumulativeRecordJSONEncoder)}"
+            )
+
+    print("info: loaded rule ctx")
+
+
+def rule_ctx_store() -> None:
+    global RULE_CTX, PARAMS
+    redis_client = redis.Redis(host=PARAMS.redis_host, db=0, decode_responses=True)
+
+    prefix = "rules:device_uniform_0_10_cnt_gt_2:"
+    for k, v in RULE_CTX.device_uniform_0_10_cnt_gt_2.items():
+        key = f"{prefix}{k}"
+        value = json.dumps(v, cls=CumulativeRecordJSONEncoder)
+        redis_client.set(key, value)
+        print(f"info: stored {key} {value}")
+
+    print("info: stored rule ctx")
 
 
 def mongo_reconnect() -> None:
@@ -363,6 +406,8 @@ def signal_terminate(*_: Any) -> None:
         MQ_CHANNEL = None
         print("info: closed mq connection")
 
+    rule_ctx_store()
+
     httpd_thread.join()
 
 
@@ -376,6 +421,8 @@ def main() -> None:
     signal.signal(signal.SIGTERM, signal_terminate)
 
     PARAMS = process_params()
+
+    rule_ctx_load()
 
     mongo_reconnect()
     mq_reconnect()
