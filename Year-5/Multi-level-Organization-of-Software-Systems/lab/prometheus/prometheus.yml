@@ -2,25 +2,21 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: "mops-controller"
+  - job_name: dummy
     metrics_path: /metrics
     scheme: http
-    static_configs:
-      - targets:
-          - mops-controller:8080
-  - job_name: "mops-rule-engine"
-    metrics_path: /metrics
-    scheme: http
-    static_configs:
-      - targets:
-          - mops-rule-engine:8080
-  - job_name: "mops-rabbitmq"
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/jobs.yml
+
+  - job_name: mops-rabbitmq
     metrics_path: /metrics
     scheme: http
     static_configs:
       - targets:
           - mops-rabbitmq:15692
-  - job_name: "mops-mongo-exporter"
+
+  - job_name: mops-mongo-exporter
     metrics_path: /metrics
     scheme: http
     static_configs:

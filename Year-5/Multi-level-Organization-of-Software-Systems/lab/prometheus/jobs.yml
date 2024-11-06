@@ -1,0 +1,14 @@
+- targets:
+    - mops-controller-1:8080
+    - mops-controller-2:8080
+    - mops-controller-3:8080
+  labels:
+    job: mops-controller
+
+- targets:
+    - mops-rule-engine-4-1:8080
+    - mops-rule-engine-4-2:8080
+    - mops-rule-engine-4-3:8080
+    - mops-rule-engine-4-4:8080
+  labels:
+    job: mops-rule-engine
