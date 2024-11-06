@@ -13,6 +13,9 @@ start() {
     # --log-opt gelf-address=udp://127.0.0.1:9081 \
     # --log-opt tag="$container_name" \
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -e RULE_ENGINE_MONGO_URL="mongodb://mops-mongo:27017/" \
     -e RULE_ENGINE_MQ_HOST="mops-rabbitmq" \
     -e RULE_ENGINE_REDIS_HOST="mops-redis" \

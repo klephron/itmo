@@ -7,6 +7,9 @@ container="logstash:8.15.3"
 
 start() {
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9081:9081/udp \
     -e LS_JAVA_OPTS="-Xms512m -Xmx512m" \
     -v $script_dir/../logstash/logstash.yml:/usr/share/logstash/config/logstash.yml \

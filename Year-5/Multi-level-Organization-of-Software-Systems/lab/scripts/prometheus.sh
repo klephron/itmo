@@ -9,6 +9,9 @@ container_volume_data="mops-prometheus-data"
 start() {
   docker volume create $container_volume_data
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9041:9090 \
     -v  $script_dir/../prometheus/:/etc/prometheus/\
     -v $container_volume_data:/prometheus/ \

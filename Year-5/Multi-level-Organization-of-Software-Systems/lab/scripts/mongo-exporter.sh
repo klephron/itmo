@@ -10,6 +10,9 @@ mongo_root_password="root"
 
 start() {
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9091:9216 \
     -e MONGODB_USER=$mongo_root_username \
     -e MONGODB_PASSWORD=$mongo_root_password \

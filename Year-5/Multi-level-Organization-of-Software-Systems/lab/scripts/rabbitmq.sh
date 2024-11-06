@@ -10,6 +10,9 @@ rabbitmq_default_pass="root"
 
 start() {
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9031:15672 \
     -e RABBITMQ_DEFAULT_USER="$rabbitmq_default_user" \
     -e RABBITMQ_DEFAULT_PASS="$rabbitmq_default_pass" \

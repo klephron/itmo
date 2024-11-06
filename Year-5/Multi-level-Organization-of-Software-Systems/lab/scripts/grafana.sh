@@ -9,6 +9,9 @@ container_volume_data="mops-grafana-data"
 start() {
   docker volume create $container_volume_data
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9051:3000 \
     -e GF_INSTALL_PLUGINS="" \
     -e GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \

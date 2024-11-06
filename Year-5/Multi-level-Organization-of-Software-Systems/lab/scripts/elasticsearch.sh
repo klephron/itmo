@@ -9,6 +9,9 @@ container_volume_data="mops-elasticsearch-data"
 start() {
   docker volume create $container_volume_data
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9061:9200 \
     --ulimit memlock=-1:-1 \
     -e node.name="$container_name" \

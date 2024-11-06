@@ -7,6 +7,9 @@ container="kibana:8.15.3"
 
 start() {
   docker run --name $container_name \
+    --log-driver=gelf \
+    --log-opt gelf-address=udp://127.0.0.1:9081 \
+    --log-opt tag="$container_name" \
     -p 9071:5601 \
     -d $container
 }
