@@ -29,6 +29,134 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "interval": "60",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.3.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "last_over_time(mongodb_dbstats_totalSize[$__interval])",
+          "instant": false,
+          "legendFormat": "{{database}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Mongo - Database Total Size",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "fe2t71frs7y0we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 8,
+      "interval": "60",
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.3.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "last_over_time(mongodb_dbstats_indexSize[$__interval])",
+          "instant": false,
+          "legendFormat": "{{database}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Mongo - Database Index Size",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "fe2t71frs7y0we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -86,7 +214,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 6
       },
       "id": 5,
       "interval": "60",
@@ -107,12 +235,36 @@
         {
           "editorMode": "code",
           "expr": "rate(mongodb_top_insert_time{database=\"mops\", collection!=\"system.profile\"}[$__interval])\n/\nrate(mongodb_top_insert_count{database=\"mops\", collection!=\"system.profile\"}[$__interval])",
-          "legendFormat": "{{database}}.{{collection}}",
+          "legendFormat": "{{database}}.{{collection}}[insert]",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "fe2t71frs7y0we"
+          },
+          "editorMode": "code",
+          "expr": "rate(mongodb_top_update_time{database=\"mops\", collection!=\"system.profile\"}[$__interval])\n/\nrate(mongodb_top_update_count{database=\"mops\", collection!=\"system.profile\"}[$__interval])",
+          "hide": false,
+          "legendFormat": "{{database}}.{{collection}}[update]",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "fe2t71frs7y0we"
+          },
+          "editorMode": "code",
+          "expr": "rate(mongodb_top_remove_time{database=\"mops\", collection!=\"system.profile\"}[$__interval])\n/\nrate(mongodb_top_remove_count{database=\"mops\", collection!=\"system.profile\"}[$__interval])",
+          "hide": false,
+          "legendFormat": "{{database}}.{{collection}}[remove]",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Avg Insert Time",
+      "title": "Mongo - Avg Insert/Update/Remove Time",
       "type": "timeseries"
     },
     {
@@ -179,7 +331,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 6
       },
       "id": 6,
       "interval": "60",
@@ -200,12 +352,36 @@
         {
           "editorMode": "code",
           "expr": "rate(mongodb_top_insert_count{database=\"mops\"}[$__interval])",
-          "legendFormat": "{{database}}.{{collection}}",
+          "legendFormat": "{{database}}.{{collection}}[insert]",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "fe2t71frs7y0we"
+          },
+          "editorMode": "code",
+          "expr": "rate(mongodb_top_update_count{database=\"mops\"}[$__interval])",
+          "hide": false,
+          "legendFormat": "{{database}}.{{collection}}[update]",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "fe2t71frs7y0we"
+          },
+          "editorMode": "code",
+          "expr": "rate(mongodb_top_remove_count{database=\"mops\"}[$__interval])",
+          "hide": false,
+          "legendFormat": "{{database}}.{{collection}}[remove]",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Mongo Insert RPS",
+      "title": "Mongo - Insert/Update/Remove RPS",
       "type": "timeseries"
     },
     {
@@ -273,9 +449,10 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 14
       },
       "id": 2,
+      "interval": "60",
       "options": {
         "legend": {
           "calcs": [],
@@ -292,14 +469,14 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "mongodb_dbstats_totalSize",
+          "expr": "rate(mongodb_dbstats_totalSize[$__interval])",
           "format": "time_series",
           "legendFormat": "{{database}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Mongo Database Total Size",
+      "title": "Mongo - Database Total Size Change Per Second",
       "type": "timeseries"
     },
     {
@@ -367,9 +544,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 14
       },
       "id": 3,
+      "interval": "60",
       "options": {
         "legend": {
           "calcs": [],
@@ -386,13 +564,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "mongodb_dbstats_indexSize",
+          "expr": "rate(mongodb_dbstats_indexSize[$__interval])",
           "legendFormat": "{{database}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Mongo Database Index Size",
+      "title": "Mongo - Database Index Size Change Per Second",
       "type": "timeseries"
     },
     {
@@ -460,9 +638,10 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 22
       },
       "id": 4,
+      "interval": "60",
       "options": {
         "legend": {
           "calcs": [],
@@ -479,13 +658,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "mongodb_dbstats_dataSize",
+          "expr": "rate(mongodb_dbstats_dataSize[$__interval])",
           "legendFormat": "{{database}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Mongo Database Data Size",
+      "title": "Mongo - Database Data Size Change Per Second",
       "type": "timeseries"
     },
     {
@@ -554,7 +733,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 22
       },
       "id": 1,
       "options": {
@@ -583,7 +762,7 @@
           "refId": "A"
         }
       ],
-      "title": "Mongo Database Avg Object Size",
+      "title": "Mongo - Database Avg Object Size",
       "type": "timeseries"
     }
   ],
@@ -594,13 +773,13 @@
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "MOPS Mongo",
   "uid": "ee2xeyzurlekgf",
-  "version": 13,
+  "version": 28,
   "weekStart": ""
 }
