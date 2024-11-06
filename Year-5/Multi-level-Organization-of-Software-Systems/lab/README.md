@@ -89,7 +89,21 @@ bash scripts/all.sh help
 
 ## Connection to dashboards
 
-Lookup scripts to get more info. Try default login/password `root` `root`, or for ELK:
+RabbitMQ:
+- `localhost:9031`
+- login/password `root`/`root`
+
+Prometheus:
+- `localhost:9041`
+- login/password `root`/`root`
+
+Grafana:
+- `localhost:9051`
+- login/password `root`/`root`
+
+Kibana:
+- `localhost:9071`
+- Default ELK authentication, see:
 
 ```sh
 bash scripts/elasticsearch.sh commands
