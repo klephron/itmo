@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "dot/ast.h"
 #include "dot/ir.h"
 #include "exception/exception.h"
 #include "lexer/lexer.h"
@@ -145,18 +146,16 @@ void ensure_dir_exist(const char *filename) {
 }
 
 // ast - ext, dot - file extension
-// char *get_ast_dot_output(const struct args_struct *args,
-//                          const option2_ast        *ast) {
-//   char *suffix = ".ast.dot";
-//   char *prefix = join_paths(args->output_dir, option2_ast_filename(ast));
+char *get_ast_dot_output(const struct args_struct *args, const ast *ast) {
+  char *suffix = ".ast.dot";
+  char *prefix = join_paths(args->output_dir, ast->name);
 
-//   char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
-//   sprintf(output, "%s%s", prefix, suffix);
+  char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
+  sprintf(output, "%s%s", prefix, suffix);
 
-//   free(prefix);
-
-//   return output;
-// }
+  free(prefix);
+  return output;
+}
 
 char *get_c_dot_output(struct args_struct *args, const char *source,
                        const char *func, const char *ext) {
@@ -169,7 +168,6 @@ char *get_c_dot_output(struct args_struct *args, const char *source,
   sprintf(output, "%s.%s.%s%s", prefix, func, ext, suffix);
 
   free(prefix);
-
   return output;
 }
 
@@ -269,17 +267,16 @@ int execute(struct args_struct *args) {
   }
 
   // stage: ast dot
-  // if (!error || args->ignore_errors) {
-  //   for (list_it it = asts->head; it; it = it->next) {
-  //     option2_ast *ast = it->data;
-
-  //     dot_string *dot = dot_ast(ast);
-  //     char       *output = get_ast_dot_output(args, ast);
-  //     write_dot(args, dot, output);
-  //     free(output);
-  //     dot_string_free(dot);
-  //   }
-  // }
+  if (!error || args->ignore_errors) {
+    for (list_it it = asts->head; it; it = it->next) {
+      ast        *ast = it->data;
+      dot_string *dot = dot_ast(ast);
+      char       *output = get_ast_dot_output(args, ast);
+      write_dot(args, dot, output);
+      free(output);
+      dot_string_free(dot);
+    }
+  }
 
   // stage: build cfg + handle exceptions
   // ir_ctx *ir = NULL;

@@ -493,9 +493,9 @@ int ir_pass2_subroutine_add(ir_pass2 *self, ir_subroutine *sub) {
       const size_t prev_line = lsv->signature->id->base.loc.line;
       const size_t prev_offset = lsv->signature->id->base.loc.pos_start;
       exception   *ex = exception_new_f(
-          EXCEPTION_IR, subtype, sub->file_name, line, offset,
-          exception_subtype_ir_str(subtype), "previous definition in %s %d:%d",
-          lsv->file_name, prev_line, prev_offset);
+            EXCEPTION_IR, subtype, sub->file_name, line, offset,
+            exception_subtype_ir_str(subtype), "previous definition in %s %d:%d",
+            lsv->file_name, prev_line, prev_offset);
       ir_ctx_add_exception(ctx, ex);
       ok = 0;
     }

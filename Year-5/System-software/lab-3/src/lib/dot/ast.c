@@ -158,7 +158,7 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   return id;
 }
 
-static struct dot_ctx *dot_new(pANTLR3_BASE_TREE tree) {
+static struct dot_ctx *dot_new(ANTLR3_BASE_TREE *tree) {
   struct dot_ctx *ctx =
       dot_ctx_new("strict digraph AST", "shape=rect, style=filled");
 
@@ -167,18 +167,18 @@ static struct dot_ctx *dot_new(pANTLR3_BASE_TREE tree) {
   return ctx;
 }
 
-// dot_string *dot_ast(const option2_ast *ast) {
-//   pANTLR3_BASE_TREE tree = ast->result.tree;
-//   struct dot_ctx   *ctx = dot_new(tree);
+dot_string *dot_ast(const ast *ast) {
+  pANTLR3_BASE_TREE tree = ast->tree;
+  struct dot_ctx   *ctx = dot_new(tree);
 
-//   size_t len = dot_len(ctx);
-//   char  *chars = malloc(len + 1);
+  size_t len = dot_len(ctx);
+  char  *chars = malloc(len + 1);
 
-//   dot_generate(ctx, chars);
+  dot_generate(ctx, chars);
 
-//   assert(len == strlen(chars));
+  assert(len == strlen(chars));
 
-//   ctx->free(ctx);
+  ctx->free(ctx);
 
-//   return dot_string_new(chars, len);
-// }
+  return dot_string_new(chars, len);
+}
