@@ -1,6 +1,6 @@
 #include "ir/ctx.h"
 
-#include "exception.h"
+#include "exception/exception.h"
 #include "ir/subroutine.h"
 #include "util/container_util.h"
 #include "util/log.h"

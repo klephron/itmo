@@ -9,7 +9,7 @@
 #include "util/colors.h"
 #include "util/string_buffer.h"
 
-void exception_free(struct exception *exc) {
+void exception_free(exception *exc) {
   if (exc) {
     if (exc->stream) {
       free(exc->stream);
@@ -27,12 +27,11 @@ void exception_free(struct exception *exc) {
   }
 }
 
-struct exception *exception_new(enum exception_type type, int subtype,
-                                const char *stream, uint32_t line,
-                                uint32_t offset, const char *name,
-                                const char *message) {
+exception *exception_new(exception_type type, int subtype, const char *stream,
+                         uint32_t line, uint32_t offset, const char *name,
+                         const char *message) {
 
-  struct exception *exc = calloc(1, sizeof(struct exception));
+  exception *exc = calloc(1, sizeof(exception));
 
   exc->type = type;
   exc->subtype = subtype;
@@ -54,22 +53,20 @@ struct exception *exception_new(enum exception_type type, int subtype,
   return exc;
 };
 
-struct exception *exception_new_v(enum exception_type type, int subtype,
-                                  const char *stream, uint32_t line,
-                                  uint32_t offset, const char *name,
-                                  const char *format, va_list args) {
+exception *exception_new_v(exception_type type, int subtype, const char *stream,
+                           uint32_t line, uint32_t offset, const char *name,
+                           const char *format, va_list args) {
   char message[256]; // message size
   message[0] = '\0';
   vsnprintf(message, 255, format, args);
   return exception_new(type, subtype, stream, line, offset, name, message);
 }
 
-struct exception *exception_new_f(enum exception_type type, int subtype,
-                                  const char *stream, uint32_t line,
-                                  uint32_t offset, const char *name,
-                                  const char *format, ...) {
-  struct exception *exc;
-  va_list           args;
+exception *exception_new_f(exception_type type, int subtype, const char *stream,
+                           uint32_t line, uint32_t offset, const char *name,
+                           const char *format, ...) {
+  exception *exc;
+  va_list    args;
   va_start(args, format);
   exc =
       exception_new_v(type, subtype, stream, line, offset, name, format, args);
@@ -77,7 +74,7 @@ struct exception *exception_new_f(enum exception_type type, int subtype,
   return exc;
 }
 
-static char *exception_unknown_to_chars(const struct exception *exc) {
+static char *exception_unknown_to_chars(const exception *exc) {
   char buf[256];
 
   char *exc_stream = "<empty>";
@@ -113,7 +110,7 @@ static char *exception_unknown_to_chars(const struct exception *exc) {
   return string_buffer_detach(buffer);
 }
 
-static char *exception_lexer_to_chars(const struct exception *exc) {
+static char *exception_lexer_to_chars(const exception *exc) {
   char buf[256];
 
   char *exc_stream = "<empty>";
@@ -143,7 +140,7 @@ static char *exception_lexer_to_chars(const struct exception *exc) {
   return string_buffer_detach(buffer);
 }
 
-static char *exception_parser_to_chars(const struct exception *exc) {
+static char *exception_parser_to_chars(const exception *exc) {
   char buf[256];
 
   char *exc_stream = "<empty>";
@@ -179,7 +176,7 @@ static char *exception_parser_to_chars(const struct exception *exc) {
   return string_buffer_detach(buffer);
 }
 
-static char *exception_tree_to_chars(const struct exception *exc) {
+static char *exception_tree_to_chars(const exception *exc) {
   char buf[256];
 
   char *exc_stream = "<empty>";
@@ -215,7 +212,7 @@ static char *exception_tree_to_chars(const struct exception *exc) {
   return string_buffer_detach(buffer);
 }
 
-static char *exception_ir_to_chars(const struct exception *exc) {
+static char *exception_ir_to_chars(const exception *exc) {
   char buf[256];
 
   char *exc_stream = "<empty>";
@@ -251,7 +248,7 @@ static char *exception_ir_to_chars(const struct exception *exc) {
   return string_buffer_detach(buffer);
 }
 
-char *exception_to_chars(const struct exception *exc) {
+char *exception_to_chars(const exception *exc) {
   switch (exc->type) {
   case EXCEPTION_LEXER:
     return exception_lexer_to_chars(exc);
@@ -266,19 +263,18 @@ char *exception_to_chars(const struct exception *exc) {
   }
 }
 
-struct exception *
-exception_new_from_helper(const struct exception_helper *helper, char *format,
-                          ...) {
+exception *exception_new_from_helper(const exception_helper *helper,
+                                     char                   *format, ...) {
   va_list args;
   va_start(args, format);
-  struct exception *exc =
+  exception *exc =
       exception_new_v(helper->type, helper->subtype, helper->stream,
                       helper->line, helper->offset, helper->name, format, args);
   va_end(args);
   return exc;
 }
 
-const char *exception_subtype_ir_str(enum exception_subtype_ir type) {
+const char *exception_subtype_ir_str(exception_subtype_ir type) {
   switch (type) {
   case EXCEPTION_IR_SUBROUTINE_REDEFINITION:
     return "subroutine redefinition";

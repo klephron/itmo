@@ -1,5 +1,5 @@
 #include "pass2.h"
-#include "exception.h"
+#include "exception/exception.h"
 #include "ir/ctx.h"
 #include "ir/scope.h"
 #include "util/container_util.h"

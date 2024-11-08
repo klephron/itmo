@@ -1,5 +1,5 @@
 #include "pass1.h"
-#include "exception.h"
+#include "exception/exception.h"
 #include "util/log.h"
 #include "util/macro.h"
 

@@ -1,17 +1,18 @@
 #include <getopt.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "dot/ir.h"
+#include "exception/exception.h"
+#include "lexer/lexer.h"
+#include "parser/parser.h"
 #include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
 #include "util/log.h"
 #include "util/macro.h"
 
-#include "dot/ast.h"
-#include "exception.h"
-#include "option2_ast.h"
-#include "option2_ir.h"
+#include "exception/exception.h"
 
 struct args_struct {
   char  *prog_name;
@@ -144,18 +145,18 @@ void ensure_dir_exist(const char *filename) {
 }
 
 // ast - ext, dot - file extension
-char *get_ast_dot_output(const struct args_struct *args,
-                         const option2_ast        *ast) {
-  char *suffix = ".ast.dot";
-  char *prefix = join_paths(args->output_dir, option2_ast_filename(ast));
+// char *get_ast_dot_output(const struct args_struct *args,
+//                          const option2_ast        *ast) {
+//   char *suffix = ".ast.dot";
+//   char *prefix = join_paths(args->output_dir, option2_ast_filename(ast));
 
-  char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
-  sprintf(output, "%s%s", prefix, suffix);
+//   char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
+//   sprintf(output, "%s%s", prefix, suffix);
 
-  free(prefix);
+//   free(prefix);
 
-  return output;
-}
+//   return output;
+// }
 
 char *get_c_dot_output(struct args_struct *args, const char *source,
                        const char *func, const char *ext) {
@@ -206,90 +207,143 @@ void write_dot(struct args_struct *args, const dot_string *dot,
   fclose(output_fd);
 }
 
+void container_delete_lexer(void *data) {
+  lexer *lexer = data;
+  lexer_free(lexer);
+}
+
+void container_delete_token_stream(void *data) {
+  lexer_token_stream *stream = data;
+  lexer_token_stream_free(stream);
+}
+
+void container_delete_parser(void *data) {
+  parser *parser = data;
+  parser_free(parser);
+}
+
+void container_delete_ast(void *data) {
+  ast *ast = data;
+  ast_free(ast);
+}
+
 int execute(struct args_struct *args) {
   int error = 0;
 
-  // stage: build ast + handle exceptions
-  p_list asts = option2_ast_build_many(args->input_files);
+  list *sources =
+      list_new(container_cmp_false, container_new_move, container_delete_chars);
+  list *lexers =
+      list_new(container_cmp_false, container_new_move, container_delete_lexer);
+  list *streams = list_new(container_cmp_false, container_new_move,
+                           container_delete_token_stream);
+  list *parsers = list_new(container_cmp_false, container_new_move,
+                           container_delete_parser);
+  list *asts =
+      list_new(container_cmp_false, container_new_move, container_delete_ast);
 
-  for (list_it it = asts->head; it; it = it->next) {
-    option2_ast *ast = it->data;
-    if (list_size(ast->exceptions) != 0) {
-      print_exceptions(args, ast->exceptions);
+  // stage: tokenize and parse to AST
+  for (list_it it = args->input_files->head; it; it = it->next) {
+    const char *path = (const char *)it->data;
+    const char *data = read_file(path);
+
+    lexer              *lexer = lexer_new(data, strlen(data), path);
+    lexer_token_stream *stream = lexer_token_stream_new(lexer);
+    parser             *parser = parser_new(stream);
+    ast                *ast = parser_parse(parser);
+
+    if (list_size(lexer->exceptions) != 0) {
+      print_exceptions(args, lexer->exceptions);
       error = 1;
     }
+
+    if (list_size(parser->exceptions) != 0) {
+      print_exceptions(args, parser->exceptions);
+      error = 1;
+    }
+
+    list_push_back(asts, ast);
+    list_push_back(parsers, parser);
+    list_push_back(streams, stream);
+    list_push_back(lexers, lexer);
+    list_push_back(sources, (char *)data);
   }
 
   // stage: ast dot
-  if (!error || args->ignore_errors) {
-    for (list_it it = asts->head; it; it = it->next) {
-      option2_ast *ast = it->data;
+  // if (!error || args->ignore_errors) {
+  //   for (list_it it = asts->head; it; it = it->next) {
+  //     option2_ast *ast = it->data;
 
-      dot_string *dot = dot_ast(ast);
-      char       *output = get_ast_dot_output(args, ast);
-      write_dot(args, dot, output);
-      free(output);
-      dot_string_free(dot);
-    }
-  }
+  //     dot_string *dot = dot_ast(ast);
+  //     char       *output = get_ast_dot_output(args, ast);
+  //     write_dot(args, dot, output);
+  //     free(output);
+  //     dot_string_free(dot);
+  //   }
+  // }
 
   // stage: build cfg + handle exceptions
-  ir_ctx *ir = NULL;
+  // ir_ctx *ir = NULL;
 
-  if (!error || args->ignore_errors) {
-    ir = option2_ir_build(asts);
-    if (list_size(ir->exceptions)) {
-      print_exceptions(args, ir->exceptions);
-      error = 1;
-    }
-  }
+  // if (!error || args->ignore_errors) {
+  //   ir = option2_ir_build(asts);
+  //   if (list_size(ir->exceptions)) {
+  //     print_exceptions(args, ir->exceptions);
+  //     error = 1;
+  //   }
+  // }
 
   // stage: build cfg for each function
-  if (!error || args->ignore_errors) {
-    for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
-         it.next(&it)) {
-      ir_subroutine *sub = it.get(&it);
-      const char    *sub_name = ir_subroutine_name(sub);
-      const char    *source = sub->file_name;
+  // if (!error || args->ignore_errors) {
+  //   for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
+  //        it.next(&it)) {
+  //     ir_subroutine *sub = it.get(&it);
+  //     const char    *sub_name = ir_subroutine_name(sub);
+  //     const char    *source = sub->file_name;
 
-      dot_string *dot_cfg = dot_ir_cfg(ir, sub, args->cfg_add_expr);
-      char       *output_cfg = get_cfg_dot_output(args, source, sub_name);
-      write_dot(args, dot_cfg, output_cfg);
-      free(output_cfg);
-      dot_string_free(dot_cfg);
-    }
-  }
+  //     dot_string *dot_cfg = dot_ir_cfg(ir, sub, args->cfg_add_expr);
+  //     char       *output_cfg = get_cfg_dot_output(args, source, sub_name);
+  //     write_dot(args, dot_cfg, output_cfg);
+  //     free(output_cfg);
+  //     dot_string_free(dot_cfg);
+  //   }
+  // }
 
   // stage: build cg for selected functions
-  if (!error || args->ignore_errors) {
-    for (list_it it = args->subroutines->head; it; it = it->next) {
-      const char *sub_name = it->data;
+  // if (!error || args->ignore_errors) {
+  //   for (list_it it = args->subroutines->head; it; it = it->next) {
+  //     const char *sub_name = it->data;
 
-      ir_subroutine *sub_args = ir_subroutine_new(
-          NULL,
-          ir_signature_new(ir_term_id_new((ir_loc){}, sub_name), NULL, NULL),
-          NULL, NULL);
+  //     ir_subroutine *sub_args = ir_subroutine_new(
+  //         NULL,
+  //         ir_signature_new(ir_term_id_new((ir_loc){}, sub_name), NULL, NULL),
+  //         NULL, NULL);
 
-      hashset_it it = hashset_find(ir->subroutines, sub_args);
+  //     hashset_it it = hashset_find(ir->subroutines, sub_args);
 
-      if (!it.end(&it)) {
-        ir_subroutine *sub = it.get(&it);
-        dot_string    *dot_cg = dot_ir_cg(ir, sub);
-        char          *output_cg =
-            get_cg_dot_output(args, sub->file_name, ir_subroutine_name(sub));
-        write_dot(args, dot_cg, output_cg);
-        free(output_cg);
-        dot_string_free(dot_cg);
-      } else {
-        info("function %s is not found", sub_name);
-      }
+  //     if (!it.end(&it)) {
+  //       ir_subroutine *sub = it.get(&it);
+  //       dot_string    *dot_cg = dot_ir_cg(ir, sub);
+  //       char          *output_cg =
+  //           get_cg_dot_output(args, sub->file_name, ir_subroutine_name(sub));
+  //       write_dot(args, dot_cg, output_cg);
+  //       free(output_cg);
+  //       dot_string_free(dot_cg);
+  //     } else {
+  //       info("function %s is not found", sub_name);
+  //     }
 
-      ir_subroutine_free(sub_args);
-    }
-  }
+  //     ir_subroutine_free(sub_args);
+  //   }
+  // }
 
-  ir_ctx_free(ir);
+  // ir_ctx_free(ir);
+  // list_free(asts);
+
   list_free(asts);
+  list_free(parsers);
+  list_free(streams);
+  list_free(lexers);
+  list_free(sources);
 
   return error && !args->ignore_errors;
 }
