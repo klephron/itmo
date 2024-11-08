@@ -1,0 +1,27 @@
+method fun4():
+begin
+end;
+
+method fun3():
+begin
+  main();
+end;
+
+method fun2():
+begin
+  fun1();
+  fun3();
+end;
+
+method fun1():
+begin
+  fun1();
+  fun2();
+  fun3();
+end;
+
+method main(n: int): long
+var
+begin
+  fun1();
+end;
