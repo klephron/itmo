@@ -1,0 +1,268 @@
+tree grammar HirBuilder;
+
+options {
+  language = C;
+  tokenVocab = Main;
+  ASTLabelType = pANTLR3_BASE_TREE;
+}
+
+
+@header {
+}
+
+@members {
+}
+
+// SOURCES
+source
+  : ^(ROOT source_item*)
+  ;
+
+source_item
+  : func_def
+  ;
+
+
+// TYPES
+type_ref
+  : ^(TYPE 'bool')
+  | ^(TYPE 'byte')
+  | ^(TYPE 'int')
+  | ^(TYPE 'uint')
+  | ^(TYPE 'long')
+  | ^(TYPE 'ulong')
+  | ^(TYPE 'char')
+  | ^(TYPE 'string')
+
+  | ^(TYPE identifier)
+
+  | ^(TYPE ^('array' type_ref ^(ELEMS  ','*)))
+  ;
+
+
+// FUNCTIONS
+func_def
+  @init {
+  }
+  : ^(FUNC func_signature (^(BODY func_body))? )
+  ;
+
+func_signature
+  @init {
+  }
+  : identifier arg_def_list ^(RETURNS (type_ref)?)
+  ;
+
+arg_def_list
+  @init {
+  }
+  : ^(PARAMS (arg_def)*)
+  ;
+
+arg_def
+  @init {
+  }
+  : ^(PARAM identifier (type_ref)?)
+  ;
+
+func_body
+  @init {
+  }
+  : ^(VARS (func_body_var)* ) (statement_block)
+  ;
+
+func_body_var
+  @init  {
+  }
+  : ^(VAR (type_ref)? (identifier)*)
+  ;
+
+
+//STATEMENTS
+statement
+  : (statement_if
+  | statement_block
+  | statement_while
+  | statement_do
+  | statement_break
+  | statement_expression)
+  ;
+
+statement_if
+  @init {
+  }
+  : ^('if' expr statement (statement)?)
+  ;
+
+statement_block
+  @init {
+  }
+  : ^('begin' (statement)*)
+  ;
+
+statement_while
+  @init {
+  }
+  : ^('while' expr statement)
+  ;
+
+statement_do
+  @init {
+  }
+  : ^('repeat' statement_do_condition statement)
+  ;
+
+statement_do_condition
+  : ^('while' expr)
+  | ^('until' expr)
+  ;
+
+statement_break
+  @init {
+  }
+  : 'break'
+  ;
+
+statement_expression
+  @init {
+  }
+  : expr
+  ;
+
+
+// EXPRESSIONS
+expr
+  : (expr_14
+  | expr_12
+  | expr_11
+  | expr_10
+  | expr_9
+  | expr_8
+  | expr_7
+  | expr_6
+  | expr_5
+  | expr_4
+  | expr_3
+  | expr_2
+  | expr_caller
+  | expr_indexer
+  | expr_literal
+  | expr_identifier)
+  ;
+
+
+// OPERATORS
+expr_15
+  : (expr)*
+  ;
+
+expr_14
+  : ^('=' expr expr)
+  ;
+
+expr_12
+  : ^('||' expr expr)
+  ;
+
+expr_11
+  : ^('&&' expr expr)
+  ;
+
+expr_10
+  : ^('|' expr expr)
+  ;
+
+expr_9
+  : ^('^' expr expr)
+  ;
+
+expr_8
+  : ^('&' expr expr)
+  ;
+
+expr_7
+  : ^('==' expr expr)
+  | ^('!=' expr expr)
+  ;
+
+expr_6
+  : ^('<' expr expr)
+  | ^('<=' expr expr)
+  | ^('>' expr expr)
+  | ^('>=' expr expr)
+  ;
+
+expr_5
+  : ^('<<' expr expr)
+  | ^('>>' expr expr)
+  ;
+
+expr_4
+  @init {
+  }
+  : ^('+' expr (expr)?)
+  | ^('-' expr (expr)?)
+  ;
+
+expr_3
+  : ^('*' expr expr)
+  | ^('/' expr expr)
+  | ^('%' expr expr)
+  ;
+
+// NOTE: excluding unary +/-
+expr_2
+  : ^('--' expr)
+  | ^('++' expr)
+  | ^('!' expr)
+  | ^('~' expr)
+  ;
+
+expr_caller
+  @init {
+  }
+  : ^(CALLER ^(ARGS expr_15) expr)
+  ;
+
+expr_indexer
+  @init {
+  }
+  : ^(INDEXER ^(ARGS expr_15) expr)
+  ;
+
+expr_literal
+  : (bool | str | rune | hex | bits | dec)
+  ;
+
+expr_identifier
+  : identifier
+  ;
+
+
+// TERMINALS
+identifier
+  : IDENTIFIER;
+
+str
+  : ^(CONST_STR STR)
+  ;
+
+rune
+  : ^(CONST_CHAR CHAR)
+  ;
+
+hex
+  : ^(CONST_HEX HEX)
+  ;
+
+bits
+  : ^(CONST_BITS BITS)
+  ;
+
+dec
+  : ^(CONST_DEC DEC)
+  ;
+
+bool
+  : ^(CONST_BOOL BOOL)
+  ;

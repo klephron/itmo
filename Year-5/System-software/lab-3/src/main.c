@@ -4,6 +4,7 @@
 
 #include "dot/ast.h"
 #include "exception/exception.h"
+#include "hir/build.h"
 #include "lexer/lexer.h"
 #include "parser/parser.h"
 #include "util/container_util.h"
@@ -290,18 +291,23 @@ int execute(struct args_struct *args) {
     }
   }
 
-  // stage: build cfg + handle exceptions
-  // ir_ctx *ir = NULL;
+  // stage: build hir + handle exceptions
+  hir     *hir = hir_new();
+  hir_ctx *hir_ctx = hir_ctx_new(hir);
 
-  // if (!error || args->ignore_errors) {
-  //   ir = option2_ir_build(asts);
-  //   if (list_size(ir->exceptions)) {
-  //     print_exceptions(args, ir->exceptions);
-  //     error = 1;
-  //   }
-  // }
+  if (!error || args->ignore_errors) {
+    for (list_ast_it it = list_ast_begin(asts); !list_ast_it_end(&it);
+         list_ast_it_next(&it)) {
+      const ast *ast = list_ast_it_get(&it);
+      hir_build_from_ast(hir_ctx, ast);
+    }
+  }
+  if (list_exception_size(hir_ctx->exceptions)) {
+    print_exceptions(args, hir_ctx->exceptions);
+    error = 1;
+  }
 
-  // stage: build cfg for each function
+  // stage: build mir + handle exception
   // if (!error || args->ignore_errors) {
   //   for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
   //        it.next(&it)) {
@@ -317,7 +323,8 @@ int execute(struct args_struct *args) {
   //   }
   // }
 
-  // stage: build cg for selected functions
+  // stage: dot cfg
+  // stage: dot cg
   // if (!error || args->ignore_errors) {
   //   for (list_it it = args->subroutines->head; it; it = it->next) {
   //     const char *sub_name = it->data;
@@ -347,6 +354,9 @@ int execute(struct args_struct *args) {
 
   // ir_ctx_free(ir);
   // list_free(asts);
+
+  hir_ctx_free(hir_ctx);
+  hir_free(hir);
 
   list_ast_free(asts);
   list_parser_free(parsers);

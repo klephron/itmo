@@ -3,31 +3,31 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-enum exception_type_enum {
+typedef enum exception_type_enum {
   EXCEPTION_UNKNOWN,
   EXCEPTION_LEXER,
   EXCEPTION_PARSER,
   EXCEPTION_TREE,
   EXCEPTION_IR,
-};
+} exception_type;
 
-enum exception_subtype_lexer_enum {
+typedef enum exception_subtype_lexer_enum {
   EXCEPTION_LEXER_UNKNOWN,
   EXCEPTION_LEXER_MATCHING,
-};
+} exception_subtype_lexer;
 
-enum exception_subtype_parser_enum {
+typedef enum exception_subtype_parser_enum {
   EXCEPTION_PARSER_UNKNOWN,
   EXCEPTION_PARSER_EOF,
   EXCEPTION_PARSER_GENERIC,
-};
+} exception_subtype_parser;
 
-enum exception_subtype_tree_enum {
+typedef enum exception_subtype_tree_enum {
   EXCEPTION_TREE_UNKNOWN,
   EXCEPTION_TREE_UNEXPECTED_NODE,
-};
+} exception_subtype_tree;
 
-enum exception_subtype_ir_enum {
+typedef enum exception_subtype_ir_enum {
   EXCEPTION_IR_UNKNOWN,
   EXCEPTION_IR_SUBROUTINE_REDEFINITION,
   EXCEPTION_IR_SUBROUTINE_OVERLOADING,
@@ -41,9 +41,9 @@ enum exception_subtype_ir_enum {
   EXCEPTION_IR_NULL,
   EXCEPTION_IR_SYMBOL_REDEFINITION,
   EXCEPTION_IR_SYMBOL_UNDEFINED,
-};
+} exception_subtype_ir;
 
-struct exception_struct {
+typedef struct exception_struct {
   enum exception_type_enum type;
   int                      subtype;
   char                    *stream;
@@ -51,25 +51,16 @@ struct exception_struct {
   uint32_t                 offset;
   char                    *name;
   char                    *message;
-};
+} exception;
 
-struct exception_helper_struct {
+typedef struct exception_helper_struct {
   enum exception_type_enum type;
+  const char              *name;
   int                      subtype;
-  char                    *stream;
   uint32_t                 line;
   uint32_t                 offset;
-  char                    *name;
-};
-
-typedef enum exception_type_enum           exception_type;
-typedef enum exception_subtype_lexer_enum  exception_subtype_lexer;
-typedef enum exception_subtype_parser_enum exception_subtype_parser;
-typedef enum exception_subtype_tree_enum   exception_subtype_tree;
-typedef enum exception_subtype_ir_enum     exception_subtype_ir;
-
-typedef struct exception_struct        exception;
-typedef struct exception_helper_struct exception_helper;
+  const char              *stream;
+} exception_helper;
 
 exception *exception_new(exception_type type, int subtype, const char *stream,
                          uint32_t line, uint32_t offset, const char *name,

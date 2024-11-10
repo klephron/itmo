@@ -1,5 +1,6 @@
-#include "util/file.h"
 #include <criterion/criterion.h>
+
+#include "util/file.h"
 
 Test(file, dirname) {
   char *filename, *dir;

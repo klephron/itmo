@@ -1,12 +1,13 @@
 #include <criterion/criterion.h>
+
 #include <stdio.h>
 
 #include "util/container_util.h"
 #include "util/list.h"
 
 Test(list, create_delete) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   cr_expect_eq(list->f_cmp, container_cmp_chars_chars);
   cr_expect_eq(list->f_new, container_new_chars_chars);
@@ -16,8 +17,8 @@ Test(list, create_delete) {
 }
 
 Test(list, push_back) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   chars_chars data = {.key = "hello", .value = "world"};
 
@@ -26,8 +27,8 @@ Test(list, push_back) {
 }
 
 Test(list, push_back2) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   chars_chars data = {.key = "hello", .value = "world"};
   list_push_back(list, &data);
@@ -36,7 +37,8 @@ Test(list, push_back2) {
   list_push_back(list, &data);
 
   int cnt = 0;
-  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list_begin(list); !list_it_end(&it);
+       list_it_next(&it), ++cnt)
     ;
 
   cr_expect_eq(2, cnt);
@@ -45,8 +47,8 @@ Test(list, push_back2) {
 }
 
 Test(list, find_insert) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   chars_chars data = {.key = "hello", .value = "world"};
   list_push_back(list, &data);
@@ -54,7 +56,8 @@ Test(list, find_insert) {
   list_insert(list, list_find(list, &data), &data);
 
   int cnt = 0;
-  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list_begin(list); !list_it_end(&it);
+       list_it_next(&it), ++cnt)
     ;
 
   cr_expect_eq(1, cnt);
@@ -63,8 +66,8 @@ Test(list, find_insert) {
 }
 
 Test(list, push_push) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   chars_chars data = {.key = "hello", .value = "world"};
   list_push_back(list, &data);
@@ -72,7 +75,8 @@ Test(list, push_push) {
   list_push_back(list, &data);
 
   int cnt = 0;
-  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list_begin(list); !list_it_end(&it);
+       list_it_next(&it), ++cnt)
     ;
 
   cr_expect_eq(2, cnt);
@@ -81,8 +85,8 @@ Test(list, push_push) {
 }
 
 Test(list, put_many) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   char key[10];
   char value[10];
@@ -96,7 +100,8 @@ Test(list, put_many) {
   }
 
   int cnt = 0;
-  for (list_it it = list->head; it != NULL; it = it->next, ++cnt)
+  for (list_it it = list_begin(list); !list_it_end(&it);
+       list_it_next(&it), ++cnt)
     ;
 
   cr_expect_eq(1000, cnt);
@@ -105,8 +110,8 @@ Test(list, put_many) {
 }
 
 Test(list, put_many_check) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   char key[16];
   char value[16];
@@ -120,8 +125,9 @@ Test(list, put_many_check) {
   }
 
   int cnt = 0;
-  for (list_it it = list->head; it != NULL; it = it->next, ++cnt) {
-    chars_chars *data = it->data;
+  for (list_it it = list_begin(list); !list_it_end(&it);
+       list_it_next(&it), ++cnt) {
+    chars_chars *data = list_it_get(&it);
     sprintf(key, "%d", cnt);
     sprintf(value, "%d", cnt + 1000);
 
@@ -135,8 +141,8 @@ Test(list, put_many_check) {
 }
 
 Test(list, push_front) {
-  p_list list = list_new(container_cmp_chars_chars, container_new_chars_chars,
-                         container_delete_chars_chars);
+  list *list = list_new(container_cmp_chars_chars, container_new_chars_chars,
+                        container_delete_chars_chars);
 
   char *key1 = "key1";
   char *value1 = "value1";

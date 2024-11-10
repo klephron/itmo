@@ -1,5 +1,6 @@
-#include "exception.h"
 #include <criterion/criterion.h>
+
+#include "exception/exception.h"
 
 Test(exception, basic) {
   exception *exc = exception_new(0, 0, "ordinary/file", 1000, 50, "exception",
