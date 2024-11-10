@@ -246,26 +246,26 @@ identifier returns [hir_id v]
   : c=IDENTIFIER { $v = hir_build_id(ANTLR3_USERP(), $c); }
   ;
 
-str
-  : ^(CONST_STR STR)
+str returns [hir_lit *v]
+  : ^(CONST_STR c=STR { $v = hir_build_str(ANTLR3_USERP(), $c); })
   ;
 
-rune
-  : ^(CONST_CHAR CHAR)
+rune returns [hir_lit *v]
+  : ^(CONST_CHAR c=CHAR { $v = hir_build_rune(ANTLR3_USERP(), $c); })
   ;
 
-hex
-  : ^(CONST_HEX HEX)
+hex returns [hir_lit *v]
+  : ^(CONST_HEX c=HEX) { $v = hir_build_hex(ANTLR3_USERP(), $c); }
   ;
 
-bits
-  : ^(CONST_BITS BITS)
+bits returns [hir_lit *v]
+  : ^(CONST_BITS c=BITS) { $v = hir_build_bits(ANTLR3_USERP(), $c); }
   ;
 
-dec
-  : ^(CONST_DEC DEC)
+dec returns [hir_lit *v]
+  : ^(CONST_DEC c=DEC) { $v = hir_build_dec(ANTLR3_USERP(), $c); }
   ;
 
-bool
-  : ^(CONST_BOOL BOOL)
+bool returns [hir_lit *v]
+  : ^(CONST_BOOL c=BOOL) { $v = hir_build_bool(ANTLR3_USERP(), $c); }
   ;

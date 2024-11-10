@@ -11,4 +11,10 @@ method main(n: int): long
 var
 begin
   fun1();
+  1;
+  'c';
+  '\t';
+  true;
+  18446744073709551615;
+  "aafaddfafsdadsfa";
 end;

@@ -217,7 +217,7 @@ IDENTIFIER: (ALPHA | SPECIAL) (ALPHA | SPECIAL | DIGIT)* ;
 BITS: '0' ('b'|'B') BINARY_DIGIT+ ;
 HEX: '0'('x'|'X') HEX_DIGIT+ ;
 DEC: DIGIT+ ;
-CHAR: '\'' ~('\'') '\'' ;
+CHAR: '\'' ('\\' . | ~('\\'|'\'')) '\'' ;
 STR: ('"') ('\\' . | ~('\\'|'"'))* ('"') ;
 
 NEWLINE:'\r'? '\n' { $channel = HIDDEN; };

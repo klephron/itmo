@@ -1,4 +1,4 @@
-#pragma once
+// #pragma once
 
 // #include "ir/loc.h"
 // #include "ir/type.h"

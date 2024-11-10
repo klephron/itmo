@@ -9,6 +9,13 @@ typedef struct hir_id_struct {
 
 hir_id hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 
+hir_lit *hir_build_str(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_lit *hir_build_rune(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_lit *hir_build_hex(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_lit *hir_build_bits(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_lit *hir_build_dec(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_lit *hir_build_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+
 type_base   *hir_build_type_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 type_base   *hir_build_type_byte(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 type_base   *hir_build_type_int(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
