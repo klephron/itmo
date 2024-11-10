@@ -1,15 +1,21 @@
 #pragma once
 
-#include "util/list.h"
+#include "hir/symbols.h"
 
-typedef struct hir_struct            hir;
-typedef struct hir_subroutine_struct hir_subroutine;
+typedef struct hir_subroutine {
+} hir_subroutine;
 
-struct hir_struct {
-  list name_resolution_table;
-  list subroutines;
-};
+hir_subroutine *hir_subroutine_new();
+void           *hir_subroutine_free(hir_subroutine *);
 
-// struct hir_subroutine_struct {
-// type
-// };
+static inline void container_delete_hir_subroutine(void *data) {
+  hir_subroutine_free(data);
+}
+LIST_DECLARE_STATIC_INLINE(list_hir_subroutine, hir_subroutine,
+                           container_cmp_false, container_new_move,
+                           container_delete_hir_subroutine);
+
+typedef struct hir_struct {
+  list_hir_symbol     *symbols;
+  list_hir_subroutine *subroutines;
+} hir;
