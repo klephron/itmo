@@ -8,6 +8,8 @@ options {
 
 
 @header {
+#include "antlr3/antlr3.h"
+#include "hir/build_int.h"
 }
 
 @members {
@@ -24,19 +26,18 @@ source_item
 
 
 // TYPES
-type_ref
-  : ^(TYPE 'bool')
-  | ^(TYPE 'byte')
-  | ^(TYPE 'int')
-  | ^(TYPE 'uint')
-  | ^(TYPE 'long')
-  | ^(TYPE 'ulong')
-  | ^(TYPE 'char')
-  | ^(TYPE 'string')
-
-  | ^(TYPE identifier)
-
-  | ^(TYPE ^('array' type_ref ^(ELEMS  ','*)))
+type_ref returns [type_base *v]
+  : ^(TYPE t='bool')  { $v = hir_build_type_bool(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='byte')  { $v = hir_build_type_byte(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='int')   { $v = hir_build_type_int(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='uint')  { $v = hir_build_type_uint(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='long')  { $v = hir_build_type_long(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='ulong') { $v = hir_build_type_ulong(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='char')  { $v = hir_build_type_char(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='string'){ $v = hir_build_type_string(ANTLR3_USERP(), $t); }
+  | ^(TYPE id=identifier) { $v = (type_base *) hir_build_type_custom(ANTLR3_USERP(), $id.v); }
+  | ^(TYPE ^(r='array' tr=type_ref ^(ELEMS  ','*)))
+    { $v = (type_base *) hir_build_type_array(ANTLR3_USERP(), $r, $ELEMS, $tr.v); }
   ;
 
 
@@ -49,8 +50,9 @@ func_def
 
 func_signature
   @init {
+    void *type_v = NULL;
   }
-  : identifier arg_def_list ^(RETURNS (type_ref)?)
+  : identifier arg_def_list ^(RETURNS (type_ref )?)
   ;
 
 arg_def_list
@@ -240,8 +242,9 @@ expr_identifier
 
 
 // TERMINALS
-identifier
-  : IDENTIFIER;
+identifier returns [hir_id v]
+  : c=IDENTIFIER { $v = hir_build_id(ANTLR3_USERP(), $c); }
+  ;
 
 str
   : ^(CONST_STR STR)

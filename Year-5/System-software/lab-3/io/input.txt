@@ -2,22 +2,9 @@ method fun4():
 begin
 end;
 
-method fun3():
+method fun3(a: array [,,,] of int):
 begin
   main();
-end;
-
-method fun2():
-begin
-  fun1();
-  fun3();
-end;
-
-method fun1():
-begin
-  fun1();
-  fun2();
-  fun3();
 end;
 
 method main(n: int): long
