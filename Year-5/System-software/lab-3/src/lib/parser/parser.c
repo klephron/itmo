@@ -42,7 +42,7 @@ static void parser_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
                                                   : ttext->chars);
   }
 
-  list_push_back(userp->exceptions, exc);
+  list_exception_push_back(userp->exceptions, exc);
 }
 
 parser *parser_new(const lexer_token_stream *tokens) {
@@ -60,7 +60,7 @@ parser *parser_new(const lexer_token_stream *tokens) {
 
 void parser_free(parser *self) {
   if (self) {
-    list_free(self->exceptions);
+    list_exception_free(self->exceptions);
     self->exceptions = NULL;
     self->parser->free(self->parser);
     self->parser = NULL;

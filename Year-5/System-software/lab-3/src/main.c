@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "dot/ast.h"
-#include "dot/ir.h"
 #include "exception/exception.h"
 #include "lexer/lexer.h"
 #include "parser/parser.h"
@@ -15,15 +14,18 @@
 
 #include "exception/exception.h"
 
+LIST_DECLARE_STATIC_INLINE(list_char, char, container_cmp_chars,
+                           container_new_chars, container_delete_chars);
+
 struct args_struct {
-  char  *prog_name;
-  p_list input_files;
+  char      *prog_name;
+  list_char *input_files;
   // options
-  char  *output_dir;
-  int    ignore_errors;
-  int    tee;
-  int    cfg_add_expr;
-  p_list subroutines;
+  char      *output_dir;
+  int        ignore_errors;
+  int        tee;
+  int        cfg_add_expr;
+  list_char *subroutines;
   // status
   int code;
   int help;
@@ -33,15 +35,13 @@ struct args_struct *args_new() {
   struct args_struct *args = MALLOC(struct args_struct);
 
   args->prog_name = NULL;
-  args->input_files = list_new(container_cmp_chars, container_new_chars,
-                               container_delete_chars);
+  args->input_files = list_char_new();
 
   args->output_dir = ".";
   args->ignore_errors = 0;
   args->cfg_add_expr = 0;
   args->tee = 0;
-  args->subroutines = list_new(container_cmp_chars, container_new_chars,
-                               container_delete_chars);
+  args->subroutines = list_char_new();
 
   args->code = 0;
   args->help = 0;
@@ -50,8 +50,8 @@ struct args_struct *args_new() {
 }
 
 void args_free(struct args_struct *args) {
-  list_free(args->input_files);
-  list_free(args->subroutines);
+  list_char_free(args->input_files);
+  list_char_free(args->subroutines);
   free(args);
 }
 
@@ -59,9 +59,10 @@ void usage(struct args_struct *args) {
   int  buf_len = 256;
   char subroutines[buf_len];
   int  offset = 0;
-  for (list_it it = args->subroutines->head; it; it = it->next) {
-    offset += snprintf(subroutines + offset, buf_len - offset - 1, "%s,",
-                       (const char *)it->data);
+  for (list_char_it it = list_char_begin(args->subroutines);
+       !list_char_it_end(&it); list_char_it_next(&it)) {
+    char *sub = list_char_it_get(&it);
+    offset += snprintf(subroutines + offset, buf_len - offset - 1, "%s,", sub);
   }
   if (offset > 0) {
     subroutines[offset - 1] = '\0';
@@ -111,7 +112,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
       args->output_dir = optarg;
       break;
     case 's':
-      list_push_back(args->subroutines, optarg);
+      list_char_push_back(args->subroutines, optarg);
       break;
     case 'h':
       args->help = 1;
@@ -130,11 +131,11 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
 
   for (; argc > 0; --argc, ++argv) {
     const char *file = argv[0];
-    list_push_back(args->input_files, (void *)file);
+    list_char_push_back(args->input_files, (void *)file);
   }
 
-  if (list_size(args->subroutines) == 0) {
-    list_push_back(args->subroutines, "main");
+  if (list_char_size(args->subroutines) == 0) {
+    list_char_push_back(args->subroutines, "main");
   }
 }
 
@@ -182,13 +183,16 @@ char *get_cg_dot_output(struct args_struct *args, const char *source,
 }
 
 int has_subroutine(struct args_struct *args, const char *subroutine) {
-  return !!list_find(args->subroutines, subroutine);
+  list_char_it it = list_char_find(args->subroutines, subroutine);
+  return !list_char_it_end(&it);
 }
 
-void print_exceptions(struct args_struct *args, const p_list exceptions) {
+void print_exceptions(struct args_struct *args, list_exception *exceptions) {
   UNUSED(args);
-  for (list_it it = exceptions->head; it; it = it->next) {
-    char *msg = exception_to_chars(((exception *)it->data));
+  for (list_exception_it it = list_exception_begin(exceptions);
+       !list_exception_it_end(&it); list_exception_it_next(&it)) {
+    exception *exc = list_exception_it_get(&it);
+    char      *msg = exception_to_chars(exc);
     fprintf(stderr, "%s\n", msg);
     free(msg);
   }
@@ -205,43 +209,50 @@ void write_dot(struct args_struct *args, const dot_string *dot,
   fclose(output_fd);
 }
 
-void container_delete_lexer(void *data) {
+static inline void container_delete_lexer(void *data) {
   lexer *lexer = data;
   lexer_free(lexer);
 }
+LIST_DECLARE_STATIC_INLINE(list_lexer, lexer, container_cmp_false,
+                           container_new_move, container_delete_lexer);
 
-void container_delete_token_stream(void *data) {
+static inline void container_delete_token_stream(void *data) {
   lexer_token_stream *stream = data;
   lexer_token_stream_free(stream);
 }
+LIST_DECLARE_STATIC_INLINE(list_stream, lexer_token_stream, container_cmp_false,
+                           container_new_move, container_delete_token_stream);
 
-void container_delete_parser(void *data) {
+static inline void container_delete_parser(void *data) {
   parser *parser = data;
   parser_free(parser);
 }
+LIST_DECLARE_STATIC_INLINE(list_parser, parser, container_cmp_false,
+                           container_new_move, container_delete_parser);
 
-void container_delete_ast(void *data) {
+static inline void container_delete_ast(void *data) {
   ast *ast = data;
   ast_free(ast);
 }
+LIST_DECLARE_STATIC_INLINE(list_ast, ast, container_cmp_false,
+                           container_new_move, container_delete_ast);
+
+LIST_DECLARE_STATIC_INLINE(list_source, char, container_cmp_false,
+                           container_new_move, container_delete_chars);
 
 int execute(struct args_struct *args) {
   int error = 0;
 
-  list *sources =
-      list_new(container_cmp_false, container_new_move, container_delete_chars);
-  list *lexers =
-      list_new(container_cmp_false, container_new_move, container_delete_lexer);
-  list *streams = list_new(container_cmp_false, container_new_move,
-                           container_delete_token_stream);
-  list *parsers = list_new(container_cmp_false, container_new_move,
-                           container_delete_parser);
-  list *asts =
-      list_new(container_cmp_false, container_new_move, container_delete_ast);
+  list_source *sources = list_source_new();
+  list_lexer  *lexers = list_lexer_new();
+  list_stream *streams = list_stream_new();
+  list_parser *parsers = list_parser_new();
+  list_ast    *asts = list_ast_new();
 
   // stage: tokenize and parse to AST
-  for (list_it it = args->input_files->head; it; it = it->next) {
-    const char *path = (const char *)it->data;
+  for (list_char_it it = list_char_begin(args->input_files);
+       !list_char_it_end(&it); list_char_it_next(&it)) {
+    const char *path = list_char_it_get(&it);
     const char *data = read_file(path);
 
     lexer              *lexer = lexer_new(data, strlen(data), path);
@@ -249,27 +260,28 @@ int execute(struct args_struct *args) {
     parser             *parser = parser_new(stream);
     ast                *ast = parser_parse(parser);
 
-    if (list_size(lexer->exceptions) != 0) {
+    if (list_exception_size(lexer->exceptions) != 0) {
       print_exceptions(args, lexer->exceptions);
       error = 1;
     }
 
-    if (list_size(parser->exceptions) != 0) {
+    if (list_exception_size(parser->exceptions) != 0) {
       print_exceptions(args, parser->exceptions);
       error = 1;
     }
 
-    list_push_back(asts, ast);
-    list_push_back(parsers, parser);
-    list_push_back(streams, stream);
-    list_push_back(lexers, lexer);
-    list_push_back(sources, (char *)data);
+    list_ast_push_back(asts, ast);
+    list_parser_push_back(parsers, parser);
+    list_stream_push_back(streams, stream);
+    list_lexer_push_back(lexers, lexer);
+    list_source_push_back(sources, (char *)data);
   }
 
   // stage: ast dot
   if (!error || args->ignore_errors) {
-    for (list_it it = asts->head; it; it = it->next) {
-      ast        *ast = it->data;
+    for (list_ast_it it = list_ast_begin(asts); !list_ast_it_end(&it);
+         list_ast_it_next(&it)) {
+      ast        *ast = list_ast_it_get(&it);
       dot_string *dot = dot_ast(ast);
       char       *output = get_ast_dot_output(args, ast);
       write_dot(args, dot, output);
@@ -336,11 +348,11 @@ int execute(struct args_struct *args) {
   // ir_ctx_free(ir);
   // list_free(asts);
 
-  list_free(asts);
-  list_free(parsers);
-  list_free(streams);
-  list_free(lexers);
-  list_free(sources);
+  list_ast_free(asts);
+  list_parser_free(parsers);
+  list_stream_free(streams);
+  list_lexer_free(lexers);
+  list_source_free(sources);
 
   return error && !args->ignore_errors;
 }
@@ -355,7 +367,7 @@ int main(int argc, char *argv[]) {
     usage(args);
   }
 
-  if (!args->help && list_size(args->input_files) == 0) {
+  if (!args->help && list_char_size(args->input_files) == 0) {
     printf("%s: no input files specified\n", args->prog_name);
     args->code = -1;
   }

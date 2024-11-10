@@ -3,20 +3,19 @@
 #include "antlr3/rec/MainParser.h"
 #include "ast/ast.h"
 #include "lexer/lexer.h"
-#include "util/list.h"
 
 typedef struct parser_userp_struct parser_userp;
 typedef struct parser_struct       parser;
 
 struct parser_userp_struct {
-  list       *exceptions;
-  const char *stream_name;
+  list_exception *exceptions;
+  const char     *stream_name;
 };
 
 struct parser_struct {
   const lexer_token_stream *tokens;
   MainParser               *parser;
-  list                     *exceptions;
+  list_exception           *exceptions;
   parser_userp              userp;
 };
 

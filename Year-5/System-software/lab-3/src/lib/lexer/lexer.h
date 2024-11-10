@@ -1,7 +1,7 @@
 #pragma once
 
 #include "antlr3/rec/MainLexer.h"
-#include "util/list.h"
+#include "exception/container.h"
 #include <antlr3interfaces.h>
 
 typedef struct lexer_userp_struct        lexer_userp;
@@ -9,14 +9,14 @@ typedef struct lexer_struct              lexer;
 typedef struct lexer_token_stream_struct lexer_token_stream;
 
 struct lexer_userp_struct {
-  list       *exceptions;
-  const char *name;
+  list_exception *exceptions;
+  const char     *name;
 };
 
 struct lexer_struct {
   ANTLR3_INPUT_STREAM *stream;
   MainLexer           *lexer;
-  list                *exceptions;
+  list_exception      *exceptions;
   lexer_userp          userp;
 };
 

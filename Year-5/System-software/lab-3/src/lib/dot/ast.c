@@ -16,8 +16,8 @@ struct dot_ctx {
 
   size_t id;
 
-  p_list list_nodes; // key - id, value - label
-  p_list list_edges; // key - id_u, value - id_v
+  list *list_nodes; // key - id, value - label
+  list *list_edges; // key - id_u, value - id_v
 
   void (*free)(struct dot_ctx *);
 };
@@ -60,15 +60,15 @@ static size_t dot_len(struct dot_ctx *ctx) {
   len += strlen("node []\n");
   len += strlen(ctx->node_style);
 
-  for (list_it it = ctx->list_nodes->head; it; it = it->next) {
-    chars_chars *data = it->data;
+  for (list_node *cur = ctx->list_nodes->head; cur; cur = cur->next) {
+    chars_chars *data = cur->data;
     len += strlen(data->key);
     len += strlen("[label=]\n");
     len += strlen(data->value);
   }
 
-  for (list_it it = ctx->list_edges->head; it; it = it->next) {
-    chars_chars *data = it->data;
+  for (list_node *cur = ctx->list_edges->head; cur; cur = cur->next) {
+    chars_chars *data = cur->data;
     len += strlen(data->key);
     len += strlen(" -> \n");
     len += strlen(data->value);
@@ -88,16 +88,16 @@ static void dot_generate(struct dot_ctx *ctx, char *str) {
   end = stpcpy(end, ctx->node_style);
   end = stpcpy(end, "]\n");
 
-  for (list_it it = ctx->list_nodes->head; it; it = it->next) {
-    chars_chars *data = it->data;
+  for (list_node *cur = ctx->list_nodes->head; cur; cur = cur->next) {
+    chars_chars *data = cur->data;
     end = stpcpy(end, data->key);
     end = stpcpy(end, "[label=");
     end = stpcpy(end, data->value);
     end = stpcpy(end, "]\n");
   }
 
-  for (list_it it = ctx->list_edges->head; it; it = it->next) {
-    chars_chars *data = it->data;
+  for (list_node *cur = ctx->list_edges->head; cur; cur = cur->next) {
+    chars_chars *data = cur->data;
     end = stpcpy(end, data->key);
     end = stpcpy(end, " -> ");
     end = stpcpy(end, data->value);

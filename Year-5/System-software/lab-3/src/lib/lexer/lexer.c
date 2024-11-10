@@ -1,7 +1,6 @@
 #include "lexer.h"
 
 #include "antlr3/rec/MainLexer.h"
-#include "exception/container.h"
 #include "exception/exception.h"
 #include "util/macro.h"
 #include <antlr3.h>
@@ -44,7 +43,7 @@ static void lexer_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
         exh.line, exh.offset);
   }
 
-  list_push_back(userp->exceptions, exc);
+  list_exception_push_back(userp->exceptions, exc);
 }
 
 lexer *lexer_new(const char *data, size_t len, const char *name) {
@@ -63,7 +62,7 @@ lexer *lexer_new(const char *data, size_t len, const char *name) {
 
 void lexer_free(lexer *self) {
   if (self) {
-    list_free(self->exceptions);
+    list_exception_free(self->exceptions);
     self->exceptions = NULL;
     self->lexer->free(self->lexer);
     self->lexer = NULL;
