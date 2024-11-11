@@ -44,3 +44,17 @@ void          hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
 
 void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
                     list_hir_var *vars, void *body);
+
+hir_expr_lit    *hir_build_expr_lit(hir_ctx *ctx, hir_lit *lit);
+hir_expr_id     *hir_build_expr_id(hir_ctx *ctx, hir_id *id);
+hir_expr_index  *hir_build_expr_indexer(hir_ctx *ctx, hir_expr_base *indexed,
+                                        list_hir_expr *args);
+hir_expr_call   *hir_build_expr_caller(hir_ctx *ctx, hir_expr_base *indexed,
+                                       list_hir_expr *args);
+hir_expr_unary  *hir_build_expr_unary(hir_ctx *ctx, hir_expr_base *first,
+                                      ANTLR3_BASE_TREE   *op_node,
+                                      hir_expr_unary_enum op);
+hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
+                                       hir_expr_base       *second,
+                                       ANTLR3_BASE_TREE    *op_node,
+                                       hir_expr_binary_enum op);

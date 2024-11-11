@@ -358,3 +358,65 @@ void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
 
   list_hir_subroutine_push_back(ctx->hir->subroutines, subroutine);
 }
+
+// EXPRESSIONS
+hir_expr_lit *hir_build_expr_lit(hir_ctx *ctx, hir_lit *lit) {
+  UNUSED(ctx);
+  return hir_expr_lit_new(span_copy(lit->base.span), NULL, lit);
+}
+
+hir_expr_id *hir_build_expr_id(hir_ctx *ctx, hir_id *id) {
+  UNUSED(ctx);
+  return hir_expr_id_new(span_copy(id->base.span), NULL, id, NULL);
+}
+
+hir_expr_index *hir_build_expr_indexer(hir_ctx *ctx, hir_expr_base *indexed,
+                                       list_hir_expr *args) {
+  UNUSED(ctx);
+  span *span;
+  if (list_hir_expr_size(args) > 0) {
+    span = hir_span_new_range(indexed->base.span,
+                              list_hir_expr_back(args)->base.span);
+  } else {
+    span = span_copy(indexed->base.span);
+  }
+  return hir_expr_index_new(span, NULL, indexed, args);
+}
+
+hir_expr_call *hir_build_expr_caller(hir_ctx *ctx, hir_expr_base *indexed,
+                                     list_hir_expr *args) {
+  UNUSED(ctx);
+  span *span;
+  if (list_hir_expr_size(args) > 0) {
+    span = hir_span_new_range(indexed->base.span,
+                              list_hir_expr_back(args)->base.span);
+  } else {
+    span = span_copy(indexed->base.span);
+  }
+  return hir_expr_call_new(span, NULL, indexed, args);
+}
+
+hir_expr_unary *hir_build_expr_unary(hir_ctx *ctx, hir_expr_base *first,
+                                     ANTLR3_BASE_TREE   *op_node,
+                                     hir_expr_unary_enum op) {
+  span *op_span = hir_span_new(op_node, ctx->stream);
+  span *span;
+  if (op_span->line_start < first->base.span->line_start) {
+    span = hir_span_new_range(op_span, first->base.span);
+  } else {
+    span = hir_span_new_range(first->base.span, op_span);
+  }
+  span_free(op_span);
+  return hir_expr_unary_new(span, NULL, op, first);
+}
+
+hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
+                                       hir_expr_base       *second,
+                                       ANTLR3_BASE_TREE    *op_node,
+                                       hir_expr_binary_enum op) {
+  UNUSED(ctx);
+  UNUSED(op_node);
+  return hir_expr_binary_new(
+      hir_span_new_range(first->base.span, second->base.span), NULL, op, first,
+      second);
+}
