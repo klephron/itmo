@@ -38,6 +38,7 @@ typedef struct hir_stmt_if_struct {
 
 hir_stmt_if *hir_stmt_if_new(span *span, hir_expr_base *cond, hir_stmt_base *je,
                              hir_stmt_base *jz);
+void         hir_stmt_if_free(hir_stmt_if *self);
 
 typedef struct hir_stmt_block_struct {
   hir_stmt_base  base;
@@ -45,6 +46,7 @@ typedef struct hir_stmt_block_struct {
 } hir_stmt_block;
 
 hir_stmt_block *hir_stmt_block_new(span *span, list_hir_stmt *stmts);
+void            hir_stmt_block_free(hir_stmt_block *self);
 
 typedef struct hir_stmt_while_struct {
   hir_stmt_base  base;
@@ -54,6 +56,7 @@ typedef struct hir_stmt_while_struct {
 
 hir_stmt_while *hir_stmt_while_new(span *span, hir_expr_base *cond,
                                    hir_stmt_base *stmt);
+void            hir_stmt_while_free(hir_stmt_while *self);
 
 typedef struct hir_stmt_do_struct {
   hir_stmt_base  base;
@@ -64,12 +67,14 @@ typedef struct hir_stmt_do_struct {
 
 hir_stmt_do *hir_stmt_do_new(span *span, int positive, hir_expr_base *cond,
                              hir_stmt_base *stmt);
+void         hir_stmt_do_free(hir_stmt_do *self);
 
 typedef struct hir_stmt_break_struct {
   hir_stmt_base base;
 } hir_stmt_break;
 
 hir_stmt_break *hir_stmt_break_new(span *span);
+void            hir_stmt_break_free(hir_stmt_break *self);
 
 typedef struct hir_stmt_expr_struct {
   hir_stmt_base  base;
@@ -77,3 +82,4 @@ typedef struct hir_stmt_expr_struct {
 } hir_stmt_expr;
 
 hir_stmt_expr *hir_stmt_expr_new(span *span, hir_expr_base *expr);
+void           hir_stmt_expr_free(hir_stmt_expr *self);

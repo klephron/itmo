@@ -1,7 +1,6 @@
-method mainadfafa(a, b: int, c: array [,,,] of int, d, e: array [,,,,] of array [,,,] of int): int
+method main(): int
 var
-  a : int;
-  b : long;
-  c, d : array [,,,] of int;
+  a : array [,,,] of int;
 begin
+  fun1[a, b, c];
 end;

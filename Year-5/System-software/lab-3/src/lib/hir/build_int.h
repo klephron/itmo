@@ -43,7 +43,7 @@ void          hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
                                         list_hir_var *second);
 
 void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
-                    list_hir_var *vars, void *body);
+                    list_hir_var *vars, hir_stmt_block *body);
 
 hir_expr_lit    *hir_build_expr_lit(hir_ctx *ctx, hir_lit *lit);
 hir_expr_id     *hir_build_expr_id(hir_ctx *ctx, hir_id *id);
@@ -58,3 +58,16 @@ hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
                                        hir_expr_base       *second,
                                        ANTLR3_BASE_TREE    *op_node,
                                        hir_expr_binary_enum op);
+
+hir_stmt_if    *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                  hir_expr_base *cond, hir_stmt_base *je,
+                                  hir_stmt_base *jz);
+hir_stmt_block *hir_build_stmt_block(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                     list_hir_stmt *stmts);
+hir_stmt_while *hir_build_stmt_while(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                     hir_expr_base *cond, hir_stmt_base *stmt);
+hir_stmt_do    *hir_build_stmt_do(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                  int positive, hir_expr_base *cond,
+                                  hir_stmt_base *stmt);
+hir_stmt_break *hir_build_stmt_break(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_stmt_expr  *hir_build_stmt_expr(hir_ctx *ctx, hir_expr_base *expr);

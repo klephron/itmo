@@ -338,7 +338,7 @@ void hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
 }
 
 void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
-                    list_hir_var *vars, void *body) {
+                    list_hir_var *vars, hir_stmt_block *body) {
   subroutine->vars = vars;
   subroutine->body = body;
 
@@ -419,4 +419,59 @@ hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
   return hir_expr_binary_new(
       hir_span_new_range(first->base.span, second->base.span), NULL, op, first,
       second);
+}
+
+// STATEMENTS
+hir_stmt_if *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                               hir_expr_base *cond, hir_stmt_base *je,
+                               hir_stmt_base *jz) {
+  span *node_span = hir_span_new(node, ctx->stream);
+  span *span;
+  if (jz) {
+    span = hir_span_new_range(node_span, jz->base.span);
+  } else {
+    span = hir_span_new_range(node_span, je->base.span);
+  }
+  span_free(node_span);
+  return hir_stmt_if_new(span, cond, je, jz);
+}
+
+hir_stmt_block *hir_build_stmt_block(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                     list_hir_stmt *stmts) {
+  span *node_span = hir_span_new(node, ctx->stream);
+  span *span;
+  if (list_hir_stmt_size(stmts) > 0) {
+    span = hir_span_new_range(node_span, list_hir_stmt_back(stmts)->base.span);
+    span_free(node_span);
+  } else {
+    span = node_span;
+  }
+  return hir_stmt_block_new(span, stmts);
+}
+
+hir_stmt_while *hir_build_stmt_while(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                     hir_expr_base *cond, hir_stmt_base *stmt) {
+  span *node_span = hir_span_new(node, ctx->stream);
+  span *span = hir_span_new_range(node_span, stmt->base.span);
+  span_free(node_span);
+  return hir_stmt_while_new(span, cond, stmt);
+}
+
+hir_stmt_do *hir_build_stmt_do(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                               int positive, hir_expr_base *cond,
+                               hir_stmt_base *stmt) {
+  span *node_span = hir_span_new(node, ctx->stream);
+  span *span = hir_span_new_range(node_span, cond->base.span);
+  span_free(node_span);
+  return hir_stmt_do_new(span, positive, cond, stmt);
+}
+
+hir_stmt_break *hir_build_stmt_break(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
+  span *node_span = hir_span_new(node, ctx->stream);
+  return hir_stmt_break_new(node_span);
+}
+
+hir_stmt_expr *hir_build_stmt_expr(hir_ctx *ctx, hir_expr_base *expr) {
+  UNUSED(ctx);
+  return hir_stmt_expr_new(span_copy(expr->base.span), expr);
 }

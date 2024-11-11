@@ -10,7 +10,7 @@ typedef struct hir_subroutine {
   list_hir_param   *params;
   type_base        *ret_type;
   list_hir_var     *vars;
-  hir_stmt_base    *body;
+  hir_stmt_block   *body;
   const hir_symbol *binding;
 } hir_subroutine;
 

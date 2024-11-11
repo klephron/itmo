@@ -105,56 +105,56 @@ func_body_var returns [ list_hir_var *v ]
 
 
 //STATEMENTS
-statement
-  : (statement_if
-  | statement_block
-  | statement_while
-  | statement_do
-  | statement_break
-  | statement_expression)
+statement returns [ hir_stmt_base *v ]
+  : statement_if { $v = (hir_stmt_base *) $statement_if.v; }
+  | statement_block { $v = (hir_stmt_base *) $statement_block.v; }
+  | statement_while { $v = (hir_stmt_base *) $statement_while.v; }
+  | statement_do { $v = (hir_stmt_base *) $statement_do.v; }
+  | statement_break { $v = (hir_stmt_base *) $statement_break.v; }
+  | statement_expression { $v = (hir_stmt_base *) $statement_expression.v; }
   ;
 
-statement_if
+statement_if returns [ hir_stmt_if *v ]
   @init {
+    hir_stmt_base *jz_v = NULL;
   }
-  : ^('if' expr statement (statement)?)
+  : ^(n='if' expr je=statement (jz=statement { jz_v = $jz.v; })?) {
+    $v = hir_build_stmt_if(ANTLR3_USERP(), $n, $expr.v, $je.v, jz_v);
+  }
   ;
 
-statement_block returns [ void *v ]
+statement_block returns [ hir_stmt_block *v ]
   @init {
+    list_hir_stmt *stmts = list_hir_stmt_new();
   }
-  : ^('begin' (statement)*) {
-    $v = NULL;
+  : ^(n='begin' (statement { list_hir_stmt_push_back(stmts, $statement.v); } )*) {
+    $v = hir_build_stmt_block(ANTLR3_USERP(), $n, stmts);
   }
   ;
 
-statement_while
-  @init {
+statement_while returns [ hir_stmt_while *v ]
+  : ^(n='while' expr statement) {
+    $v = hir_build_stmt_while(ANTLR3_USERP(), $n, $expr.v, $statement.v);
   }
-  : ^('while' expr statement)
   ;
 
-statement_do
-  @init {
+statement_do returns [ hir_stmt_do *v ]
+  : ^('repeat' std=statement_do_condition statement) {
+    $v = hir_build_stmt_do(ANTLR3_USERP(), $std.n, $std.p, $std.e, $statement.v);
   }
-  : ^('repeat' statement_do_condition statement)
   ;
 
-statement_do_condition
-  : ^('while' expr)
-  | ^('until' expr)
+statement_do_condition returns [ hir_expr_base *e, ANTLR3_BASE_TREE *n, int p ]
+  : ^(a='while' expr) { $e = $expr.v; $n = $a; $p = 1; }
+  | ^(a='until' expr) { $e = $expr.v; $n = $a; $p = 0; }
   ;
 
-statement_break
-  @init {
-  }
-  : 'break'
+statement_break returns [ hir_stmt_break *v ]
+  : br='break' { $v = hir_build_stmt_break(ANTLR3_USERP(), $br); }
   ;
 
-statement_expression
-  @init {
-  }
-  : expr
+statement_expression returns [ hir_stmt_expr *v ]
+  : expr { $v = hir_build_stmt_expr(ANTLR3_USERP(), $expr.v); }
   ;
 
 

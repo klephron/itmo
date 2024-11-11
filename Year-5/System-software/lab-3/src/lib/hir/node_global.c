@@ -18,12 +18,15 @@ hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
   self->body = body;
   return self;
 }
+
 void hir_subroutine_free(hir_subroutine *self) {
   if (self) {
     hir_id_free(self->id);
     list_hir_param_free(self->params);
     type_free(self->ret_type);
     list_hir_var_free(self->vars);
+    self->binding = NULL;
+    hir_stmt_block_free(self->body);
     hir_base_deinit(&self->base);
     free(self);
   }
