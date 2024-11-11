@@ -84,7 +84,6 @@ void hir_lit_free(hir_lit *self) {
       free(self->value.v_str);
       break;
     default:
-      hir_node_free(self->value.v_node);
       break;
     }
     type_free(self->type);

@@ -433,6 +433,8 @@ hir_stmt_if *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
     span = hir_span_new_range(node_span, je->base.span);
   }
   span_free(node_span);
+  // debug("%zu:%zu %zu:%zu", span->line_start, span->pos_start, span->line_end,
+  // span->pos_end);
   return hir_stmt_if_new(span, cond, je, jz);
 }
 

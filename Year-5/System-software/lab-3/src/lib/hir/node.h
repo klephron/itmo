@@ -45,12 +45,11 @@ LIST_DECLARE_STATIC_INLINE(list_hir_id, hir_id, container_cmp_false,
 
 // LITERAL
 typedef union hir_lit_u_union {
-  hir_base *v_node;
-  long      v_long;
-  ulong     v_ulong;
-  char     *v_str;
-  char     *v_char;
-  int       v_bool;
+  long  v_long;
+  ulong v_ulong;
+  char *v_str;
+  char *v_char;
+  int   v_bool;
 } hir_lit_u;
 
 typedef struct hir_lit_struct {
