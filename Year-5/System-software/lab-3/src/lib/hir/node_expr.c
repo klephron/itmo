@@ -1,4 +1,222 @@
 #include "node_expr.h"
 #include "util/log.h"
+#include "util/macro.h"
 
-void hir_expr_free(hir_expr_base *generic) { debug("TODO"); }
+void hir_expr_unary_free(hir_expr_unary *self);
+void hir_expr_binary_free(hir_expr_binary *self);
+void hir_expr_lit_free(hir_expr_lit *self);
+void hir_expr_id_free(hir_expr_id *self);
+void hir_expr_call_free(hir_expr_call *self);
+void hir_expr_index_free(hir_expr_index *self);
+
+void hir_expr_base_init(hir_expr_base *self, span *span, hir_expr_enum kind,
+                        type_base *type) {
+  hir_base_init(&self->base, span, HIR_NODE_EXPR);
+  self->kind = kind;
+  self->type = type;
+}
+
+void hir_expr_base_deinit(hir_expr_base *self) {
+  type_free(self->type);
+  hir_base_deinit(&self->base);
+}
+
+void hir_expr_free(hir_expr_base *generic) {
+  if (generic) {
+    switch (generic->kind) {
+    case HIR_EXPR_UNARY:
+      return hir_expr_unary_free((hir_expr_unary *)generic);
+    case HIR_EXPR_BINARY:
+      return hir_expr_binary_free((hir_expr_binary *)generic);
+    case HIR_EXPR_LITERAL:
+      return hir_expr_lit_free((hir_expr_lit *)generic);
+    case HIR_EXPR_IDENTIFIER:
+      return hir_expr_id_free((hir_expr_id *)generic);
+    case HIR_EXPR_CALL:
+      return hir_expr_call_free((hir_expr_call *)generic);
+    case HIR_EXPR_INDEX:
+      return hir_expr_index_free((hir_expr_index *)generic);
+    case HIR_EXPR_UNKNOWN:
+    default:
+      error("unknown expr type %d, %p", generic->kind, generic);
+    }
+  }
+}
+
+hir_expr_unary *hir_expr_unary_new(span *span, type_base *type,
+                                   hir_expr_unary_enum op,
+                                   hir_expr_base      *first) {
+  hir_expr_unary *self = MALLOC(hir_expr_unary);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_UNARY, type);
+  self->op = op;
+  self->first = first;
+  return self;
+}
+
+void hir_expr_unary_free(hir_expr_unary *self) {
+  if (self) {
+    hir_expr_free(self->first);
+    hir_expr_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+const char *hir_expr_unary_opstr(hir_expr_unary_enum type) {
+  switch (type) {
+  case HIR_EXPR_UNARY_PLUS:
+    return "PLUS";
+  case HIR_EXPR_UNARY_MINUS:
+    return "MINUS";
+  case HIR_EXPR_UNARY_LOGICAL_NOT:
+    return "LOGICAL_NOT";
+  case HIR_EXPR_UNARY_BITWISE_NOT:
+    return "BITWISE_NOT";
+  case HIR_EXPR_UNARY_LOAD:
+    return "LOAD";
+  case HIR_EXPR_UNARY_INC:
+    return "INC";
+  case HIR_EXPR_UNARY_DEC:
+    return "DEC";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+hir_expr_binary *hir_expr_binary_new(span *span, type_base *type,
+                                     hir_expr_binary_enum op,
+                                     hir_expr_base       *first,
+                                     hir_expr_base       *second) {
+  hir_expr_binary *self = MALLOC(hir_expr_binary);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_BINARY, type);
+  self->op = op;
+  self->first = first;
+  self->second = second;
+  return self;
+}
+
+void hir_expr_binary_free(hir_expr_binary *self) {
+  if (self) {
+    hir_expr_free(self->first);
+    hir_expr_free(self->second);
+    hir_expr_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+const char *hir_expr_binary_opstr(hir_expr_binary_enum type) {
+  switch (type) {
+  case HIR_EXPR_BINARY_ASSIGN:
+    return "ASSIGN";
+  case HIR_EXPR_BINARY_LOGICAL_OR:
+    return "LOGICAL_OR";
+  case HIR_EXPR_BINARY_LOGICAL_AND:
+    return "LOGICAL_AND";
+  case HIR_EXPR_BINARY_BITWISE_OR:
+    return "BITWISE_OR";
+  case HIR_EXPR_BINARY_BITWISE_XOR:
+    return "BITWISE_XOR";
+  case HIR_EXPR_BINARY_BITWISE_AND:
+    return "BITWISE_AND";
+  case HIR_EXPR_BINARY_EQUALS:
+    return "EQUALS";
+  case HIR_EXPR_BINARY_NOT_EQUALS:
+    return "NOT_EQUALS";
+  case HIR_EXPR_BINARY_LESS:
+    return "LESS";
+  case HIR_EXPR_BINARY_LESS_EQUALS:
+    return "LESS_EQUALS";
+  case HIR_EXPR_BINARY_GREATER:
+    return "GREATER";
+  case HIR_EXPR_BINARY_GREATER_EQUALS:
+    return "GREATER_EQUALS";
+  case HIR_EXPR_BINARY_BITWISE_SHIFT_LEFT:
+    return "BITWISE_SHIFT_LEFT";
+  case HIR_EXPR_BINARY_BITWISE_SHIFT_RIGHT:
+    return "BITWISE_SHIFT_RIGHT";
+  case HIR_EXPR_BINARY_ADD:
+    return "ADD";
+  case HIR_EXPR_BINARY_SUB:
+    return "SUB";
+  case HIR_EXPR_BINARY_MUL:
+    return "MUL";
+  case HIR_EXPR_BINARY_DIV:
+    return "DIV";
+  case HIR_EXPR_BINARY_MOD:
+    return "MOD";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+hir_expr_lit *hir_expr_lit_new(span *span, type_base *type, hir_lit *lit) {
+
+  hir_expr_lit *self = MALLOC(hir_expr_lit);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_LITERAL, type);
+  self->lit = lit;
+  return self;
+}
+
+void hir_expr_lit_free(hir_expr_lit *self) {
+  if (self) {
+    hir_lit_free(self->lit);
+    hir_expr_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+hir_expr_id *hir_expr_id_new(span *span, type_base *type, hir_id *id,
+                             const hir_symbol *binding) {
+
+  hir_expr_id *self = MALLOC(hir_expr_id);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_IDENTIFIER, type);
+  self->id = id;
+  self->binding = binding;
+  return self;
+}
+
+void hir_expr_id_free(hir_expr_id *self) {
+  if (self) {
+    hir_id_free(self->id);
+    self->binding = NULL;
+    hir_expr_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+hir_expr_call *hir_expr_call_new(span *span, type_base *type,
+                                 hir_expr_base *callee, list_hir_expr *args) {
+
+  hir_expr_call *self = MALLOC(hir_expr_call);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_CALL, type);
+  self->callee = callee;
+  self->args = args;
+  return self;
+}
+
+void hir_expr_call_free(hir_expr_call *self) {
+  if (self) {
+    hir_expr_free(self->callee);
+    list_hir_expr_free(self->args);
+    hir_expr_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+hir_expr_index *hir_expr_index_new(span *span, type_base *type,
+                                   hir_expr_base *indexed,
+                                   list_hir_expr *args) {
+  hir_expr_index *self = MALLOC(hir_expr_index);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_INDEX, type);
+  self->indexed = indexed;
+  self->args = args;
+  return self;
+}
+
+void hir_expr_index_free(hir_expr_index *self) {
+  if (self) {
+    hir_expr_free(self->indexed);
+    list_hir_expr_free(self->args);
+    hir_expr_base_deinit(&self->base);
+    free(self);
+  }
+}

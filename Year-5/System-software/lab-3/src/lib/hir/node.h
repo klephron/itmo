@@ -60,6 +60,7 @@ typedef struct hir_lit_struct {
 } hir_lit;
 
 hir_lit *hir_lit_new(span *span, type_base *type, hir_lit_u value);
+void     hir_lit_free(hir_lit *self);
 
 // PARAM
 typedef struct hir_param {

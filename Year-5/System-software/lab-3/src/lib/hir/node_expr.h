@@ -66,6 +66,12 @@ typedef struct hir_expr_unary_struct {
   hir_expr_base      *first;
 } hir_expr_unary;
 
+hir_expr_unary *hir_expr_unary_new(span *span, type_base *type,
+                                   hir_expr_unary_enum op,
+                                   hir_expr_base      *first);
+void            hir_expr_unary_free(hir_expr_unary *self);
+const char     *hir_expr_unary_opstr(hir_expr_unary_enum type);
+
 typedef struct hir_expr_binary_struct {
   hir_expr_base        base;
   hir_expr_binary_enum op;
@@ -73,10 +79,20 @@ typedef struct hir_expr_binary_struct {
   hir_expr_base       *second;
 } hir_expr_binary;
 
+hir_expr_binary *hir_expr_binary_new(span *span, type_base *type,
+                                     hir_expr_binary_enum op,
+                                     hir_expr_base       *first,
+                                     hir_expr_base       *second);
+void             hir_expr_binary_free(hir_expr_binary *self);
+const char      *hir_expr_binary_opstr(hir_expr_binary_enum type);
+
 typedef struct hir_expr_lit_struct {
   hir_expr_base base;
   hir_lit      *lit;
 } hir_expr_lit;
+
+hir_expr_lit *hir_expr_lit_new(span *span, type_base *type, hir_lit *lit);
+void          hir_expr_lit_free(hir_expr_lit *self);
 
 typedef struct hir_expr_id {
   hir_expr_base     base;
@@ -84,14 +100,26 @@ typedef struct hir_expr_id {
   const hir_symbol *binding;
 } hir_expr_id;
 
+hir_expr_id *hir_expr_id_new(span *span, type_base *type, hir_id *id,
+                             const hir_symbol *binding);
+void         hir_expr_id_free(hir_expr_id *self);
+
 typedef struct hir_expr_call {
   hir_expr_base  base;
   hir_expr_base *callee;
   list_hir_expr *args;
 } hir_expr_call;
 
+hir_expr_call *hir_expr_call_new(span *span, type_base *type,
+                                 hir_expr_base *callee, list_hir_expr *args);
+void           hir_expr_call_free(hir_expr_call *self);
+
 typedef struct hir_expr_index {
   hir_expr_base  base;
   hir_expr_base *indexed;
   list_hir_expr *args;
 } hir_expr_index;
+
+hir_expr_index *hir_expr_index_new(span *span, type_base *type,
+                                   hir_expr_base *indexed, list_hir_expr *args);
+void            hir_expr_index_free(hir_expr_index *self);
