@@ -7,14 +7,14 @@
 hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
                                    list_hir_param *params, type_base *ret_type,
                                    list_hir_var *vars, void *body,
-                                   const hir_symbol *symbol) {
+                                   const hir_symbol *binding) {
   hir_subroutine *self = MALLOC(hir_subroutine);
   hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
   self->id = id;
   self->params = params;
   self->ret_type = ret_type;
   self->vars = vars;
-  self->symbol = symbol;
+  self->binding = binding;
   self->body = body;
   return self;
 }

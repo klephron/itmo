@@ -1,8 +1,14 @@
 #include "node.h"
 
+#include "hir/node_expr.h"
 #include "hir/node_global.h"
 #include "util/log.h"
 #include "util/macro.h"
+
+void hir_id_free(hir_id *id);
+void hir_lit_free(hir_lit *self);
+void hir_param_free(hir_param *self);
+void hir_var_free(hir_var *self);
 
 void hir_base_init(hir_base *self, span *span, hir_node_enum kind) {
   self->kind = kind;
@@ -10,6 +16,30 @@ void hir_base_init(hir_base *self, span *span, hir_node_enum kind) {
 }
 
 void hir_base_deinit(hir_base *self) { span_free(self->span); }
+
+void hir_node_free(hir_base *generic) {
+  if (generic) {
+    switch (generic->kind) {
+    case HIR_NODE_ID:
+      return hir_id_free((hir_id *)generic);
+    case HIR_NODE_LIT:
+      return hir_lit_free((hir_lit *)generic);
+    case HIR_NODE_PARAM:
+      return hir_param_free((hir_param *)generic);
+    case HIR_NODE_VAR:
+      return hir_var_free((hir_var *)generic);
+    case HIR_NODE_SUBROUTINE:
+      return hir_subroutine_free((hir_subroutine *)generic);
+    case HIR_NODE_EXPR:
+      return hir_expr_free((hir_expr_base *)generic);
+    case HIR_NODE_STMT:
+      return hir_stmt_free((hir_stmt_base *)generic);
+    case HIR_NODE_UNKNOWN:
+      error("deleting unknown generic node");
+      break;
+    }
+  }
+}
 
 // ID
 hir_id *hir_id_new(span *span, char *name) {
@@ -82,7 +112,7 @@ void hir_param_free(hir_param *self) {
 
 hir_var *hir_var_new(span *span, hir_id *id, type_base *type) {
   hir_var *self = MALLOC(hir_var);
-  hir_base_init(&self->base, span, HIR_NODE_PARAM);
+  hir_base_init(&self->base, span, HIR_NODE_VAR);
   self->id = id;
   self->type = type;
   return self;
@@ -94,20 +124,5 @@ void hir_var_free(hir_var *self) {
     type_free(self->type);
     hir_base_deinit(&self->base);
     free(self);
-  }
-}
-
-// GENERIC
-void hir_node_free(hir_base *generic) {
-  if (generic) {
-    switch (generic->kind) {
-    case HIR_NODE_LIT:
-      return hir_lit_free((hir_lit *)generic);
-    case HIR_NODE_SUBROUTINE:
-      return hir_subroutine_free((hir_subroutine *)generic);
-    default:
-      error("deleting unknown generic node");
-      break;
-    }
   }
 }

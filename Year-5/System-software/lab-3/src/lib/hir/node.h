@@ -22,6 +22,8 @@ typedef struct hir_base_struct {
 void hir_base_init(hir_base *self, span *span, hir_node_enum kind);
 void hir_base_deinit(hir_base *self);
 
+void hir_node_free(hir_base *generic);
+
 // ID
 typedef struct hir_id_struct {
   hir_base base;
@@ -92,6 +94,3 @@ static inline void container_delete_hir_var(void *data) {
 }
 LIST_DECLARE_STATIC_INLINE(list_hir_var, hir_var, container_cmp_false,
                            container_new_move, container_delete_hir_var);
-
-// GENERIC
-void hir_node_free(hir_base *generic);
