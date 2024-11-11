@@ -4,8 +4,8 @@
 
 typedef enum hir_binding_enum {
   HIR_BINDING_UNKNOWN,
-  HIR_BINDING_GLOBAL,
-  HIR_BINDING_SUBROUTINE,
+  HIR_BINDING_GLOBAL,     // binded as global symbol
+  HIR_BINDING_SUBROUTINE, // binded inside subroutine
 } hir_binding_enum;
 
 typedef struct hir_symbol_struct hir_symbol;
@@ -18,7 +18,7 @@ typedef struct hir_symbol_struct {
   span             *decl_span;
 } hir_symbol;
 
-hir_symbol *hir_symbol_new(const char *name, hir_binding_enum bind_kind,
+hir_symbol *hir_symbol_new(char *name, hir_binding_enum bind_kind,
                            const hir_symbol *bind_parent, type_base *type,
                            span *decl_span);
 void        hir_symbol_free(hir_symbol *self);

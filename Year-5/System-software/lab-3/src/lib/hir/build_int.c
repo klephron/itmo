@@ -1,6 +1,7 @@
 #include "build_int.h"
 #include "antlr3/antlr3.h"
 #include "errno.h"
+#include "hir/symbols.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <antlr3commontoken.h>
@@ -12,15 +13,17 @@ static span *hir_span_new(ANTLR3_BASE_TREE *first, const char *source) {
   }
   ANTLR3_COMMON_TOKEN *first_token = first->getToken(first);
 
-  return span_new(source, first_token->line, first_token->line,
-                  first_token->getCharPositionInLine(first_token),
-                  first_token->getCharPositionInLine(first_token) +
-                      (first_token->stop - first_token->start + 1));
+  span *span = span_new(source, first_token->line, first_token->line,
+                        first_token->getCharPositionInLine(first_token),
+                        first_token->getCharPositionInLine(first_token) +
+                            (first_token->stop - first_token->start + 1));
+  return span;
 }
 
 static span *hir_span_new_range(const span *first, const span *second) {
-  return span_new(first->source, first->line_start, second->line_end,
-                  first->pos_start, second->pos_end);
+  span *span = span_new(first->source, first->line_start, second->line_end,
+                        first->pos_start, second->pos_end);
+  return span;
 }
 
 static long hir_build_str2long(const char *str, int base, char **err_str_out) {
@@ -111,9 +114,9 @@ static void hir_exception_add(hir_ctx *ctx, exception_subtype_ir subtype,
 }
 
 // IDENTIFIER
-hir_id hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
+hir_id *hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   const char *name = ANTLR3_CHARS(node);
-  return (hir_id){.name = name, .span = hir_span_new(node, ctx->stream)};
+  return hir_id_new(hir_span_new(node, ctx->stream), strdup(name));
 }
 
 // LITERALS
@@ -255,9 +258,11 @@ type_base *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   return type_base_new(TYPE_STRING, span);
 }
 
-type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id id) {
+type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id) {
   UNUSED(ctx);
-  return type_custom_new(id.span, id.name);
+  hir_id_data  id_data = hir_id_pop(id);
+  type_custom *custom = type_custom_new(id_data.span, id_data.name);
+  return custom;
 }
 
 type_array *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
@@ -265,7 +270,91 @@ type_array *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                  type_base        *elem_type) {
   span  *root = hir_span_new(node, ctx->stream);
   size_t dimensions = ANTLR3_SIZE(dimensions_node) + 1;
-  span  *span = hir_span_new_range(root, elem_type->span);
+  span  *span_m = hir_span_new_range(root, elem_type->span);
   span_free(root);
-  return type_array_new(span, dimensions, elem_type);
+  return type_array_new(span_m, dimensions, elem_type);
+}
+
+hir_param *hir_build_param(hir_ctx *ctx, hir_id *id, type_base *type) {
+  UNUSED(ctx);
+  span *span;
+  if (type) {
+    span = hir_span_new_range(id->base.span, type->span);
+  } else {
+    span = span_copy(id->base.span);
+  }
+  return hir_param_new(span, id, type);
+}
+
+hir_subroutine *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
+                                    hir_id *id, list_hir_param *params,
+                                    type_base *ret_type) {
+  span *root_span = hir_span_new(root, ctx->stream);
+  span *span;
+  if (ret_type) {
+    span = hir_span_new_range(root_span, ret_type->span);
+  } else if (list_hir_param_size(params) > 0) {
+    span =
+        hir_span_new_range(root_span, list_hir_param_back(params)->base.span);
+  } else {
+    span = hir_span_new_range(root_span, id->base.span);
+  }
+  span_free(root_span);
+  // debug("%zu:%zu %zu:%zu", span->line_start, span->pos_start, span->line_end,
+  // span->pos_end);
+  return hir_subroutine_new(span, id, params, ret_type, NULL, NULL, NULL);
+}
+
+list_hir_var *hir_build_body_var(hir_ctx *ctx, list_hir_id *ids,
+                                 type_base *type) {
+  UNUSED(ctx);
+  list_hir_var *var_list = list_hir_var_new();
+
+  size_t id_size = list_hir_id_size(ids);
+  for (size_t i = 1; i < id_size; ++i) {
+    hir_id *id = list_hir_id_pop_front(ids);
+    list_hir_var_push_back(
+        var_list, hir_var_new(span_copy(id->base.span), id, type_copy(type)));
+  }
+  if (id_size > 0) {
+    hir_id *id = list_hir_id_pop_front(ids);
+    list_hir_var_push_back(var_list,
+                           hir_var_new(span_copy(id->base.span), id, type));
+  }
+
+  list_hir_id_free(ids);
+  return var_list;
+}
+
+void hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
+                               list_hir_var *second) {
+  UNUSED(ctx);
+  size_t size = list_hir_var_size(second);
+  for (size_t i = 0; i < size; ++i) {
+    hir_var *var = list_hir_var_pop_front(second);
+    list_hir_var_push_back(first, var);
+  }
+  list_hir_var_free(second);
+}
+
+void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
+                    list_hir_var *vars, void *body) {
+  subroutine->vars = vars;
+  subroutine->body = body;
+
+  type_list *types = type_list_new();
+  for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
+       !list_hir_param_it_end(&it); list_hir_param_it_next(&it)) {
+    type_base *type = list_hir_param_it_get(&it)->type;
+    type_list_push_back(types, type_copy(type));
+  }
+
+  list_hir_symbol_push_back(
+      ctx->hir->globals,
+      hir_symbol_new(strdup(subroutine->id->name), HIR_BINDING_GLOBAL, NULL,
+                     (type_base *)type_callable_new(
+                         NULL, type_copy(subroutine->ret_type), types),
+                     span_copy(subroutine->base.span)));
+
+  list_hir_subroutine_push_back(ctx->hir->subroutines, subroutine);
 }

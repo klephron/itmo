@@ -1,20 +1,7 @@
-method fun4():
-begin
-end;
-
-method fun3(a: array [,,,] of int):
-begin
-  main();
-end;
-
-method main(n: int): long
+method mainadfafa(a, b: int, c: array [,,,] of int, d, e: array [,,,,] of array [,,,] of int): int
 var
+  a : int;
+  b : long;
+  c, d : array [,,,] of int;
 begin
-  fun1();
-  1;
-  'c';
-  '\t';
-  true;
-  18446744073709551615;
-  "aafaddfafsdadsfa";
 end;

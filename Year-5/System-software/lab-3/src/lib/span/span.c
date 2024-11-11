@@ -1,5 +1,3 @@
-#pragma once
-
 #include "span.h"
 #include "util/log.h"
 #include "util/macro.h"

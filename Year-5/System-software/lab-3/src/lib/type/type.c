@@ -1,5 +1,6 @@
 #include "type.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 
 #include <assert.h>
@@ -80,7 +81,6 @@ type_callable *type_callable_new(span *span, type_base *ret_type,
 
 static void type_callable_free(type_callable *self) {
   if (self) {
-    type_base_free(&self->base);
     type_free(self->ret_type);
     type_list_free(self->param_types);
     free(self);
@@ -173,7 +173,7 @@ type_base *type_copy(const type_base *self) {
         type_list_copy(callable->param_types));
   }
   default:
-    return type_base_new(self->type, self->span);
+    return type_base_new(self->type, span_copy(self->span));
   }
 }
 
@@ -211,6 +211,7 @@ const char *type_enum_str(type_enum type) {
   case TYPE_CALLABLE:
     return "CALLABLE";
   case TYPE_UNKNOWN:
+  default:
     return "UNKNOWN";
   }
 }

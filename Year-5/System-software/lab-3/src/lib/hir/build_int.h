@@ -1,13 +1,9 @@
 #pragma once
 
 #include "hir/build.h"
+#include "util/list.h"
 
-typedef struct hir_id_struct {
-  span       *span;
-  const char *name;
-} hir_id;
-
-hir_id hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_id *hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 
 hir_lit *hir_build_str(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_lit *hir_build_rune(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
@@ -24,15 +20,27 @@ type_base   *hir_build_type_long(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 type_base   *hir_build_type_ulong(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 type_base   *hir_build_type_char(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 type_base   *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id id);
+type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id);
 type_array  *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                   ANTLR3_BASE_TREE *dimensions,
                                   type_base        *elem_type);
 
-void hir_build_func_pre(hir_ctx *ctx);
-void hir_buid_func(hir_ctx *ctx);
-void hir_build_func_signature(hir_ctx *ctx);
-void hir_build_arg_list_pre(hir_ctx *ctx);
-void hir_build_arg_list(hir_ctx *ctx);
-void hir_build_arg(hir_ctx *ctx);
-void hir_build_type(hir_ctx *ctx);
+// void hir_build_func_pre(hir_ctx *ctx);
+// void hir_buid_func(hir_ctx *ctx);
+// void hir_build_func_signature(hir_ctx *ctx);
+// void hir_build_arg_list_pre(hir_ctx *ctx);
+// void hir_build_arg_list(hir_ctx *ctx);
+// void hir_build_arg(hir_ctx *ctx);
+// void hir_build_type(hir_ctx *ctx);
+hir_param      *hir_build_param(hir_ctx *ctx, hir_id *id, type_base *type);
+hir_subroutine *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
+                                    hir_id *id, list_hir_param *params,
+                                    type_base *ret_type);
+
+list_hir_var *hir_build_body_var(hir_ctx *ctx, list_hir_id *ids,
+                                 type_base *type);
+void          hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
+                                        list_hir_var *second);
+
+void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
+                    list_hir_var *vars, void *body);

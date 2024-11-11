@@ -8,6 +8,7 @@ options {
 
 
 @header {
+#include "util/log.h"
 #include "antlr3/antlr3.h"
 #include "hir/build_int.h"
 }
@@ -44,39 +45,62 @@ type_ref returns [type_base *v]
 // FUNCTIONS
 func_def
   @init {
+    list_hir_var *vars = NULL;
+    void *block = NULL;
   }
-  : ^(FUNC func_signature (^(BODY func_body))? )
+  : ^(FUNC
+      func_signature[$FUNC]
+      (^(BODY
+        ^(VARS { vars = list_hir_var_new(); } (func_body_var {
+            hir_build_body_var_extend(ANTLR3_USERP(), vars, $func_body_var.v);
+          }) *)
+        (statement_block) { block = $statement_block.v; }
+      ))?
+    ) {
+    hir_build_func(ANTLR3_USERP(), $func_signature.v, vars, block);
+  }
   ;
 
-func_signature
+func_signature [void *FUNC_n] returns [ hir_subroutine *v ]
   @init {
-    void *type_v = NULL;
+    type_base *type_ref_v = NULL;
   }
-  : identifier arg_def_list ^(RETURNS (type_ref )?)
+  : id=identifier params=param_def_list
+      ^(RETURNS (type_ref { type_ref_v = $type_ref.v; })?)
+      {
+    $v = hir_build_signature(ANTLR3_USERP(), $FUNC_n, $id.v, $params.v, type_ref_v);
+  }
   ;
 
-arg_def_list
+param_def_list returns [ list_hir_param *v ]
   @init {
+    list_hir_param *ret_v = list_hir_param_new();
   }
-  : ^(PARAMS (arg_def)*)
+  : ^(PARAMS (param_def { list_hir_param_push_back(ret_v, $param_def.v); })*) {
+    $v = ret_v;
+  }
   ;
 
-arg_def
+param_def returns [ hir_param *v ]
   @init {
+    type_base *type_ref_v = NULL;
   }
-  : ^(PARAM identifier (type_ref)?)
+  : ^(PARAM identifier (type_ref { type_ref_v = $type_ref.v; })?) {
+    $v = hir_build_param(ANTLR3_USERP(), $identifier.v, type_ref_v);
+  }
   ;
 
-func_body
+func_body_var returns [ list_hir_var *v ]
   @init {
+    type_base *tr_v = NULL;
+    list_hir_id *ids = list_hir_id_new();
   }
-  : ^(VARS (func_body_var)* ) (statement_block)
-  ;
-
-func_body_var
-  @init  {
+  : ^(VAR (type_ref { tr_v = $type_ref.v; })? (identifier {
+        list_hir_id_push_back(ids, $identifier.v);
+      } )*
+    ) {
+    $v = hir_build_body_var(ANTLR3_USERP(), ids, tr_v);
   }
-  : ^(VAR (type_ref)? (identifier)*)
   ;
 
 
@@ -96,10 +120,12 @@ statement_if
   : ^('if' expr statement (statement)?)
   ;
 
-statement_block
+statement_block returns [ void *v ]
   @init {
   }
-  : ^('begin' (statement)*)
+  : ^('begin' (statement)*) {
+    $v = NULL;
+  }
   ;
 
 statement_while
@@ -242,7 +268,7 @@ expr_identifier
 
 
 // TERMINALS
-identifier returns [hir_id v]
+identifier returns [hir_id *v]
   : c=IDENTIFIER { $v = hir_build_id(ANTLR3_USERP(), $c); }
   ;
 
