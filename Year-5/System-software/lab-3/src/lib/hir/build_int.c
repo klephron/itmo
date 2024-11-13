@@ -269,10 +269,15 @@ type_array *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                  ANTLR3_BASE_TREE *dimensions_node,
                                  type_base        *elem_type) {
   span  *root = hir_span_new(node, ctx->stream);
-  size_t dimensions = ANTLR3_SIZE(dimensions_node) + 1;
+  size_t dimensions = ANTLR3_SIZE(dimensions_node);
   span  *span_m = hir_span_new_range(root, elem_type->span);
   span_free(root);
-  return type_array_new(span_m, dimensions, elem_type);
+
+  type_base *type_root = elem_type;
+  for (size_t i = 0; i < dimensions; ++i) {
+    type_root = (type_base *)type_array_new(span_copy(span_m), type_root);
+  }
+  return type_array_new(span_m, type_root);
 }
 
 hir_param *hir_build_param(hir_ctx *ctx, hir_id *id, type_base *type) {

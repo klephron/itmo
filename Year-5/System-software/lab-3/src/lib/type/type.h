@@ -39,7 +39,6 @@ LIST_DECLARE_STATIC_INLINE(list_type, type_base, container_cmp_type,
 
 typedef struct type_array_struct {
   type_base  base;
-  size_t     dimensions;
   type_base *elem_type;
 } type_array;
 
@@ -59,7 +58,7 @@ const char *type_enum_str(type_enum type);
 type_base  *type_base_new(span *span, type_enum type);
 const char *type_base_str(type_base *type);
 
-type_array *type_array_new(span *span, size_t dimensions, type_base *elem_type);
+type_array    *type_array_new(span *span, type_base *elem_type);
 type_custom   *type_custom_new(span *span, char *name);
 type_callable *type_callable_new(span *span, type_base *ret_type,
                                  list_type *param_types);

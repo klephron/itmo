@@ -1,13 +1,10 @@
 #include "str.h"
 
-#include "util/macro.h"
 #include "util/string_buffer.h"
 #include <stdio.h>
 #include <string.h>
 
 static void type_str_generic(string_buffer *buffer, const type_base *generic) {
-  char buf[16];
-
   switch (generic->type) {
   case TYPE_BOOL:
     string_buffer_append(buffer, "bool");
@@ -39,9 +36,6 @@ static void type_str_generic(string_buffer *buffer, const type_base *generic) {
   case TYPE_ARRAY: {
     type_array *array = (type_array *)generic;
     string_buffer_append(buffer, "array[");
-    snprintf(buf, STRMAXLEN(buf), "%zu", array->dimensions);
-    string_buffer_append(buffer, buf);
-    string_buffer_append(buffer, ",");
     type_str_generic(buffer, array->elem_type);
     string_buffer_append(buffer, "]");
   } break;

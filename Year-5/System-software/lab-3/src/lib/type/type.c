@@ -36,11 +36,9 @@ type_base *type_base_new(span *span, type_enum type) {
 }
 
 // ARRAY
-type_array *type_array_new(span *span, size_t dimensions,
-                           type_base *elem_type) {
+type_array *type_array_new(span *span, type_base *elem_type) {
   type_array *self = MALLOC(type_array);
   type_base_init(&self->base, TYPE_ARRAY, span);
-  self->dimensions = dimensions;
   self->elem_type = elem_type;
   return self;
 }
@@ -117,9 +115,6 @@ int type_equals(const type_base *lsv, const type_base *rsv) {
   case TYPE_ARRAY: {
     type_array *lsv_arr = (type_array *)lsv;
     type_array *rsv_arr = (type_array *)rsv;
-    if (lsv_arr->dimensions != rsv_arr->dimensions) {
-      return 0;
-    }
     return type_equals(lsv_arr->elem_type, rsv_arr->elem_type);
   }
   case TYPE_CUSTOM: {
@@ -161,7 +156,7 @@ type_base *type_copy(const type_base *self) {
   switch (self->type) {
   case TYPE_ARRAY: {
     type_array *array = (type_array *)self;
-    return (type_base *)type_array_new(span_copy(self->span), array->dimensions,
+    return (type_base *)type_array_new(span_copy(self->span),
                                        type_copy(array->elem_type));
   }
   case TYPE_CUSTOM: {
