@@ -334,11 +334,11 @@ int execute(struct args_struct *args) {
   // stage: print hir symbols
   if (args->hir_symbols && (!error || args->ignore_errors)) {
     char *globals = hir_list_symbol_str(hir->globals);
-    printf("HIR GLOBAL SYMBOLS:\n%s\n", globals);
+    printf("HIR GLOBAL SYMBOLS:\n%s", globals);
     free(globals);
 
     char *locals = hir_list_symbol_str(hir->locals);
-    printf("HIR LOCAL SYMBOLS:\n%s\n", locals);
+    printf("HIR LOCAL SYMBOLS:\n%s", locals);
     free(locals);
   }
 

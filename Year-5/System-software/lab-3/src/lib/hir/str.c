@@ -209,7 +209,7 @@ typedef struct hir_symbol_table_struct {
   char *span;
 } hir_symbol_table;
 
-void hir_symbol_table_deinit(hir_symbol_table *self) {
+static void hir_symbol_table_deinit(hir_symbol_table *self) {
   if (self) {
     free(self->id_ptr);
     free(self->name);
@@ -313,39 +313,56 @@ char *hir_list_symbol_str(const list_hir_symbol *symbols) {
     hir_symbol_table_deinit(&table);
   }
 
+  // separator
+  {
+    string_buffer_append(buffer, "┌");
+    string_buffer_append_cell(buffer, id_ms, "", "─");
+    string_buffer_append(buffer, "┬");
+    string_buffer_append_cell(buffer, name_ms, "", "─");
+    string_buffer_append(buffer, "┬");
+    string_buffer_append_cell(buffer, bind_kind_ms, "", "─");
+    string_buffer_append(buffer, "┬");
+    string_buffer_append_cell(buffer, bind_parent_ms, "", "─");
+    string_buffer_append(buffer, "┬");
+    string_buffer_append_cell(buffer, type_ms, "", "─");
+    string_buffer_append(buffer, "┬");
+    string_buffer_append_cell(buffer, span_ms, "", "─");
+    string_buffer_append(buffer, "┐\n");
+  }
+
   // header
   {
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, id_ms, id_h, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, name_ms, name_h, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, bind_kind_ms, bind_kind_h, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, bind_parent_ms, bind_parent_h,
                               HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, type_ms, type_h, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, span_ms, span_h, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|\n");
+    string_buffer_append(buffer, "│\n");
   }
 
   // separator
   {
-    string_buffer_append(buffer, "|");
-    string_buffer_append_cell(buffer, id_ms, "", "-");
-    string_buffer_append(buffer, "|");
-    string_buffer_append_cell(buffer, name_ms, "", "-");
-    string_buffer_append(buffer, "|");
-    string_buffer_append_cell(buffer, bind_kind_ms, "", "-");
-    string_buffer_append(buffer, "|");
-    string_buffer_append_cell(buffer, bind_parent_ms, "", "-");
-    string_buffer_append(buffer, "|");
-    string_buffer_append_cell(buffer, type_ms, "", "-");
-    string_buffer_append(buffer, "|");
-    string_buffer_append_cell(buffer, span_ms, "", "-");
-    string_buffer_append(buffer, "|\n");
+    string_buffer_append(buffer, "├");
+    string_buffer_append_cell(buffer, id_ms, "", "─");
+    string_buffer_append(buffer, "┼");
+    string_buffer_append_cell(buffer, name_ms, "", "─");
+    string_buffer_append(buffer, "┼");
+    string_buffer_append_cell(buffer, bind_kind_ms, "", "─");
+    string_buffer_append(buffer, "┼");
+    string_buffer_append_cell(buffer, bind_parent_ms, "", "─");
+    string_buffer_append(buffer, "┼");
+    string_buffer_append_cell(buffer, type_ms, "", "─");
+    string_buffer_append(buffer, "┼");
+    string_buffer_append_cell(buffer, span_ms, "", "─");
+    string_buffer_append(buffer, "┤\n");
   }
 
   // body
@@ -355,23 +372,40 @@ char *hir_list_symbol_str(const list_hir_symbol *symbols) {
     const hir_symbol *symbol = it.get(&it);
     hir_symbol_table  table = hir_symbol_to_table(symbol);
 
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, id_ms, table.id_ptr, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, name_ms, table.name, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, bind_kind_ms, table.bind_kind,
                               HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, bind_parent_ms, table.bind_parent,
                               HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, type_ms, table.type, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|");
+    string_buffer_append(buffer, "│");
     string_buffer_append_cell(buffer, span_ms, table.span, HIR_STR_SPACE);
-    string_buffer_append(buffer, "|\n");
+    string_buffer_append(buffer, "│\n");
 
     hir_symbol_table_deinit(&table);
+  }
+
+  // separator
+  {
+    string_buffer_append(buffer, "└");
+    string_buffer_append_cell(buffer, id_ms, "", "─");
+    string_buffer_append(buffer, "┴");
+    string_buffer_append_cell(buffer, name_ms, "", "─");
+    string_buffer_append(buffer, "┴");
+    string_buffer_append_cell(buffer, bind_kind_ms, "", "─");
+    string_buffer_append(buffer, "┴");
+    string_buffer_append_cell(buffer, bind_parent_ms, "", "─");
+    string_buffer_append(buffer, "┴");
+    string_buffer_append_cell(buffer, type_ms, "", "─");
+    string_buffer_append(buffer, "┴");
+    string_buffer_append_cell(buffer, span_ms, "", "─");
+    string_buffer_append(buffer, "┘\n");
   }
 
   return string_buffer_detach(buffer);
@@ -1020,7 +1054,6 @@ char *hir_tree_str(const hir *hir) {
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_appendln(buffer, "SUBROUTINES: [");
-
   pad += HIR_STR_TAB;
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
        !it.end(&it); it.next(&it)) {
@@ -1029,7 +1062,6 @@ char *hir_tree_str(const hir *hir) {
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
-
   string_buffer_append_padding(buffer, HIR_STR_TAB);
   string_buffer_appendln(buffer, "]");
 
