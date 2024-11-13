@@ -5,6 +5,7 @@
 #include "dot/ast.h"
 #include "exception/exception.h"
 #include "hir/build.h"
+#include "hir/str.h"
 #include "lexer/lexer.h"
 #include "parser/parser.h"
 #include "util/container_util.h"
@@ -306,6 +307,15 @@ int execute(struct args_struct *args) {
     print_exceptions(args, hir_ctx->exceptions);
     error = 1;
   }
+
+  // stage: print global and local symbol tables
+  char *globals = hir_list_symbol_str(hir->globals);
+  info("HIR GLOBAL SYMBOLS:\n%s", globals);
+  free(globals);
+
+  char *locals = hir_list_symbol_str(hir->locals);
+  info("HIR LOCAL SYMBOLS:\n%s", locals);
+  free(locals);
 
   // stage: build mir + handle exception
   // if (!error || args->ignore_errors) {

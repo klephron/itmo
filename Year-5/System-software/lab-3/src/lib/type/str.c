@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static void type_str_generic(string_buffer *buffer, type_base *generic) {
+static void type_str_generic(string_buffer *buffer, const type_base *generic) {
   char buf[16];
 
   switch (generic->type) {
@@ -75,7 +75,7 @@ static void type_str_generic(string_buffer *buffer, type_base *generic) {
   }
 }
 
-char *type_str(type_base *generic) {
+char *type_str(const type_base *generic) {
   if (generic) {
     string_buffer *buffer = string_buffer_new(16, 0);
     type_str_generic(buffer, generic);
