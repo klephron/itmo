@@ -606,7 +606,6 @@ static void hir_tree_str_expr_unary(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "op: ");
   string_buffer_appendln(buffer, hir_expr_unary_enum_str(expr->op));
-  string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "first: ");
@@ -631,7 +630,6 @@ static void hir_tree_str_expr_binary(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "op: ");
   string_buffer_appendln(buffer, hir_expr_binary_enum_str(expr->op));
-  string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "first: ");
@@ -659,7 +657,7 @@ static void hir_tree_str_expr_lit(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_append(buffer, "first: ");
+  string_buffer_append(buffer, "lit: ");
   hir_tree_str_lit(buffer, pad, expr->lit);
   string_buffer_appendln(buffer, "");
 
