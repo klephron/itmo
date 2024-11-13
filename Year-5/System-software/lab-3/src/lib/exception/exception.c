@@ -75,7 +75,7 @@ exception *exception_new_f(exception_type type, int subtype, const char *stream,
   return exc;
 }
 
-char *exception_to_chars(const exception *exc) {
+char *exception_str(const exception *exc) {
   char buf[256];
 
   char *exc_stream = "<empty>";

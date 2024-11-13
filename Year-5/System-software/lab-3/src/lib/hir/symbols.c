@@ -1,6 +1,5 @@
 #include "symbols.h"
 #include "util/macro.h"
-#include <string.h>
 
 hir_symbol *hir_symbol_new(char *name, hir_binding_enum bind_kind,
                            const hir_symbol *bind_parent, type_base *type,

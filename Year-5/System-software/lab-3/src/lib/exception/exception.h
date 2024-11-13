@@ -74,6 +74,6 @@ exception *exception_new_f(exception_type type, int subtype, const char *stream,
 exception *exception_new_from_helper(const exception_helper *helper,
                                      char                   *format, ...);
 void       exception_free(exception *exc);
-char      *exception_to_chars(const exception *exc);
+char      *exception_str(const exception *exc);
 
 const char *exception_subtype_ir_str(exception_subtype_ir ir);

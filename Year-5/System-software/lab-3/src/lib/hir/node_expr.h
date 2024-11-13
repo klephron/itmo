@@ -18,7 +18,6 @@ typedef enum hir_expr_unary_enum {
   HIR_EXPR_UNARY_MINUS,
   HIR_EXPR_UNARY_LOGICAL_NOT,
   HIR_EXPR_UNARY_BITWISE_NOT,
-  HIR_EXPR_UNARY_LOAD,
   HIR_EXPR_UNARY_INC,
   HIR_EXPR_UNARY_DEC
 } hir_expr_unary_enum;

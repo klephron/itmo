@@ -193,7 +193,7 @@ void print_exceptions(struct args_struct *args, list_exception *exceptions) {
   for (list_exception_it it = list_exception_begin(exceptions);
        !list_exception_it_end(&it); list_exception_it_next(&it)) {
     exception *exc = list_exception_it_get(&it);
-    char      *msg = exception_to_chars(exc);
+    char      *msg = exception_str(exc);
     fprintf(stderr, "%s\n", msg);
     free(msg);
   }
