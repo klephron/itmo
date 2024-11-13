@@ -69,7 +69,6 @@ hir_expr_unary *hir_expr_unary_new(span *span, type_base *type,
                                    hir_expr_unary_enum op,
                                    hir_expr_base      *first);
 void            hir_expr_unary_free(hir_expr_unary *self);
-const char     *hir_expr_unary_opstr(hir_expr_unary_enum type);
 
 typedef struct hir_expr_binary_struct {
   hir_expr_base        base;
@@ -83,7 +82,6 @@ hir_expr_binary *hir_expr_binary_new(span *span, type_base *type,
                                      hir_expr_base       *first,
                                      hir_expr_base       *second);
 void             hir_expr_binary_free(hir_expr_binary *self);
-const char      *hir_expr_binary_opstr(hir_expr_binary_enum type);
 
 typedef struct hir_expr_lit_struct {
   hir_expr_base base;

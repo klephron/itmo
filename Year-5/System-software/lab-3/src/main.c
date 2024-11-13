@@ -306,7 +306,6 @@ int execute(struct args_struct *args) {
     error = 1;
   }
 
-  // stage: print global and local symbol tables
   char *globals = hir_list_symbol_str(hir->globals);
   info("HIR GLOBAL SYMBOLS:\n%s", globals);
   free(globals);
@@ -314,6 +313,10 @@ int execute(struct args_struct *args) {
   char *locals = hir_list_symbol_str(hir->locals);
   info("HIR LOCAL SYMBOLS:\n%s", locals);
   free(locals);
+
+  char *tree = hir_tree_str(hir);
+  info("HIR TREE:\n%s", tree);
+  free(tree);
 
   // stage: build mir + handle exception
   // if (!error || args->ignore_errors) {

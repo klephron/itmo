@@ -92,11 +92,13 @@ void hir_lit_free(hir_lit *self) {
   }
 }
 // HIR_PARAM
-hir_param *hir_param_new(span *span, hir_id *id, type_base *type) {
+hir_param *hir_param_new(span *span, hir_id *id, type_base *type,
+                         const hir_symbol *symbol) {
   hir_param *self = MALLOC(hir_param);
   hir_base_init(&self->base, span, HIR_NODE_PARAM);
   self->id = id;
   self->type = type;
+  self->symbol = symbol;
   return self;
 }
 
@@ -109,11 +111,13 @@ void hir_param_free(hir_param *self) {
   }
 }
 
-hir_var *hir_var_new(span *span, hir_id *id, type_base *type) {
+hir_var *hir_var_new(span *span, hir_id *id, type_base *type,
+                     const hir_symbol *symbol) {
   hir_var *self = MALLOC(hir_var);
   hir_base_init(&self->base, span, HIR_NODE_VAR);
   self->id = id;
   self->type = type;
+  self->symbol = symbol;
   return self;
 }
 

@@ -283,7 +283,7 @@ hir_param *hir_build_param(hir_ctx *ctx, hir_id *id, type_base *type) {
   } else {
     span = span_copy(id->base.span);
   }
-  return hir_param_new(span, id, type);
+  return hir_param_new(span, id, type, NULL);
 }
 
 hir_subroutine *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
@@ -313,13 +313,13 @@ list_hir_var *hir_build_body_var(hir_ctx *ctx, list_hir_id *ids,
   size_t id_size = list_hir_id_size(ids);
   for (size_t i = 1; i < id_size; ++i) {
     hir_id *id = list_hir_id_pop_front(ids);
-    list_hir_var_push_back(
-        var_list, hir_var_new(span_copy(id->base.span), id, type_copy(type)));
+    list_hir_var_push_back(var_list, hir_var_new(span_copy(id->base.span), id,
+                                                 type_copy(type), NULL));
   }
   if (id_size > 0) {
     hir_id *id = list_hir_id_pop_front(ids);
-    list_hir_var_push_back(var_list,
-                           hir_var_new(span_copy(id->base.span), id, type));
+    list_hir_var_push_back(
+        var_list, hir_var_new(span_copy(id->base.span), id, type, NULL));
   }
 
   list_hir_id_free(ids);

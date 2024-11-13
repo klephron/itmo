@@ -25,7 +25,7 @@ begin
   main[a,b][][d];
 end;
 
-method main2(n: int): long
+method main2(): long
 begin
   if n == 0 then 1;
   else if n == 1 then 1;
