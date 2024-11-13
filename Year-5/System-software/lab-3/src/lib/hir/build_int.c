@@ -123,14 +123,14 @@ hir_id *hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 hir_lit *hir_build_str(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span       *span = hir_span_new(node, ctx->stream);
   const char *chars = ANTLR3_CHARS(node);
-  return hir_lit_new(span, type_base_new(TYPE_STRING, span_copy(span)),
+  return hir_lit_new(span, type_base_new(span_copy(span), TYPE_STRING),
                      (hir_lit_u){.v_str = strdup(chars)});
 }
 
 hir_lit *hir_build_rune(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span       *span = hir_span_new(node, ctx->stream);
   const char *chars = ANTLR3_CHARS(node);
-  return hir_lit_new(span, type_base_new(TYPE_CHAR, span_copy(span)),
+  return hir_lit_new(span, type_base_new(span_copy(span), TYPE_CHAR),
                      (hir_lit_u){.v_char = strdup(chars)});
 }
 
@@ -149,10 +149,10 @@ hir_lit *hir_build_hex(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
       free(err_msg);
       return NULL;
     }
-    return hir_lit_new(span, type_base_new(TYPE_ULONG, NULL),
+    return hir_lit_new(span, type_base_new(NULL, TYPE_ULONG),
                        (hir_lit_u){.v_ulong = uvalue});
   }
-  return hir_lit_new(span, type_base_new(TYPE_LONG, NULL),
+  return hir_lit_new(span, type_base_new(NULL, TYPE_LONG),
                      (hir_lit_u){.v_long = value});
 }
 
@@ -171,10 +171,10 @@ hir_lit *hir_build_bits(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
       free(err_msg);
       return NULL;
     }
-    return hir_lit_new(span, type_base_new(TYPE_ULONG, NULL),
+    return hir_lit_new(span, type_base_new(NULL, TYPE_ULONG),
                        (hir_lit_u){.v_ulong = uvalue});
   }
-  return hir_lit_new(span, type_base_new(TYPE_LONG, NULL),
+  return hir_lit_new(span, type_base_new(NULL, TYPE_LONG),
                      (hir_lit_u){.v_long = value});
 }
 
@@ -193,10 +193,10 @@ hir_lit *hir_build_dec(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
       free(err_msg);
       return NULL;
     }
-    return hir_lit_new(span, type_base_new(TYPE_ULONG, NULL),
+    return hir_lit_new(span, type_base_new(NULL, TYPE_ULONG),
                        (hir_lit_u){.v_ulong = uvalue});
   }
-  return hir_lit_new(span, type_base_new(TYPE_LONG, NULL),
+  return hir_lit_new(span, type_base_new(NULL, TYPE_LONG),
                      (hir_lit_u){.v_long = value});
 }
 
@@ -214,48 +214,48 @@ hir_lit *hir_build_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
                       "%s is invalid boolean const", chars);
     return NULL;
   }
-  return hir_lit_new(span, type_base_new(TYPE_BOOL, NULL), u);
+  return hir_lit_new(span, type_base_new(NULL, TYPE_BOOL), u);
 }
 
 // TYPES
 type_base *hir_build_type_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_BOOL, span);
+  return type_base_new(span, TYPE_BOOL);
 }
 
 type_base *hir_build_type_byte(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_BYTE, span);
+  return type_base_new(span, TYPE_BYTE);
 }
 
 type_base *hir_build_type_int(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_INT, span);
+  return type_base_new(span, TYPE_INT);
 }
 
 type_base *hir_build_type_uint(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_UINT, span);
+  return type_base_new(span, TYPE_UINT);
 }
 
 type_base *hir_build_type_long(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_LONG, span);
+  return type_base_new(span, TYPE_LONG);
 }
 
 type_base *hir_build_type_ulong(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_ULONG, span);
+  return type_base_new(span, TYPE_ULONG);
 }
 
 type_base *hir_build_type_char(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_CHAR, span);
+  return type_base_new(span, TYPE_CHAR);
 }
 
 type_base *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span *span = hir_span_new(node, ctx->stream);
-  return type_base_new(TYPE_STRING, span);
+  return type_base_new(span, TYPE_STRING);
 }
 
 type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id) {
@@ -342,11 +342,11 @@ void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
   subroutine->vars = vars;
   subroutine->body = body;
 
-  type_list *types = type_list_new();
+  list_type *types = list_type_new();
   for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
        !list_hir_param_it_end(&it); list_hir_param_it_next(&it)) {
     type_base *type = list_hir_param_it_get(&it)->type;
-    type_list_push_back(types, type_copy(type));
+    list_type_push_back(types, type_copy(type));
   }
 
   list_hir_symbol_push_back(

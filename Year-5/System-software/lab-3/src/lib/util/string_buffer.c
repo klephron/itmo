@@ -20,6 +20,7 @@ string_buffer *string_buffer_new(int capacity, double growth_factor) {
     self->capacity = STRING_BUFFER_INITIAL_CAPACITY;
   }
   self->data = malloc(self->capacity);
+  self->data[0] = '\0';
   self->cur = self->data;
   if (growth_factor > 1) {
     self->growth_factor = growth_factor;

@@ -20,16 +20,16 @@ static void type_base_init(type_base *self, type_enum type, span *span) {
   self->span = span;
 }
 
-static type_list *type_list_copy(type_list *list) {
-  type_list *new_list = type_list_new();
+static list_type *type_list_copy(list_type *list) {
+  list_type *new_list = list_type_new();
   for (list_node *it = list->list.head; it; it = it->next) {
     type_base *generic = it->data;
-    type_list_push_back(new_list, type_copy(generic));
+    list_type_push_back(new_list, type_copy(generic));
   }
   return new_list;
 }
 
-type_base *type_base_new(type_enum type, span *span) {
+type_base *type_base_new(span *span, type_enum type) {
   type_base *self = MALLOC(type_base);
   type_base_init(self, type, span);
   return self;
@@ -47,30 +47,32 @@ type_array *type_array_new(span *span, size_t dimensions,
 
 static void type_array_free(type_array *self) {
   if (self) {
-    type_base_deinit(&self->base);
     type_free(self->elem_type);
+    type_base_deinit(&self->base);
     free(self);
   }
 }
 
 // CUSTOM
-type_custom *type_custom_new(span *span, const char *name) {
+type_custom *type_custom_new(span *span, char *name) {
   type_custom *self = MALLOC(type_custom);
   type_base_init(&self->base, TYPE_CUSTOM, span);
-  self->name = strdup(name);
+  self->name = name;
   return self;
 }
 
 static void type_custom_free(type_custom *self) {
   if (self) {
-    type_base_free(&self->base);
-    free(self->name);
+    if (self->name) {
+      free(self->name);
+    }
+    type_base_deinit(&self->base);
     free(self);
   }
 }
 // CALLABLE
 type_callable *type_callable_new(span *span, type_base *ret_type,
-                                 type_list *param_types) {
+                                 list_type *param_types) {
   type_callable *self = MALLOC(type_callable);
   type_base_init(&self->base, TYPE_CALLABLE, span);
   self->ret_type = ret_type;
@@ -81,7 +83,8 @@ type_callable *type_callable_new(span *span, type_base *ret_type,
 static void type_callable_free(type_callable *self) {
   if (self) {
     type_free(self->ret_type);
-    type_list_free(self->param_types);
+    list_type_free(self->param_types);
+    type_base_deinit(&self->base);
     free(self);
   }
 }
@@ -131,8 +134,8 @@ int type_equals(const type_base *lsv, const type_base *rsv) {
     if (ret) {
       return ret;
     }
-    size_t lsize = type_list_size(lsv_cal->param_types);
-    size_t rsize = type_list_size(rsv_cal->param_types);
+    size_t lsize = list_type_size(lsv_cal->param_types);
+    size_t rsize = list_type_size(rsv_cal->param_types);
     if (lsize != rsize) {
       return 1;
     }
@@ -163,7 +166,8 @@ type_base *type_copy(const type_base *self) {
   }
   case TYPE_CUSTOM: {
     type_custom *custom = (type_custom *)self;
-    return (type_base *)type_custom_new(span_copy(self->span), custom->name);
+    return (type_base *)type_custom_new(span_copy(self->span),
+                                        strdup(custom->name));
   }
   case TYPE_CALLABLE: {
     type_callable *callable = (type_callable *)self;
@@ -172,7 +176,7 @@ type_base *type_copy(const type_base *self) {
         type_list_copy(callable->param_types));
   }
   default:
-    return type_base_new(self->type, span_copy(self->span));
+    return type_base_new(span_copy(self->span), self->type);
   }
 }
 

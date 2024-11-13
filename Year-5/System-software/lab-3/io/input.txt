@@ -1,4 +1,4 @@
-method main(): int
+method main(): array [,,,] of custom_1
 var
   a : array [,,,] of int;
 begin
