@@ -1,6 +1,5 @@
 #include "type.h"
 
-#include "util/log.h"
 #include "util/macro.h"
 
 #include <assert.h>

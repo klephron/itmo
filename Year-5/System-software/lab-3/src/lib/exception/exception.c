@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "util/colors.h"
+#include "util/macro.h"
 #include "util/string_buffer.h"
 
 void exception_free(exception *exc) {
@@ -74,193 +75,60 @@ exception *exception_new_f(exception_type type, int subtype, const char *stream,
   return exc;
 }
 
-static char *exception_unknown_to_chars(const exception *exc) {
-  char buf[256];
-
-  char *exc_stream = "<empty>";
-  char *exc_name = "<empty>";
-  char *exc_message = "<empty>";
-
-  {
-    if (exc->stream) {
-      exc_stream = exc->stream;
-    }
-
-    if (exc->name) {
-      exc_name = exc->name;
-    }
-
-    if (exc->message) {
-      exc_message = exc->message;
-    }
-  }
-
-  string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
-  string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
-
-  snprintf(buf, sizeof(buf) - 1, "(U%d): %s -> %s\n", exc->subtype, exc_name,
-           exc_message);
-  string_buffer_append(buffer, buf);
-
-  snprintf(buf, sizeof(buf) - 1,
-           ANSI_COLOR_BLUE " -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
-           exc->line, exc->offset);
-  string_buffer_append(buffer, buf);
-
-  return string_buffer_detach(buffer);
-}
-
-static char *exception_lexer_to_chars(const exception *exc) {
-  char buf[256];
-
-  char *exc_stream = "<empty>";
-  char *exc_message = "<empty>";
-
-  {
-    if (exc->stream) {
-      exc_stream = exc->stream;
-    }
-
-    if (exc->message) {
-      exc_message = exc->message;
-    }
-  }
-
-  string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
-  string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
-
-  snprintf(buf, sizeof(buf) - 1, "(L%d): %s\n", exc->subtype, exc_message);
-  string_buffer_append(buffer, buf);
-
-  snprintf(buf, sizeof(buf) - 1,
-           ANSI_COLOR_BLUE " -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
-           exc->line, exc->offset);
-  string_buffer_append(buffer, buf);
-
-  return string_buffer_detach(buffer);
-}
-
-static char *exception_parser_to_chars(const exception *exc) {
-  char buf[256];
-
-  char *exc_stream = "<empty>";
-  char *exc_name = "<empty>";
-  char *exc_message = "<empty>";
-
-  {
-    if (exc->stream) {
-      exc_stream = exc->stream;
-    }
-
-    if (exc->name) {
-      exc_name = exc->name;
-    }
-
-    if (exc->message) {
-      exc_message = exc->message;
-    }
-  }
-
-  string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
-  string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
-
-  snprintf(buf, sizeof(buf) - 1, "(P%d): %s -> %s\n", exc->subtype, exc_name,
-           exc_message);
-  string_buffer_append(buffer, buf);
-
-  snprintf(buf, sizeof(buf) - 1,
-           ANSI_COLOR_BLUE " -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
-           exc->line, exc->offset);
-  string_buffer_append(buffer, buf);
-
-  return string_buffer_detach(buffer);
-}
-
-static char *exception_tree_to_chars(const exception *exc) {
-  char buf[256];
-
-  char *exc_stream = "<empty>";
-  char *exc_name = "<empty>";
-  char *exc_message = "<empty>";
-
-  {
-    if (exc->stream) {
-      exc_stream = exc->stream;
-    }
-
-    if (exc->name) {
-      exc_name = exc->name;
-    }
-
-    if (exc->message) {
-      exc_message = exc->message;
-    }
-  }
-
-  string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
-  string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
-
-  snprintf(buf, sizeof(buf) - 1, "(T%d): %s -> %s\n", exc->subtype, exc_name,
-           exc_message);
-  string_buffer_append(buffer, buf);
-
-  snprintf(buf, sizeof(buf) - 1,
-           ANSI_COLOR_BLUE " -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
-           exc->line, exc->offset);
-  string_buffer_append(buffer, buf);
-
-  return string_buffer_detach(buffer);
-}
-
-static char *exception_ir_to_chars(const exception *exc) {
-  char buf[256];
-
-  char *exc_stream = "<empty>";
-  char *exc_name = "<empty>";
-  char *exc_message = "<empty>";
-
-  {
-    if (exc->stream) {
-      exc_stream = exc->stream;
-    }
-
-    if (exc->name) {
-      exc_name = exc->name;
-    }
-
-    if (exc->message) {
-      exc_message = exc->message;
-    }
-  }
-
-  string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
-  string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
-
-  snprintf(buf, sizeof(buf) - 1, "(I%d): %s -> %s\n", exc->subtype, exc_name,
-           exc_message);
-  string_buffer_append(buffer, buf);
-
-  snprintf(buf, sizeof(buf) - 1,
-           ANSI_COLOR_BLUE " -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
-           exc->line, exc->offset);
-  string_buffer_append(buffer, buf);
-
-  return string_buffer_detach(buffer);
-}
-
 char *exception_to_chars(const exception *exc) {
+  char buf[256];
+
+  char *exc_stream = "<empty>";
+  char *exc_name = "<empty>";
+  char *exc_message = "<empty>";
+
+  {
+    if (exc->stream) {
+      exc_stream = exc->stream;
+    }
+
+    if (exc->name) {
+      exc_name = exc->name;
+    }
+
+    if (exc->message) {
+      exc_message = exc->message;
+    }
+  }
+
+  string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
+
+  string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
+
   switch (exc->type) {
   case EXCEPTION_LEXER:
-    return exception_lexer_to_chars(exc);
+    snprintf(buf, STRMAXLEN(buf), "(L%d): %s\n", exc->subtype, exc_message);
+    break;
   case EXCEPTION_PARSER:
-    return exception_parser_to_chars(exc);
+    snprintf(buf, STRMAXLEN(buf), "(P%d): %s -> %s", exc->subtype, exc_name,
+             exc_message);
+    break;
   case EXCEPTION_TREE:
-    return exception_tree_to_chars(exc);
+    snprintf(buf, STRMAXLEN(buf), "(T%d): %s -> %s", exc->subtype, exc_name,
+             exc_message);
+    break;
   case EXCEPTION_IR:
-    return exception_ir_to_chars(exc);
+    snprintf(buf, STRMAXLEN(buf), "(I%d): %s -> %s", exc->subtype, exc_name,
+             exc_message);
+    break;
   default:
-    return exception_unknown_to_chars(exc);
+    snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
+             exc_message);
+    break;
   }
+  string_buffer_append(buffer, buf);
+
+  snprintf(buf, STRMAXLEN(buf),
+           ANSI_COLOR_BLUE " -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
+           exc->line, exc->offset);
+  string_buffer_append(buffer, buf);
+
+  return string_buffer_detach(buffer);
 }
 
 exception *exception_new_from_helper(const exception_helper *helper,

@@ -4,3 +4,4 @@
 #define MALLOC(x) ((typeof(x) *)malloc(sizeof(typeof(x))))
 #define MALLOCN(x, n) ((typeof(x) *)malloc(sizeof(typeof(x)) * n))
 #define T(x)
+#define STRMAXLEN(x) (sizeof(x) - 1)
