@@ -106,3 +106,28 @@ Test(hashset, char_char) {
 
   hashset_char_char_free(hashset);
 }
+
+Test(hashset, char_char_it) {
+  hashset_char_char *hashset = hashset_char_char_new();
+
+  char key[10];
+  char value[10];
+
+  chars_chars data = {.key = key, .value = value};
+
+  for (int i = 0; i < 1000; ++i) {
+    sprintf(key, "%d", i);
+    sprintf(value, "%d", i + 1000);
+    hashset_char_char_insert(hashset, &data);
+  }
+
+  size_t cnt = 0;
+  for (hashset_char_char_it it = hashset_char_char_begin(hashset); !it.end(&it);
+       it.next(&it)) {
+    cnt += 1;
+  }
+
+  cr_expect_eq(1000, cnt);
+
+  hashset_char_char_free(hashset);
+}

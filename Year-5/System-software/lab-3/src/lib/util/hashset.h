@@ -61,7 +61,23 @@ int   hashset_it_next(hashset_it *it);
                                                                                \
   typedef struct hashset_type##_it_struct {                                    \
     hashset_it it;                                                             \
+    type *(*get)(struct hashset_type##_it_struct * it);                        \
+    int (*next)(struct hashset_type##_it_struct * it);                         \
+    int (*end)(struct hashset_type##_it_struct * it);                          \
   } hashset_type##_it;                                                         \
+                                                                               \
+  __attribute__((__unused__)) static inline type *hashset_type##_it_get(       \
+      hashset_type##_it *self) {                                               \
+    return hashset_it_get(&self->it);                                          \
+  }                                                                            \
+  __attribute__((__unused__)) static inline int hashset_type##_it_next(        \
+      hashset_type##_it *self) {                                               \
+    return hashset_it_next(&self->it);                                         \
+  }                                                                            \
+  __attribute__((__unused__)) static inline int hashset_type##_it_end(         \
+      hashset_type##_it *self) {                                               \
+    return hashset_it_end(&self->it);                                          \
+  }                                                                            \
                                                                                \
   __attribute__((                                                              \
       __unused__)) static inline hashset_type *hashset_type##_new() {          \
@@ -81,7 +97,11 @@ int   hashset_it_next(hashset_it *it);
   __attribute__((__unused__)) static inline hashset_type##_it                  \
       hashset_type##_find(hashset_type *self, type *data) {                    \
     return (hashset_type##_it){                                                \
-        .it = hashset_find(&self->hashset, (void *)data)};                     \
+        .it = hashset_find(&self->hashset, (void *)data),                      \
+        .get = hashset_type##_it_get,                                          \
+        .next = hashset_type##_it_next,                                        \
+        .end = hashset_type##_it_end,                                          \
+    };                                                                         \
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline void hashset_type##_insert(        \
@@ -91,23 +111,15 @@ int   hashset_it_next(hashset_it *it);
                                                                                \
   __attribute__((__unused__)) static inline hashset_type##_it                  \
       hashset_type##_begin(hashset_type *self) {                               \
-    return (hashset_type##_it){.it = hashset_begin(&self->hashset)};           \
+    return (hashset_type##_it){                                                \
+        .it = hashset_begin(&self->hashset),                                   \
+        .get = hashset_type##_it_get,                                          \
+        .next = hashset_type##_it_next,                                        \
+        .end = hashset_type##_it_end,                                          \
+    };                                                                         \
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline void hashset_type##_replace(       \
       hashset_type *self, hashset_type##_it it, type *data) {                  \
     hashset_replace(&self->hashset, it.it, (void *)data);                      \
-  }                                                                            \
-                                                                               \
-  __attribute__((__unused__)) static inline type *hashset_type##_it_get(       \
-      hashset_type##_it *self) {                                               \
-    return hashset_it_get(&self->it);                                          \
-  }                                                                            \
-  __attribute__((__unused__)) static inline int hashset_type##_it_next(        \
-      hashset_type##_it *self) {                                               \
-    return hashset_it_next(&self->it);                                         \
-  }                                                                            \
-  __attribute__((__unused__)) static inline int hashset_type##_it_end(         \
-      hashset_type##_it *self) {                                               \
-    return hashset_it_end(&self->it);                                          \
   }
