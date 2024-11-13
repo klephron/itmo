@@ -26,8 +26,13 @@ struct args_struct {
   char      *output_dir;
   int        ignore_errors;
   int        tee;
+  int        ast;
+  int        cfg;
   int        cfg_add_expr;
-  list_char *subroutines;
+  int        cg;
+  list_char *cg_subroutines;
+  int        hir_symbols;
+  int        hir_tree;
   // status
   int code;
   int help;
@@ -41,9 +46,17 @@ struct args_struct *args_new() {
 
   args->output_dir = ".";
   args->ignore_errors = 0;
-  args->cfg_add_expr = 0;
   args->tee = 0;
-  args->subroutines = list_char_new();
+
+  args->ast = 0;
+
+  args->cfg = 0;
+  args->cfg_add_expr = 0;
+  args->cg = 0;
+  args->cg_subroutines = list_char_new();
+
+  args->hir_symbols = 0;
+  args->hir_tree = 0;
 
   args->code = 0;
   args->help = 0;
@@ -53,34 +66,41 @@ struct args_struct *args_new() {
 
 void args_free(struct args_struct *args) {
   list_char_free(args->input_files);
-  list_char_free(args->subroutines);
+  list_char_free(args->cg_subroutines);
   free(args);
 }
 
 void usage(struct args_struct *args) {
   int  buf_len = 256;
-  char subroutines[buf_len];
+  char cg_subroutines[buf_len];
   int  offset = 0;
-  for (list_char_it it = list_char_begin(args->subroutines); !it.end(&it);
+  for (list_char_it it = list_char_begin(args->cg_subroutines); !it.end(&it);
        it.next(&it)) {
     char *sub = it.get(&it);
-    offset += snprintf(subroutines + offset, buf_len - offset - 1, "%s,", sub);
+    offset +=
+        snprintf(cg_subroutines + offset, buf_len - offset - 1, "%s,", sub);
   }
   if (offset > 0) {
-    subroutines[offset - 1] = '\0';
+    cg_subroutines[offset - 1] = '\0';
   }
 
   printf(
       "Usage: %s [options] <file>...\n"
       "Options:\n"
+      "-o <directory>   - output directory (current: %s)\n"
       "--tee            - print to file and to stdout (current: %d)\n"
       "--ignore-errors  - continue execution on errors (current: %d)\n"
+      "--ast            - add AST output (current: %d)\n"
+      "--cfg            - add control flow graph output (current: %d)\n"
       "--cfg-add-expr   - add expressions to control flow graph (current: %d)\n"
-      "-o <directory>   - output directory (current: %s)\n"
+      "--cg             - add call graph output (current: %d)\n"
       "-s <subroutine>  - set or add subroutine for call graph generation"
-      "(current: %s)\n",
-      args->prog_name, args->tee, args->ignore_errors, args->cfg_add_expr,
-      args->output_dir, subroutines);
+      "(current: %s)\n"
+      "--hir-symbols    - print HIR symbols (current: %d)\n"
+      "--hir-tree       - print HIR tree (current: %d)\n",
+      args->prog_name, args->output_dir, args->tee, args->ignore_errors,
+      args->ast, args->cfg, args->cfg_add_expr, args->cg, cg_subroutines,
+      args->hir_symbols, args->hir_tree);
 }
 
 void parse_args(struct args_struct *args, int argc, char *argv[]) {
@@ -91,7 +111,12 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
   struct option long_options[] = {
       {"tee", no_argument, &args->tee, 1},
       {"ignore-errors", no_argument, &args->ignore_errors, 1},
+      {"ast", no_argument, &args->ast, 1},
+      {"cfg", no_argument, &args->cfg, 1},
       {"cfg-add-expr", no_argument, &args->cfg_add_expr, 1},
+      {"cg", no_argument, &args->cg, 1},
+      {"hir-symbols", no_argument, &args->hir_symbols, 1},
+      {"hir-tree", no_argument, &args->hir_tree, 1},
   };
   int option_index = 0;
   int has_next = 1;
@@ -114,7 +139,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
       args->output_dir = optarg;
       break;
     case 's':
-      list_char_push_back(args->subroutines, optarg);
+      list_char_push_back(args->cg_subroutines, optarg);
       break;
     case 'h':
       args->help = 1;
@@ -136,8 +161,8 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
     list_char_push_back(args->input_files, (void *)file);
   }
 
-  if (list_char_size(args->subroutines) == 0) {
-    list_char_push_back(args->subroutines, "main");
+  if (list_char_size(args->cg_subroutines) == 0) {
+    list_char_push_back(args->cg_subroutines, "main");
   }
 }
 
@@ -185,7 +210,7 @@ char *get_cg_dot_output(struct args_struct *args, const char *source,
 }
 
 int has_subroutine(struct args_struct *args, const char *subroutine) {
-  list_char_it it = list_char_find(args->subroutines, subroutine);
+  list_char_it it = list_char_find(args->cg_subroutines, subroutine);
   return !list_char_it_end(&it);
 }
 
@@ -279,8 +304,8 @@ int execute(struct args_struct *args) {
     list_source_push_back(sources, (char *)data);
   }
 
-  // stage: ast dot
-  if (!error || args->ignore_errors) {
+  // stage: dot ast
+  if (args->ast && (!error || args->ignore_errors)) {
     for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
       ast        *ast = it.get(&it);
       dot_string *dot = dot_ast(ast);
@@ -306,17 +331,23 @@ int execute(struct args_struct *args) {
     error = 1;
   }
 
-  char *globals = hir_list_symbol_str(hir->globals);
-  info("HIR GLOBAL SYMBOLS:\n%s", globals);
-  free(globals);
+  // stage: print hir symbols
+  if (args->hir_symbols && (!error || args->ignore_errors)) {
+    char *globals = hir_list_symbol_str(hir->globals);
+    printf("HIR GLOBAL SYMBOLS:\n%s\n", globals);
+    free(globals);
 
-  char *locals = hir_list_symbol_str(hir->locals);
-  info("HIR LOCAL SYMBOLS:\n%s", locals);
-  free(locals);
+    char *locals = hir_list_symbol_str(hir->locals);
+    printf("HIR LOCAL SYMBOLS:\n%s\n", locals);
+    free(locals);
+  }
 
-  char *tree = hir_tree_str(hir);
-  info("HIR TREE:\n%s", tree);
-  free(tree);
+  // stage: print hir tree
+  if (args->hir_tree && (!error || args->ignore_errors)) {
+    char *tree = hir_tree_str(hir);
+    printf("HIR TREE:\n%s\n", tree);
+    free(tree);
+  }
 
   // stage: build mir + handle exception
   // if (!error || args->ignore_errors) {
