@@ -344,8 +344,8 @@ void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
 
   list_type *types = list_type_new();
   for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
-       !list_hir_param_it_end(&it); list_hir_param_it_next(&it)) {
-    type_base *type = list_hir_param_it_get(&it)->type;
+       !it.end(&it); it.next(&it)) {
+    type_base *type = it.get(&it)->type;
     list_type_push_back(types, type_copy(type));
   }
 

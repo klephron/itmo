@@ -51,7 +51,23 @@ int   list_it_end(list_it *it);
                                                                                \
   typedef struct list_type##_it_struct {                                       \
     list_it it;                                                                \
+    type *(*get)(struct list_type##_it_struct * it);                           \
+    int (*next)(struct list_type##_it_struct * it);                            \
+    int (*end)(struct list_type##_it_struct * it);                             \
   } list_type##_it;                                                            \
+                                                                               \
+  __attribute__((__unused__)) static inline type *list_type##_it_get(          \
+      list_type##_it *self) {                                                  \
+    return list_it_get(&self->it);                                             \
+  }                                                                            \
+  __attribute__((__unused__)) static inline int list_type##_it_next(           \
+      list_type##_it *self) {                                                  \
+    return list_it_next(&self->it);                                            \
+  }                                                                            \
+  __attribute__((__unused__)) static inline int list_type##_it_end(            \
+      list_type##_it *self) {                                                  \
+    return list_it_end(&self->it);                                             \
+  }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline list_type *list_type##_new() {     \
     list_type *self = (list_type *)malloc(sizeof(list_type));                  \
@@ -94,7 +110,12 @@ int   list_it_end(list_it *it);
                                                                                \
   __attribute__((__unused__)) static inline list_type##_it list_type##_find(   \
       const list_type *self, const type *data) {                               \
-    return (list_type##_it){.it = list_find(&self->list, (const void *)data)}; \
+    return (list_type##_it){                                                   \
+        .it = list_find(&self->list, (const void *)data),                      \
+        .get = list_type##_it_get,                                             \
+        .next = list_type##_it_next,                                           \
+        .end = list_type##_it_end,                                             \
+    };                                                                         \
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline void list_type##_insert(           \
@@ -108,18 +129,10 @@ int   list_it_end(list_it *it);
   }                                                                            \
   __attribute__((__unused__)) static inline list_type##_it list_type##_begin(  \
       list_type *self) {                                                       \
-    return (list_type##_it){.it = list_begin(&self->list)};                    \
-  }                                                                            \
-                                                                               \
-  __attribute__((__unused__)) static inline type *list_type##_it_get(          \
-      list_type##_it *self) {                                                  \
-    return list_it_get(&self->it);                                             \
-  }                                                                            \
-  __attribute__((__unused__)) static inline int list_type##_it_next(           \
-      list_type##_it *self) {                                                  \
-    return list_it_next(&self->it);                                            \
-  }                                                                            \
-  __attribute__((__unused__)) static inline int list_type##_it_end(            \
-      list_type##_it *self) {                                                  \
-    return list_it_end(&self->it);                                             \
+    return (list_type##_it){                                                   \
+        .it = list_begin(&self->list),                                         \
+        .get = list_type##_it_get,                                             \
+        .next = list_type##_it_next,                                           \
+        .end = list_type##_it_end,                                             \
+    };                                                                         \
   }

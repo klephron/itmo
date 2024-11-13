@@ -61,9 +61,9 @@ void usage(struct args_struct *args) {
   int  buf_len = 256;
   char subroutines[buf_len];
   int  offset = 0;
-  for (list_char_it it = list_char_begin(args->subroutines);
-       !list_char_it_end(&it); list_char_it_next(&it)) {
-    char *sub = list_char_it_get(&it);
+  for (list_char_it it = list_char_begin(args->subroutines); !it.end(&it);
+       it.next(&it)) {
+    char *sub = it.get(&it);
     offset += snprintf(subroutines + offset, buf_len - offset - 1, "%s,", sub);
   }
   if (offset > 0) {
@@ -191,9 +191,9 @@ int has_subroutine(struct args_struct *args, const char *subroutine) {
 
 void print_exceptions(struct args_struct *args, list_exception *exceptions) {
   UNUSED(args);
-  for (list_exception_it it = list_exception_begin(exceptions);
-       !list_exception_it_end(&it); list_exception_it_next(&it)) {
-    exception *exc = list_exception_it_get(&it);
+  for (list_exception_it it = list_exception_begin(exceptions); !it.end(&it);
+       it.next(&it)) {
+    exception *exc = it.get(&it);
     char      *msg = exception_str(exc);
     fprintf(stderr, "%s\n", msg);
     free(msg);
@@ -252,9 +252,9 @@ int execute(struct args_struct *args) {
   list_ast    *asts = list_ast_new();
 
   // stage: tokenize and parse to AST
-  for (list_char_it it = list_char_begin(args->input_files);
-       !list_char_it_end(&it); list_char_it_next(&it)) {
-    const char *path = list_char_it_get(&it);
+  for (list_char_it it = list_char_begin(args->input_files); !it.end(&it);
+       it.next(&it)) {
+    const char *path = it.get(&it);
     const char *data = read_file(path);
 
     lexer              *lexer = lexer_new(data, strlen(data), path);
@@ -281,9 +281,8 @@ int execute(struct args_struct *args) {
 
   // stage: ast dot
   if (!error || args->ignore_errors) {
-    for (list_ast_it it = list_ast_begin(asts); !list_ast_it_end(&it);
-         list_ast_it_next(&it)) {
-      ast        *ast = list_ast_it_get(&it);
+    for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
+      ast        *ast = it.get(&it);
       dot_string *dot = dot_ast(ast);
       char       *output = get_ast_dot_output(args, ast);
       write_dot(args, dot, output);
@@ -297,8 +296,7 @@ int execute(struct args_struct *args) {
   hir_ctx *hir_ctx = hir_ctx_new(hir);
 
   if (!error || args->ignore_errors) {
-    for (list_ast_it it = list_ast_begin(asts); !list_ast_it_end(&it);
-         list_ast_it_next(&it)) {
+    for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
       const ast *ast = list_ast_it_get(&it);
       hir_build_from_ast(hir_ctx, ast);
     }
