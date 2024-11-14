@@ -10,7 +10,7 @@ options {
 @header {
 #include "util/log.h"
 #include "antlr3/antlr3.h"
-#include "hir/build_int.h"
+#include "hir/ctx_build.h"
 }
 
 @members {

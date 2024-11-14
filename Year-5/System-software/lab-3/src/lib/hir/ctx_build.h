@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hir/build.h"
+#include "hir/ctx.h"
 
 hir_id *hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 

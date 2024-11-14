@@ -1,4 +1,5 @@
-#include "build.h"
+#include "ctx.h"
+
 #include "antlr3/tree/HirBuilder.h"
 #include "util/macro.h"
 
@@ -6,7 +7,7 @@ hir_ctx *hir_ctx_new(const hir *hir) {
   hir_ctx *self = MALLOC(hir_ctx);
   self->hir = hir;
   self->exceptions = list_exception_new();
-  self->stream = NULL;
+  self->ast_stream = NULL;
   return self;
 }
 
@@ -15,7 +16,7 @@ void hir_ctx_free(hir_ctx *self) {
     self->hir = NULL;
     list_exception_free(self->exceptions);
     self->exceptions = NULL;
-    self->stream = NULL;
+    self->ast_stream = NULL;
     free(self);
   }
 }
@@ -31,7 +32,7 @@ static void hir_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   pANTLR3_BASE_TREE theBaseTree;
 
   exception_helper exh;
-  exh.stream = (char *)ctx->stream;
+  exh.stream = (char *)ctx->ast_stream;
   exh.type = EXCEPTION_TREE;
   exh.subtype = EXCEPTION_TREE_UNEXPECTED_NODE;
   exh.line = 0;
@@ -59,7 +60,7 @@ static void hir_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
 }
 
 void hir_build_from_ast(hir_ctx *ctx, const ast *ast) {
-  ctx->stream = ast->name;
+  ctx->ast_stream = ast->name;
 
   pANTLR3_COMMON_TREE_NODE_STREAM nodes =
       antlr3CommonTreeNodeStreamNewTree(ast->tree, ANTLR3_SIZE_HINT);

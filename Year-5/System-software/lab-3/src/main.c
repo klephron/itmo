@@ -4,17 +4,14 @@
 
 #include "dot/ast.h"
 #include "exception/exception.h"
-#include "hir/build.h"
+#include "hir/ctx.h"
 #include "hir/str.h"
 #include "lexer/lexer.h"
 #include "parser/parser.h"
 #include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
-#include "util/log.h"
 #include "util/macro.h"
-
-#include "exception/exception.h"
 
 LIST_DECLARE_STATIC_INLINE(list_char, char, container_cmp_chars,
                            container_new_chars, container_delete_chars);
