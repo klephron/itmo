@@ -28,12 +28,14 @@ void exception_free(exception *exc) {
   }
 }
 
-exception *exception_new(exception_type type, int subtype, const char *stream,
-                         uint32_t line, uint32_t offset, const char *name,
+exception *exception_new(exception_level level, exception_type type,
+                         int subtype, const char *stream, uint32_t line,
+                         uint32_t offset, const char *name,
                          const char *message) {
 
   exception *exc = calloc(1, sizeof(exception));
 
+  exc->level = level;
   exc->type = type;
   exc->subtype = subtype;
 
@@ -54,23 +56,26 @@ exception *exception_new(exception_type type, int subtype, const char *stream,
   return exc;
 };
 
-exception *exception_new_v(exception_type type, int subtype, const char *stream,
-                           uint32_t line, uint32_t offset, const char *name,
+exception *exception_new_v(exception_level level, exception_type type,
+                           int subtype, const char *stream, uint32_t line,
+                           uint32_t offset, const char *name,
                            const char *format, va_list args) {
   char message[256]; // message size
   message[0] = '\0';
   vsnprintf(message, 255, format, args);
-  return exception_new(type, subtype, stream, line, offset, name, message);
+  return exception_new(level, type, subtype, stream, line, offset, name,
+                       message);
 }
 
-exception *exception_new_f(exception_type type, int subtype, const char *stream,
-                           uint32_t line, uint32_t offset, const char *name,
+exception *exception_new_f(exception_level level, exception_type type,
+                           int subtype, const char *stream, uint32_t line,
+                           uint32_t offset, const char *name,
                            const char *format, ...) {
   exception *exc;
   va_list    args;
   va_start(args, format);
-  exc =
-      exception_new_v(type, subtype, stream, line, offset, name, format, args);
+  exc = exception_new_v(level, type, subtype, stream, line, offset, name,
+                        format, args);
   va_end(args);
   return exc;
 }
@@ -98,7 +103,20 @@ char *exception_str(const exception *exc) {
 
   string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
 
-  string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
+  switch (exc->level) {
+  case EXCEPTION_LEVEL_INFO:
+    string_buffer_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
+    break;
+  case EXCEPTION_LEVEL_WARNING:
+    string_buffer_append(buffer, ANSI_COLOR_YELLOW "warning" ANSI_COLOR_RESET);
+    break;
+  case EXCEPTION_LEVEL_ERROR:
+    string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
+    break;
+  default:
+    string_buffer_append(buffer, "unknown");
+    break;
+  }
 
   switch (exc->type) {
   case EXCEPTION_LEXER:
@@ -122,9 +140,10 @@ char *exception_str(const exception *exc) {
     break;
   }
   string_buffer_append(buffer, buf);
+  string_buffer_append(buffer, "\n");
 
   snprintf(buf, STRMAXLEN(buf),
-           ANSI_COLOR_BLUE " -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
+           ANSI_COLOR_BLUE "  -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
            exc->line, exc->offset);
   string_buffer_append(buffer, buf);
 
@@ -135,9 +154,9 @@ exception *exception_new_from_helper(const exception_helper *helper,
                                      char                   *format, ...) {
   va_list args;
   va_start(args, format);
-  exception *exc =
-      exception_new_v(helper->type, helper->subtype, helper->stream,
-                      helper->line, helper->offset, helper->name, format, args);
+  exception *exc = exception_new_v(helper->level, helper->type, helper->subtype,
+                                   helper->stream, helper->line, helper->offset,
+                                   helper->name, format, args);
   va_end(args);
   return exc;
 }

@@ -284,15 +284,17 @@ int execute(struct args_struct *args) {
     parser             *parser = parser_new(stream);
     ast                *ast = parser_parse(parser);
 
-    if (list_exception_size(lexer->exceptions) != 0) {
-      print_exceptions(args, lexer->exceptions);
+    if (list_exception_count_by_level(lexer->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
       error = 1;
     }
+    print_exceptions(args, lexer->exceptions);
 
-    if (list_exception_size(parser->exceptions) != 0) {
-      print_exceptions(args, parser->exceptions);
+    if (list_exception_count_by_level(parser->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
       error = 1;
     }
+    print_exceptions(args, parser->exceptions);
 
     list_ast_push_back(asts, ast);
     list_parser_push_back(parsers, parser);
@@ -322,10 +324,12 @@ int execute(struct args_struct *args) {
       const ast *ast = list_ast_it_get(&it);
       hir_build_from_ast(hir_ctx, ast);
     }
-  }
-  if (list_exception_size(hir_ctx->exceptions)) {
+    if (list_exception_count_by_level(hir_ctx->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      error = 1;
+    }
     print_exceptions(args, hir_ctx->exceptions);
-    error = 1;
+    hir_ctx_reset_exceptions(hir_ctx);
   }
 
   // stage: print hir symbols

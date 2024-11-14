@@ -100,15 +100,15 @@ static ulong hir_build_str2ulong(const char *str, int base,
   return number;
 }
 
-static void hir_exception_add(hir_ctx *ctx, exception_subtype_ir subtype,
-                              const span *span, const char *format, ...) {
+static void hir_error_add(hir_ctx *ctx, exception_subtype_ir subtype,
+                          const span *span, const char *format, ...) {
   exception *exc;
   va_list    args;
   va_start(args, format);
 
-  exc = exception_new_v(EXCEPTION_IR, subtype, span->source, span->line_start,
-                        span->pos_start, exception_subtype_ir_str(subtype),
-                        format, args);
+  exc = exception_new_v(EXCEPTION_LEVEL_ERROR, EXCEPTION_IR, subtype,
+                        span->source, span->line_start, span->pos_start,
+                        exception_subtype_ir_str(subtype), format, args);
   list_exception_push_back(ctx->exceptions, exc);
 
   va_end(args);
@@ -146,7 +146,7 @@ hir_lit *hir_build_hex(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
     err_msg = NULL;
     ulong uvalue = hir_build_str2ulong(chars, 16, &err_msg);
     if (err_msg) {
-      hir_exception_add(ctx, EXCEPTION_IR_HEX_VALIDATION, span, err_msg);
+      hir_error_add(ctx, EXCEPTION_IR_HEX_VALIDATION, span, err_msg);
       free(err_msg);
       return NULL;
     }
@@ -168,7 +168,7 @@ hir_lit *hir_build_bits(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
     err_msg = NULL;
     ulong uvalue = hir_build_str2ulong(chars, 2, &err_msg);
     if (err_msg) {
-      hir_exception_add(ctx, EXCEPTION_IR_BITS_VALIDATION, span, err_msg);
+      hir_error_add(ctx, EXCEPTION_IR_BITS_VALIDATION, span, err_msg);
       free(err_msg);
       return NULL;
     }
@@ -190,7 +190,7 @@ hir_lit *hir_build_dec(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
     err_msg = NULL;
     ulong uvalue = hir_build_str2ulong(chars, 10, &err_msg);
     if (err_msg) {
-      hir_exception_add(ctx, EXCEPTION_IR_DEC_VALIDATION, span, err_msg);
+      hir_error_add(ctx, EXCEPTION_IR_DEC_VALIDATION, span, err_msg);
       free(err_msg);
       return NULL;
     }
@@ -211,8 +211,8 @@ hir_lit *hir_build_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   } else if (!strcmp("false", chars)) {
     u.v_bool = 0;
   } else {
-    hir_exception_add(ctx, EXCEPTION_IR_BOOL_VALIDATION, span,
-                      "%s is invalid boolean const", chars);
+    hir_error_add(ctx, EXCEPTION_IR_BOOL_VALIDATION, span,
+                  "%s is invalid boolean const", chars);
     return NULL;
   }
   return hir_lit_new(span, type_base_new(NULL, TYPE_BOOL), u);

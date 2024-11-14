@@ -11,6 +11,7 @@ typedef struct hir_ctx_struct {
 } hir_ctx;
 
 hir_ctx *hir_ctx_new(const hir *hir);
+void     hir_ctx_reset_exceptions(hir_ctx *self);
 void     hir_ctx_free(hir_ctx *self);
 
 void hir_build_from_ast(hir_ctx *ctx, const ast *ast);

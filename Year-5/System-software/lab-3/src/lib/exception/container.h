@@ -10,3 +10,8 @@ static inline void  container_delete_exception(void *_data) {
 }
 LIST_DECLARE_STATIC_INLINE(list_exception, exception, container_cmp_false,
                            container_new_exception, container_delete_exception);
+
+size_t list_exception_count_by_type(const list_exception *list,
+                                    exception_type        type);
+size_t list_exception_count_by_level(const list_exception *list,
+                                     exception_level       level);

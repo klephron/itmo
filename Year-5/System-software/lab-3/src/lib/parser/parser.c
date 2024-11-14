@@ -20,6 +20,7 @@ static void parser_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   }
 
   ex = recognizer->state->exception;
+  exh.level = EXCEPTION_LEVEL_ERROR;
   exh.type = EXCEPTION_PARSER;
   exh.line = ex->line;
   exh.name = ex->message;

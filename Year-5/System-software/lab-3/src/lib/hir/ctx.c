@@ -1,6 +1,7 @@
 #include "ctx.h"
 
 #include "antlr3/tree/HirBuilder.h"
+#include "exception/container.h"
 #include "util/macro.h"
 
 hir_ctx *hir_ctx_new(const hir *hir) {
@@ -9,6 +10,11 @@ hir_ctx *hir_ctx_new(const hir *hir) {
   self->exceptions = list_exception_new();
   self->ast_stream = NULL;
   return self;
+}
+
+void hir_ctx_reset_exceptions(hir_ctx *self) {
+  list_exception_free(self->exceptions);
+  self->exceptions = list_exception_new();
 }
 
 void hir_ctx_free(hir_ctx *self) {
@@ -32,6 +38,7 @@ static void hir_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   pANTLR3_BASE_TREE theBaseTree;
 
   exception_helper exh;
+  exh.level = EXCEPTION_LEVEL_ERROR;
   exh.stream = (char *)ctx->ast_stream;
   exh.type = EXCEPTION_TREE;
   exh.subtype = EXCEPTION_TREE_UNEXPECTED_NODE;

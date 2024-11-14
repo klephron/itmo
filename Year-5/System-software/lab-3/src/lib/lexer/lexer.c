@@ -21,6 +21,7 @@ static void lexer_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
 
   ex = recognizer->state->exception;
 
+  exh.level = EXCEPTION_LEVEL_ERROR;
   exh.type = EXCEPTION_LEXER;
   exh.line = ex->line;
   exh.name = ex->message;
