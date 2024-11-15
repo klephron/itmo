@@ -2,13 +2,46 @@
 
 #include "antlr3/tree/HirBuilder.h"
 #include "exception/container.h"
+#include "hir/ctx_bind.h"
+#include "hir/ctx_type.h"
 #include "util/macro.h"
 
+// SCOPE
+hir_ctx_scope_entry *hir_ctx_scope_entry_new(const char       *name,
+                                             const hir_symbol *binding) {
+  hir_ctx_scope_entry *self = MALLOC(hir_ctx_scope_entry);
+  self->name = name;
+  self->binding = binding;
+  return self;
+}
+
+void hir_ctx_scope_entry_free(hir_ctx_scope_entry *self) {
+  if (self) {
+    free(self);
+  }
+}
+
+hir_ctx_scope *hir_ctx_scope_new(hir_ctx_scope_enum kind) {
+  hir_ctx_scope *self = MALLOC(hir_ctx_scope);
+  self->kind = kind;
+  self->hashset = hashset_hir_ctx_scope_entry_new();
+  return self;
+}
+
+void hir_ctx_scope_free(hir_ctx_scope *self) {
+  if (self) {
+    hashset_hir_ctx_scope_entry_free(self->hashset);
+    free(self);
+  }
+}
+
+// CTX
 hir_ctx *hir_ctx_new(const hir *hir) {
   hir_ctx *self = MALLOC(hir_ctx);
   self->hir = hir;
   self->exceptions = list_exception_new();
   self->ast_stream = NULL;
+  self->scopes = NULL;
   return self;
 }
 
@@ -23,12 +56,14 @@ void hir_ctx_free(hir_ctx *self) {
     list_exception_free(self->exceptions);
     self->exceptions = NULL;
     self->ast_stream = NULL;
+    self->scopes = NULL;
     free(self);
   }
 }
 
-static void hir_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
-                              pANTLR3_UINT8          *token) {
+// BUILD
+static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
+                                        pANTLR3_UINT8          *token) {
   UNUSED(token);
 
   hir_ctx   *ctx = recognizer->state->userp;
@@ -66,7 +101,7 @@ static void hir_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   list_exception_push_back(ctx->exceptions, exc);
 }
 
-void hir_build_from_ast(hir_ctx *ctx, const ast *ast) {
+void hir_ctx_build(hir_ctx *ctx, const ast *ast) {
   ctx->ast_stream = ast->name;
 
   pANTLR3_COMMON_TREE_NODE_STREAM nodes =
@@ -74,10 +109,19 @@ void hir_build_from_ast(hir_ctx *ctx, const ast *ast) {
   HirBuilder *builder = HirBuilderNew(nodes);
 
   builder->pTreeParser->rec->state->userp = ctx;
-  builder->pTreeParser->rec->displayRecognitionError = hir_display_error;
+  builder->pTreeParser->rec->displayRecognitionError =
+      hir_ctx_build_display_error;
 
   builder->source(builder);
 
   builder->free(builder);
   nodes->free(nodes);
+
+  ctx->ast_stream = NULL;
 }
+
+// BIND
+void hir_ctx_bind(hir_ctx *ctx) { hir_ctx_bind_all(ctx); }
+
+// TYPE
+void hir_ctx_type(hir_ctx *ctx) { hir_ctx_type_all(ctx); }

@@ -8,7 +8,7 @@ typedef enum exception_type_enum {
   EXCEPTION_LEXER,
   EXCEPTION_PARSER,
   EXCEPTION_TREE,
-  EXCEPTION_IR,
+  EXCEPTION_HIR,
 } exception_type;
 
 typedef enum exception_level_enum {
@@ -34,21 +34,20 @@ typedef enum exception_subtype_tree_enum {
   EXCEPTION_TREE_UNEXPECTED_NODE,
 } exception_subtype_tree;
 
-typedef enum exception_subtype_ir_enum {
-  EXCEPTION_IR_UNKNOWN,
-  EXCEPTION_IR_SUBROUTINE_REDEFINITION,
-  EXCEPTION_IR_SUBROUTINE_OVERLOADING,
-  EXCEPTION_IR_SUBROUTINE_PARAMETER_DUPLICATION,
-  EXCEPTION_IR_CHAR_VALIDATION,
-  EXCEPTION_IR_HEX_VALIDATION,
-  EXCEPTION_IR_BITS_VALIDATION,
-  EXCEPTION_IR_DEC_VALIDATION,
-  EXCEPTION_IR_BOOL_VALIDATION,
-  EXCEPTION_IR_RVALUE_ASSIGNMENT,
-  EXCEPTION_IR_NULL,
-  EXCEPTION_IR_SYMBOL_REDEFINITION,
-  EXCEPTION_IR_SYMBOL_UNDEFINED,
-} exception_subtype_ir;
+typedef enum exception_subtype_hir_enum {
+  EXCEPTION_HIR_UNKNOWN,
+  EXCEPTION_HIR_HEX_VALIDATION,
+  EXCEPTION_HIR_BITS_VALIDATION,
+  EXCEPTION_HIR_DEC_VALIDATION,
+  EXCEPTION_HIR_BOOL_VALIDATION,
+  EXCEPTION_HIR_SYMBOL_REDEFINITION,
+  EXCEPTION_HIR_SYMBOL_UNDEFINED,
+  // EXCEPTION_HIR_RVALUE_ASSIGNMENT,
+  // EXCEPTION_HIR_NULL,
+  // EXCEPTION_HIR_SUBROUTINE_REDEFINITION,
+  // EXCEPTION_HIR_SUBROUTINE_OVERLOADING,
+  // EXCEPTION_HIR_SUBROUTINE_PARAMETER_DUPLICATION,
+} exception_subtype_hir;
 
 typedef struct exception_struct {
   exception_level level;
@@ -88,4 +87,4 @@ exception *exception_new_from_helper(const exception_helper *helper,
 void       exception_free(exception *exc);
 char      *exception_str(const exception *exc);
 
-const char *exception_subtype_ir_str(exception_subtype_ir ir);
+const char *exception_subtype_hir_str(exception_subtype_hir ir);

@@ -130,7 +130,7 @@ char *exception_str(const exception *exc) {
     snprintf(buf, STRMAXLEN(buf), "(T%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
-  case EXCEPTION_IR:
+  case EXCEPTION_HIR:
     snprintf(buf, STRMAXLEN(buf), "(I%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
@@ -161,33 +161,31 @@ exception *exception_new_from_helper(const exception_helper *helper,
   return exc;
 }
 
-const char *exception_subtype_ir_str(exception_subtype_ir type) {
+const char *exception_subtype_hir_str(exception_subtype_hir type) {
   switch (type) {
-  case EXCEPTION_IR_SUBROUTINE_REDEFINITION:
-    return "subroutine redefinition";
-  case EXCEPTION_IR_SUBROUTINE_OVERLOADING:
-    return "subroutine overloading";
-  case EXCEPTION_IR_SUBROUTINE_PARAMETER_DUPLICATION:
-    return "subroutine parameter duplication";
-  case EXCEPTION_IR_CHAR_VALIDATION:
-    return "char validation";
-  case EXCEPTION_IR_HEX_VALIDATION:
+  case EXCEPTION_HIR_HEX_VALIDATION:
     return "hex validation";
-  case EXCEPTION_IR_BITS_VALIDATION:
+  case EXCEPTION_HIR_BITS_VALIDATION:
     return "bits validation";
-  case EXCEPTION_IR_DEC_VALIDATION:
+  case EXCEPTION_HIR_DEC_VALIDATION:
     return "dec validation";
-  case EXCEPTION_IR_BOOL_VALIDATION:
+  case EXCEPTION_HIR_BOOL_VALIDATION:
     return "bool validation";
-  case EXCEPTION_IR_RVALUE_ASSIGNMENT:
-    return "rvalue assignment";
-  case EXCEPTION_IR_NULL:
-    return "null";
-  case EXCEPTION_IR_SYMBOL_REDEFINITION:
+  case EXCEPTION_HIR_SYMBOL_REDEFINITION:
     return "symbol redefinition";
-  case EXCEPTION_IR_SYMBOL_UNDEFINED:
+  case EXCEPTION_HIR_SYMBOL_UNDEFINED:
     return "symbol undefined";
-  case EXCEPTION_IR_UNKNOWN:
+  // case EXCEPTION_HIR_SUBROUTINE_REDEFINITION:
+  //   return "subroutine redefinition";
+  // case EXCEPTION_HIR_SUBROUTINE_OVERLOADING:
+  //   return "subroutine overloading";
+  // case EXCEPTION_HIR_SUBROUTINE_PARAMETER_DUPLICATION:
+  //   return "subroutine parameter duplication";
+  // case EXCEPTION_HIR_RVALUE_ASSIGNMENT:
+  //   return "rvalue assignment";
+  // case EXCEPTION_HIR_NULL:
+  //   return "null";
+  case EXCEPTION_HIR_UNKNOWN:
   default:
     return "unknown";
   }

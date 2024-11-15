@@ -322,7 +322,7 @@ int execute(struct args_struct *args) {
   if (!error || args->ignore_errors) {
     for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
       const ast *ast = list_ast_it_get(&it);
-      hir_build_from_ast(hir_ctx, ast);
+      hir_ctx_build(hir_ctx, ast);
     }
     if (list_exception_count_by_level(hir_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
@@ -348,6 +348,28 @@ int execute(struct args_struct *args) {
     char *tree = hir_tree_str(hir);
     printf("HIR TREE:\n%s\n", tree);
     free(tree);
+  }
+
+  // stage: hir bind symbols
+  if (!error || args->ignore_errors) {
+    hir_ctx_bind(hir_ctx);
+    if (list_exception_count_by_level(hir_ctx->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      error = 1;
+    }
+    print_exceptions(args, hir_ctx->exceptions);
+    hir_ctx_reset_exceptions(hir_ctx);
+  }
+
+  // stage: hir type
+  if (!error || args->ignore_errors) {
+    hir_ctx_type(hir_ctx);
+    if (list_exception_count_by_level(hir_ctx->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      error = 1;
+    }
+    print_exceptions(args, hir_ctx->exceptions);
+    hir_ctx_reset_exceptions(hir_ctx);
   }
 
   // stage: build mir + handle exception

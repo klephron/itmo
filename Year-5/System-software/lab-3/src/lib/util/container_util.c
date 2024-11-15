@@ -60,6 +60,12 @@ void container_delete_chars_chars(void *_data) {
 
 void container_delete_chars(void *_data) { free(_data); }
 
+void container_delete_ptr(void *_data) {
+  if (_data) {
+    free(_data);
+  }
+}
+
 void container_delete_false(void *_data) { UNUSED(_data); }
 
 // HASH
