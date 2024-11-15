@@ -332,24 +332,6 @@ int execute(struct args_struct *args) {
     hir_ctx_reset_exceptions(hir_ctx);
   }
 
-  // stage: print hir symbols
-  if (args->hir_symbols && (!error || args->ignore_errors)) {
-    char *globals = hir_list_symbol_str(hir->globals);
-    printf("HIR GLOBAL SYMBOLS:\n%s", globals);
-    free(globals);
-
-    char *locals = hir_list_symbol_str(hir->locals);
-    printf("HIR LOCAL SYMBOLS:\n%s", locals);
-    free(locals);
-  }
-
-  // stage: print hir tree
-  if (args->hir_tree && (!error || args->ignore_errors)) {
-    char *tree = hir_tree_str(hir);
-    printf("HIR TREE:\n%s\n", tree);
-    free(tree);
-  }
-
   // stage: hir bind symbols
   if (!error || args->ignore_errors) {
     hir_ctx_bind(hir_ctx);
@@ -370,6 +352,24 @@ int execute(struct args_struct *args) {
     }
     print_exceptions(args, hir_ctx->exceptions);
     hir_ctx_reset_exceptions(hir_ctx);
+  }
+
+  // stage: print hir symbols
+  if (args->hir_symbols && (!error || args->ignore_errors)) {
+    char *globals = hir_list_symbol_str(hir->globals);
+    printf("HIR GLOBAL SYMBOLS:\n%s", globals);
+    free(globals);
+
+    char *locals = hir_list_symbol_str(hir->locals);
+    printf("HIR LOCAL SYMBOLS:\n%s", locals);
+    free(locals);
+  }
+
+  // stage: print hir tree
+  if (args->hir_tree && (!error || args->ignore_errors)) {
+    char *tree = hir_tree_str(hir);
+    printf("HIR TREE:\n%s\n", tree);
+    free(tree);
   }
 
   // stage: build mir + handle exception

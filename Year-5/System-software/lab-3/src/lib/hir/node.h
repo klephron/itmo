@@ -66,11 +66,11 @@ typedef struct hir_param {
   hir_base          base;
   hir_id           *id;
   type_base        *type;
-  const hir_symbol *symbol;
+  const hir_symbol *binding;
 } hir_param;
 
 hir_param *hir_param_new(span *span, hir_id *id, type_base *type,
-                         const hir_symbol *symbol);
+                         const hir_symbol *binding);
 void       hir_param_free(hir_param *self);
 
 static inline void container_delete_hir_param(void *data) {
@@ -84,11 +84,11 @@ typedef struct hir_var {
   hir_base          base;
   hir_id           *id;
   type_base        *type;
-  const hir_symbol *symbol;
+  const hir_symbol *binding;
 } hir_var;
 
 hir_var *hir_var_new(span *span, hir_id *id, type_base *type,
-                     const hir_symbol *symbol);
+                     const hir_symbol *binding);
 void     hir_var_free(hir_var *self);
 
 static inline void container_delete_hir_var(void *data) {

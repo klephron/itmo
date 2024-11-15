@@ -235,7 +235,9 @@ static void hir_binding_parent_str(string_buffer    *buffer,
                                    const hir_symbol *parent) {
   if (parent) {
     hir_binding_parent_str(buffer, parent->bind_parent);
-    string_buffer_append(buffer, "::");
+    if (parent->bind_parent) {
+      string_buffer_append(buffer, "::");
+    }
     string_buffer_append(buffer, parent->name);
   }
 }
@@ -542,7 +544,7 @@ static void hir_tree_str_param(string_buffer *buffer, size_t pad,
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "symbol: ");
-  hir_tree_str_symbol(buffer, pad, param->symbol);
+  hir_tree_str_symbol(buffer, pad, param->binding);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
@@ -572,7 +574,7 @@ static void hir_tree_str_var(string_buffer *buffer, size_t pad,
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "symbol: ");
-  hir_tree_str_symbol(buffer, pad, var->symbol);
+  hir_tree_str_symbol(buffer, pad, var->binding);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;

@@ -347,21 +347,6 @@ void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
                     list_hir_var *vars, hir_stmt_block *body) {
   subroutine->vars = vars;
   subroutine->body = body;
-
-  list_type *types = list_type_new();
-  for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
-       !it.end(&it); it.next(&it)) {
-    type_base *type = it.get(&it)->type;
-    list_type_push_back(types, type_copy(type));
-  }
-
-  list_hir_symbol_push_back(
-      ctx->hir->globals,
-      hir_symbol_new(strdup(subroutine->id->name), HIR_BINDING_GLOBAL, NULL,
-                     (type_base *)type_callable_new(
-                         NULL, type_copy(subroutine->ret_type), types),
-                     span_copy(subroutine->base.span)));
-
   list_hir_subroutine_push_back(ctx->hir->subroutines, subroutine);
 }
 
