@@ -2,7 +2,6 @@
 
 #include "antlr3/antlr3.h"
 #include "errno.h"
-#include "hir/symbols.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <antlr3commontoken.h>
