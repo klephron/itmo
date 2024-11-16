@@ -23,7 +23,7 @@ typedef enum eir_expr_unary_enum {
   EIR_EXPR_UNARY_BITWISE_NOT,
   EIR_EXPR_UNARY_INC,
   EIR_EXPR_UNARY_DEC,
-  EIR_EXPR_LOAD
+  EIR_EXPR_UNARY_LOAD
 } eir_expr_unary_enum;
 
 typedef enum eir_expr_binary_enum {

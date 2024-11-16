@@ -4,9 +4,14 @@
 #include "exception/container.h"
 #include "hir/hir.h"
 
+LIST_DECLARE_STATIC_INLINE(list_eir_block, eir_block_base, container_cmp_false,
+                           container_new_move, container_delete_false);
+
 typedef struct eir_ctx_struct {
   eir            *eir;
   list_exception *exceptions;
+  // internal data
+  list_eir_block *break_stack;
 } eir_ctx;
 
 eir_ctx *eir_ctx_new(eir *eir);

@@ -134,6 +134,10 @@ char *exception_str(const exception *exc) {
     snprintf(buf, STRMAXLEN(buf), "(H%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
+  case EXCEPTION_EIR:
+    snprintf(buf, STRMAXLEN(buf), "(E%d): %s -> %s", exc->subtype, exc_name,
+             exc_message);
+    break;
   default:
     snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
@@ -179,17 +183,18 @@ const char *exception_subtype_hir_str(exception_subtype_hir type) {
     return "invalid subroutine declaration";
   case EXCEPTION_HIR_TYPE_UNSUPPORTED:
     return "type unsupported";
-  // case EXCEPTION_HIR_SUBROUTINE_REDEFINITION:
-  //   return "subroutine redefinition";
-  // case EXCEPTION_HIR_SUBROUTINE_OVERLOADING:
-  //   return "subroutine overloading";
-  // case EXCEPTION_HIR_SUBROUTINE_PARAMETER_DUPLICATION:
-  //   return "subroutine parameter duplication";
-  // case EXCEPTION_HIR_RVALUE_ASSIGNMENT:
-  //   return "rvalue assignment";
-  // case EXCEPTION_HIR_NULL:
-  //   return "null";
   case EXCEPTION_HIR_UNKNOWN:
+  default:
+    return "unknown";
+  }
+}
+
+const char *exception_subtype_eir_str(exception_subtype_eir type) {
+  switch (type) {
+  case EXCEPTION_EIR_NULL:
+    return "null";
+  case EXCEPTION_EIR_RVALUE_ASSIGNMENT:
+    return "rvalue assignment";
   default:
     return "unknown";
   }

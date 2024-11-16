@@ -1,6 +1,6 @@
 method malloc(n: int):void;
 
-method main(n: int, d: array [] of custom_2, e): long
+method main(n: int, d: array [] of int, e): long
 var
   a: void;
   b, c;

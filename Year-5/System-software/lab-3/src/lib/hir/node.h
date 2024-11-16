@@ -36,6 +36,7 @@ typedef struct hir_id_data_struct {
 } hir_id_data;
 
 hir_id     *hir_id_new(span *span, char *name);
+hir_id     *hir_id_copy(const hir_id *id);
 hir_id_data hir_id_pop(hir_id *id);
 void        hir_id_free(hir_id *id);
 
@@ -59,6 +60,7 @@ typedef struct hir_lit_struct {
 } hir_lit;
 
 hir_lit *hir_lit_new(span *span, type_base *type, hir_lit_u value);
+hir_lit *hir_lit_copy(const hir_lit *self);
 void     hir_lit_free(hir_lit *self);
 
 // PARAM

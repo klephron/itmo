@@ -15,4 +15,4 @@ span  span_make(const char *source, size_t line_start, size_t line_end,
 span *span_new(const char *source, size_t line_start, size_t line_end,
                size_t pos_start, size_t pos_end);
 void  span_free(span *self);
-span *span_copy(span *self);
+span *span_copy(const span *self);

@@ -9,6 +9,7 @@ typedef enum exception_type_enum {
   EXCEPTION_PARSER,
   EXCEPTION_TREE,
   EXCEPTION_HIR,
+  EXCEPTION_EIR,
 } exception_type;
 
 typedef enum exception_level_enum {
@@ -44,12 +45,13 @@ typedef enum exception_subtype_hir_enum {
   EXCEPTION_HIR_SYMBOL_UNDEFINED,
   EXCEPTION_HIR_SUBROUTINE_DECL_INVALID,
   EXCEPTION_HIR_TYPE_UNSUPPORTED,
-  // EXCEPTION_HIR_RVALUE_ASSIGNMENT,
-  // EXCEPTION_HIR_NULL,
-  // EXCEPTION_HIR_SUBROUTINE_REDEFINITION,
-  // EXCEPTION_HIR_SUBROUTINE_OVERLOADING,
-  // EXCEPTION_HIR_SUBROUTINE_PARAMETER_DUPLICATION,
 } exception_subtype_hir;
+
+typedef enum exception_subtype_eir_enum {
+  EXCEPTION_EIR_UNKNOWN,
+  EXCEPTION_EIR_NULL,
+  EXCEPTION_EIR_RVALUE_ASSIGNMENT,
+} exception_subtype_eir;
 
 typedef struct exception_struct {
   exception_level level;
@@ -90,3 +92,4 @@ void       exception_free(exception *exc);
 char      *exception_str(const exception *exc);
 
 const char *exception_subtype_hir_str(exception_subtype_hir ir);
+const char *exception_subtype_eir_str(exception_subtype_eir ir);

@@ -26,7 +26,7 @@ void span_free(span *self) {
   }
 }
 
-span *span_copy(span *self) {
+span *span_copy(const span *self) {
   if (self) {
     span *new_self = MALLOC(span);
     *new_self = *self;

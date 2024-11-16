@@ -4,6 +4,7 @@
 #include "hir/node_global.h"
 #include "util/log.h"
 #include "util/macro.h"
+#include <string.h>
 
 void hir_id_free(hir_id *id);
 void hir_lit_free(hir_lit *self);
@@ -59,6 +60,10 @@ hir_id_data hir_id_pop(hir_id *id) {
   return data;
 }
 
+hir_id *hir_id_copy(const hir_id *id) {
+  return hir_id_new(span_copy(id->base.span), strdup(id->name));
+}
+
 void hir_id_free(hir_id *id) {
   if (id) {
     free(id->name);
@@ -74,6 +79,25 @@ hir_lit *hir_lit_new(span *span, type_base *type, hir_lit_u value) {
   self->type = type;
   self->value = value;
   return self;
+}
+
+hir_lit *hir_lit_copy(const hir_lit *self) {
+  if (self) {
+    hir_lit_u u;
+    switch (self->type->type) {
+    case TYPE_STRING:
+      u.v_str = strdup(self->value.v_str);
+      break;
+    case TYPE_CHAR:
+      u.v_char = strdup(self->value.v_char);
+      break;
+    default:
+      u = self->value;
+      break;
+    }
+    return hir_lit_new(span_copy(self->base.span), type_copy(self->type), u);
+  }
+  return NULL;
 }
 
 void hir_lit_free(hir_lit *self) {
