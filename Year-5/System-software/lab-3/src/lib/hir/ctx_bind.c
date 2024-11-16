@@ -170,22 +170,24 @@ static void hir_ctx_bind_subroutine(hir_ctx *ctx, hir_subroutine *subroutine) {
     }
   }
 
-  for (list_hir_var_it it = list_hir_var_begin(subroutine->vars); !it.end(&it);
-       it.next(&it)) {
-    hir_var    *var = it.get(&it);
-    const char *name = var->id->name;
+  if (subroutine->vars) {
+    for (list_hir_var_it it = list_hir_var_begin(subroutine->vars);
+         !it.end(&it); it.next(&it)) {
+      hir_var    *var = it.get(&it);
+      const char *name = var->id->name;
 
-    const hir_symbol *found = hir_ctx_find_symbol(ctx, name);
-    if (found) {
-      hir_ctx_error_symbol_redefinition(ctx, found, var->base.span);
-    } else {
-      hir_symbol *symbol = hir_symbol_new(
-          strdup(name), HIR_BINDING_SUBROUTINE, subroutine->binding,
-          type_copy(var->type), span_copy(var->base.span));
-      list_hir_symbol_push_back(ctx->hir->locals, symbol);
+      const hir_symbol *found = hir_ctx_find_symbol(ctx, name);
+      if (found) {
+        hir_ctx_error_symbol_redefinition(ctx, found, var->base.span);
+      } else {
+        hir_symbol *symbol = hir_symbol_new(
+            strdup(name), HIR_BINDING_SUBROUTINE, subroutine->binding,
+            type_copy(var->type), span_copy(var->base.span));
+        list_hir_symbol_push_back(ctx->hir->locals, symbol);
 
-      hir_ctx_scope_insert_symbol(root_scope, symbol);
-      var->binding = symbol;
+        hir_ctx_scope_insert_symbol(root_scope, symbol);
+        var->binding = symbol;
+      }
     }
   }
 

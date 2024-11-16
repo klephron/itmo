@@ -99,6 +99,7 @@ static ulong hir_build_str2ulong(const char *str, int base,
   return number;
 }
 
+// ERRORS
 static void hir_error_add(hir_ctx *ctx, exception_subtype_hir subtype,
                           const span *span, const char *format, ...) {
   exception *exc;

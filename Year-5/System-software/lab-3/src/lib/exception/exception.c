@@ -131,7 +131,7 @@ char *exception_str(const exception *exc) {
              exc_message);
     break;
   case EXCEPTION_HIR:
-    snprintf(buf, STRMAXLEN(buf), "(I%d): %s -> %s", exc->subtype, exc_name,
+    snprintf(buf, STRMAXLEN(buf), "(H%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
   default:
@@ -175,6 +175,10 @@ const char *exception_subtype_hir_str(exception_subtype_hir type) {
     return "symbol redefinition";
   case EXCEPTION_HIR_SYMBOL_UNDEFINED:
     return "symbol undefined";
+  case EXCEPTION_HIR_SUBROUTINE_DECL_INVALID:
+    return "invalid subroutine declaration";
+  case EXCEPTION_HIR_TYPE_UNSUPPORTED:
+    return "type unsupported";
   // case EXCEPTION_HIR_SUBROUTINE_REDEFINITION:
   //   return "subroutine redefinition";
   // case EXCEPTION_HIR_SUBROUTINE_OVERLOADING:

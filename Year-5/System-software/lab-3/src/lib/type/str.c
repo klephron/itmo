@@ -5,6 +5,11 @@
 #include <string.h>
 
 static void type_str_generic(string_buffer *buffer, const type_base *generic) {
+  if (!generic) {
+    string_buffer_append(buffer, "(nil)");
+    return;
+  }
+
   switch (generic->type) {
   case TYPE_BOOL:
     string_buffer_append(buffer, "bool");
