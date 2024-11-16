@@ -376,6 +376,17 @@ int execute(struct args_struct *args) {
   eir     *eir = eir_new();
   eir_ctx *eir_ctx = eir_ctx_new(eir);
 
+  // stage: build eir
+  if (!error || args->ignore_errors) {
+    eir_ctx_build(eir_ctx, hir);
+    if (list_exception_count_by_level(eir_ctx->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      error = 1;
+    }
+    print_exceptions(args, eir_ctx->exceptions);
+    eir_ctx_reset_exceptions(eir_ctx);
+  }
+
   // stage: build mir + handle exception
   // if (!error || args->ignore_errors) {
   //   for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
