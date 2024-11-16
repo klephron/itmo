@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "dot/ast.h"
+#include "eir/ctx.h"
 #include "exception/exception.h"
 #include "hir/ctx.h"
 #include "hir/str.h"
@@ -372,6 +373,9 @@ int execute(struct args_struct *args) {
     free(tree);
   }
 
+  eir     *eir = eir_new();
+  eir_ctx *eir_ctx = eir_ctx_new(eir);
+
   // stage: build mir + handle exception
   // if (!error || args->ignore_errors) {
   //   for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
@@ -419,6 +423,8 @@ int execute(struct args_struct *args) {
 
   // ir_ctx_free(ir);
   // list_free(asts);
+  eir_ctx_free(eir_ctx);
+  eir_free(eir);
 
   hir_ctx_free(hir_ctx);
   hir_free(hir);
