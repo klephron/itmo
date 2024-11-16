@@ -1,6 +1,5 @@
 #include "ctx_type.h"
 #include "exception/exception.h"
-#include "util/macro.h"
 
 static void hir_error_add(hir_ctx *ctx, exception_subtype_hir subtype,
                           const span *span, const char *format, ...) {

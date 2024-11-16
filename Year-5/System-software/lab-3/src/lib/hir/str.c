@@ -867,6 +867,11 @@ static void hir_tree_str_stmt_if(string_buffer *buffer, size_t pad,
 
 static void hir_tree_str_stmt_block(string_buffer *buffer, size_t pad,
                                     hir_stmt_block *stmt) {
+  if (!stmt) {
+    string_buffer_append(buffer, "(nil)");
+    return;
+  }
+
   string_buffer_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -1022,17 +1027,21 @@ static void hir_tree_str_subroutine(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "vars: [");
-  pad += HIR_STR_TAB;
-  for (list_hir_var_it it = list_hir_var_begin(subroutine->vars); !it.end(&it);
-       it.next(&it)) {
+  if (subroutine->vars) {
+    string_buffer_appendln(buffer, "vars: [");
+    pad += HIR_STR_TAB;
+    for (list_hir_var_it it = list_hir_var_begin(subroutine->vars);
+         !it.end(&it); it.next(&it)) {
+      string_buffer_append_padding(buffer, pad);
+      hir_tree_str_var(buffer, pad, it.get(&it));
+      string_buffer_appendln(buffer, "");
+    }
+    pad -= HIR_STR_TAB;
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_var(buffer, pad, it.get(&it));
-    string_buffer_appendln(buffer, "");
+    string_buffer_appendln(buffer, "]");
+  } else {
+    string_buffer_appendln(buffer, "vars: (nil)");
   }
-  pad -= HIR_STR_TAB;
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "]");
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "body: ");
