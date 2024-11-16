@@ -51,6 +51,7 @@ typedef enum exception_subtype_eir_enum {
   EXCEPTION_EIR_UNKNOWN,
   EXCEPTION_EIR_NULL,
   EXCEPTION_EIR_RVALUE_ASSIGNMENT,
+  EXCEPTION_EIR_BAD_BREAK,
 } exception_subtype_eir;
 
 typedef struct exception_struct {

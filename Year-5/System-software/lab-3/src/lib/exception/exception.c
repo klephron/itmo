@@ -195,6 +195,8 @@ const char *exception_subtype_eir_str(exception_subtype_eir type) {
     return "null";
   case EXCEPTION_EIR_RVALUE_ASSIGNMENT:
     return "rvalue assignment";
+  case EXCEPTION_EIR_BAD_BREAK:
+    return "bad break";
   default:
     return "unknown";
   }
