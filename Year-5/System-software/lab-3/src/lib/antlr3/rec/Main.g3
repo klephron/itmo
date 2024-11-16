@@ -43,7 +43,7 @@ source_item
 
 // TYPES
 type_ref
-  : (tr='bool' | tr='byte' | tr='int' | tr='uint' | tr='long' | tr='ulong' | tr='char' | tr='string') -> ^(TYPE $tr)
+  : (tr='bool' | tr='byte' | tr='int' | tr='uint' | tr='long' | tr='ulong' | tr='char' | tr='string' | tr='void') -> ^(TYPE $tr)
   | identifier -> ^(TYPE identifier)
   | 'array' '[' (elems+=',')* ']' 'of' type_ref -> ^(TYPE ^('array' ^(type_ref) ^(ELEMS $elems*)))
   ;

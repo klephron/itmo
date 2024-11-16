@@ -30,14 +30,7 @@ static int hir_ctx_type_type(hir_ctx *ctx, type_base *type) {
                   cs->source, cs->line_start, cs->pos_start, cs->line_end,
                   cs->pos_end);
     ok = 0;
-    break;
-  }
-
-  case TYPE_VOID:
-    hir_error_add(ctx, EXCEPTION_HIR_TYPE_UNSUPPORTED, type->span,
-                  "void type is unsupported");
-    ok = 0;
-    break;
+  } break;
   case TYPE_ARRAY:
     ok &= hir_ctx_type_type(ctx, ((type_array *)type)->elem_type);
     break;

@@ -6,7 +6,7 @@
 
 static void type_str_generic(string_buffer *buffer, const type_base *generic) {
   if (!generic) {
-    string_buffer_append(buffer, "(nil)");
+    string_buffer_append(buffer, "-");
     return;
   }
 

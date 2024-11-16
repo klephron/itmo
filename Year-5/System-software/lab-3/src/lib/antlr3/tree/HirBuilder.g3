@@ -36,6 +36,7 @@ type_ref returns [type_base *v]
   | ^(TYPE t='ulong') { $v = hir_build_type_ulong(ANTLR3_USERP(), $t); }
   | ^(TYPE t='char')  { $v = hir_build_type_char(ANTLR3_USERP(), $t); }
   | ^(TYPE t='string'){ $v = hir_build_type_string(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='void'){ $v = hir_build_type_void(ANTLR3_USERP(), $t); }
   | ^(TYPE id=identifier) { $v = (type_base *) hir_build_type_custom(ANTLR3_USERP(), $id.v); }
   | ^(TYPE ^(r='array' tr=type_ref ^(ELEMS  ','*)))
     { $v = (type_base *) hir_build_type_array(ANTLR3_USERP(), $r, $ELEMS, $tr.v); }

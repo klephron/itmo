@@ -259,6 +259,11 @@ type_base *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   return type_base_new(span, TYPE_STRING);
 }
 
+type_base *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
+  span *span = hir_span_new(node, ctx->ast_stream);
+  return type_base_new(span, TYPE_VOID);
+}
+
 type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id) {
   UNUSED(ctx);
   hir_id_data  id_data = hir_id_pop(id);
