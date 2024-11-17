@@ -413,15 +413,15 @@ static eir_scope *eir_ctx_build_stmt_if(eir_ctx *ctx, const hir_stmt_if *stmt) {
     eir_block_set_next(cur_jz->end, scope->end);
   }
 
-  eir_block_base *cur_block = (eir_block_base *)eir_block_cond_new(
+  eir_block_base *block_cond = (eir_block_base *)eir_block_cond_new(
       span_copy(stmt->base.base.span), cur_cond,
       cur_je ? cur_je->begin : scope->end, cur_jz ? cur_jz->begin : scope->end);
 
   eir_scope_free(cur_je);
   eir_scope_free(cur_jz);
 
-  eir_block_set_next(scope->begin, cur_block);
-  scope->begin = cur_block;
+  eir_block_set_next(scope->begin, block_cond);
+  scope->begin = block_cond;
 
   return scope;
 }
@@ -461,11 +461,71 @@ static eir_scope *eir_ctx_build_stmt_block(eir_ctx              *ctx,
 
 static eir_scope *eir_ctx_build_stmt_while(eir_ctx              *ctx,
                                            const hir_stmt_while *stmt) {
-  return NULL;
+  eir_scope *parent = list_eir_scope_front(ctx->scope_stack);
+
+  eir_block_base *end = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
+  eir_scope      *scope = eir_scope_new(parent->cur, parent->cur, end);
+
+  list_eir_scope_push_front(ctx->scope_stack, scope);
+  list_eir_block_push_front(ctx->break_stack, end);
+
+  eir_expr_base *expr = eir_ctx_build_expr(ctx, stmt->cond);
+  eir_scope     *child = eir_ctx_build_stmt(ctx, stmt->stmt);
+
+  list_eir_scope_pop_front(ctx->scope_stack);
+  list_eir_block_pop_front(ctx->break_stack);
+
+  eir_block_base *block_cond = (eir_block_base *)eir_block_cond_new(
+      span_copy(stmt->base.base.span), expr, child ? child->begin : scope->end,
+      scope->end);
+
+  if (child) {
+    eir_block_set_next(child->end, block_cond);
+    eir_scope_free(child);
+  }
+
+  eir_block_set_next(scope->begin, block_cond);
+  scope->begin = block_cond;
+
+  return scope;
 }
 
 static eir_scope *eir_ctx_build_stmt_do(eir_ctx *ctx, const hir_stmt_do *stmt) {
-  return NULL;
+  eir_scope *parent = list_eir_scope_front(ctx->scope_stack);
+
+  eir_block_base *end = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
+  eir_scope      *scope = eir_scope_new(parent->cur, parent->cur, end);
+
+  list_eir_scope_push_front(ctx->scope_stack, scope);
+  list_eir_block_push_front(ctx->break_stack, end);
+
+  eir_scope     *child = eir_ctx_build_stmt(ctx, stmt->stmt);
+  eir_expr_base *expr = eir_ctx_build_expr(ctx, stmt->cond);
+
+  list_eir_scope_pop_front(ctx->scope_stack);
+  list_eir_block_pop_front(ctx->break_stack);
+
+  eir_block_base *cur;
+  if (stmt->positive) {
+    cur = (eir_block_base *)eir_block_cond_new(
+        span_copy(stmt->base.base.span), expr,
+        child ? child->begin : scope->end, scope->end);
+  } else {
+    cur = (eir_block_base *)eir_block_cond_new(
+        span_copy(stmt->base.base.span), expr, scope->end,
+        child ? child->begin : scope->end);
+  }
+
+  if (child) {
+    eir_block_set_next(child->end, cur);
+  }
+
+  eir_block_set_next(scope->begin, child ? child->begin : scope->end);
+  scope->begin = child ? child->begin : scope->end;
+
+  eir_scope_free(child);
+
+  return scope;
 }
 
 static eir_scope *eir_ctx_build_stmt_break(eir_ctx              *ctx,
