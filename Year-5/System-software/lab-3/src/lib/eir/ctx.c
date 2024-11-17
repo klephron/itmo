@@ -328,9 +328,8 @@ static eir_expr_base *eir_ctx_build_expr_id(eir_ctx           *ctx,
                                             const hir_expr_id *id) {
   UNUSED(ctx);
   if (id) {
-    return (eir_expr_base *)eir_expr_id_new(span_copy(id->base.base.span),
-                                            type_copy(id->base.type),
-                                            hir_id_copy(id->id));
+    return (eir_expr_base *)eir_expr_id_new(
+        span_copy(id->base.base.span), type_copy(id->base.type), id->binding);
   }
   return NULL;
 }

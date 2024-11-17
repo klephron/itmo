@@ -91,16 +91,16 @@ void eir_expr_lit_free(eir_expr_lit *self) {
   }
 }
 
-eir_expr_id *eir_expr_id_new(span *span, type_base *type, hir_id *id) {
+eir_expr_id *eir_expr_id_new(span *span, type_base *type,
+                             const hir_symbol *binding) {
   eir_expr_id *self = MALLOC(eir_expr_id);
   eir_expr_base_init(&self->base, span, EIR_EXPR_IDENTIFIER, type);
-  self->id = id;
+  self->binding = binding;
   return self;
 }
 
 void eir_expr_id_free(eir_expr_id *self) {
   if (self) {
-    hir_id_free(self->id);
     eir_expr_base_deinit(&self->base);
     free(self);
   }

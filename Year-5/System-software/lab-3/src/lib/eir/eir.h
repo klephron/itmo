@@ -96,11 +96,12 @@ eir_expr_lit *eir_expr_lit_new(span *span, type_base *type, hir_lit *lit);
 void          eir_expr_lit_free(eir_expr_lit *self);
 
 typedef struct eir_expr_id_struct {
-  eir_expr_base base;
-  hir_id       *id;
+  eir_expr_base     base;
+  const hir_symbol *binding;
 } eir_expr_id;
 
-eir_expr_id *eir_expr_id_new(span *span, type_base *type, hir_id *id);
+eir_expr_id *eir_expr_id_new(span *span, type_base *type,
+                             const hir_symbol *binding);
 void         eir_expr_id_free(eir_expr_id *self);
 
 typedef struct eir_expr_call_struct {

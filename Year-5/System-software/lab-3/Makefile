@@ -149,6 +149,11 @@ index:
 clean:
 	rm -rf $(BUILD_DIR)
 
+### Remove io output files
+clean/out:
+	find io -type f -name "*.dot" -delete
+	find io -type f -name "*.pdf" -delete
+
 ### Help
 help:
 	@printf "Targets:\n"
