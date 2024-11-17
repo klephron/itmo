@@ -72,6 +72,8 @@ static void hir_ctx_bind_expr(hir_ctx *ctx, hir_expr_base *generic) {
     hir_ctx_bind_expr(ctx, binary->first);
     hir_ctx_bind_expr(ctx, binary->second);
   } break;
+  case HIR_EXPR_LITERAL: {
+  } break;
   case HIR_EXPR_IDENTIFIER: {
     hir_expr_id      *id = (hir_expr_id *)generic;
     const hir_symbol *found = hir_ctx_find_symbol(ctx, id->id->name);
@@ -104,7 +106,7 @@ static void hir_ctx_bind_expr(hir_ctx *ctx, hir_expr_base *generic) {
     hir_ctx_bind_expr(ctx, index->expr);
   } break;
   default:
-    error("unknown expr type %d %p", generic->base.kind, generic);
+    error("unknown expr type %d %p", generic->kind, generic);
     break;
   }
 }
@@ -143,6 +145,8 @@ static void hir_ctx_bind_stmt(hir_ctx *ctx, hir_stmt_base *generic) {
     hir_stmt_do *stmt = (hir_stmt_do *)generic;
     hir_ctx_bind_stmt(ctx, stmt->stmt);
     hir_ctx_bind_expr(ctx, stmt->cond);
+  } break;
+  case HIR_STMT_BREAK: {
   } break;
   case HIR_STMT_EXPR: {
     hir_stmt_expr *stmt = (hir_stmt_expr *)generic;
