@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "dot/ast.h"
+#include "dot/eir.h"
 #include "eir/ctx.h"
 #include "exception/exception.h"
 #include "hir/ctx.h"
@@ -14,33 +15,33 @@
 #include "util/list.h"
 #include "util/macro.h"
 
-LIST_DECLARE_STATIC_INLINE(list_char, char, container_cmp_chars,
+LIST_DECLARE_STATIC_INLINE(list_chars, char, container_cmp_chars,
                            container_new_chars, container_delete_chars);
 
 struct args_struct {
-  char      *prog_name;
-  list_char *input_files;
+  char       *prog_name;
+  list_chars *input_files;
   // options
-  char      *output_dir;
-  int        ignore_errors;
-  int        tee;
-  int        ast;
-  int        cfg;
-  int        cfg_add_expr;
-  int        cg;
-  list_char *cg_subroutines;
-  int        hir_symbols;
-  int        hir_tree;
+  char       *output_dir;
+  int         ignore_errors;
+  int         tee;
+  int         ast;
+  int         cfg;
+  int         cfg_add_expr;
+  int         cg;
+  list_chars *cg_subroutines;
+  int         hir_symbols;
+  int         hir_tree;
   // status
   int code;
   int help;
 };
 
-struct args_struct *args_new() {
+static struct args_struct *args_new() {
   struct args_struct *args = MALLOC(struct args_struct);
 
   args->prog_name = NULL;
-  args->input_files = list_char_new();
+  args->input_files = list_chars_new();
 
   args->output_dir = ".";
   args->ignore_errors = 0;
@@ -51,7 +52,7 @@ struct args_struct *args_new() {
   args->cfg = 0;
   args->cfg_add_expr = 0;
   args->cg = 0;
-  args->cg_subroutines = list_char_new();
+  args->cg_subroutines = list_chars_new();
 
   args->hir_symbols = 0;
   args->hir_tree = 0;
@@ -62,17 +63,17 @@ struct args_struct *args_new() {
   return args;
 }
 
-void args_free(struct args_struct *args) {
-  list_char_free(args->input_files);
-  list_char_free(args->cg_subroutines);
+static void args_free(struct args_struct *args) {
+  list_chars_free(args->input_files);
+  list_chars_free(args->cg_subroutines);
   free(args);
 }
 
-void usage(struct args_struct *args) {
+static void usage(struct args_struct *args) {
   int  buf_len = 256;
   char cg_subroutines[buf_len];
   int  offset = 0;
-  for (list_char_it it = list_char_begin(args->cg_subroutines); !it.end(&it);
+  for (list_chars_it it = list_chars_begin(args->cg_subroutines); !it.end(&it);
        it.next(&it)) {
     char *sub = it.get(&it);
     offset +=
@@ -101,7 +102,7 @@ void usage(struct args_struct *args) {
       args->hir_symbols, args->hir_tree);
 }
 
-void parse_args(struct args_struct *args, int argc, char *argv[]) {
+static void parse_args(struct args_struct *args, int argc, char *argv[]) {
   if (argc > 0) {
     args->prog_name = argv[0];
   }
@@ -137,7 +138,7 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
       args->output_dir = optarg;
       break;
     case 's':
-      list_char_push_back(args->cg_subroutines, optarg);
+      list_chars_push_back(args->cg_subroutines, optarg);
       break;
     case 'h':
       args->help = 1;
@@ -156,23 +157,24 @@ void parse_args(struct args_struct *args, int argc, char *argv[]) {
 
   for (; argc > 0; --argc, ++argv) {
     const char *file = argv[0];
-    list_char_push_back(args->input_files, (void *)file);
+    list_chars_push_back(args->input_files, (void *)file);
   }
 
-  if (list_char_size(args->cg_subroutines) == 0) {
-    list_char_push_back(args->cg_subroutines, "main");
+  if (list_chars_size(args->cg_subroutines) == 0) {
+    list_chars_push_back(args->cg_subroutines, "main");
   }
 }
 
 // filename is not directory
-void ensure_dir_exist(const char *filename) {
+static void ensure_dir_exist(const char *filename) {
   char *dir = dirname(filename);
   dir_create_p(dir);
   free(dir);
 }
 
 // ast - ext, dot - file extension
-char *get_ast_dot_output(const struct args_struct *args, const ast *ast) {
+static char *get_ast_dot_output(const struct args_struct *args,
+                                const ast                *ast) {
   char *suffix = ".ast.dot";
   char *prefix = join_paths(args->output_dir, ast->name);
 
@@ -183,8 +185,8 @@ char *get_ast_dot_output(const struct args_struct *args, const ast *ast) {
   return output;
 }
 
-char *get_c_dot_output(struct args_struct *args, const char *source,
-                       const char *func, const char *ext) {
+static char *get_c_dot_output(struct args_struct *args, const char *source,
+                              const char *func, const char *ext) {
   char *suffix = ".dot";
 
   char *prefix = join_paths(args->output_dir, source);
@@ -197,22 +199,23 @@ char *get_c_dot_output(struct args_struct *args, const char *source,
   return output;
 }
 
-char *get_cfg_dot_output(struct args_struct *args, const char *source,
-                         const char *func) {
+static char *get_cfg_dot_output(struct args_struct *args, const char *source,
+                                const char *func) {
   return get_c_dot_output(args, source, func, "cfg");
 }
 
-char *get_cg_dot_output(struct args_struct *args, const char *source,
-                        const char *func) {
+static char *get_cg_dot_output(struct args_struct *args, const char *source,
+                               const char *func) {
   return get_c_dot_output(args, source, func, "cg");
 }
 
-int has_subroutine(struct args_struct *args, const char *subroutine) {
-  list_char_it it = list_char_find(args->cg_subroutines, subroutine);
-  return !list_char_it_end(&it);
+static int has_subroutine(struct args_struct *args, const char *subroutine) {
+  list_chars_it it = list_chars_find(args->cg_subroutines, subroutine);
+  return !it.end(&it);
 }
 
-void print_exceptions(struct args_struct *args, list_exception *exceptions) {
+static void print_exceptions(struct args_struct *args,
+                             list_exception     *exceptions) {
   UNUSED(args);
   for (list_exception_it it = list_exception_begin(exceptions); !it.end(&it);
        it.next(&it)) {
@@ -223,8 +226,8 @@ void print_exceptions(struct args_struct *args, list_exception *exceptions) {
   }
 }
 
-void write_dot(struct args_struct *args, const dot_string *dot,
-               const char *output) {
+static void write_dot(struct args_struct *args, const dot_string *dot,
+                      const char *output) {
   if (args->tee) {
     printf("%s\n", dot->chars);
   }
@@ -265,7 +268,7 @@ LIST_DECLARE_STATIC_INLINE(list_ast, ast, container_cmp_false,
 LIST_DECLARE_STATIC_INLINE(list_source, char, container_cmp_false,
                            container_new_move, container_delete_chars);
 
-int execute(struct args_struct *args) {
+static int execute(struct args_struct *args) {
   int error = 0;
 
   list_source *sources = list_source_new();
@@ -275,7 +278,7 @@ int execute(struct args_struct *args) {
   list_ast    *asts = list_ast_new();
 
   // stage: tokenize and parse to AST
-  for (list_char_it it = list_char_begin(args->input_files); !it.end(&it);
+  for (list_chars_it it = list_chars_begin(args->input_files); !it.end(&it);
        it.next(&it)) {
     const char *path = it.get(&it);
     const char *data = read_file(path);
@@ -387,53 +390,42 @@ int execute(struct args_struct *args) {
     eir_ctx_reset_exceptions(eir_ctx);
   }
 
-  // stage: build mir + handle exception
-  // if (!error || args->ignore_errors) {
-  //   for (hashset_it it = hashset_begin(ir->subroutines); !it.end(&it);
-  //        it.next(&it)) {
-  //     ir_subroutine *sub = it.get(&it);
-  //     const char    *sub_name = ir_subroutine_name(sub);
-  //     const char    *source = sub->file_name;
-
-  //     dot_string *dot_cfg = dot_ir_cfg(ir, sub, args->cfg_add_expr);
-  //     char       *output_cfg = get_cfg_dot_output(args, source, sub_name);
-  //     write_dot(args, dot_cfg, output_cfg);
-  //     free(output_cfg);
-  //     dot_string_free(dot_cfg);
-  //   }
-  // }
-
   // stage: dot cfg
+  if (args->cfg && (!error || args->ignore_errors)) {
+    for (list_eir_subroutine_it it =
+             list_eir_subroutine_begin(eir->subroutines);
+         !it.end(&it); it.next(&it)) {
+      const eir_subroutine *sub = it.get(&it);
+      const char           *sub_name = sub->binding->name;
+      const char           *source = sub->binding->decl_span->source;
+
+      dot_string *dot = dot_eir_cfg(eir, sub, args->cfg_add_expr);
+      char       *output = get_cfg_dot_output(args, source, sub_name);
+      write_dot(args, dot, output);
+      free(output);
+      dot_string_free(dot);
+    }
+  }
+
   // stage: dot cg
-  // if (!error || args->ignore_errors) {
-  //   for (list_it it = args->subroutines->head; it; it = it->next) {
-  //     const char *sub_name = it->data;
+  if (args->cg && (!error || args->ignore_errors)) {
+    for (list_eir_subroutine_it it =
+             list_eir_subroutine_begin(eir->subroutines);
+         !it.end(&it); it.next(&it)) {
+      const eir_subroutine *sub = it.get(&it);
+      const char           *sub_name = sub->binding->name;
+      const char           *source = sub->binding->decl_span->source;
 
-  //     ir_subroutine *sub_args = ir_subroutine_new(
-  //         NULL,
-  //         ir_signature_new(ir_term_id_new((ir_loc){}, sub_name), NULL, NULL),
-  //         NULL, NULL);
+      if (has_subroutine(args, sub_name)) {
+        dot_string *dot = dot_eir_cg(eir, sub);
+        char       *output = get_cg_dot_output(args, source, sub_name);
+        write_dot(args, dot, output);
+        free(output);
+        dot_string_free(dot);
+      }
+    }
+  }
 
-  //     hashset_it it = hashset_find(ir->subroutines, sub_args);
-
-  //     if (!it.end(&it)) {
-  //       ir_subroutine *sub = it.get(&it);
-  //       dot_string    *dot_cg = dot_ir_cg(ir, sub);
-  //       char          *output_cg =
-  //           get_cg_dot_output(args, sub->file_name, ir_subroutine_name(sub));
-  //       write_dot(args, dot_cg, output_cg);
-  //       free(output_cg);
-  //       dot_string_free(dot_cg);
-  //     } else {
-  //       info("function %s is not found", sub_name);
-  //     }
-
-  //     ir_subroutine_free(sub_args);
-  //   }
-  // }
-
-  // ir_ctx_free(ir);
-  // list_free(asts);
   eir_ctx_free(eir_ctx);
   eir_free(eir);
 
@@ -459,7 +451,7 @@ int main(int argc, char *argv[]) {
     usage(args);
   }
 
-  if (!args->help && list_char_size(args->input_files) == 0) {
+  if (!args->help && list_chars_size(args->input_files) == 0) {
     printf("%s: no input files specified\n", args->prog_name);
     args->code = -1;
   }
