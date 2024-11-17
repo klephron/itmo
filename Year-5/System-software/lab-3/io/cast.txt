@@ -1,0 +1,6 @@
+method main3():
+var
+  e;
+begin
+  cast<int>(e);
+end;

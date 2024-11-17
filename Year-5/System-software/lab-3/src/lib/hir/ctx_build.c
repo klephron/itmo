@@ -417,6 +417,14 @@ hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
       second);
 }
 
+hir_expr_cast *hir_build_expr_cast(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                   type_base *type, hir_expr_base *expr) {
+  span *node_span = hir_span_new(node, ctx->ast_stream);
+  span *span = hir_span_new_range(node_span, expr->base.span);
+  span_free(node_span);
+  return hir_expr_cast_new(span, type, expr);
+}
+
 // STATEMENTS
 hir_stmt_if *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                hir_expr_base *cond, hir_stmt_base *je,

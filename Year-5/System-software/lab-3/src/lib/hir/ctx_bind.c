@@ -1,4 +1,5 @@
 #include "ctx_bind.h"
+#include "util/log.h"
 
 // just in case of mangling or something else
 static void hir_ctx_scope_insert_symbol(hir_ctx_scope    *self,
@@ -98,7 +99,12 @@ static void hir_ctx_bind_expr(hir_ctx *ctx, hir_expr_base *generic) {
       hir_ctx_bind_expr(ctx, expr);
     }
   } break;
+  case HIR_EXPR_CAST: {
+    hir_expr_cast *index = (hir_expr_cast *)generic;
+    hir_ctx_bind_expr(ctx, index->expr);
+  } break;
   default:
+    error("unknown expr type %d %p", generic->base.kind, generic);
     break;
   }
 }
@@ -143,6 +149,7 @@ static void hir_ctx_bind_stmt(hir_ctx *ctx, hir_stmt_base *generic) {
     hir_ctx_bind_expr(ctx, stmt->expr);
   } break;
   default:
+    error("unknown stmt kind %d %p", generic->kind, generic);
     break;
   }
 }

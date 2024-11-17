@@ -10,6 +10,7 @@ typedef enum hir_expr_enum {
   HIR_EXPR_IDENTIFIER,
   HIR_EXPR_CALL,
   HIR_EXPR_INDEX,
+  HIR_EXPR_CAST,
 } hir_expr_enum;
 
 typedef enum hir_expr_unary_enum {
@@ -120,3 +121,12 @@ typedef struct hir_expr_index {
 hir_expr_index *hir_expr_index_new(span *span, type_base *type,
                                    hir_expr_base *indexed, list_hir_expr *args);
 void            hir_expr_index_free(hir_expr_index *self);
+
+typedef struct hir_expr_cast {
+  hir_expr_base  base;
+  hir_expr_base *expr;
+} hir_expr_cast;
+
+hir_expr_cast *hir_expr_cast_new(span *span, type_base *type,
+                                 hir_expr_base *expr);
+void           hir_expr_cast_free(hir_expr_cast *self);

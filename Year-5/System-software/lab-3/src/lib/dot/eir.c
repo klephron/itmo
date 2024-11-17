@@ -261,8 +261,16 @@ static size_t cfg_traverse_expr_traverse(dot_block *st, string_buffer *buffer,
     snprintf(buf, sizeof(buf) - 1, "label=\"INDEX\"");
     break;
   }
+  case EIR_EXPR_CAST: {
+    eir_expr_cast *cast = (eir_expr_cast *)expr;
+    UNUSED(cast);
+    char *ts = type_str(cast->base.type);
+    snprintf(buf, sizeof(buf) - 1, "label=\"CAST<%s>\"", ts);
+    free(ts);
+    break;
+  }
   default:
-    error("unknown expression kind");
+    error("unknown expression kind %d %p", expr->kind, expr);
     ok = 0;
   }
 
@@ -333,6 +341,14 @@ static size_t cfg_traverse_expr_traverse(dot_block *st, string_buffer *buffer,
       if (arg_id) {
         list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id, arg_id));
       }
+    }
+    break;
+  }
+  case EIR_EXPR_CAST: {
+    eir_expr_cast *cast = (eir_expr_cast *)expr;
+    size_t         child = cfg_traverse_expr_traverse(st, buffer, cast->expr);
+    if (child) {
+      list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id, child));
     }
     break;
   }
@@ -639,8 +655,13 @@ static void cg_traverse_expr(dot_ctx_cg *ctx, dot_subroutine *dsub,
     }
     break;
   }
+  case EIR_EXPR_CAST: {
+    eir_expr_cast *cast = (eir_expr_cast *)expr;
+    cg_traverse_expr(ctx, dsub, buffer, eir, cast->expr);
+    break;
+  }
   default:
-    error("unknown expression kind");
+    error("unknown expression kind %d %p", expr->kind, expr);
   }
 }
 

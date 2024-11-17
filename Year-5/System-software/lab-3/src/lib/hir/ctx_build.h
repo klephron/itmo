@@ -49,6 +49,8 @@ hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
                                        hir_expr_base       *second,
                                        ANTLR3_BASE_TREE    *op_node,
                                        hir_expr_binary_enum op);
+hir_expr_cast   *hir_build_expr_cast(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                     type_base *type, hir_expr_base *expr);
 
 hir_stmt_if    *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                   hir_expr_base *cond, hir_stmt_base *je,

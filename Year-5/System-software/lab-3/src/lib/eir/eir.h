@@ -13,6 +13,7 @@ typedef enum eir_expr_enum {
   EIR_EXPR_IDENTIFIER,
   EIR_EXPR_CALL,
   EIR_EXPR_INDEX,
+  EIR_EXPR_CAST,
 } eir_expr_enum;
 
 typedef enum eir_expr_unary_enum {
@@ -123,6 +124,15 @@ typedef struct eir_expr_index_struct {
 eir_expr_index *eir_expr_index_new(span *span, type_base *type,
                                    eir_expr_base *indexed, list_eir_expr *args);
 void            eir_expr_index_free(eir_expr_index *self);
+
+typedef struct eir_expr_cast_struct {
+  eir_expr_base  base;
+  eir_expr_base *expr;
+} eir_expr_cast;
+
+eir_expr_cast *eir_expr_cast_new(span *span, type_base *type,
+                                 eir_expr_base *expr);
+void           eir_expr_cast_free(eir_expr_cast *self);
 
 // BLOCK
 typedef enum eir_block_enum {

@@ -36,6 +36,8 @@ void hir_expr_free(hir_expr_base *generic) {
       return hir_expr_call_free((hir_expr_call *)generic);
     case HIR_EXPR_INDEX:
       return hir_expr_index_free((hir_expr_index *)generic);
+    case HIR_EXPR_CAST:
+      return hir_expr_cast_free((hir_expr_cast *)generic);
     case HIR_EXPR_UNKNOWN:
     default:
       error("unknown expr type %d, %p", generic->kind, generic);
@@ -150,6 +152,22 @@ void hir_expr_index_free(hir_expr_index *self) {
   if (self) {
     hir_expr_free(self->indexed);
     list_hir_expr_free(self->args);
+    hir_expr_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+hir_expr_cast *hir_expr_cast_new(span *span, type_base *type,
+                                 hir_expr_base *expr) {
+  hir_expr_cast *self = MALLOC(hir_expr_cast);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_CAST, type);
+  self->expr = expr;
+  return self;
+}
+
+void hir_expr_cast_free(hir_expr_cast *self) {
+  if (self) {
+    hir_expr_free(self->expr);
     hir_expr_base_deinit(&self->base);
     free(self);
   }

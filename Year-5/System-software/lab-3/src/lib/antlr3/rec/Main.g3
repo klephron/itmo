@@ -26,6 +26,7 @@ tokens {
   CONST_CHAR;
   CONST_STR;
   TYPE;
+  CAST;
 }
 
 @headers{
@@ -120,6 +121,7 @@ statement_expression
 // EXPRESSIONS
 expr
   : expr_14
+  | c='cast' '<' type_ref '>' '(' expr ')' -> ^(CAST[$c, "CAST"] type_ref expr)
   ;
 
 // OPERATORS

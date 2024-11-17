@@ -17,6 +17,8 @@ static eir_expr_base *eir_ctx_build_expr_call(eir_ctx             *ctx,
                                               const hir_expr_call *call);
 static eir_expr_base *eir_ctx_build_expr_index(eir_ctx              *ctx,
                                                const hir_expr_index *index);
+static eir_expr_base *eir_ctx_build_expr_cast(eir_ctx             *ctx,
+                                              const hir_expr_cast *cast);
 
 static eir_scope *eir_ctx_build_stmt_if(eir_ctx *self, const hir_stmt_if *stmt);
 static eir_scope *eir_ctx_build_stmt_block(eir_ctx              *self,
@@ -109,18 +111,20 @@ static eir_expr_base *eir_ctx_build_expr(eir_ctx             *ctx,
                                          const hir_expr_base *generic) {
   if (generic) {
     switch (generic->kind) {
-    case EIR_EXPR_UNARY:
+    case HIR_EXPR_UNARY:
       return eir_ctx_build_expr_unary(ctx, (hir_expr_unary *)generic);
-    case EIR_EXPR_BINARY:
+    case HIR_EXPR_BINARY:
       return eir_ctx_build_expr_binary(ctx, (hir_expr_binary *)generic);
-    case EIR_EXPR_LITERAL:
+    case HIR_EXPR_LITERAL:
       return eir_ctx_build_expr_lit(ctx, (hir_expr_lit *)generic);
-    case EIR_EXPR_IDENTIFIER:
+    case HIR_EXPR_IDENTIFIER:
       return eir_ctx_build_expr_id(ctx, (hir_expr_id *)generic);
-    case EIR_EXPR_CALL:
+    case HIR_EXPR_CALL:
       return eir_ctx_build_expr_call(ctx, (hir_expr_call *)generic);
-    case EIR_EXPR_INDEX:
+    case HIR_EXPR_INDEX:
       return eir_ctx_build_expr_index(ctx, (hir_expr_index *)generic);
+    case HIR_EXPR_CAST:
+      return eir_ctx_build_expr_cast(ctx, (hir_expr_cast *)generic);
     default:
       error("unexpected expr type %d %p", generic->kind, generic);
       return NULL;
@@ -362,6 +366,16 @@ static eir_expr_base *eir_ctx_build_expr_index(eir_ctx              *ctx,
     return (eir_expr_base *)eir_expr_index_new(
         span_copy(index->base.base.span), type_copy(index->base.type),
         eir_ctx_build_expr(ctx, index->indexed), list);
+  }
+  return NULL;
+}
+
+static eir_expr_base *eir_ctx_build_expr_cast(eir_ctx             *ctx,
+                                              const hir_expr_cast *cast) {
+  if (cast) {
+    return (eir_expr_base *)eir_expr_cast_new(
+        span_copy(cast->base.base.span), type_copy(cast->base.type),
+        eir_ctx_build_expr(ctx, cast->expr));
   }
   return NULL;
 }
