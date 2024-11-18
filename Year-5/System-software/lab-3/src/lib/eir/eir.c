@@ -164,8 +164,9 @@ void eir_expr_builtin_free(eir_expr_builtin *self) {
 }
 
 // BLOCK
-void eir_block_base_init(eir_block_base *self, span *span,
+void eir_block_base_init(eir_block_base *self, size_t id, span *span,
                          eir_block_enum kind) {
+  self->id = id;
   self->kind = kind;
   self->span = span;
 }
@@ -194,10 +195,10 @@ void eir_block_free(eir_block_base *generic) {
   }
 }
 
-eir_block_next *eir_block_next_new(span *span, eir_expr_base *expr,
+eir_block_next *eir_block_next_new(size_t id, span *span, eir_expr_base *expr,
                                    eir_block_base *next) {
   eir_block_next *self = MALLOC(eir_block_next);
-  eir_block_base_init(&self->base, span, EIR_BLOCK_NEXT);
+  eir_block_base_init(&self->base, id, span, EIR_BLOCK_NEXT);
   self->expr = expr;
   self->next = next;
   return self;
@@ -212,10 +213,10 @@ void eir_block_next_free(eir_block_next *self) {
   }
 }
 
-eir_block_cond *eir_block_cond_new(span *span, eir_expr_base *cond,
+eir_block_cond *eir_block_cond_new(size_t id, span *span, eir_expr_base *cond,
                                    eir_block_base *je, eir_block_base *jz) {
   eir_block_cond *self = MALLOC(eir_block_cond);
-  eir_block_base_init(&self->base, span, EIR_BLOCK_COND);
+  eir_block_base_init(&self->base, id, span, EIR_BLOCK_COND);
   self->cond = cond;
   self->jz = jz;
   self->je = je;

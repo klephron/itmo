@@ -31,6 +31,8 @@ static eir_scope *eir_ctx_build_stmt_break(eir_ctx              *self,
 static eir_scope *eir_ctx_build_stmt_expr(eir_ctx             *self,
                                           const hir_stmt_expr *stmt);
 
+static size_t eir_ctx_next_block_id(eir_ctx *ctx) { return ctx->block_cnt++; }
+
 eir_scope *eir_scope_new(eir_block_base *begin, eir_block_base *cur,
                          eir_block_base *end) {
   eir_scope *self = MALLOC(eir_scope);
@@ -50,6 +52,7 @@ eir_ctx *eir_ctx_new(eir *eir) {
   eir_ctx *self = MALLOC(eir_ctx);
   self->eir = eir;
   self->exceptions = list_exception_new();
+  self->block_cnt = 0;
   return self;
 }
 
@@ -430,8 +433,9 @@ static eir_scope *eir_ctx_build_stmt(eir_ctx             *ctx,
 static eir_scope *eir_ctx_build_stmt_if(eir_ctx *ctx, const hir_stmt_if *stmt) {
   eir_scope *parent = list_eir_scope_front(ctx->scope_stack);
 
-  eir_block_base *end = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
-  eir_scope      *scope = eir_scope_new(parent->cur, parent->cur, end);
+  eir_block_base *end = (eir_block_base *)eir_block_next_new(
+      eir_ctx_next_block_id(ctx), NULL, NULL, NULL);
+  eir_scope *scope = eir_scope_new(parent->cur, parent->cur, end);
 
   list_eir_scope_push_front(ctx->scope_stack, scope);
 
@@ -450,7 +454,7 @@ static eir_scope *eir_ctx_build_stmt_if(eir_ctx *ctx, const hir_stmt_if *stmt) {
   }
 
   eir_block_base *block_cond = (eir_block_base *)eir_block_cond_new(
-      span_copy(stmt->base.base.span), cur_cond,
+      eir_ctx_next_block_id(ctx), span_copy(stmt->base.base.span), cur_cond,
       cur_je ? cur_je->begin : scope->end, cur_jz ? cur_jz->begin : scope->end);
 
   eir_scope_free(cur_je);
@@ -470,8 +474,9 @@ static eir_scope *eir_ctx_build_stmt_block(eir_ctx              *ctx,
 
   eir_scope *parent = list_eir_scope_front(ctx->scope_stack);
 
-  eir_block_base *end = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
-  eir_scope      *scope = eir_scope_new(parent->cur, parent->cur, end);
+  eir_block_base *end = (eir_block_base *)eir_block_next_new(
+      eir_ctx_next_block_id(ctx), NULL, NULL, NULL);
+  eir_scope *scope = eir_scope_new(parent->cur, parent->cur, end);
 
   list_eir_scope_push_front(ctx->scope_stack, scope);
 
@@ -499,8 +504,9 @@ static eir_scope *eir_ctx_build_stmt_while(eir_ctx              *ctx,
                                            const hir_stmt_while *stmt) {
   eir_scope *parent = list_eir_scope_front(ctx->scope_stack);
 
-  eir_block_base *end = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
-  eir_scope      *scope = eir_scope_new(parent->cur, parent->cur, end);
+  eir_block_base *end = (eir_block_base *)eir_block_next_new(
+      eir_ctx_next_block_id(ctx), NULL, NULL, NULL);
+  eir_scope *scope = eir_scope_new(parent->cur, parent->cur, end);
 
   list_eir_scope_push_front(ctx->scope_stack, scope);
   list_eir_block_push_front(ctx->break_stack, end);
@@ -512,8 +518,8 @@ static eir_scope *eir_ctx_build_stmt_while(eir_ctx              *ctx,
   list_eir_block_pop_front(ctx->break_stack);
 
   eir_block_base *block_cond = (eir_block_base *)eir_block_cond_new(
-      span_copy(stmt->base.base.span), expr, child ? child->begin : scope->end,
-      scope->end);
+      eir_ctx_next_block_id(ctx), span_copy(stmt->base.base.span), expr,
+      child ? child->begin : scope->end, scope->end);
 
   if (child) {
     eir_block_set_next(child->end, block_cond);
@@ -529,8 +535,9 @@ static eir_scope *eir_ctx_build_stmt_while(eir_ctx              *ctx,
 static eir_scope *eir_ctx_build_stmt_do(eir_ctx *ctx, const hir_stmt_do *stmt) {
   eir_scope *parent = list_eir_scope_front(ctx->scope_stack);
 
-  eir_block_base *end = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
-  eir_scope      *scope = eir_scope_new(parent->cur, parent->cur, end);
+  eir_block_base *end = (eir_block_base *)eir_block_next_new(
+      eir_ctx_next_block_id(ctx), NULL, NULL, NULL);
+  eir_scope *scope = eir_scope_new(parent->cur, parent->cur, end);
 
   list_eir_scope_push_front(ctx->scope_stack, scope);
   list_eir_block_push_front(ctx->break_stack, end);
@@ -544,12 +551,12 @@ static eir_scope *eir_ctx_build_stmt_do(eir_ctx *ctx, const hir_stmt_do *stmt) {
   eir_block_base *cur;
   if (stmt->positive) {
     cur = (eir_block_base *)eir_block_cond_new(
-        span_copy(stmt->base.base.span), expr,
+        eir_ctx_next_block_id(ctx), span_copy(stmt->base.base.span), expr,
         child ? child->begin : scope->end, scope->end);
   } else {
     cur = (eir_block_base *)eir_block_cond_new(
-        span_copy(stmt->base.base.span), expr, scope->end,
-        child ? child->begin : scope->end);
+        eir_ctx_next_block_id(ctx), span_copy(stmt->base.base.span), expr,
+        scope->end, child ? child->begin : scope->end);
   }
 
   if (child) {
@@ -579,7 +586,8 @@ static eir_scope *eir_ctx_build_stmt_break(eir_ctx              *ctx,
                   (hir_lit_u){.v_bool = 1}));
 
   eir_block_base *cur = (eir_block_base *)eir_block_cond_new(
-      span_copy(span), expr_true, list_eir_block_front(ctx->break_stack), NULL);
+      eir_ctx_next_block_id(ctx), span_copy(span), expr_true,
+      list_eir_block_front(ctx->break_stack), NULL);
 
   return eir_scope_new(cur, cur, cur);
 }
@@ -588,38 +596,44 @@ static eir_scope *eir_ctx_build_stmt_expr(eir_ctx             *ctx,
                                           const hir_stmt_expr *stmt) {
   eir_expr_base  *expr = eir_ctx_build_expr(ctx, stmt->expr);
   eir_block_base *cur = (eir_block_base *)eir_block_next_new(
-      span_copy(stmt->base.base.span), expr, NULL);
+      eir_ctx_next_block_id(ctx), span_copy(stmt->base.base.span), expr, NULL);
 
   return eir_scope_new(cur, cur, cur);
 }
 
 static eir_subroutine *eir_ctx_build_subroutine(eir_ctx              *ctx,
                                                 const hir_subroutine *hir_sub) {
-  ctx->scope_stack = list_eir_scope_new();
-  ctx->break_stack = list_eir_block_new();
+  if (hir_sub->body) {
+    ctx->scope_stack = list_eir_scope_new();
+    ctx->break_stack = list_eir_block_new();
 
-  eir_block_base *scope_begin, *scope_cur, *scope_end;
-  scope_begin = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
-  scope_end = (eir_block_base *)eir_block_next_new(NULL, NULL, NULL);
-  scope_cur = scope_begin;
+    eir_block_base *scope_begin, *scope_cur, *scope_end;
+    scope_begin = (eir_block_base *)eir_block_next_new(
+        eir_ctx_next_block_id(ctx), NULL, NULL, NULL);
+    scope_end = (eir_block_base *)eir_block_next_new(eir_ctx_next_block_id(ctx),
+                                                     NULL, NULL, NULL);
+    scope_cur = scope_begin;
 
-  eir_scope *scope = eir_scope_new(scope_begin, scope_cur, scope_end);
-  list_eir_scope_push_front(ctx->scope_stack, scope);
+    eir_scope *scope = eir_scope_new(scope_begin, scope_cur, scope_end);
+    list_eir_scope_push_front(ctx->scope_stack, scope);
 
-  // do body
-  eir_scope *child = eir_ctx_build_stmt_block(ctx, hir_sub->body);
+    // do body
+    eir_scope *child = eir_ctx_build_stmt_block(ctx, hir_sub->body);
 
-  if (child) {
-    scope->cur = child->end;
-    eir_scope_free(child);
+    if (child) {
+      scope->cur = child->end;
+      eir_scope_free(child);
+    }
+
+    eir_block_set_next(scope->cur, scope->end);
+
+    list_eir_block_free(ctx->break_stack);
+    list_eir_scope_free(ctx->scope_stack);
+
+    return eir_subroutine_new(scope_begin, hir_sub->binding);
   }
 
-  eir_block_set_next(scope->cur, scope->end);
-
-  list_eir_block_free(ctx->break_stack);
-  list_eir_scope_free(ctx->scope_stack);
-
-  return eir_subroutine_new(scope_begin, hir_sub->binding);
+  return eir_subroutine_new(NULL, hir_sub->binding);
 }
 
 // 1. copy referencees to global and local symbol tables

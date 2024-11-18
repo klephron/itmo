@@ -29,6 +29,7 @@ typedef struct eir_ctx_struct {
   // internal data
   list_eir_block *break_stack;
   list_eir_scope *scope_stack;
+  size_t          block_cnt;
 } eir_ctx;
 
 eir_ctx *eir_ctx_new(eir *eir);

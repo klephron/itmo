@@ -152,6 +152,7 @@ typedef enum eir_block_enum {
 } eir_block_enum;
 
 typedef struct eir_block_base_struct {
+  size_t         id;
   eir_block_enum kind;
   span          *span;
 } eir_block_base;
@@ -166,7 +167,7 @@ typedef struct eir_block_next_struct {
   eir_block_base *next;
 } eir_block_next;
 
-eir_block_next *eir_block_next_new(span *span, eir_expr_base *expr,
+eir_block_next *eir_block_next_new(size_t id, span *span, eir_expr_base *expr,
                                    eir_block_base *next);
 void            eir_block_next_free(eir_block_next *self);
 
@@ -177,7 +178,7 @@ typedef struct eir_block_cond_struct {
   eir_block_base *jz;
 } eir_block_cond;
 
-eir_block_cond *eir_block_cond_new(span *span, eir_expr_base *cond,
+eir_block_cond *eir_block_cond_new(size_t id, span *span, eir_expr_base *cond,
                                    eir_block_base *je, eir_block_base *jz);
 void            eir_block_cond_free(eir_block_cond *self);
 

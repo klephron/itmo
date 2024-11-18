@@ -40,7 +40,6 @@ static void dot_block_edge_free(dot_block_edge *self);
 
 typedef struct dot_block_struct {
   const eir_block_base *ptr;
-  size_t                id;
   size_t                expr_cnt;
   list_expr_edge       *expr_edges;
 } dot_block;
@@ -70,7 +69,6 @@ LIST_DECLARE_STATIC_INLINE(list_block_edge, dot_block_edge, container_cmp_false,
                            container_new_move, container_delete_dot_block_edge);
 
 typedef struct dot_ctx_cfg_struct {
-  size_t           cnt;
   hashset_block   *blocks; // visited
   list_block_edge *block_edges;
 } dot_ctx_cfg;
@@ -169,10 +167,9 @@ static void dot_block_free(dot_block *self) {
   free(self);
 }
 
-static dot_block *dot_block_new(const eir_block_base *ptr, size_t id) {
+static dot_block *dot_block_new(const eir_block_base *ptr) {
   dot_block *self = MALLOC(dot_block);
   self->ptr = ptr;
-  self->id = id;
   self->expr_cnt = 0;
   self->expr_edges = list_expr_edge_new();
   return self;
@@ -193,14 +190,12 @@ static void dot_block_edge_free(dot_block_edge *self) { free(self); }
 // // CFG
 static dot_ctx_cfg *ctx_cfg_new() {
   dot_ctx_cfg *cfg = MALLOC(dot_ctx_cfg);
-  cfg->cnt = 0;
   cfg->blocks = hashset_block_new();
   cfg->block_edges = list_block_edge_new();
   return cfg;
 }
 
 static void ctx_cfg_free(dot_ctx_cfg *cfg) {
-  cfg->cnt = 0;
   hashset_block_free(cfg->blocks);
   list_block_edge_free(cfg->block_edges);
   free(cfg);
@@ -215,7 +210,7 @@ static size_t cfg_traverse_expr_traverse(dot_block *st, string_buffer *buffer,
   }
 
   size_t id = ++st->expr_cnt;
-  sprintf(buf, "expr_%zu_%zu[", st->id, id);
+  sprintf(buf, "expr_%zu_%zu[", st->ptr->id, id);
 
   string_buffer_append(buffer, buf);
 
@@ -375,8 +370,8 @@ static void cfg_traverse_expr_link(dot_block *st, string_buffer *buffer) {
   for (list_expr_edge_it it = list_expr_edge_begin(st->expr_edges);
        !it.end(&it); it.next(&it)) {
     dot_expr_edge *edge = it.get(&it);
-    snprintf(buf, sizeof(buf) - 1, "expr_%zu_%zu -> expr_%zu_%zu;\n", st->id,
-             edge->id_from, st->id, edge->id_to);
+    snprintf(buf, sizeof(buf) - 1, "expr_%zu_%zu -> expr_%zu_%zu;\n",
+             st->ptr->id, edge->id_from, st->ptr->id, edge->id_to);
     string_buffer_append(buffer, buf);
   }
 }
@@ -385,7 +380,7 @@ static void cfg_traverse_expr(dot_block *st, string_buffer *buffer,
                               eir_expr_base *root) {
   char buf[64];
 
-  snprintf(buf, sizeof(buf) - 1, "cluster_%zu_expr", st->id);
+  snprintf(buf, sizeof(buf) - 1, "cluster_%zu_expr", st->ptr->id);
   string_buffer_append(buffer, "subgraph ");
   string_buffer_append(buffer, buf);
   string_buffer_append(buffer, "{\n"
@@ -402,7 +397,7 @@ static void cfg_traverse_expr(dot_block *st, string_buffer *buffer,
 
   if (expr_id) {
     snprintf(buf, sizeof(buf) - 1, "block_%zu -> expr_%zu_%zu[style=invis];",
-             st->id, st->id, expr_id);
+             st->ptr->id, st->ptr->id, expr_id);
     string_buffer_append(buffer, buf);
   }
 }
@@ -419,19 +414,18 @@ static size_t cfg_traverse(dot_ctx_cfg *ctx, string_buffer *buffer,
       hashset_block_find(ctx->blocks, &(dot_block){.ptr = root});
 
   if (!it.end(&it)) {
-    return ((dot_block *)it.get(&it))->id;
+    return ((dot_block *)it.get(&it))->ptr->id;
   }
 
   dot_block *st;
   {
-    size_t block_id = ++ctx->cnt;
-    st = dot_block_new(root, block_id);
+    st = dot_block_new(root);
   }
 
   hashset_block_insert(ctx->blocks, st);
 
   string_buffer_append(buffer, "subgraph ");
-  snprintf(buf, sizeof(buf) - 1, "cluster_%zu", st->id);
+  snprintf(buf, sizeof(buf) - 1, "cluster_%zu", st->ptr->id);
   string_buffer_append(buffer, buf);
   string_buffer_append(buffer, " {\n"
                                "style=\"filled,solid\";\n"
@@ -440,7 +434,7 @@ static size_t cfg_traverse(dot_ctx_cfg *ctx, string_buffer *buffer,
                                "fillcolor=lightgray;\n"
                                "\n");
 
-  snprintf(buf, sizeof(buf) - 1, "block_%zu", st->id);
+  snprintf(buf, sizeof(buf) - 1, "block_%zu", st->ptr->id);
   string_buffer_append(buffer, buf);
   string_buffer_append(buffer, "[shape=plaintext]\n"
                                "\n");
@@ -468,7 +462,8 @@ static size_t cfg_traverse(dot_ctx_cfg *ctx, string_buffer *buffer,
         cfg_traverse(ctx, buffer, ((eir_block_next *)root)->next, v_expr);
     if (child_id) {
       list_block_edge_push_back(
-          ctx->block_edges, dot_block_edge_new(st->id, child_id, "", "black"));
+          ctx->block_edges,
+          dot_block_edge_new(st->ptr->id, child_id, "", "black"));
     }
     break;
   }
@@ -478,7 +473,7 @@ static size_t cfg_traverse(dot_ctx_cfg *ctx, string_buffer *buffer,
     if (child_jz_id) {
       list_block_edge_push_back(
           ctx->block_edges,
-          dot_block_edge_new(st->id, child_jz_id, "False", "blue"));
+          dot_block_edge_new(st->ptr->id, child_jz_id, "False", "blue"));
     }
 
     size_t child_je_id =
@@ -486,7 +481,7 @@ static size_t cfg_traverse(dot_ctx_cfg *ctx, string_buffer *buffer,
     if (child_je_id) {
       list_block_edge_push_back(
           ctx->block_edges,
-          dot_block_edge_new(st->id, child_je_id, "True", "red"));
+          dot_block_edge_new(st->ptr->id, child_je_id, "True", "red"));
     }
 
     break;
@@ -495,7 +490,7 @@ static size_t cfg_traverse(dot_ctx_cfg *ctx, string_buffer *buffer,
     error("unknown block type %d", root->kind);
   }
 
-  return st->id;
+  return st->ptr->id;
 }
 
 static void cfg_link(dot_ctx_cfg *cfg, string_buffer *buffer) {
@@ -694,7 +689,7 @@ static void cg_traverse_block(dot_ctx_cg *ctx_cg, dot_subroutine *dsub,
   }
 
   // searches by ptr
-  dot_block *dbl = dot_block_new(root, 0);
+  dot_block *dbl = dot_block_new(root);
   hashset_block_insert(dsub->blocks, dbl);
 
   // traverse current block
