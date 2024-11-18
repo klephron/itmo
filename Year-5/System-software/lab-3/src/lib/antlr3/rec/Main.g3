@@ -26,7 +26,9 @@ tokens {
   CONST_CHAR;
   CONST_STR;
   TYPE;
-  CAST;
+  BUILTIN_CAST;
+  BUILTIN_NEW;
+  BUILTIN_FREE;
 }
 
 @headers{
@@ -117,11 +119,9 @@ statement_expression
   : expr ';' -> ^(expr)
   ;
 
-
 // EXPRESSIONS
 expr
   : expr_14
-  | c='cast' '<' type_ref '>' '(' expr ')' -> ^(CAST[$c, "CAST"] type_ref expr)
   ;
 
 // OPERATORS
@@ -180,7 +180,7 @@ expr_2
   ;
 
 expr_01
-  : expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
+  : expr_builtin | expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
   ;
 
 caller_indexer
@@ -202,6 +202,11 @@ expr_literal
   : bool | str | rune | hex | bits | dec
   ;
 
+expr_builtin
+  : c='cast!' '<' type_ref '>' '(' expr ')' -> ^(BUILTIN_CAST[$c, "BUILTIN_CAST"] type_ref expr)
+  | c='new!' '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN_NEW[$c, "BUILTIN_NEW"] type_ref ^(ARGS expr_15))
+  | c='free!' '(' expr ')' -> ^(BUILTIN_FREE[$c, "BUILTIN_FREE"] expr)
+  ;
 
 // TERMINALS
 identifier: IDENTIFIER;

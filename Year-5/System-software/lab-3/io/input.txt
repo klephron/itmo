@@ -37,7 +37,7 @@ var
   f, g: array [,] of array [,] of int;
   n;
 begin
-  while (a == 1) do begin
+  while (new!<int>(a) == cast!<int>(1) == free!(a)) do begin
     a = 2;
     break;
   end;

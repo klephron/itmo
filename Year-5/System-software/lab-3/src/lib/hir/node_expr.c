@@ -2,13 +2,6 @@
 #include "util/log.h"
 #include "util/macro.h"
 
-void hir_expr_unary_free(hir_expr_unary *self);
-void hir_expr_binary_free(hir_expr_binary *self);
-void hir_expr_lit_free(hir_expr_lit *self);
-void hir_expr_id_free(hir_expr_id *self);
-void hir_expr_call_free(hir_expr_call *self);
-void hir_expr_index_free(hir_expr_index *self);
-
 void hir_expr_base_init(hir_expr_base *self, span *span, hir_expr_enum kind,
                         type_base *type) {
   hir_base_init(&self->base, span, HIR_NODE_EXPR);
@@ -36,8 +29,8 @@ void hir_expr_free(hir_expr_base *generic) {
       return hir_expr_call_free((hir_expr_call *)generic);
     case HIR_EXPR_INDEX:
       return hir_expr_index_free((hir_expr_index *)generic);
-    case HIR_EXPR_CAST:
-      return hir_expr_cast_free((hir_expr_cast *)generic);
+    case HIR_EXPR_BUILTIN:
+      return hir_expr_builtin_free((hir_expr_builtin *)generic);
     case HIR_EXPR_UNKNOWN:
     default:
       error("unknown expr type %d, %p", generic->kind, generic);
@@ -157,17 +150,19 @@ void hir_expr_index_free(hir_expr_index *self) {
   }
 }
 
-hir_expr_cast *hir_expr_cast_new(span *span, type_base *type,
-                                 hir_expr_base *expr) {
-  hir_expr_cast *self = MALLOC(hir_expr_cast);
-  hir_expr_base_init(&self->base, span, HIR_EXPR_CAST, type);
-  self->expr = expr;
+hir_expr_builtin *hir_expr_builtin_new(span *span, type_base *type,
+                                       hir_expr_builtin_enum kind,
+                                       list_hir_expr        *args) {
+  hir_expr_builtin *self = MALLOC(hir_expr_builtin);
+  hir_expr_base_init(&self->base, span, HIR_EXPR_BUILTIN, type);
+  self->kind = kind;
+  self->args = args;
   return self;
 }
 
-void hir_expr_cast_free(hir_expr_cast *self) {
+void hir_expr_builtin_free(hir_expr_builtin *self) {
   if (self) {
-    hir_expr_free(self->expr);
+    list_hir_expr_free(self->args);
     hir_expr_base_deinit(&self->base);
     free(self);
   }

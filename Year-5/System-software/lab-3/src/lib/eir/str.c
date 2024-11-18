@@ -69,3 +69,16 @@ const char *eir_expr_binary_enum_str(eir_expr_binary_enum type) {
     return "UNKNOWN";
   }
 }
+
+const char *eir_expr_builtin_enum_str(eir_expr_builtin_enum type) {
+  switch (type) {
+  case EIR_EXPR_BUILTIN_CAST:
+    return "CAST";
+  case EIR_EXPR_BUILTIN_NEW:
+    return "NEW";
+  case EIR_EXPR_BUILTIN_FREE:
+    return "FREE";
+  default:
+    return "UNKNOWN";
+  }
+}

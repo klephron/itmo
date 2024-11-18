@@ -30,8 +30,8 @@ void eir_expr_free(eir_expr_base *generic) {
       return eir_expr_call_free((eir_expr_call *)generic);
     case EIR_EXPR_INDEX:
       return eir_expr_index_free((eir_expr_index *)generic);
-    case EIR_EXPR_CAST:
-      return eir_expr_cast_free((eir_expr_cast *)generic);
+    case EIR_EXPR_BUILTIN:
+      return eir_expr_builtin_free((eir_expr_builtin *)generic);
     default:
       error("unknown eir_expr_enum %d %p", generic->kind, generic);
     }
@@ -145,17 +145,19 @@ void eir_expr_index_free(eir_expr_index *self) {
   }
 }
 
-eir_expr_cast *eir_expr_cast_new(span *span, type_base *type,
-                                 eir_expr_base *expr) {
-  eir_expr_cast *self = MALLOC(eir_expr_cast);
-  eir_expr_base_init(&self->base, span, EIR_EXPR_CAST, type);
-  self->expr = expr;
+eir_expr_builtin *eir_expr_builtin_new(span *span, type_base *type,
+                                       eir_expr_builtin_enum kind,
+                                       list_eir_expr        *args) {
+  eir_expr_builtin *self = MALLOC(eir_expr_builtin);
+  eir_expr_base_init(&self->base, span, EIR_EXPR_BUILTIN, type);
+  self->kind = kind;
+  self->args = args;
   return self;
 }
 
-void eir_expr_cast_free(eir_expr_cast *self) {
+void eir_expr_builtin_free(eir_expr_builtin *self) {
   if (self) {
-    eir_expr_free(self->expr);
+    list_eir_expr_free(self->args);
     eir_expr_base_deinit(&self->base);
     free(self);
   }

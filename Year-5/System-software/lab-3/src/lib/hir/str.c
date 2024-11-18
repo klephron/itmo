@@ -36,8 +36,8 @@ static void hir_tree_str_expr_call(string_buffer *buffer, size_t pad,
                                    hir_expr_call *expr);
 static void hir_tree_str_expr_index(string_buffer *buffer, size_t pad,
                                     hir_expr_index *expr);
-static void hir_tree_str_expr_cast(string_buffer *buffer, size_t pad,
-                                   hir_expr_cast *expr);
+static void hir_tree_str_expr_builtin(string_buffer *buffer, size_t pad,
+                                      hir_expr_builtin *expr);
 
 // EXPRESSION_ENUM
 const char *hir_expr_unary_enum_str(hir_expr_unary_enum type) {
@@ -159,10 +159,24 @@ const char *hir_expr_enum_str(hir_expr_enum kind) {
     return "CALL";
   case HIR_EXPR_INDEX:
     return "INDEX";
-  case HIR_EXPR_CAST:
-    return "CAST";
+  case HIR_EXPR_BUILTIN:
+    return "BUILTIN";
   default:
     error("unknown expr enum %d", kind);
+    return "UNKNOWN";
+  }
+}
+
+const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
+  switch (kind) {
+  case HIR_EXPR_BUILTIN_CAST:
+    return "CAST";
+  case HIR_EXPR_BUILTIN_NEW:
+    return "NEW";
+  case HIR_EXPR_BUILTIN_FREE:
+    return "FREE";
+  default:
+    error("unknown expr builtin enum %d", kind);
     return "UNKNOWN";
   }
 }
@@ -631,8 +645,8 @@ static void hir_tree_str_expr(string_buffer *buffer, size_t pad,
     return hir_tree_str_expr_call(buffer, pad, (hir_expr_call *)expr);
   case HIR_EXPR_INDEX:
     return hir_tree_str_expr_index(buffer, pad, (hir_expr_index *)expr);
-  case HIR_EXPR_CAST:
-    return hir_tree_str_expr_cast(buffer, pad, (hir_expr_cast *)expr);
+  case HIR_EXPR_BUILTIN:
+    return hir_tree_str_expr_builtin(buffer, pad, (hir_expr_builtin *)expr);
   default:
     error("unknown expr kind %d", expr->kind);
   }
@@ -736,6 +750,21 @@ static void hir_tree_str_expr_id(string_buffer *buffer, size_t pad,
   string_buffer_append(buffer, "}");
 }
 
+static void hir_tree_str_list_expr(string_buffer *buffer, size_t pad,
+                                   list_hir_expr *list) {
+  string_buffer_appendln(buffer, "[");
+  pad += HIR_STR_TAB;
+  for (list_hir_expr_it it = list_hir_expr_begin(list); !it.end(&it);
+       it.next(&it)) {
+    string_buffer_append_padding(buffer, pad);
+    hir_tree_str_expr(buffer, pad, it.get(&it));
+    string_buffer_appendln(buffer, "");
+  }
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "]");
+}
+
 static void hir_tree_str_expr_call(string_buffer *buffer, size_t pad,
                                    hir_expr_call *expr) {
   string_buffer_appendln(buffer, "{");
@@ -752,17 +781,9 @@ static void hir_tree_str_expr_call(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "args: [");
-  pad += HIR_STR_TAB;
-  for (list_hir_expr_it it = list_hir_expr_begin(expr->args); !it.end(&it);
-       it.next(&it)) {
-    string_buffer_append_padding(buffer, pad);
-    hir_tree_str_expr(buffer, pad, it.get(&it));
-    string_buffer_appendln(buffer, "");
-  }
-  pad -= HIR_STR_TAB;
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "]");
+  string_buffer_appendln(buffer, "args: ");
+  hir_tree_str_list_expr(buffer, pad, expr->args);
+  string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
   string_buffer_append_padding(buffer, pad);
@@ -785,25 +806,17 @@ static void hir_tree_str_expr_index(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "args: [");
-  pad += HIR_STR_TAB;
-  for (list_hir_expr_it it = list_hir_expr_begin(expr->args); !it.end(&it);
-       it.next(&it)) {
-    string_buffer_append_padding(buffer, pad);
-    hir_tree_str_expr(buffer, pad, it.get(&it));
-    string_buffer_appendln(buffer, "");
-  }
-  pad -= HIR_STR_TAB;
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "]");
+  string_buffer_appendln(buffer, "args: ");
+  hir_tree_str_list_expr(buffer, pad, expr->args);
+  string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "}");
 }
 
-static void hir_tree_str_expr_cast(string_buffer *buffer, size_t pad,
-                                   hir_expr_cast *expr) {
+static void hir_tree_str_expr_builtin(string_buffer *buffer, size_t pad,
+                                      hir_expr_builtin *expr) {
   string_buffer_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -813,8 +826,13 @@ static void hir_tree_str_expr_cast(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_append(buffer, "expr: ");
-  hir_tree_str_expr(buffer, pad, expr->expr);
+  string_buffer_append(buffer, "kind: ");
+  string_buffer_append(buffer, hir_expr_builtin_enum_str(expr->kind));
+  string_buffer_appendln(buffer, "");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "args: ");
+  hir_tree_str_list_expr(buffer, pad, expr->args);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;

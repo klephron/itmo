@@ -101,9 +101,13 @@ static void hir_ctx_bind_expr(hir_ctx *ctx, hir_expr_base *generic) {
       hir_ctx_bind_expr(ctx, expr);
     }
   } break;
-  case HIR_EXPR_CAST: {
-    hir_expr_cast *index = (hir_expr_cast *)generic;
-    hir_ctx_bind_expr(ctx, index->expr);
+  case HIR_EXPR_BUILTIN: {
+    hir_expr_builtin *builtin = (hir_expr_builtin *)generic;
+    for (list_hir_expr_it it = list_hir_expr_begin(builtin->args); !it.end(&it);
+         it.next(&it)) {
+      hir_expr_base *expr = it.get(&it);
+      hir_ctx_bind_expr(ctx, expr);
+    }
   } break;
   default:
     error("unknown expr type %d %p", generic->kind, generic);

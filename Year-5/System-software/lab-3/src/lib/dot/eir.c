@@ -261,12 +261,18 @@ static size_t cfg_traverse_expr_traverse(dot_block *st, string_buffer *buffer,
     snprintf(buf, sizeof(buf) - 1, "label=\"INDEX\"");
     break;
   }
-  case EIR_EXPR_CAST: {
-    eir_expr_cast *cast = (eir_expr_cast *)expr;
-    UNUSED(cast);
-    char *ts = type_str(cast->base.type);
-    snprintf(buf, sizeof(buf) - 1, "label=\"CAST<%s>\"", ts);
-    free(ts);
+  case EIR_EXPR_BUILTIN: {
+    eir_expr_builtin *builtin = (eir_expr_builtin *)expr;
+    char             *ts = type_str(builtin->base.type);
+    const char       *kind = eir_expr_builtin_enum_str(builtin->kind);
+
+    if (ts) {
+      snprintf(buf, sizeof(buf) - 1, "label=\"BUILTIN_%s<%s>\"", kind, ts);
+      free(ts);
+    } else {
+      snprintf(buf, sizeof(buf) - 1, "label=\"BUILTIN_%s\"", kind);
+    }
+
     break;
   }
   default:
@@ -344,11 +350,15 @@ static size_t cfg_traverse_expr_traverse(dot_block *st, string_buffer *buffer,
     }
     break;
   }
-  case EIR_EXPR_CAST: {
-    eir_expr_cast *cast = (eir_expr_cast *)expr;
-    size_t         child = cfg_traverse_expr_traverse(st, buffer, cast->expr);
-    if (child) {
-      list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id, child));
+  case EIR_EXPR_BUILTIN: {
+    eir_expr_builtin *builtin = (eir_expr_builtin *)expr;
+    for (list_eir_expr_it it = list_eir_expr_begin(builtin->args); !it.end(&it);
+         it.next(&it)) {
+      eir_expr_base *arg = it.get(&it); // NOTE: may be very bad
+      size_t         arg_id = cfg_traverse_expr_traverse(st, buffer, arg);
+      if (arg_id) {
+        list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id, arg_id));
+      }
     }
     break;
   }
@@ -655,9 +665,13 @@ static void cg_traverse_expr(dot_ctx_cg *ctx, dot_subroutine *dsub,
     }
     break;
   }
-  case EIR_EXPR_CAST: {
-    eir_expr_cast *cast = (eir_expr_cast *)expr;
-    cg_traverse_expr(ctx, dsub, buffer, eir, cast->expr);
+  case EIR_EXPR_BUILTIN: {
+    eir_expr_builtin *builtin = (eir_expr_builtin *)expr;
+    for (list_eir_expr_it it = list_eir_expr_begin(builtin->args); !it.end(&it);
+         it.next(&it)) {
+      eir_expr_base *arg = it.get(&it);
+      cg_traverse_expr(ctx, dsub, buffer, eir, arg);
+    }
     break;
   }
   default:

@@ -13,7 +13,7 @@ typedef enum eir_expr_enum {
   EIR_EXPR_IDENTIFIER,
   EIR_EXPR_CALL,
   EIR_EXPR_INDEX,
-  EIR_EXPR_CAST,
+  EIR_EXPR_BUILTIN,
 } eir_expr_enum;
 
 typedef enum eir_expr_unary_enum {
@@ -49,6 +49,13 @@ typedef enum eir_expr_binary_enum {
   EIR_EXPR_BINARY_DIV,
   EIR_EXPR_BINARY_MOD,
 } eir_expr_binary_enum;
+
+typedef enum eir_expr_builtin_enum {
+  EIR_EXPR_BUILTIN_UNKNOWN,
+  EIR_EXPR_BUILTIN_CAST,
+  EIR_EXPR_BUILTIN_NEW,
+  EIR_EXPR_BUILTIN_FREE
+} eir_expr_builtin_enum;
 
 typedef struct eir_expr_base_struct {
   eir_expr_enum kind;
@@ -125,14 +132,16 @@ eir_expr_index *eir_expr_index_new(span *span, type_base *type,
                                    eir_expr_base *indexed, list_eir_expr *args);
 void            eir_expr_index_free(eir_expr_index *self);
 
-typedef struct eir_expr_cast_struct {
-  eir_expr_base  base;
-  eir_expr_base *expr;
-} eir_expr_cast;
+typedef struct eir_expr_builtin_struct {
+  eir_expr_base         base;
+  eir_expr_builtin_enum kind;
+  list_eir_expr        *args;
+} eir_expr_builtin;
 
-eir_expr_cast *eir_expr_cast_new(span *span, type_base *type,
-                                 eir_expr_base *expr);
-void           eir_expr_cast_free(eir_expr_cast *self);
+eir_expr_builtin *eir_expr_builtin_new(span *span, type_base *type,
+                                       eir_expr_builtin_enum kind,
+                                       list_eir_expr        *args);
+void              eir_expr_builtin_free(eir_expr_builtin *self);
 
 // BLOCK
 typedef enum eir_block_enum {

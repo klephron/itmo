@@ -10,7 +10,7 @@ typedef enum hir_expr_enum {
   HIR_EXPR_IDENTIFIER,
   HIR_EXPR_CALL,
   HIR_EXPR_INDEX,
-  HIR_EXPR_CAST,
+  HIR_EXPR_BUILTIN,
 } hir_expr_enum;
 
 typedef enum hir_expr_unary_enum {
@@ -45,6 +45,13 @@ typedef enum hir_expr_binary_enum {
   HIR_EXPR_BINARY_DIV,
   HIR_EXPR_BINARY_MOD,
 } hir_expr_binary_enum;
+
+typedef enum hir_expr_builtin_enum {
+  HIR_EXPR_BUILTIN_UNKNOWN,
+  HIR_EXPR_BUILTIN_CAST,
+  HIR_EXPR_BUILTIN_NEW,
+  HIR_EXPR_BUILTIN_FREE,
+} hir_expr_builtin_enum;
 
 typedef struct hir_expr_base_struct {
   hir_base      base;
@@ -122,11 +129,13 @@ hir_expr_index *hir_expr_index_new(span *span, type_base *type,
                                    hir_expr_base *indexed, list_hir_expr *args);
 void            hir_expr_index_free(hir_expr_index *self);
 
-typedef struct hir_expr_cast {
-  hir_expr_base  base;
-  hir_expr_base *expr;
-} hir_expr_cast;
+typedef struct hir_expr_builtin {
+  hir_expr_base         base;
+  hir_expr_builtin_enum kind;
+  list_hir_expr        *args;
+} hir_expr_builtin;
 
-hir_expr_cast *hir_expr_cast_new(span *span, type_base *type,
-                                 hir_expr_base *expr);
-void           hir_expr_cast_free(hir_expr_cast *self);
+hir_expr_builtin *hir_expr_builtin_new(span *span, type_base *type,
+                                       hir_expr_builtin_enum kind,
+                                       list_hir_expr        *args);
+void              hir_expr_builtin_free(hir_expr_builtin *self);

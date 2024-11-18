@@ -17,8 +17,8 @@ static eir_expr_base *eir_ctx_build_expr_call(eir_ctx             *ctx,
                                               const hir_expr_call *call);
 static eir_expr_base *eir_ctx_build_expr_index(eir_ctx              *ctx,
                                                const hir_expr_index *index);
-static eir_expr_base *eir_ctx_build_expr_cast(eir_ctx             *ctx,
-                                              const hir_expr_cast *cast);
+static eir_expr_base *eir_ctx_build_expr_builtin(eir_ctx                *ctx,
+                                                 const hir_expr_builtin *cast);
 
 static eir_scope *eir_ctx_build_stmt_if(eir_ctx *self, const hir_stmt_if *stmt);
 static eir_scope *eir_ctx_build_stmt_block(eir_ctx              *self,
@@ -123,8 +123,8 @@ static eir_expr_base *eir_ctx_build_expr(eir_ctx             *ctx,
       return eir_ctx_build_expr_call(ctx, (hir_expr_call *)generic);
     case HIR_EXPR_INDEX:
       return eir_ctx_build_expr_index(ctx, (hir_expr_index *)generic);
-    case HIR_EXPR_CAST:
-      return eir_ctx_build_expr_cast(ctx, (hir_expr_cast *)generic);
+    case HIR_EXPR_BUILTIN:
+      return eir_ctx_build_expr_builtin(ctx, (hir_expr_builtin *)generic);
     default:
       error("unexpected expr type %d %p", generic->kind, generic);
       return NULL;
@@ -370,12 +370,35 @@ static eir_expr_base *eir_ctx_build_expr_index(eir_ctx              *ctx,
   return NULL;
 }
 
-static eir_expr_base *eir_ctx_build_expr_cast(eir_ctx             *ctx,
-                                              const hir_expr_cast *cast) {
-  if (cast) {
-    return (eir_expr_base *)eir_expr_cast_new(
-        span_copy(cast->base.base.span), type_copy(cast->base.type),
-        eir_ctx_build_expr(ctx, cast->expr));
+static eir_expr_base *
+eir_ctx_build_expr_builtin(eir_ctx *ctx, const hir_expr_builtin *builtin) {
+  if (builtin) {
+    list_eir_expr *args = list_eir_expr_new();
+    for (list_hir_expr_it it = list_hir_expr_begin(builtin->args); !it.end(&it);
+         it.next(&it)) {
+      list_eir_expr_push_back(args, eir_ctx_build_expr(ctx, it.get(&it)));
+    }
+
+    eir_expr_builtin_enum kind;
+    switch (builtin->kind) {
+    case HIR_EXPR_BUILTIN_CAST:
+      kind = EIR_EXPR_BUILTIN_CAST;
+      break;
+    case HIR_EXPR_BUILTIN_NEW:
+      kind = EIR_EXPR_BUILTIN_NEW;
+      break;
+    case HIR_EXPR_BUILTIN_FREE:
+      kind = EIR_EXPR_BUILTIN_FREE;
+      break;
+    default:
+      error("unknown builtin kind %d %p", builtin->kind, builtin);
+      kind = EIR_EXPR_BUILTIN_UNKNOWN;
+      break;
+    }
+
+    return (eir_expr_base *)eir_expr_builtin_new(
+        span_copy(builtin->base.base.span), type_copy(builtin->base.type), kind,
+        args);
   }
   return NULL;
 }

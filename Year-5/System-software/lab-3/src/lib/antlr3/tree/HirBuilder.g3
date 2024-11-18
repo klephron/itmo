@@ -161,7 +161,8 @@ statement_expression returns [ hir_stmt_expr *v ]
 
 // EXPRESSIONS
 expr returns [ hir_expr_base *v ]
-  : expr_14 { $v = (hir_expr_base *) $expr_14.v; }
+  : expr_builtin { $v = (hir_expr_base *) $expr_builtin.v; }
+  | expr_14 { $v = (hir_expr_base *) $expr_14.v; }
   | expr_12 { $v = (hir_expr_base *) $expr_12.v; }
   | expr_11 { $v = (hir_expr_base *) $expr_11.v; }
   | expr_10 { $v = (hir_expr_base *) $expr_10.v; }
@@ -177,22 +178,23 @@ expr returns [ hir_expr_base *v ]
   | expr_indexer { $v = (hir_expr_base *) $expr_indexer.v; }
   | expr_literal { $v = (hir_expr_base *) $expr_literal.v; }
   | expr_identifier { $v = (hir_expr_base *) $expr_identifier.v; }
-  | expr_cast { $v = (hir_expr_base *) $expr_cast.v; }
   ;
 
 
 // OPERATORS
-expr_args returns [ list_hir_expr *v ]
+expr_builtin returns [ hir_expr_builtin *v ]
+  : ^(BUILTIN_CAST t=type_ref e=expr) { $v = hir_build_expr_builtin_cast(ANTLR3_USERP(), $BUILTIN_CAST, $t.v, $e.v); }
+  | ^(BUILTIN_NEW t=type_ref e15=expr_15) { $v = hir_build_expr_builtin_new(ANTLR3_USERP(), $BUILTIN_NEW, $t.v, $e15.v); }
+  | ^(BUILTIN_FREE e=expr) { $v = hir_build_expr_builtin_free(ANTLR3_USERP(), $BUILTIN_FREE, $e.v); }
+  ;
+
+expr_15 returns [ list_hir_expr *v ]
   @init {
     list_hir_expr *args = list_hir_expr_new();
   }
   : ^(ARGS (expr { list_hir_expr_push_back(args, $expr.v); } )*) {
     $v = args;
   }
-  ;
-
-expr_cast returns [ hir_expr_cast *v ]
-  : ^(CAST t=type_ref e=expr) { $v = hir_build_expr_cast(ANTLR3_USERP(), $CAST, $t.v, $e.v ); }
   ;
 
 expr_14 returns [ hir_expr_binary *v ]
@@ -270,14 +272,14 @@ expr_2 returns [ hir_expr_unary *v ]
   ;
 
 expr_caller returns [ hir_expr_call *v ]
-  : ^(CALLER expr_args expr) {
-    $v = hir_build_expr_caller(ANTLR3_USERP(), $expr.v, $expr_args.v);
+  : ^(CALLER expr_15 expr) {
+    $v = hir_build_expr_caller(ANTLR3_USERP(), $expr.v, $expr_15.v);
   }
   ;
 
 expr_indexer returns [ hir_expr_index *v ]
-  : ^(INDEXER expr_args expr) {
-    $v = hir_build_expr_indexer(ANTLR3_USERP(), $expr.v, $expr_args.v);
+  : ^(INDEXER expr_15 expr) {
+    $v = hir_build_expr_indexer(ANTLR3_USERP(), $expr.v, $expr_15.v);
   }
   ;
 
