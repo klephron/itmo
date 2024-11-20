@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "codegen/x86_64.h"
 #include "dot/ast.h"
 #include "dot/eir.h"
 #include "eir/ctx.h"
@@ -9,6 +10,7 @@
 #include "hir/ctx.h"
 #include "hir/str.h"
 #include "lexer/lexer.h"
+#include "mir/ctx.h"
 #include "parser/parser.h"
 #include "util/container_util.h"
 #include "util/file.h"
@@ -425,6 +427,34 @@ static int execute(struct args_struct *args) {
       }
     }
   }
+
+  mir     *mir = mir_new();
+  mir_ctx *mir_ctx = mir_ctx_new(mir);
+
+  // stage: build mir
+  if (!error || args->ignore_errors) {
+    mir_ctx_build(mir_ctx, eir);
+    if (list_exception_count_by_level(mir_ctx->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      error = 1;
+    }
+    print_exceptions(args, eir_ctx->exceptions);
+  }
+
+  // stage: emit x86_64 assembly code
+  if (!error || args->ignore_errors) {
+    x86_64 *x86_64 = x86_64_build(mir);
+    char   *data = x86_64_emit(x86_64);
+    // TODO: write to output
+    if (data) {
+      free(data);
+    }
+    x86_64_free(x86_64);
+  }
+
+  // stage: codegen for specific architecture
+  mir_ctx_free(mir_ctx);
+  mir_free(mir);
 
   eir_ctx_free(eir_ctx);
   eir_free(eir);

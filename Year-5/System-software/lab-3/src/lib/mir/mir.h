@@ -1,8 +1,11 @@
 #pragma once
 
+#include "hir/node.h"
+#include "type/type.h"
+
 /*
  * Linearized representation of eir (used mostly for lab purpose)
- * with SSA and some optimizations.
+ * with(out) SSA and some optimizations.
  *
  * Looks like this:
  *
@@ -10,24 +13,25 @@
  * can store type_id, data_size, data_ptr
  *
  * fn main(): ret_type {
- *   ALLOC(_0, ret_type);
- *   ALLOC(_1, unknown);
+ *   VALUE(_0, ret_type);
+ *   VALUE(_1, unknown);
  *   ... other variables
- *   ALLOC(_3: bool);
+ *   VALUE(_3: bool);
  *
- *   // example implementation of ALLOC with ret_type specified as int_64
+ *   // example implementation of VALUE (declaration)
+ *   // with ret_type specified as int_64
  *   sub rsp, 32
  *   mov [rbp - 8], 1      // type_id is 1, e.g., for int
  *   mov [rbp - 16], 8     // data_size is 8 bytes
  *   mov rax, rbp - 32     // Calculate rbp - 32 and store it in rax
- *   mov [rbp - 24], rax   // Store the value of rax (rbp - 32) into memory at [rbp - 24]
+ *   mov [rbp - 24], rax   // Store the value of rax into memory at [rbp - 24]
  *
  *   bb0: {
  *     // can work with dynamic values and constants
  *     STORE(_1, 6_i32);
  *     STORE(_3, EQUALS(_2, _3))
  *
- *     JE(_3, bb1, bb0); // jump if _3 is resolved as True
+ *     JMP(_3, bb1, bb0); // jump if _3 is resolved as True
  *   }
  *
  *   bb1: {
@@ -35,3 +39,154 @@
  *   }
  * }
  */
+
+// GENERIC
+typedef enum mir_node_enum {
+  MIR_NODE_UNKNOWN,
+  MIR_NODE_VALUE,
+  MIR_NODE_LIT,
+  MIR_NODE_BUILTIN,
+  MIR_NODE_CALL,
+  MIR_NODE_SUBROUTINE,
+  MIR_NODE_SUBROUTINE_EXTERNAL,
+} mir_node_enum;
+
+typedef struct mir_node_base_struct {
+  mir_node_enum kind;
+} mir_node_base;
+
+void mir_node_free(mir_node_base *generic);
+
+static inline void container_delete_mir_node(void *data) {
+  return mir_node_free(data);
+}
+LIST_DECLARE_STATIC_INLINE(list_mir_node, mir_node_base, container_cmp_false,
+                           container_new_move, container_delete_mir_node);
+
+// VALUE
+typedef struct mir_value_struct {
+  mir_node_base base;
+  size_t        id;
+  type_base    *type;
+} mir_value;
+
+mir_value *mir_value_new(size_t id, type_base *type);
+void       mir_value_free(mir_value *self);
+
+static inline void container_delete_mir_value(void *data) {
+  return mir_value_free(data);
+}
+LIST_DECLARE_STATIC_INLINE(list_mir_value, mir_value, container_cmp_false,
+                           container_new_move, container_delete_mir_value);
+
+// LIT
+typedef struct mir_lit_struct {
+  mir_node_base base;
+  hir_lit      *lit;
+} mir_lit;
+
+mir_lit *mir_lit_new(hir_lit *lit);
+void     mir_lit_free(mir_lit *self);
+
+// BUILTIN
+typedef enum mir_builtin_enum {
+  MIR_BUILTIN_UNKNOWN,
+  MIR_BUILTIN_STORE,
+} mir_builtin_enum;
+
+typedef struct mir_builtin_struct {
+  mir_node_base    base;
+  mir_builtin_enum kind;
+  list_mir_node   *args;
+} mir_builtin;
+
+mir_builtin *mir_builtin_new(mir_builtin_enum kind, list_mir_node *args);
+void         mir_builtin_free(mir_builtin *self);
+
+// CALL
+typedef struct mir_call_struct {
+  mir_node_base        base;
+  const mir_node_base *sub_ref;
+  list_mir_node       *args;
+} mir_call;
+
+mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_node *args);
+void      mir_call_free(mir_call *self);
+
+// JUMPS (inside basic blocks)
+typedef struct mir_bb_struct mir_bb;
+
+// if value == nil then jmp to jz
+typedef struct mir_jmp_struct {
+  const mir_value *value_ref;
+  const mir_bb    *je_ref;
+  const mir_bb    *jz_ref;
+} mir_jmp;
+
+mir_jmp *mir_jmp_new(const mir_value *value_ref, const mir_bb *je_ref,
+                     const mir_bb *jz_ref);
+void     mir_jmp_free(mir_jmp *self);
+
+// BASIC BLOCK
+// if jmp is nil then return
+typedef struct mir_bb_struct {
+  size_t         id;
+  list_mir_node *stmts;
+  mir_jmp       *jmp;
+} mir_bb;
+
+mir_bb *mir_bb_new(size_t id, list_mir_node *stmts, mir_jmp *jmp);
+void    mir_bb_free(mir_bb *self);
+
+static inline void container_delete_mir_bb(void *data) { mir_bb_free(data); }
+LIST_DECLARE_STATIC_INLINE(list_mir_bb, mir_bb, container_cmp_false,
+                           container_new_move, container_delete_mir_bb);
+
+// SUBROUTINE
+typedef struct mir_subroutine_struct {
+  mir_node_base   base;
+  char           *name;
+  mir_value      *ret; // id=0
+  list_mir_value *args;
+  list_mir_value *values;
+  list_mir_bb    *bbs;
+} mir_subroutine;
+
+mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,
+                                   list_mir_value *args, list_mir_value *values,
+                                   list_mir_bb *bbs);
+void            mir_subroutine_free(mir_subroutine *self);
+
+static inline void container_delete_mir_subroutine(void *data) {
+  mir_subroutine_free(data);
+}
+LIST_DECLARE_STATIC_INLINE(list_mir_subroutine, mir_subroutine,
+                           container_cmp_false, container_new_move,
+                           container_delete_mir_subroutine);
+
+// SUBROUTINE EXTERNAL
+typedef struct mir_subroutine_ext_struct {
+  mir_node_base base;
+  char         *name;
+  type_base    *ret;
+  list_type    *args;
+} mir_subroutine_ext;
+
+mir_subroutine_ext *mir_subroutine_ext_new(char *name, type_base *ret,
+                                           list_type *args);
+void                mir_subroutine_ext_free(mir_subroutine_ext *subroutine);
+
+static inline void container_delete_mir_subroutine_ext(void *data) {
+  mir_subroutine_ext_free(data);
+}
+LIST_DECLARE_STATIC_INLINE(list_mir_subroutine_ext, mir_subroutine_ext,
+                           container_cmp_false, container_new_move,
+                           container_delete_mir_subroutine_ext);
+
+typedef struct mir_struct {
+  list_mir_subroutine_ext *sub_exts;
+  list_mir_subroutine     *subs;
+} mir;
+
+mir *mir_new();
+void mir_free(mir *self);

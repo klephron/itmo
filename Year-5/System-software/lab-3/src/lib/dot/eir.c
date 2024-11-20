@@ -418,9 +418,7 @@ static size_t cfg_traverse(dot_ctx_cfg *ctx, string_buffer *buffer,
   }
 
   dot_block *st;
-  {
-    st = dot_block_new(root);
-  }
+  { st = dot_block_new(root); }
 
   hashset_block_insert(ctx->blocks, st);
 

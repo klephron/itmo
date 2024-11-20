@@ -781,7 +781,7 @@ static void hir_tree_str_expr_call(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "args: ");
+  string_buffer_append(buffer, "args: ");
   hir_tree_str_list_expr(buffer, pad, expr->args);
   string_buffer_appendln(buffer, "");
 
@@ -806,7 +806,7 @@ static void hir_tree_str_expr_index(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "args: ");
+  string_buffer_append(buffer, "args: ");
   hir_tree_str_list_expr(buffer, pad, expr->args);
   string_buffer_appendln(buffer, "");
 
@@ -831,7 +831,7 @@ static void hir_tree_str_expr_builtin(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "");
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "args: ");
+  string_buffer_append(buffer, "args: ");
   hir_tree_str_list_expr(buffer, pad, expr->args);
   string_buffer_appendln(buffer, "");
 
@@ -863,6 +863,7 @@ static void hir_tree_str_stmt(string_buffer *buffer, size_t pad,
                               hir_stmt_base *stmt) {
   if (!stmt) {
     string_buffer_append(buffer, "(nil)");
+    return;
   }
   switch (stmt->kind) {
   case HIR_STMT_IF:
