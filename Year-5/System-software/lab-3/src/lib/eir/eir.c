@@ -263,11 +263,15 @@ eir_block_base *eir_block_get_next(eir_block_base *self) {
 }
 
 // SUBROUTINE
-eir_subroutine *eir_subroutine_new(eir_block_base   *root,
-                                   const hir_symbol *binding) {
+eir_subroutine *eir_subroutine_new(eir_block_base       *root,
+                                   const hir_symbol     *binding,
+                                   const list_hir_param *params_ref,
+                                   const list_hir_var   *vars_ref) {
   eir_subroutine *self = MALLOC(eir_subroutine);
   self->root = root;
   self->binding = binding;
+  self->params_ref = params_ref;
+  self->vars_ref = vars_ref;
   return self;
 }
 

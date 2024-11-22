@@ -54,7 +54,7 @@ typedef enum eir_expr_builtin_enum {
   EIR_EXPR_BUILTIN_UNKNOWN,
   EIR_EXPR_BUILTIN_CAST,
   EIR_EXPR_BUILTIN_NEW,
-  EIR_EXPR_BUILTIN_FREE
+  EIR_EXPR_BUILTIN_FREE,
 } eir_expr_builtin_enum;
 
 typedef struct eir_expr_base_struct {
@@ -184,12 +184,16 @@ void            eir_block_cond_free(eir_block_cond *self);
 
 // SUBROUTINE
 typedef struct eir_subroutine_struct {
-  eir_block_base   *root;
-  const hir_symbol *binding;
+  eir_block_base       *root;
+  const hir_symbol     *binding;
+  const list_hir_param *params_ref;
+  const list_hir_var   *vars_ref;
 } eir_subroutine;
 
-eir_subroutine *eir_subroutine_new(eir_block_base   *root,
-                                   const hir_symbol *binding);
+eir_subroutine *eir_subroutine_new(eir_block_base       *root,
+                                   const hir_symbol     *binding,
+                                   const list_hir_param *params_ref,
+                                   const list_hir_var   *vars_ref);
 void            eir_subroutine_free(eir_subroutine *self);
 
 static inline void container_delete_eir_subroutine(void *data) {

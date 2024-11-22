@@ -60,23 +60,26 @@ void mir_lit_free(mir_lit *self) {
   }
 }
 
-mir_builtin *mir_builtin_new(mir_builtin_enum kind, list_mir_node *args) {
+mir_builtin *mir_builtin_new(mir_builtin_enum kind, list_mir_arg *args,
+                             type_base *spec) {
   mir_builtin *self = MALLOC(mir_builtin);
   mir_node_init(&self->base, MIR_NODE_BUILTIN);
   self->kind = kind;
   self->args = args;
+  self->spec = spec;
   return self;
 }
 
 void mir_builtin_free(mir_builtin *self) {
   if (self) {
-    list_mir_node_free(self->args);
+    list_mir_arg_free(self->args);
+    type_free(self->spec);
     mir_node_deinit(&self->base);
     free(self);
   }
 }
 
-mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_node *args) {
+mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_arg *args) {
   mir_call *self = MALLOC(mir_call);
   mir_node_init(&self->base, MIR_NODE_CALL);
   self->sub_ref = sub_ref;
@@ -87,7 +90,7 @@ mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_node *args) {
 void mir_call_free(mir_call *self) {
   if (self) {
     self->sub_ref = NULL;
-    list_mir_node_free(self->args);
+    list_mir_arg_free(self->args);
     free(self);
   }
 }
@@ -139,10 +142,10 @@ mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,
 void mir_subroutine_free(mir_subroutine *self) {
   if (self) {
     free(self->name);
+    list_mir_bb_free(self->bbs);
     mir_value_free(self->ret);
     list_mir_value_free(self->args);
     list_mir_value_free(self->values);
-    list_mir_bb_free(self->bbs);
     free(self);
   }
 }

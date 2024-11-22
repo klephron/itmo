@@ -11,6 +11,7 @@
 #include "hir/str.h"
 #include "lexer/lexer.h"
 #include "mir/ctx.h"
+#include "mir/str.h"
 #include "parser/parser.h"
 #include "util/container_util.h"
 #include "util/file.h"
@@ -34,6 +35,7 @@ struct args_struct {
   list_chars *cg_subroutines;
   int         hir_symbols;
   int         hir_tree;
+  int         mir_tree;
   // status
   int code;
   int help;
@@ -58,6 +60,8 @@ static struct args_struct *args_new() {
 
   args->hir_symbols = 0;
   args->hir_tree = 0;
+
+  args->mir_tree = 0;
 
   args->code = 0;
   args->help = 0;
@@ -98,10 +102,11 @@ static void usage(struct args_struct *args) {
       "-s <subroutine>  - set or add subroutine for call graph generation"
       "(current: %s)\n"
       "--hir-symbols    - print HIR symbols (current: %d)\n"
-      "--hir-tree       - print HIR tree (current: %d)\n",
+      "--hir-tree       - print HIR tree (current: %d)\n"
+      "--mir-tree       - print MIR tree (current: %d)\n",
       args->prog_name, args->output_dir, args->tee, args->ignore_errors,
       args->ast, args->cfg, args->cfg_add_expr, args->cg, cg_subroutines,
-      args->hir_symbols, args->hir_tree);
+      args->hir_symbols, args->hir_tree, args->mir_tree);
 }
 
 static void parse_args(struct args_struct *args, int argc, char *argv[]) {
@@ -118,6 +123,7 @@ static void parse_args(struct args_struct *args, int argc, char *argv[]) {
       {"cg", no_argument, &args->cg, 1},
       {"hir-symbols", no_argument, &args->hir_symbols, 1},
       {"hir-tree", no_argument, &args->hir_tree, 1},
+      {"mir-tree", no_argument, &args->mir_tree, 1},
   };
   int option_index = 0;
   int has_next = 1;
@@ -439,6 +445,13 @@ static int execute(struct args_struct *args) {
       error = 1;
     }
     print_exceptions(args, eir_ctx->exceptions);
+  }
+
+  // stage: print mir tree
+  if (!error || args->ignore_errors) {
+    char *tree = mir_tree_str(mir);
+    printf("MIR TREE:\n%s\n", tree);
+    free(tree);
   }
 
   // stage: emit x86_64 assembly code

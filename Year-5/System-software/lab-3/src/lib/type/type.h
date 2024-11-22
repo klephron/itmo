@@ -37,6 +37,8 @@ static inline void container_delete_type(void *self) { return type_free(self); }
 LIST_DECLARE_STATIC_INLINE(list_type, type_base, container_cmp_type,
                            container_new_move, container_delete_type);
 
+list_type *list_type_copy(const list_type *in);
+
 typedef struct type_array_struct {
   type_base  base;
   type_base *elem_type;

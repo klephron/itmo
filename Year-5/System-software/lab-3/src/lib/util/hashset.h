@@ -110,9 +110,9 @@ int   hashset_it_next(hashset_it *it);
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline hashset_type##_it                  \
-      hashset_type##_begin(hashset_type *self) {                               \
+      hashset_type##_begin(const hashset_type *self) {                         \
     return (hashset_type##_it){                                                \
-        .it = hashset_begin(&self->hashset),                                   \
+        .it = hashset_begin((hashset *)&self->hashset),                        \
         .get = hashset_type##_it_get,                                          \
         .next = hashset_type##_it_next,                                        \
         .end = hashset_type##_it_end,                                          \

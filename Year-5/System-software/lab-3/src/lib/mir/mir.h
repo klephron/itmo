@@ -79,6 +79,12 @@ static inline void container_delete_mir_value(void *data) {
 LIST_DECLARE_STATIC_INLINE(list_mir_value, mir_value, container_cmp_false,
                            container_new_move, container_delete_mir_value);
 
+// ARGS
+void *container_new_mir_arg(void *);
+void  container_delete_mir_arg(void *);
+LIST_DECLARE_STATIC_INLINE(list_mir_arg, mir_node_base, container_cmp_false,
+                           container_new_mir_arg, container_delete_mir_arg);
+
 // LIT
 typedef struct mir_lit_struct {
   mir_node_base base;
@@ -92,25 +98,52 @@ void     mir_lit_free(mir_lit *self);
 typedef enum mir_builtin_enum {
   MIR_BUILTIN_UNKNOWN,
   MIR_BUILTIN_STORE,
+  MIR_BUILTIN_PLUS,
+  MIR_BUILTIN_MINUS,
+  MIR_BUILTIN_LOGICAL_NOT,
+  MIR_BUILTIN_BITWISE_NOT,
+  MIR_BUILTIN_INC,
+  MIR_BUILTIN_DEC,
+  MIR_BUILTIN_LOAD,
+  MIR_BUILTIN_LOGICAL_OR,
+  MIR_BUILTIN_LOGICAL_AND,
+  MIR_BUILTIN_BITWISE_OR,
+  MIR_BUILTIN_BITWISE_XOR,
+  MIR_BUILTIN_BITWISE_AND,
+  MIR_BUILTIN_EQUALS,
+  MIR_BUILTIN_NOT_EQUALS,
+  MIR_BUILTIN_LESS,
+  MIR_BUILTIN_LESS_EQUALS,
+  MIR_BUILTIN_GREATER,
+  MIR_BUILTIN_GREATER_EQUALS,
+  MIR_BUILTIN_BITWISE_SHIFT_LEFT,
+  MIR_BUILTIN_BITWISE_SHIFT_RIGHT,
+  MIR_BUILTIN_ADD,
+  MIR_BUILTIN_SUB,
+  MIR_BUILTIN_MUL,
+  MIR_BUILTIN_DIV,
+  MIR_BUILTIN_MOD,
 } mir_builtin_enum;
 
 typedef struct mir_builtin_struct {
   mir_node_base    base;
   mir_builtin_enum kind;
-  list_mir_node   *args;
+  list_mir_arg    *args;
+  type_base       *spec;
 } mir_builtin;
 
-mir_builtin *mir_builtin_new(mir_builtin_enum kind, list_mir_node *args);
+mir_builtin *mir_builtin_new(mir_builtin_enum kind, list_mir_arg *args,
+                             type_base *spec);
 void         mir_builtin_free(mir_builtin *self);
 
 // CALL
 typedef struct mir_call_struct {
   mir_node_base        base;
   const mir_node_base *sub_ref;
-  list_mir_node       *args;
+  list_mir_arg        *args;
 } mir_call;
 
-mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_node *args);
+mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_arg *args);
 void      mir_call_free(mir_call *self);
 
 // JUMPS (inside basic blocks)

@@ -603,6 +603,7 @@ static eir_scope *eir_ctx_build_stmt_expr(eir_ctx             *ctx,
 
 static eir_subroutine *eir_ctx_build_subroutine(eir_ctx              *ctx,
                                                 const hir_subroutine *hir_sub) {
+  ctx->block_cnt = 0;
   if (hir_sub->body) {
     ctx->scope_stack = list_eir_scope_new();
     ctx->break_stack = list_eir_block_new();
@@ -630,10 +631,12 @@ static eir_subroutine *eir_ctx_build_subroutine(eir_ctx              *ctx,
     list_eir_block_free(ctx->break_stack);
     list_eir_scope_free(ctx->scope_stack);
 
-    return eir_subroutine_new(scope_begin, hir_sub->binding);
+    return eir_subroutine_new(scope_begin, hir_sub->binding, hir_sub->params,
+                              hir_sub->vars);
   }
 
-  return eir_subroutine_new(NULL, hir_sub->binding);
+  return eir_subroutine_new(NULL, hir_sub->binding, hir_sub->params,
+                            hir_sub->vars);
 }
 
 // 1. copy referencees to global and local symbol tables

@@ -39,6 +39,17 @@ static void hir_tree_str_expr_index(string_buffer *buffer, size_t pad,
 static void hir_tree_str_expr_builtin(string_buffer *buffer, size_t pad,
                                       hir_expr_builtin *expr);
 
+static void string_buffer_append_padding(string_buffer *buffer, size_t size) {
+  for (size_t i = 0; i < size; ++i) {
+    string_buffer_append(buffer, HIR_STR_SPACE);
+  }
+}
+
+static void string_buffer_appendln(string_buffer *buffer, const char *data) {
+  string_buffer_append(buffer, data);
+  string_buffer_append(buffer, "\n");
+}
+
 // EXPRESSION_ENUM
 const char *hir_expr_unary_enum_str(hir_expr_unary_enum type) {
   switch (type) {
@@ -435,17 +446,6 @@ char *hir_list_symbol_str(const list_hir_symbol *symbols) {
 }
 
 // HIR TREE
-static void string_buffer_append_padding(string_buffer *buffer, size_t size) {
-  for (size_t i = 0; i < size; ++i) {
-    string_buffer_append(buffer, HIR_STR_SPACE);
-  }
-}
-
-static void string_buffer_appendln(string_buffer *buffer, const char *data) {
-  string_buffer_append(buffer, data);
-  string_buffer_append(buffer, "\n");
-}
-
 static void hir_tree_str_span(string_buffer *buffer, size_t pad,
                               const span *span) {
   UNUSED(pad);

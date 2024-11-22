@@ -175,6 +175,18 @@ type_base *type_copy(const type_base *self) {
   }
 }
 
+list_type *list_type_copy(const list_type *in) {
+  if (!in) {
+    return NULL;
+  }
+  list_type *nlist = list_type_new();
+  for (list_type_it it = list_type_begin((list_type *)in); !it.end(&it);
+       it.next(&it)) {
+    list_type_push_back(nlist, type_copy(it.get(&it)));
+  }
+  return nlist;
+}
+
 const char *type_base_str(type_base *self) {
   if (self) {
     return type_enum_str(self->type);

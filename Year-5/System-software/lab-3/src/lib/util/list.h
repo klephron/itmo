@@ -128,9 +128,9 @@ int   list_it_end(list_it *it);
     return list_size(&self->list);                                             \
   }                                                                            \
   __attribute__((__unused__)) static inline list_type##_it list_type##_begin(  \
-      list_type *self) {                                                       \
+      const list_type *self) {                                                 \
     return (list_type##_it){                                                   \
-        .it = list_begin(&self->list),                                         \
+        .it = list_begin((list *)&self->list),                                 \
         .get = list_type##_it_get,                                             \
         .next = list_type##_it_next,                                           \
         .end = list_type##_it_end,                                             \
