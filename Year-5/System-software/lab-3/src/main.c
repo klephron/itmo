@@ -446,7 +446,7 @@ static int execute(struct args_struct *args) {
                                       EXCEPTION_LEVEL_ERROR)) {
       error = 1;
     }
-    print_exceptions(args, eir_ctx->exceptions);
+    print_exceptions(args, mir_ctx->exceptions);
   }
 
   // stage: print mir tree

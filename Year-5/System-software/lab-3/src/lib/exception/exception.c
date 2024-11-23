@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "util/colors.h"
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/string_buffer.h"
 
@@ -138,7 +139,12 @@ char *exception_str(const exception *exc) {
     snprintf(buf, STRMAXLEN(buf), "(E%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
+  case EXCEPTION_MIR:
+    snprintf(buf, STRMAXLEN(buf), "(M%d): %s -> %s", exc->subtype, exc_name,
+             exc_message);
+    break;
   default:
+    info("unknown exception type %d", exc->type);
     snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
@@ -199,5 +205,14 @@ const char *exception_subtype_eir_str(exception_subtype_eir type) {
     return "bad break";
   default:
     return "unknown";
+  }
+}
+
+const char *exception_subtype_mir_str(exception_subtype_mir type) {
+  switch (type) {
+  case EXCEPTION_MIR_UNKNOWN:
+    return "null";
+  case EXCEPTION_MIR_NO_RETURN:
+    return "no return";
   }
 }

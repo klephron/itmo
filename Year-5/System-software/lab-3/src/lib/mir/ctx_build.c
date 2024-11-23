@@ -22,6 +22,20 @@ static mir_node_base *mir_ctx_build_expr_store(mir_ctx        *ctx,
   return (mir_node_base *)store_value;
 }
 
+static void mir_ctx_warning_no_return(mir_ctx              *ctx,
+                                      const eir_subroutine *eir_sub) {
+  const span *eirs = eir_sub->binding->decl_span;
+  list_exception_push_back(
+      ctx->exceptions,
+      exception_new_f(EXCEPTION_LEVEL_WARNING, EXCEPTION_MIR,
+                      EXCEPTION_MIR_NO_RETURN, eirs->source, eirs->line_start,
+                      eirs->pos_start,
+                      exception_subtype_mir_str(EXCEPTION_MIR_NO_RETURN),
+                      "return value in %s at %s %zu:%zu %zu:%zu is unitialized",
+                      eir_sub->binding->name, eirs->source, eirs->line_start,
+                      eirs->pos_start, eirs->line_end, eirs->pos_end));
+}
+
 // if ret_value  -> returns mir_value (intermediate)
 // if !ret_value -> returns expression
 static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
@@ -529,6 +543,8 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
     list_mir_arg_push_back(args, ctx->last_stmt);
     mir_builtin *ret_stmt = mir_builtin_new(MIR_BUILTIN_STORE, args, NULL);
     list_mir_node_push_back(ctx->last_bb->stmts, (mir_node_base *)ret_stmt);
+  } else {
+    mir_ctx_warning_no_return(ctx, eir_sub);
   }
 
   hashset_mir_map_value_free(ctx->map_lvalues);
