@@ -130,6 +130,9 @@ run/pdf: build
 		--ast --cfg --cg \
 		--cfg-add-expr --hir-symbols --mir \
 		io/input.txt || true
+	@echo "--------------------ASSEMBLY(io/a.asm)--------------------"
+	@cat io/a.asm
+	@echo "--------------------DOT2PDF(io/)--------------------"
 	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
 
 ### Build tests

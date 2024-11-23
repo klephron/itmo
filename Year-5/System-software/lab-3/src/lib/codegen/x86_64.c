@@ -16,5 +16,5 @@ x86_64 *x86_64_build(mir *mir) {
 
 char *x86_64_emit(x86_64 *self) {
   UNUSED(self);
-  return strdup("assembly code");
+  return strdup("assembly code\n");
 }
