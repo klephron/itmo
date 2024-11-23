@@ -1,5 +1,6 @@
 #include "codegen/x86_64.h"
 #include "util/macro.h"
+#include <string.h>
 
 void x86_64_free(x86_64 *self) {
   if (self) {
@@ -15,5 +16,5 @@ x86_64 *x86_64_build(mir *mir) {
 
 char *x86_64_emit(x86_64 *self) {
   UNUSED(self);
-  return NULL;
+  return strdup("assembly code");
 }

@@ -37,6 +37,13 @@ var
   f, g: array [,] of array [,] of int;
   n;
 begin
+  repeat
+      begin
+        a = 4;
+        break;
+      end;
+    until true;
+
   while (new!<int>(a) == cast!<int>(1) == free!(a)) do begin
     a = 2;
     break;
@@ -48,13 +55,6 @@ begin
         break;
       end;
     while true;
-
-  repeat
-      begin
-        a = 4;
-        break;
-      end;
-    until true;
 
   4 * 10;
 
@@ -71,4 +71,5 @@ begin
     write(a);
     if a == 0 then break;
   end;
+  n;
 end;

@@ -26,6 +26,7 @@ struct args_struct {
   list_chars *input_files;
   // options
   char       *output_dir;
+  char       *output_file;
   int         ignore_errors;
   int         tee;
   int         ast;
@@ -35,7 +36,7 @@ struct args_struct {
   list_chars *cg_subroutines;
   int         hir_symbols;
   int         hir_tree;
-  int         mir_tree;
+  int         mir;
   // status
   int code;
   int help;
@@ -48,6 +49,7 @@ static struct args_struct *args_new() {
   args->input_files = list_chars_new();
 
   args->output_dir = ".";
+  args->output_file = "a.asm";
   args->ignore_errors = 0;
   args->tee = 0;
 
@@ -61,7 +63,7 @@ static struct args_struct *args_new() {
   args->hir_symbols = 0;
   args->hir_tree = 0;
 
-  args->mir_tree = 0;
+  args->mir = 0;
 
   args->code = 0;
   args->help = 0;
@@ -92,7 +94,8 @@ static void usage(struct args_struct *args) {
   printf(
       "Usage: %s [options] <file>...\n"
       "Options:\n"
-      "-o <directory>   - output directory (current: %s)\n"
+      "-d <directory>   - output directory (current: %s)\n"
+      "-o <file>        - main output file (current: %s)\n"
       "--tee            - print to file and to stdout (current: %d)\n"
       "--ignore-errors  - continue execution on errors (current: %d)\n"
       "--ast            - add AST output (current: %d)\n"
@@ -103,10 +106,10 @@ static void usage(struct args_struct *args) {
       "(current: %s)\n"
       "--hir-symbols    - print HIR symbols (current: %d)\n"
       "--hir-tree       - print HIR tree (current: %d)\n"
-      "--mir-tree       - print MIR tree (current: %d)\n",
-      args->prog_name, args->output_dir, args->tee, args->ignore_errors,
-      args->ast, args->cfg, args->cfg_add_expr, args->cg, cg_subroutines,
-      args->hir_symbols, args->hir_tree, args->mir_tree);
+      "--mir            - print MIR tree (current: %d)\n",
+      args->prog_name, args->output_dir, args->output_file, args->tee,
+      args->ignore_errors, args->ast, args->cfg, args->cfg_add_expr, args->cg,
+      cg_subroutines, args->hir_symbols, args->hir_tree, args->mir);
 }
 
 static void parse_args(struct args_struct *args, int argc, char *argv[]) {
@@ -123,7 +126,7 @@ static void parse_args(struct args_struct *args, int argc, char *argv[]) {
       {"cg", no_argument, &args->cg, 1},
       {"hir-symbols", no_argument, &args->hir_symbols, 1},
       {"hir-tree", no_argument, &args->hir_tree, 1},
-      {"mir-tree", no_argument, &args->mir_tree, 1},
+      {"mir", no_argument, &args->mir, 1},
   };
   int option_index = 0;
   int has_next = 1;
@@ -131,7 +134,7 @@ static void parse_args(struct args_struct *args, int argc, char *argv[]) {
   while (has_next) {
     unsigned c;
 
-    c = getopt_long(argc, argv, "o:s:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "o:d:s:h", long_options, &option_index);
 
     switch (c) {
     case EOF:
@@ -142,8 +145,11 @@ static void parse_args(struct args_struct *args, int argc, char *argv[]) {
         break;
       }
       break;
-    case 'o':
+    case 'd':
       args->output_dir = optarg;
+      break;
+    case 'o':
+      args->output_file = optarg;
       break;
     case 's':
       list_chars_push_back(args->cg_subroutines, optarg);
@@ -243,6 +249,20 @@ static void write_dot(struct args_struct *args, const dot_string *dot,
   FILE *output_fd = fopen(output, "wb");
   fwrite(dot->chars, dot->len, 1, output_fd);
   fclose(output_fd);
+}
+
+static void write_asm(struct args_struct *args, const char *data) {
+  if (args->tee) {
+    printf("%s\n", data);
+  }
+  ensure_dir_exist(data);
+  char *output = join_paths(args->output_dir, args->output_file);
+  if (output) {
+    FILE *output_fd = fopen(output, "wb");
+    fwrite(data, strlen(data), 1, output_fd);
+    fclose(output_fd);
+    free(output);
+  }
 }
 
 static inline void container_delete_lexer(void *data) {
@@ -460,8 +480,8 @@ static int execute(struct args_struct *args) {
   if (!error || args->ignore_errors) {
     x86_64 *x86_64 = x86_64_build(mir);
     char   *data = x86_64_emit(x86_64);
-    // TODO: write to output
     if (data) {
+      write_asm(args, data);
       free(data);
     }
     x86_64_free(x86_64);

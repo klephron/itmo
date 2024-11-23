@@ -118,6 +118,7 @@ mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,
   self->args = args;
   self->values = values;
   self->bbs = bbs;
+  self->bb_first = NULL;
   return self;
 }
 

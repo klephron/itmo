@@ -548,6 +548,11 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   }
 
   hashset_mir_map_value_free(ctx->map_lvalues);
+
+  // set first block
+  if (list_mir_bb_size(mir_sub->bbs)) {
+    mir_sub->bb_first = list_mir_bb_front(mir_sub->bbs);
+  }
 }
 
 void mir_ctx_build_all(mir_ctx *ctx, const eir *eir) {

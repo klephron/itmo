@@ -126,9 +126,9 @@ run: build
 
 ### Run main executable and generate dot
 run/pdf: build
-	./build/main --ignore-errors \
+	./build/main -d . -o io/a.asm --ignore-errors \
 		--ast --cfg --cg \
-		--cfg-add-expr --hir-symbols --mir-tree \
+		--cfg-add-expr --hir-symbols --mir \
 		io/input.txt || true
 	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
 

@@ -188,6 +188,7 @@ typedef struct mir_subroutine_struct {
   list_mir_value *args;
   list_mir_value *values;
   list_mir_bb    *bbs;
+  const mir_bb   *bb_first;
 } mir_subroutine;
 
 mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,
