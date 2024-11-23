@@ -478,13 +478,13 @@ static int execute(struct args_struct *args) {
 
   // stage: emit x86_64 assembly code
   if (!error || args->ignore_errors) {
-    x86_64 *x86_64 = x86_64_build(mir);
-    char   *data = x86_64_emit(x86_64);
+    cg_x86_64 *cg_x86_64 = cg_x86_64_build(mir);
+    char      *data = cg_x86_64_emit(cg_x86_64);
     if (data) {
       write_asm(args, data);
       free(data);
     }
-    x86_64_free(x86_64);
+    cg_x86_64_free(cg_x86_64);
   }
 
   // stage: codegen for specific architecture

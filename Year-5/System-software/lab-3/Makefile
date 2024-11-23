@@ -159,6 +159,7 @@ clean:
 clean/out:
 	find io -type f -name "*.dot" -delete
 	find io -type f -name "*.pdf" -delete
+	find io -type f -name "*.asm" -delete
 
 ### Help
 help:
