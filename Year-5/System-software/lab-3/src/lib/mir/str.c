@@ -63,6 +63,18 @@ const char *mir_builtin_enum_str(mir_builtin_enum kind) {
     return "DIV";
   case MIR_BUILTIN_MOD:
     return "MOD";
+  case MIR_BUILTIN_CALL:
+    return "CALL";
+  case MIR_BUILTIN_INDEX:
+    return "INDEX";
+  case MIR_BUILTIN_STORE_INDEX:
+    return "STORE_INDEX";
+  case MIR_BUILTIN_CAST:
+    return "CAST";
+  case MIR_BUILTIN_NEW:
+    return "NEW";
+  case MIR_BUILTIN_FREE:
+    return "FREE";
   default:
     info("unknown kind %d", kind);
     return "UNKNOWN";
@@ -177,34 +189,13 @@ static void mir_tree_str_stmt(string_buffer *buffer, size_t pad,
     }
     string_buffer_append(buffer, ")");
   } break;
-  case MIR_NODE_CALL: {
-    const mir_call *call = (mir_call *)stmt;
-
-    const char *sub_name;
-    switch (call->sub_ref->kind) {
-    case MIR_NODE_SUBROUTINE:
-      sub_name = ((mir_subroutine *)call->sub_ref)->name;
-      break;
-    case MIR_NODE_SUBROUTINE_EXTERNAL:
-      sub_name = ((mir_subroutine_ext *)call->sub_ref)->name;
-      break;
-    default:
-      error("unexpected type %d %p", call->sub_ref->kind, call);
-    }
-
-    string_buffer_append(buffer, sub_name);
-
-    string_buffer_append(buffer, "(");
-    list_mir_arg_it it = list_mir_arg_begin(call->args);
-    if (!it.end(&it)) {
-      mir_tree_str_stmt(buffer, pad, it.get(&it));
-      it.next(&it);
-    }
-    for (; !it.end(&it); it.next(&it)) {
-      string_buffer_append(buffer, ", ");
-      mir_tree_str_stmt(buffer, pad, it.get(&it));
-    }
-    string_buffer_append(buffer, ")");
+  case MIR_NODE_SUBROUTINE: {
+    const mir_subroutine *sub = (mir_subroutine *)stmt;
+    string_buffer_append(buffer, sub->name);
+  } break;
+  case MIR_NODE_SUBROUTINE_EXTERNAL: {
+    const mir_subroutine_ext *sub = (mir_subroutine_ext *)stmt;
+    string_buffer_append(buffer, sub->name);
   } break;
   case MIR_NODE_UNKNOWN:
   default:

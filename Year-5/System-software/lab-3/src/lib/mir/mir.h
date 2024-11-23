@@ -46,7 +46,6 @@ typedef enum mir_node_enum {
   MIR_NODE_VALUE,
   MIR_NODE_LIT,
   MIR_NODE_BUILTIN,
-  MIR_NODE_CALL,
   MIR_NODE_SUBROUTINE,
   MIR_NODE_SUBROUTINE_EXTERNAL,
 } mir_node_enum;
@@ -123,6 +122,12 @@ typedef enum mir_builtin_enum {
   MIR_BUILTIN_MUL,
   MIR_BUILTIN_DIV,
   MIR_BUILTIN_MOD,
+  MIR_BUILTIN_CALL,
+  MIR_BUILTIN_INDEX,
+  MIR_BUILTIN_STORE_INDEX,
+  MIR_BUILTIN_CAST,
+  MIR_BUILTIN_NEW,
+  MIR_BUILTIN_FREE
 } mir_builtin_enum;
 
 typedef struct mir_builtin_struct {
@@ -139,11 +144,11 @@ void         mir_builtin_free(mir_builtin *self);
 // CALL
 typedef struct mir_call_struct {
   mir_node_base        base;
-  const mir_node_base *sub_ref;
+  const mir_node_base *node_ref; // subroutine/subroutine_ext/value_ref
   list_mir_arg        *args;
 } mir_call;
 
-mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_arg *args);
+mir_call *mir_call_new(const mir_node_base *node_ref, list_mir_arg *args);
 void      mir_call_free(mir_call *self);
 
 // JUMPS (inside basic blocks)

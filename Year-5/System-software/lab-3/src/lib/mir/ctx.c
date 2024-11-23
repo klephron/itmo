@@ -56,13 +56,17 @@ void mir_ctx_free(mir_ctx *self) {
 // ARGS
 void *container_new_mir_arg(void *data) { return container_new_move(data); }
 void  container_delete_mir_arg(void *data) {
+   if (!data) {
+     return;
+  }
    mir_node_base *base = data;
    switch (base->kind) {
    case MIR_NODE_VALUE:
+   case MIR_NODE_SUBROUTINE:
+   case MIR_NODE_SUBROUTINE_EXTERNAL:
     (void)data;
     break;
    case MIR_NODE_LIT:
-   case MIR_NODE_CALL:
    case MIR_NODE_BUILTIN:
     mir_node_free(data);
     break;
@@ -71,6 +75,7 @@ void  container_delete_mir_arg(void *data) {
   }
 }
 
+// wraps result in store expression
 static mir_node_base *mir_ctx_build_expr_store(mir_ctx        *ctx,
                                                mir_subroutine *mir_sub,
                                                mir_bb         *mir_bb,
@@ -151,38 +156,61 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
   case EIR_EXPR_BINARY: {
     const eir_expr_binary *binary = (eir_expr_binary *)eir_expr;
 
+    // HANDLE BINARY_STORE
     if (binary->op == EIR_EXPR_BINARY_STORE) {
-      mir_node_base *second_expr =
-          mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->second, 0);
+      mir_node_base *store_second =
+          mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->second, 1);
+
+      const eir_expr_base *first = binary->first;
+      if (!(first->kind == EIR_EXPR_IDENTIFIER ||
+            first->kind == EIR_EXPR_INDEX)) {
+        error("expected identifier or index, got %d %p", first->kind, first);
+        mir_node_free(store_second);
+        return NULL;
+      }
 
       list_mir_arg *store_args = list_mir_arg_new();
 
-      const eir_expr_base *first = binary->first;
-      if (first->kind != EIR_EXPR_IDENTIFIER) {
-        error("expected identifier , got %d %p", first->kind, first);
-        return NULL;
+      mir_node_base *store_first;
+      if (first->kind == EIR_EXPR_IDENTIFIER) {
+        hashset_mir_map_value_it map_id = hashset_mir_map_value_find(
+            ctx->map_lvalues,
+            &(mir_map_value){.hir = ((eir_expr_id *)first)->binding});
+
+        if (map_id.end(&map_id)) {
+          error("unknown identifier %p", first);
+          mir_node_free(store_second);
+          return NULL;
+        }
+
+        store_first = (mir_node_base *)map_id.get(&map_id)->mir;
+      } else {
+        store_first =
+            mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->first, 0);
       }
 
-      hashset_mir_map_value_it map_id = hashset_mir_map_value_find(
-          ctx->map_lvalues,
-          &(mir_map_value){.hir = ((eir_expr_id *)first)->binding});
+      list_mir_arg_push_back(store_args, store_first);
+      list_mir_arg_push_back(store_args, store_second);
 
-      if (map_id.end(&map_id)) {
-        error("unknown identifier %p", first);
-        return NULL;
+      mir_node_base *store =
+          (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, store_args, NULL);
+
+      if (ret_value) {
+        list_mir_node_push_back(mir_bb->stmts, store);
+
+        if (first->kind == EIR_EXPR_IDENTIFIER) {
+          return store_first;
+        } else {
+          return mir_ctx_build_expr_store(
+              ctx, mir_sub, mir_bb,
+              mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->first, 0));
+        }
+      } else {
+        return store;
       }
-
-      const mir_value *store_value = map_id.get(&map_id)->mir;
-      list_mir_arg_push_back(store_args, (mir_node_base *)store_value);
-      list_mir_arg_push_back(store_args, second_expr);
-
-      list_mir_node_push_back(
-          mir_bb->stmts, (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE,
-                                                          store_args, NULL));
-
-      return (mir_node_base *)store_value;
     }
 
+    // HANDLE OTHER
     mir_builtin_enum kind;
     switch (binary->op) {
     case EIR_EXPR_BINARY_LOGICAL_OR:
@@ -282,30 +310,117 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
     return (mir_node_base *)val;
   } break;
   case EIR_EXPR_IDENTIFIER: {
-    const eir_expr_id       *id = (eir_expr_id *)eir_expr;
-    hashset_mir_map_value_it it = hashset_mir_map_value_find(
-        ctx->map_lvalues, &(mir_map_value){.hir = id->binding});
+    const eir_expr_id *id = (eir_expr_id *)eir_expr;
 
-    if (it.end(&it)) {
-      error("can't find id from local index matching %s", id->binding->name);
-      return NULL;
+    // identifier
+    hashset_mir_map_value_it v_it = hashset_mir_map_value_find(
+        ctx->map_lvalues, &(mir_map_value){.hir = id->binding});
+    if (!v_it.end(&v_it)) {
+      const mir_value *val = v_it.get(&v_it)->mir;
+      return (mir_node_base *)val;
     }
 
-    const mir_value *val = it.get(&it)->mir;
+    hashset_mir_map_sub_it s_it = hashset_mir_map_sub_find(
+        ctx->map_subs, &(mir_map_sub){.hir = id->binding});
+    if (!s_it.end(&s_it)) {
+      const mir_node_base *val = s_it.get(&s_it)->mir;
+      return (mir_node_base *)val;
+    }
 
-    return (mir_node_base *)val;
+    error("can't find id from local index matching %s", id->binding->name);
+    return NULL;
+
   } break;
   case EIR_EXPR_CALL: {
     const eir_expr_call *call = (eir_expr_call *)eir_expr;
 
+    list_mir_arg *args = list_mir_arg_new();
+
+    mir_node_base *callee =
+        mir_ctx_build_expr(ctx, mir_sub, mir_bb, call->callee, 1);
+    list_mir_arg_push_back(args, callee);
+
+    for (list_eir_expr_it it = list_eir_expr_begin(call->args); !it.end(&it);
+         it.next(&it)) {
+      const eir_expr_base *eir_arg = it.get(&it);
+      mir_node_base       *mir_arg =
+          mir_ctx_build_expr(ctx, mir_sub, mir_bb, eir_arg, 1);
+      list_mir_arg_push_back(args, mir_arg);
+    }
+
+    mir_builtin *expr = mir_builtin_new(MIR_BUILTIN_CALL, args, NULL);
+
+    if (ret_value) {
+      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
+                                      (mir_node_base *)expr);
+    } else {
+      return (mir_node_base *)expr;
+    }
   } break;
   case EIR_EXPR_INDEX: {
     const eir_expr_index *index = (eir_expr_index *)eir_expr;
+
+    list_mir_arg *args = list_mir_arg_new();
+
+    mir_node_base *indexed =
+        mir_ctx_build_expr(ctx, mir_sub, mir_bb, index->indexed, 1);
+    list_mir_arg_push_back(args, indexed);
+
+    for (list_eir_expr_it it = list_eir_expr_begin(index->args); !it.end(&it);
+         it.next(&it)) {
+      const eir_expr_base *eir_arg = it.get(&it);
+      mir_node_base       *mir_arg =
+          mir_ctx_build_expr(ctx, mir_sub, mir_bb, eir_arg, 1);
+      list_mir_arg_push_back(args, mir_arg);
+    }
+
+    mir_builtin *expr = mir_builtin_new(MIR_BUILTIN_INDEX, args, NULL);
+
+    if (ret_value) {
+      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
+                                      (mir_node_base *)expr);
+    } else {
+      return (mir_node_base *)expr;
+    }
 
   } break;
   case EIR_EXPR_BUILTIN: {
     const eir_expr_builtin *builtin = (eir_expr_builtin *)eir_expr;
 
+    type_base *spec = type_copy(builtin->base.type);
+
+    mir_builtin_enum kind;
+    switch (builtin->kind) {
+    case EIR_EXPR_BUILTIN_CAST:
+      kind = MIR_BUILTIN_CAST;
+      break;
+    case EIR_EXPR_BUILTIN_NEW:
+      kind = MIR_BUILTIN_NEW;
+      break;
+    case EIR_EXPR_BUILTIN_FREE:
+      kind = MIR_BUILTIN_FREE;
+      break;
+    default:
+      error("unknown builtin kind %d %p", builtin->kind, builtin);
+      return NULL;
+    }
+
+    list_mir_arg *args = list_mir_arg_new();
+    for (list_eir_expr_it it = list_eir_expr_begin(builtin->args); !it.end(&it);
+         it.next(&it)) {
+      const eir_expr_base *eir_arg = it.get(&it);
+      mir_node_base       *mir_arg =
+          mir_ctx_build_expr(ctx, mir_sub, mir_bb, eir_arg, 1);
+      list_mir_arg_push_back(args, mir_arg);
+    }
+
+    mir_builtin *expr = mir_builtin_new(kind, args, spec);
+    if (ret_value) {
+      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
+                                      (mir_node_base *)expr);
+    } else {
+      return (mir_node_base *)expr;
+    }
   } break;
   default:
     error("unexpected eir expr type %d %p", eir_expr->kind, eir_expr);

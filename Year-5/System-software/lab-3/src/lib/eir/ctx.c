@@ -145,10 +145,16 @@ static eir_expr_base *eir_ctx_build_expr_unary(eir_ctx              *ctx,
     // force load first arg
     eir_expr_base *first = eir_ctx_build_expr(ctx, unary->first);
     eir_expr_base *first_load = NULL;
-    if (first && first->kind == EIR_EXPR_IDENTIFIER) {
+    eir_expr_base *first_index = NULL;
+
+    if (first && (first->kind == EIR_EXPR_IDENTIFIER)) {
       first_load = (eir_expr_base *)eir_expr_unary_new(
           span_copy(first->span), type_copy(first->type), EIR_EXPR_UNARY_LOAD,
           first);
+    }
+
+    if (first && (first->kind == EIR_EXPR_INDEX)) {
+      first_index = first;
     }
 
     // default implementation (no changes)
@@ -181,7 +187,7 @@ static eir_expr_base *eir_ctx_build_expr_unary(eir_ctx              *ctx,
     switch (unary->op) {
     case HIR_EXPR_UNARY_INC:
     case HIR_EXPR_UNARY_DEC: {
-      if (!first_load) {
+      if (!(first_load || first_index)) {
         eir_error_rvalue_assignment(ctx, first->span);
         eir_expr_free(first);
         return NULL;
@@ -195,7 +201,8 @@ static eir_expr_base *eir_ctx_build_expr_unary(eir_ctx              *ctx,
       }
 
       eir_expr_base *expr_inc_dec = (eir_expr_base *)eir_expr_unary_new(
-          span_copy(u_span), type_copy(u_type), inc_dec, first_load);
+          span_copy(u_span), type_copy(u_type), inc_dec,
+          first_load ? first_load : first_index);
 
       return (eir_expr_base *)eir_expr_binary_new(
           span_copy(u_span), type_copy(u_type), EIR_EXPR_BINARY_STORE,
@@ -304,7 +311,8 @@ static eir_expr_base *eir_ctx_build_expr_binary(eir_ctx               *ctx,
     // rewriting
     switch (binary->op) {
     case HIR_EXPR_BINARY_ASSIGN:
-      if (first && first->kind != EIR_EXPR_IDENTIFIER) {
+      if (first && !(first->kind == EIR_EXPR_IDENTIFIER ||
+                     first->kind == EIR_EXPR_INDEX)) {
         eir_error_rvalue_assignment(ctx, first->span);
         eir_expr_free(second);
         return NULL;

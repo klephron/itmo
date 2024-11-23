@@ -17,8 +17,6 @@ void mir_node_free(mir_node_base *generic) {
       return mir_lit_free((mir_lit *)generic);
     case MIR_NODE_BUILTIN:
       return mir_builtin_free((mir_builtin *)generic);
-    case MIR_NODE_CALL:
-      return mir_call_free((mir_call *)generic);
     case MIR_NODE_SUBROUTINE:
       return mir_subroutine_free((mir_subroutine *)generic);
     case MIR_NODE_SUBROUTINE_EXTERNAL:
@@ -75,22 +73,6 @@ void mir_builtin_free(mir_builtin *self) {
     list_mir_arg_free(self->args);
     type_free(self->spec);
     mir_node_deinit(&self->base);
-    free(self);
-  }
-}
-
-mir_call *mir_call_new(const mir_node_base *sub_ref, list_mir_arg *args) {
-  mir_call *self = MALLOC(mir_call);
-  mir_node_init(&self->base, MIR_NODE_CALL);
-  self->sub_ref = sub_ref;
-  self->args = args;
-  return self;
-}
-
-void mir_call_free(mir_call *self) {
-  if (self) {
-    self->sub_ref = NULL;
-    list_mir_arg_free(self->args);
     free(self);
   }
 }
@@ -171,15 +153,24 @@ void mir_subroutine_ext_free(mir_subroutine_ext *self) {
 
 mir *mir_new() {
   mir *self = MALLOC(mir);
-  self->sub_exts = list_mir_subroutine_ext_new();
   self->subs = list_mir_subroutine_new();
+  self->sub_exts = list_mir_subroutine_ext_new();
   return self;
 }
 
 void mir_free(mir *self) {
   if (self) {
-    list_mir_subroutine_ext_free(self->sub_exts);
+    // delete blocks before, because it can reference globals
+    if (self->subs) {
+      for (list_mir_subroutine_it it = list_mir_subroutine_begin(self->subs);
+           !it.end(&it); it.next(&it)) {
+        mir_subroutine *sub = it.get(&it);
+        list_mir_bb_free(sub->bbs);
+        sub->bbs = NULL;
+      }
+    }
     list_mir_subroutine_free(self->subs);
+    list_mir_subroutine_ext_free(self->sub_exts);
     free(self);
   }
 }
