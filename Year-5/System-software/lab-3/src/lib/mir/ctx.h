@@ -98,4 +98,6 @@ typedef struct mir_ctx_struct {
 
 mir_ctx *mir_ctx_new(mir *mir);
 void     mir_ctx_free(mir_ctx *self);
-void     mir_ctx_build(mir_ctx *self, const eir *eir);
+
+void mir_ctx_build(mir_ctx *self, const eir *eir);
+void mir_ctx_bb_merge(mir_ctx *self);

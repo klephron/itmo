@@ -440,6 +440,8 @@ static int execute(struct args_struct *args) {
   // stage: build mir
   if (!error || args->ignore_errors) {
     mir_ctx_build(mir_ctx, eir);
+    // optimizations
+    mir_ctx_bb_merge(mir_ctx);
     if (list_exception_count_by_level(mir_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
       error = 1;
