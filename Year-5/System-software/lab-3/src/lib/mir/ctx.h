@@ -94,6 +94,8 @@ typedef struct mir_ctx_struct {
   hashset_mir_map_sub   *map_subs;
   hashset_mir_map_value *map_lvalues;
   hashset_mir_map_bb    *map_bbs;
+  mir_node_base         *last_stmt; // topological last
+  mir_bb                *last_bb;
 } mir_ctx;
 
 mir_ctx *mir_ctx_new(mir *mir);

@@ -381,10 +381,26 @@ static mir_bb *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
   case EIR_BLOCK_NEXT: {
     eir_block_next *eir_next = (eir_block_next *)eir_bb;
 
-    mir_node_base *expr =
+    mir_node_base *mir_stmt =
         mir_ctx_build_expr(ctx, mir_sub, bb, eir_next->expr, 0);
-    if (expr) {
-      list_mir_node_push_back(bb->stmts, expr);
+
+    int topo_last = 0;
+
+    if (mir_stmt) {
+      if (mir_stmt->kind != MIR_NODE_VALUE) {
+        list_mir_node_push_back(bb->stmts, mir_stmt);
+      } else if (!eir_next->next) {
+        topo_last = 1;
+      } else {
+        hashset_mir_map_bb_it next_it = hashset_mir_map_bb_find(
+            ctx->map_bbs, &(mir_map_bb){.hir = eir_next->next});
+        topo_last = next_it.end(&next_it);
+      }
+    }
+
+    if (topo_last) {
+      ctx->last_stmt = mir_stmt;
+      ctx->last_bb = bb;
     }
 
     mir_bb *bb_next = mir_ctx_build_stmt(ctx, mir_sub, eir_next->next);
@@ -502,8 +518,18 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   }
 
   ctx->map_bbs = hashset_mir_map_bb_new();
+  ctx->last_stmt = NULL;
+  ctx->last_bb = NULL;
   mir_ctx_build_stmt(ctx, mir_sub, eir_sub->root);
   hashset_mir_map_bb_free(ctx->map_bbs);
+
+  if (ctx->last_stmt && ctx->last_bb) {
+    list_mir_arg *args = list_mir_arg_new();
+    list_mir_arg_push_back(args, (mir_node_base *)mir_sub->ret);
+    list_mir_arg_push_back(args, ctx->last_stmt);
+    mir_builtin *ret_stmt = mir_builtin_new(MIR_BUILTIN_STORE, args, NULL);
+    list_mir_node_push_back(ctx->last_bb->stmts, (mir_node_base *)ret_stmt);
+  }
 
   hashset_mir_map_value_free(ctx->map_lvalues);
 }
