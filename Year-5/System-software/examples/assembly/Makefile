@@ -2,12 +2,13 @@ AS=as
 LD=ld
 
 BUILD_DIR=build
-TGTS=exit
+TGTS=max
+AS_FLAGS=--64 -g
 
 all: run
 
 run: link
-	./build/exit
+	./$(BUILD_DIR)/$(TGTS)
 
 build: $(patsubst %,$(BUILD_DIR)/%.o, $(TGTS))
 
@@ -19,7 +20,7 @@ clean:
 define make-objects
 
 $$(BUILD_DIR)/$(1).o: $(1).s
-	$$(AS) $$< -o $$@
+	$$(AS) $$(AS_FLAGS) $$< -o $$@
 
 $$(BUILD_DIR)/$(1): $$(BUILD_DIR)/$(1).o
 	$$(LD) $$< -o $$@
