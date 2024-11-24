@@ -1,12 +1,12 @@
 .section .data
   data_items:
-    .quad 300000000005,67,34,222,45,75,54,34,44,33,22,11,66,0
+    .quad 240,67,34,222,45,75,54,34,44,33,22,11,66,0
 
 .section .text
 .globl _start
 
 _start:
-  movq (0), %rdi # move 0 into the index register
+  movq $0, %rdi # move 0 into the index register
   movq data_items(,%rdi,8), %rax # load the first byte of data
   movq %rax, %rbx # since this is the first item, %eax is the biggest
 
