@@ -214,5 +214,7 @@ const char *exception_subtype_mir_str(exception_subtype_mir type) {
     return "null";
   case EXCEPTION_MIR_NO_RETURN:
     return "no return";
+  default:
+    return "unknown";
   }
 }
