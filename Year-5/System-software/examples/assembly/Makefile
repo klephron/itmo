@@ -5,9 +5,9 @@ LD_FLAGS=-g -z noexecstack
 
 BUILD_DIR=build
 
-TGTS.LIBC=hello_world
+TGTS.LIBC=hello_world malloc
 TGTS.ASM=exit max
-TGTS.MAIN=hello_world
+TGTS.MAIN=malloc
 
 
 all: run
@@ -24,6 +24,10 @@ clean:
 
 dir:
 	mkdir -p $(BUILD_DIR)
+
+objdump: $(BUILD_DIR)/$(TGTS.MAIN).o
+	objdump -Mx86-64,att,amd64 -tr $<
+	objdump -Mx86-64,att,amd64 -S $<
 
 
 define make-objects
