@@ -1,6 +1,75 @@
-// single line comment
-/*
-multiline comment */
-method /* this is it */ malloc(n: int):int;
+method malloc(n: int):int;
 method read():void;
 method write():void;
+
+method fun4():
+begin
+end;
+
+method fun3():
+begin
+  main();
+end;
+
+method fun2():
+begin
+  fun1();
+  fun3();
+end;
+
+method fun1():
+begin
+  fun1();
+  fun2();
+  fun3();
+end;
+
+method main(n: int): long
+var
+begin
+  fun1();
+end;
+
+method main3():
+var
+  a, b, c, d : int;
+  e;
+  f, g: array [,] of array [,] of int;
+  n;
+begin
+  repeat
+      begin
+        a = 4;
+        break;
+      end;
+    until true;
+
+  while (new!<int>(a) == cast!<int>(1)) do begin
+    a = 2;
+    break;
+  end;
+
+  repeat
+      begin
+        a = 4;
+        break;
+      end;
+    while true;
+
+  4 * 10;
+
+  b = (++a * 10);
+  -(--d);
+  e = d;
+
+  main(a, b)()(d);
+  main[a,b][][d];
+
+  ++n;
+  while (--n) do begin
+    a = read();
+    write(a);
+    if a == 0 then break;
+  end;
+  n;
+end;

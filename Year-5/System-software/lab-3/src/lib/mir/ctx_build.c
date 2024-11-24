@@ -392,8 +392,9 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
   case EIR_BLOCK_NEXT: {
     eir_block_next *eir_next = (eir_block_next *)eir_bb;
 
+    // NOTE: return value so it actually can be dropped
     mir_node_base *mir_stmt =
-        mir_ctx_build_stmt(ctx, mir_sub, bb, eir_next->expr, 0);
+        mir_ctx_build_stmt(ctx, mir_sub, bb, eir_next->expr, 1);
 
     int is_last_stmt = 0;
 
@@ -543,17 +544,6 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   hashset_mir_map_bb_free(ctx->map_bbs);
   hashset_mir_map_value_free(ctx->map_lvalues);
 
-  // assign return value
-  if (ctx->stmt_last && ctx->bb_last) {
-    list_mir_arg *args = list_mir_arg_new();
-    list_mir_arg_push_back(args, (mir_node_base *)mir_sub->ret);
-    list_mir_arg_push_back(args, ctx->stmt_last);
-    mir_builtin *ret_stmt = mir_builtin_new(MIR_BUILTIN_STORE, args, NULL);
-    list_mir_node_push_back(ctx->bb_last->stmts, (mir_node_base *)ret_stmt);
-  } else {
-    mir_ctx_warning_no_return(ctx, eir_sub);
-  }
-
   // set first block
   if (list_mir_bb_size(mir_sub->bbs)) {
     mir_sub->bb_first_ref = list_mir_bb_front(mir_sub->bbs);
@@ -576,7 +566,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   while (!list_mir_value_empty(value_stack)) {
     mir_value *first = list_mir_value_pop_front(value_stack);
     mir_lit   *second = mir_lit_new(
-        hir_lit_new(NULL, type_base_new(NULL, TYPE_VOID), (hir_lit_u){}));
+          hir_lit_new(NULL, type_base_new(NULL, TYPE_VOID), (hir_lit_u){}));
 
     list_mir_arg *args = list_mir_arg_new();
     list_mir_arg_push_back(args, (mir_node_base *)first);
@@ -606,11 +596,22 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
     mir_value *first = it.get(&it);
 
     list_mir_arg *args = list_mir_arg_new();
-    list_mir_arg_push_back(args, (mir_node_base *)first);
+    list_mir_arg_push_front(args, (mir_node_base *)first);
 
     list_mir_node_push_front(
         ctx->bb_last->stmts,
         (mir_node_base *)mir_builtin_new(MIR_BUILTIN_DROP, args, NULL));
+  }
+
+  // assign return value
+  if (ctx->stmt_last && ctx->bb_last) {
+    list_mir_arg *args = list_mir_arg_new();
+    list_mir_arg_push_back(args, (mir_node_base *)mir_sub->ret);
+    list_mir_arg_push_back(args, ctx->stmt_last);
+    mir_builtin *ret_stmt = mir_builtin_new(MIR_BUILTIN_STORE, args, NULL);
+    list_mir_node_push_front(ctx->bb_last->stmts, (mir_node_base *)ret_stmt);
+  } else {
+    mir_ctx_warning_no_return(ctx, eir_sub);
   }
 }
 
