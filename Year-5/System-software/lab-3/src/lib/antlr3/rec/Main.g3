@@ -225,9 +225,10 @@ DEC: DIGIT+ ;
 CHAR: '\'' ('\\' . | ~('\\'|'\'')) '\'' ;
 STR: ('"') ('\\' . | ~('\\'|'"'))* ('"') ;
 
+SL_COMMENT: '//' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;};
+ML_COMMENT: '/*' ( options {greedy=false;} : . )* '*/' {$channel=HIDDEN;};
 NEWLINE:'\r'? '\n' { $channel = HIDDEN; };
 WSS: WS+ { $channel = HIDDEN; };
-
 
 fragment TRUE: 'true';
 fragment FALSE: 'false';
