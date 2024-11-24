@@ -255,8 +255,8 @@ static void write_asm(struct args_struct *args, const char *data) {
   if (args->tee) {
     printf("%s\n", data);
   }
-  ensure_dir_exist(data);
   char *output = join_paths(args->output_dir, args->output_file);
+  ensure_dir_exist(output);
   if (output) {
     FILE *output_fd = fopen(output, "wb");
     fwrite(data, strlen(data), 1, output_fd);

@@ -446,19 +446,6 @@ hir_expr_builtin *hir_build_expr_builtin_new(hir_ctx          *ctx,
   return hir_expr_builtin_new(span, type, HIR_EXPR_BUILTIN_NEW, args);
 }
 
-hir_expr_builtin *hir_build_expr_builtin_free(hir_ctx          *ctx,
-                                              ANTLR3_BASE_TREE *node,
-                                              hir_expr_base    *expr) {
-  span *node_span = hir_span_new(node, ctx->ast_stream);
-  span *span = hir_span_new_range(node_span, expr->base.span);
-  span_free(node_span);
-
-  list_hir_expr *args = list_hir_expr_new();
-  list_hir_expr_push_back(args, expr);
-
-  return hir_expr_builtin_new(span, NULL, HIR_EXPR_BUILTIN_FREE, args);
-}
-
 // STATEMENTS
 hir_stmt_if *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                hir_expr_base *cond, hir_stmt_base *je,

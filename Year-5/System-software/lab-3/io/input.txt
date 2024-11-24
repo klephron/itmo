@@ -44,7 +44,7 @@ begin
       end;
     until true;
 
-  while (new!<int>(a) == cast!<int>(1) == free!(a)) do begin
+  while (new!<int>(a) == cast!<int>(1)) do begin
     a = 2;
     break;
   end;

@@ -340,9 +340,6 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
     case EIR_EXPR_BUILTIN_NEW:
       kind = MIR_BUILTIN_NEW;
       break;
-    case EIR_EXPR_BUILTIN_FREE:
-      kind = MIR_BUILTIN_FREE;
-      break;
     default:
       error("unknown builtin kind %d %p", builtin->kind, builtin);
       return NULL;

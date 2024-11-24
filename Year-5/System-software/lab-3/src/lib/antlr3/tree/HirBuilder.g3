@@ -185,7 +185,6 @@ expr returns [ hir_expr_base *v ]
 expr_builtin returns [ hir_expr_builtin *v ]
   : ^(BUILTIN_CAST t=type_ref e=expr) { $v = hir_build_expr_builtin_cast(ANTLR3_USERP(), $BUILTIN_CAST, $t.v, $e.v); }
   | ^(BUILTIN_NEW t=type_ref e15=expr_15) { $v = hir_build_expr_builtin_new(ANTLR3_USERP(), $BUILTIN_NEW, $t.v, $e15.v); }
-  | ^(BUILTIN_FREE e=expr) { $v = hir_build_expr_builtin_free(ANTLR3_USERP(), $BUILTIN_FREE, $e.v); }
   ;
 
 expr_15 returns [ list_hir_expr *v ]

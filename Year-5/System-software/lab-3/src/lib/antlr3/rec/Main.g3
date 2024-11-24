@@ -28,7 +28,6 @@ tokens {
   TYPE;
   BUILTIN_CAST;
   BUILTIN_NEW;
-  BUILTIN_FREE;
 }
 
 @headers{
@@ -205,7 +204,6 @@ expr_literal
 expr_builtin
   : c='cast!' '<' type_ref '>' '(' expr ')' -> ^(BUILTIN_CAST[$c, "BUILTIN_CAST"] type_ref expr)
   | c='new!' '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN_NEW[$c, "BUILTIN_NEW"] type_ref ^(ARGS expr_15))
-  | c='free!' '(' expr ')' -> ^(BUILTIN_FREE[$c, "BUILTIN_FREE"] expr)
   ;
 
 // TERMINALS

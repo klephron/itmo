@@ -398,9 +398,6 @@ eir_ctx_build_expr_builtin(eir_ctx *ctx, const hir_expr_builtin *builtin) {
     case HIR_EXPR_BUILTIN_NEW:
       kind = EIR_EXPR_BUILTIN_NEW;
       break;
-    case HIR_EXPR_BUILTIN_FREE:
-      kind = EIR_EXPR_BUILTIN_FREE;
-      break;
     default:
       error("unknown builtin kind %d %p", builtin->kind, builtin);
       kind = EIR_EXPR_BUILTIN_UNKNOWN;

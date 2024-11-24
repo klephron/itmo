@@ -67,8 +67,6 @@ const char *mir_builtin_enum_str(mir_builtin_enum kind) {
     return "CALL";
   case MIR_BUILTIN_INDEX:
     return "INDEX";
-  case MIR_BUILTIN_STORE_INDEX:
-    return "STORE_INDEX";
   case MIR_BUILTIN_CAST:
     return "CAST";
   case MIR_BUILTIN_NEW:

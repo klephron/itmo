@@ -58,9 +58,6 @@ hir_expr_builtin *hir_build_expr_builtin_new(hir_ctx          *ctx,
                                              ANTLR3_BASE_TREE *node,
                                              type_base        *type,
                                              list_hir_expr    *expr);
-hir_expr_builtin *hir_build_expr_builtin_free(hir_ctx          *ctx,
-                                              ANTLR3_BASE_TREE *node,
-                                              hir_expr_base    *expr);
 
 hir_stmt_if    *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                   hir_expr_base *cond, hir_stmt_base *je,

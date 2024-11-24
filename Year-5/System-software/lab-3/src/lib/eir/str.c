@@ -76,8 +76,6 @@ const char *eir_expr_builtin_enum_str(eir_expr_builtin_enum type) {
     return "CAST";
   case EIR_EXPR_BUILTIN_NEW:
     return "NEW";
-  case EIR_EXPR_BUILTIN_FREE:
-    return "FREE";
   default:
     return "UNKNOWN";
   }

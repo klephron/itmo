@@ -54,7 +54,6 @@ typedef enum eir_expr_builtin_enum {
   EIR_EXPR_BUILTIN_UNKNOWN,
   EIR_EXPR_BUILTIN_CAST,
   EIR_EXPR_BUILTIN_NEW,
-  EIR_EXPR_BUILTIN_FREE,
 } eir_expr_builtin_enum;
 
 typedef struct eir_expr_base_struct {
