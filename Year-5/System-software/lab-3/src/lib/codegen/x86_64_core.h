@@ -16,7 +16,7 @@ typedef enum cg_x86_64_type_enum {
   CG_X86_64_TYPE_ARRAY,
 } cg_x86_64_type_enum;
 
-typedef struct cg_x86_64_type_struct   cg_x86_64_type;
+typedef struct cg_x86_64_type_struct cg_x86_64_type;
 typedef struct __attribute__((packed)) cg_x86_64_type_struct {
   cg_x86_64_type_enum type;
   cg_x86_64_type     *next;
@@ -39,6 +39,7 @@ void __cg_x86_64_drop(cg_x86_64_value *ref);
 
 // external function call should be done natively
 cg_x86_64_value __cg_x86_64_value_int(int32_t value);
+cg_x86_64_value __cg_x86_64_value_string(const char *value);
 
 cg_x86_64_value __cg_x86_64_plus(cg_x86_64_value *lsv);
 cg_x86_64_value __cg_x86_64_minus(cg_x86_64_value *lsv);

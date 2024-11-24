@@ -59,6 +59,14 @@ cg_x86_64_value __cg_x86_64_value_int(int32_t value) {
   return (cg_x86_64_value){.data = data};
 }
 
+cg_x86_64_value __cg_x86_64_value_string(const char *value) {
+  size_t          l = strlen(value);
+  cg_x86_64_data *data =
+      data_new(l + 1, (cg_x86_64_type){.type = CG_X86_64_TYPE_STRING});
+  memcpy(data->data, value, l + 1);
+  return (cg_x86_64_value){.data = data};
+}
+
 cg_x86_64_value __cg_x86_64_plus(cg_x86_64_value *lsv);
 cg_x86_64_value __cg_x86_64_minus(cg_x86_64_value *lsv);
 cg_x86_64_value __cg_x86_64_logical_not(cg_x86_64_value *lsv);
@@ -146,11 +154,11 @@ cg_x86_64_value __cg_x86_64_add(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
     char           *l = lsv_data->data;
     char           *r = rsv_data->data;
     cg_x86_64_data *data =
-        data_new(lsv_data->data_size + rsv_data->data_size + 1,
+        data_new(lsv_data->data_size + rsv_data->data_size - 1,
                  (cg_x86_64_type){.type = CG_X86_64_TYPE_STRING});
-    memcpy(data->data, l, lsv_data->data_size);
-    memcpy(data->data + lsv_data->data_size, r, rsv_data->data_size);
-    data->data[lsv_data->data_size + rsv_data->data_size] = '\0';
+    memcpy(data->data, l, lsv_data->data_size - 1);
+    memcpy(data->data + lsv_data->data_size - 1, r, rsv_data->data_size - 1);
+    data->data[lsv_data->data_size + rsv_data->data_size - 2] = '\0';
     return (cg_x86_64_value){.data = data};
   } break;
   case CG_X86_64_TYPE_BOOL:
