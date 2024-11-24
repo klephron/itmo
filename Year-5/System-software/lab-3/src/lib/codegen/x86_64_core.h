@@ -38,13 +38,21 @@ void __cg_x86_64_init(cg_x86_64_value *ref);
 void __cg_x86_64_drop(cg_x86_64_value *ref);
 
 // external function call should be done natively
+cg_x86_64_value __cg_x86_64_value_bool(int8_t value);
+cg_x86_64_value __cg_x86_64_value_byte(uint8_t value);
 cg_x86_64_value __cg_x86_64_value_int(int32_t value);
+cg_x86_64_value __cg_x86_64_value_uint(uint32_t value);
+cg_x86_64_value __cg_x86_64_value_long(int64_t value);
+cg_x86_64_value __cg_x86_64_value_ulong(uint64_t value);
+cg_x86_64_value __cg_x86_64_value_char(char value);
 cg_x86_64_value __cg_x86_64_value_string(const char *value);
+// ... - array sizes
+cg_x86_64_value __cg_x86_64_value_array(cg_x86_64_type *type, size_t dims, ...);
 
 cg_x86_64_value __cg_x86_64_plus(cg_x86_64_value *lsv);
 cg_x86_64_value __cg_x86_64_minus(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_logical_not(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_bitwise_not(cg_x86_64_value *lsv);
+cg_x86_64_value __cg_x86_64_not(cg_x86_64_value *lsv);
+cg_x86_64_value __cg_x86_64_bit_not(cg_x86_64_value *lsv);
 cg_x86_64_value __cg_x86_64_inc(cg_x86_64_value *lsv);
 cg_x86_64_value __cg_x86_64_dec(cg_x86_64_value *lsv);
 
@@ -67,3 +75,4 @@ cg_x86_64_value __cg_x86_64_mod(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
 
 cg_x86_64_value __cg_x86_64_index(cg_x86_64_value *lsv, size_t size, ...);
 cg_x86_64_value __cg_x86_64_cast(cg_x86_64_value *lsv, cg_x86_64_type_enum);
+cg_x86_64_value __cg_x86_64_assign(cg_x86_64_value *lsv);

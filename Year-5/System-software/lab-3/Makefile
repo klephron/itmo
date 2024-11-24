@@ -142,6 +142,10 @@ build/test: $(TGTS.TST)
 test: build/test
 	@for file in $(TGTS.TST); do "./$$file"; done;
 
+### Build core
+core/x86_64:
+	$(CC) -m64 -g -O0 -c -o $(BUILD_DIR)/x86_64_core.o $(LIB_DIR)/codegen/x86_64_core.c
+
 ### Format
 format:
 	@$(FORMAT) $(SRCS.LIB) $(HDRS.LIB) $(SRCS.TST)

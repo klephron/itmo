@@ -7,8 +7,12 @@ size: .quad 64
 .extern free
 .extern example_func
 .extern example2_func
+.extern __cg_x86_64_value_bool
+.extern __cg_x86_64_drop
 
 main:
+
+
   call example_func
   call example2_func
 

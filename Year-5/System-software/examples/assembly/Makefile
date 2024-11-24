@@ -7,11 +7,12 @@ CC_FLAGS=-m64 -g
 
 BUILD_DIR=build
 
-TGTS.CLIBS=example example2
-TGTS.LIBC=hello_world malloc
+TGTS.CLIBS=example example2 x86_64_core
+TGTS.LIBC=hello_world malloc lab
+#
 TGTS.ASM=exit max
 
-TGTS.MAIN=malloc
+TGTS.MAIN=lab
 
 
 all: run
