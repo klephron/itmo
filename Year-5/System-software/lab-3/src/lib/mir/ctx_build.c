@@ -3,25 +3,6 @@
 #include "util/log.h"
 #include <string.h>
 
-// wraps result in store expression
-static mir_node_base *mir_ctx_build_expr_store(mir_ctx        *ctx,
-                                               mir_subroutine *mir_sub,
-                                               mir_bb         *mir_bb,
-                                               mir_node_base  *mir_expr) {
-  mir_value *store_value = mir_value_new(ctx->value_cnt++, NULL);
-  list_mir_value_push_back(mir_sub->values, store_value);
-
-  list_mir_arg *store_args = list_mir_arg_new();
-  list_mir_arg_push_back(store_args, (mir_node_base *)store_value);
-  list_mir_arg_push_back(store_args, (mir_node_base *)mir_expr);
-
-  list_mir_node_push_back(
-      mir_bb->stmts,
-      (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, store_args, NULL));
-
-  return (mir_node_base *)store_value;
-}
-
 static void mir_ctx_warning_no_return(mir_ctx              *ctx,
                                       const eir_subroutine *eir_sub) {
   const span *eirs = eir_sub->binding->decl_span;
@@ -36,9 +17,28 @@ static void mir_ctx_warning_no_return(mir_ctx              *ctx,
                       eirs->pos_start, eirs->line_end, eirs->pos_end));
 }
 
+// wraps result in store expression
+static mir_node_base *mir_ctx_build_expr_store(mir_ctx        *ctx,
+                                               mir_subroutine *mir_sub,
+                                               mir_bb         *mir_bb,
+                                               mir_node_base  *mir_expr) {
+  mir_value *store_value = mir_value_new(ctx->value_cnt++, NULL);
+  list_mir_value_push_back(mir_sub->tmps, store_value);
+
+  list_mir_arg *store_args = list_mir_arg_new();
+  list_mir_arg_push_back(store_args, (mir_node_base *)store_value);
+  list_mir_arg_push_back(store_args, (mir_node_base *)mir_expr);
+
+  list_mir_node_push_back(
+      mir_bb->stmts,
+      (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, store_args, NULL));
+
+  return (mir_node_base *)store_value;
+}
+
 // if ret_value  -> returns mir_value (intermediate)
 // if !ret_value -> returns expression
-static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
+static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
                                          mir_bb              *mir_bb,
                                          const eir_expr_base *eir_expr,
                                          int                  ret_value) {
@@ -51,7 +51,7 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
     const eir_expr_unary *unary = (eir_expr_unary *)eir_expr;
 
     mir_node_base *first =
-        mir_ctx_build_expr(ctx, mir_sub, mir_bb, unary->first, 1);
+        mir_ctx_build_stmt(ctx, mir_sub, mir_bb, unary->first, 1);
 
     if (unary->op == EIR_EXPR_UNARY_LOAD) {
       return first;
@@ -86,13 +86,13 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
     list_mir_arg *args = list_mir_arg_new();
     list_mir_arg_push_back(args, (mir_node_base *)first);
 
-    mir_builtin *expr = mir_builtin_new(kind, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(kind, args, NULL);
 
     if (ret_value) {
       return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)expr);
+                                      (mir_node_base *)stmt);
     } else {
-      return (mir_node_base *)expr;
+      return (mir_node_base *)stmt;
     }
 
   } break;
@@ -102,7 +102,7 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
     // HANDLE BINARY_STORE
     if (binary->op == EIR_EXPR_BINARY_STORE) {
       mir_node_base *store_second =
-          mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->second, 1);
+          mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->second, 1);
 
       const eir_expr_base *first = binary->first;
       if (!(first->kind == EIR_EXPR_IDENTIFIER ||
@@ -129,7 +129,7 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
         store_first = (mir_node_base *)map_id.get(&map_id)->mir;
       } else {
         store_first =
-            mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->first, 0);
+            mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->first, 0);
       }
 
       list_mir_arg_push_back(store_args, store_first);
@@ -146,7 +146,7 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
         } else {
           return mir_ctx_build_expr_store(
               ctx, mir_sub, mir_bb,
-              mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->first, 0));
+              mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->first, 0));
         }
       } else {
         return store;
@@ -222,26 +222,26 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
 
     list_mir_arg *args = list_mir_arg_new();
     mir_value    *args_first =
-        (mir_value *)mir_ctx_build_expr(ctx, mir_sub, mir_bb, binary->first, 1);
+        (mir_value *)mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->first, 1);
     list_mir_arg_push_back(args, (mir_node_base *)args_first);
-    mir_value *args_second = (mir_value *)mir_ctx_build_expr(
+    mir_value *args_second = (mir_value *)mir_ctx_build_stmt(
         ctx, mir_sub, mir_bb, binary->second, 1);
     list_mir_arg_push_back(args, (mir_node_base *)args_second);
 
-    mir_builtin *expr = mir_builtin_new(kind, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(kind, args, NULL);
 
     if (ret_value) {
       return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)expr);
+                                      (mir_node_base *)stmt);
     } else {
-      return (mir_node_base *)expr;
+      return (mir_node_base *)stmt;
     }
 
   } break;
   case EIR_EXPR_LITERAL: {
     const eir_expr_lit *lit = (eir_expr_lit *)eir_expr;
     mir_value *val = mir_value_new(ctx->value_cnt++, type_copy(lit->lit->type));
-    list_mir_value_push_back(mir_sub->values, val);
+    list_mir_value_push_back(mir_sub->tmps, val);
 
     list_mir_arg *args = list_mir_arg_new();
     list_mir_arg_push_back(args, (mir_node_base *)val);
@@ -280,24 +280,24 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
     list_mir_arg *args = list_mir_arg_new();
 
     mir_node_base *callee =
-        mir_ctx_build_expr(ctx, mir_sub, mir_bb, call->callee, 1);
+        mir_ctx_build_stmt(ctx, mir_sub, mir_bb, call->callee, 1);
     list_mir_arg_push_back(args, callee);
 
     for (list_eir_expr_it it = list_eir_expr_begin(call->args); !it.end(&it);
          it.next(&it)) {
       const eir_expr_base *eir_arg = it.get(&it);
       mir_node_base       *mir_arg =
-          mir_ctx_build_expr(ctx, mir_sub, mir_bb, eir_arg, 1);
+          mir_ctx_build_stmt(ctx, mir_sub, mir_bb, eir_arg, 1);
       list_mir_arg_push_back(args, mir_arg);
     }
 
-    mir_builtin *expr = mir_builtin_new(MIR_BUILTIN_CALL, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(MIR_BUILTIN_CALL, args, NULL);
 
     if (ret_value) {
       return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)expr);
+                                      (mir_node_base *)stmt);
     } else {
-      return (mir_node_base *)expr;
+      return (mir_node_base *)stmt;
     }
   } break;
   case EIR_EXPR_INDEX: {
@@ -306,24 +306,24 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
     list_mir_arg *args = list_mir_arg_new();
 
     mir_node_base *indexed =
-        mir_ctx_build_expr(ctx, mir_sub, mir_bb, index->indexed, 1);
+        mir_ctx_build_stmt(ctx, mir_sub, mir_bb, index->indexed, 1);
     list_mir_arg_push_back(args, indexed);
 
     for (list_eir_expr_it it = list_eir_expr_begin(index->args); !it.end(&it);
          it.next(&it)) {
       const eir_expr_base *eir_arg = it.get(&it);
       mir_node_base       *mir_arg =
-          mir_ctx_build_expr(ctx, mir_sub, mir_bb, eir_arg, 1);
+          mir_ctx_build_stmt(ctx, mir_sub, mir_bb, eir_arg, 1);
       list_mir_arg_push_back(args, mir_arg);
     }
 
-    mir_builtin *expr = mir_builtin_new(MIR_BUILTIN_INDEX, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(MIR_BUILTIN_INDEX, args, NULL);
 
     if (ret_value) {
       return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)expr);
+                                      (mir_node_base *)stmt);
     } else {
-      return (mir_node_base *)expr;
+      return (mir_node_base *)stmt;
     }
 
   } break;
@@ -350,16 +350,16 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
          it.next(&it)) {
       const eir_expr_base *eir_arg = it.get(&it);
       mir_node_base       *mir_arg =
-          mir_ctx_build_expr(ctx, mir_sub, mir_bb, eir_arg, 1);
+          mir_ctx_build_stmt(ctx, mir_sub, mir_bb, eir_arg, 1);
       list_mir_arg_push_back(args, mir_arg);
     }
 
-    mir_builtin *expr = mir_builtin_new(kind, args, spec);
+    mir_builtin *stmt = mir_builtin_new(kind, args, spec);
     if (ret_value) {
       return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)expr);
+                                      (mir_node_base *)stmt);
     } else {
-      return (mir_node_base *)expr;
+      return (mir_node_base *)stmt;
     }
   } break;
   default:
@@ -370,7 +370,7 @@ static mir_node_base *mir_ctx_build_expr(mir_ctx *ctx, mir_subroutine *mir_sub,
   return NULL;
 }
 
-static mir_bb *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
+static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
                                   const eir_block_base *eir_bb) {
   if (!eir_bb) {
     return NULL;
@@ -393,40 +393,42 @@ static mir_bb *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
     eir_block_next *eir_next = (eir_block_next *)eir_bb;
 
     mir_node_base *mir_stmt =
-        mir_ctx_build_expr(ctx, mir_sub, bb, eir_next->expr, 0);
+        mir_ctx_build_stmt(ctx, mir_sub, bb, eir_next->expr, 0);
 
-    int topo_last = 0;
+    int is_last_stmt = 0;
 
     if (mir_stmt) {
       if (mir_stmt->kind != MIR_NODE_VALUE) {
         list_mir_node_push_back(bb->stmts, mir_stmt);
       } else if (!eir_next->next) {
-        topo_last = 1;
+        is_last_stmt = 1;
       } else {
         hashset_mir_map_bb_it next_it = hashset_mir_map_bb_find(
             ctx->map_bbs, &(mir_map_bb){.hir = eir_next->next});
-        topo_last = next_it.end(&next_it);
+        is_last_stmt = next_it.end(&next_it);
       }
     }
 
-    if (topo_last) {
-      ctx->last_stmt = mir_stmt;
-      ctx->last_bb = bb;
+    if (is_last_stmt) {
+      ctx->stmt_last = mir_stmt;
     }
 
-    mir_bb *bb_next = mir_ctx_build_stmt(ctx, mir_sub, eir_next->next);
+    mir_bb *bb_next = mir_ctx_build_body(ctx, mir_sub, eir_next->next);
 
     if (bb_next) {
       bb->jmp = mir_jmp_new(NULL, NULL, bb_next);
+    } else {
+      bb->jmp = NULL;
+      ctx->bb_last = bb;
     }
   } break;
   case EIR_BLOCK_COND: {
     eir_block_cond *eir_cond = (eir_block_cond *)eir_bb;
 
     mir_value *value =
-        (mir_value *)mir_ctx_build_expr(ctx, mir_sub, bb, eir_cond->cond, 1);
-    mir_bb *bb_je = mir_ctx_build_stmt(ctx, mir_sub, eir_cond->je);
-    mir_bb *bb_jz = mir_ctx_build_stmt(ctx, mir_sub, eir_cond->jz);
+        (mir_value *)mir_ctx_build_stmt(ctx, mir_sub, bb, eir_cond->cond, 1);
+    mir_bb *bb_je = mir_ctx_build_body(ctx, mir_sub, eir_cond->je);
+    mir_bb *bb_jz = mir_ctx_build_body(ctx, mir_sub, eir_cond->jz);
 
     if (bb_jz || bb_je) {
       bb->jmp = mir_jmp_new(value, bb_je, bb_jz);
@@ -468,9 +470,9 @@ static void mir_ctx_build_subroutine_before(mir_ctx              *ctx,
         ctx->map_subs,
         mir_map_sub_new(eir_sub->binding, (mir_node_base *)mir_sub));
   } else {
-    mir_subroutine *mir_sub =
-        mir_subroutine_new(mir_name, NULL, list_mir_value_new(),
-                           list_mir_value_new(), list_mir_bb_new());
+    mir_subroutine *mir_sub = mir_subroutine_new(
+        mir_name, NULL, list_mir_value_new(), list_mir_value_new(),
+        list_mir_value_new(), list_mir_bb_new());
 
     list_mir_subroutine_push_back(ctx->mir->subs, mir_sub);
 
@@ -499,6 +501,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   ctx->map_lvalues = hashset_mir_map_value_new();
   ctx->value_cnt = 0;
 
+  // return
   const type_callable *eir_type = (type_callable *)eir_sub->binding->type;
 
   type_base *mir_ret_type = type_copy(eir_type->ret_type);
@@ -508,6 +511,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   mir_value *mir_ret = mir_value_new(ctx->value_cnt++, mir_ret_type);
   mir_sub->ret = mir_ret;
 
+  // params
   for (list_hir_param_it it = list_hir_param_begin(eir_sub->params_ref);
        !it.end(&it); it.next(&it)) {
     hir_param *param = it.get(&it);
@@ -518,37 +522,95 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
                                  mir_map_value_new(param->binding, value));
   }
 
+  // vars
   for (list_hir_var_it it = list_hir_var_begin(eir_sub->vars_ref); !it.end(&it);
        it.next(&it)) {
     hir_var   *var = it.get(&it);
     mir_value *value = mir_value_new(ctx->value_cnt++, type_copy(var->type));
-    list_mir_value_push_back(mir_sub->values, value);
+    list_mir_value_push_back(mir_sub->vars, value);
     // add to local var index
     hashset_mir_map_value_insert(ctx->map_lvalues,
                                  mir_map_value_new(var->binding, value));
   }
 
+  // blocks
   ctx->map_bbs = hashset_mir_map_bb_new();
-  ctx->last_stmt = NULL;
-  ctx->last_bb = NULL;
-  mir_ctx_build_stmt(ctx, mir_sub, eir_sub->root);
-  hashset_mir_map_bb_free(ctx->map_bbs);
+  ctx->stmt_last = NULL;
+  ctx->bb_last = NULL;
 
-  if (ctx->last_stmt && ctx->last_bb) {
+  mir_ctx_build_body(ctx, mir_sub, eir_sub->root);
+
+  hashset_mir_map_bb_free(ctx->map_bbs);
+  hashset_mir_map_value_free(ctx->map_lvalues);
+
+  // assign return value
+  if (ctx->stmt_last && ctx->bb_last) {
     list_mir_arg *args = list_mir_arg_new();
     list_mir_arg_push_back(args, (mir_node_base *)mir_sub->ret);
-    list_mir_arg_push_back(args, ctx->last_stmt);
+    list_mir_arg_push_back(args, ctx->stmt_last);
     mir_builtin *ret_stmt = mir_builtin_new(MIR_BUILTIN_STORE, args, NULL);
-    list_mir_node_push_back(ctx->last_bb->stmts, (mir_node_base *)ret_stmt);
+    list_mir_node_push_back(ctx->bb_last->stmts, (mir_node_base *)ret_stmt);
   } else {
     mir_ctx_warning_no_return(ctx, eir_sub);
   }
 
-  hashset_mir_map_value_free(ctx->map_lvalues);
-
   // set first block
   if (list_mir_bb_size(mir_sub->bbs)) {
-    mir_sub->bb_first = list_mir_bb_front(mir_sub->bbs);
+    mir_sub->bb_first_ref = list_mir_bb_front(mir_sub->bbs);
+  }
+
+  // init vars and tmps with ()
+  list_mir_value *value_stack = list_mir_value_new();
+
+  for (list_mir_value_it it = list_mir_value_begin(mir_sub->vars); !it.end(&it);
+       it.next(&it)) {
+    mir_value *first = it.get(&it);
+    list_mir_value_push_front(value_stack, first);
+  }
+  for (list_mir_value_it it = list_mir_value_begin(mir_sub->tmps); !it.end(&it);
+       it.next(&it)) {
+    mir_value *first = it.get(&it);
+    list_mir_value_push_front(value_stack, first);
+  }
+
+  while (!list_mir_value_empty(value_stack)) {
+    mir_value *first = list_mir_value_pop_front(value_stack);
+    mir_lit   *second = mir_lit_new(
+        hir_lit_new(NULL, type_base_new(NULL, TYPE_VOID), (hir_lit_u){}));
+
+    list_mir_arg *args = list_mir_arg_new();
+    list_mir_arg_push_back(args, (mir_node_base *)first);
+    list_mir_arg_push_back(args, (mir_node_base *)second);
+
+    list_mir_node_push_front(
+        mir_sub->bb_first_ref->stmts,
+        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, args, NULL));
+  }
+
+  list_mir_value_free(value_stack);
+
+  // cleanup vars and tmps
+  for (list_mir_value_it it = list_mir_value_begin(mir_sub->vars); !it.end(&it);
+       it.next(&it)) {
+    mir_value *first = it.get(&it);
+
+    list_mir_arg *args = list_mir_arg_new();
+    list_mir_arg_push_back(args, (mir_node_base *)first);
+
+    list_mir_node_push_front(
+        ctx->bb_last->stmts,
+        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_DROP, args, NULL));
+  }
+  for (list_mir_value_it it = list_mir_value_begin(mir_sub->tmps); !it.end(&it);
+       it.next(&it)) {
+    mir_value *first = it.get(&it);
+
+    list_mir_arg *args = list_mir_arg_new();
+    list_mir_arg_push_back(args, (mir_node_base *)first);
+
+    list_mir_node_push_front(
+        ctx->bb_last->stmts,
+        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_DROP, args, NULL));
   }
 }
 

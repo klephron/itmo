@@ -206,7 +206,7 @@ char *hir_lit_value_str(const hir_lit *lit) {
     }
   } break;
   case TYPE_VOID:
-    return strdup("(nothing)");
+    return strdup("()");
   case TYPE_ARRAY:
   case TYPE_CUSTOM:
   case TYPE_CALLABLE:

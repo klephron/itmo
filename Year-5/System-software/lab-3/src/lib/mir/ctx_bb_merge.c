@@ -1,7 +1,6 @@
 #include "ctx_bb_merge.h"
 #include "util/hashset.h"
 #include "util/list.h"
-#include "util/log.h"
 #include "util/macro.h"
 
 LIST_DECLARE_STATIC_INLINE(list_mir_bb_ref, mir_bb, container_cmp_false,
@@ -82,7 +81,7 @@ static mir_bb_preds *mir_ctx_bb_get_preds(mir_ctx              *ctx,
 }
 
 // returns next block that can be merged
-static const mir_bb *mir_ctx_bb_can_merge_next(const mir_bb *b) {
+static mir_bb *mir_ctx_bb_can_merge_next(mir_bb *b) {
   if (!b->jmp) { // if last
     return NULL;
   }
@@ -92,10 +91,8 @@ static const mir_bb *mir_ctx_bb_can_merge_next(const mir_bb *b) {
   return b->jmp->jz_ref;
 }
 
-const mir_bb *mir_ctx_bb_merge_block(mir_ctx              *ctx,
-                                     hashset_mir_bb_preds *hs_preds,
-                                     hashset_mir_bb       *hs_deleted,
-                                     const mir_bb         *bb) {
+mir_bb *mir_ctx_bb_merge_block(mir_ctx *ctx, hashset_mir_bb_preds *hs_preds,
+                               hashset_mir_bb *hs_deleted, mir_bb *bb) {
   UNUSED(ctx);
 
   if (!bb) {
@@ -104,7 +101,7 @@ const mir_bb *mir_ctx_bb_merge_block(mir_ctx              *ctx,
 
   // debug("merging... %zu", bb->id);
 
-  const mir_bb *next_bb = mir_ctx_bb_can_merge_next(bb);
+  mir_bb *next_bb = mir_ctx_bb_can_merge_next(bb);
   if (!next_bb) {
     return NULL;
   }
@@ -140,16 +137,14 @@ const mir_bb *mir_ctx_bb_merge_block(mir_ctx              *ctx,
   }
 
   // merge stmt_list to another block
-  size_t         bb_stmt_size = list_mir_node_size(bb->stmts);
   list_mir_node *rev_stmt = list_mir_node_new();
 
-  while (bb_stmt_size--) {
+  while (!list_mir_node_empty(bb->stmts)) {
     mir_node_base *stmt = list_mir_node_pop_front(bb->stmts);
     list_mir_node_push_front(rev_stmt, stmt);
   }
 
-  bb_stmt_size = list_mir_node_size(rev_stmt);
-  while (bb_stmt_size--) {
+  while (!list_mir_node_empty(rev_stmt)) {
     mir_node_base *stmt = list_mir_node_pop_front(rev_stmt);
     list_mir_node_push_front(next_bb->stmts, stmt);
   }
@@ -183,19 +178,17 @@ void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
   //   }
   // }
 
-  size_t       bbs_size = list_mir_bb_size(sub->bbs);
   list_mir_bb *new_bbs = list_mir_bb_new();
 
   // NOTE: bb_first may be redundant (need to check)
-  while (bbs_size--) {
-    mir_bb       *bb = list_mir_bb_pop_front(sub->bbs);
-    const mir_bb *next_bb =
-        mir_ctx_bb_merge_block(ctx, hs_preds, hs_deleted, bb);
+  while (!list_mir_bb_empty(sub->bbs)) {
+    mir_bb *bb = list_mir_bb_pop_front(sub->bbs);
+    mir_bb *next_bb = mir_ctx_bb_merge_block(ctx, hs_preds, hs_deleted, bb);
     if (next_bb) {
       hashset_mir_bb_insert(hs_deleted, bb);
       mir_bb_free(bb);
-      if (bb != next_bb && bb == sub->bb_first) {
-        sub->bb_first = next_bb;
+      if (bb != next_bb && bb == sub->bb_first_ref) {
+        sub->bb_first_ref = (mir_bb *)next_bb;
       }
     } else {
       list_mir_bb_push_back(new_bbs, bb);

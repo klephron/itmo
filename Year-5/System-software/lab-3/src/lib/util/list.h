@@ -32,6 +32,7 @@ void    list_push_front(list *self, void *data);
 void   *list_pop_front(list *self);
 void   *list_front(list *self);
 void   *list_back(list *self);
+int     list_empty(list *self);
 list_it list_find(const list *self, const void *data);
 void    list_insert(list *self, list_it it, void *data);
 size_t  list_size(const list *self);
@@ -106,6 +107,11 @@ int   list_it_end(list_it *it);
   __attribute__((__unused__)) static inline type *list_type##_back(            \
       list_type *self) {                                                       \
     return (type *)list_back(&self->list);                                     \
+  }                                                                            \
+                                                                               \
+  __attribute__((__unused__)) static inline int list_type##_empty(             \
+      list_type *self) {                                                       \
+    return list_empty(&self->list);                                            \
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline list_type##_it list_type##_find(   \

@@ -71,8 +71,8 @@ const char *mir_builtin_enum_str(mir_builtin_enum kind) {
     return "CAST";
   case MIR_BUILTIN_NEW:
     return "NEW";
-  case MIR_BUILTIN_FREE:
-    return "FREE";
+  case MIR_BUILTIN_DROP:
+    return "DROP";
   default:
     info("unknown kind %d", kind);
     return "UNKNOWN";
@@ -299,17 +299,24 @@ static void mir_tree_str_subroutine(string_buffer *buffer, size_t pad,
     string_buffer_appendln(buffer, "\t// args");
   }
 
-  for (list_mir_value_it it = list_mir_value_begin(sub->values); !it.end(&it);
+  for (list_mir_value_it it = list_mir_value_begin(sub->vars); !it.end(&it);
        it.next(&it)) {
     string_buffer_append_padding(buffer, pad);
     mir_tree_str_value(buffer, pad, it.get(&it));
-    string_buffer_appendln(buffer, "\t// values");
+    string_buffer_appendln(buffer, "\t// vars");
+  }
+
+  for (list_mir_value_it it = list_mir_value_begin(sub->tmps); !it.end(&it);
+       it.next(&it)) {
+    string_buffer_append_padding(buffer, pad);
+    mir_tree_str_value(buffer, pad, it.get(&it));
+    string_buffer_appendln(buffer, "\t// tmps");
   }
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "// first bb: ");
-  if (sub->bb_first) {
-    snprintf(buf, STRMAXLEN(buf), "bb%zu", sub->bb_first->id);
+  if (sub->bb_first_ref) {
+    snprintf(buf, STRMAXLEN(buf), "bb%zu", sub->bb_first_ref->id);
   } else {
     snprintf(buf, STRMAXLEN(buf), "(nil)");
   }

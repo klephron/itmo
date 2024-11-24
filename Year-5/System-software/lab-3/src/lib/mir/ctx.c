@@ -58,21 +58,21 @@ void mir_ctx_free(mir_ctx *self) {
 // ARGS
 void *container_new_mir_arg(void *data) { return container_new_move(data); }
 void  container_delete_mir_arg(void *data) {
-   if (!data) {
-     return;
+  if (!data) {
+    return;
   }
-   mir_node_base *base = data;
-   switch (base->kind) {
-   case MIR_NODE_VALUE:
-   case MIR_NODE_SUBROUTINE:
-   case MIR_NODE_SUBROUTINE_EXTERNAL:
+  mir_node_base *base = data;
+  switch (base->kind) {
+  case MIR_NODE_VALUE:
+  case MIR_NODE_SUBROUTINE:
+  case MIR_NODE_SUBROUTINE_EXTERNAL:
     (void)data;
     break;
-   case MIR_NODE_LIT:
-   case MIR_NODE_BUILTIN:
+  case MIR_NODE_LIT:
+  case MIR_NODE_BUILTIN:
     mir_node_free(data);
     break;
-   default:
+  default:
     error("unexpected node type %d %p", base->kind, base);
   }
 }

@@ -126,7 +126,7 @@ typedef enum mir_builtin_enum {
   MIR_BUILTIN_INDEX,
   MIR_BUILTIN_CAST,
   MIR_BUILTIN_NEW,
-  MIR_BUILTIN_FREE
+  MIR_BUILTIN_DROP
 } mir_builtin_enum;
 
 typedef struct mir_builtin_struct {
@@ -142,12 +142,12 @@ void         mir_builtin_free(mir_builtin *self);
 
 // CALL
 typedef struct mir_call_struct {
-  mir_node_base        base;
-  const mir_node_base *node_ref; // subroutine/subroutine_ext/value_ref
-  list_mir_arg        *args;
+  mir_node_base  base;
+  mir_node_base *node_ref; // subroutine/subroutine_ext/value_ref
+  list_mir_arg  *args;
 } mir_call;
 
-mir_call *mir_call_new(const mir_node_base *node_ref, list_mir_arg *args);
+mir_call *mir_call_new(mir_node_base *node_ref, list_mir_arg *args);
 void      mir_call_free(mir_call *self);
 
 // JUMPS (inside basic blocks)
@@ -155,13 +155,12 @@ typedef struct mir_bb_struct mir_bb;
 
 // if value == nil then jmp to jz
 typedef struct mir_jmp_struct {
-  const mir_value *value_ref;
-  const mir_bb    *je_ref;
-  const mir_bb    *jz_ref;
+  mir_value *value_ref;
+  mir_bb    *je_ref;
+  mir_bb    *jz_ref;
 } mir_jmp;
 
-mir_jmp *mir_jmp_new(const mir_value *value_ref, const mir_bb *je_ref,
-                     const mir_bb *jz_ref);
+mir_jmp *mir_jmp_new(mir_value *value_ref, mir_bb *je_ref, mir_bb *jz_ref);
 void     mir_jmp_free(mir_jmp *self);
 
 // BASIC BLOCK
@@ -185,14 +184,15 @@ typedef struct mir_subroutine_struct {
   char           *name;
   mir_value      *ret; // id=0
   list_mir_value *args;
-  list_mir_value *values;
+  list_mir_value *vars;
+  list_mir_value *tmps;
   list_mir_bb    *bbs;
-  const mir_bb   *bb_first;
+  mir_bb         *bb_first_ref;
 } mir_subroutine;
 
 mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,
-                                   list_mir_value *args, list_mir_value *values,
-                                   list_mir_bb *bbs);
+                                   list_mir_value *args, list_mir_value *vars,
+                                   list_mir_value *tmps, list_mir_bb *bbs);
 void            mir_subroutine_free(mir_subroutine *self);
 
 static inline void container_delete_mir_subroutine(void *data) {

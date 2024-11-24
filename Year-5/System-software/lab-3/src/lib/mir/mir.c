@@ -77,8 +77,7 @@ void mir_builtin_free(mir_builtin *self) {
   }
 }
 
-mir_jmp *mir_jmp_new(const mir_value *value_ref, const mir_bb *je_ref,
-                     const mir_bb *jz_ref) {
+mir_jmp *mir_jmp_new(mir_value *value_ref, mir_bb *je_ref, mir_bb *jz_ref) {
   mir_jmp *self = MALLOC(mir_jmp);
   self->value_ref = value_ref;
   self->je_ref = je_ref;
@@ -109,16 +108,17 @@ void mir_bb_free(mir_bb *self) {
 }
 
 mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,
-                                   list_mir_value *args, list_mir_value *values,
-                                   list_mir_bb *bbs) {
+                                   list_mir_value *args, list_mir_value *vars,
+                                   list_mir_value *tmps, list_mir_bb *bbs) {
   mir_subroutine *self = MALLOC(mir_subroutine);
   mir_node_init(&self->base, MIR_NODE_SUBROUTINE);
   self->name = name;
   self->ret = ret;
   self->args = args;
-  self->values = values;
+  self->vars = vars;
+  self->tmps = tmps;
   self->bbs = bbs;
-  self->bb_first = NULL;
+  self->bb_first_ref = NULL;
   return self;
 }
 
@@ -128,7 +128,8 @@ void mir_subroutine_free(mir_subroutine *self) {
     list_mir_bb_free(self->bbs);
     mir_value_free(self->ret);
     list_mir_value_free(self->args);
-    list_mir_value_free(self->values);
+    list_mir_value_free(self->vars);
+    list_mir_value_free(self->tmps);
     free(self);
   }
 }
