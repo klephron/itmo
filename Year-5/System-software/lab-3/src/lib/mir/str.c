@@ -25,8 +25,6 @@ const char *mir_builtin_enum_str(mir_builtin_enum kind) {
     return "INC";
   case MIR_BUILTIN_DEC:
     return "DEC";
-  case MIR_BUILTIN_LOAD:
-    return "LOAD";
   case MIR_BUILTIN_LOGICAL_OR:
     return "LOGICAL_OR";
   case MIR_BUILTIN_LOGICAL_AND:
