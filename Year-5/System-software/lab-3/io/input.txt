@@ -61,6 +61,7 @@ begin
   b = (++a * 10);
   -(--d);
   e = d;
+  a[4] = 5;
 
   main(a, b)()(d);
   main[a,b][][d];
