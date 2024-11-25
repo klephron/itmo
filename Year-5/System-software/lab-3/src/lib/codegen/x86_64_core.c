@@ -92,7 +92,7 @@ static int cg_types_equals(cg_x86_64_type *lsv, cg_x86_64_type *rsv) {
   return 1;
 }
 
-static void cg_type_str(cg_x86_64_type *type_ptr) {
+__attribute__((unused)) static void cg_type_str(cg_x86_64_type *type_ptr) {
   if (type_ptr) {
     printf("subtype: %d", type_ptr->kind);
     if (type_ptr->next) {
@@ -214,10 +214,10 @@ CG_X86_64_VALUE_DIRECT(int, int32_t, CG_X86_64_TYPE_INT);
 CG_X86_64_VALUE_DIRECT(uint, uint32_t, CG_X86_64_TYPE_UINT);
 CG_X86_64_VALUE_DIRECT(long, int64_t, CG_X86_64_TYPE_LONG);
 CG_X86_64_VALUE_DIRECT(ulong, uint64_t, CG_X86_64_TYPE_ULONG);
-CG_X86_64_VALUE_DIRECT(char, char, CG_X86_64_TYPE_CHAR);
+CG_X86_64_VALUE_DIRECT(char, uint8_t, CG_X86_64_TYPE_CHAR);
 
-cg_x86_64_value __cg_x86_64_value_string(const char *value) {
-  size_t          l = strlen(value);
+cg_x86_64_value __cg_x86_64_value_string(const uint8_t *value) {
+  size_t          l = strlen((char *)value);
   cg_x86_64_data *data =
       cg_data_new(l + 1, (cg_x86_64_type){.kind = CG_X86_64_TYPE_STRING});
   memcpy(data->raw, value, l + 1);
@@ -289,30 +289,259 @@ error:
 }
 
 // UNARY
-cg_x86_64_value __cg_x86_64_plus(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_minus(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_not(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_bit_not(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_inc(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_dec(cg_x86_64_value *lsv);
+cg_x86_64_value __cg_x86_64_plus(cg_x86_64_value *lsv) {
+  if (!lsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+  cg_x86_64_data *data = lsv->data;
+  switch (data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_byte(+l);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *data->raw;
+    return __cg_x86_64_value_int(+l);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *data->raw;
+    return __cg_x86_64_value_uint(+l);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *data->raw;
+    return __cg_x86_64_value_long(+l);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *data->raw;
+    return __cg_x86_64_value_ulong(+l);
+  } break;
+  case CG_X86_64_TYPE_CHAR:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_minus(cg_x86_64_value *lsv) {
+  if (!lsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+  cg_x86_64_data *data = lsv->data;
+  switch (data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_byte(-l);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *data->raw;
+    return __cg_x86_64_value_int(-l);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *data->raw;
+    return __cg_x86_64_value_uint(-l);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *data->raw;
+    return __cg_x86_64_value_long(-l);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *data->raw;
+    return __cg_x86_64_value_ulong(-l);
+  } break;
+  case CG_X86_64_TYPE_CHAR:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_not(cg_x86_64_value *lsv) {
+  if (!lsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+  cg_x86_64_data *data = lsv->data;
+  switch (data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_byte(!l);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *data->raw;
+    return __cg_x86_64_value_int(!l);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *data->raw;
+    return __cg_x86_64_value_uint(!l);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *data->raw;
+    return __cg_x86_64_value_long(!l);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *data->raw;
+    return __cg_x86_64_value_ulong(!l);
+  } break;
+  case CG_X86_64_TYPE_BOOL: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_bool(!l);
+  } break;
+  case CG_X86_64_TYPE_CHAR:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_bit_not(cg_x86_64_value *lsv) {
+  if (!lsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+  cg_x86_64_data *data = lsv->data;
+  switch (data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_byte(~l);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *data->raw;
+    return __cg_x86_64_value_int(~l);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *data->raw;
+    return __cg_x86_64_value_uint(~l);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *data->raw;
+    return __cg_x86_64_value_long(~l);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *data->raw;
+    return __cg_x86_64_value_ulong(~l);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_char(~l);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  case CG_X86_64_TYPE_BOOL:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_inc(cg_x86_64_value *lsv) {
+  if (!lsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+  cg_x86_64_data *data = lsv->data;
+  switch (data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_byte(l + 1);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *data->raw;
+    return __cg_x86_64_value_int(l + 1);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *data->raw;
+    return __cg_x86_64_value_uint(l + 1);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *data->raw;
+    return __cg_x86_64_value_long(l + 1);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *data->raw;
+    return __cg_x86_64_value_ulong(l + 1);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_char(l + 1);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  case CG_X86_64_TYPE_BOOL:
+  default:
+    printf("error: type implementation undefined\n");
+    return __cg_x86_64_value_void();
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_dec(cg_x86_64_value *lsv) {
+  if (!lsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+  cg_x86_64_data *data = lsv->data;
+  switch (data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_byte(l - 1);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *data->raw;
+    return __cg_x86_64_value_int(l - 1);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *data->raw;
+    return __cg_x86_64_value_uint(l - 1);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *data->raw;
+    return __cg_x86_64_value_long(l - 1);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *data->raw;
+    return __cg_x86_64_value_ulong(l - 1);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *data->raw;
+    return __cg_x86_64_value_char(l - 1);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  case CG_X86_64_TYPE_BOOL:
+  default:
+    printf("error: type implementation undefined\n");
+    return __cg_x86_64_value_void();
+  }
+error:
+  return __cg_x86_64_value_void();
+}
 
 // BINARY
-cg_x86_64_value __cg_x86_64_or(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_and(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_or(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_xor(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_and(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_eq(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_neq(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_less(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_less_eq(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_shl(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_shr(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-
-cg_x86_64_value __cg_x86_64_add(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+cg_x86_64_value __cg_x86_64_or(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
   if (!lsv->data || !rsv->data) {
     printf("error: any variable empty\n");
-    return __cg_x86_64_value_void();
+    goto error;
   }
 
   cg_x86_64_data *lsv_data, *rsv_data;
@@ -321,61 +550,703 @@ cg_x86_64_value __cg_x86_64_add(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
 
   if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
     printf("error: types mismatch\n");
-    return __cg_x86_64_value_void();
+    goto error;
   }
 
   switch (lsv_data->type.kind) {
   case CG_X86_64_TYPE_BYTE: {
-    uint8_t         l = *lsv_data->raw;
-    uint8_t         r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(uint8_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_BYTE});
-    *data->raw = l + r;
-    return (cg_x86_64_value){.data = data};
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l || r);
   } break;
   case CG_X86_64_TYPE_INT: {
-    int32_t         l = *lsv_data->raw;
-    int32_t         r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(int32_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_INT});
-    *data->raw = l + r;
-    return (cg_x86_64_value){.data = data};
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l || r);
   } break;
   case CG_X86_64_TYPE_UINT: {
-    uint32_t        l = *lsv_data->raw;
-    uint32_t        r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(uint32_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_UINT});
-    *data->raw = l + r;
-    return (cg_x86_64_value){.data = data};
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l || r);
   } break;
   case CG_X86_64_TYPE_LONG: {
-    int64_t         l = *lsv_data->raw;
-    int64_t         r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(int64_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_LONG});
-    *data->raw = l + r;
-    return (cg_x86_64_value){.data = data};
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l || r);
   } break;
   case CG_X86_64_TYPE_ULONG: {
-    uint64_t        l = *lsv_data->raw;
-    uint64_t        r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(uint64_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_ULONG});
-    *data->raw = l + r;
-    return (cg_x86_64_value){.data = data};
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l || r);
   } break;
   case CG_X86_64_TYPE_CHAR: {
-    char            l = *lsv_data->raw;
-    char            r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(char), (cg_x86_64_type){.kind = CG_X86_64_TYPE_CHAR});
-    *data->raw = l + r;
-    return (cg_x86_64_value){.data = data};
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l || r);
+  } break;
+  case CG_X86_64_TYPE_BOOL: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l || r);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_and(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l && r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l && r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l && r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l && r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l && r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l && r);
+  } break;
+  case CG_X86_64_TYPE_BOOL: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l && r);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_bit_or(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l | r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l | r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l | r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l | r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l | r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l | r);
+  } break;
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_bit_xor(cg_x86_64_value *lsv,
+                                    cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l ^ r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l ^ r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l ^ r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l ^ r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l ^ r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l ^ r);
+  } break;
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_bit_and(cg_x86_64_value *lsv,
+                                    cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l & r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l & r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l & r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l & r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l & r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l & r);
+  } break;
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_eq(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l == r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l == r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l == r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l == r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l == r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l == r);
+  } break;
+  case CG_X86_64_TYPE_BOOL: {
+    uint8_t l = *lsv_data->raw;
+    l = l != 0 ? 1 : 0;
+    uint8_t r = *rsv_data->raw;
+    r = r != 0 ? 1 : 0;
+    return __cg_x86_64_value_bool(l == r);
   } break;
   case CG_X86_64_TYPE_STRING: {
-    char           *l = lsv_data->raw;
-    char           *r = rsv_data->raw;
+    uint8_t *l = lsv_data->raw;
+    uint8_t *r = rsv_data->raw;
+    uint8_t  res = !strcmp((char *)l, (char *)r);
+    return __cg_x86_64_value_bool(res);
+  } break;
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_neq(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l != r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l != r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l != r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l != r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l != r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_bool(l != r);
+  } break;
+    uint8_t l = *lsv_data->raw;
+    l = l != 0 ? 1 : 0;
+    uint8_t r = *rsv_data->raw;
+    r = r != 0 ? 1 : 0;
+    return __cg_x86_64_value_bool(l != r);
+  case CG_X86_64_TYPE_STRING: {
+    uint8_t *l = lsv_data->raw;
+    uint8_t *r = rsv_data->raw;
+    uint8_t  res = strcmp((char *)l, (char *)r);
+    return __cg_x86_64_value_bool(res);
+  } break;
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_less(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l < r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l < r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l < r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l < r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l < r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l < r);
+  } break;
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_less_eq(cg_x86_64_value *lsv,
+                                    cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l <= r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l <= r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l <= r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l <= r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l <= r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l <= r);
+  } break;
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_bit_shl(cg_x86_64_value *lsv,
+                                    cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l << r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l << r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l << r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l << r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l << r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l << r);
+  } break;
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_bit_shr(cg_x86_64_value *lsv,
+                                    cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l >> r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l >> r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l >> r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l >> r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l >> r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l >> r);
+  } break;
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_add(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l + r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l + r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l + r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l + r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l + r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    char l = *lsv_data->raw;
+    char r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l + r);
+  } break;
+  case CG_X86_64_TYPE_STRING: {
+    uint8_t        *l = lsv_data->raw;
+    uint8_t        *r = rsv_data->raw;
     cg_x86_64_data *data =
         cg_data_new(lsv_data->data_size + rsv_data->data_size - 1,
                     (cg_x86_64_type){.kind = CG_X86_64_TYPE_STRING});
@@ -389,14 +1260,15 @@ cg_x86_64_value __cg_x86_64_add(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
   case CG_X86_64_TYPE_VOID:
   default:
     printf("error: type implementation undefined\n");
-    return __cg_x86_64_value_void();
   }
+error:
+  return __cg_x86_64_value_void();
 }
 
 cg_x86_64_value __cg_x86_64_sub(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
   if (!lsv->data || !rsv->data) {
     printf("error: any variable empty\n");
-    return __cg_x86_64_value_void();
+    goto error;
   }
 
   cg_x86_64_data *lsv_data, *rsv_data;
@@ -405,57 +1277,39 @@ cg_x86_64_value __cg_x86_64_sub(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
 
   if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
     printf("error: types mismatch\n");
-    return __cg_x86_64_value_void();
+    goto error;
   }
 
   switch (lsv_data->type.kind) {
   case CG_X86_64_TYPE_BYTE: {
-    uint8_t         l = *lsv_data->raw;
-    uint8_t         r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(uint8_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_BYTE});
-    *data->raw = l - r;
-    return (cg_x86_64_value){.data = data};
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l - r);
   } break;
   case CG_X86_64_TYPE_INT: {
-    int32_t         l = *lsv_data->raw;
-    int32_t         r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(int32_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_INT});
-    *data->raw = l - r;
-    return (cg_x86_64_value){.data = data};
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l - r);
   } break;
   case CG_X86_64_TYPE_UINT: {
-    uint32_t        l = *lsv_data->raw;
-    uint32_t        r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(uint32_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_UINT});
-    *data->raw = l - r;
-    return (cg_x86_64_value){.data = data};
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l - r);
   } break;
   case CG_X86_64_TYPE_LONG: {
-    int64_t         l = *lsv_data->raw;
-    int64_t         r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(int64_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_LONG});
-    *data->raw = l - r;
-    return (cg_x86_64_value){.data = data};
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l - r);
   } break;
   case CG_X86_64_TYPE_ULONG: {
-    uint64_t        l = *lsv_data->raw;
-    uint64_t        r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(uint64_t), (cg_x86_64_type){.kind = CG_X86_64_TYPE_ULONG});
-    *data->raw = l - r;
-    return (cg_x86_64_value){.data = data};
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l - r);
   } break;
   case CG_X86_64_TYPE_CHAR: {
-    char            l = *lsv_data->raw;
-    char            r = *rsv_data->raw;
-    cg_x86_64_data *data = cg_data_new(
-        sizeof(char), (cg_x86_64_type){.kind = CG_X86_64_TYPE_CHAR});
-    *data->raw = l - r;
-    return (cg_x86_64_value){.data = data};
+    char l = *lsv_data->raw;
+    char r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l - r);
   } break;
   case CG_X86_64_TYPE_STRING:
   case CG_X86_64_TYPE_BOOL:
@@ -463,19 +1317,190 @@ cg_x86_64_value __cg_x86_64_sub(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
   case CG_X86_64_TYPE_VOID:
   default:
     printf("error: type implementation undefined\n");
-    return __cg_x86_64_value_void();
   }
+error:
+  return __cg_x86_64_value_void();
 }
 
-cg_x86_64_value __cg_x86_64_mul(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_div(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_mod(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
+cg_x86_64_value __cg_x86_64_mul(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l * r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l * r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l * r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l * r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l * r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    char l = *lsv_data->raw;
+    char r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l * r);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_div(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l / r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l / r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l / r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l / r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l / r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    char l = *lsv_data->raw;
+    char r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l / r);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
+
+cg_x86_64_value __cg_x86_64_mod(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
+  if (!lsv->data || !rsv->data) {
+    printf("error: any variable empty\n");
+    goto error;
+  }
+
+  cg_x86_64_data *lsv_data, *rsv_data;
+  lsv_data = lsv->data;
+  rsv_data = rsv->data;
+
+  if (!cg_types_equals(&lsv_data->type, &rsv_data->type)) {
+    printf("error: types mismatch\n");
+    goto error;
+  }
+
+  switch (lsv_data->type.kind) {
+  case CG_X86_64_TYPE_BYTE: {
+    uint8_t l = *lsv_data->raw;
+    uint8_t r = *rsv_data->raw;
+    return __cg_x86_64_value_byte(l % r);
+  } break;
+  case CG_X86_64_TYPE_INT: {
+    int32_t l = *lsv_data->raw;
+    int32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_int(l % r);
+  } break;
+  case CG_X86_64_TYPE_UINT: {
+    uint32_t l = *lsv_data->raw;
+    uint32_t r = *rsv_data->raw;
+    return __cg_x86_64_value_uint(l % r);
+  } break;
+  case CG_X86_64_TYPE_LONG: {
+    int64_t l = *lsv_data->raw;
+    int64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_long(l % r);
+  } break;
+  case CG_X86_64_TYPE_ULONG: {
+    uint64_t l = *lsv_data->raw;
+    uint64_t r = *rsv_data->raw;
+    return __cg_x86_64_value_ulong(l % r);
+  } break;
+  case CG_X86_64_TYPE_CHAR: {
+    char l = *lsv_data->raw;
+    char r = *rsv_data->raw;
+    return __cg_x86_64_value_char(l % r);
+  } break;
+  case CG_X86_64_TYPE_STRING:
+  case CG_X86_64_TYPE_BOOL:
+  case CG_X86_64_TYPE_ARRAY:
+  case CG_X86_64_TYPE_VOID:
+  default:
+    printf("error: type implementation undefined\n");
+  }
+error:
+  return __cg_x86_64_value_void();
+}
 
 // SPECIAL
 cg_x86_64_value __cg_x86_64_index(cg_x86_64_value *array, uint64_t dims, ...) {
+  va_list args;
+  va_start(args, dims);
+
   if (!array->data) {
     printf("error: variable empty\n");
-    return __cg_x86_64_value_void();
+    goto error;
   }
 
   cg_x86_64_data *lsv_data = array->data;
@@ -484,32 +1509,25 @@ cg_x86_64_value __cg_x86_64_index(cg_x86_64_value *array, uint64_t dims, ...) {
   case CG_X86_64_TYPE_STRING: {
     if (dims != 1) {
       printf("error: multiple indexes aren't supported for this type\n");
-      return __cg_x86_64_value_void();
+      goto error;
     }
-
-    va_list args;
-    va_start(args, dims);
 
     cg_x86_64_value *arg = va_arg(args, cg_x86_64_value *);
 
     uint64_t index = cg_unsigned(cg_get_number(arg->data));
     if (index == UINT64_MAX) {
       printf("error: with arg %p while creating array\n", arg);
-      va_end(args);
-      return __cg_x86_64_value_void();
+      goto error;
     }
 
-    char            l = lsv_data->raw[index];
-    cg_x86_64_value res = __cg_x86_64_value_char(l);
-
     va_end(args);
-    return res;
+
+    char l = lsv_data->raw[index];
+
+    return __cg_x86_64_value_char(l);
   } break;
     // TODO: allow to get columns, not only elements
   case CG_X86_64_TYPE_ARRAY: {
-    va_list args;
-    va_start(args, dims);
-
     cg_x86_64_type       *type_ptr = &lsv_data->type;
     cg_x86_64_array_meta *meta = lsv_data->meta_array;
     uint64_t              column_size = meta->elem_size;
@@ -543,18 +1561,20 @@ cg_x86_64_value __cg_x86_64_index(cg_x86_64_value *array, uint64_t dims, ...) {
     memcpy(data->raw, array->data->raw + offset, sizeof(meta->elem_size));
 
     return (cg_x86_64_value){.data = data};
-  error:
-    va_end(args);
-    return __cg_x86_64_value_void();
   }
   default:
     printf("error: type implementation undefined\n");
-    return __cg_x86_64_value_void();
   }
+error:
+  va_end(args);
+  return __cg_x86_64_value_void();
 }
 
 void __cg_x86_64_index_set(cg_x86_64_value *from, cg_x86_64_value *array,
                            uint64_t dims, ...) {
+  va_list args;
+  va_start(args, dims);
+
   if (!from->data || !array->data) {
     printf("error: any variable empty\n");
     return;
@@ -564,38 +1584,30 @@ void __cg_x86_64_index_set(cg_x86_64_value *from, cg_x86_64_value *array,
   case CG_X86_64_TYPE_STRING: {
     if (from->data->type.kind != CG_X86_64_TYPE_CHAR) {
       printf("error: from should be char\n");
-      return;
+      goto error;
     }
     if (dims > 1) {
       printf("error: dims for string should be 1\n");
-      return;
+      goto error;
     }
-
-    va_list args;
-    va_start(args, dims);
 
     cg_x86_64_value *arg = va_arg(args, cg_x86_64_value *);
     if (!arg->data) {
-      va_end(args);
       printf("error: arg %p no data\n", arg);
-      return;
+      goto error;
     }
 
     uint64_t index = cg_unsigned(cg_get_number(arg->data));
     if (index == UINT64_MAX) {
       printf("error: with arg %p while creating array\n", arg);
-      va_end(args);
+      goto error;
     }
 
     char l = *from->data->raw;
     array->data->raw[index] = l;
 
-    va_end(args);
   } break;
   case CG_X86_64_TYPE_ARRAY: {
-    va_list args;
-    va_start(args, dims);
-
     cg_x86_64_data *array_data = array->data;
 
     cg_x86_64_type       *type_ptr = &array_data->type;
@@ -625,25 +1637,21 @@ void __cg_x86_64_index_set(cg_x86_64_value *from, cg_x86_64_value *array,
       column_size *= meta->dimensions[dims - 1 - i];
     }
 
-    va_end(args);
-
     memcpy(array_data->raw + offset, from->data->raw, sizeof(meta->elem_size));
-    return;
 
-  error:
-    va_end(args);
   } break;
   default:
     printf("error: type implementation undefined\n");
-    return;
   }
+error:
+  va_end(args);
 }
 
 cg_x86_64_value __cg_x86_64_cast(cg_x86_64_value    *lsv,
                                  cg_x86_64_type_enum kind) {
   if (!lsv->data) {
     printf("error: any variable empty\n");
-    return __cg_x86_64_value_void();
+    goto error;
   }
 
   cg_x86_64_number num;
@@ -682,7 +1690,7 @@ cg_x86_64_value __cg_x86_64_cast(cg_x86_64_value    *lsv,
   case CG_X86_64_TYPE_ARRAY:
   default:
     printf("error: unsupported source cast value\n");
-    return __cg_x86_64_value_void();
+    goto error;
   }
 
   switch (kind) {
@@ -704,7 +1712,8 @@ cg_x86_64_value __cg_x86_64_cast(cg_x86_64_value    *lsv,
   case CG_X86_64_TYPE_STRING:
   case CG_X86_64_TYPE_ARRAY:
   default:
-    return __cg_x86_64_value_void();
     printf("error: unsupported target cast value\n");
   }
+error:
+  return __cg_x86_64_value_void();
 }

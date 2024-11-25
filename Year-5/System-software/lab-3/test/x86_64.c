@@ -40,18 +40,18 @@ Test(x86_64, sum_string) {
   __cg_x86_64_init(&res);
 
   __cg_x86_64_drop(&left);
-  left = __cg_x86_64_value_string("abcde");
+  left = __cg_x86_64_value_string((const uint8_t *)"abcde");
 
   __cg_x86_64_drop(&right);
-  right = __cg_x86_64_value_string("fghyu");
+  right = __cg_x86_64_value_string((const uint8_t *)"fghyu");
 
   __cg_x86_64_drop(&res);
   res = __cg_x86_64_add(&left, &right);
 
-  char *res_val = res.data->raw;
+  uint8_t *res_val = res.data->raw;
   debug("%zu, %s", res.data->data_size, res.data->raw);
   cr_expect_eq(res.data->data_size, strlen("abcdefghyu") + 1);
-  cr_expect_str_eq(res_val, "abcdefghyu");
+  cr_expect_str_eq((char *)res_val, "abcdefghyu");
 
   __cg_x86_64_drop(&res);
   __cg_x86_64_drop(&left);
@@ -98,7 +98,7 @@ Test(x86_64, string_index) {
   __cg_x86_64_init(&res);
 
   __cg_x86_64_drop(&string);
-  string = __cg_x86_64_value_string("abcde");
+  string = __cg_x86_64_value_string((const uint8_t *)"abcde");
 
   __cg_x86_64_drop(&index);
   index = __cg_x86_64_value_long(3);
@@ -155,7 +155,7 @@ Test(x86_64, string_set) {
   __cg_x86_64_init(&chr);
 
   __cg_x86_64_drop(&string);
-  string = __cg_x86_64_value_string("abcdef");
+  string = __cg_x86_64_value_string((const uint8_t *)"abcdef");
 
   __cg_x86_64_drop(&index);
   index = __cg_x86_64_value_long(1);

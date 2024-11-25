@@ -39,7 +39,7 @@ typedef struct __attribute__((packed)) cg_x86_64_data_struct {
     cg_x86_64_array_meta *meta_array;
     void                 *meta;
   };
-  char raw[0];
+  uint8_t raw[0];
 } cg_x86_64_data;
 
 typedef struct __attribute__((packed)) cg_x86_64_value_struct {
@@ -57,8 +57,8 @@ cg_x86_64_value __cg_x86_64_value_int(int32_t value);
 cg_x86_64_value __cg_x86_64_value_uint(uint32_t value);
 cg_x86_64_value __cg_x86_64_value_long(int64_t value);
 cg_x86_64_value __cg_x86_64_value_ulong(uint64_t value);
-cg_x86_64_value __cg_x86_64_value_char(char value);
-cg_x86_64_value __cg_x86_64_value_string(const char *value);
+cg_x86_64_value __cg_x86_64_value_char(uint8_t value);
+cg_x86_64_value __cg_x86_64_value_string(const uint8_t *value);
 // ... - array sizes of type == cg_x86_64_value *
 cg_x86_64_value __cg_x86_64_value_array(cg_x86_64_type *elem_type,
                                         uint64_t        rank, ...);
