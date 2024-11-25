@@ -946,12 +946,13 @@ cg_x86_64_value __cg_x86_64_neq(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
     uint8_t l = *lsv_data->raw;
     uint8_t r = *rsv_data->raw;
     return __cg_x86_64_value_bool(l != r);
-  } break;
+  case CG_X86_64_TYPE_BOOL: {
     uint8_t l = *lsv_data->raw;
     l = l != 0 ? 1 : 0;
     uint8_t r = *rsv_data->raw;
     r = r != 0 ? 1 : 0;
     return __cg_x86_64_value_bool(l != r);
+  } break;
   case CG_X86_64_TYPE_STRING: {
     uint8_t *l = lsv_data->raw;
     uint8_t *r = rsv_data->raw;
@@ -963,8 +964,9 @@ cg_x86_64_value __cg_x86_64_neq(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
   default:
     printf("error: type implementation undefined\n");
   }
-error:
-  return __cg_x86_64_value_void();
+  error:
+    return __cg_x86_64_value_void();
+  }
 }
 
 cg_x86_64_value __cg_x86_64_less(cg_x86_64_value *lsv, cg_x86_64_value *rsv) {
