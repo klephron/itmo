@@ -59,42 +59,43 @@ cg_x86_64_value __cg_x86_64_value_long(int64_t value);
 cg_x86_64_value __cg_x86_64_value_ulong(uint64_t value);
 cg_x86_64_value __cg_x86_64_value_char(uint8_t value);
 cg_x86_64_value __cg_x86_64_value_string(const uint8_t *value);
-// ... - array sizes of type == cg_x86_64_value *
+// ... - array sizes of type == cg_x86_64_value
 cg_x86_64_value __cg_x86_64_value_array(cg_x86_64_type *elem_type,
                                         uint64_t        rank, ...);
 
 // UNARY
-cg_x86_64_value __cg_x86_64_plus(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_minus(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_not(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_bit_not(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_inc(cg_x86_64_value *lsv);
-cg_x86_64_value __cg_x86_64_dec(cg_x86_64_value *lsv);
+cg_x86_64_value __cg_x86_64_plus(cg_x86_64_value lsv);
+cg_x86_64_value __cg_x86_64_minus(cg_x86_64_value lsv);
+cg_x86_64_value __cg_x86_64_not(cg_x86_64_value lsv);
+cg_x86_64_value __cg_x86_64_bit_not(cg_x86_64_value lsv);
+cg_x86_64_value __cg_x86_64_inc(cg_x86_64_value lsv);
+cg_x86_64_value __cg_x86_64_dec(cg_x86_64_value lsv);
 
 // BINARY
-cg_x86_64_value __cg_x86_64_or(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_and(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_or(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_xor(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_and(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_eq(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_neq(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_less(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_less_eq(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_shl(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_bit_shr(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_add(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_sub(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_mul(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_div(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
-cg_x86_64_value __cg_x86_64_mod(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
+cg_x86_64_value __cg_x86_64_or(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_and(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_bit_or(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_bit_xor(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_bit_and(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_eq(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_neq(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_less(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_less_eq(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_bit_shl(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_bit_shr(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_add(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_sub(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_mul(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_div(cg_x86_64_value lsv, cg_x86_64_value rsv);
+cg_x86_64_value __cg_x86_64_mod(cg_x86_64_value lsv, cg_x86_64_value rsv);
 
 // SPECIAL
 
+// ... -> cg_x86_64_value
 // in array arguments are passed in reserve order
-// so arr[1,2] -> index(arr, 2, 2, 1)
-cg_x86_64_value __cg_x86_64_index(cg_x86_64_value *array, uint64_t size, ...);
-void __cg_x86_64_index_set(cg_x86_64_value *from, cg_x86_64_value *array,
+// so arr[1,2] -> index(arr, 2, 2, 1), cg_x86_64_value
+cg_x86_64_value __cg_x86_64_index(cg_x86_64_value array, uint64_t size, ...);
+void __cg_x86_64_index_set(cg_x86_64_value from, cg_x86_64_value array,
                            uint64_t size, ...);
-cg_x86_64_value __cg_x86_64_cast(cg_x86_64_value *value, cg_x86_64_type_enum);
-cg_x86_64_value __cg_x86_64_assign(cg_x86_64_value *value);
+cg_x86_64_value __cg_x86_64_cast(cg_x86_64_value value, cg_x86_64_type_enum);
+void            __cg_x86_64_assign(cg_x86_64_value *lsv, cg_x86_64_value *rsv);
