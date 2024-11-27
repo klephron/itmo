@@ -112,14 +112,17 @@ run: compiler/build/main
 	./build/compiler/main io/input.txt
 
 ### Run main executable and generate dot
-run/pdf: compiler/build/main
-	./build/compiler/main -d . -o io/a.asm --ignore-errors \
+run/pdf: run/pdf/io/input.txt
+run/pdf/%: RUN.INPUT_FILE=$(patsubst run/pdf/%,%,$@)
+run/pdf/%: RUN.ASM_FILE=$(patsubst run/pdf/%,%.asm,$@)
+run/pdf/%: compiler/build/main
+	./build/compiler/main -d . -o $(RUN.ASM_FILE) --ignore-errors \
 		--ast --cfg --cg \
 		--cfg-add-expr --hir-symbols --mir \
-		io/input.txt || true
-	@echo "--------------------ASSEMBLY(io/a.asm)--------------------"
-	@cat io/a.asm
-	@echo "--------------------DOT2PDF(io/)--------------------"
+		$(RUN.INPUT_FILE) || true
+	@echo "--------------------ASSEMBLY($(RUN.ASM_FILE))--------------------"
+	@cat $(RUN.ASM_FILE)
+	@echo "--------------------DOT2PDF($(RUN.INPUT_FILE))--------------------"
 	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
 
 ### Compile file
@@ -131,9 +134,10 @@ run/asm/%: RUN.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
 run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a
 	./build/compiler/main --ignore-error \
 		-d . -o $(RUN.ASM_FILE) $(RUN.INPUT_FILE)
-
+	@echo "--------------------ASSEMBLY($(RUN.ASM_FILE))--------------------"
+	@cat $(RUN.ASM_FILE)
+	@echo "--------------------COMPILE($(RUN.ASM_FILE))--------------------"
 	$(AS) $(RUN.AS_FLAGS) -o $(RUN.OBJECT_FILE) $(RUN.ASM_FILE)
-
 	$(LD) $(RUN.LD_FLAGS) -o $(RUN.OUTPUT_FILE) \
 		-dynamic-linker /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
 		/usr/lib/x86_64-linux-gnu/crt1.o \
@@ -142,7 +146,7 @@ run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a
 		$(RUN.OBJECT_FILE) \
 		$(BUILD_DIR)/x86_64_core/libx86_64_core.a \
 		/usr/lib/x86_64-linux-gnu/crtn.o
-
+	@echo "--------------------RUN($(RUN.OUTPUT_FILE))--------------------"
 	./$(RUN.OUTPUT_FILE)
 
 ### Format
