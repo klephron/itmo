@@ -1,3 +1,5 @@
 *.dot
 *.pdf
 *.asm
+*.o
+*.out

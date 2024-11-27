@@ -4,5 +4,4 @@ var
 begin
   cast!<int>(e);
   new!<int>(e);
-  free!(e);
 end;

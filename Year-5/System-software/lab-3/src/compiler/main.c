@@ -470,7 +470,7 @@ static int execute(struct args_struct *args) {
   }
 
   // stage: print mir tree
-  if (!error || args->ignore_errors) {
+  if (args->mir && (!error || args->ignore_errors)) {
     char *tree = mir_tree_str(mir);
     printf("MIR TREE:\n%s\n", tree);
     free(tree);
