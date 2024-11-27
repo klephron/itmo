@@ -1,6 +1,6 @@
 #include <criterion/criterion.h>
 
-#include "hir/symbols.h"
+#include "compiler/hir/symbols.h"
 #include "util/log.h"
 #include "util/string_buffer.h"
 

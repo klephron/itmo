@@ -1,6 +1,6 @@
 #include <criterion/criterion.h>
 
-#include "type/str.h"
+#include "compiler/type/str.h"
 #include "util/log.h"
 #include <stdio.h>
 

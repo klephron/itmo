@@ -4,3 +4,6 @@
 [submodule "Year-5/Reactive-java/lab-2"]
 	path = Year-5/Reactive-java/lab-2
 	url = git@github.com:zavar152/RJ-lab2.git
+[submodule "Year-5/Reactive-java/lab-3"]
+	path = Year-5/Reactive-java/lab-3
+	url = git@github.com:zavar152/RJ-lab3.git
