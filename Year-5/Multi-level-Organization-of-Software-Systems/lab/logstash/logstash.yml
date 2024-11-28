@@ -5,5 +5,5 @@ xpack:
     enabled: true
     elasticsearch:
       username: "logstash_writer"
-      password: "mefU1vUpHzQXtTiEy=g0"
+      password: "password"
       hosts: ["http://mops-elasticsearch:9200"]

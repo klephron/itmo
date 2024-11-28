@@ -36,21 +36,10 @@ commands() {
   # create user/role for logstash
   echo curl -u elastic:password \
     -X PUT "http://localhost:9061/_security/role/logstash_writer_role" -H \
-    'Content-Type: application/json' -d '{
-      "cluster": ["manage_index_templates", "monitor", "manage", "all"],
-      "indices": [
-        {
-          "names": ["mops-*"],
-          "privileges": ["write", "create", "create_index", "manage"]
-        }
-      ]
-    }'
-  echo curl -u elastic:password \
+    'Content-Type: application/json' -d '{ "cluster": ["manage_index_templates", "monitor", "manage", "all"], "indices": [ { "names": ["mops-*"], "privileges": ["write", "create", "create_index", "manage"] } ] }'
+  echo curl -u elastic:password '\' \
     -X POST "http://localhost:9061/_security/user/logstash_writer" -H \
-    'Content-Type: application/json' -d '{
-      "password" : "password",
-      "roles" : [ "logstash_writer_role" ]
-    }'
+    'Content-Type: application/json' -d '{ "password" : "password", "roles" : [ "logstash_writer_role" ] }'
 }
 
 stop() {
