@@ -2,7 +2,6 @@
 #include <cmath>
 #include <cstdio>
 #include <iostream>
-#include <list>
 #include <vector>
 
 #define stdin_input() (freopen("input.txt", "r", stdin))
@@ -11,17 +10,14 @@
 template <typename T>
 using V = typename std::vector<T>;
 
-template <typename T>
-using L = typename std::list<T>;
-
 #define LCA_SIZE 200000
 #define NODES_SIZE 100000
 #define SPT_LOG 18
 
-V<L<int32_t>> edges;
+V<V<int32_t>> edges;
 int32_t visited[NODES_SIZE];
 
-V<L<int32_t>> tr_ch;
+V<V<int32_t>> tr_ch;
 int32_t depths[LCA_SIZE];
 int32_t nodes[LCA_SIZE];
 int32_t lasts[NODES_SIZE];
@@ -66,7 +62,7 @@ void tr_ch_build_dfs(int32_t p) {
 
 void tr_ch_build() {
   int32_t n = edges.size();
-  tr_ch = std::vector(n, L<int32_t>());
+  tr_ch = std::vector(n, V<int32_t>());
 
   for (int32_t i = 0; i < n; ++i) {
     visited[i] = 0;
@@ -75,21 +71,21 @@ void tr_ch_build() {
 }
 
 int main() {
-  // stdin_input();
-  // stdout_output();
+  stdin_input();
+  stdout_output();
 
   int32_t n, q;
 
   std::cin >> n;
   int32_t size = n;
 
-  edges = std::vector(size, L<int32_t>());
+  edges = std::vector(size, V<int32_t>());
   while (--n) {
     int32_t u, v;
     std::cin >> u >> v;
 
-    edges[u].push_back(v);
-    edges[v].push_back(u);
+    edges[u].emplace_back(v);
+    edges[v].emplace_back(u);
   }
 
   tr_ch_build();
