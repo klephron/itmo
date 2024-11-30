@@ -36,16 +36,14 @@ static int32_t lca_setup_dfs(int32_t d, int32_t i, int32_t p) {
   return i + 1;
 }
 
-static void sparse_table_min_i_build(int32_t n) {
+static void sparse_table_min_build(int32_t n) {
   for (int32_t i = 0; i < n; ++i) {
-    sp_table[i][0] = i;
+    sp_table[i][0] = depths[i];
   }
 
   for (int32_t j = 1; j < SPT_LOG; ++j) {
     for (int32_t i = 0; i + (1 << j) - 1 < n; ++i) {
-      int32_t l = sp_table[i][j - 1];
-      int32_t r = sp_table[i + (1 << (j - 1))][j - 1];
-      sp_table[i][j] = depths[l] < depths[r] ? l : r;
+      sp_table[i][j] = std::min(sp_table[i][j - 1], sp_table[i + (1 << (j - 1))][j - 1]);
     }
   }
 }
@@ -92,7 +90,7 @@ int main() {
 
   lca_setup_dfs(0, 0, 0);
 
-  sparse_table_min_i_build(size * 2 - 1);
+  sparse_table_min_build(size * 2 - 1);
 
   std::cin >> q;
   while (q--) {
@@ -106,10 +104,8 @@ int main() {
     int32_t log = log2(size);
     int32_t sp_l = sp_table[ll][log];
     int32_t sp_r = sp_table[lr - (1 << log) + 1][log];
-    int32_t min_i = depths[sp_l] < depths[sp_r] ? sp_l : sp_r;
+    int32_t ca_depth = std::min(sp_l, sp_r);
 
-    int32_t ca = nodes[min_i];
-    int32_t ca_depth = depths[lasts[ca]];
     int32_t l_depth = depths[lasts[a]];
     int32_t r_depth = depths[lasts[b]];
 
