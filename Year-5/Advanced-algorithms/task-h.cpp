@@ -1,5 +1,4 @@
 #include <climits>
-#include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <vector>
@@ -12,87 +11,103 @@ using V = typename std::vector<T>;
 
 #define LCA_SIZE 200000
 #define NODES_SIZE 100000
-#define SPT_LOG 18
 
 V<V<int32_t>> edges;
-int32_t visited[NODES_SIZE];
+V<int32_t> visited;
 
-V<V<int32_t>> tr_ch;
-int32_t depths[LCA_SIZE];
-int32_t nodes[LCA_SIZE];
-int32_t lasts[NODES_SIZE];
-int32_t sp_table[LCA_SIZE][SPT_LOG];
-int32_t logs2[LCA_SIZE];
+V<V<int32_t>> tree_children;
+V<int32_t> depths;
+V<int32_t> lasts;
+
+V<int32_t> depth_tree;
+
+static int32_t seg_tree_query(int32_t i, int32_t tl, int32_t tr, const int32_t l, const int32_t r) {
+  if (l <= tl && tr <= r) {
+    return depth_tree[i];
+  } else if (tr < l || tl > r) {
+    return INT_MAX;
+  } else {
+    int32_t mid = tl + (tr - tl) / 2;
+    int32_t left_i = seg_tree_query(2 * i + 1, tl, mid, l, r);
+    int32_t right_i = seg_tree_query(2 * i + 2, mid + 1, tr, l, r);
+    return left_i < right_i ? left_i : right_i;
+  }
+}
+
+static inline void seg_tree_build() {
+  size_t n = depths.size();
+
+  size_t tr_sz = 1;
+  while (tr_sz < n) {
+    tr_sz *= 2;
+  }
+  tr_sz *= 2;
+
+  depth_tree = V<int32_t>(tr_sz);
+
+  size_t ti = (tr_sz / 2 - 1);
+  for (size_t i = 0; i < n; ++i, ++ti) {
+    depth_tree[ti] = depths[i];
+  }
+  for (; ti < tr_sz; ++ti) {
+    depth_tree[ti] = INT_MAX;
+  }
+  for (ti = (tr_sz / 2) - 2;; --ti) {
+    int32_t left_i = depth_tree[2 * ti + 1];
+    int32_t right_i = depth_tree[2 * ti + 2];
+    depth_tree[ti] = left_i < right_i ? left_i : right_i;
+    if (ti == 0)
+      break;
+  }
+}
 
 // returns next i
 static int32_t lca_setup_dfs(int32_t d, int32_t i, int32_t p) {
-  nodes[i] = p;
   depths[i] = d;
-  for (auto ch : tr_ch[p]) {
+  for (auto ch : tree_children[p]) {
     i = lca_setup_dfs(d + 1, i + 1, ch);
-    nodes[i] = p;
     depths[i] = d;
   }
   lasts[p] = i;
   return i + 1;
 }
 
-static void sparse_table_min_build(int32_t n) {
-  int32_t log_v = 0;
-  int32_t next_log_i = 2;
-
-  for (int32_t i = 0; i < n; ++i) {
-    sp_table[i][0] = depths[i];
-    if (i == next_log_i) {
-      next_log_i *= 2;
-      ++log_v;
-    }
-    logs2[i] = log_v;
-  }
-
-  for (int32_t j = 1; j < SPT_LOG; ++j) {
-    for (int32_t i = 0; i + (1 << j) - 1 < n; ++i) {
-      sp_table[i][j] = std::min(sp_table[i][j - 1], sp_table[i + (1 << (j - 1))][j - 1]);
-    }
-  }
+static inline void lca_setup() {
+  size_t n = tree_children.size();
+  depths = V<int32_t>(n * 2 - 1);
+  lasts = V<int32_t>(n);
+  lca_setup_dfs(0, 0, 0);
 }
 
-static inline int32_t energy_required(int32_t a, int32_t b) {
-  int32_t la = lasts[a];
-  int32_t lb = lasts[b];
-
-  int32_t l = std::min(la, lb);
-  int32_t r = std::max(la, lb);
-
-  int32_t size = r - l + 1;
-  int32_t log = logs2[size];
-  int32_t query_l = sp_table[l][log];
-  int32_t query_r = sp_table[r - (1 << log) + 1][log];
-  int32_t ca_depth = query_l < query_r ? query_l : query_r;
-
-  int32_t l_depth = depths[la];
-  int32_t r_depth = depths[lb];
-  return l_depth + r_depth - 2 * ca_depth;
-}
-
-void tr_ch_build_dfs(int32_t p) {
+static inline void tree_build_dfs(int32_t p) {
   visited[p] = 1;
   for (auto c : edges[p]) {
     if (!visited[c]) {
-      tr_ch[p].emplace_back(c);
-      tr_ch_build_dfs(c);
+      tree_children[p].push_back(c);
+      tree_build_dfs(c);
     }
   }
 }
 
-void tr_ch_build() {
-  int32_t n = edges.size();
-  tr_ch = std::vector(n, V<int32_t>());
+static inline void tree_build() {
+  size_t n = edges.size();
+  tree_children = std::vector(n, V<int32_t>());
+  visited = std::vector<int32_t>(n, 0);
+  tree_build_dfs(0);
+}
 
-  for (int32_t i = 0; i < n; ++i) {
-    visited[i] = 0;
-  }
-  tr_ch_build_dfs(0);
+static inline int32_t energy_required(int32_t l, int32_t r) {
+  int32_t last_l = lasts[l];
+  int32_t last_r = lasts[r];
+
+  int32_t ll = std::min(last_l, last_r);
+  int32_t lr = std::max(last_l, last_r);
+
+  int32_t ca_depth = seg_tree_query(0, 0, depth_tree.size() / 2 - 1, ll, lr);
+
+  int32_t l_depth = depths[last_l];
+  int32_t r_depth = depths[last_r];
+  return l_depth + r_depth - 2 * ca_depth;
 }
 
 int main() {
@@ -102,9 +117,7 @@ int main() {
   int32_t n, q;
 
   std::cin >> n;
-  int32_t size = n;
-
-  edges = std::vector(size, V<int32_t>());
+  edges = std::vector(n, V<int32_t>());
   while (--n) {
     int32_t u, v;
     std::cin >> u >> v;
@@ -113,11 +126,9 @@ int main() {
     edges[v].emplace_back(u);
   }
 
-  tr_ch_build();
-
-  lca_setup_dfs(0, 0, 0);
-
-  sparse_table_min_build(size * 2 - 1);
+  tree_build();
+  lca_setup();
+  seg_tree_build();
 
   std::cin >> q;
   while (q--) {
@@ -125,9 +136,8 @@ int main() {
     std::cin >> u >> v >> t;
 
     int32_t req = energy_required(u, v);
-    bool ok = (req <= t);
 
-    if (ok) {
+    if (req <= t) {
       std::cout << "Yes" << std::endl;
     } else {
       std::cout << "No" << std::endl;
