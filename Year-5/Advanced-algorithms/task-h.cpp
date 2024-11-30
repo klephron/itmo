@@ -22,7 +22,7 @@ int32_t depths[LCA_SIZE];
 int32_t nodes[LCA_SIZE];
 int32_t lasts[NODES_SIZE];
 int32_t sp_table[LCA_SIZE][SPT_LOG];
-int32_t logarithms[LCA_SIZE];
+int32_t logs2[LCA_SIZE];
 
 // returns next i
 static int32_t lca_setup_dfs(int32_t d, int32_t i, int32_t p) {
@@ -47,7 +47,7 @@ static void sparse_table_min_build(int32_t n) {
       next_log_i *= 2;
       ++log_v;
     }
-    logarithms[i] = log_v;
+    logs2[i] = log_v;
   }
 
   for (int32_t j = 1; j < SPT_LOG; ++j) {
@@ -57,11 +57,29 @@ static void sparse_table_min_build(int32_t n) {
   }
 }
 
+static inline int32_t energy_required(int32_t a, int32_t b) {
+  int32_t la = lasts[a];
+  int32_t lb = lasts[b];
+
+  int32_t l = std::min(la, lb);
+  int32_t r = std::max(la, lb);
+
+  int32_t size = r - l + 1;
+  int32_t log = logs2[size];
+  int32_t query_l = sp_table[l][log];
+  int32_t query_r = sp_table[r - (1 << log) + 1][log];
+  int32_t ca_depth = query_l < query_r ? query_l : query_r;
+
+  int32_t l_depth = depths[la];
+  int32_t r_depth = depths[lb];
+  return l_depth + r_depth - 2 * ca_depth;
+}
+
 void tr_ch_build_dfs(int32_t p) {
   visited[p] = 1;
   for (auto c : edges[p]) {
     if (!visited[c]) {
-      tr_ch[p].push_back(c);
+      tr_ch[p].emplace_back(c);
       tr_ch_build_dfs(c);
     }
   }
@@ -103,22 +121,13 @@ int main() {
 
   std::cin >> q;
   while (q--) {
-    int32_t a, b, t;
-    std::cin >> a >> b >> t;
+    int32_t u, v, t;
+    std::cin >> u >> v >> t;
 
-    int32_t ll = lasts[a] < lasts[b] ? lasts[a] : lasts[b];
-    int32_t lr = lasts[a] > lasts[b] ? lasts[a] : lasts[b];
+    int32_t req = energy_required(u, v);
+    bool ok = (req <= t);
 
-    int32_t size = lr - ll + 1;
-    int32_t log = logarithms[size];
-    int32_t sp_l = sp_table[ll][log];
-    int32_t sp_r = sp_table[lr - (1 << log) + 1][log];
-    int32_t ca_depth = std::min(sp_l, sp_r);
-
-    int32_t l_depth = depths[lasts[a]];
-    int32_t r_depth = depths[lasts[b]];
-
-    if (l_depth + r_depth - 2 * ca_depth <= t) {
+    if (ok) {
       std::cout << "Yes" << std::endl;
     } else {
       std::cout << "No" << std::endl;
