@@ -1,4 +1,4 @@
-CC := clang++
+CC := g++
 FLAGS := -std=c++20 -g3 -O0 -fsanitize=address,undefined,leak -Wall -Wextra -Wpedantic
 MKDIR := mkdir -p
 BUILD_DIR := build
@@ -10,7 +10,7 @@ TGTS = $(patsubst %.cpp, %, $(SRCS))
 DIRS = $(sort $(BUILD_DIR))
 
 
-default: run/task-f
+default: run/task-h
 
 all: $(patsubst %, $(BUILD_DIR)/%, $(TGTS))
 
@@ -45,4 +45,3 @@ help:
 	@echo "Global targets: default all clean"
 	@echo "Targets: $(TGTS)"
 	@echo "Tasks for targets: % (run/%), build/%"
-
