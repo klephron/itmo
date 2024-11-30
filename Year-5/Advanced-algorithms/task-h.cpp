@@ -22,6 +22,7 @@ int32_t depths[LCA_SIZE];
 int32_t nodes[LCA_SIZE];
 int32_t lasts[NODES_SIZE];
 int32_t sp_table[LCA_SIZE][SPT_LOG];
+int32_t logarithms[LCA_SIZE];
 
 // returns next i
 static int32_t lca_setup_dfs(int32_t d, int32_t i, int32_t p) {
@@ -37,8 +38,16 @@ static int32_t lca_setup_dfs(int32_t d, int32_t i, int32_t p) {
 }
 
 static void sparse_table_min_build(int32_t n) {
+  int32_t log_v = 0;
+  int32_t next_log_i = 2;
+
   for (int32_t i = 0; i < n; ++i) {
     sp_table[i][0] = depths[i];
+    if (i == next_log_i) {
+      next_log_i *= 2;
+      ++log_v;
+    }
+    logarithms[i] = log_v;
   }
 
   for (int32_t j = 1; j < SPT_LOG; ++j) {
@@ -101,7 +110,7 @@ int main() {
     int32_t lr = lasts[a] > lasts[b] ? lasts[a] : lasts[b];
 
     int32_t size = lr - ll + 1;
-    int32_t log = log2(size);
+    int32_t log = logarithms[size];
     int32_t sp_l = sp_table[ll][log];
     int32_t sp_r = sp_table[lr - (1 << log) + 1][log];
     int32_t ca_depth = std::min(sp_l, sp_r);
