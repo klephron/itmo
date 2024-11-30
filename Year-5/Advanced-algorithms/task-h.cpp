@@ -9,17 +9,18 @@
 template <typename T>
 using V = typename std::vector<T>;
 
-#define LCA_SIZE 200000
-#define NODES_SIZE 100000
+const size_t LCA_SIZE = 200000;
+const size_t NODES_SIZE = 100000;
+const size_t TREE_SIZE = 1 << 19;
 
 V<V<int32_t>> edges;
-V<int32_t> visited;
+int32_t visited[NODES_SIZE];
 
 V<V<int32_t>> tree_children;
-V<int32_t> depths;
-V<int32_t> lasts;
+int32_t depths[LCA_SIZE];
+int32_t lasts[NODES_SIZE];
 
-V<int32_t> depth_tree;
+int32_t depth_tree[TREE_SIZE];
 
 static int32_t seg_tree_query(int32_t i, int32_t tl, int32_t tr, const int32_t l, const int32_t r) {
   if (l <= tl && tr <= r) {
@@ -34,25 +35,15 @@ static int32_t seg_tree_query(int32_t i, int32_t tl, int32_t tr, const int32_t l
   }
 }
 
-static inline void seg_tree_build() {
-  size_t n = depths.size();
-
-  size_t tr_sz = 1;
-  while (tr_sz < n) {
-    tr_sz *= 2;
-  }
-  tr_sz *= 2;
-
-  depth_tree = V<int32_t>(tr_sz);
-
-  size_t ti = (tr_sz / 2 - 1);
+static inline void seg_tree_build(size_t n) {
+  size_t ti = (TREE_SIZE / 2 - 1);
   for (size_t i = 0; i < n; ++i, ++ti) {
     depth_tree[ti] = depths[i];
   }
-  for (; ti < tr_sz; ++ti) {
+  for (; ti < TREE_SIZE; ++ti) {
     depth_tree[ti] = INT_MAX;
   }
-  for (ti = (tr_sz / 2) - 2;; --ti) {
+  for (ti = (TREE_SIZE / 2) - 2;; --ti) {
     int32_t left_i = depth_tree[2 * ti + 1];
     int32_t right_i = depth_tree[2 * ti + 2];
     depth_tree[ti] = left_i < right_i ? left_i : right_i;
@@ -72,13 +63,6 @@ static int32_t lca_setup_dfs(int32_t d, int32_t i, int32_t p) {
   return i + 1;
 }
 
-static inline void lca_setup() {
-  size_t n = tree_children.size();
-  depths = V<int32_t>(n * 2 - 1);
-  lasts = V<int32_t>(n);
-  lca_setup_dfs(0, 0, 0);
-}
-
 static inline void tree_build_dfs(int32_t p) {
   visited[p] = 1;
   for (auto c : edges[p]) {
@@ -92,7 +76,11 @@ static inline void tree_build_dfs(int32_t p) {
 static inline void tree_build() {
   size_t n = edges.size();
   tree_children = std::vector(n, V<int32_t>());
-  visited = std::vector<int32_t>(n, 0);
+
+  for (size_t i = 0; i < NODES_SIZE; ++i) {
+    visited[i] = 0;
+  }
+
   tree_build_dfs(0);
 }
 
@@ -103,7 +91,7 @@ static inline int32_t energy_required(int32_t l, int32_t r) {
   int32_t ll = std::min(last_l, last_r);
   int32_t lr = std::max(last_l, last_r);
 
-  int32_t ca_depth = seg_tree_query(0, 0, depth_tree.size() / 2 - 1, ll, lr);
+  int32_t ca_depth = seg_tree_query(0, 0, TREE_SIZE / 2 - 1, ll, lr);
 
   int32_t l_depth = depths[last_l];
   int32_t r_depth = depths[last_r];
@@ -117,6 +105,8 @@ int main() {
   int32_t n, q;
 
   std::cin >> n;
+  int32_t size = n;
+
   edges = std::vector(n, V<int32_t>());
   while (--n) {
     int32_t u, v;
@@ -127,8 +117,8 @@ int main() {
   }
 
   tree_build();
-  lca_setup();
-  seg_tree_build();
+  lca_setup_dfs(0, 0, 0);
+  seg_tree_build(size * 2 - 1);
 
   std::cin >> q;
   while (q--) {

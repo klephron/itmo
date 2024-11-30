@@ -96,8 +96,8 @@ void tr_ch_build() {
 }
 
 int main() {
-  stdin_input();
-  stdout_output();
+  // stdin_input();
+  // stdout_output();
 
   int32_t n, q;
 
