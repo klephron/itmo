@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "compiler/codegen/x86_64.h"
+#include "compiler/codegen/x86_64_ctx.h"
 #include "compiler/dot/ast.h"
 #include "compiler/dot/eir.h"
 #include "compiler/eir/ctx.h"
@@ -476,18 +477,31 @@ static int execute(struct args_struct *args) {
     free(tree);
   }
 
+  cg_x86_64     *cg = cg_x86_64_new();
+  cg_x86_64_ctx *cg_ctx = cg_x86_64_ctx_new(cg);
+
+  // stage: build x86_64 structs
+  if (!error || args->ignore_errors) {
+    cg_x86_64_ctx_build(cg_ctx, mir);
+    if (list_exception_count_by_level(cg_ctx->exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      error = 1;
+    }
+    print_exceptions(args, cg_ctx->exceptions);
+  }
+
   // stage: emit x86_64 assembly code
   if (!error || args->ignore_errors) {
-    cg_x86_64 *cg_x86_64 = cg_x86_64_build(mir);
-    char      *data = cg_x86_64_emit(cg_x86_64);
+    char *data = cg_x86_64_ctx_emit(cg_ctx);
     if (data) {
       write_asm(args, data);
       free(data);
     }
-    cg_x86_64_free(cg_x86_64);
   }
 
-  // stage: codegen for specific architecture
+  cg_x86_64_ctx_free(cg_ctx);
+  cg_x86_64_free(cg);
+
   mir_ctx_free(mir_ctx);
   mir_free(mir);
 

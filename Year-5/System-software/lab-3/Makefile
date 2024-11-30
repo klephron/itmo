@@ -133,6 +133,7 @@ run/asm/%: RUN.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
 run/asm/%: RUN.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
 run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a
 	./build/compiler/main --ignore-error \
+		--mir \
 		-d . -o $(RUN.ASM_FILE) $(RUN.INPUT_FILE)
 	@echo "--------------------ASSEMBLY($(RUN.ASM_FILE))--------------------"
 	@cat $(RUN.ASM_FILE)

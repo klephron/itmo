@@ -2,6 +2,7 @@ method malloc(n: int):int;
 method read():void;
 method write():void;
 
+/*
 method fun4():
 begin
 end;
@@ -29,8 +30,9 @@ var
 begin
   fun1();
 end;
+*/
 
-method main3():
+method main():
 var
   a, b, c, d : int;
   e;
@@ -44,6 +46,7 @@ begin
       end;
     until true;
 
+  /*
   while (new!<int>(a) == cast!<int>(1)) do begin
     a = 2;
     break;
@@ -72,5 +75,7 @@ begin
     write(a);
     if a == 0 then break;
   end;
+  */
+
   n;
 end;
