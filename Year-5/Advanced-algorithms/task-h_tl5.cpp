@@ -75,24 +75,24 @@ static inline int32_t energy_required(int32_t a, int32_t b) {
   return l_depth + r_depth - 2 * ca_depth;
 }
 
-void tr_ch_build_dfs(int32_t p) {
+void tree_children_build_dfs(int32_t p) {
   visited[p] = 1;
   for (auto c : edges[p]) {
     if (!visited[c]) {
       tree_children[p].emplace_back(c);
-      tr_ch_build_dfs(c);
+      tree_children_build_dfs(c);
     }
   }
 }
 
-void tr_ch_build() {
+void tree_children_build() {
   int32_t n = edges.size();
-  tree_children = std::vector(n, V<int32_t>());
+  tree_children = std::vector<V<int32_t>>(n);
 
   for (int32_t i = 0; i < n; ++i) {
     visited[i] = 0;
   }
-  tr_ch_build_dfs(0);
+  tree_children_build_dfs(0);
 }
 
 int main() {
@@ -104,7 +104,7 @@ int main() {
   std::cin >> n;
   int32_t size = n;
 
-  edges = std::vector(size, V<int32_t>());
+  edges = std::vector<V<int32_t>>(size);
   while (--n) {
     int32_t u, v;
     std::cin >> u >> v;
@@ -113,7 +113,7 @@ int main() {
     edges[v].emplace_back(u);
   }
 
-  tr_ch_build();
+  tree_children_build();
 
   lca_setup_dfs(0, 0, 0);
 

@@ -63,25 +63,25 @@ static int32_t lca_setup_dfs(int32_t d, int32_t i, int32_t p) {
   return i + 1;
 }
 
-static inline void tree_build_dfs(int32_t p) {
+static inline void children_build_dfs(int32_t p) {
   visited[p] = 1;
   for (auto c : edges[p]) {
     if (!visited[c]) {
       tree_children[p].push_back(c);
-      tree_build_dfs(c);
+      children_build_dfs(c);
     }
   }
 }
 
-static inline void tree_build() {
+static inline void children_build() {
   size_t n = edges.size();
-  tree_children = std::vector(n, V<int32_t>());
+  tree_children = std::vector<V<int32_t>>(n);
 
   for (size_t i = 0; i < NODES_SIZE; ++i) {
     visited[i] = 0;
   }
 
-  tree_build_dfs(0);
+  children_build_dfs(0);
 }
 
 static inline int32_t energy_required(int32_t l, int32_t r) {
@@ -99,15 +99,15 @@ static inline int32_t energy_required(int32_t l, int32_t r) {
 }
 
 int main() {
-  stdin_input();
-  stdout_output();
+  // stdin_input();
+  // stdout_output();
 
   int32_t n, q;
 
   std::cin >> n;
   int32_t size = n;
 
-  edges = std::vector(n, V<int32_t>());
+  edges = std::vector<V<int32_t>>(n);
   while (--n) {
     int32_t u, v;
     std::cin >> u >> v;
@@ -116,7 +116,7 @@ int main() {
     edges[v].emplace_back(u);
   }
 
-  tree_build();
+  children_build();
   lca_setup_dfs(0, 0, 0);
   seg_tree_build(size * 2 - 1);
 
