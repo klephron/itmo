@@ -80,4 +80,3 @@ $(sort $(DIRS)):
 $(foreach target, $(TGTS.ODT), $(eval $(call make-odt-rule,$(target))))
 $(foreach target, $(TGTS.MD), $(eval $(call make-md-rule,$(target))))
 $(foreach target, $(TGTS), $(eval $(call make-merge-rule,$(target))))
-

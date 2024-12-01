@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#define stdin_input() (freopen("input_gen.txt", "r", stdin))
+#define stdin_input() (freopen("input.txt", "r", stdin))
 #define stdout_output() (freopen("output.txt", "w", stdout))
 
 template <typename T>
