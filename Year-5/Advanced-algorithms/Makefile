@@ -1,5 +1,6 @@
 CC := g++
-FLAGS := -std=c++20 -g3 -O0 -fsanitize=address,undefined,leak -Wall -Wextra -Wpedantic
+# -fsanitize=address,undefined,leak
+FLAGS := -std=c++20 -g3 -O0 -Wall -Wextra -Wpedantic -fno-omit-frame-pointer
 MKDIR := mkdir -p
 BUILD_DIR := build
 
