@@ -109,19 +109,19 @@ void cg_x86_64_data_free(cg_x86_64_data *self) {
 }
 
 // INSTRUCTION
-cg_x86_64_mode *cg_x86_64_mode_new_direct(cg_x86_64_label *addr_label) {
+cg_x86_64_mode *cg_x86_64_mode_new_direct(cg_x86_64_label *addr_label_ref) {
   cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
   self->kind = CG_X86_64_MODE_DIRECT;
-  self->addr_label = addr_label;
+  self->addr_label_ref = addr_label_ref;
   return self;
 }
 
-cg_x86_64_mode *cg_x86_64_mode_new_indexed(cg_x86_64_label *addr_label,
+cg_x86_64_mode *cg_x86_64_mode_new_indexed(cg_x86_64_label *addr_label_ref,
                                            cg_x86_64_reg    index_reg,
                                            uint64_t         multi_const) {
   cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
   self->kind = CG_X86_64_MODE_INDEXED;
-  self->addr_label = addr_label;
+  self->addr_label_ref = addr_label_ref;
   self->index_reg = index_reg;
   self->multi_const = multi_const;
   return self;

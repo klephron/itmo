@@ -8,37 +8,37 @@
 #include <string.h>
 
 // MAPPINGS
-mir_map_sub *mir_map_sub_new(const hir_symbol *hir, const mir_node_base *mir) {
+mir_map_sub *mir_map_sub_new(hir_symbol *hir_ref, mir_node_base *mir_ref) {
   mir_map_sub *self = MALLOC(mir_map_sub);
-  self->hir = hir;
-  self->mir = mir;
+  self->hir_ref = hir_ref;
+  self->mir_ref = mir_ref;
   return self;
 }
 
 void mir_map_sub_free(mir_map_sub *self) { free(self); }
 
-mir_map_value *mir_map_value_new(const hir_symbol *hir, const mir_value *mir) {
+mir_map_value *mir_map_value_new(hir_symbol *hir_ref, mir_value *mir_ref) {
   mir_map_value *self = MALLOC(mir_map_value);
-  self->hir = hir;
-  self->mir = mir;
+  self->hir_ref = hir_ref;
+  self->mir_ref = mir_ref;
   return self;
 }
 
 void mir_map_value_free(mir_map_value *self) { free(self); }
 
-mir_map_bb *mir_map_bb_new(const eir_block_base *hir, const mir_bb *mir) {
+mir_map_bb *mir_map_bb_new(eir_block_base *hir_ref, mir_bb *mir_ref) {
   mir_map_bb *self = MALLOC(mir_map_bb);
-  self->hir = hir;
-  self->mir = mir;
+  self->hir_ref = hir_ref;
+  self->mir_ref = mir_ref;
   return self;
 }
 
 void mir_map_bb_free(mir_map_bb *self) { free(self); }
 
 // CTX
-mir_ctx *mir_ctx_new(mir *mir) {
+mir_ctx *mir_ctx_new(mir *mir_ref) {
   mir_ctx *self = MALLOC(mir_ctx);
-  self->mir = mir;
+  self->mir_ref = mir_ref;
   self->exceptions = list_exception_new();
   self->value_cnt = 0;
   self->map_subs = hashset_mir_map_sub_new();
@@ -47,7 +47,7 @@ mir_ctx *mir_ctx_new(mir *mir) {
 
 void mir_ctx_free(mir_ctx *self) {
   if (self) {
-    self->mir = NULL;
+    self->mir_ref = NULL;
     list_exception_free(self->exceptions);
     self->value_cnt = 0;
     hashset_mir_map_sub_free(self->map_subs);

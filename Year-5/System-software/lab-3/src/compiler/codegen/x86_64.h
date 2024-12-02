@@ -99,8 +99,8 @@ typedef enum cg_x86_64_reg_enum {
 // currently supported modes:
 typedef enum cg_x86_64_mode_enum {
   CG_X86_64_MODE_UNKNOWN,
-  CG_X86_64_MODE_DIRECT,    // addr_label(1)
-  CG_X86_64_MODE_INDEXED,   // addr_label(1) + index_reg(2) + multi_const(3)
+  CG_X86_64_MODE_DIRECT,    // addr_label_ref(1)
+  CG_X86_64_MODE_INDEXED,   // addr_label_ref(1) + index_reg(2) + multi_const(3)
   CG_X86_64_MODE_INDIRECT,  // base_reg(2)
   CG_X86_64_MODE_BASE,      // offset_const(1) + base_reg(2)
   CG_X86_64_MODE_IMMEDIATE, // imm_const(1)
@@ -109,7 +109,7 @@ typedef enum cg_x86_64_mode_enum {
 typedef struct cg_x86_64_mode_struct {
   cg_x86_64_mode_enum kind;
   union {
-    cg_x86_64_label *addr_label;
+    cg_x86_64_label *addr_label_ref;
     uint64_t         imm_const;
     uint64_t         offset_const;
   };
@@ -122,8 +122,8 @@ typedef struct cg_x86_64_mode_struct {
   };
 } cg_x86_64_mode;
 
-cg_x86_64_mode *cg_x86_64_mode_new_direct(cg_x86_64_label *addr_label);
-cg_x86_64_mode *cg_x86_64_mode_new_indexed(cg_x86_64_label *addr_label,
+cg_x86_64_mode *cg_x86_64_mode_new_direct(cg_x86_64_label *addr_label_ref);
+cg_x86_64_mode *cg_x86_64_mode_new_indexed(cg_x86_64_label *addr_label_ref,
                                            cg_x86_64_reg    index_reg,
                                            uint64_t         multi_const);
 cg_x86_64_mode *cg_x86_64_mode_new_indirect(cg_x86_64_reg base_reg);

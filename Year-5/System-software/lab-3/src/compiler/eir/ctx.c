@@ -48,9 +48,9 @@ void eir_scope_free(eir_scope *self) {
   }
 }
 
-eir_ctx *eir_ctx_new(eir *eir) {
+eir_ctx *eir_ctx_new(eir *eir_ref) {
   eir_ctx *self = MALLOC(eir_ctx);
-  self->eir = eir;
+  self->eir_ref = eir_ref;
   self->exceptions = list_exception_new();
   self->block_cnt = 0;
   return self;
@@ -65,7 +65,7 @@ void eir_ctx_free(eir_ctx *self) {
   if (self) {
     list_exception_free(self->exceptions);
     self->exceptions = NULL;
-    self->eir = NULL;
+    self->eir_ref = NULL;
     free(self);
   }
 }
@@ -647,12 +647,12 @@ static eir_subroutine *eir_ctx_build_subroutine(eir_ctx              *ctx,
 // 1. copy referencees to global and local symbol tables
 // 2. rebuild hir to eir (will change some tree nodes)
 void eir_ctx_build(eir_ctx *ctx, const hir *hir) {
-  ctx->eir->globals = hir->globals;
-  ctx->eir->locals = hir->locals;
+  ctx->eir_ref->globals = hir->globals;
+  ctx->eir_ref->locals = hir->locals;
 
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
        !it.end(&it); it.next(&it)) {
-    list_eir_subroutine_push_back(ctx->eir->subroutines,
+    list_eir_subroutine_push_back(ctx->eir_ref->subroutines,
                                   eir_ctx_build_subroutine(ctx, it.get(&it)));
   }
 }

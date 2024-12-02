@@ -59,14 +59,14 @@ LIST_DECLARE_STATIC_INLINE(list_hir_ctx_scope, hir_ctx_scope,
 
 // CTX
 typedef struct hir_ctx_struct {
-  const hir      *hir;
+  hir            *hir_ref;
   list_exception *exceptions;
   // internal data
   const char         *ast_stream;
   list_hir_ctx_scope *scopes;
 } hir_ctx;
 
-hir_ctx *hir_ctx_new(const hir *hir);
+hir_ctx *hir_ctx_new(hir *hir_ref);
 void     hir_ctx_reset_exceptions(hir_ctx *self);
 void     hir_ctx_free(hir_ctx *self);
 

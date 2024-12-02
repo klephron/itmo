@@ -118,7 +118,7 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
       if (first->kind == EIR_EXPR_IDENTIFIER) {
         hashset_mir_map_value_it map_id = hashset_mir_map_value_find(
             ctx->map_lvalues,
-            &(mir_map_value){.hir = ((eir_expr_id *)first)->binding});
+            &(mir_map_value){.hir_ref = ((eir_expr_id *)first)->binding});
 
         if (map_id.end(&map_id)) {
           error("unknown identifier %p", first);
@@ -126,7 +126,7 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
           return NULL;
         }
 
-        store_first = (mir_node_base *)map_id.get(&map_id)->mir;
+        store_first = (mir_node_base *)map_id.get(&map_id)->mir_ref;
       } else {
         store_first =
             mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->first, 0);
@@ -257,16 +257,16 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
 
     // identifier
     hashset_mir_map_value_it v_it = hashset_mir_map_value_find(
-        ctx->map_lvalues, &(mir_map_value){.hir = id->binding});
+        ctx->map_lvalues, &(mir_map_value){.hir_ref = id->binding});
     if (!v_it.end(&v_it)) {
-      const mir_value *val = v_it.get(&v_it)->mir;
+      const mir_value *val = v_it.get(&v_it)->mir_ref;
       return (mir_node_base *)val;
     }
 
     hashset_mir_map_sub_it s_it = hashset_mir_map_sub_find(
-        ctx->map_subs, &(mir_map_sub){.hir = id->binding});
+        ctx->map_subs, &(mir_map_sub){.hir_ref = id->binding});
     if (!s_it.end(&s_it)) {
-      const mir_node_base *val = s_it.get(&s_it)->mir;
+      const mir_node_base *val = s_it.get(&s_it)->mir_ref;
       return (mir_node_base *)val;
     }
 
@@ -378,9 +378,9 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
 
   // check if mapping exists
   hashset_mir_map_bb_it it =
-      hashset_mir_map_bb_find(ctx->map_bbs, &(mir_map_bb){.hir = eir_bb});
+      hashset_mir_map_bb_find(ctx->map_bbs, &(mir_map_bb){.hir_ref = eir_bb});
   if (!it.end(&it)) {
-    return (mir_bb *)it.get(&it)->mir;
+    return (mir_bb *)it.get(&it)->mir_ref;
   }
 
   mir_bb *bb = mir_bb_new(eir_bb->id, list_mir_node_new(), NULL);
@@ -405,7 +405,7 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
         is_last_stmt = 1;
       } else {
         hashset_mir_map_bb_it next_it = hashset_mir_map_bb_find(
-            ctx->map_bbs, &(mir_map_bb){.hir = eir_next->next});
+            ctx->map_bbs, &(mir_map_bb){.hir_ref = eir_next->next});
         is_last_stmt = next_it.end(&next_it);
       }
     }
@@ -464,7 +464,7 @@ static void mir_ctx_build_subroutine_before(mir_ctx              *ctx,
 
     mir_subroutine_ext *mir_sub =
         mir_subroutine_ext_new(mir_name, mir_ret, mir_param_types);
-    list_mir_subroutine_ext_push_back(ctx->mir->sub_exts, mir_sub);
+    list_mir_subroutine_ext_push_back(ctx->mir_ref->sub_exts, mir_sub);
 
     // add to mapping
     hashset_mir_map_sub_insert(
@@ -475,7 +475,7 @@ static void mir_ctx_build_subroutine_before(mir_ctx              *ctx,
         mir_name, NULL, list_mir_value_new(), list_mir_value_new(),
         list_mir_value_new(), list_mir_bb_new());
 
-    list_mir_subroutine_push_back(ctx->mir->subs, mir_sub);
+    list_mir_subroutine_push_back(ctx->mir_ref->subs, mir_sub);
 
     // add to mapping
     hashset_mir_map_sub_insert(
@@ -492,12 +492,12 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
 
   // get mapping
   hashset_mir_map_sub_it sub_it = hashset_mir_map_sub_find(
-      ctx->map_subs, &(mir_map_sub){.hir = eir_sub->binding});
+      ctx->map_subs, &(mir_map_sub){.hir_ref = eir_sub->binding});
   if (sub_it.end(&sub_it)) {
     error("can't get preserved subroutine from index for %p", eir_sub);
     return;
   }
-  mir_subroutine *mir_sub = (mir_subroutine *)sub_it.get(&sub_it)->mir;
+  mir_subroutine *mir_sub = (mir_subroutine *)sub_it.get(&sub_it)->mir_ref;
 
   ctx->map_lvalues = hashset_mir_map_value_new();
   ctx->value_cnt = 0;

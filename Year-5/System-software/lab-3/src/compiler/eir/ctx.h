@@ -24,7 +24,7 @@ LIST_DECLARE_STATIC_INLINE(list_eir_scope, eir_scope, container_cmp_false,
                            container_new_move, container_delete_eir_scope);
 
 typedef struct eir_ctx_struct {
-  eir            *eir;
+  eir            *eir_ref;
   list_exception *exceptions;
   // internal data
   list_eir_block *break_stack;
@@ -32,7 +32,7 @@ typedef struct eir_ctx_struct {
   size_t          block_cnt;
 } eir_ctx;
 
-eir_ctx *eir_ctx_new(eir *eir);
+eir_ctx *eir_ctx_new(eir *eir_ref);
 void     eir_ctx_reset_exceptions(eir_ctx *self);
 void     eir_ctx_free(eir_ctx *self);
 

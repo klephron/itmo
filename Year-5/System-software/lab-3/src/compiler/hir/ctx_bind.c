@@ -178,7 +178,7 @@ static void hir_ctx_bind_subroutine(hir_ctx *ctx, hir_subroutine *subroutine) {
       hir_symbol *symbol = hir_symbol_new(
           strdup(name), HIR_BINDING_SUBROUTINE, subroutine->binding,
           type_copy(param->type), span_copy(param->base.span));
-      list_hir_symbol_push_back(ctx->hir->locals, symbol);
+      list_hir_symbol_push_back(ctx->hir_ref->locals, symbol);
 
       hir_ctx_scope_insert_symbol(root_scope, symbol);
       param->binding = symbol;
@@ -198,7 +198,7 @@ static void hir_ctx_bind_subroutine(hir_ctx *ctx, hir_subroutine *subroutine) {
         hir_symbol *symbol = hir_symbol_new(
             strdup(name), HIR_BINDING_SUBROUTINE, subroutine->binding,
             type_copy(var->type), span_copy(var->base.span));
-        list_hir_symbol_push_back(ctx->hir->locals, symbol);
+        list_hir_symbol_push_back(ctx->hir_ref->locals, symbol);
 
         hir_ctx_scope_insert_symbol(root_scope, symbol);
         var->binding = symbol;
@@ -218,7 +218,7 @@ void hir_ctx_bind_all(hir_ctx *ctx) {
   list_hir_ctx_scope_push_front(ctx->scopes, root_scope);
 
   for (list_hir_subroutine_it it =
-           list_hir_subroutine_begin(ctx->hir->subroutines);
+           list_hir_subroutine_begin(ctx->hir_ref->subroutines);
        !it.end(&it); it.next(&it)) {
     hir_subroutine *subroutine = it.get(&it);
 
@@ -234,7 +234,7 @@ void hir_ctx_bind_all(hir_ctx *ctx) {
                        (type_base *)type_callable_new(
                            NULL, type_copy(subroutine->ret_type), types),
                        span_copy(subroutine->base.span));
-    list_hir_symbol_push_back(ctx->hir->globals, symbol);
+    list_hir_symbol_push_back(ctx->hir_ref->globals, symbol);
 
     // add to global scope
     const hir_symbol *found =
@@ -248,7 +248,7 @@ void hir_ctx_bind_all(hir_ctx *ctx) {
   }
 
   for (list_hir_subroutine_it it =
-           list_hir_subroutine_begin(ctx->hir->subroutines);
+           list_hir_subroutine_begin(ctx->hir_ref->subroutines);
        !it.end(&it); it.next(&it)) {
     hir_subroutine *subroutine = it.get(&it);
     hir_ctx_bind_subroutine(ctx, subroutine);

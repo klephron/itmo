@@ -204,7 +204,8 @@ void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
 }
 
 void mir_ctx_bb_merge_all(mir_ctx *ctx) {
-  for (list_mir_subroutine_it it = list_mir_subroutine_begin(ctx->mir->subs);
+  for (list_mir_subroutine_it it =
+           list_mir_subroutine_begin(ctx->mir_ref->subs);
        !it.end(&it); it.next(&it)) {
     mir_ctx_bb_merge_subroutine(ctx, it.get(&it));
   }

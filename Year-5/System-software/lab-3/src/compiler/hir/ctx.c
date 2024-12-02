@@ -36,9 +36,9 @@ void hir_ctx_scope_free(hir_ctx_scope *self) {
 }
 
 // CTX
-hir_ctx *hir_ctx_new(const hir *hir) {
+hir_ctx *hir_ctx_new(hir *hir_ref) {
   hir_ctx *self = MALLOC(hir_ctx);
-  self->hir = hir;
+  self->hir_ref = hir_ref;
   self->exceptions = list_exception_new();
   self->ast_stream = NULL;
   self->scopes = NULL;
@@ -52,7 +52,7 @@ void hir_ctx_reset_exceptions(hir_ctx *self) {
 
 void hir_ctx_free(hir_ctx *self) {
   if (self) {
-    self->hir = NULL;
+    self->hir_ref = NULL;
     list_exception_free(self->exceptions);
     self->exceptions = NULL;
     self->ast_stream = NULL;

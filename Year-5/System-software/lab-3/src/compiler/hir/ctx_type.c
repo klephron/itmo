@@ -73,19 +73,19 @@ static int hir_ctx_type_subroutine_decl(hir_ctx *ctx, hir_subroutine *sub) {
 }
 
 void hir_ctx_type_all(hir_ctx *ctx) {
-  for (list_hir_symbol_it it = list_hir_symbol_begin(ctx->hir->globals);
+  for (list_hir_symbol_it it = list_hir_symbol_begin(ctx->hir_ref->globals);
        !it.end(&it); it.next(&it)) {
     const hir_symbol *symbol = it.get(&it);
     hir_ctx_type_type(ctx, symbol->type);
   }
-  for (list_hir_symbol_it it = list_hir_symbol_begin(ctx->hir->locals);
+  for (list_hir_symbol_it it = list_hir_symbol_begin(ctx->hir_ref->locals);
        !it.end(&it); it.next(&it)) {
     const hir_symbol *symbol = it.get(&it);
     hir_ctx_type_type(ctx, symbol->type);
   }
 
   for (list_hir_subroutine_it it =
-           list_hir_subroutine_begin(ctx->hir->subroutines);
+           list_hir_subroutine_begin(ctx->hir_ref->subroutines);
        !it.end(&it); it.next(&it)) {
     hir_subroutine *subroutine = it.get(&it);
     if (!subroutine->body) {

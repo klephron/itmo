@@ -352,7 +352,7 @@ void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
                     list_hir_var *vars, hir_stmt_block *body) {
   subroutine->vars = vars;
   subroutine->body = body;
-  list_hir_subroutine_push_back(ctx->hir->subroutines, subroutine);
+  list_hir_subroutine_push_back(ctx->hir_ref->subroutines, subroutine);
 }
 
 // EXPRESSIONS
