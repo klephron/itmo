@@ -9,6 +9,7 @@ typedef enum cg_x86_64_unit_enum {
   CG_X86_64_UNIT_DATA,
   CG_X86_64_UNIT_INSTR,
   CG_X86_64_UNIT_LABEL,
+  CG_X86_64_UNIT_DIRECTIVE,
 } cg_x86_64_unit_enum;
 
 typedef struct cg_x86_64_unit {
@@ -24,12 +25,40 @@ LIST_DECLARE_STATIC_INLINE(list_cg_x86_64_unit, cg_x86_64_unit,
                            container_cmp_false, container_new_move,
                            container_delete_cg_x86_64_unit);
 
+typedef enum cg_x86_64_label_enum {
+  CG_X86_64_LABEL_UNKNOWN,
+  CG_X86_64_LABEL_DIRECTIVE,
+  CG_X86_64_LABEL_DATA,
+  CG_X86_64_LABEL_INSTR,
+} cg_x86_64_label_enum;
+
 typedef struct cg_x86_64_label_struct {
-  cg_x86_64_unit base;
-  char          *name;
+  cg_x86_64_unit       base;
+  cg_x86_64_label_enum kind;
+  char                *name;
 } cg_x86_64_label;
 
-cg_x86_64_label *cg_x86_64_label_new(char *name);
+cg_x86_64_label *cg_x86_64_label_new(char *name, cg_x86_64_label_enum kind);
+
+typedef enum cg_x86_64_dir_enum {
+  CG_X86_64_DIR_UNKNOWN,
+  CG_X86_64_DIR_SECTION,
+  CG_X86_64_DIR_GLOBL,
+  CG_X86_64_DIR_EXTERN,
+} cg_x86_64_dir_enum;
+
+typedef struct cg_x86_64_dir_struct {
+  cg_x86_64_unit     base;
+  cg_x86_64_dir_enum kind;
+  union {
+    char            *section;
+    cg_x86_64_label *label;
+  };
+} cg_x86_64_dir;
+
+cg_x86_64_dir *cg_x86_64_dir_section_new(char *section);
+cg_x86_64_dir *cg_x86_64_dir_globl_new(cg_x86_64_label *label);
+cg_x86_64_dir *cg_x86_64_dir_extern_new(cg_x86_64_label *label);
 
 typedef enum cg_x86_64_data_enum {
   CG_X86_64_DATA_BYTE,  // 1 byte
@@ -99,6 +128,7 @@ typedef enum cg_x86_64_reg_enum {
 // currently supported modes:
 typedef enum cg_x86_64_mode_enum {
   CG_X86_64_MODE_UNKNOWN,
+  CG_X86_64_MODE_REGISTER,
   CG_X86_64_MODE_DIRECT,    // addr_label_ref(1)
   CG_X86_64_MODE_INDEXED,   // addr_label_ref(1) + index_reg(2) + multi_const(3)
   CG_X86_64_MODE_INDIRECT,  // base_reg(2)
@@ -112,6 +142,7 @@ typedef struct cg_x86_64_mode_struct {
     cg_x86_64_label *addr_label_ref;
     uint64_t         imm_const;
     uint64_t         offset_const;
+    cg_x86_64_reg    reg;
   };
   union {
     cg_x86_64_reg index_reg;
@@ -122,6 +153,7 @@ typedef struct cg_x86_64_mode_struct {
   };
 } cg_x86_64_mode;
 
+cg_x86_64_mode *cg_x86_64_mode_new_register(cg_x86_64_reg reg);
 cg_x86_64_mode *cg_x86_64_mode_new_direct(cg_x86_64_label *addr_label_ref);
 cg_x86_64_mode *cg_x86_64_mode_new_indexed(cg_x86_64_label *addr_label_ref,
                                            cg_x86_64_reg    index_reg,
@@ -144,6 +176,10 @@ typedef enum cg_x86_64_mnem_enum {
   CG_X86_64_MNEM_UNKNOWN,
   CG_X86_64_MNEM_PUSHQ,
   CG_X86_64_MNEM_POPQ,
+  CG_X86_64_MNEM_MOVQ,
+  CG_X86_64_MNEM_RETQ,
+  CG_X86_64_MNEM_SYSCALL,
+  CG_X86_64_MNEM_XORQ,
 } cg_x86_64_mnem;
 
 // at&t instruction order
@@ -156,20 +192,8 @@ typedef struct cg_x86_64_instr_struct {
 cg_x86_64_instr *cg_x86_64_instr_new(cg_x86_64_mnem       mnem,
                                      list_cg_x86_64_mode *operands);
 
-typedef struct cg_x86_64_section_struct {
-  char                *name;
-  list_cg_x86_64_unit *units;
-} cg_x86_64_section;
-
-cg_x86_64_section *cg_x86_64_section_new(char *name);
-void               cg_x86_64_section_free(cg_x86_64_section *self);
-
-LIST_DECLARE_STATIC_INLINE(list_cg_x86_64_section, cg_x86_64_section,
-                           container_cmp_false, container_new_move,
-                           container_delete_chars);
-
 typedef struct cg_x86_64_struct {
-  list_cg_x86_64_section *sections;
+  list_cg_x86_64_unit *units;
 } cg_x86_64;
 
 cg_x86_64 *cg_x86_64_new();

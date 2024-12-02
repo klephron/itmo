@@ -2,7 +2,6 @@ method malloc(n: int):int;
 method read():void;
 method write():void;
 
-/*
 method fun4():
 begin
 end;
@@ -24,13 +23,6 @@ begin
   fun2();
   fun3();
 end;
-
-method main(n: int): long
-var
-begin
-  fun1();
-end;
-*/
 
 method main():
 var

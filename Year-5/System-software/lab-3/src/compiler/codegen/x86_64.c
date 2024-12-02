@@ -5,6 +5,7 @@
 void cg_x86_64_label_free(cg_x86_64_label *self);
 void cg_x86_64_data_free(cg_x86_64_data *self);
 void cg_x86_64_instr_free(cg_x86_64_instr *self);
+void cg_x86_64_dir_free(cg_x86_64_dir *self);
 
 // GENERIC
 static inline void cg_x86_64_unit_base_init(cg_x86_64_unit     *base,
@@ -22,8 +23,13 @@ void cg_x86_64_unit_free(cg_x86_64_unit *generic) {
   }
   switch (generic->kind) {
   case CG_X86_64_UNIT_DATA:
+    return cg_x86_64_data_free((cg_x86_64_data *)generic);
   case CG_X86_64_UNIT_INSTR:
+    return cg_x86_64_instr_free((cg_x86_64_instr *)generic);
   case CG_X86_64_UNIT_LABEL:
+    return cg_x86_64_label_free((cg_x86_64_label *)generic);
+  case CG_X86_64_UNIT_DIRECTIVE:
+    return cg_x86_64_dir_free((cg_x86_64_dir *)generic);
   case CG_X86_64_UNIT_UNKNOWN:
   default:
     error("unknown assembly unit %d %p", generic->kind, generic);
@@ -32,10 +38,11 @@ void cg_x86_64_unit_free(cg_x86_64_unit *generic) {
 }
 
 // LABEL
-cg_x86_64_label *cg_x86_64_label_new(char *name) {
+cg_x86_64_label *cg_x86_64_label_new(char *name, cg_x86_64_label_enum kind) {
   cg_x86_64_label *self = MALLOC(cg_x86_64_label);
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_LABEL);
   self->name = name;
+  self->kind = kind;
   return self;
 }
 
@@ -43,6 +50,48 @@ void cg_x86_64_label_free(cg_x86_64_label *self) {
   if (self) {
     free(self->name);
     cg_x86_64_unit_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+// DIRECTIVE
+cg_x86_64_dir *cg_x86_64_dir_section_new(char *section) {
+  cg_x86_64_dir *self = MALLOC(cg_x86_64_dir);
+  cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DIRECTIVE);
+  self->kind = CG_X86_64_DIR_SECTION;
+  self->section = section;
+  return self;
+}
+
+cg_x86_64_dir *cg_x86_64_dir_globl_new(cg_x86_64_label *label) {
+  cg_x86_64_dir *self = MALLOC(cg_x86_64_dir);
+  cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DIRECTIVE);
+  self->kind = CG_X86_64_DIR_GLOBL;
+  self->label = label;
+  return self;
+}
+
+cg_x86_64_dir *cg_x86_64_dir_extern_new(cg_x86_64_label *label) {
+  cg_x86_64_dir *self = MALLOC(cg_x86_64_dir);
+  cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DIRECTIVE);
+  self->kind = CG_X86_64_DIR_EXTERN;
+  self->label = label;
+  return self;
+}
+
+void cg_x86_64_dir_free(cg_x86_64_dir *self) {
+  if (self) {
+    switch (self->kind) {
+    case CG_X86_64_DIR_SECTION:
+      free(self->section);
+      break;
+    case CG_X86_64_DIR_GLOBL:
+    case CG_X86_64_DIR_EXTERN:
+      cg_x86_64_label_free(self->label);
+      break;
+    default:
+      break;
+    }
     free(self);
   }
 }
@@ -109,6 +158,12 @@ void cg_x86_64_data_free(cg_x86_64_data *self) {
 }
 
 // INSTRUCTION
+cg_x86_64_mode *cg_x86_64_mode_new_register(cg_x86_64_reg reg) {
+  cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
+  self->kind = CG_X86_64_MODE_REGISTER;
+  self->reg = reg;
+  return self;
+}
 cg_x86_64_mode *cg_x86_64_mode_new_direct(cg_x86_64_label *addr_label_ref) {
   cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
   self->kind = CG_X86_64_MODE_DIRECT;
@@ -176,13 +231,13 @@ void cg_x86_64_instr_free(cg_x86_64_instr *self) {
 // CODEGEN MAIN
 cg_x86_64 *cg_x86_64_new() {
   cg_x86_64 *self = MALLOC(cg_x86_64);
-  self->sections = list_cg_x86_64_section_new();
+  self->units = list_cg_x86_64_unit_new();
   return self;
 }
 
 void cg_x86_64_free(cg_x86_64 *self) {
   if (self) {
-    list_cg_x86_64_section_free(self->sections);
+    list_cg_x86_64_unit_free(self->units);
     free(self);
   }
 }

@@ -7,6 +7,8 @@
 typedef struct cg_x86_64_ctx_struct {
   cg_x86_64      *cg_ref;
   list_exception *exceptions;
+  // internal
+
 } cg_x86_64_ctx;
 
 cg_x86_64_ctx *cg_x86_64_ctx_new(cg_x86_64 *cg_ref);
