@@ -65,14 +65,14 @@ void     hir_lit_free(hir_lit *self);
 
 // PARAM
 typedef struct hir_param {
-  hir_base          base;
-  hir_id           *id;
-  type_base        *type;
-  const hir_symbol *binding;
+  hir_base    base;
+  hir_id     *id;
+  type_base  *type;
+  hir_symbol *binding_ref;
 } hir_param;
 
 hir_param *hir_param_new(span *span, hir_id *id, type_base *type,
-                         const hir_symbol *binding);
+                         hir_symbol *binding_ref);
 void       hir_param_free(hir_param *self);
 
 static inline void container_delete_hir_param(void *data) {
@@ -83,14 +83,14 @@ LIST_DECLARE_STATIC_INLINE(list_hir_param, hir_param, container_cmp_false,
 
 // VAR
 typedef struct hir_var {
-  hir_base          base;
-  hir_id           *id;
-  type_base        *type;
-  const hir_symbol *binding;
+  hir_base    base;
+  hir_id     *id;
+  type_base  *type;
+  hir_symbol *binding_ref;
 } hir_var;
 
 hir_var *hir_var_new(span *span, hir_id *id, type_base *type,
-                     const hir_symbol *binding);
+                     hir_symbol *binding_ref);
 void     hir_var_free(hir_var *self);
 
 static inline void container_delete_hir_var(void *data) {

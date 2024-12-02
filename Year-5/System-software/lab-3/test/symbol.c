@@ -7,8 +7,8 @@
 static void hir_binding_parent_str(string_buffer    *buffer,
                                    const hir_symbol *parent) {
   if (parent) {
-    hir_binding_parent_str(buffer, parent->bind_parent);
-    if (parent->bind_parent) {
+    hir_binding_parent_str(buffer, parent->bind_parent_ref);
+    if (parent->bind_parent_ref) {
       string_buffer_append(buffer, "::");
     }
     string_buffer_append(buffer, parent->name);

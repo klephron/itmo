@@ -2,16 +2,14 @@
 
 #include "compiler/antlr3/tree/HirBuilder.h"
 #include "compiler/exception/container.h"
-#include "compiler/hir/ctx_bind.h"
-#include "compiler/hir/ctx_type.h"
 #include "util/macro.h"
 
 // SCOPE
-hir_ctx_scope_entry *hir_ctx_scope_entry_new(const char       *name,
-                                             const hir_symbol *binding) {
+hir_ctx_scope_entry *hir_ctx_scope_entry_new(char       *name_ref,
+                                             hir_symbol *binding_ref) {
   hir_ctx_scope_entry *self = MALLOC(hir_ctx_scope_entry);
-  self->name = name;
-  self->binding = binding;
+  self->name_ref = name_ref;
+  self->binding_ref = binding_ref;
   return self;
 }
 
@@ -40,7 +38,7 @@ hir_ctx *hir_ctx_new(hir *hir_ref) {
   hir_ctx *self = MALLOC(hir_ctx);
   self->hir_ref = hir_ref;
   self->exceptions = list_exception_new();
-  self->ast_stream = NULL;
+  self->ast_stream_ref = NULL;
   self->scopes = NULL;
   return self;
 }
@@ -55,7 +53,7 @@ void hir_ctx_free(hir_ctx *self) {
     self->hir_ref = NULL;
     list_exception_free(self->exceptions);
     self->exceptions = NULL;
-    self->ast_stream = NULL;
+    self->ast_stream_ref = NULL;
     self->scopes = NULL;
     free(self);
   }
@@ -74,7 +72,7 @@ static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
 
   exception_helper exh;
   exh.level = EXCEPTION_LEVEL_ERROR;
-  exh.stream = (char *)ctx->ast_stream;
+  exh.stream = (char *)ctx->ast_stream_ref;
   exh.type = EXCEPTION_TREE;
   exh.subtype = EXCEPTION_TREE_UNEXPECTED_NODE;
   exh.line = 0;
@@ -102,7 +100,7 @@ static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
 }
 
 void hir_ctx_build(hir_ctx *ctx, const ast *ast) {
-  ctx->ast_stream = ast->name;
+  ctx->ast_stream_ref = ast->name;
 
   pANTLR3_COMMON_TREE_NODE_STREAM nodes =
       antlr3CommonTreeNodeStreamNewTree(ast->tree, ANTLR3_SIZE_HINT);
@@ -117,11 +115,5 @@ void hir_ctx_build(hir_ctx *ctx, const ast *ast) {
   builder->free(builder);
   nodes->free(nodes);
 
-  ctx->ast_stream = NULL;
+  ctx->ast_stream_ref = NULL;
 }
-
-// BIND
-void hir_ctx_bind(hir_ctx *ctx) { hir_ctx_bind_all(ctx); }
-
-// TYPE
-void hir_ctx_type(hir_ctx *ctx) { hir_ctx_type_all(ctx); }

@@ -1,4 +1,5 @@
-#include "ctx_bb_merge.h"
+#include "ctx.h"
+
 #include "util/hashset.h"
 #include "util/list.h"
 #include "util/macro.h"
@@ -203,7 +204,7 @@ void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
   hashset_mir_bb_preds_free(hs_preds);
 }
 
-void mir_ctx_bb_merge_all(mir_ctx *ctx) {
+void mir_ctx_bb_merge(mir_ctx *ctx) {
   for (list_mir_subroutine_it it =
            list_mir_subroutine_begin(ctx->mir_ref->subs);
        !it.end(&it); it.next(&it)) {

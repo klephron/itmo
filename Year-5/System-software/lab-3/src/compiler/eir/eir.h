@@ -103,12 +103,12 @@ eir_expr_lit *eir_expr_lit_new(span *span, type_base *type, hir_lit *lit);
 void          eir_expr_lit_free(eir_expr_lit *self);
 
 typedef struct eir_expr_id_struct {
-  eir_expr_base     base;
-  const hir_symbol *binding;
+  eir_expr_base base;
+  hir_symbol   *binding_ref;
 } eir_expr_id;
 
 eir_expr_id *eir_expr_id_new(span *span, type_base *type,
-                             const hir_symbol *binding);
+                             hir_symbol *binding_ref);
 void         eir_expr_id_free(eir_expr_id *self);
 
 typedef struct eir_expr_call_struct {
@@ -183,16 +183,15 @@ void            eir_block_cond_free(eir_block_cond *self);
 
 // SUBROUTINE
 typedef struct eir_subroutine_struct {
-  eir_block_base       *root;
-  const hir_symbol     *binding;
-  const list_hir_param *params_ref;
-  const list_hir_var   *vars_ref;
+  eir_block_base *root;
+  hir_symbol     *binding_ref;
+  list_hir_param *params_ref;
+  list_hir_var   *vars_ref;
 } eir_subroutine;
 
-eir_subroutine *eir_subroutine_new(eir_block_base       *root,
-                                   const hir_symbol     *binding,
-                                   const list_hir_param *params_ref,
-                                   const list_hir_var   *vars_ref);
+eir_subroutine *eir_subroutine_new(eir_block_base *root, hir_symbol *binding,
+                                   list_hir_param *params_ref,
+                                   list_hir_var   *vars_ref);
 void            eir_subroutine_free(eir_subroutine *self);
 
 static inline void container_delete_eir_subroutine(void *data) {
@@ -204,8 +203,8 @@ LIST_DECLARE_STATIC_INLINE(list_eir_subroutine, eir_subroutine,
 
 // EIR
 typedef struct eir_struct {
-  const list_hir_symbol *globals;
-  const list_hir_symbol *locals;
+  const list_hir_symbol *globals_ref;
+  const list_hir_symbol *locals_ref;
   list_eir_subroutine   *subroutines;
 } eir;
 

@@ -241,7 +241,7 @@ static size_t cfg_traverse_expr_traverse(dot_block *st, string_buffer *buffer,
   }
   case EIR_EXPR_IDENTIFIER: {
     eir_expr_id *id = (eir_expr_id *)expr;
-    snprintf(buf, sizeof(buf) - 1, "label=\"%s\"", id->binding->name);
+    snprintf(buf, sizeof(buf) - 1, "label=\"%s\"", id->binding_ref->name);
     break;
   }
   case EIR_EXPR_CALL: {
@@ -632,7 +632,7 @@ static void cg_traverse_expr(dot_ctx_cg *ctx, dot_subroutine *dsub,
     eir_expr_id *sub_id = (eir_expr_id *)sub_base;
 
     hashset_subsymbol_it it = hashset_subsymbol_find(
-        ctx->subindex, &(subsymbol){.symbol = sub_id->binding});
+        ctx->subindex, &(subsymbol){.symbol = sub_id->binding_ref});
 
     if (it.end(&it)) {
       error("identifer is not found");
@@ -742,7 +742,7 @@ static size_t cg_traverse(dot_ctx_cg *ctx, string_buffer *buffer,
   hashset_subroutine_insert(ctx->subroutines, dsub);
 
   snprintf(buf, sizeof(buf) - 1, "subroutine_%zu[label=%s];\n", dsub->id,
-           sub->binding->name);
+           sub->binding_ref->name);
   string_buffer_append(buffer, buf);
 
   // find function calls in blocks
@@ -772,7 +772,7 @@ dot_string *dot_eir_cg(const eir *eir, const eir_subroutine *sub) {
        !it.end(&it); it.next(&it)) {
     eir_subroutine *it_sub = it.get(&it);
     hashset_subsymbol_insert(ctx->subindex,
-                             subsymbol_new(it_sub->binding, it_sub));
+                             subsymbol_new(it_sub->binding_ref, it_sub));
   }
 
   string_buffer_append(

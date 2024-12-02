@@ -16,23 +16,23 @@ typedef enum hir_ctx_scope_enum {
 } hir_ctx_scope_enum;
 
 typedef struct hir_ctx_scope_entry_struct {
-  const char       *name;
-  const hir_symbol *binding;
+  char       *name_ref;
+  hir_symbol *binding_ref;
 } hir_ctx_scope_entry;
 
-hir_ctx_scope_entry *hir_ctx_scope_entry_new(const char       *id,
-                                             const hir_symbol *binding);
+hir_ctx_scope_entry *hir_ctx_scope_entry_new(char       *id_ref,
+                                             hir_symbol *binding_ref);
 void                 hir_ctx_scope_entry_free(hir_ctx_scope_entry *self);
 
 static inline int container_cmp_hir_ctx_scope_entry(const void *_lsv,
                                                     const void *_rsv) {
   const hir_ctx_scope_entry *lsv = _lsv;
   const hir_ctx_scope_entry *rsv = _rsv;
-  return container_cmp_chars(lsv->name, rsv->name);
+  return container_cmp_chars(lsv->name_ref, rsv->name_ref);
 }
 static inline size_t container_hash_hir_ctx_scope_entry(const void *_lsv) {
   const hir_ctx_scope_entry *lsv = _lsv;
-  return container_hash_chars(lsv->name);
+  return container_hash_chars(lsv->name_ref);
 }
 static inline void container_delete_hir_ctx_scope_entry(void *_lsv) {
   hir_ctx_scope_entry_free(_lsv);
@@ -62,7 +62,7 @@ typedef struct hir_ctx_struct {
   hir            *hir_ref;
   list_exception *exceptions;
   // internal data
-  const char         *ast_stream;
+  const char         *ast_stream_ref;
   list_hir_ctx_scope *scopes;
 } hir_ctx;
 

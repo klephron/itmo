@@ -425,8 +425,8 @@ static int execute(struct args_struct *args) {
              list_eir_subroutine_begin(eir->subroutines);
          !it.end(&it); it.next(&it)) {
       const eir_subroutine *sub = it.get(&it);
-      const char           *sub_name = sub->binding->name;
-      const char           *source = sub->binding->decl_span->source;
+      const char           *sub_name = sub->binding_ref->name;
+      const char           *source = sub->binding_ref->decl_span->source;
 
       dot_string *dot = dot_eir_cfg(eir, sub, args->cfg_add_expr);
       char       *output = get_cfg_dot_output(args, source, sub_name);
@@ -442,8 +442,8 @@ static int execute(struct args_struct *args) {
              list_eir_subroutine_begin(eir->subroutines);
          !it.end(&it); it.next(&it)) {
       const eir_subroutine *sub = it.get(&it);
-      const char           *sub_name = sub->binding->name;
-      const char           *source = sub->binding->decl_span->source;
+      const char           *sub_name = sub->binding_ref->name;
+      const char           *source = sub->binding_ref->decl_span->source;
 
       if (has_subroutine(args, sub_name)) {
         dot_string *dot = dot_eir_cg(eir, sub);

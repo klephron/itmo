@@ -100,13 +100,13 @@ hir_expr_lit *hir_expr_lit_new(span *span, type_base *type, hir_lit *lit);
 void          hir_expr_lit_free(hir_expr_lit *self);
 
 typedef struct hir_expr_id {
-  hir_expr_base     base;
-  hir_id           *id;
-  const hir_symbol *binding;
+  hir_expr_base base;
+  hir_id       *id;
+  hir_symbol   *binding_ref;
 } hir_expr_id;
 
 hir_expr_id *hir_expr_id_new(span *span, type_base *type, hir_id *id,
-                             const hir_symbol *binding);
+                             hir_symbol *binding_ref);
 void         hir_expr_id_free(hir_expr_id *self);
 
 typedef struct hir_expr_call {

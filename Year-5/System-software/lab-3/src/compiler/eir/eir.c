@@ -94,10 +94,10 @@ void eir_expr_lit_free(eir_expr_lit *self) {
 }
 
 eir_expr_id *eir_expr_id_new(span *span, type_base *type,
-                             const hir_symbol *binding) {
+                             hir_symbol *binding_ref) {
   eir_expr_id *self = MALLOC(eir_expr_id);
   eir_expr_base_init(&self->base, span, EIR_EXPR_IDENTIFIER, type);
-  self->binding = binding;
+  self->binding_ref = binding_ref;
   return self;
 }
 
@@ -263,13 +263,13 @@ eir_block_base *eir_block_get_next(eir_block_base *self) {
 }
 
 // SUBROUTINE
-eir_subroutine *eir_subroutine_new(eir_block_base       *root,
-                                   const hir_symbol     *binding,
-                                   const list_hir_param *params_ref,
-                                   const list_hir_var   *vars_ref) {
+eir_subroutine *eir_subroutine_new(eir_block_base *root,
+                                   hir_symbol     *binding_ref,
+                                   list_hir_param *params_ref,
+                                   list_hir_var   *vars_ref) {
   eir_subroutine *self = MALLOC(eir_subroutine);
   self->root = root;
-  self->binding = binding;
+  self->binding_ref = binding_ref;
   self->params_ref = params_ref;
   self->vars_ref = vars_ref;
   return self;
@@ -313,7 +313,7 @@ void eir_subroutine_free(eir_subroutine *self) {
       eir_subroutine_graph_to_tree(self->root);
     }
     eir_block_free(self->root);
-    self->binding = NULL;
+    self->binding_ref = NULL;
     free(self);
   }
 }
@@ -321,16 +321,16 @@ void eir_subroutine_free(eir_subroutine *self) {
 // EIR
 eir *eir_new() {
   eir *self = MALLOC(eir);
-  self->globals = NULL;
-  self->locals = NULL;
+  self->globals_ref = NULL;
+  self->locals_ref = NULL;
   self->subroutines = list_eir_subroutine_new();
   return self;
 }
 
 void eir_free(eir *self) {
   if (self) {
-    self->globals = NULL;
-    self->locals = NULL;
+    self->globals_ref = NULL;
+    self->locals_ref = NULL;
     list_eir_subroutine_free(self->subroutines);
     self->subroutines = NULL;
     free(self);

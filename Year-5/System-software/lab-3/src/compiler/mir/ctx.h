@@ -9,11 +9,11 @@
 
 // MAPPINGS
 typedef struct mir_map_sub_struct {
-  hir_symbol    *hir_ref;
-  mir_node_base *mir_ref;
+  const hir_symbol *hir_ref;
+  mir_node_base    *mir_ref;
 } mir_map_sub;
 
-mir_map_sub *mir_map_sub_new(hir_symbol *hir_ref, mir_node_base *mir_ref);
+mir_map_sub *mir_map_sub_new(const hir_symbol *hir_ref, mir_node_base *mir_ref);
 void         mir_map_sub_free(mir_map_sub *self);
 
 static inline int container_cmp_mir_map_sub(const void *_lsv,
@@ -35,11 +35,11 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_mir_map_sub, mir_map_sub,
                               container_hash_mir_map_sub);
 
 typedef struct mir_map_value_struct {
-  hir_symbol *hir_ref;
-  mir_value  *mir_ref;
+  const hir_symbol *hir_ref;
+  mir_value        *mir_ref;
 } mir_map_value;
 
-mir_map_value *mir_map_value_new(hir_symbol *hir_ref, mir_value *mir_ref);
+mir_map_value *mir_map_value_new(const hir_symbol *hir_ref, mir_value *mir_ref);
 void           mir_map_value_free(mir_map_value *self);
 
 static inline int container_cmp_mir_map_value(const void *_lsv,
@@ -61,11 +61,11 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_mir_map_value, mir_map_value,
                               container_hash_mir_map_value);
 
 typedef struct mir_map_bb_struct {
-  eir_block_base *hir_ref;
-  mir_bb         *mir_ref;
+  const eir_block_base *hir_ref;
+  mir_bb               *mir_ref;
 } mir_map_bb;
 
-mir_map_bb *mir_map_bb_new(eir_block_base *hir, mir_bb *mir);
+mir_map_bb *mir_map_bb_new(const eir_block_base *hir, mir_bb *mir);
 void        mir_map_bb_free(mir_map_bb *self);
 
 static inline int container_cmp_mir_map_bb(const void *_lsv, const void *_rsv) {

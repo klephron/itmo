@@ -1,20 +1,20 @@
-#include "ctx_build.h"
+#include "ctx.h"
 
 #include "util/log.h"
 #include <string.h>
 
 static void mir_ctx_warning_no_return(mir_ctx              *ctx,
                                       const eir_subroutine *eir_sub) {
-  const span *eirs = eir_sub->binding->decl_span;
+  const span *eirs = eir_sub->binding_ref->decl_span;
   list_exception_push_back(
       ctx->exceptions,
-      exception_new_f(EXCEPTION_LEVEL_WARNING, EXCEPTION_MIR,
-                      EXCEPTION_MIR_NO_RETURN, eirs->source, eirs->line_start,
-                      eirs->pos_start,
-                      exception_subtype_mir_str(EXCEPTION_MIR_NO_RETURN),
-                      "return value in %s at %s %zu:%zu %zu:%zu is unitialized",
-                      eir_sub->binding->name, eirs->source, eirs->line_start,
-                      eirs->pos_start, eirs->line_end, eirs->pos_end));
+      exception_new_f(
+          EXCEPTION_LEVEL_WARNING, EXCEPTION_MIR, EXCEPTION_MIR_NO_RETURN,
+          eirs->source, eirs->line_start, eirs->pos_start,
+          exception_subtype_mir_str(EXCEPTION_MIR_NO_RETURN),
+          "return value in %s at %s %zu:%zu %zu:%zu is unitialized",
+          eir_sub->binding_ref->name, eirs->source, eirs->line_start,
+          eirs->pos_start, eirs->line_end, eirs->pos_end));
 }
 
 // wraps result in store expression
@@ -118,7 +118,7 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
       if (first->kind == EIR_EXPR_IDENTIFIER) {
         hashset_mir_map_value_it map_id = hashset_mir_map_value_find(
             ctx->map_lvalues,
-            &(mir_map_value){.hir_ref = ((eir_expr_id *)first)->binding});
+            &(mir_map_value){.hir_ref = ((eir_expr_id *)first)->binding_ref});
 
         if (map_id.end(&map_id)) {
           error("unknown identifier %p", first);
@@ -257,20 +257,20 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
 
     // identifier
     hashset_mir_map_value_it v_it = hashset_mir_map_value_find(
-        ctx->map_lvalues, &(mir_map_value){.hir_ref = id->binding});
+        ctx->map_lvalues, &(mir_map_value){.hir_ref = id->binding_ref});
     if (!v_it.end(&v_it)) {
       const mir_value *val = v_it.get(&v_it)->mir_ref;
       return (mir_node_base *)val;
     }
 
     hashset_mir_map_sub_it s_it = hashset_mir_map_sub_find(
-        ctx->map_subs, &(mir_map_sub){.hir_ref = id->binding});
+        ctx->map_subs, &(mir_map_sub){.hir_ref = id->binding_ref});
     if (!s_it.end(&s_it)) {
       const mir_node_base *val = s_it.get(&s_it)->mir_ref;
       return (mir_node_base *)val;
     }
 
-    error("can't find id from local index matching %s", id->binding->name);
+    error("can't find id from local index matching %s", id->binding_ref->name);
     return NULL;
 
   } break;
@@ -445,7 +445,7 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
 
 static void mir_ctx_build_subroutine_before(mir_ctx              *ctx,
                                             const eir_subroutine *eir_sub) {
-  const type_callable *eir_type = (type_callable *)eir_sub->binding->type;
+  const type_callable *eir_type = (type_callable *)eir_sub->binding_ref->type;
   type_enum            eir_type_enum = eir_type->base.type;
 
   if (eir_type_enum != TYPE_CALLABLE) {
@@ -453,7 +453,7 @@ static void mir_ctx_build_subroutine_before(mir_ctx              *ctx,
           eir_sub);
   }
 
-  char *mir_name = strdup(eir_sub->binding->name);
+  char *mir_name = strdup(eir_sub->binding_ref->name);
 
   if (!eir_sub->root) {
     type_base *mir_ret = type_copy(eir_type->ret_type);
@@ -469,7 +469,7 @@ static void mir_ctx_build_subroutine_before(mir_ctx              *ctx,
     // add to mapping
     hashset_mir_map_sub_insert(
         ctx->map_subs,
-        mir_map_sub_new(eir_sub->binding, (mir_node_base *)mir_sub));
+        mir_map_sub_new(eir_sub->binding_ref, (mir_node_base *)mir_sub));
   } else {
     mir_subroutine *mir_sub = mir_subroutine_new(
         mir_name, NULL, list_mir_value_new(), list_mir_value_new(),
@@ -480,7 +480,7 @@ static void mir_ctx_build_subroutine_before(mir_ctx              *ctx,
     // add to mapping
     hashset_mir_map_sub_insert(
         ctx->map_subs,
-        mir_map_sub_new(eir_sub->binding, (mir_node_base *)mir_sub));
+        mir_map_sub_new(eir_sub->binding_ref, (mir_node_base *)mir_sub));
   }
 }
 
@@ -492,7 +492,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
 
   // get mapping
   hashset_mir_map_sub_it sub_it = hashset_mir_map_sub_find(
-      ctx->map_subs, &(mir_map_sub){.hir_ref = eir_sub->binding});
+      ctx->map_subs, &(mir_map_sub){.hir_ref = eir_sub->binding_ref});
   if (sub_it.end(&sub_it)) {
     error("can't get preserved subroutine from index for %p", eir_sub);
     return;
@@ -503,7 +503,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   ctx->value_cnt = 0;
 
   // return
-  const type_callable *eir_type = (type_callable *)eir_sub->binding->type;
+  const type_callable *eir_type = (type_callable *)eir_sub->binding_ref->type;
 
   type_base *mir_ret_type = type_copy(eir_type->ret_type);
   if (!mir_ret_type) {
@@ -520,7 +520,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
     list_mir_value_push_back(mir_sub->args, value);
     // add to local var index
     hashset_mir_map_value_insert(ctx->map_lvalues,
-                                 mir_map_value_new(param->binding, value));
+                                 mir_map_value_new(param->binding_ref, value));
   }
 
   // vars
@@ -531,7 +531,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
     list_mir_value_push_back(mir_sub->vars, value);
     // add to local var index
     hashset_mir_map_value_insert(ctx->map_lvalues,
-                                 mir_map_value_new(var->binding, value));
+                                 mir_map_value_new(var->binding_ref, value));
   }
 
   // blocks
@@ -615,7 +615,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   }
 }
 
-void mir_ctx_build_all(mir_ctx *ctx, const eir *eir) {
+void mir_ctx_build(mir_ctx *ctx, const eir *eir) {
   for (list_eir_subroutine_it it = list_eir_subroutine_begin(eir->subroutines);
        !it.end(&it); it.next(&it)) {
     const eir_subroutine *sub = it.get(&it);

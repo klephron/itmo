@@ -1,4 +1,5 @@
-#include "ctx_type.h"
+#include "ctx.h"
+
 #include "compiler/exception/exception.h"
 
 static void hir_error_add(hir_ctx *ctx, exception_subtype_hir subtype,
@@ -72,7 +73,7 @@ static int hir_ctx_type_subroutine_decl(hir_ctx *ctx, hir_subroutine *sub) {
   return ok;
 }
 
-void hir_ctx_type_all(hir_ctx *ctx) {
+void hir_ctx_type(hir_ctx *ctx) {
   for (list_hir_symbol_it it = list_hir_symbol_begin(ctx->hir_ref->globals);
        !it.end(&it); it.next(&it)) {
     const hir_symbol *symbol = it.get(&it);

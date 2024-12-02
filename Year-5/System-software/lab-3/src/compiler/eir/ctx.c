@@ -343,8 +343,9 @@ static eir_expr_base *eir_ctx_build_expr_id(eir_ctx           *ctx,
                                             const hir_expr_id *id) {
   UNUSED(ctx);
   if (id) {
-    return (eir_expr_base *)eir_expr_id_new(
-        span_copy(id->base.base.span), type_copy(id->base.type), id->binding);
+    return (eir_expr_base *)eir_expr_id_new(span_copy(id->base.base.span),
+                                            type_copy(id->base.type),
+                                            id->binding_ref);
   }
   return NULL;
 }
@@ -636,19 +637,19 @@ static eir_subroutine *eir_ctx_build_subroutine(eir_ctx              *ctx,
     list_eir_block_free(ctx->break_stack);
     list_eir_scope_free(ctx->scope_stack);
 
-    return eir_subroutine_new(scope_begin, hir_sub->binding, hir_sub->params,
-                              hir_sub->vars);
+    return eir_subroutine_new(scope_begin, hir_sub->binding_ref,
+                              hir_sub->params, hir_sub->vars);
   }
 
-  return eir_subroutine_new(NULL, hir_sub->binding, hir_sub->params,
+  return eir_subroutine_new(NULL, hir_sub->binding_ref, hir_sub->params,
                             hir_sub->vars);
 }
 
 // 1. copy referencees to global and local symbol tables
 // 2. rebuild hir to eir (will change some tree nodes)
 void eir_ctx_build(eir_ctx *ctx, const hir *hir) {
-  ctx->eir_ref->globals = hir->globals;
-  ctx->eir_ref->locals = hir->locals;
+  ctx->eir_ref->globals_ref = hir->globals;
+  ctx->eir_ref->locals_ref = hir->locals;
 
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
        !it.end(&it); it.next(&it)) {

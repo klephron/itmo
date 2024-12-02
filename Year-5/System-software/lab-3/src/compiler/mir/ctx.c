@@ -1,14 +1,13 @@
 #include "ctx.h"
 #include "assert.h"
-#include "compiler/mir/ctx_bb_merge.h"
-#include "compiler/mir/ctx_build.h"
 #include "compiler/mir/mir.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <string.h>
 
 // MAPPINGS
-mir_map_sub *mir_map_sub_new(hir_symbol *hir_ref, mir_node_base *mir_ref) {
+mir_map_sub *mir_map_sub_new(const hir_symbol *hir_ref,
+                             mir_node_base    *mir_ref) {
   mir_map_sub *self = MALLOC(mir_map_sub);
   self->hir_ref = hir_ref;
   self->mir_ref = mir_ref;
@@ -17,7 +16,8 @@ mir_map_sub *mir_map_sub_new(hir_symbol *hir_ref, mir_node_base *mir_ref) {
 
 void mir_map_sub_free(mir_map_sub *self) { free(self); }
 
-mir_map_value *mir_map_value_new(hir_symbol *hir_ref, mir_value *mir_ref) {
+mir_map_value *mir_map_value_new(const hir_symbol *hir_ref,
+                                 mir_value        *mir_ref) {
   mir_map_value *self = MALLOC(mir_map_value);
   self->hir_ref = hir_ref;
   self->mir_ref = mir_ref;
@@ -26,7 +26,7 @@ mir_map_value *mir_map_value_new(hir_symbol *hir_ref, mir_value *mir_ref) {
 
 void mir_map_value_free(mir_map_value *self) { free(self); }
 
-mir_map_bb *mir_map_bb_new(eir_block_base *hir_ref, mir_bb *mir_ref) {
+mir_map_bb *mir_map_bb_new(const eir_block_base *hir_ref, mir_bb *mir_ref) {
   mir_map_bb *self = MALLOC(mir_map_bb);
   self->hir_ref = hir_ref;
   self->mir_ref = mir_ref;
@@ -76,9 +76,3 @@ void  container_delete_mir_arg(void *data) {
     error("unexpected node type %d %p", base->kind, base);
   }
 }
-
-void mir_ctx_build(mir_ctx *self, const eir *eir) {
-  mir_ctx_build_all(self, eir);
-}
-
-void mir_ctx_bb_merge(mir_ctx *self) { mir_ctx_bb_merge_all(self); }

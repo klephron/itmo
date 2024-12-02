@@ -266,8 +266,8 @@ const char *hir_binding_enum_str(hir_binding_enum kind) {
 static void hir_binding_parent_str(string_buffer    *buffer,
                                    const hir_symbol *parent) {
   if (parent) {
-    hir_binding_parent_str(buffer, parent->bind_parent);
-    if (parent->bind_parent) {
+    hir_binding_parent_str(buffer, parent->bind_parent_ref);
+    if (parent->bind_parent_ref) {
       string_buffer_append(buffer, "::");
     }
     string_buffer_append(buffer, parent->name);
@@ -279,8 +279,8 @@ static hir_symbol_table hir_symbol_to_table(const hir_symbol *symbol) {
   snprintf(id_ptr, STRMAXLEN(id_ptr), "%p", symbol);
 
   string_buffer *bind_parent_buffer = string_buffer_new(16, 0);
-  if (symbol->bind_parent) {
-    hir_binding_parent_str(bind_parent_buffer, symbol->bind_parent);
+  if (symbol->bind_parent_ref) {
+    hir_binding_parent_str(bind_parent_buffer, symbol->bind_parent_ref);
   } else {
     string_buffer_append(bind_parent_buffer, "-");
   }
@@ -565,7 +565,7 @@ static void hir_tree_str_param(string_buffer *buffer, size_t pad,
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "symbol: ");
-  hir_tree_str_symbol(buffer, pad, param->binding);
+  hir_tree_str_symbol(buffer, pad, param->binding_ref);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
@@ -595,7 +595,7 @@ static void hir_tree_str_var(string_buffer *buffer, size_t pad,
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "symbol: ");
-  hir_tree_str_symbol(buffer, pad, var->binding);
+  hir_tree_str_symbol(buffer, pad, var->binding_ref);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
@@ -742,7 +742,7 @@ static void hir_tree_str_expr_id(string_buffer *buffer, size_t pad,
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "binding: ");
-  hir_tree_str_symbol(buffer, pad, expr->binding);
+  hir_tree_str_symbol(buffer, pad, expr->binding_ref);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
@@ -1098,7 +1098,7 @@ static void hir_tree_str_subroutine(string_buffer *buffer, size_t pad,
 
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "binding: ");
-  hir_tree_str_symbol(buffer, pad, subroutine->binding);
+  hir_tree_str_symbol(buffer, pad, subroutine->binding_ref);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;

@@ -2,12 +2,12 @@
 #include "util/macro.h"
 
 hir_symbol *hir_symbol_new(char *name, hir_binding_enum bind_kind,
-                           const hir_symbol *bind_parent, type_base *type,
+                           hir_symbol *bind_parent_ref, type_base *type,
                            span *decl_span) {
   hir_symbol *self = MALLOC(hir_symbol);
   self->name = name;
   self->bind_kind = bind_kind;
-  self->bind_parent = bind_parent;
+  self->bind_parent_ref = bind_parent_ref;
   self->type = type;
   self->decl_span = decl_span;
   return self;

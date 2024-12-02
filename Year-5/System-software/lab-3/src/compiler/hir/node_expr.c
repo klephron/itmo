@@ -94,19 +94,19 @@ void hir_expr_lit_free(hir_expr_lit *self) {
 }
 
 hir_expr_id *hir_expr_id_new(span *span, type_base *type, hir_id *id,
-                             const hir_symbol *binding) {
+                             hir_symbol *binding_ref) {
 
   hir_expr_id *self = MALLOC(hir_expr_id);
   hir_expr_base_init(&self->base, span, HIR_EXPR_IDENTIFIER, type);
   self->id = id;
-  self->binding = binding;
+  self->binding_ref = binding_ref;
   return self;
 }
 
 void hir_expr_id_free(hir_expr_id *self) {
   if (self) {
     hir_id_free(self->id);
-    self->binding = NULL;
+    self->binding_ref = NULL;
     hir_expr_base_deinit(&self->base);
     free(self);
   }

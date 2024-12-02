@@ -9,15 +9,15 @@ typedef enum hir_binding_enum {
 } hir_binding_enum;
 
 typedef struct hir_symbol_struct {
-  char                           *name;
-  hir_binding_enum                bind_kind;
-  const struct hir_symbol_struct *bind_parent;
-  type_base                      *type;
-  span                           *decl_span;
+  char                     *name;
+  hir_binding_enum          bind_kind;
+  struct hir_symbol_struct *bind_parent_ref;
+  type_base                *type;
+  span                     *decl_span;
 } hir_symbol;
 
 hir_symbol *hir_symbol_new(char *name, hir_binding_enum bind_kind,
-                           const hir_symbol *bind_parent, type_base *type,
+                           hir_symbol *bind_parent_ref, type_base *type,
                            span *decl_span);
 void        hir_symbol_free(hir_symbol *self);
 
