@@ -57,10 +57,10 @@ static void cg_emit_mode(cg_x86_64_ctx *self, string_buffer *buf,
     string_buffer_append(buf, cg_reg_str(op->reg));
     break;
   case CG_X86_64_MODE_DIRECT:
-    string_buffer_append(buf, op->addr_label_ref->name);
+    string_buffer_append(buf, op->addr_label);
     break;
   case CG_X86_64_MODE_INDEXED:
-    string_buffer_append(buf, op->addr_label_ref->name);
+    string_buffer_append(buf, op->addr_label);
     string_buffer_append(buf, "(");
     string_buffer_append(buf, ",%");
     string_buffer_append(buf, cg_reg_str(op->base_reg));
@@ -152,6 +152,15 @@ void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
     break;
   case CG_X86_64_MNEM_SYSCALL:
     string_buffer_append(buf, "syscall");
+    break;
+  case CG_X86_64_MNEM_SUBQ:
+    string_buffer_append(buf, "subq");
+    break;
+  case CG_X86_64_MNEM_LEAQ:
+    string_buffer_append(buf, "leaq");
+    break;
+  case CG_X86_64_MNEM_CALL:
+    string_buffer_append(buf, "call");
     break;
   case CG_X86_64_MNEM_UNKNOWN:
   default:

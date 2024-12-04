@@ -7,9 +7,13 @@ INCS      := $(INCS)
 BUILD_DIR := $(BUILD_DIR)
 AR        := $(AR)
 
-SRCS := $(call rwildcard,$(CURDIR),*.c)
-HDRS := $(call rwildcard,$(CURDIR), *.h)
-OBJS := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
+CORE.SRCS := x86_64_core.c
+CORE.HDRS := x86_64_core.h
+CORE.OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(CORE.SRCS))
+
+ALL.SRCS := $(call rwildcard,$(CURDIR),*.c)
+ALL.HDRS := $(call rwildcard,$(CURDIR), *.h)
+ALL.OBJS := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%.o, $(ALL.SRCS))
 
 DIRS := $(sort $(dir $(OBJS)))
 $(sort $(DIRS)):
@@ -19,7 +23,10 @@ $(sort $(DIRS)):
 $(BUILD_DIR)/%.o: %.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
-$(BUILD_DIR)/libx86_64_core.a: $(OBJS)
+$(BUILD_DIR)/libx86_64_core.a: $(CORE.OBJS)
+	$(AR) rcs $@ $^
+
+$(BUILD_DIR)/libx86_64_all.a: $(ALL.OBJS)
 	$(AR) rcs $@ $^
 
 

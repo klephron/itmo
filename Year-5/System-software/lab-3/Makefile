@@ -49,7 +49,7 @@ define COMPILER.ENV
 	CP="$(CP)" \
 	CC="$(CC)" \
 	FLAGS="$(FLAGS)" \
-	LIBS="$(UTIL.BUILD_DIR)/libutil.a" \
+	LIBS="$(UTIL.BUILD_DIR)/libutil.a $(X86_64_CORE.BUILD_DIR)/libx86_64_all.a" \
 	INCS="$(patsubst %,-I%,$(sort $(SRC_DIR) $(GEN_DIR))) -lantlr3c" \
 	ANTLR="$(ANTLR)" \
 	GEN_DIR="$(COMPILER.GEN_DIR)" \
@@ -77,7 +77,7 @@ define TEST.ENV
 	MKDIR="$(MKDIR)" \
 	CC="$(CC)" \
 	FLAGS="$(FLAGS)" \
-	LIBS="$(COMPILER.BUILD_DIR)/libcompiler.a $(UTIL.BUILD_DIR)/libutil.a $(X86_64_CORE.BUILD_DIR)/libx86_64_core.a" \
+	LIBS="$(COMPILER.BUILD_DIR)/libcompiler.a $(UTIL.BUILD_DIR)/libutil.a $(X86_64_CORE.BUILD_DIR)/libx86_64_all.a" \
 	INCS="-I$(SRC_DIR) -lantlr3c -lcriterion" \
 	BUILD_DIR="$(TEST.BUILD_DIR)"
 endef
@@ -90,7 +90,7 @@ util/%:
 
 ### Makefile of compiler module
 compiler: compiler/build/main
-compiler/%: util/build/libutil.a
+compiler/%: util/build/libutil.a x86_64_core/build/libx86_64_all.a
 	@$(MAKE) --no-print-directory -C $(COMPILER.SRC_DIR) $(patsubst compiler/%,%,$@) $(COMPILER.ENV)
 
 ### Makefile of X86_64_core module
@@ -100,7 +100,7 @@ x86_64_core/%:
 
 ### Makefile of test module
 test: test/build
-test/%: util/build/libutil.a compiler/build/libcompiler.a x86_64_core/build/libx86_64_core.a
+test/%: util/build/libutil.a compiler/build/libcompiler.a x86_64_core/build/libx86_64_all.a
 	@$(MAKE) --no-print-directory -C $(TEST.SRC_DIR) $(patsubst test/%,%,$@) $(TEST.ENV)
 
 ### Run all tests

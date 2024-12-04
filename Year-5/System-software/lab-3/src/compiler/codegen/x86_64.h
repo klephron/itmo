@@ -139,10 +139,10 @@ typedef enum cg_x86_64_mode_enum {
 typedef struct cg_x86_64_mode_struct {
   cg_x86_64_mode_enum kind;
   union {
-    cg_x86_64_label *addr_label_ref;
-    uint64_t         imm_const;
-    uint64_t         offset_const;
-    cg_x86_64_reg    reg;
+    char         *addr_label; // NOTE: can store reference to label
+    uint64_t      imm_const;
+    uint64_t      offset_const;
+    cg_x86_64_reg reg;
   };
   union {
     cg_x86_64_reg index_reg;
@@ -154,10 +154,10 @@ typedef struct cg_x86_64_mode_struct {
 } cg_x86_64_mode;
 
 cg_x86_64_mode *cg_x86_64_mode_new_register(cg_x86_64_reg reg);
-cg_x86_64_mode *cg_x86_64_mode_new_direct(cg_x86_64_label *addr_label_ref);
-cg_x86_64_mode *cg_x86_64_mode_new_indexed(cg_x86_64_label *addr_label_ref,
-                                           cg_x86_64_reg    index_reg,
-                                           uint64_t         multi_const);
+cg_x86_64_mode *cg_x86_64_mode_new_direct(char *addr_label);
+cg_x86_64_mode *cg_x86_64_mode_new_indexed(char         *addr_label,
+                                           cg_x86_64_reg index_reg,
+                                           uint64_t      multi_const);
 cg_x86_64_mode *cg_x86_64_mode_new_indirect(cg_x86_64_reg base_reg);
 cg_x86_64_mode *cg_x86_64_mode_new_base(uint64_t      offset_const,
                                         cg_x86_64_reg base_reg);
@@ -180,6 +180,9 @@ typedef enum cg_x86_64_mnem_enum {
   CG_X86_64_MNEM_RETQ,
   CG_X86_64_MNEM_SYSCALL,
   CG_X86_64_MNEM_XORQ,
+  CG_X86_64_MNEM_SUBQ,
+  CG_X86_64_MNEM_LEAQ,
+  CG_X86_64_MNEM_CALL,
 } cg_x86_64_mnem;
 
 // at&t instruction order

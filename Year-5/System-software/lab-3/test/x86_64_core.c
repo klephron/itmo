@@ -5,404 +5,404 @@
 #include "x86_64_core/x86_64_core.h"
 
 Test(x86_64_core, sum_int) {
-  cg_x86_64_value left;
-  cg_x86_64_value right;
-  cg_x86_64_value result;
+  x86_64_value left;
+  x86_64_value right;
+  x86_64_value result;
 
-  __cg_x86_64_init(&left);
-  __cg_x86_64_init(&right);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&left);
+  __x86_64_value_init(&right);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&left);
-  left = __cg_x86_64_value_int(22);
+  __x86_64_value_drop(&left);
+  left = __x86_64_value_int(22);
 
-  __cg_x86_64_drop(&right);
-  right = __cg_x86_64_value_int(20);
+  __x86_64_value_drop(&right);
+  right = __x86_64_value_int(20);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_add(left, right);
+  __x86_64_value_drop(&result);
+  result = __x86_64_add(left, right);
 
   int32_t res = *result.data->raw;
   cr_expect_eq(res, 42);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&left);
-  __cg_x86_64_drop(&right);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&left);
+  __x86_64_value_drop(&right);
 }
 
 Test(x86_64_core, sum_string) {
-  cg_x86_64_value left;
-  cg_x86_64_value right;
-  cg_x86_64_value result;
+  x86_64_value left;
+  x86_64_value right;
+  x86_64_value result;
 
-  __cg_x86_64_init(&left);
-  __cg_x86_64_init(&right);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&left);
+  __x86_64_value_init(&right);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&left);
-  left = __cg_x86_64_value_string((const uint8_t *)"abcde");
+  __x86_64_value_drop(&left);
+  left = __x86_64_value_string((const uint8_t *)"abcde");
 
-  __cg_x86_64_drop(&right);
-  right = __cg_x86_64_value_string((const uint8_t *)"fghyu");
+  __x86_64_value_drop(&right);
+  right = __x86_64_value_string((const uint8_t *)"fghyu");
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_add(left, right);
+  __x86_64_value_drop(&result);
+  result = __x86_64_add(left, right);
 
   uint8_t *res = result.data->raw;
   debug("%zu, %s", result.data->data_size, result.data->raw);
   cr_expect_eq(result.data->data_size, strlen("abcdefghyu") + 1);
   cr_expect_str_eq((char *)res, "abcdefghyu");
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&left);
-  __cg_x86_64_drop(&right);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&left);
+  __x86_64_value_drop(&right);
 }
 
 Test(x86_64_core, array_create) {
-  cg_x86_64_value first;
-  cg_x86_64_value second;
-  cg_x86_64_value result;
+  x86_64_value first;
+  x86_64_value second;
+  x86_64_value result;
 
-  __cg_x86_64_init(&first);
-  __cg_x86_64_init(&second);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&first);
+  __x86_64_value_init(&second);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&first);
-  first = __cg_x86_64_value_long(10);
+  __x86_64_value_drop(&first);
+  first = __x86_64_value_long(10);
 
-  __cg_x86_64_drop(&second);
-  second = __cg_x86_64_value_long(8);
+  __x86_64_value_drop(&second);
+  second = __x86_64_value_long(8);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_add(first, second);
+  __x86_64_value_drop(&result);
+  result = __x86_64_add(first, second);
   debug("res: %zu, %ld", result.data->data_size, *result.data->raw);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_value_array(
-      &(cg_x86_64_type){.kind = CG_X86_64_TYPE_INT}, 2, first, second);
+  __x86_64_value_drop(&result);
+  result = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_INT}, 2,
+                                first, second);
 
   cr_expect_eq(80 * 4, result.data->data_size);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&first);
-  __cg_x86_64_drop(&second);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&first);
+  __x86_64_value_drop(&second);
 }
 
 Test(x86_64_core, string_index) {
-  cg_x86_64_value string;
-  cg_x86_64_value index;
-  cg_x86_64_value result;
+  x86_64_value string;
+  x86_64_value index;
+  x86_64_value result;
 
-  __cg_x86_64_init(&string);
-  __cg_x86_64_init(&index);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&string);
+  __x86_64_value_init(&index);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&string);
-  string = __cg_x86_64_value_string((const uint8_t *)"abcde");
+  __x86_64_value_drop(&string);
+  string = __x86_64_value_string((const uint8_t *)"abcde");
 
-  __cg_x86_64_drop(&index);
-  index = __cg_x86_64_value_long(3);
+  __x86_64_value_drop(&index);
+  index = __x86_64_value_long(3);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_index(string, 1, index);
+  __x86_64_value_drop(&result);
+  result = __x86_64_index_get(string, 1, index);
   debug("res: %zu, %c", result.data->data_size, *result.data->raw);
 
   cr_expect_eq('d', (char)*result.data->raw);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&string);
-  __cg_x86_64_drop(&index);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&string);
+  __x86_64_value_drop(&index);
 }
 
 Test(x86_64_core, array_index_1d) {
-  cg_x86_64_value array;
-  cg_x86_64_value rank_1;
-  cg_x86_64_value index;
-  cg_x86_64_value result;
+  x86_64_value array;
+  x86_64_value rank_1;
+  x86_64_value index;
+  x86_64_value result;
 
-  __cg_x86_64_init(&array);
-  __cg_x86_64_init(&rank_1);
-  __cg_x86_64_init(&index);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&array);
+  __x86_64_value_init(&rank_1);
+  __x86_64_value_init(&index);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&rank_1);
-  rank_1 = __cg_x86_64_value_long(10);
+  __x86_64_value_drop(&rank_1);
+  rank_1 = __x86_64_value_long(10);
 
-  __cg_x86_64_drop(&index);
-  index = __cg_x86_64_value_long(1);
+  __x86_64_value_drop(&index);
+  index = __x86_64_value_long(1);
 
-  __cg_x86_64_drop(&array);
-  array = __cg_x86_64_value_array(
-      &(cg_x86_64_type){.kind = CG_X86_64_TYPE_LONG}, 1, rank_1);
+  __x86_64_value_drop(&array);
+  array =
+      __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, 1, rank_1);
 
-  result = __cg_x86_64_index(array, 1, index);
+  result = __x86_64_index_get(array, 1, index);
   debug("res: %zu, %c", result.data->data_size, *result.data->raw);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&index);
-  __cg_x86_64_drop(&rank_1);
-  __cg_x86_64_drop(&array);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&index);
+  __x86_64_value_drop(&rank_1);
+  __x86_64_value_drop(&array);
 }
 
 Test(x86_64_core, string_set) {
-  cg_x86_64_value string;
-  cg_x86_64_value index;
-  cg_x86_64_value chr;
+  x86_64_value string;
+  x86_64_value index;
+  x86_64_value chr;
 
-  __cg_x86_64_init(&string);
-  __cg_x86_64_init(&index);
-  __cg_x86_64_init(&chr);
+  __x86_64_value_init(&string);
+  __x86_64_value_init(&index);
+  __x86_64_value_init(&chr);
 
-  __cg_x86_64_drop(&string);
-  string = __cg_x86_64_value_string((const uint8_t *)"abcdef");
+  __x86_64_value_drop(&string);
+  string = __x86_64_value_string((const uint8_t *)"abcdef");
 
-  __cg_x86_64_drop(&index);
-  index = __cg_x86_64_value_long(1);
+  __x86_64_value_drop(&index);
+  index = __x86_64_value_long(1);
 
-  __cg_x86_64_drop(&chr);
-  chr = __cg_x86_64_value_char('x');
+  __x86_64_value_drop(&chr);
+  chr = __x86_64_value_char('x');
 
-  __cg_x86_64_index_set(chr, string, 1, index);
+  __x86_64_index_set(chr, string, 1, index);
 
   cr_expect_eq('x', string.data->raw[1]);
 
-  __cg_x86_64_drop(&chr);
-  __cg_x86_64_drop(&index);
-  __cg_x86_64_drop(&string);
+  __x86_64_value_drop(&chr);
+  __x86_64_value_drop(&index);
+  __x86_64_value_drop(&string);
 }
 
 Test(x86_64_core, array_set_1d) {
-  cg_x86_64_value array;
-  cg_x86_64_value rank_1;
-  cg_x86_64_value index_1;
-  cg_x86_64_value result;
+  x86_64_value array;
+  x86_64_value rank_1;
+  x86_64_value index_1;
+  x86_64_value result;
 
-  __cg_x86_64_init(&array);
-  __cg_x86_64_init(&rank_1);
-  __cg_x86_64_init(&index_1);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&array);
+  __x86_64_value_init(&rank_1);
+  __x86_64_value_init(&index_1);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&rank_1);
-  rank_1 = __cg_x86_64_value_long(10);
+  __x86_64_value_drop(&rank_1);
+  rank_1 = __x86_64_value_long(10);
 
-  __cg_x86_64_drop(&index_1);
-  index_1 = __cg_x86_64_value_long(1);
+  __x86_64_value_drop(&index_1);
+  index_1 = __x86_64_value_long(1);
 
-  __cg_x86_64_drop(&array);
-  array = __cg_x86_64_value_array(
-      &(cg_x86_64_type){.kind = CG_X86_64_TYPE_LONG}, 1, rank_1);
+  __x86_64_value_drop(&array);
+  array =
+      __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, 1, rank_1);
 
-  __cg_x86_64_index_set(rank_1, array, 1, index_1);
+  __x86_64_index_set(rank_1, array, 1, index_1);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_index(array, 1, index_1);
+  __x86_64_value_drop(&result);
+  result = __x86_64_index_get(array, 1, index_1);
 
   int64_t res = *result.data->raw;
   cr_expect_eq(10, res);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&index_1);
-  __cg_x86_64_drop(&rank_1);
-  __cg_x86_64_drop(&array);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&index_1);
+  __x86_64_value_drop(&rank_1);
+  __x86_64_value_drop(&array);
 }
 
 Test(x86_64_core, array_set_2d) {
-  cg_x86_64_value array;
-  cg_x86_64_value rank_1;
-  cg_x86_64_value index_1;
-  cg_x86_64_value index_2;
-  cg_x86_64_value result;
+  x86_64_value array;
+  x86_64_value rank_1;
+  x86_64_value index_1;
+  x86_64_value index_2;
+  x86_64_value result;
 
-  __cg_x86_64_init(&array);
-  __cg_x86_64_init(&rank_1);
-  __cg_x86_64_init(&index_1);
-  __cg_x86_64_init(&index_2);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&array);
+  __x86_64_value_init(&rank_1);
+  __x86_64_value_init(&index_1);
+  __x86_64_value_init(&index_2);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&rank_1);
-  rank_1 = __cg_x86_64_value_long(10);
+  __x86_64_value_drop(&rank_1);
+  rank_1 = __x86_64_value_long(10);
 
-  __cg_x86_64_drop(&index_1);
-  index_1 = __cg_x86_64_value_long(1);
-  __cg_x86_64_drop(&index_2);
-  index_2 = __cg_x86_64_value_long(2);
+  __x86_64_value_drop(&index_1);
+  index_1 = __x86_64_value_long(1);
+  __x86_64_value_drop(&index_2);
+  index_2 = __x86_64_value_long(2);
 
-  __cg_x86_64_drop(&array);
-  array = __cg_x86_64_value_array(
-      &(cg_x86_64_type){.kind = CG_X86_64_TYPE_LONG}, 2, rank_1, rank_1);
+  __x86_64_value_drop(&array);
+  array = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, 2,
+                               rank_1, rank_1);
 
-  __cg_x86_64_index_set(rank_1, array, 2, index_1, index_2);
+  __x86_64_index_set(rank_1, array, 2, index_1, index_2);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_index(array, 2, index_1, index_2);
+  __x86_64_value_drop(&result);
+  result = __x86_64_index_get(array, 2, index_1, index_2);
 
   int64_t res = *result.data->raw;
   cr_expect_eq(10, res);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&index_1);
-  __cg_x86_64_drop(&index_2);
-  __cg_x86_64_drop(&rank_1);
-  __cg_x86_64_drop(&array);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&index_1);
+  __x86_64_value_drop(&index_2);
+  __x86_64_value_drop(&rank_1);
+  __x86_64_value_drop(&array);
 }
 
 Test(x86_64_core, array_cast_1) {
-  cg_x86_64_value source;
-  cg_x86_64_value target;
+  x86_64_value source;
+  x86_64_value target;
 
-  __cg_x86_64_init(&source);
-  __cg_x86_64_init(&target);
+  __x86_64_value_init(&source);
+  __x86_64_value_init(&target);
 
-  __cg_x86_64_drop(&source);
-  source = __cg_x86_64_value_long(10);
+  __x86_64_value_drop(&source);
+  source = __x86_64_value_long(10);
 
-  __cg_x86_64_drop(&target);
-  target = __cg_x86_64_cast(source, CG_X86_64_TYPE_BYTE);
+  __x86_64_value_drop(&target);
+  target = __x86_64_cast(source, X86_64_TYPE_BYTE);
 
   int64_t res = *target.data->raw;
   cr_expect_eq(10, res);
 
-  __cg_x86_64_drop(&source);
-  __cg_x86_64_drop(&target);
+  __x86_64_value_drop(&source);
+  __x86_64_value_drop(&target);
 }
 
 Test(x86_64_core, array_cast_2) {
-  cg_x86_64_value source;
-  cg_x86_64_value target;
+  x86_64_value source;
+  x86_64_value target;
 
-  __cg_x86_64_init(&source);
-  __cg_x86_64_init(&target);
+  __x86_64_value_init(&source);
+  __x86_64_value_init(&target);
 
-  __cg_x86_64_drop(&source);
-  source = __cg_x86_64_value_uint(10);
+  __x86_64_value_drop(&source);
+  source = __x86_64_value_uint(10);
 
-  __cg_x86_64_drop(&target);
-  target = __cg_x86_64_cast(source, CG_X86_64_TYPE_LONG);
+  __x86_64_value_drop(&target);
+  target = __x86_64_cast(source, X86_64_TYPE_LONG);
 
   uint32_t res = *target.data->raw;
   cr_expect_eq(10, res);
 
-  __cg_x86_64_drop(&source);
-  __cg_x86_64_drop(&target);
+  __x86_64_value_drop(&source);
+  __x86_64_value_drop(&target);
 }
 
 Test(x86_64_core, long_shl) {
-  cg_x86_64_value first;
-  cg_x86_64_value second;
-  cg_x86_64_value result;
+  x86_64_value first;
+  x86_64_value second;
+  x86_64_value result;
 
-  __cg_x86_64_init(&first);
-  __cg_x86_64_init(&second);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&first);
+  __x86_64_value_init(&second);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&first);
-  first = __cg_x86_64_value_long(1);
+  __x86_64_value_drop(&first);
+  first = __x86_64_value_long(1);
 
-  __cg_x86_64_drop(&second);
-  second = __cg_x86_64_value_long(3);
+  __x86_64_value_drop(&second);
+  second = __x86_64_value_long(3);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_bit_shl(first, second);
+  __x86_64_value_drop(&result);
+  result = __x86_64_bit_shl(first, second);
 
   int64_t res = *result.data->raw;
   cr_expect_eq(8, res);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&second);
-  __cg_x86_64_drop(&first);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&second);
+  __x86_64_value_drop(&first);
 }
 
 Test(x86_64_core, bool_eq_neq) {
-  cg_x86_64_value first;
-  cg_x86_64_value second;
-  cg_x86_64_value result;
-  int8_t          res;
+  x86_64_value first;
+  x86_64_value second;
+  x86_64_value result;
+  int8_t       res;
 
-  __cg_x86_64_init(&first);
-  __cg_x86_64_init(&second);
-  __cg_x86_64_init(&result);
+  __x86_64_value_init(&first);
+  __x86_64_value_init(&second);
+  __x86_64_value_init(&result);
 
-  __cg_x86_64_drop(&first);
-  first = __cg_x86_64_value_bool(true);
+  __x86_64_value_drop(&first);
+  first = __x86_64_value_bool(true);
 
-  __cg_x86_64_drop(&second);
-  second = __cg_x86_64_value_bool(false);
+  __x86_64_value_drop(&second);
+  second = __x86_64_value_bool(false);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_eq(first, second);
+  __x86_64_value_drop(&result);
+  result = __x86_64_eq(first, second);
 
   res = *result.data->raw;
   res = res > 0 ? 1 : 0;
   cr_expect_eq(0, res);
 
-  __cg_x86_64_drop(&result);
-  result = __cg_x86_64_neq(first, second);
+  __x86_64_value_drop(&result);
+  result = __x86_64_neq(first, second);
 
   res = *result.data->raw;
   res = res > 0 ? 1 : 0;
   cr_expect_neq(0, res);
 
-  __cg_x86_64_drop(&result);
-  __cg_x86_64_drop(&second);
-  __cg_x86_64_drop(&first);
+  __x86_64_value_drop(&result);
+  __x86_64_value_drop(&second);
+  __x86_64_value_drop(&first);
 }
 
 Test(x86_64_core, bool_not) {
-  cg_x86_64_value first;
-  cg_x86_64_value second;
-  int8_t          res;
+  x86_64_value first;
+  x86_64_value second;
+  int8_t       res;
 
-  __cg_x86_64_init(&first);
-  __cg_x86_64_init(&second);
+  __x86_64_value_init(&first);
+  __x86_64_value_init(&second);
 
-  __cg_x86_64_drop(&first);
-  first = __cg_x86_64_value_bool(true);
+  __x86_64_value_drop(&first);
+  first = __x86_64_value_bool(true);
 
   res = *first.data->raw;
   res = res > 0 ? 1 : 0;
   cr_expect_eq(1, res);
 
-  __cg_x86_64_drop(&second);
-  second = __cg_x86_64_not(first);
+  __x86_64_value_drop(&second);
+  second = __x86_64_not(first);
 
   res = *second.data->raw;
   res = res > 0 ? 1 : 0;
   cr_expect_eq(0, res);
 
-  __cg_x86_64_drop(&first);
-  first = __cg_x86_64_not(second);
+  __x86_64_value_drop(&first);
+  first = __x86_64_not(second);
 
   res = *first.data->raw;
   res = res > 0 ? 1 : 0;
   cr_expect_eq(1, res);
 
-  __cg_x86_64_drop(&second);
-  __cg_x86_64_drop(&first);
+  __x86_64_value_drop(&second);
+  __x86_64_value_drop(&first);
 }
 
 Test(x86_64_core, assign) {
-  cg_x86_64_value lsv;
-  cg_x86_64_value rsv;
+  x86_64_value lsv;
+  x86_64_value rsv;
 
-  __cg_x86_64_init(&lsv);
-  __cg_x86_64_init(&rsv);
+  __x86_64_value_init(&lsv);
+  __x86_64_value_init(&rsv);
 
-  __cg_x86_64_drop(&rsv);
-  rsv = __cg_x86_64_value_string((uint8_t *)"something");
+  __x86_64_value_drop(&rsv);
+  rsv = __x86_64_value_string((uint8_t *)"something");
 
-  __cg_x86_64_assign(&lsv, &rsv);
+  __x86_64_assign(&lsv, &rsv);
 
   cr_expect_str_eq("something", (char *)rsv.data->raw);
   cr_expect_str_eq((char *)rsv.data->raw, (char *)lsv.data->raw);
-  __cg_x86_64_drop(&rsv);
+  __x86_64_value_drop(&rsv);
 
   cr_expect_str_eq("something", (char *)lsv.data->raw);
-  __cg_x86_64_drop(&lsv);
+  __x86_64_value_drop(&lsv);
 
-  rsv = __cg_x86_64_value_string((uint8_t *)"something");
-  __cg_x86_64_assign(&rsv, &rsv);
+  rsv = __x86_64_value_string((uint8_t *)"something");
+  __x86_64_assign(&rsv, &rsv);
 
   cr_expect_str_eq("something", (char *)rsv.data->raw);
-  __cg_x86_64_drop(&rsv);
+  __x86_64_value_drop(&rsv);
 }
