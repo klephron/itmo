@@ -17,7 +17,7 @@ $(sort $(DIRS)):
 	$(MKDIR) $(@:dir/%=%)
 
 # compile object files excluding generated
-$(BUILD_DIR)/%: %.c $(HDRS) | $(DIRS)
+$(BUILD_DIR)/%: %.c $(HDRS) $(LIBS) | $(DIRS)
 	$(CC) $(FLAGS) $< -o $@ $(LIBS) $(INCS)
 
 

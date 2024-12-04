@@ -80,7 +80,8 @@ const char *x86_64_symbol_enum_str(x86_64_symbol_enum kind) {
     return "__x86_64_cast";
   case X86_64_SYMBOL_ASSIGN:
     return "__x86_64_assign";
-    break;
+  case X86_64_SYMBOL_COND:
+    return "__x86_64_cond";
   default:
     error("unknown symbol %d", kind);
     return "<unknown>";

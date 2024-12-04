@@ -53,6 +53,7 @@ typedef enum x86_64_symbol_enum {
   X86_64_SYMBOL_INDEX_SET,
   X86_64_SYMBOL_CAST,
   X86_64_SYMBOL_ASSIGN,
+  X86_64_SYMBOL_COND,
   // add symbols until unknown
   X86_64_SYMBOL_UNKNOWN,
 } x86_64_symbol_enum;

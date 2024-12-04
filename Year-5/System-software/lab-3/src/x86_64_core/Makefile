@@ -15,7 +15,7 @@ ALL.SRCS := $(call rwildcard,$(CURDIR),*.c)
 ALL.HDRS := $(call rwildcard,$(CURDIR), *.h)
 ALL.OBJS := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%.o, $(ALL.SRCS))
 
-DIRS := $(sort $(dir $(OBJS)))
+DIRS := $(sort $(dir $(ALL.OBJS)))
 $(sort $(DIRS)):
 	$(MKDIR) $(@:dir/%=%)
 

@@ -391,7 +391,7 @@ Test(x86_64_core, assign) {
   __x86_64_value_drop(&rsv);
   rsv = __x86_64_value_string((uint8_t *)"something");
 
-  __x86_64_assign(&lsv, &rsv);
+  __x86_64_assign(&lsv, rsv);
 
   cr_expect_str_eq("something", (char *)rsv.data->raw);
   cr_expect_str_eq((char *)rsv.data->raw, (char *)lsv.data->raw);
@@ -401,8 +401,50 @@ Test(x86_64_core, assign) {
   __x86_64_value_drop(&lsv);
 
   rsv = __x86_64_value_string((uint8_t *)"something");
-  __x86_64_assign(&rsv, &rsv);
+  __x86_64_assign(&rsv, rsv);
 
   cr_expect_str_eq("something", (char *)rsv.data->raw);
+  __x86_64_value_drop(&rsv);
+}
+
+Test(x86_64_core, cond) {
+  x86_64_value rsv;
+
+  __x86_64_value_init(&rsv);
+
+  __x86_64_value_drop(&rsv);
+  rsv = __x86_64_value_bool(true);
+
+  uint8_t v = __x86_64_cond(rsv);
+  cr_expect_neq(0, v);
+
+  __x86_64_value_drop(&rsv);
+}
+
+Test(x86_64_core, cond2) {
+  x86_64_value rsv;
+
+  __x86_64_value_init(&rsv);
+
+  __x86_64_value_drop(&rsv);
+  rsv = __x86_64_value_bool(false);
+
+  uint8_t v = __x86_64_cond(rsv);
+  cr_expect_eq(0, v);
+
+  __x86_64_value_drop(&rsv);
+}
+
+Test(x86_64_core, cond3) {
+  x86_64_value rsv;
+
+  __x86_64_value_init(&rsv);
+
+  __x86_64_value_drop(&rsv);
+  rsv = __x86_64_value_int(4);
+
+  uint8_t v = __x86_64_cond(rsv);
+  cr_expect_eq(0, v);
+
   __x86_64_value_drop(&rsv);
 }

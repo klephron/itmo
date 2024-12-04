@@ -244,7 +244,8 @@ static void cg_stmt_drop(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb,
 }
 
 // no jump only on last block
-static void cg_jump(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb, mir_jmp *jmp) {
+static void cg_jump(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb,
+                    mir_jmp *jmp) {
   UNUSED(self);
   UNUSED(sub);
   UNUSED(bb);

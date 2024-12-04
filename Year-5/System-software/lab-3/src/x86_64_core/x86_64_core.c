@@ -1717,14 +1717,33 @@ error:
 }
 
 // NOTE: no need to drop
-void __x86_64_assign(x86_64_value *lsv, x86_64_value *rsv) {
-  if (!rsv->data) {
+void __x86_64_assign(x86_64_value *lsv, x86_64_value rsv) {
+  if (!rsv.data) {
     printf("error: assignment from null rsv\n");
   }
-  if (lsv->data == rsv->data) {
+  if (lsv->data == rsv.data) {
     return;
   }
   __x86_64_value_drop(lsv);
-  rsv->data->refs += 1;
-  lsv->data = rsv->data;
+  rsv.data->refs += 1;
+  lsv->data = rsv.data;
+}
+
+uint8_t __x86_64_cond(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+  x86_64_data *data = value.data;
+  switch (data->type.kind) {
+  case X86_64_TYPE_BOOL: {
+    uint8_t v = *data->raw;
+    return v;
+  }
+  default:
+    printf("error: unsupported cond type %d, expected bool(type %d)\n",
+           data->type.kind, X86_64_TYPE_BOOL);
+  }
+error:
+  return 0;
 }
