@@ -188,9 +188,6 @@ void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
     if (next_bb) {
       hashset_mir_bb_insert(hs_deleted, bb);
       mir_bb_free(bb);
-      if (bb != next_bb && bb == sub->bb_first_ref) {
-        sub->bb_first_ref = (mir_bb *)next_bb;
-      }
     } else {
       list_mir_bb_push_back(new_bbs, bb);
     }

@@ -265,8 +265,6 @@ static void mir_tree_str_bb(string_buffer *buffer, size_t pad,
 
 static void mir_tree_str_subroutine(string_buffer *buffer, size_t pad,
                                     const mir_subroutine *sub) {
-  char buf[32];
-
   string_buffer_append(buffer, "method ");
   string_buffer_append(buffer, sub->name);
   string_buffer_append(buffer, "(");
@@ -310,15 +308,6 @@ static void mir_tree_str_subroutine(string_buffer *buffer, size_t pad,
     mir_tree_str_value(buffer, pad, it.get(&it));
     string_buffer_appendln(buffer, "\t// tmps");
   }
-
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_append(buffer, "// first bb: ");
-  if (sub->bb_first_ref) {
-    snprintf(buf, STRMAXLEN(buf), "bb%zu", sub->bb_first_ref->id);
-  } else {
-    snprintf(buf, STRMAXLEN(buf), "(nil)");
-  }
-  string_buffer_appendln(buffer, buf);
 
   for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !it.end(&it);
        it.next(&it)) {

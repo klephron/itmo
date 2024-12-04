@@ -1,8 +1,10 @@
+#include "util/macro.h"
 #include "x86_64_ctx.h"
 
 #include "x86_64_core/x86_64_core.h"
 #include "x86_64_core/x86_64_meta.h"
 
+#include <stdio.h>
 #include <string.h>
 
 typedef enum cg_reg_type_enum {
@@ -10,6 +12,25 @@ typedef enum cg_reg_type_enum {
   CG_REG_CALLER,
   CG_REG_CALLEE,
 } cg_reg_type;
+
+static int cg_is_exit(cg_x86_64_ctx *self, const mir_subroutine *sub) {
+  UNUSED(self);
+  return !strcmp(sub->name, "main");
+}
+
+static int cg_is_global(cg_x86_64_ctx *self, const mir_node_base *base) {
+  hashset_cg_x86_64_mir_ref_it it =
+      hashset_cg_x86_64_mir_ref_find(self->globls, (mir_node_base *)base);
+  return !it.end(&it);
+}
+
+static char *cg_local_name(const char *old) {
+  size_t len = strlen(old);
+  char  *name = malloc(len + 3);
+  memcpy(name, ".L", 2);
+  memcpy(name + 2, old, len + 1);
+  return name;
+}
 
 static void cg_sub_prologue(cg_x86_64_ctx *self) {
   list_cg_x86_64_mode *operands;
@@ -35,7 +56,25 @@ static void cg_sub_prologue(cg_x86_64_ctx *self) {
   self->sub_rbp_offset = self->sub_stack_size;
 }
 
-static void cg_sub_epilogue(cg_x86_64_ctx *self, int ret) {
+static char *cg_sub_epilogue_name(mir_subroutine *sub) {
+  const char epilogue[] = "_ep";
+
+  size_t ssz = strlen(sub->name);
+  size_t lsz = ssz + sizeof(epilogue);
+  char  *label = malloc(lsz);
+  memcpy(label, sub->name, ssz);
+  memcpy(label + ssz, epilogue, sizeof(epilogue));
+  char *local = cg_local_name(label);
+  free(label);
+  return local;
+}
+
+static void cg_sub_epilogue(cg_x86_64_ctx *self, mir_subroutine *sub, int ret) {
+  cg_x86_64_label *block_label =
+      cg_x86_64_label_new(cg_sub_epilogue_name(sub), CG_X86_64_LABEL_INSTR);
+  list_cg_x86_64_unit_push_back(self->sub_units_ref,
+                                (cg_x86_64_unit *)block_label);
+
   list_cg_x86_64_mode *operands;
   // movq %rsp, %rbp
   operands = list_cg_x86_64_mode_new();
@@ -149,7 +188,7 @@ static void cg_value_prologue(cg_x86_64_ctx *self, mir_subroutine *sub) {
   size_t rbp_offset = 0;
   if (sub->ret) {
     hashset_cg_x86_64_map_value_insert(
-        self->sub_map_value, cg_x86_64_map_value_new(sub->ret, rbp_offset));
+        self->sub_map_values, cg_x86_64_map_value_new(sub->ret, rbp_offset));
     rbp_offset += sizeof(x86_64_value);
   }
 
@@ -157,7 +196,7 @@ static void cg_value_prologue(cg_x86_64_ctx *self, mir_subroutine *sub) {
        it.next(&it)) {
     mir_value *value = it.get(&it);
     hashset_cg_x86_64_map_value_insert(
-        self->sub_map_value, cg_x86_64_map_value_new(value, rbp_offset));
+        self->sub_map_values, cg_x86_64_map_value_new(value, rbp_offset));
     rbp_offset += sizeof(x86_64_value);
   }
 
@@ -165,7 +204,7 @@ static void cg_value_prologue(cg_x86_64_ctx *self, mir_subroutine *sub) {
        it.next(&it)) {
     mir_value *value = it.get(&it);
     hashset_cg_x86_64_map_value_insert(
-        self->sub_map_value, cg_x86_64_map_value_new(value, rbp_offset));
+        self->sub_map_values, cg_x86_64_map_value_new(value, rbp_offset));
     rbp_offset += sizeof(x86_64_value);
   }
 
@@ -173,29 +212,71 @@ static void cg_value_prologue(cg_x86_64_ctx *self, mir_subroutine *sub) {
        it.next(&it)) {
     mir_value *value = it.get(&it);
     hashset_cg_x86_64_map_value_insert(
-        self->sub_map_value, cg_x86_64_map_value_new(value, rbp_offset));
+        self->sub_map_values, cg_x86_64_map_value_new(value, rbp_offset));
     rbp_offset += sizeof(x86_64_value);
   }
 }
 
-static void cg_subroutine(cg_x86_64_ctx *self, mir_subroutine *sub, int exit) {
+static char *cg_block_name(mir_subroutine *sub, mir_bb *bb) {
+  size_t bb_sz = strlen(sub->name) + 1 + 32;
+  char  *bb_name = malloc(bb_sz);
+  snprintf(bb_name, bb_sz, "%s_%zu", sub->name, bb->id);
+  char *local = cg_local_name(bb_name);
+  free(bb_name);
+  return local;
+}
+
+static void cg_block(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb) {
+  cg_x86_64_label *block_label =
+      cg_x86_64_label_new(cg_block_name(sub, bb), CG_X86_64_LABEL_INSTR);
+  list_cg_x86_64_unit_push_back(self->sub_units_ref,
+                                (cg_x86_64_unit *)block_label);
+}
+
+static char *cg_sub_name(mir_subroutine *sub, int global) {
+  if (global) {
+    return strdup(sub->name);
+  } else {
+    return cg_local_name(sub->name);
+  }
+}
+
+static void cg_sub(cg_x86_64_ctx *self, mir_subroutine *sub, int exit,
+                   int global) {
   self->sub_stack_size = X86_64_ALIGN_REG_64;
-  self->sub_map_value = hashset_cg_x86_64_map_value_new();
+  self->sub_map_values = hashset_cg_x86_64_map_value_new();
 
   cg_x86_64_label *sub_label =
-      cg_x86_64_label_new(strdup(sub->name), CG_X86_64_LABEL_INSTR);
+      cg_x86_64_label_new(cg_sub_name(sub, global), CG_X86_64_LABEL_INSTR);
   list_cg_x86_64_unit_push_back(self->sub_units_ref,
                                 (cg_x86_64_unit *)sub_label);
 
   cg_sub_prologue(self);
   cg_value_prologue(self, sub);
 
-  cg_sub_epilogue(self, !exit);
+  for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !it.end(&it);
+       it.next(&it)) {
+    cg_block(self, sub, it.get(&it));
+  }
+
+  cg_sub_epilogue(self, sub, !exit);
 
   if (exit) {
     cg_sub_exit(self);
   }
-  hashset_cg_x86_64_map_value_free(self->sub_map_value);
+  hashset_cg_x86_64_map_value_free(self->sub_map_values);
+}
+
+static void cg_units_append_move(list_cg_x86_64_unit *to,
+                                 list_cg_x86_64_unit *from) {
+  for (list_cg_x86_64_unit_it it = list_cg_x86_64_unit_begin(from);
+       !it.end(&it); it.next(&it)) {
+    list_cg_x86_64_unit_push_back(to, it.get(&it));
+  }
+  while (!list_cg_x86_64_unit_empty(from)) {
+    list_cg_x86_64_unit_pop_front(from);
+  }
+  list_cg_x86_64_unit_free(from);
 }
 
 void cg_x86_64_ctx_build(cg_x86_64_ctx *self, mir *mir) {
@@ -206,11 +287,13 @@ void cg_x86_64_ctx_build(cg_x86_64_ctx *self, mir *mir) {
   self->data_units_ref = data_units;
 
   cg_x86_64_dir *section_text = cg_x86_64_dir_section_new(strdup(".text"));
-  cg_x86_64_dir *globl_main = cg_x86_64_dir_globl_new(
-      cg_x86_64_label_new(strdup("main"), CG_X86_64_LABEL_DIRECTIVE));
+
+  list_cg_x86_64_unit *globl_units = list_cg_x86_64_unit_new();
 
   list_cg_x86_64_unit *ext_units = list_cg_x86_64_unit_new();
   self->ext_units_ref = ext_units;
+
+  self->globls = hashset_cg_x86_64_mir_ref_new();
 
   // core declarations
   for (int kind = 0; kind < X86_64_SYMBOL_UNKNOWN; ++kind) {
@@ -225,10 +308,29 @@ void cg_x86_64_ctx_build(cg_x86_64_ctx *self, mir *mir) {
            list_mir_subroutine_ext_begin(mir->sub_exts);
        !it.end(&it); it.next(&it)) {
     mir_subroutine_ext *ext = it.get(&it);
+    char               *ext_name = strdup(ext->name);
+
     list_cg_x86_64_unit_push_back(
         ext_units,
         (cg_x86_64_unit *)cg_x86_64_dir_extern_new(
-            cg_x86_64_label_new(strdup(ext->name), CG_X86_64_LABEL_DIRECTIVE)));
+            cg_x86_64_label_new(ext_name, CG_X86_64_LABEL_DIRECTIVE)));
+
+    hashset_cg_x86_64_mir_ref_insert(self->globls, (mir_node_base *)ext);
+  }
+
+  // add to globals
+  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
+       !it.end(&it); it.next(&it)) {
+    mir_subroutine *sub = it.get(&it);
+
+    if (!strcmp(sub->name, "main")) {
+      list_cg_x86_64_unit_push_back(
+          globl_units,
+          (cg_x86_64_unit *)cg_x86_64_dir_globl_new(cg_x86_64_label_new(
+              strdup(sub->name), CG_X86_64_LABEL_DIRECTIVE)));
+
+      hashset_cg_x86_64_mir_ref_insert(self->globls, (mir_node_base *)sub);
+    }
   }
 
   list_cg_x86_64_unit *text_units = list_cg_x86_64_unit_new();
@@ -237,48 +339,22 @@ void cg_x86_64_ctx_build(cg_x86_64_ctx *self, mir *mir) {
   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
        !it.end(&it); it.next(&it)) {
     mir_subroutine *sub = it.get(&it);
-    if (!strcmp(sub->name, "main")) {
-      cg_subroutine(self, sub, 1);
-    } else {
-      cg_subroutine(self, sub, 0);
-    }
+
+    int exit = cg_is_exit(self, sub);
+    int global = cg_is_global(self, (mir_node_base *)sub);
+
+    cg_sub(self, sub, exit, global);
   }
 
   // .section .data
   list_cg_x86_64_unit_push_back(units, (cg_x86_64_unit *)section_data);
-
-  for (list_cg_x86_64_unit_it it = list_cg_x86_64_unit_begin(data_units);
-       !it.end(&it); it.next(&it)) {
-    list_cg_x86_64_unit_push_back(units, it.get(&it));
-  }
-  while (!list_cg_x86_64_unit_empty(data_units)) {
-    list_cg_x86_64_unit_pop_front(data_units);
-  }
-  list_cg_x86_64_unit_free(data_units);
+  cg_units_append_move(units, data_units);
 
   // .section .text
   list_cg_x86_64_unit_push_back(units, (cg_x86_64_unit *)section_text);
+  cg_units_append_move(units, ext_units);
+  cg_units_append_move(units, globl_units);
+  cg_units_append_move(units, text_units);
 
-  // .extern directive...
-  for (list_cg_x86_64_unit_it it = list_cg_x86_64_unit_begin(ext_units);
-       !it.end(&it); it.next(&it)) {
-    list_cg_x86_64_unit_push_back(units, it.get(&it));
-  }
-  while (!list_cg_x86_64_unit_empty(ext_units)) {
-    list_cg_x86_64_unit_pop_front(ext_units);
-  }
-  list_cg_x86_64_unit_free(ext_units);
-
-  // .globl directive...
-  list_cg_x86_64_unit_push_back(units, (cg_x86_64_unit *)globl_main);
-
-  // subroutines...
-  for (list_cg_x86_64_unit_it it = list_cg_x86_64_unit_begin(text_units);
-       !it.end(&it); it.next(&it)) {
-    list_cg_x86_64_unit_push_back(units, it.get(&it));
-  }
-  while (!list_cg_x86_64_unit_empty(text_units)) {
-    list_cg_x86_64_unit_pop_front(text_units);
-  }
-  list_cg_x86_64_unit_free(text_units);
+  hashset_cg_x86_64_mir_ref_free(self->globls);
 }

@@ -1,3 +1,4 @@
+#include "compiler/mir/mir.h"
 #include "ctx.h"
 
 #include "util/log.h"
@@ -544,10 +545,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   hashset_mir_map_bb_free(ctx->map_bbs);
   hashset_mir_map_value_free(ctx->map_lvalues);
 
-  // set first block
-  if (list_mir_bb_size(mir_sub->bbs)) {
-    mir_sub->bb_first_ref = list_mir_bb_front(mir_sub->bbs);
-  }
+  mir_bb *bb_first_ref = list_mir_bb_front(mir_sub->bbs);
 
   // init vars and tmps with ()
   list_mir_value *value_stack = list_mir_value_new();
@@ -573,7 +571,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
     list_mir_arg_push_back(args, (mir_node_base *)second);
 
     list_mir_node_push_front(
-        mir_sub->bb_first_ref->stmts,
+        bb_first_ref->stmts,
         (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, args, NULL));
   }
 

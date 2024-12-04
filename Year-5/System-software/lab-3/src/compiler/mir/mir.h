@@ -185,8 +185,7 @@ typedef struct mir_subroutine_struct {
   list_mir_value *args;
   list_mir_value *vars;
   list_mir_value *tmps;
-  list_mir_bb    *bbs;
-  mir_bb         *bb_first_ref;
+  list_mir_bb    *bbs; // topologically sorted
 } mir_subroutine;
 
 mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,

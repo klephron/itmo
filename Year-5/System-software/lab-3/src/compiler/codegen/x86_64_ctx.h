@@ -33,6 +33,10 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_cg_x86_64_map_value, cg_x86_64_map_value,
                               container_delete_cg_x86_64_map_value,
                               container_hash_cg_x86_64_map_value);
 
+HASHSET_DECLARE_STATIC_INLINE(hashset_cg_x86_64_mir_ref, mir_node_base,
+                              container_cmp_ptr, container_new_move,
+                              container_delete_false, container_hash_ptr);
+
 typedef struct cg_x86_64_ctx_struct {
   cg_x86_64      *cg_ref;
   list_exception *exceptions;
@@ -43,7 +47,9 @@ typedef struct cg_x86_64_ctx_struct {
 
   size_t sub_stack_size; // offset of current rsp after subroutine call
   size_t sub_rbp_offset;
-  hashset_cg_x86_64_map_value *sub_map_value; // sub var metainfo
+  hashset_cg_x86_64_map_value *sub_map_values; // sub var metainfo
+
+  hashset_cg_x86_64_mir_ref *globls; // ref mir structs to handle global labels
 } cg_x86_64_ctx;
 
 cg_x86_64_ctx *cg_x86_64_ctx_new(cg_x86_64 *cg_ref);

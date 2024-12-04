@@ -118,7 +118,6 @@ mir_subroutine *mir_subroutine_new(char *name, mir_value *ret,
   self->vars = vars;
   self->tmps = tmps;
   self->bbs = bbs;
-  self->bb_first_ref = NULL;
   return self;
 }
 
