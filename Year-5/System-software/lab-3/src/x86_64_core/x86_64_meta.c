@@ -80,8 +80,24 @@ const char *x86_64_symbol_enum_str(x86_64_symbol_enum kind) {
     return "__x86_64_cast";
   case X86_64_SYMBOL_ASSIGN:
     return "__x86_64_assign";
-  case X86_64_SYMBOL_COND:
-    return "__x86_64_cond";
+  case X86_64_SYMBOL_UNWRAP_BOOL:
+    return "__x86_64_unwrap_bool";
+  case X86_64_SYMBOL_UNWRAP_BYTE:
+    return "__x86_64_unwrap_byte";
+  case X86_64_SYMBOL_UNWRAP_INT:
+    return "__x86_64_unwrap_int";
+  case X86_64_SYMBOL_UNWRAP_UINT:
+    return "__x86_64_unwrap_uint";
+  case X86_64_SYMBOL_UNWRAP_LONG:
+    return "__x86_64_unwrap_long";
+  case X86_64_SYMBOL_UNWRAP_ULONG:
+    return "__x86_64_unwrap_ulong";
+  case X86_64_SYMBOL_UNWRAP_CHAR:
+    return "__x86_64_unwrap_char";
+  case X86_64_SYMBOL_UNWRAP_STRING:
+    return "__x86_64_unwrap_string";
+  case X86_64_SYMBOL_UNWRAP_ARRAY:
+    return "__x86_64_unwrap_array";
   default:
     error("unknown symbol %d", kind);
     return "<unknown>";

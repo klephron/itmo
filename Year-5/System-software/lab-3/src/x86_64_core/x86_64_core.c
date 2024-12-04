@@ -1729,21 +1729,170 @@ void __x86_64_assign(x86_64_value *lsv, x86_64_value rsv) {
   lsv->data = rsv.data;
 }
 
-uint8_t __x86_64_cond(x86_64_value value) {
+uint8_t __x86_64_unwrap_bool(x86_64_value value) {
   if (!value.data) {
     printf("error: cond from null value\n");
     goto error;
   }
+
   x86_64_data *data = value.data;
-  switch (data->type.kind) {
-  case X86_64_TYPE_BOOL: {
+  if (data->type.kind == X86_64_TYPE_BOOL) {
     uint8_t v = *data->raw;
     return v;
   }
-  default:
-    printf("error: unsupported cond type %d, expected bool(type %d)\n",
-           data->type.kind, X86_64_TYPE_BOOL);
-  }
+
+  printf("error: unsupported cond type %d, expected bool(type %d)\n",
+         data->type.kind, X86_64_TYPE_BOOL);
+
 error:
   return 0;
+}
+
+uint8_t __x86_64_unwrap_byte(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_BYTE) {
+    uint8_t v = *data->raw;
+    return v;
+  }
+
+  printf("error: unsupported cond type %d, expected byte(type %d)\n",
+         data->type.kind, X86_64_TYPE_BYTE);
+
+error:
+  return 0;
+}
+
+int32_t __x86_64_unwrap_int(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_INT) {
+    int32_t v = *data->raw;
+    return v;
+  }
+
+  printf("error: unsupported cond type %d, expected int(type %d)\n",
+         data->type.kind, X86_64_TYPE_INT);
+
+error:
+  return 0;
+}
+uint32_t __x86_64_unwrap_uint(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_UINT) {
+    uint32_t v = *data->raw;
+    return v;
+  }
+
+  printf("error: unsupported cond type %d, expected uint(type %d)\n",
+         data->type.kind, X86_64_TYPE_UINT);
+
+error:
+  return 0;
+}
+
+int64_t __x86_64_unwrap_long(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_LONG) {
+    int64_t v = *data->raw;
+    return v;
+  }
+
+  printf("error: unsupported cond type %d, expected long(type %d)\n",
+         data->type.kind, X86_64_TYPE_LONG);
+
+error:
+  return 0;
+}
+
+uint64_t __x86_64_unwrap_ulong(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_ULONG) {
+    uint64_t v = *data->raw;
+    return v;
+  }
+
+  printf("error: unsupported cond type %d, expected ulong(type %d)\n",
+         data->type.kind, X86_64_TYPE_ULONG);
+
+error:
+  return 0;
+}
+
+uint8_t __x86_64_unwrap_char(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_CHAR) {
+    uint8_t v = *data->raw;
+    return v;
+  }
+
+  printf("error: unsupported cond type %d, expected char(type %d)\n",
+         data->type.kind, X86_64_TYPE_CHAR);
+
+error:
+  return 0;
+}
+
+uint8_t *__x86_64_unwrap_string(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_STRING) {
+    return data->raw;
+  }
+
+  printf("error: unsupported cond type %d, expected string(type %d)\n",
+         data->type.kind, X86_64_TYPE_STRING);
+
+error:
+  return NULL;
+}
+
+uint8_t *__x86_64_unwrap_array(x86_64_value value) {
+  if (!value.data) {
+    printf("error: cond from null value\n");
+    goto error;
+  }
+
+  x86_64_data *data = value.data;
+  if (data->type.kind == X86_64_TYPE_ARRAY) {
+    return data->raw;
+  }
+
+  printf("error: unsupported cond type %d, expected array(type %d)\n",
+         data->type.kind, X86_64_TYPE_ARRAY);
+
+error:
+  return NULL;
 }

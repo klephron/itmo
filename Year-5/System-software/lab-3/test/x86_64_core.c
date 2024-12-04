@@ -415,7 +415,7 @@ Test(x86_64_core, cond) {
   __x86_64_value_drop(&rsv);
   rsv = __x86_64_value_bool(true);
 
-  uint8_t v = __x86_64_cond(rsv);
+  uint8_t v = __x86_64_unwrap_bool(rsv);
   cr_expect_neq(0, v);
 
   __x86_64_value_drop(&rsv);
@@ -429,21 +429,7 @@ Test(x86_64_core, cond2) {
   __x86_64_value_drop(&rsv);
   rsv = __x86_64_value_bool(false);
 
-  uint8_t v = __x86_64_cond(rsv);
-  cr_expect_eq(0, v);
-
-  __x86_64_value_drop(&rsv);
-}
-
-Test(x86_64_core, cond3) {
-  x86_64_value rsv;
-
-  __x86_64_value_init(&rsv);
-
-  __x86_64_value_drop(&rsv);
-  rsv = __x86_64_value_int(4);
-
-  uint8_t v = __x86_64_cond(rsv);
+  uint8_t v = __x86_64_unwrap_bool(rsv);
   cr_expect_eq(0, v);
 
   __x86_64_value_drop(&rsv);
