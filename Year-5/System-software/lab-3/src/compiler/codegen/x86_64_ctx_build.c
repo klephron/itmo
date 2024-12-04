@@ -1,3 +1,4 @@
+#include "util/log.h"
 #include "util/macro.h"
 #include "x86_64_ctx.h"
 
@@ -226,11 +227,67 @@ static char *cg_block_name(mir_subroutine *sub, mir_bb *bb) {
   return local;
 }
 
+static void cg_stmt_store(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb,
+                          mir_builtin *stmt) {
+  UNUSED(self);
+  UNUSED(sub);
+  UNUSED(bb);
+  UNUSED(stmt);
+}
+
+static void cg_stmt_drop(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb,
+                         mir_builtin *stmt) {
+  UNUSED(self);
+  UNUSED(sub);
+  UNUSED(bb);
+  UNUSED(stmt);
+}
+
+// no jump only on last block
+static void cg_jump(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb, mir_jmp *jmp) {
+  UNUSED(self);
+  UNUSED(sub);
+  UNUSED(bb);
+  if (!jmp) {
+    return;
+  }
+}
+
+static void cg_stmt(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb,
+                    mir_node_base *stmt) {
+  switch (stmt->kind) {
+  case MIR_NODE_BUILTIN: {
+    mir_builtin *builtin = (mir_builtin *)stmt;
+    switch (builtin->kind) {
+    case MIR_BUILTIN_STORE: {
+      cg_stmt_store(self, sub, bb, builtin);
+    } break;
+    case MIR_BUILTIN_DROP: {
+      cg_stmt_drop(self, sub, bb, builtin);
+    } break;
+    default:
+      error("unexpected builtin kind %d of stmt %p", builtin->kind, stmt);
+    }
+  } break;
+  default:
+    error("unexpected kind %d of stmt %p", stmt->kind, stmt);
+    break;
+  }
+}
+
 static void cg_block(cg_x86_64_ctx *self, mir_subroutine *sub, mir_bb *bb) {
   cg_x86_64_label *block_label =
       cg_x86_64_label_new(cg_block_name(sub, bb), CG_X86_64_LABEL_INSTR);
   list_cg_x86_64_unit_push_back(self->sub_units_ref,
                                 (cg_x86_64_unit *)block_label);
+
+  for (list_mir_node_it it = list_mir_node_begin(bb->stmts); !it.end(&it);
+       it.next(&it)) {
+    mir_node_base *stmt = it.get(&it);
+    cg_stmt(self, sub, bb, stmt);
+  }
+
+  cg_jump(self, sub, bb, bb->jmp);
 }
 
 static char *cg_sub_name(mir_subroutine *sub, int global) {
@@ -260,10 +317,10 @@ static void cg_sub(cg_x86_64_ctx *self, mir_subroutine *sub, int exit,
   }
 
   cg_sub_epilogue(self, sub, !exit);
-
   if (exit) {
     cg_sub_exit(self);
   }
+
   hashset_cg_x86_64_map_value_free(self->sub_map_values);
 }
 

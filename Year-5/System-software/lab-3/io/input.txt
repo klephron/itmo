@@ -38,7 +38,6 @@ begin
       end;
     until true;
 
-  /*
   while (new!<int>(a) == cast!<int>(1)) do begin
     a = 2;
     break;
@@ -52,6 +51,8 @@ begin
     while true;
 
   4 * 10;
+
+  a = a * b;
 
   b = (++a * 10);
   -(--d);
@@ -67,7 +68,6 @@ begin
     write(a);
     if a == 0 then break;
   end;
-  */
 
-  n;
+  main();
 end;
