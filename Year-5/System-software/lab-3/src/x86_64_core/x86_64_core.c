@@ -1729,6 +1729,61 @@ void __x86_64_assign(x86_64_value *lsv, x86_64_value rsv) {
   lsv->data = rsv.data;
 }
 
+void __x86_64_print(x86_64_value value) {
+  x86_64_data *data = value.data;
+
+  const char *end = "\n";
+
+  if (!data) {
+    printf("<empty>");
+    goto print_end;
+  }
+
+  switch (data->type.kind) {
+  case X86_64_TYPE_VOID:
+    printf("<void>");
+    break;
+  case X86_64_TYPE_BOOL:
+    if (__x86_64_unwrap_bool(value)) {
+      printf("true");
+    } else {
+      printf("false");
+    }
+    break;
+  case X86_64_TYPE_BYTE:
+    printf("%u", __x86_64_unwrap_byte(value));
+    break;
+  case X86_64_TYPE_INT:
+    printf("%d", __x86_64_unwrap_int(value));
+    break;
+  case X86_64_TYPE_UINT:
+    printf("%d", __x86_64_unwrap_uint(value));
+    break;
+  case X86_64_TYPE_LONG:
+    printf("%ld", __x86_64_unwrap_long(value));
+    break;
+  case X86_64_TYPE_ULONG:
+    printf("%lu", __x86_64_unwrap_ulong(value));
+    break;
+  case X86_64_TYPE_CHAR:
+    printf("%c", __x86_64_unwrap_char(value));
+    break;
+  case X86_64_TYPE_STRING:
+    printf("%s", __x86_64_unwrap_string(value));
+    break;
+  case X86_64_TYPE_ARRAY:
+    printf("warn: array printing is unsupported\n");
+    printf("<array>");
+    break;
+  default:
+    printf("error: unknown type %d\n", data->type.kind);
+    printf("<unknown>");
+  }
+
+print_end:
+  printf("%s", end);
+}
+
 uint8_t __x86_64_unwrap_bool(x86_64_value value) {
   if (!value.data) {
     printf("error: cond from null value\n");

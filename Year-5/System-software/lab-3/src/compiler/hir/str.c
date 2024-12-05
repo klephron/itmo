@@ -184,8 +184,8 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
     return "CAST";
   case HIR_EXPR_BUILTIN_NEW:
     return "NEW";
-  case HIR_EXPR_BUILTIN_FREE:
-    return "FREE";
+  case HIR_EXPR_BUILTIN_PRINT:
+    return "PRINT";
   default:
     error("unknown expr builtin enum %d", kind);
     return "UNKNOWN";

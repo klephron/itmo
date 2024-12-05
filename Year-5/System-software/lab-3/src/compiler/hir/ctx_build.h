@@ -50,14 +50,12 @@ hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
                                        ANTLR3_BASE_TREE    *op_node,
                                        hir_expr_binary_enum op);
 
-hir_expr_builtin *hir_build_expr_builtin_cast(hir_ctx          *ctx,
-                                              ANTLR3_BASE_TREE *node,
-                                              type_base        *type,
-                                              hir_expr_base    *expr);
-hir_expr_builtin *hir_build_expr_builtin_new(hir_ctx          *ctx,
-                                             ANTLR3_BASE_TREE *node,
-                                             type_base        *type,
-                                             list_hir_expr    *expr);
+hir_expr_builtin *hir_build_expr_builtin(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                         hir_expr_builtin_enum kind,
+                                         type_base *type, list_hir_expr *expr);
+hir_expr_builtin *hir_build_expr_builtin_print(hir_ctx          *ctx,
+                                               ANTLR3_BASE_TREE *node,
+                                               list_hir_expr    *expr);
 
 hir_stmt_if    *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                   hir_expr_base *cond, hir_stmt_base *je,

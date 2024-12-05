@@ -71,6 +71,8 @@ const char *mir_builtin_enum_str(mir_builtin_enum kind) {
     return "NEW";
   case MIR_BUILTIN_DROP:
     return "DROP";
+  case MIR_BUILTIN_PRINT:
+    return "PRINT";
   default:
     info("unknown kind %d", kind);
     return "UNKNOWN";

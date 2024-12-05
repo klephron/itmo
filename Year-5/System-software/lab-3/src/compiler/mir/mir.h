@@ -125,7 +125,8 @@ typedef enum mir_builtin_enum {
   MIR_BUILTIN_INDEX,
   MIR_BUILTIN_CAST,
   MIR_BUILTIN_NEW,
-  MIR_BUILTIN_DROP
+  MIR_BUILTIN_DROP,
+  MIR_BUILTIN_PRINT,
 } mir_builtin_enum;
 
 typedef struct mir_builtin_struct {

@@ -50,7 +50,7 @@ typedef enum hir_expr_builtin_enum {
   HIR_EXPR_BUILTIN_UNKNOWN,
   HIR_EXPR_BUILTIN_CAST,
   HIR_EXPR_BUILTIN_NEW,
-  HIR_EXPR_BUILTIN_FREE,
+  HIR_EXPR_BUILTIN_PRINT,
 } hir_expr_builtin_enum;
 
 typedef struct hir_expr_base_struct {

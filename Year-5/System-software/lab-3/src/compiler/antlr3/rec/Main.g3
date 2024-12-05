@@ -26,8 +26,7 @@ tokens {
   CONST_CHAR;
   CONST_STR;
   TYPE;
-  BUILTIN_CAST;
-  BUILTIN_NEW;
+  BUILTIN;
 }
 
 @headers{
@@ -202,8 +201,8 @@ expr_literal
   ;
 
 expr_builtin
-  : c='cast!' '<' type_ref '>' '(' expr ')' -> ^(BUILTIN_CAST[$c, "BUILTIN_CAST"] type_ref expr)
-  | c='new!' '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN_NEW[$c, "BUILTIN_NEW"] type_ref ^(ARGS expr_15))
+  : c=('cast!' | 'new!') '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c type_ref ^(ARGS expr_15))
+  | c=('print!') '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c ^(ARGS expr_15))
   ;
 
 // TERMINALS

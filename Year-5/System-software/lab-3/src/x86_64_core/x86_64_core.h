@@ -101,6 +101,7 @@ void __x86_64_index_set(x86_64_value from, x86_64_value array, uint64_t size,
                         ...);
 x86_64_value __x86_64_cast(x86_64_value value, x86_64_type_enum);
 void         __x86_64_assign(x86_64_value *lsv, x86_64_value rsv);
+void         __x86_64_print(x86_64_value value);
 
 uint8_t  __x86_64_unwrap_bool(x86_64_value value);
 uint8_t  __x86_64_unwrap_byte(x86_64_value value);
