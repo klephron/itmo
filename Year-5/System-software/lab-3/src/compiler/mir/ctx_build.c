@@ -390,7 +390,6 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
   mir_bb *bb = mir_bb_new(eir_bb->id, list_mir_node_new(), NULL);
 
   hashset_mir_map_bb_insert(ctx->map_bbs, mir_map_bb_new(eir_bb, bb));
-  list_mir_bb_push_back(mir_sub->bbs, bb);
 
   switch (eir_bb->kind) {
   case EIR_BLOCK_NEXT: {
@@ -444,6 +443,8 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
     bb = NULL;
     break;
   }
+
+  list_mir_bb_push_front(mir_sub->bbs, bb);
   return bb;
 }
 
@@ -553,6 +554,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   // init vars and tmps with ()
   list_mir_value *value_stack = list_mir_value_new();
 
+  list_mir_value_push_back(value_stack, mir_sub->ret);
   for (list_mir_value_it it = list_mir_value_begin(mir_sub->vars); !it.end(&it);
        it.next(&it)) {
     mir_value *first = it.get(&it);

@@ -2,6 +2,7 @@
 
 #include "util/hashset.h"
 #include "util/list.h"
+#include "util/log.h"
 #include "util/macro.h"
 
 LIST_DECLARE_STATIC_INLINE(list_mir_bb_ref, mir_bb, container_cmp_false,
@@ -82,11 +83,23 @@ static mir_bb_preds *mir_ctx_bb_get_preds(mir_ctx              *ctx,
 }
 
 // returns next block that can be merged
-static mir_bb *mir_ctx_bb_can_merge_next(mir_bb *b) {
+// if conditional -> don't merge
+// if next block has more than 1 reference -> don't merge
+//   (these references are from not deleted blocks,
+//   because no dead code optimizations are applied)
+static mir_bb *mir_ctx_bb_can_merge_next(mir_bb               *b,
+                                         hashset_mir_bb_preds *hs_preds) {
   if (!b->jmp) { // if last
     return NULL;
   }
-  if (b->jmp->je_ref) { // if conditional
+  if (b->jmp->value_ref) { // if conditional
+    return NULL;
+  }
+  // if more than 1 reference to next block
+  hashset_mir_bb_preds_it it = hashset_mir_bb_preds_find(
+      hs_preds, &(mir_bb_preds){.bb = b->jmp->jz_ref});
+  mir_bb_preds *preds = it.get(&it);
+  if (list_mir_bb_ref_size(preds->preds) > 1) {
     return NULL;
   }
   return b->jmp->jz_ref;
@@ -102,7 +115,7 @@ mir_bb *mir_ctx_bb_merge_block(mir_ctx *ctx, hashset_mir_bb_preds *hs_preds,
 
   // debug("merging... %zu", bb->id);
 
-  mir_bb *next_bb = mir_ctx_bb_can_merge_next(bb);
+  mir_bb *next_bb = mir_ctx_bb_can_merge_next(bb, hs_preds);
   if (!next_bb) {
     return NULL;
   }
@@ -111,6 +124,7 @@ mir_bb *mir_ctx_bb_merge_block(mir_ctx *ctx, hashset_mir_bb_preds *hs_preds,
       hashset_mir_bb_preds_find(hs_preds, &(mir_bb_preds){.bb = bb});
   mir_bb_preds *bb_preds = preds_it.get(&preds_it);
 
+  // update all predecessors
   for (list_mir_bb_ref_it it = list_mir_bb_ref_begin(bb_preds->preds);
        !it.end(&it); it.next(&it)) {
     mir_bb *pred_bb = it.get(&it);

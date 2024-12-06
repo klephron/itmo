@@ -234,6 +234,7 @@ static size_t cfg_traverse_expr_traverse(dot_block *st, string_buffer *buffer,
     eir_expr_lit *lit = (eir_expr_lit *)expr;
     char         *ts = type_str(lit->lit->type);
     char         *vs = hir_lit_value_str(lit->lit);
+    info(vs);
     snprintf(buf, sizeof(buf) - 1, "label=\"(%s)%s\"", ts, vs);
     free(vs);
     free(ts);

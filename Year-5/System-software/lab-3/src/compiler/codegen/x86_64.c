@@ -158,23 +158,23 @@ void cg_x86_64_data_free(cg_x86_64_data *self) {
 }
 
 // INSTRUCTION
-cg_x86_64_mode *cg_x86_64_mode_new_register(cg_x86_64_reg reg) {
-  cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
+cg_x86_64_op *cg_x86_64_op_new_register(cg_x86_64_reg reg) {
+  cg_x86_64_op *self = MALLOC(cg_x86_64_op);
   self->kind = CG_X86_64_MODE_REGISTER;
   self->reg = reg;
   return self;
 }
-cg_x86_64_mode *cg_x86_64_mode_new_direct(char *addr_label) {
-  cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
+cg_x86_64_op *cg_x86_64_op_new_direct(char *addr_label) {
+  cg_x86_64_op *self = MALLOC(cg_x86_64_op);
   self->kind = CG_X86_64_MODE_DIRECT;
   self->addr_label = addr_label;
   return self;
 }
 
-cg_x86_64_mode *cg_x86_64_mode_new_indexed(char         *addr_label,
-                                           cg_x86_64_reg index_reg,
-                                           uint64_t      multi_const) {
-  cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
+cg_x86_64_op *cg_x86_64_op_new_indexed(char         *addr_label,
+                                       cg_x86_64_reg index_reg,
+                                       uint64_t      multi_const) {
+  cg_x86_64_op *self = MALLOC(cg_x86_64_op);
   self->kind = CG_X86_64_MODE_INDEXED;
   self->addr_label = addr_label;
   self->index_reg = index_reg;
@@ -182,30 +182,30 @@ cg_x86_64_mode *cg_x86_64_mode_new_indexed(char         *addr_label,
   return self;
 }
 
-cg_x86_64_mode *cg_x86_64_mode_new_indirect(cg_x86_64_reg base_reg) {
-  cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
+cg_x86_64_op *cg_x86_64_op_new_indirect(cg_x86_64_reg base_reg) {
+  cg_x86_64_op *self = MALLOC(cg_x86_64_op);
   self->kind = CG_X86_64_MODE_INDIRECT;
   self->base_reg = base_reg;
   return self;
 }
 
-cg_x86_64_mode *cg_x86_64_mode_new_base(uint64_t      offset_const,
-                                        cg_x86_64_reg base_reg) {
-  cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
+cg_x86_64_op *cg_x86_64_op_new_base(uint64_t      offset_const,
+                                    cg_x86_64_reg base_reg) {
+  cg_x86_64_op *self = MALLOC(cg_x86_64_op);
   self->kind = CG_X86_64_MODE_BASE;
   self->offset_const = offset_const;
   self->base_reg = base_reg;
   return self;
 }
 
-cg_x86_64_mode *cg_x86_64_mode_new_immediate(uint64_t imm_const) {
-  cg_x86_64_mode *self = MALLOC(cg_x86_64_mode);
+cg_x86_64_op *cg_x86_64_op_new_immediate(uint64_t imm_const) {
+  cg_x86_64_op *self = MALLOC(cg_x86_64_op);
   self->kind = CG_X86_64_MODE_IMMEDIATE;
   self->imm_const = imm_const;
   return self;
 }
 
-void cg_x86_64_mode_free(cg_x86_64_mode *self) {
+void cg_x86_64_op_free(cg_x86_64_op *self) {
   if (self) {
     switch (self->kind) {
     case CG_X86_64_MODE_DIRECT:
@@ -219,8 +219,8 @@ void cg_x86_64_mode_free(cg_x86_64_mode *self) {
   }
 }
 
-cg_x86_64_instr *cg_x86_64_instr_new(cg_x86_64_mnem       mnem,
-                                     list_cg_x86_64_mode *operands) {
+cg_x86_64_instr *cg_x86_64_instr_new(cg_x86_64_mnem     mnem,
+                                     list_cg_x86_64_op *operands) {
   cg_x86_64_instr *self = MALLOC(cg_x86_64_instr);
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_INSTR);
   self->mnem = mnem;
@@ -230,7 +230,7 @@ cg_x86_64_instr *cg_x86_64_instr_new(cg_x86_64_mnem       mnem,
 
 void cg_x86_64_instr_free(cg_x86_64_instr *self) {
   if (self) {
-    list_cg_x86_64_mode_free(self->operands);
+    list_cg_x86_64_op_free(self->operands);
     cg_x86_64_unit_base_deinit(&self->base);
     free(self);
   }

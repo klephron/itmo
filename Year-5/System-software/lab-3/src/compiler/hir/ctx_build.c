@@ -124,15 +124,23 @@ hir_id *hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 hir_lit *hir_build_str(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span       *span = hir_span_new(node, ctx->ast_stream_ref);
   const char *chars = ANTLR3_CHARS(node);
+  size_t      len = strlen(chars);
+  char       *data = malloc(len - 1);
+  strncpy(data, chars + 1, len - 2);
+  data[len - 2] = '\0';
   return hir_lit_new(span, type_base_new(span_copy(span), TYPE_STRING),
-                     (hir_lit_u){.v_str = strdup(chars)});
+                     (hir_lit_u){.v_str = data});
 }
 
 hir_lit *hir_build_rune(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   span       *span = hir_span_new(node, ctx->ast_stream_ref);
   const char *chars = ANTLR3_CHARS(node);
+  size_t      len = strlen(chars);
+  char       *data = malloc(len - 1);
+  strncpy(data, chars + 1, len - 2);
+  data[len - 2] = '\0';
   return hir_lit_new(span, type_base_new(span_copy(span), TYPE_CHAR),
-                     (hir_lit_u){.v_char = strdup(chars)});
+                     (hir_lit_u){.v_char = data});
 }
 
 hir_lit *hir_build_hex(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {

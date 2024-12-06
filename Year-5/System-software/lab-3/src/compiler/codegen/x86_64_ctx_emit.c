@@ -7,47 +7,72 @@
 
 static const char *cg_reg_str(cg_x86_64_reg reg) {
   switch (reg) {
+    // 0
   case CG_X86_64_REG_RAX:
     return "rax";
+  case CG_X86_64_REG_AL:
+    return "al";
+  case CG_X86_64_REG_AH:
+    return "ah";
+    // 1
   case CG_X86_64_REG_RBX:
     return "rbx";
+    // 2
   case CG_X86_64_REG_RCX:
     return "rcx";
+    // 3
   case CG_X86_64_REG_RDX:
     return "rdx";
+    // 4
   case CG_X86_64_REG_RSP:
     return "rsp";
+    // 5
   case CG_X86_64_REG_RBP:
     return "rbp";
+    // 6
   case CG_X86_64_REG_RSI:
     return "rsi";
+    // 7
   case CG_X86_64_REG_RDI:
     return "rdi";
+  case CG_X86_64_REG_EDI:
+    return "edi";
+  case CG_X86_64_REG_DIH:
+    return "dih";
+  case CG_X86_64_REG_DIL:
+    return "dil";
+    // 8
   case CG_X86_64_REG_R8:
     return "r8";
+    // 9
   case CG_X86_64_REG_R9:
     return "r9";
+    // 10
   case CG_X86_64_REG_R10:
     return "r10";
+    // 11
   case CG_X86_64_REG_R11:
     return "r11";
+    // 12
   case CG_X86_64_REG_R12:
     return "r12";
+    // 13
   case CG_X86_64_REG_R13:
     return "r13";
+    // 14
   case CG_X86_64_REG_R14:
     return "r14";
+    // 15
   case CG_X86_64_REG_R15:
     return "r15";
   default:
     error("unknown reg kind %d", reg);
     return "unknown";
-    break;
   }
 }
 
 static void cg_emit_mode(cg_x86_64_ctx *self, string_buffer *buf,
-                         cg_x86_64_mode *op) {
+                         cg_x86_64_op *op) {
   UNUSED(self);
   char sbuf[32];
 
@@ -119,7 +144,7 @@ static void cg_emit_data(cg_x86_64_ctx *self, string_buffer *buf,
     string_buffer_append(buf, sbuf);
     break;
   case CG_X86_64_DATA_ASCII:
-    string_buffer_append(buf, ".ascii");
+    string_buffer_append(buf, ".ascii ");
     string_buffer_append(buf, "\"");
     string_buffer_append(buf, (char *)data->data_ascii);
     string_buffer_append(buf, "\\0\"");
@@ -132,7 +157,7 @@ static void cg_emit_data(cg_x86_64_ctx *self, string_buffer *buf,
 
 void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
                    cg_x86_64_instr *instr) {
-  list_cg_x86_64_mode *operands = instr->operands;
+  list_cg_x86_64_op *operands = instr->operands;
   string_buffer_append(buf, "  ");
   switch (instr->mnem) {
   case CG_X86_64_MNEM_PUSHQ:
@@ -143,6 +168,9 @@ void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
     break;
   case CG_X86_64_MNEM_MOVQ:
     string_buffer_append(buf, "movq");
+    break;
+  case CG_X86_64_MNEM_MOVB:
+    string_buffer_append(buf, "movb");
     break;
   case CG_X86_64_MNEM_RETQ:
     string_buffer_append(buf, "retq");
@@ -162,12 +190,24 @@ void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
   case CG_X86_64_MNEM_CALL:
     string_buffer_append(buf, "call");
     break;
+  case CG_X86_64_MNEM_TESTB:
+    string_buffer_append(buf, "testb");
+    break;
+  case CG_X86_64_MNEM_JE:
+    string_buffer_append(buf, "je");
+    break;
+  case CG_X86_64_MNEM_JZ:
+    string_buffer_append(buf, "jz");
+    break;
+  case CG_X86_64_MNEM_JMP:
+    string_buffer_append(buf, "jmp");
+    break;
   case CG_X86_64_MNEM_UNKNOWN:
   default:
     error("unexpected instr kind %d %p", instr->mnem, instr);
     break;
   }
-  list_cg_x86_64_mode_it op_it = list_cg_x86_64_mode_begin(operands);
+  list_cg_x86_64_op_it op_it = list_cg_x86_64_op_begin(operands);
   if (!op_it.end(&op_it)) {
     string_buffer_append(buf, " ");
     cg_emit_mode(self, buf, op_it.get(&op_it));

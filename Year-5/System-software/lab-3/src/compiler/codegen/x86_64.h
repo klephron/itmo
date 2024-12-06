@@ -87,21 +87,42 @@ cg_x86_64_data *cg_x86_64_data_new_quad(uint64_t data);
 cg_x86_64_data *cg_x86_64_data_new_ascii(uint8_t *data);
 
 typedef enum cg_x86_64_reg_enum {
+  // 0
   CG_X86_64_REG_RAX,
+  CG_X86_64_REG_AL,
+  CG_X86_64_REG_AH,
+  // 1
   CG_X86_64_REG_RBX,
+  // 2
   CG_X86_64_REG_RCX,
+  // 3
   CG_X86_64_REG_RDX,
+  // 4
   CG_X86_64_REG_RSP,
+  // 5
   CG_X86_64_REG_RBP,
+  // 6
   CG_X86_64_REG_RSI,
+  // 7
   CG_X86_64_REG_RDI,
+  CG_X86_64_REG_EDI,
+  CG_X86_64_REG_DIL,
+  CG_X86_64_REG_DIH,
+  // 8
   CG_X86_64_REG_R8,
+  // 9
   CG_X86_64_REG_R9,
+  // 10
   CG_X86_64_REG_R10,
+  // 11
   CG_X86_64_REG_R11,
+  // 12
   CG_X86_64_REG_R12,
+  // 13
   CG_X86_64_REG_R13,
+  // 14
   CG_X86_64_REG_R14,
+  // 15
   CG_X86_64_REG_R15,
 } cg_x86_64_reg;
 
@@ -136,7 +157,7 @@ typedef enum cg_x86_64_mode_enum {
   CG_X86_64_MODE_IMMEDIATE, // imm_const(1)
 } cg_x86_64_mode_enum;
 
-typedef struct cg_x86_64_mode_struct {
+typedef struct cg_x86_64_op_struct {
   cg_x86_64_mode_enum kind;
   union {
     char         *addr_label; // NOTE: can store reference to label
@@ -151,31 +172,32 @@ typedef struct cg_x86_64_mode_struct {
   union {
     uint64_t multi_const;
   };
-} cg_x86_64_mode;
+} cg_x86_64_op;
 
-cg_x86_64_mode *cg_x86_64_mode_new_register(cg_x86_64_reg reg);
-cg_x86_64_mode *cg_x86_64_mode_new_direct(char *addr_label);
-cg_x86_64_mode *cg_x86_64_mode_new_indexed(char         *addr_label,
-                                           cg_x86_64_reg index_reg,
-                                           uint64_t      multi_const);
-cg_x86_64_mode *cg_x86_64_mode_new_indirect(cg_x86_64_reg base_reg);
-cg_x86_64_mode *cg_x86_64_mode_new_base(uint64_t      offset_const,
-                                        cg_x86_64_reg base_reg);
-cg_x86_64_mode *cg_x86_64_mode_new_immediate(uint64_t imm_const);
+cg_x86_64_op *cg_x86_64_op_new_register(cg_x86_64_reg reg);
+cg_x86_64_op *cg_x86_64_op_new_direct(char *addr_label);
+cg_x86_64_op *cg_x86_64_op_new_indexed(char         *addr_label,
+                                       cg_x86_64_reg index_reg,
+                                       uint64_t      multi_const);
+cg_x86_64_op *cg_x86_64_op_new_indirect(cg_x86_64_reg base_reg);
+cg_x86_64_op *cg_x86_64_op_new_base(uint64_t      offset_const,
+                                    cg_x86_64_reg base_reg);
+cg_x86_64_op *cg_x86_64_op_new_immediate(uint64_t imm_const);
 
-void cg_x86_64_mode_free(cg_x86_64_mode *self);
+void cg_x86_64_op_free(cg_x86_64_op *self);
 
-static inline void container_delete_cg_x86_64_mode(void *data) {
-  cg_x86_64_mode_free(data);
+static inline void container_delete_cg_x86_64_op(void *data) {
+  cg_x86_64_op_free(data);
 }
-LIST_DECLARE_STATIC_INLINE(list_cg_x86_64_mode, cg_x86_64_mode,
-                           container_cmp_false, container_new_move,
-                           container_delete_cg_x86_64_mode);
+LIST_DECLARE_STATIC_INLINE(list_cg_x86_64_op, cg_x86_64_op, container_cmp_false,
+                           container_new_move, container_delete_cg_x86_64_op);
 
 typedef enum cg_x86_64_mnem_enum {
   CG_X86_64_MNEM_UNKNOWN,
   CG_X86_64_MNEM_PUSHQ,
   CG_X86_64_MNEM_POPQ,
+  CG_X86_64_MNEM_MOVB,
+  CG_X86_64_MNEM_MOVL,
   CG_X86_64_MNEM_MOVQ,
   CG_X86_64_MNEM_RETQ,
   CG_X86_64_MNEM_SYSCALL,
@@ -183,17 +205,21 @@ typedef enum cg_x86_64_mnem_enum {
   CG_X86_64_MNEM_SUBQ,
   CG_X86_64_MNEM_LEAQ,
   CG_X86_64_MNEM_CALL,
+  CG_X86_64_MNEM_TESTB,
+  CG_X86_64_MNEM_JE,
+  CG_X86_64_MNEM_JZ,
+  CG_X86_64_MNEM_JMP,
 } cg_x86_64_mnem;
 
 // at&t instruction order
 typedef struct cg_x86_64_instr_struct {
-  cg_x86_64_unit       base;
-  cg_x86_64_mnem       mnem;
-  list_cg_x86_64_mode *operands;
+  cg_x86_64_unit     base;
+  cg_x86_64_mnem     mnem;
+  list_cg_x86_64_op *operands;
 } cg_x86_64_instr;
 
-cg_x86_64_instr *cg_x86_64_instr_new(cg_x86_64_mnem       mnem,
-                                     list_cg_x86_64_mode *operands);
+cg_x86_64_instr *cg_x86_64_instr_new(cg_x86_64_mnem     mnem,
+                                     list_cg_x86_64_op *operands);
 
 typedef struct cg_x86_64_struct {
   list_cg_x86_64_unit *units;

@@ -1,0 +1,14 @@
+method a():
+begin
+end;
+
+method b():
+begin
+end;
+
+method main():
+var
+  e, v;
+begin
+  e = "data";
+end;
