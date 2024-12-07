@@ -1,0 +1,15 @@
+method main():
+var
+  i, total;
+begin
+  i = new!<bool>();
+  i = new!<byte>();
+  i = new!<int>();
+  i = new!<uint>();
+  i = new!<long>();
+  i = new!<ulong>();
+  i = new!<char>();
+  i = new!<string>();
+  i = new!<array [] of int>(10);
+  i = new!<array [,,] of int>(10, 20, 30);
+end;
