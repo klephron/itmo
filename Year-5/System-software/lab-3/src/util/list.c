@@ -111,7 +111,7 @@ void *list_it_get(list_it *it) { return it->cur->data; }
 int list_it_next(list_it *it) {
   if (it->cur) {
     it->cur = it->cur->next;
-    return 1;
+    return it->cur ? 1 : 0;
   }
   return 0;
 }

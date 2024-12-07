@@ -13,7 +13,7 @@
     assert(sizeof(type_t) == __x86_64_type_direct_size(type_enum));            \
     x86_64_data *data =                                                        \
         c_data_new(sizeof(type_t), (x86_64_type){.kind = type_enum});          \
-    *data->raw = value;                                                        \
+    *(type_t *)data->raw = value;                                              \
     return (x86_64_value){.data = data};                                       \
   }
 
@@ -30,33 +30,33 @@ static x86_64_number c_get_number(x86_64_data *data) {
 
   switch (data->type.kind) {
   case X86_64_TYPE_INT: {
-    int32_t r = *data->raw;
+    int32_t r = *(int32_t *)data->raw;
     number.ld = r;
     number.sign = 1;
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t r = *data->raw;
+    int64_t r = *(int64_t *)data->raw;
     number.ld = r;
     number.sign = 1;
   } break;
   case X86_64_TYPE_CHAR:
   case X86_64_TYPE_BYTE: {
-    uint8_t r = *data->raw;
+    uint8_t r = *(uint8_t *)data->raw;
     number.lu = r;
     number.sign = 1;
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t r = *data->raw;
+    uint32_t r = *(uint32_t *)data->raw;
     number.lu = r;
     number.sign = 0;
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t r = *data->raw;
+    uint64_t r = *(uint64_t *)data->raw;
     number.lu = r;
     number.sign = 0;
   } break;
   default:
-    printf("error: bad value type %d\n", data->type.kind);
+    fprintf(stderr, "error: bad value type %d\n", data->type.kind);
     number.sign = -1;
   }
   return number;
@@ -94,9 +94,9 @@ static int c_types_equals(x86_64_type *lsv, x86_64_type *rsv) {
 
 __attribute__((unused)) static void c_type_str(x86_64_type *type_ptr) {
   if (type_ptr) {
-    printf("subtype: %d", type_ptr->kind);
+    fprintf(stdout, "subtype: %d", type_ptr->kind);
     if (type_ptr->next) {
-      printf(" -- ");
+      fprintf(stdout, " -- ");
       c_type_str(type_ptr->next);
     }
   }
@@ -106,7 +106,7 @@ __attribute__((unused)) static void c_type_str(x86_64_type *type_ptr) {
 static x86_64_data *c_data_new(size_t data_size, x86_64_type type) {
   x86_64_data *data = malloc(sizeof(x86_64_data) + data_size);
   if (!data) {
-    printf("error: malloc returned NULL\n");
+    fprintf(stderr, "error: malloc returned NULL\n");
     return NULL;
   }
   data->type = type;
@@ -138,7 +138,7 @@ static x86_64_type c_type_copy(const x86_64_type *type) {
     if (type->next) {
       res_cur->next = (x86_64_type *)malloc(sizeof(x86_64_type));
       if (!res.next) {
-        printf("error: malloc while copying type is NULL\n");
+        fprintf(stderr, "error: malloc while copying type is NULL\n");
         error = 1;
         break;
       }
@@ -174,7 +174,7 @@ size_t __x86_64_type_direct_size(x86_64_type_enum type) {
     return 0;
     break;
   default:
-    printf("error: type is only for direct types\n");
+    fprintf(stderr, "error: type is only for direct types\n");
     return 0;
   }
 }
@@ -222,11 +222,22 @@ x86_64_value __x86_64_value_string(const uint8_t *value) {
   return (x86_64_value){.data = data};
 }
 
-x86_64_value __x86_64_value_array(x86_64_type *elem_type, uint64_t rank, ...) {
+x86_64_value __x86_64_value_array(x86_64_type *elem_type, ...) {
   assert(elem_type != NULL);
 
   va_list args;
-  va_start(args, rank);
+
+  va_start(args, elem_type);
+  size_t rank = 0;
+  while (1) {
+    x86_64_value arg = va_arg(args, x86_64_value);
+    if (!arg.data) {
+      break;
+    }
+    ++rank;
+  }
+
+  va_start(args, elem_type);
 
   uint64_t data_size = __x86_64_type_direct_size(elem_type->kind);
 
@@ -238,7 +249,7 @@ x86_64_value __x86_64_value_array(x86_64_type *elem_type, uint64_t rank, ...) {
   x86_64_array_meta *meta =
       malloc(sizeof(x86_64_array_meta) + sizeof(meta->dimensions[0]) * rank);
   if (!meta) {
-    printf("error: malloc\n");
+    fprintf(stderr, "error: malloc\n");
     goto error;
   }
 
@@ -248,13 +259,14 @@ x86_64_value __x86_64_value_array(x86_64_type *elem_type, uint64_t rank, ...) {
   for (size_t i = 0; i < rank; type_ptr = type_ptr->next, ++i) {
     x86_64_value arg = va_arg(args, x86_64_value);
     if (arg.data == NULL) {
-      printf("error: arg data is null\n");
+      fprintf(stderr, "error: arg data is null\n");
       goto error;
     }
 
     uint64_t size = c_unsigned(c_get_number(arg.data));
     if (size == UINT64_MAX) {
-      printf("error: with arg data %p while creating array\n", arg.data);
+      fprintf(stderr, "error: with arg data %p while creating array\n",
+              arg.data);
       goto error;
     }
 
@@ -264,7 +276,7 @@ x86_64_value __x86_64_value_array(x86_64_type *elem_type, uint64_t rank, ...) {
     type_ptr->kind = X86_64_TYPE_ARRAY;
     type_ptr->next = malloc(sizeof(x86_64_type));
     if (!type_ptr->next) {
-      printf("error: malloc returned NULL\n");
+      fprintf(stderr, "error: malloc returned NULL\n");
       goto error;
     }
   }
@@ -288,29 +300,29 @@ error:
 // UNARY
 x86_64_value __x86_64_plus(x86_64_value lsv) {
   if (!lsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
   x86_64_data *data = lsv.data;
   switch (data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_byte(+l);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *data->raw;
+    int32_t l = *(int32_t *)data->raw;
     return __x86_64_value_int(+l);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *data->raw;
+    uint32_t l = *(uint32_t *)data->raw;
     return __x86_64_value_uint(+l);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *data->raw;
+    int64_t l = *(int64_t *)data->raw;
     return __x86_64_value_long(+l);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *data->raw;
+    uint64_t l = *(uint64_t *)data->raw;
     return __x86_64_value_ulong(+l);
   } break;
   case X86_64_TYPE_CHAR:
@@ -319,7 +331,7 @@ x86_64_value __x86_64_plus(x86_64_value lsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -327,29 +339,29 @@ error:
 
 x86_64_value __x86_64_minus(x86_64_value lsv) {
   if (!lsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
   x86_64_data *data = lsv.data;
   switch (data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_byte(-l);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *data->raw;
+    int32_t l = *(int32_t *)data->raw;
     return __x86_64_value_int(-l);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *data->raw;
+    uint32_t l = *(uint32_t *)data->raw;
     return __x86_64_value_uint(-l);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *data->raw;
+    int64_t l = *(int64_t *)data->raw;
     return __x86_64_value_long(-l);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *data->raw;
+    uint64_t l = *(uint64_t *)data->raw;
     return __x86_64_value_ulong(-l);
   } break;
   case X86_64_TYPE_CHAR:
@@ -358,7 +370,7 @@ x86_64_value __x86_64_minus(x86_64_value lsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -366,33 +378,33 @@ error:
 
 x86_64_value __x86_64_not(x86_64_value lsv) {
   if (!lsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
   x86_64_data *data = lsv.data;
   switch (data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_byte(!l);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *data->raw;
+    int32_t l = *(int32_t *)data->raw;
     return __x86_64_value_int(!l);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *data->raw;
+    uint32_t l = *(uint32_t *)data->raw;
     return __x86_64_value_uint(!l);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *data->raw;
+    int64_t l = *(int64_t *)data->raw;
     return __x86_64_value_long(!l);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *data->raw;
+    uint64_t l = *(uint64_t *)data->raw;
     return __x86_64_value_ulong(!l);
   } break;
   case X86_64_TYPE_BOOL: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_bool(!l);
   } break;
   case X86_64_TYPE_CHAR:
@@ -400,7 +412,7 @@ x86_64_value __x86_64_not(x86_64_value lsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -408,33 +420,33 @@ error:
 
 x86_64_value __x86_64_bit_not(x86_64_value lsv) {
   if (!lsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
   x86_64_data *data = lsv.data;
   switch (data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_byte(~l);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *data->raw;
+    int32_t l = *(int32_t *)data->raw;
     return __x86_64_value_int(~l);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *data->raw;
+    uint32_t l = *(uint32_t *)data->raw;
     return __x86_64_value_uint(~l);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *data->raw;
+    int64_t l = *(int64_t *)data->raw;
     return __x86_64_value_long(~l);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *data->raw;
+    uint64_t l = *(uint64_t *)data->raw;
     return __x86_64_value_ulong(~l);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_char(~l);
   } break;
   case X86_64_TYPE_STRING:
@@ -442,7 +454,7 @@ x86_64_value __x86_64_bit_not(x86_64_value lsv) {
   case X86_64_TYPE_VOID:
   case X86_64_TYPE_BOOL:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -450,33 +462,33 @@ error:
 
 x86_64_value __x86_64_inc(x86_64_value lsv) {
   if (!lsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
   x86_64_data *data = lsv.data;
   switch (data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_byte(l + 1);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *data->raw;
+    int32_t l = *(int32_t *)data->raw;
     return __x86_64_value_int(l + 1);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *data->raw;
+    uint32_t l = *(uint32_t *)data->raw;
     return __x86_64_value_uint(l + 1);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *data->raw;
+    int64_t l = *(int64_t *)data->raw;
     return __x86_64_value_long(l + 1);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *data->raw;
+    uint64_t l = *(uint64_t *)data->raw;
     return __x86_64_value_ulong(l + 1);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_char(l + 1);
   } break;
   case X86_64_TYPE_STRING:
@@ -484,7 +496,7 @@ x86_64_value __x86_64_inc(x86_64_value lsv) {
   case X86_64_TYPE_VOID:
   case X86_64_TYPE_BOOL:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
     return __x86_64_value_void();
   }
 error:
@@ -493,33 +505,33 @@ error:
 
 x86_64_value __x86_64_dec(x86_64_value lsv) {
   if (!lsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
   x86_64_data *data = lsv.data;
   switch (data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_byte(l - 1);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *data->raw;
+    int32_t l = *(int32_t *)data->raw;
     return __x86_64_value_int(l - 1);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *data->raw;
+    uint32_t l = *(uint32_t *)data->raw;
     return __x86_64_value_uint(l - 1);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *data->raw;
+    int64_t l = *(int64_t *)data->raw;
     return __x86_64_value_long(l - 1);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *data->raw;
+    uint64_t l = *(uint64_t *)data->raw;
     return __x86_64_value_ulong(l - 1);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *data->raw;
+    uint8_t l = *(uint8_t *)data->raw;
     return __x86_64_value_char(l - 1);
   } break;
   case X86_64_TYPE_STRING:
@@ -527,7 +539,7 @@ x86_64_value __x86_64_dec(x86_64_value lsv) {
   case X86_64_TYPE_VOID:
   case X86_64_TYPE_BOOL:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
     return __x86_64_value_void();
   }
 error:
@@ -537,7 +549,7 @@ error:
 // BINARY
 x86_64_value __x86_64_or(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -546,51 +558,51 @@ x86_64_value __x86_64_or(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l || r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_bool(l || r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_bool(l || r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_bool(l || r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_bool(l || r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l || r);
   } break;
   case X86_64_TYPE_BOOL: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l || r);
   } break;
   case X86_64_TYPE_STRING:
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -598,7 +610,7 @@ error:
 
 x86_64_value __x86_64_and(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -607,51 +619,51 @@ x86_64_value __x86_64_and(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l && r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_bool(l && r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_bool(l && r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_bool(l && r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_bool(l && r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l && r);
   } break;
   case X86_64_TYPE_BOOL: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l && r);
   } break;
   case X86_64_TYPE_STRING:
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -659,7 +671,7 @@ error:
 
 x86_64_value __x86_64_bit_or(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -668,39 +680,39 @@ x86_64_value __x86_64_bit_or(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l | r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l | r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l | r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l | r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l | r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l | r);
   } break;
   case X86_64_TYPE_BOOL:
@@ -708,7 +720,7 @@ x86_64_value __x86_64_bit_or(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -716,7 +728,7 @@ error:
 
 x86_64_value __x86_64_bit_xor(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -725,39 +737,39 @@ x86_64_value __x86_64_bit_xor(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l ^ r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l ^ r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l ^ r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l ^ r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l ^ r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l ^ r);
   } break;
   case X86_64_TYPE_BOOL:
@@ -765,7 +777,7 @@ x86_64_value __x86_64_bit_xor(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -773,7 +785,7 @@ error:
 
 x86_64_value __x86_64_bit_and(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -782,39 +794,39 @@ x86_64_value __x86_64_bit_and(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l & r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l & r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l & r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l & r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l & r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l & r);
   } break;
   case X86_64_TYPE_BOOL:
@@ -822,7 +834,7 @@ x86_64_value __x86_64_bit_and(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -830,7 +842,7 @@ error:
 
 x86_64_value __x86_64_eq(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -839,58 +851,58 @@ x86_64_value __x86_64_eq(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l == r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_bool(l == r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_bool(l == r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_bool(l == r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_bool(l == r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l == r);
   } break;
   case X86_64_TYPE_BOOL: {
-    uint8_t l = *lsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
     l = l != 0 ? 1 : 0;
-    uint8_t r = *rsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     r = r != 0 ? 1 : 0;
     return __x86_64_value_bool(l == r);
   } break;
   case X86_64_TYPE_STRING: {
-    uint8_t *l = lsv_data->raw;
-    uint8_t *r = rsv_data->raw;
+    uint8_t *l = (uint8_t *)lsv_data->raw;
+    uint8_t *r = (uint8_t *)rsv_data->raw;
     uint8_t  res = !strcmp((char *)l, (char *)r);
     return __x86_64_value_bool(res);
   } break;
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -898,7 +910,7 @@ error:
 
 x86_64_value __x86_64_neq(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -907,57 +919,57 @@ x86_64_value __x86_64_neq(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l != r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_bool(l != r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_bool(l != r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_bool(l != r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_bool(l != r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_bool(l != r);
   case X86_64_TYPE_BOOL: {
-    uint8_t l = *lsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
     l = l != 0 ? 1 : 0;
-    uint8_t r = *rsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     r = r != 0 ? 1 : 0;
     return __x86_64_value_bool(l != r);
   } break;
   case X86_64_TYPE_STRING: {
-    uint8_t *l = lsv_data->raw;
-    uint8_t *r = rsv_data->raw;
+    uint8_t *l = (uint8_t *)lsv_data->raw;
+    uint8_t *r = (uint8_t *)rsv_data->raw;
     uint8_t  res = strcmp((char *)l, (char *)r);
     return __x86_64_value_bool(res);
   } break;
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
   error:
     return __x86_64_value_void();
@@ -966,7 +978,7 @@ x86_64_value __x86_64_neq(x86_64_value lsv, x86_64_value rsv) {
 
 x86_64_value __x86_64_less(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -975,47 +987,47 @@ x86_64_value __x86_64_less(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
-    return __x86_64_value_byte(l < r);
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
+    return __x86_64_value_bool(l < r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
-    return __x86_64_value_int(l < r);
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
+    return __x86_64_value_bool(l < r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
-    return __x86_64_value_uint(l < r);
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
+    return __x86_64_value_bool(l < r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
-    return __x86_64_value_long(l < r);
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
+    return __x86_64_value_bool(l < r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
-    return __x86_64_value_ulong(l < r);
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
+    return __x86_64_value_bool(l < r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
-    return __x86_64_value_char(l < r);
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
+    return __x86_64_value_bool(l < r);
   } break;
   case X86_64_TYPE_BOOL:
   case X86_64_TYPE_STRING:
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1023,7 +1035,7 @@ error:
 
 x86_64_value __x86_64_less_eq(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1032,47 +1044,47 @@ x86_64_value __x86_64_less_eq(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
-    return __x86_64_value_byte(l <= r);
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
+    return __x86_64_value_bool(l <= r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
-    return __x86_64_value_int(l <= r);
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
+    return __x86_64_value_bool(l <= r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
-    return __x86_64_value_uint(l <= r);
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
+    return __x86_64_value_bool(l <= r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
-    return __x86_64_value_long(l <= r);
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
+    return __x86_64_value_bool(l <= r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
-    return __x86_64_value_ulong(l <= r);
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
+    return __x86_64_value_bool(l <= r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
-    return __x86_64_value_char(l <= r);
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
+    return __x86_64_value_bool(l <= r);
   } break;
   case X86_64_TYPE_BOOL:
   case X86_64_TYPE_STRING:
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1080,7 +1092,7 @@ error:
 
 x86_64_value __x86_64_bit_shl(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1089,39 +1101,39 @@ x86_64_value __x86_64_bit_shl(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l << r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l << r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l << r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l << r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l << r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l << r);
   } break;
   case X86_64_TYPE_BOOL:
@@ -1129,7 +1141,7 @@ x86_64_value __x86_64_bit_shl(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1137,7 +1149,7 @@ error:
 
 x86_64_value __x86_64_bit_shr(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1146,39 +1158,39 @@ x86_64_value __x86_64_bit_shr(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l >> r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l >> r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l >> r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l >> r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l >> r);
   } break;
   case X86_64_TYPE_CHAR: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l >> r);
   } break;
   case X86_64_TYPE_BOOL:
@@ -1186,7 +1198,7 @@ x86_64_value __x86_64_bit_shr(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1194,7 +1206,7 @@ error:
 
 x86_64_value __x86_64_add(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1203,44 +1215,44 @@ x86_64_value __x86_64_add(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l + r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l + r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l + r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l + r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l + r);
   } break;
   case X86_64_TYPE_CHAR: {
-    char l = *lsv_data->raw;
-    char r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l + r);
   } break;
   case X86_64_TYPE_STRING: {
-    uint8_t     *l = lsv_data->raw;
-    uint8_t     *r = rsv_data->raw;
+    uint8_t     *l = (uint8_t *)lsv_data->raw;
+    uint8_t     *r = (uint8_t *)rsv_data->raw;
     x86_64_data *data =
         c_data_new(lsv_data->data_size + rsv_data->data_size - 1,
                    (x86_64_type){.kind = X86_64_TYPE_STRING});
@@ -1253,7 +1265,7 @@ x86_64_value __x86_64_add(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1261,7 +1273,7 @@ error:
 
 x86_64_value __x86_64_sub(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1270,39 +1282,39 @@ x86_64_value __x86_64_sub(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l - r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l - r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l - r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l - r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l - r);
   } break;
   case X86_64_TYPE_CHAR: {
-    char l = *lsv_data->raw;
-    char r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l - r);
   } break;
   case X86_64_TYPE_STRING:
@@ -1310,7 +1322,7 @@ x86_64_value __x86_64_sub(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1318,7 +1330,7 @@ error:
 
 x86_64_value __x86_64_mul(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1327,39 +1339,39 @@ x86_64_value __x86_64_mul(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l * r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l * r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l * r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l * r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l * r);
   } break;
   case X86_64_TYPE_CHAR: {
-    char l = *lsv_data->raw;
-    char r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l * r);
   } break;
   case X86_64_TYPE_STRING:
@@ -1367,7 +1379,7 @@ x86_64_value __x86_64_mul(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1375,7 +1387,7 @@ error:
 
 x86_64_value __x86_64_div(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1384,39 +1396,39 @@ x86_64_value __x86_64_div(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l / r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l / r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l / r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l / r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l / r);
   } break;
   case X86_64_TYPE_CHAR: {
-    char l = *lsv_data->raw;
-    char r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l / r);
   } break;
   case X86_64_TYPE_STRING:
@@ -1424,7 +1436,7 @@ x86_64_value __x86_64_div(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
@@ -1432,7 +1444,7 @@ error:
 
 x86_64_value __x86_64_mod(x86_64_value lsv, x86_64_value rsv) {
   if (!lsv.data || !rsv.data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1441,39 +1453,39 @@ x86_64_value __x86_64_mod(x86_64_value lsv, x86_64_value rsv) {
   rsv_data = rsv.data;
 
   if (!c_types_equals(&lsv_data->type, &rsv_data->type)) {
-    printf("error: types mismatch\n");
+    fprintf(stderr, "error: types mismatch\n");
     goto error;
   }
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_BYTE: {
-    uint8_t l = *lsv_data->raw;
-    uint8_t r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_byte(l % r);
   } break;
   case X86_64_TYPE_INT: {
-    int32_t l = *lsv_data->raw;
-    int32_t r = *rsv_data->raw;
+    int32_t l = *(int32_t *)lsv_data->raw;
+    int32_t r = *(int32_t *)rsv_data->raw;
     return __x86_64_value_int(l % r);
   } break;
   case X86_64_TYPE_UINT: {
-    uint32_t l = *lsv_data->raw;
-    uint32_t r = *rsv_data->raw;
+    uint32_t l = *(uint32_t *)lsv_data->raw;
+    uint32_t r = *(uint32_t *)rsv_data->raw;
     return __x86_64_value_uint(l % r);
   } break;
   case X86_64_TYPE_LONG: {
-    int64_t l = *lsv_data->raw;
-    int64_t r = *rsv_data->raw;
+    int64_t l = *(int64_t *)lsv_data->raw;
+    int64_t r = *(int64_t *)rsv_data->raw;
     return __x86_64_value_long(l % r);
   } break;
   case X86_64_TYPE_ULONG: {
-    uint64_t l = *lsv_data->raw;
-    uint64_t r = *rsv_data->raw;
+    uint64_t l = *(uint64_t *)lsv_data->raw;
+    uint64_t r = *(uint64_t *)rsv_data->raw;
     return __x86_64_value_ulong(l % r);
   } break;
   case X86_64_TYPE_CHAR: {
-    char l = *lsv_data->raw;
-    char r = *rsv_data->raw;
+    uint8_t l = *(uint8_t *)lsv_data->raw;
+    uint8_t r = *(uint8_t *)rsv_data->raw;
     return __x86_64_value_char(l % r);
   } break;
   case X86_64_TYPE_STRING:
@@ -1481,21 +1493,21 @@ x86_64_value __x86_64_mod(x86_64_value lsv, x86_64_value rsv) {
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_VOID:
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   return __x86_64_value_void();
 }
 
 // SPECIAL
-x86_64_value __x86_64_index_get(x86_64_value array, uint64_t dims, ...) {
+x86_64_value __x86_64_index_get(x86_64_value array, ...) {
   va_list args;
-  va_start(args, dims);
+  va_start(args, array);
 
   x86_64_data *array_data = array.data;
 
   if (!array_data) {
-    printf("error: variable empty\n");
+    fprintf(stderr, "error: variable empty\n");
     goto error;
   }
 
@@ -1503,22 +1515,18 @@ x86_64_value __x86_64_index_get(x86_64_value array, uint64_t dims, ...) {
 
   switch (lsv_data->type.kind) {
   case X86_64_TYPE_STRING: {
-    if (dims != 1) {
-      printf("error: multiple indexes aren't supported for this type\n");
-      goto error;
-    }
-
     x86_64_value arg = va_arg(args, x86_64_value);
 
     uint64_t index = c_unsigned(c_get_number(arg.data));
     if (index == UINT64_MAX) {
-      printf("error: with arg data %p while creating array\n", arg.data);
+      fprintf(stderr, "error: with arg data %p while creating array\n",
+              arg.data);
       goto error;
     }
 
     va_end(args);
 
-    char l = lsv_data->raw[index];
+    uint8_t l = lsv_data->raw[index];
 
     return __x86_64_value_char(l);
   } break;
@@ -1529,26 +1537,21 @@ x86_64_value __x86_64_index_get(x86_64_value array, uint64_t dims, ...) {
     uint64_t           column_size = meta->elem_size;
     uint64_t           offset = 0;
 
-    if (meta->rank != dims) {
-      printf("error: array doesn't support slices\n");
-      goto error;
-    }
-
-    for (uint64_t i = 0; i < dims; ++i, type_ptr = type_ptr->next) {
+    for (uint64_t i = 0;; ++i, type_ptr = type_ptr->next) {
       x86_64_value arg = va_arg(args, x86_64_value);
       if (!arg.data) {
-        printf("error: arg data %p no data\n", arg.data);
-        goto error;
+        break;
       }
 
       uint64_t index = c_unsigned(c_get_number(arg.data));
       if (index == UINT64_MAX) {
-        printf("error: with arg data %p while creating array\n", arg.data);
+        fprintf(stderr, "error: with arg data %p while creating array\n",
+                arg.data);
         goto error;
       }
 
       offset += column_size * index;
-      column_size *= meta->dimensions[dims - 1 - i];
+      column_size *= meta->dimensions[meta->rank - 1 - i];
     }
 
     va_end(args);
@@ -1559,46 +1562,42 @@ x86_64_value __x86_64_index_get(x86_64_value array, uint64_t dims, ...) {
     return (x86_64_value){.data = data};
   }
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   va_end(args);
   return __x86_64_value_void();
 }
 
-void __x86_64_index_set(x86_64_value from, x86_64_value array, uint64_t dims,
-                        ...) {
+void __x86_64_index_set(x86_64_value from, x86_64_value array, ...) {
   va_list args;
-  va_start(args, dims);
+  va_start(args, array);
 
   x86_64_data *from_data = from.data;
   x86_64_data *array_data = array.data;
 
   if (!from_data || !array_data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     return;
   }
 
   switch (array_data->type.kind) {
   case X86_64_TYPE_STRING: {
     if (from.data->type.kind != X86_64_TYPE_CHAR) {
-      printf("error: from should be char\n");
-      goto error;
-    }
-    if (dims > 1) {
-      printf("error: dims for string should be 1\n");
+      fprintf(stderr, "error: from should be char\n");
       goto error;
     }
 
     x86_64_value arg = va_arg(args, x86_64_value);
     if (!arg.data) {
-      printf("error: arg data %p no data\n", arg.data);
+      fprintf(stderr, "error: arg data %p no data\n", arg.data);
       goto error;
     }
 
     uint64_t index = c_unsigned(c_get_number(arg.data));
     if (index == UINT64_MAX) {
-      printf("error: with arg data %p while creating array\n", arg.data);
+      fprintf(stderr, "error: with arg data %p while creating array\n",
+              arg.data);
       goto error;
     }
 
@@ -1612,33 +1611,28 @@ void __x86_64_index_set(x86_64_value from, x86_64_value array, uint64_t dims,
     uint64_t           column_size = meta->elem_size;
     uint64_t           offset = 0;
 
-    if (meta->rank != dims) {
-      printf("error: array doesn't support slices\n");
-      goto error;
-    }
-
-    for (uint64_t i = 0; i < dims; ++i, type_ptr = type_ptr->next) {
+    for (uint64_t i = 0;; ++i, type_ptr = type_ptr->next) {
       x86_64_value arg = va_arg(args, x86_64_value);
       if (!arg.data) {
-        printf("error: arg data %p no data\n", arg.data);
-        goto error;
+        break;
       }
 
       uint64_t index = c_unsigned(c_get_number(arg.data));
       if (index == UINT64_MAX) {
-        printf("error: with arg data %p while creating array\n", arg.data);
+        fprintf(stderr, "error: with arg data %p while creating array\n",
+                arg.data);
         goto error;
       }
 
       offset += column_size * index;
-      column_size *= meta->dimensions[dims - 1 - i];
+      column_size *= meta->dimensions[meta->rank - 1 - i];
     }
 
     memcpy(array_data->raw + offset, from_data->raw, sizeof(meta->elem_size));
 
   } break;
   default:
-    printf("error: type implementation undefined\n");
+    fprintf(stderr, "error: type implementation undefined\n");
   }
 error:
   va_end(args);
@@ -1648,7 +1642,7 @@ x86_64_value __x86_64_cast(x86_64_value lsv, x86_64_type_enum kind) {
   x86_64_data *lsv_data = lsv.data;
 
   if (!lsv_data) {
-    printf("error: any variable empty\n");
+    fprintf(stderr, "error: any variable empty\n");
     goto error;
   }
 
@@ -1687,7 +1681,7 @@ x86_64_value __x86_64_cast(x86_64_value lsv, x86_64_type_enum kind) {
   case X86_64_TYPE_VOID:
   case X86_64_TYPE_ARRAY:
   default:
-    printf("error: unsupported source cast value\n");
+    fprintf(stderr, "error: unsupported source cast value\n");
     goto error;
   }
 
@@ -1710,32 +1704,31 @@ x86_64_value __x86_64_cast(x86_64_value lsv, x86_64_type_enum kind) {
   case X86_64_TYPE_STRING:
   case X86_64_TYPE_ARRAY:
   default:
-    printf("error: unsupported target cast value\n");
+    fprintf(stderr, "error: unsupported target cast value\n");
   }
 error:
   return __x86_64_value_void();
 }
 
-// NOTE: no need to drop
+// NOTE: assigment from __x86_64_value_void() is same as drop
 void __x86_64_assign(x86_64_value *lsv, x86_64_value rsv) {
-  if (!rsv.data) {
-    printf("error: assignment from null rsv\n");
-  }
   if (lsv->data == rsv.data) {
     return;
   }
   __x86_64_value_drop(lsv);
-  rsv.data->refs += 1;
+  if (rsv.data) {
+    rsv.data->refs += 1;
+  }
   lsv->data = rsv.data;
 }
 
-void __x86_64_print(x86_64_value value) {
+x86_64_value __x86_64_print(x86_64_value value) {
   x86_64_data *data = value.data;
 
   const char *end = "\n";
 
   if (!data) {
-    printf("<empty>");
+    fprintf(stdout, "<empty>");
     goto print_end;
   }
 
@@ -1745,59 +1738,65 @@ void __x86_64_print(x86_64_value value) {
     break;
   case X86_64_TYPE_BOOL:
     if (__x86_64_unwrap_bool(value)) {
-      printf("true");
+      fprintf(stdout, "true");
     } else {
-      printf("false");
+      fprintf(stdout, "false");
     }
     break;
   case X86_64_TYPE_BYTE:
-    printf("%u", __x86_64_unwrap_byte(value));
+    fprintf(stdout, "%u", __x86_64_unwrap_byte(value));
     break;
   case X86_64_TYPE_INT:
-    printf("%d", __x86_64_unwrap_int(value));
+    fprintf(stdout, "%d", __x86_64_unwrap_int(value));
     break;
   case X86_64_TYPE_UINT:
-    printf("%d", __x86_64_unwrap_uint(value));
+    fprintf(stdout, "%d", __x86_64_unwrap_uint(value));
     break;
   case X86_64_TYPE_LONG:
-    printf("%ld", __x86_64_unwrap_long(value));
+    fprintf(stdout, "%ld", __x86_64_unwrap_long(value));
     break;
   case X86_64_TYPE_ULONG:
-    printf("%lu", __x86_64_unwrap_ulong(value));
+    fprintf(stdout, "%lu", __x86_64_unwrap_ulong(value));
     break;
   case X86_64_TYPE_CHAR:
-    printf("%c", __x86_64_unwrap_char(value));
+    fprintf(stdout, "%c", __x86_64_unwrap_char(value));
     break;
   case X86_64_TYPE_STRING:
-    printf("%s", __x86_64_unwrap_string(value));
+    fprintf(stdout, "%s", __x86_64_unwrap_string(value));
     break;
   case X86_64_TYPE_ARRAY:
-    printf("warn: array printing is unsupported\n");
-    printf("<array>");
+    fprintf(stderr, "warn: array printing is unsupported\n");
+    fprintf(stdout, "<array>");
     break;
   default:
-    printf("error: unknown type %d\n", data->type.kind);
-    printf("<unknown>");
+    fprintf(stderr, "error: unknown type %d\n", data->type.kind);
+    fprintf(stdout, "<unknown>");
   }
 
 print_end:
-  printf("%s", end);
+  fprintf(stdout, "%s", end);
+  return __x86_64_value_void();
+}
+
+x86_64_value __x86_64_fflush() {
+  fflush(NULL);
+  return __x86_64_value_void();
 }
 
 uint8_t __x86_64_unwrap_bool(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
   x86_64_data *data = value.data;
   if (data->type.kind == X86_64_TYPE_BOOL) {
-    uint8_t v = *data->raw;
+    uint8_t v = *(uint8_t *)data->raw;
     return v;
   }
 
-  printf("error: unsupported cond type %d, expected bool(type %d)\n",
-         data->type.kind, X86_64_TYPE_BOOL);
+  fprintf(stderr, "error: unsupported cond type %d, expected bool(type %d)\n",
+          data->type.kind, X86_64_TYPE_BOOL);
 
 error:
   return 0;
@@ -1805,18 +1804,18 @@ error:
 
 uint8_t __x86_64_unwrap_byte(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
   x86_64_data *data = value.data;
   if (data->type.kind == X86_64_TYPE_BYTE) {
-    uint8_t v = *data->raw;
+    uint8_t v = *(uint8_t *)data->raw;
     return v;
   }
 
-  printf("error: unsupported cond type %d, expected byte(type %d)\n",
-         data->type.kind, X86_64_TYPE_BYTE);
+  fprintf(stderr, "error: unsupported cond type %d, expected byte(type %d)\n",
+          data->type.kind, X86_64_TYPE_BYTE);
 
 error:
   return 0;
@@ -1824,36 +1823,36 @@ error:
 
 int32_t __x86_64_unwrap_int(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
   x86_64_data *data = value.data;
   if (data->type.kind == X86_64_TYPE_INT) {
-    int32_t v = *data->raw;
+    int32_t v = *(int32_t *)data->raw;
     return v;
   }
 
-  printf("error: unsupported cond type %d, expected int(type %d)\n",
-         data->type.kind, X86_64_TYPE_INT);
+  fprintf(stderr, "error: unsupported cond type %d, expected int(type %d)\n",
+          data->type.kind, X86_64_TYPE_INT);
 
 error:
   return 0;
 }
 uint32_t __x86_64_unwrap_uint(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
   x86_64_data *data = value.data;
   if (data->type.kind == X86_64_TYPE_UINT) {
-    uint32_t v = *data->raw;
+    uint32_t v = *(uint32_t *)data->raw;
     return v;
   }
 
-  printf("error: unsupported cond type %d, expected uint(type %d)\n",
-         data->type.kind, X86_64_TYPE_UINT);
+  fprintf(stderr, "error: unsupported cond type %d, expected uint(type %d)\n",
+          data->type.kind, X86_64_TYPE_UINT);
 
 error:
   return 0;
@@ -1861,18 +1860,18 @@ error:
 
 int64_t __x86_64_unwrap_long(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
   x86_64_data *data = value.data;
   if (data->type.kind == X86_64_TYPE_LONG) {
-    int64_t v = *data->raw;
+    int64_t v = *(int64_t *)data->raw;
     return v;
   }
 
-  printf("error: unsupported cond type %d, expected long(type %d)\n",
-         data->type.kind, X86_64_TYPE_LONG);
+  fprintf(stderr, "error: unsupported cond type %d, expected long(type %d)\n",
+          data->type.kind, X86_64_TYPE_LONG);
 
 error:
   return 0;
@@ -1880,18 +1879,18 @@ error:
 
 uint64_t __x86_64_unwrap_ulong(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
   x86_64_data *data = value.data;
   if (data->type.kind == X86_64_TYPE_ULONG) {
-    uint64_t v = *data->raw;
+    uint64_t v = *(uint64_t *)data->raw;
     return v;
   }
 
-  printf("error: unsupported cond type %d, expected ulong(type %d)\n",
-         data->type.kind, X86_64_TYPE_ULONG);
+  fprintf(stderr, "error: unsupported cond type %d, expected ulong(type %d)\n",
+          data->type.kind, X86_64_TYPE_ULONG);
 
 error:
   return 0;
@@ -1899,18 +1898,18 @@ error:
 
 uint8_t __x86_64_unwrap_char(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
   x86_64_data *data = value.data;
   if (data->type.kind == X86_64_TYPE_CHAR) {
-    uint8_t v = *data->raw;
+    uint8_t v = *(uint8_t *)data->raw;
     return v;
   }
 
-  printf("error: unsupported cond type %d, expected char(type %d)\n",
-         data->type.kind, X86_64_TYPE_CHAR);
+  fprintf(stderr, "error: unsupported cond type %d, expected char(type %d)\n",
+          data->type.kind, X86_64_TYPE_CHAR);
 
 error:
   return 0;
@@ -1918,7 +1917,7 @@ error:
 
 uint8_t *__x86_64_unwrap_string(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
@@ -1927,8 +1926,8 @@ uint8_t *__x86_64_unwrap_string(x86_64_value value) {
     return data->raw;
   }
 
-  printf("error: unsupported cond type %d, expected string(type %d)\n",
-         data->type.kind, X86_64_TYPE_STRING);
+  fprintf(stderr, "error: unsupported cond type %d, expected string(type %d)\n",
+          data->type.kind, X86_64_TYPE_STRING);
 
 error:
   return NULL;
@@ -1936,7 +1935,7 @@ error:
 
 uint8_t *__x86_64_unwrap_array(x86_64_value value) {
   if (!value.data) {
-    printf("error: cond from null value\n");
+    fprintf(stderr, "error: cond from null value\n");
     goto error;
   }
 
@@ -1945,8 +1944,8 @@ uint8_t *__x86_64_unwrap_array(x86_64_value value) {
     return data->raw;
   }
 
-  printf("error: unsupported cond type %d, expected array(type %d)\n",
-         data->type.kind, X86_64_TYPE_ARRAY);
+  fprintf(stderr, "error: unsupported cond type %d, expected array(type %d)\n",
+          data->type.kind, X86_64_TYPE_ARRAY);
 
 error:
   return NULL;

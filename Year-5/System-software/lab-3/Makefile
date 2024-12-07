@@ -148,7 +148,7 @@ run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a
 		$(BUILD_DIR)/x86_64_core/libx86_64_core.a \
 		/usr/lib/x86_64-linux-gnu/crtn.o
 	@echo "--------------------RUN($(RUN.OUTPUT_FILE))--------------------"
-	./$(RUN.OUTPUT_FILE)
+	@./$(RUN.OUTPUT_FILE)
 
 ### Format
 format:

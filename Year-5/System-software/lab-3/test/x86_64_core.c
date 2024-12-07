@@ -78,8 +78,8 @@ Test(x86_64_core, array_create) {
   debug("res: %zu, %ld", result.data->data_size, *result.data->raw);
 
   __x86_64_value_drop(&result);
-  result = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_INT}, 2,
-                                first, second);
+  result = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_INT}, first,
+                                second, __x86_64_value_void());
 
   cr_expect_eq(80 * 4, result.data->data_size);
 
@@ -104,7 +104,7 @@ Test(x86_64_core, string_index) {
   index = __x86_64_value_long(3);
 
   __x86_64_value_drop(&result);
-  result = __x86_64_index_get(string, 1, index);
+  result = __x86_64_index_get(string, index, __x86_64_value_void());
   debug("res: %zu, %c", result.data->data_size, *result.data->raw);
 
   cr_expect_eq('d', (char)*result.data->raw);
@@ -133,10 +133,10 @@ Test(x86_64_core, array_index_1d) {
   index = __x86_64_value_long(1);
 
   __x86_64_value_drop(&array);
-  array =
-      __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, 1, rank_1);
+  array = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, rank_1,
+                               __x86_64_value_void());
 
-  result = __x86_64_index_get(array, 1, index);
+  result = __x86_64_index_get(array, index, __x86_64_value_void());
   debug("res: %zu, %c", result.data->data_size, *result.data->raw);
 
   __x86_64_value_drop(&result);
@@ -163,7 +163,7 @@ Test(x86_64_core, string_set) {
   __x86_64_value_drop(&chr);
   chr = __x86_64_value_char('x');
 
-  __x86_64_index_set(chr, string, 1, index);
+  __x86_64_index_set(chr, string, index, __x86_64_value_void());
 
   cr_expect_eq('x', string.data->raw[1]);
 
@@ -190,13 +190,13 @@ Test(x86_64_core, array_set_1d) {
   index_1 = __x86_64_value_long(1);
 
   __x86_64_value_drop(&array);
-  array =
-      __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, 1, rank_1);
+  array = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, rank_1,
+                               __x86_64_value_void());
 
-  __x86_64_index_set(rank_1, array, 1, index_1);
+  __x86_64_index_set(rank_1, array, index_1, __x86_64_value_void());
 
   __x86_64_value_drop(&result);
-  result = __x86_64_index_get(array, 1, index_1);
+  result = __x86_64_index_get(array, index_1, __x86_64_value_void());
 
   int64_t res = *result.data->raw;
   cr_expect_eq(10, res);
@@ -229,13 +229,13 @@ Test(x86_64_core, array_set_2d) {
   index_2 = __x86_64_value_long(2);
 
   __x86_64_value_drop(&array);
-  array = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, 2,
-                               rank_1, rank_1);
+  array = __x86_64_value_array(&(x86_64_type){.kind = X86_64_TYPE_LONG}, rank_1,
+                               rank_1, __x86_64_value_void());
 
-  __x86_64_index_set(rank_1, array, 2, index_1, index_2);
+  __x86_64_index_set(rank_1, array, index_1, index_2, __x86_64_value_void());
 
   __x86_64_value_drop(&result);
-  result = __x86_64_index_get(array, 2, index_1, index_2);
+  result = __x86_64_index_get(array, index_1, index_2, __x86_64_value_void());
 
   int64_t res = *result.data->raw;
   cr_expect_eq(10, res);

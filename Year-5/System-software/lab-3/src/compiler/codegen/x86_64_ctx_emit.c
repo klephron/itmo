@@ -100,7 +100,10 @@ static void cg_emit_mode(cg_x86_64_ctx *self, string_buffer *buf,
     string_buffer_append(buf, ")");
     break;
   case CG_X86_64_MODE_BASE:
-    snprintf(sbuf, STRMAXLEN(sbuf), "%#lx", op->offset_const);
+    snprintf(sbuf, STRMAXLEN(sbuf), "%s%#lx",
+             (int64_t)op->offset_const < 0 ? "-" : "",
+             (int64_t)op->offset_const < 0 ? -op->offset_const
+                                           : op->offset_const);
     string_buffer_append(buf, sbuf);
     string_buffer_append(buf, "(%");
     string_buffer_append(buf, cg_reg_str(op->base_reg));
@@ -184,6 +187,9 @@ void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
   case CG_X86_64_MNEM_SUBQ:
     string_buffer_append(buf, "subq");
     break;
+  case CG_X86_64_MNEM_ADDQ:
+    string_buffer_append(buf, "addq");
+    break;
   case CG_X86_64_MNEM_LEAQ:
     string_buffer_append(buf, "leaq");
     break;
@@ -193,11 +199,11 @@ void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
   case CG_X86_64_MNEM_TESTB:
     string_buffer_append(buf, "testb");
     break;
-  case CG_X86_64_MNEM_JE:
-    string_buffer_append(buf, "je");
-    break;
   case CG_X86_64_MNEM_JZ:
     string_buffer_append(buf, "jz");
+    break;
+  case CG_X86_64_MNEM_JNZ:
+    string_buffer_append(buf, "jnz");
     break;
   case CG_X86_64_MNEM_JMP:
     string_buffer_append(buf, "jmp");
@@ -296,26 +302,4 @@ char *cg_x86_64_ctx_emit(cg_x86_64_ctx *self) {
   }
 
   return string_buffer_detach(buf);
-  // return strdup(".section .data\n"
-  //               "size: .quad 64\n"
-  //               "\n"
-  //               ".section .text\n"
-  //               ".globl main\n"
-  //               ".extern __cg_x86_64_value_int\n"
-  //               ".section .text\n"
-  //               ".extern __cg_x86_64_drop\n"
-  //               "\n"
-  //               "main:\n"
-  //               "  movl $22, %edi\n"
-  //               "  call __cg_x86_64_value_int\n"
-  //               "\n"
-  //               "  pushq %rax\n"
-  //               "  movq %rsp, %rdi\n"
-  //               "  call __cg_x86_64_drop\n"
-  //               "\n"
-  //               "  addq $8, %rsp\n"
-  //               "\n"
-  //               "	movq $60, %rax\n"
-  //               "	xor %rdi, %rdi\n"
-  //               "	syscall\n");
 }

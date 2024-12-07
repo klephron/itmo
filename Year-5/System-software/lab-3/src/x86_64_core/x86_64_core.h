@@ -63,7 +63,7 @@ x86_64_value __x86_64_value_ulong(uint64_t value);
 x86_64_value __x86_64_value_char(uint8_t value);
 x86_64_value __x86_64_value_string(const uint8_t *value);
 // ... - array sizes of type == cg_x86_64_value
-x86_64_value __x86_64_value_array(x86_64_type *elem_type, uint64_t rank, ...);
+x86_64_value __x86_64_value_array(x86_64_type *elem_type, ...);
 
 // UNARY
 x86_64_value __x86_64_plus(x86_64_value lsv);
@@ -96,12 +96,13 @@ x86_64_value __x86_64_mod(x86_64_value lsv, x86_64_value rsv);
 // ... -> x86_64_value
 // in array arguments are passed in reserve order
 // so arr[1,2] -> index(arr, 2, 2, 1), x86_64_value
-x86_64_value __x86_64_index_get(x86_64_value array, uint64_t size, ...);
-void __x86_64_index_set(x86_64_value from, x86_64_value array, uint64_t size,
-                        ...);
-x86_64_value __x86_64_cast(x86_64_value value, x86_64_type_enum);
+// last argument is null (indicates end)
+x86_64_value __x86_64_index_get(x86_64_value array, ...);
+void         __x86_64_index_set(x86_64_value from, x86_64_value array, ...);
+x86_64_value __x86_64_cast(x86_64_value value, x86_64_type_enum type);
 void         __x86_64_assign(x86_64_value *lsv, x86_64_value rsv);
-void         __x86_64_print(x86_64_value value);
+x86_64_value __x86_64_print(x86_64_value value);
+x86_64_value __x86_64_fflush();
 
 uint8_t  __x86_64_unwrap_bool(x86_64_value value);
 uint8_t  __x86_64_unwrap_byte(x86_64_value value);

@@ -126,26 +126,38 @@ typedef enum cg_x86_64_reg_enum {
   CG_X86_64_REG_R15,
 } cg_x86_64_reg;
 
-// FINAL ADDRESS = ADDRESS_OR_OFFSET + %BASE_OR_OFFSET + MULTIPLIER * %INDEX
-// ADDRESS_OR_OFFSET(%BASE_OR_OFFSET,%INDEX,MULTIPLIER)
+// ----------------------------------------------------------------------------
+// MEMORY ADDRESSING:
+//
+// final address = ADDRESS_OR_OFFSET + %BASE_OR_OFFSET + MULTIPLIER * %INDEX
+//               = ADDRESS_OR_OFFSET(%BASE_OR_OFFSET,%INDEX,MULTIPLIER)
 //
 // direct addressing:
 // movl ADDRESS, %eax - load %eax with memory value at ADDRESS
-// ADDRESS - constant or label
+// ADDRESS - constant (without $) or label
 //
 // indexed:
-// movl ADDRESS(,%INDEX,MULTIPLIER), %eax
+// movl ADDRESS(,%INDEX,MULTIPLIER), %eax - direct with 'iteration'
 //
-// indirect:
+// indirect (same as base without OFFSET):
 // movl (%BASE), %ebx
 //
-// base pointer:
+// base pointer (memory at address %BASE + OFFSET):
 // movl OFFSET(%BASE) - indirect + OFFSET
 //
-// immediate:
-// movl $4, %ebx - address in now actual value
+// ----------------------------------------------------------------------------
+// IMMEDIATE:
+//
+// movl $4, %ebx - load 4 into ebx
 // $4 is ADDRESS (constant, 64 bit (hexed))
 //
+// ----------------------------------------------------------------------------
+// REGISTER-TO-REGISTER:
+//
+// movl %eax, %ebx - register to register
+//
+// ----------------------------------------------------------------------------
+
 // currently supported modes:
 typedef enum cg_x86_64_mode_enum {
   CG_X86_64_MODE_UNKNOWN,
@@ -203,11 +215,12 @@ typedef enum cg_x86_64_mnem_enum {
   CG_X86_64_MNEM_SYSCALL,
   CG_X86_64_MNEM_XORQ,
   CG_X86_64_MNEM_SUBQ,
+  CG_X86_64_MNEM_ADDQ,
   CG_X86_64_MNEM_LEAQ,
   CG_X86_64_MNEM_CALL,
   CG_X86_64_MNEM_TESTB,
-  CG_X86_64_MNEM_JE,
   CG_X86_64_MNEM_JZ,
+  CG_X86_64_MNEM_JNZ,
   CG_X86_64_MNEM_JMP,
 } cg_x86_64_mnem;
 

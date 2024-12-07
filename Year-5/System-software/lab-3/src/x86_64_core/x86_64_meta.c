@@ -82,6 +82,8 @@ const char *x86_64_symbol_enum_str(x86_64_symbol_enum kind) {
     return "__x86_64_assign";
   case X86_64_SYMBOL_PRINT:
     return "__x86_64_print";
+  case X86_64_SYMBOL_FFLUSH:
+    return "__x86_64_fflush";
   case X86_64_SYMBOL_UNWRAP_BOOL:
     return "__x86_64_unwrap_bool";
   case X86_64_SYMBOL_UNWRAP_BYTE:

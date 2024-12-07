@@ -306,7 +306,6 @@ static inline void string_buffer_append_cell(string_buffer *buffer,
   }
 }
 
-// TODO: utf-8?
 char *hir_list_symbol_str(const list_hir_symbol *symbols) {
   string_buffer *buffer = string_buffer_new(0, 0);
 

@@ -33,6 +33,11 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_cg_x86_64_map_value, cg_x86_64_map_value,
                               container_delete_cg_x86_64_map_value,
                               container_hash_cg_x86_64_map_value);
 
+LIST_DECLARE_STATIC_INLINE(list_cg_x86_64_map_value, cg_x86_64_map_value,
+                           container_cmp_cg_x86_64_map_value,
+                           container_new_move,
+                           container_delete_cg_x86_64_map_value);
+
 HASHSET_DECLARE_STATIC_INLINE(hashset_cg_x86_64_mir_ref, mir_node_base,
                               container_cmp_ptr, container_new_move,
                               container_delete_false, container_hash_ptr);
