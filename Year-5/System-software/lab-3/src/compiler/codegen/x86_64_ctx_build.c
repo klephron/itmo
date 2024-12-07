@@ -1181,6 +1181,10 @@ static void ctx_jump(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_jmp *jmp) {
   list_cg_x86_64_op *operands;
 
   if (!jmp) {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_direct(ctx_sub_epilogue_name(ctx, sub)));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_JMP, operands));
     return;
   }
 
