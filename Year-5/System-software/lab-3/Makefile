@@ -29,7 +29,11 @@ COMPILER.GEN_DIR   := $(patsubst $(SRC_DIR)/%,$(GEN_DIR)/%, $(COMPILER.SRC_DIR))
 
 X86_64_CORE.SRC_DIR   := $(SRC_DIR)/x86_64_core
 X86_64_CORE.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(X86_64_CORE.SRC_DIR))
-X86_64_CORE.FLAGS := -g3 -O0 -m64 -Wall -Wextra
+X86_64_CORE.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
+
+STDC.SRC_DIR   := $(SRC_DIR)/stdc
+STDC.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(STDC.SRC_DIR))
+STDC.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
 
 TEST.SRC_DIR   := $(CURDIR)/test
 TEST.BUILD_DIR := $(patsubst $(CURDIR)/%,$(BUILD_DIR)/%,$(TEST.SRC_DIR))
@@ -73,11 +77,19 @@ define X86_64_CORE.ENV
 	BUILD_DIR="$(X86_64_CORE.BUILD_DIR)"
 endef
 
+define STDC.ENV
+	MKDIR="$(MKDIR)" \
+	CC="$(CC)" \
+	FLAGS="$(STDC.FLAGS)" \
+	INCS="-I$(SRC_DIR)" \
+	BUILD_DIR="$(STDC.BUILD_DIR)"
+endef
+
 define TEST.ENV
 	MKDIR="$(MKDIR)" \
 	CC="$(CC)" \
 	FLAGS="$(FLAGS)" \
-	LIBS="$(COMPILER.BUILD_DIR)/libcompiler.a $(UTIL.BUILD_DIR)/libutil.a $(X86_64_CORE.BUILD_DIR)/libx86_64_all.a" \
+	LIBS="$(COMPILER.BUILD_DIR)/libcompiler.a $(UTIL.BUILD_DIR)/libutil.a $(X86_64_CORE.BUILD_DIR)/libx86_64_all.a $(STDC.BUILD_DIR)/libstdc.a" \
 	INCS="-I$(SRC_DIR) -lantlr3c -lcriterion" \
 	BUILD_DIR="$(TEST.BUILD_DIR)"
 endef
@@ -98,8 +110,13 @@ x86_64_core: x86_64_core/build/libx86_64_core.a
 x86_64_core/%:
 	@$(MAKE) --no-print-directory -C $(X86_64_CORE.SRC_DIR) $(patsubst x86_64_core/%,%,$@) $(X86_64_CORE.ENV)
 
+### Makefile of stdc module
+stdc: stdc/build/stdc.a
+stdc/%:
+	@$(MAKE) --no-print-directory -C $(STDC.SRC_DIR) $(patsubst stdc/%,%,$@) $(STDC.ENV)
+
 ### Makefile of test module
-test/%: util/build/libutil.a compiler/build/libcompiler.a x86_64_core/build/libx86_64_all.a
+test/%: util/build/libutil.a compiler/build/libcompiler.a x86_64_core/build/libx86_64_all.a stdc/build/stdc.a
 	@$(MAKE) --no-print-directory -C $(TEST.SRC_DIR) $(patsubst test/%,%,$@) $(TEST.ENV)
 
 ### Run all tests or specific
@@ -132,7 +149,7 @@ run/asm/%: RUN.INPUT_FILE=$(patsubst run/asm/%,%,$@)
 run/asm/%: RUN.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
 run/asm/%: RUN.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
 run/asm/%: RUN.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
-run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a
+run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a stdc/build/libstdc.a
 	./build/compiler/main --ignore-errors \
 		--mir \
 		-d . -o $(RUN.ASM_FILE) $(RUN.INPUT_FILE)
@@ -147,6 +164,7 @@ run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a
 		-lc \
 		$(RUN.OBJECT_FILE) \
 		$(BUILD_DIR)/x86_64_core/libx86_64_core.a \
+		$(BUILD_DIR)/stdc/libstdc.a \
 		/usr/lib/x86_64-linux-gnu/crtn.o
 	@echo "--------------------RUN($(RUN.OUTPUT_FILE))--------------------"
 	@./$(RUN.OUTPUT_FILE)

@@ -1,0 +1,9 @@
+method read_int(): int;
+method read_long(): long;
+
+method main():
+var
+  a;
+begin
+  a = read_int();
+end;
