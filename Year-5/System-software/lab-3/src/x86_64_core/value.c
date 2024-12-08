@@ -104,9 +104,8 @@ x86_64_value __x86_64_value_string(const uint8_t *value) {
 }
 
 x86_64_value __x86_64_value_array(const x86_64_type *elem_type, ...) {
-  fprintf(stdout, "here!\n");
-
   x86_64_type_enum elem_kind = x86_64_type_kind(elem_type);
+
   switch (elem_kind) {
   case X86_64_TYPE_VOID:
   case X86_64_TYPE_BOOL:

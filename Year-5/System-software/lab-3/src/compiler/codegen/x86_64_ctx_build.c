@@ -1038,7 +1038,35 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
 }
 
 void ctx_stmt_builtin_index(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
-  info("TODO: index");
+  list_cg_x86_64_op        *operands;
+  list_cg_x86_64_map_value *values = list_cg_x86_64_map_value_new();
+
+  for (list_mir_arg_it it = list_mir_arg_begin(builtin->args); !it.end(&it);
+       it.next(&it)) {
+    mir_node_base *node = it.get(&it);
+    if (node->kind != MIR_NODE_VALUE) {
+      error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
+      goto release;
+    }
+    mir_value           *value = (mir_value *)node;
+    cg_x86_64_map_value *cg_value = ctx_sub_value_find(ctx, value);
+    list_cg_x86_64_map_value_push_back(values, cg_value);
+  }
+
+  size_t stack_size = ctx_args_value_prepare(ctx, 1, values, 0);
+
+  // call func
+  operands = list_cg_x86_64_op_new();
+  cg_op_push_back(operands, cg_mode_new_direct_symbol(X86_64_SYMBOL_INDEX_GET));
+  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+
+  ctx_stack_release(ctx, stack_size);
+
+release:
+  while (!list_cg_x86_64_map_value_empty(values)) {
+    list_cg_x86_64_map_value_pop_front(values);
+  }
+  list_cg_x86_64_map_value_free(values);
 }
 
 // TODO: complex types
@@ -1376,9 +1404,42 @@ void ctx_stmt_store_builtin(cg_x86_64_ctx *ctx, mir_subroutine *sub,
   ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
 }
 
-void ctx_stmt_store_to_builtin(cg_x86_64_ctx *ctx, mir_builtin *lsv,
+void ctx_stmt_store_to_builtin(cg_x86_64_ctx *ctx, mir_builtin *builtin,
                                mir_value *rsv) {
-  debug("TODO: store to builtin");
+  list_cg_x86_64_op        *operands;
+  list_cg_x86_64_map_value *values = list_cg_x86_64_map_value_new();
+
+  // from
+  cg_x86_64_map_value *cg_rsv = ctx_sub_value_find(ctx, rsv);
+  list_cg_x86_64_map_value_push_back(values, cg_rsv);
+
+  // to
+  for (list_mir_arg_it it = list_mir_arg_begin(builtin->args); !it.end(&it);
+       it.next(&it)) {
+    mir_node_base *node = it.get(&it);
+    if (node->kind != MIR_NODE_VALUE) {
+      error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
+      goto release;
+    }
+    mir_value           *value = (mir_value *)node;
+    cg_x86_64_map_value *cg_value = ctx_sub_value_find(ctx, value);
+    list_cg_x86_64_map_value_push_back(values, cg_value);
+  }
+
+  size_t stack_size = ctx_args_value_prepare(ctx, 1, values, 0);
+
+  // call func
+  operands = list_cg_x86_64_op_new();
+  cg_op_push_back(operands, cg_mode_new_direct_symbol(X86_64_SYMBOL_INDEX_SET));
+  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+
+  ctx_stack_release(ctx, stack_size);
+
+release:
+  while (!list_cg_x86_64_map_value_empty(values)) {
+    list_cg_x86_64_map_value_pop_front(values);
+  }
+  list_cg_x86_64_map_value_free(values);
 }
 
 static void ctx_stmt_store(cg_x86_64_ctx *ctx, mir_subroutine *sub,

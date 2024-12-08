@@ -35,7 +35,7 @@ x86_64_value __x86_64_mod(x86_64_value lsv, x86_64_value rsv);
 // so arr[1,2] -> index(arr, 2, 2, 1), x86_64_value
 // last argument is null (indicates end)
 x86_64_value __x86_64_index_get(x86_64_value array, ...);
-x86_64_value __x86_64_index_set(x86_64_value from, x86_64_value array, ...);
+void         __x86_64_index_set(x86_64_value from, x86_64_value array, ...);
 x86_64_value __x86_64_cast(x86_64_value value, x86_64_type_enum type);
 void         __x86_64_assign(x86_64_value *lsv, x86_64_value rsv);
 x86_64_value __x86_64_print(x86_64_value value);

@@ -1281,7 +1281,7 @@ error:
   return __x86_64_value_void();
 }
 
-x86_64_value __x86_64_index_set(x86_64_value from, x86_64_value array, ...) {
+void __x86_64_index_set(x86_64_value from, x86_64_value array, ...) {
   va_list args;
   va_start(args, array);
 
@@ -1315,7 +1315,7 @@ x86_64_value __x86_64_index_set(x86_64_value from, x86_64_value array, ...) {
 
     char l = *from_data->raw;
     array_data->raw[index] = l;
-    return from;
+    return;
   } break;
   case X86_64_TYPE_ARRAY: {
     x86_64_type *type = array_data->type;
@@ -1342,7 +1342,7 @@ x86_64_value __x86_64_index_set(x86_64_value from, x86_64_value array, ...) {
     }
 
     memcpy(array_data->raw + offset, from_data->raw, entry_size);
-    return from;
+    return;
   } break;
 
   default:
@@ -1351,7 +1351,6 @@ x86_64_value __x86_64_index_set(x86_64_value from, x86_64_value array, ...) {
 
 error:
   va_end(args);
-  return __x86_64_value_void();
 }
 
 x86_64_value __x86_64_cast(x86_64_value lsv, x86_64_type_enum kind) {
