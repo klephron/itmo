@@ -58,7 +58,7 @@ uint64_t read_ulong() {
   return v;
 }
 
-char *read_string() {
+uint8_t *read_string() {
   char  *line = NULL;
   size_t len = 0;
   getline(&line, &len, stdin);
@@ -66,5 +66,5 @@ char *read_string() {
     return NULL;
   }
   line = trim_end(line);
-  return line;
+  return (uint8_t *)line;
 }
