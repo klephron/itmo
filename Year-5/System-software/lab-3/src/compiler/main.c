@@ -114,10 +114,8 @@ static void usage(struct args_struct *args) {
 }
 
 static void parse_args(struct args_struct *args, int argc, char *argv[]) {
-  if (argc > 0) {
-    args->prog_name = argv[0];
-  }
-
+  int           option_index;
+  int           has_next;
   struct option long_options[] = {
       {"tee", no_argument, &args->tee, 1},
       {"ignore-errors", no_argument, &args->ignore_errors, 1},
@@ -129,8 +127,13 @@ static void parse_args(struct args_struct *args, int argc, char *argv[]) {
       {"hir-tree", no_argument, &args->hir_tree, 1},
       {"mir", no_argument, &args->mir, 1},
   };
-  int option_index = 0;
-  int has_next = 1;
+
+  if (argc > 0) {
+    args->prog_name = argv[0];
+  }
+
+  option_index = 0;
+  has_next = 1;
 
   while (has_next) {
     unsigned c;
