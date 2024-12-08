@@ -7,8 +7,8 @@ INCS      := $(INCS)
 BUILD_DIR := $(BUILD_DIR)
 AR        := $(AR)
 
-CORE.SRCS := x86_64_core.c
-CORE.HDRS := x86_64_core.h
+CORE.SRCS := number.c operation.c type.c value.c
+CORE.HDRS := number.h operation.h type.h value.h
 CORE.OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(CORE.SRCS))
 
 ALL.SRCS := $(call rwildcard,$(CURDIR),*.c)
@@ -28,7 +28,6 @@ $(BUILD_DIR)/libx86_64_core.a: $(CORE.OBJS)
 
 $(BUILD_DIR)/libx86_64_all.a: $(ALL.OBJS)
 	$(AR) rcs $@ $^
-
 
 build/%:
 	@$(MAKE) --no-print-directory $(patsubst build/%,$(BUILD_DIR)/%,$@)

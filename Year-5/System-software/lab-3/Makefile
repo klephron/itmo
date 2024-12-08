@@ -99,13 +99,14 @@ x86_64_core/%:
 	@$(MAKE) --no-print-directory -C $(X86_64_CORE.SRC_DIR) $(patsubst x86_64_core/%,%,$@) $(X86_64_CORE.ENV)
 
 ### Makefile of test module
-test: test/build
 test/%: util/build/libutil.a compiler/build/libcompiler.a x86_64_core/build/libx86_64_all.a
 	@$(MAKE) --no-print-directory -C $(TEST.SRC_DIR) $(patsubst test/%,%,$@) $(TEST.ENV)
 
-### Run all tests
-run/test: FORCE | test/build
-	@for file in $(call rwildcard,$(TEST.BUILD_DIR),*); do "$$file"; done;
+### Run all tests or specific
+run/test: FORCE test/build
+	for file in $(call rwildcard,$(TEST.BUILD_DIR),*.out); do "$$file"; done;
+run/test/%: test/build/%
+	$(patsubst run/test/%,$(TEST.BUILD_DIR)/%,$@)
 
 ### Run main executable
 run: compiler/build/main

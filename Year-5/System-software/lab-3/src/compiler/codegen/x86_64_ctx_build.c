@@ -1,11 +1,10 @@
 #include "x86_64_ctx.h"
 
-#include "compiler/type/str.h"
 #include "util/log.h"
 #include "util/macro.h"
-
-#include "x86_64_core/x86_64_core.h"
-#include "x86_64_core/x86_64_meta.h"
+#include "x86_64_core/meta.h"
+#include "x86_64_core/type.h"
+#include "x86_64_core/value.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -905,8 +904,108 @@ void ctx_stmt_builtin_index(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
   info("TODO: index");
 }
 
+// TODO: complex types
 void ctx_stmt_builtin_new(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
-  info("TODO: new");
+  list_cg_x86_64_op *operands;
+
+  type_enum spec_type = builtin->spec->type;
+
+  switch (spec_type) {
+  case TYPE_BOOL: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_DIL));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVB, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_BOOL));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_BYTE: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_DIL));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVB, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_BYTE));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_INT: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_EDI));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVL, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_INT));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_UINT: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_EDI));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVL, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_UINT));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_LONG: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_LONG));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_ULONG: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_ULONG));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_CHAR: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_DIL));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVB, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_CHAR));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_STRING: {
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
+
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_STRING));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+  } break;
+  case TYPE_ARRAY: {
+
+  } break;
+  default:
+    error("unsupported new type %s %p", type_enum_str(spec_type), builtin);
+    return;
+  }
 }
 
 void ctx_stmt_builtin_cast(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
@@ -934,8 +1033,9 @@ void ctx_stmt_builtin_cast(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
     arg.cg = ctx_sub_value_find(ctx, arg.value);
   }
 
+  type_enum        spec_type = builtin->spec->type;
   x86_64_type_enum type;
-  switch (builtin->spec->type) {
+  switch (spec_type) {
   case TYPE_BOOL:
     type = X86_64_TYPE_BOOL;
     break;
@@ -968,7 +1068,7 @@ void ctx_stmt_builtin_cast(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
     break;
   default:
     error("unsupported cast type %s is not supported",
-          type_enum_str(builtin->spec->type));
+          type_enum_str(spec_type));
     type = X86_64_TYPE_VOID;
   }
 

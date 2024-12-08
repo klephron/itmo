@@ -172,6 +172,9 @@ void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
   case CG_X86_64_MNEM_MOVQ:
     string_buffer_append(buf, "movq");
     break;
+  case CG_X86_64_MNEM_MOVL:
+    string_buffer_append(buf, "movl");
+    break;
   case CG_X86_64_MNEM_MOVB:
     string_buffer_append(buf, "movb");
     break;
