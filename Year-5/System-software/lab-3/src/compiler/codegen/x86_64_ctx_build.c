@@ -453,6 +453,14 @@ static char *ctx_sub_name(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
   }
 }
 
+static char *ctx_ext_name(cg_x86_64_ctx *ctx, mir_subroutine_ext *ext) {
+  if (ctx_is_global(ctx, (mir_node_base *)ext)) {
+    return strdup(ext->name);
+  } else {
+    return ctx_local_name(ctx, ext->name);
+  }
+}
+
 static uint64_t ctx_args_value_prepare(cg_x86_64_ctx *ctx, int variadic,
                                        const list_cg_x86_64_map_value *values,
                                        int64_t arg_offset) {
@@ -1028,8 +1036,227 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
     }
     list_cg_x86_64_map_value_free(values);
   } break;
+    // unwrap arguments based on type
+    // if argument pointer -> pass __x86_64_unwrap_array
+    // if result void -> __x86_64_value_void()
+    // if result pointer -> __x86_64_value_array with 1 element
   case MIR_NODE_SUBROUTINE_EXTERNAL: {
-    info("TODO: external call");
+    list_cg_x86_64_op *operands;
+    list_type_it       t_it = list_type_begin(fun.ext->args);
+    size_t             argc = 0;
+    size_t             prev_stack = ctx->sub_stack_size;
+
+    list_cg_x86_64_unit *text_units = list_cg_x86_64_unit_new();
+
+    // NOTE:
+    // 1. unwrap arguments (pushed to front, so reverse order)
+    // 2. stack here isn't aligned, but doesn't matter (too lazy)
+    for (it.next(&it); !it.end(&it); it.next(&it), t_it.next(&t_it), ++argc) {
+      mir_node_base *node = it.get(&it);
+      type_base     *type = t_it.get(&t_it);
+
+      if (node->kind != MIR_NODE_VALUE) {
+        error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
+        break;
+      }
+      mir_value           *value = (mir_value *)node;
+      cg_x86_64_map_value *cg_value = ctx_sub_value_find(ctx, value);
+
+      // pushq %rax (arguments are aligned before push)
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RAX));
+      list_cg_x86_64_unit_push_front(text_units,
+                                     (cg_x86_64_unit *)cg_x86_64_instr_new(
+                                         CG_X86_64_MNEM_PUSHQ, operands));
+
+      // call <__unwrap_*>
+      operands = list_cg_x86_64_op_new();
+      switch (type->type) {
+      case TYPE_BOOL:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_BOOL));
+        break;
+      case TYPE_INT:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_INT));
+        break;
+      case TYPE_UINT:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_UINT));
+        break;
+      case TYPE_LONG:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_LONG));
+        break;
+      case TYPE_ULONG:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_ULONG));
+        break;
+      case TYPE_CHAR:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_CHAR));
+        break;
+      case TYPE_STRING:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_STRING));
+        break;
+      case TYPE_ARRAY:
+        cg_op_push_back(operands,
+                        cg_mode_new_direct_symbol(X86_64_SYMBOL_UNWRAP_ARRAY));
+        break;
+      default:
+        error("unsupported type %d %p", type->type, builtin);
+        break;
+      }
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+
+      // mov val, %rdi
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_base(cg_value->rbp_offset,
+                                                      CG_X86_64_REG_RBP));
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
+    }
+
+    // calculate stack offset (at max 6 arguments will be popped)
+    ctx->sub_stack_size += (argc > 6 ? argc - 6 : 0) * X86_64_ALIGN_MEMORY;
+
+    size_t align = cg_with_align(ctx->sub_stack_size, X86_64_ALIGN_CALL) -
+                   ctx->sub_stack_size;
+
+    // align stack before pushes
+    if (align) {
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_immediate(align));
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
+      ctx_text_push_back(ctx,
+                         cg_x86_64_instr_new(CG_X86_64_MNEM_SUBQ, operands));
+      ctx->sub_stack_size += align;
+    }
+
+    ctx_text_push_back_many(ctx, text_units);
+
+    // pop 6 arguments from stack (in reverse order)
+    text_units = list_cg_x86_64_unit_new();
+    switch (argc > 6 ? 6 : argc) {
+    case 6:
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R9));
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_POPQ, operands));
+      __attribute__((fallthrough));
+    case 5:
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R8));
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_POPQ, operands));
+      __attribute__((fallthrough));
+    case 4:
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RCX));
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_POPQ, operands));
+      __attribute__((fallthrough));
+    case 3:
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDX));
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_POPQ, operands));
+      __attribute__((fallthrough));
+    case 2:
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSI));
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_POPQ, operands));
+      __attribute__((fallthrough));
+    case 1:
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+      list_cg_x86_64_unit_push_front(
+          text_units,
+          (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_POPQ, operands));
+      __attribute__((fallthrough));
+    default:
+      break;
+    }
+    ctx_text_push_back_many(ctx, text_units);
+
+    // call external function
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_direct(ctx_ext_name(ctx, fun.ext)));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+
+    // movq %rax, %rdi
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RAX));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
+
+    // call __cg_x86_64_value for something (only one argument)
+    operands = list_cg_x86_64_op_new();
+    switch (fun.ext->ret->type) {
+    case TYPE_BOOL:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_BOOL));
+      break;
+    case TYPE_BYTE:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_BYTE));
+      break;
+    case TYPE_INT:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_INT));
+      break;
+    case TYPE_UINT:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_UINT));
+      break;
+    case TYPE_LONG:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_LONG));
+      break;
+    case TYPE_ULONG:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_ULONG));
+      break;
+    case TYPE_CHAR:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_CHAR));
+      break;
+    case TYPE_STRING:
+      cg_op_push_back(
+          operands, cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_STRING_MOVE));
+      break;
+    case TYPE_VOID:
+      cg_op_push_back(operands,
+                      cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_VOID));
+      break;
+    default:
+      error("unexpected ret type %d", fun.ext->ret->type);
+      break;
+    }
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+
+    // restore stack
+    if (ctx->sub_stack_size - prev_stack) {
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands, cg_x86_64_op_new_immediate(ctx->sub_stack_size -
+                                                           prev_stack));
+      cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
+      ctx_text_push_back(ctx,
+                         cg_x86_64_instr_new(CG_X86_64_MNEM_ADDQ, operands));
+    }
+
   } break;
   default:
     error("expected subroutine, got %d %p", fun.node->kind, fun.node);

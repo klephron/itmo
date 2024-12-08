@@ -103,6 +103,12 @@ x86_64_value __x86_64_value_string(const uint8_t *value) {
   return (x86_64_value){.data = data};
 }
 
+x86_64_value __x86_64_value_string_move(uint8_t *value) {
+  x86_64_value r = __x86_64_value_string(value);
+  free(value);
+  return r;
+}
+
 x86_64_value __x86_64_value_array(const x86_64_type *elem_type, ...) {
   x86_64_type_enum elem_kind = x86_64_type_kind(elem_type);
 

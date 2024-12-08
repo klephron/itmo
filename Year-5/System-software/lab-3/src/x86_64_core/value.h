@@ -27,6 +27,7 @@ x86_64_value __x86_64_value_long(int64_t value);
 x86_64_value __x86_64_value_ulong(uint64_t value);
 x86_64_value __x86_64_value_char(uint8_t value);
 x86_64_value __x86_64_value_string(const uint8_t *value);
+x86_64_value __x86_64_value_string_move(uint8_t *value);
 
 // flattened version of array
 x86_64_value __x86_64_value_array(const x86_64_type *elem_type, ...);

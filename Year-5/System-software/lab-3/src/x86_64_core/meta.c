@@ -26,6 +26,8 @@ const char *x86_64_symbol_enum_str(x86_64_symbol_enum kind) {
     return "__x86_64_value_char";
   case X86_64_SYMBOL_VALUE_STRING:
     return "__x86_64_value_string";
+  case X86_64_SYMBOL_VALUE_STRING_MOVE:
+    return "__x86_64_value_string_move";
   case X86_64_SYMBOL_VALUE_ARRAY:
     return "__x86_64_value_array";
   case X86_64_SYMBOL_PLUS:
