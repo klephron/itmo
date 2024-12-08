@@ -104,7 +104,7 @@ x86_64_value __x86_64_value_string(const uint8_t *value) {
 }
 
 x86_64_value __x86_64_value_array(const x86_64_type *elem_type, ...) {
-  assert(elem_type != NULL);
+  fprintf(stdout, "here!\n");
 
   x86_64_type_enum elem_kind = x86_64_type_kind(elem_type);
   switch (elem_kind) {
@@ -120,11 +120,11 @@ x86_64_value __x86_64_value_array(const x86_64_type *elem_type, ...) {
     break;
   case X86_64_TYPE_ARRAY:
   case X86_64_TYPE_OBJECT:
-    fprintf(stderr, "error: element type should be primitive, got %s",
+    fprintf(stderr, "error: element type should be primitive, got %s\n",
             x86_64_type_enum_str(elem_kind));
     return __x86_64_value_void();
   default:
-    fprintf(stderr, "error: unknown type, got %s",
+    fprintf(stderr, "error: unknown type, got %s\n",
             x86_64_type_enum_str(elem_kind));
     return __x86_64_value_void();
     break;

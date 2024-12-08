@@ -1,6 +1,7 @@
 #include "compiler/codegen/x86_64.h"
 #include "util/log.h"
 #include "util/macro.h"
+#include <string.h>
 
 void cg_x86_64_label_free(cg_x86_64_label *self);
 void cg_x86_64_data_free(cg_x86_64_data *self);
@@ -102,6 +103,7 @@ cg_x86_64_data *cg_x86_64_data_new_byte(uint8_t data) {
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DATA);
   self->kind = CG_X86_64_DATA_BYTE;
   self->data_byte = data;
+  self->data_size = sizeof(data);
   return self;
 }
 
@@ -110,6 +112,7 @@ cg_x86_64_data *cg_x86_64_data_new_word(uint16_t data) {
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DATA);
   self->kind = CG_X86_64_DATA_WORD;
   self->data_word = data;
+  self->data_size = sizeof(data);
   return self;
 }
 
@@ -118,6 +121,7 @@ cg_x86_64_data *cg_x86_64_data_new_long(uint32_t data) {
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DATA);
   self->kind = CG_X86_64_DATA_LONG;
   self->data_long = data;
+  self->data_size = sizeof(data);
   return self;
 }
 
@@ -126,6 +130,7 @@ cg_x86_64_data *cg_x86_64_data_new_quad(uint64_t data) {
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DATA);
   self->kind = CG_X86_64_DATA_QUAD;
   self->data_quad = data;
+  self->data_size = sizeof(data);
   return self;
 }
 
@@ -134,6 +139,16 @@ cg_x86_64_data *cg_x86_64_data_new_ascii(uint8_t *data) {
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DATA);
   self->kind = CG_X86_64_DATA_ASCII;
   self->data_ascii = data;
+  self->data_size = strlen((char *)data) + 1;
+  return self;
+}
+
+cg_x86_64_data *cg_x86_64_data_new_bytes(size_t size, uint8_t *data) {
+  cg_x86_64_data *self = MALLOC(cg_x86_64_data);
+  cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DATA);
+  self->kind = CG_X86_64_DATA_BYTES;
+  self->data_bytes = data;
+  self->data_size = size;
   return self;
 }
 
@@ -142,6 +157,9 @@ void cg_x86_64_data_free(cg_x86_64_data *self) {
     switch (self->kind) {
     case CG_X86_64_DATA_ASCII:
       free(self->data_ascii);
+      break;
+    case CG_X86_64_DATA_BYTES:
+      free(self->data_bytes);
       break;
     case CG_X86_64_DATA_BYTE:
     case CG_X86_64_DATA_WORD:

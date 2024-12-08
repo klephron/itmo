@@ -39,6 +39,54 @@ static void cg_units_append_move(list_cg_x86_64_unit *to,
   list_cg_x86_64_unit_free(from);
 }
 
+static x86_64_type *cg_type_to_x86_64(type_base *type) {
+  switch (type->type) {
+  case TYPE_BOOL:
+    return x86_64_type_new_simple(X86_64_TYPE_BOOL);
+    break;
+  case TYPE_BYTE:
+    return x86_64_type_new_simple(X86_64_TYPE_BYTE);
+    break;
+  case TYPE_INT:
+    return x86_64_type_new_simple(X86_64_TYPE_INT);
+    break;
+  case TYPE_UINT:
+    return x86_64_type_new_simple(X86_64_TYPE_UINT);
+    break;
+  case TYPE_LONG:
+    return x86_64_type_new_simple(X86_64_TYPE_LONG);
+    break;
+  case TYPE_ULONG:
+    return x86_64_type_new_simple(X86_64_TYPE_ULONG);
+    break;
+  case TYPE_CHAR:
+    return x86_64_type_new_simple(X86_64_TYPE_CHAR);
+    break;
+  case TYPE_STRING:
+    return x86_64_type_new_simple(X86_64_TYPE_STRING);
+    break;
+  case TYPE_VOID:
+    return x86_64_type_new_simple(X86_64_TYPE_VOID);
+    break;
+  // NOTE: metadata is NULL
+  // TODO: don't recreate after each wrap
+  case TYPE_ARRAY: {
+    x86_64_type *elem_type = cg_type_to_x86_64(((type_array *)type)->elem_type);
+    x86_64_type *complex =
+        x86_64_type_new_complex(X86_64_TYPE_ARRAY, elem_type, NULL);
+    x86_64_type_free(elem_type);
+    return complex;
+  }
+  case TYPE_CUSTOM:
+  case TYPE_CALLABLE:
+    error("type %d is not implemented, %p", type->type, type);
+    return NULL;
+  default:
+    error("unknown type %d %p", type->type, type);
+    return NULL;
+  }
+}
+
 static int ctx_is_exit(cg_x86_64_ctx *ctx, const mir_subroutine *sub) {
   UNUSED(ctx);
   return !strcmp(sub->name, "main");
@@ -79,6 +127,16 @@ ctx_text_push_back_many(cg_x86_64_ctx *ctx, list_cg_x86_64_unit *other) {
   cg_units_append_move(ctx->text_units_ref, other);
 }
 
+static void ctx_type_serialize(cg_x86_64_ctx *ctx, x86_64_type *type) {
+  if (!type) {
+    return;
+  }
+  size_t   sz = sizeof(x86_64_type) + sizeof(type->entries[0]) * type->count;
+  uint8_t *data = MALLOCN(uint8_t, sz);
+  memcpy(data, type, sz);
+  ctx_data_push_back(ctx, cg_x86_64_data_new_bytes(sz, data));
+}
+
 static void ctx_stack_release(cg_x86_64_ctx *ctx, size_t stack_size) {
   list_cg_x86_64_op *operands;
   if (stack_size) {
@@ -86,6 +144,7 @@ static void ctx_stack_release(cg_x86_64_ctx *ctx, size_t stack_size) {
     cg_op_push_back(operands, cg_x86_64_op_new_immediate(stack_size));
     cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_ADDQ, operands));
+    ctx->sub_stack_size -= stack_size;
   }
 }
 
@@ -253,6 +312,7 @@ static void ctx_sub_values_prologue(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
 static void ctx_sub_args_prologue(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
   list_cg_x86_64_op   *operands;
   cg_x86_64_map_value *cg;
+  uint64_t             offset = ctx->sub_rbp_offset;
 
   list_mir_value_it it = list_mir_value_begin(sub->args);
 
@@ -322,7 +382,6 @@ static void ctx_sub_args_prologue(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
   ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
   it.next(&it);
 
-  uint64_t offset = ctx->sub_rbp_offset;
   while (!it.end(&it)) {
     cg = ctx_sub_value_find(ctx, it.get(&it));
 
@@ -369,7 +428,7 @@ static char *ctx_block_name(cg_x86_64_ctx *ctx, mir_subroutine *sub,
   return local;
 }
 
-static char *ctx_data_name(cg_x86_64_ctx *self, mir_subroutine *sub,
+static char *ctx_data_name(cg_x86_64_ctx *ctx, mir_subroutine *sub,
                            mir_value *value) {
   char buf[32];
 
@@ -381,7 +440,7 @@ static char *ctx_data_name(cg_x86_64_ctx *self, mir_subroutine *sub,
     end = stpcpy(end, sub->name);
     end = stpcpy(end, buf);
   }
-  char *local = ctx_local_name(self, name);
+  char *local = ctx_local_name(ctx, name);
   free(name);
   return local;
 }
@@ -395,104 +454,173 @@ static char *ctx_sub_name(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
 }
 
 static uint64_t ctx_args_value_prepare(cg_x86_64_ctx *ctx, int variadic,
-                                       list_cg_x86_64_map_value *values) {
-  list_cg_x86_64_op   *operands;
-  cg_x86_64_map_value *cg;
-  size_t               rsp_size = 0;
-  size_t               align;
-  size_t               off = 0;
+                                       const list_cg_x86_64_map_value *values,
+                                       int64_t arg_offset) {
+  list_cg_x86_64_op          *operands;
+  cg_x86_64_map_value        *cg;
+  size_t                      aligned_rsp_size = 0;
+  size_t                      align;
+  size_t                      prev_stack_size = ctx->sub_stack_size;
+  list_cg_x86_64_unit        *texts = list_cg_x86_64_unit_new();
+  list_cg_x86_64_map_value_it it = list_cg_x86_64_map_value_begin(values);
+  list_cg_x86_64_op          *v_ops;
 
-  list_cg_x86_64_unit *texts = list_cg_x86_64_unit_new();
-
-  if (list_cg_x86_64_map_value_empty(values)) {
-    goto skip;
+  if (arg_offset < 0) {
+    arg_offset = 0;
   }
-  cg = list_cg_x86_64_map_value_pop_front(values);
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
-  list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                           CG_X86_64_MNEM_MOVQ, operands));
 
-  if (list_cg_x86_64_map_value_empty(values)) {
-    goto skip;
+  if (variadic) {
+    v_ops = list_cg_x86_64_op_new();
+    cg_op_push_back(v_ops, cg_x86_64_op_new_immediate(0));
   }
-  cg = list_cg_x86_64_map_value_pop_front(values);
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSI));
-  list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                           CG_X86_64_MNEM_MOVQ, operands));
 
-  if (list_cg_x86_64_map_value_empty(values)) {
-    goto skip;
-  }
-  cg = list_cg_x86_64_map_value_pop_front(values);
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDX));
-  list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                           CG_X86_64_MNEM_MOVQ, operands));
-
-  if (list_cg_x86_64_map_value_empty(values)) {
-    goto skip;
-  }
-  cg = list_cg_x86_64_map_value_pop_front(values);
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RCX));
-  list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                           CG_X86_64_MNEM_MOVQ, operands));
-
-  if (list_cg_x86_64_map_value_empty(values)) {
-    goto skip;
-  }
-  cg = list_cg_x86_64_map_value_pop_front(values);
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R8));
-  list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                           CG_X86_64_MNEM_MOVQ, operands));
-
-  if (list_cg_x86_64_map_value_empty(values)) {
-    goto skip;
-  }
-  cg = list_cg_x86_64_map_value_pop_front(values);
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R9));
-  list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                           CG_X86_64_MNEM_MOVQ, operands));
-
-  while (!list_cg_x86_64_map_value_empty(values)) {
-    cg = list_cg_x86_64_map_value_pop_front(values);
+  switch (arg_offset) {
+  case 0:
+    if (it.end(&it)) {
+      if (variadic) {
+        cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+        list_cg_x86_64_unit_push_back(
+            texts,
+            (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, v_ops));
+      }
+      variadic = 0;
+      break;
+    }
+    cg = it.get(&it);
     operands = list_cg_x86_64_op_new();
     cg_op_push_back(operands,
                     cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                             CG_X86_64_MNEM_PUSHQ, operands));
-    off += sizeof(x86_64_value);
-  }
-
-skip:
-  // put zero (va_arg(NULL)) as last arg if variadic
-  if (variadic) {
+                                             CG_X86_64_MNEM_MOVQ, operands));
+    it.next(&it);
+    __attribute__((fallthrough));
+  case 1:
+    if (it.end(&it)) {
+      if (variadic) {
+        cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RSI));
+        list_cg_x86_64_unit_push_back(
+            texts,
+            (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, v_ops));
+      }
+      variadic = 0;
+      break;
+    }
+    cg = it.get(&it);
     operands = list_cg_x86_64_op_new();
-    cg_op_push_back(operands, cg_x86_64_op_new_immediate(0));
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSI));
     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
-                                             CG_X86_64_MNEM_PUSHQ, operands));
-    off += sizeof(x86_64_value);
+                                             CG_X86_64_MNEM_MOVQ, operands));
+    it.next(&it);
+    __attribute__((fallthrough));
+  case 2:
+    if (it.end(&it)) {
+      if (variadic) {
+        cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RDX));
+        list_cg_x86_64_unit_push_back(
+            texts,
+            (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, v_ops));
+      }
+      variadic = 0;
+      break;
+    }
+    cg = it.get(&it);
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDX));
+    list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
+                                             CG_X86_64_MNEM_MOVQ, operands));
+    it.next(&it);
+    __attribute__((fallthrough));
+  case 3:
+    if (it.end(&it)) {
+      if (variadic) {
+        cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RCX));
+        list_cg_x86_64_unit_push_back(
+            texts,
+            (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, v_ops));
+      }
+      variadic = 0;
+      break;
+    }
+    cg = it.get(&it);
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RCX));
+    list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
+                                             CG_X86_64_MNEM_MOVQ, operands));
+    it.next(&it);
+    __attribute__((fallthrough));
+  case 4:
+    if (it.end(&it)) {
+      if (variadic) {
+        cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_R8));
+        list_cg_x86_64_unit_push_back(
+            texts,
+            (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, v_ops));
+      }
+      variadic = 0;
+      break;
+    }
+    cg = it.get(&it);
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R8));
+    list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
+                                             CG_X86_64_MNEM_MOVQ, operands));
+    it.next(&it);
+    __attribute__((fallthrough));
+  case 5:
+    if (it.end(&it)) {
+      if (variadic) {
+        cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_R9));
+        list_cg_x86_64_unit_push_back(
+            texts,
+            (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, v_ops));
+      }
+      variadic = 0;
+      break;
+    }
+    cg = it.get(&it);
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R9));
+    list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
+                                             CG_X86_64_MNEM_MOVQ, operands));
+    it.next(&it);
+    __attribute__((fallthrough));
+  case 6:
+    while (!it.end(&it)) {
+      cg = it.get(&it);
+      operands = list_cg_x86_64_op_new();
+      cg_op_push_back(operands,
+                      cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
+      list_cg_x86_64_unit_push_front(
+          texts, (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_PUSHQ,
+                                                       operands));
+      ctx->sub_stack_size += sizeof(x86_64_value);
+      it.next(&it);
+    }
+    __attribute__((fallthrough));
+  default:
+    break;
   }
 
-  rsp_size = cg_with_align(ctx->sub_stack_size + off, X86_64_ALIGN_CALL) -
-             ctx->sub_stack_size;
-  align = rsp_size - off;
+  if (variadic) {
+    list_cg_x86_64_unit_push_front(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
+                                              CG_X86_64_MNEM_PUSHQ, operands));
+    ctx->sub_stack_size += sizeof(x86_64_value);
+  }
+
+  // stack is pushed by who executes this command, so no need to no anything
+  aligned_rsp_size = cg_with_align(ctx->sub_stack_size, X86_64_ALIGN_CALL);
+  align = aligned_rsp_size - ctx->sub_stack_size;
 
   if (align) {
     operands = list_cg_x86_64_op_new();
@@ -500,10 +628,12 @@ skip:
     cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
     list_cg_x86_64_unit_push_front(texts, (cg_x86_64_unit *)cg_x86_64_instr_new(
                                               CG_X86_64_MNEM_SUBQ, operands));
+    ctx->sub_stack_size += align;
   }
 
   ctx_text_push_back_many(ctx, texts);
-  return rsp_size;
+
+  return ctx->sub_stack_size - prev_stack_size;
 }
 
 static void ctx_stmt_store_lit(cg_x86_64_ctx *ctx, mir_subroutine *sub,
@@ -709,11 +839,11 @@ static void ctx_stmt_store_assign(cg_x86_64_ctx *ctx, mir_value *lsv,
 
 static void ctx_stmt_builtin_l_value(cg_x86_64_ctx     *ctx,
                                      x86_64_symbol_enum symbol, int variadic,
-                                     list_cg_x86_64_map_value *values) {
+                                     const list_cg_x86_64_map_value *values) {
   list_cg_x86_64_op *operands;
   size_t             stack_size;
 
-  stack_size = ctx_args_value_prepare(ctx, variadic, values);
+  stack_size = ctx_args_value_prepare(ctx, variadic, values, 0);
 
   operands = list_cg_x86_64_op_new();
   cg_op_push_back(operands, cg_mode_new_direct_symbol(symbol));
@@ -734,6 +864,10 @@ static void ctx_stmt_builtin_f_value(cg_x86_64_ctx     *ctx,
                                        va_arg(args, cg_x86_64_map_value *));
   }
   ctx_stmt_builtin_l_value(ctx, symbol, variadic, values);
+
+  while (!list_cg_x86_64_map_value_empty(values)) {
+    list_cg_x86_64_map_value_pop_front(values);
+  }
   list_cg_x86_64_map_value_free(values);
 }
 
@@ -870,7 +1004,7 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
       if (arg.node->kind != MIR_NODE_VALUE) {
         error("expected %d as argument, got %d %p", MIR_NODE_VALUE,
               arg.node->kind, arg.node);
-        goto error;
+        goto release;
       }
       arg.value = (mir_value *)arg.node;
       arg.cg = ctx_sub_value_find(ctx, arg.value);
@@ -878,7 +1012,7 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
       list_cg_x86_64_map_value_push_back(values, arg.cg);
     }
 
-    size_t stack_size = ctx_args_value_prepare(ctx, 0, values);
+    size_t stack_size = ctx_args_value_prepare(ctx, 0, values, 0);
 
     // call func
     list_cg_x86_64_op *operands = list_cg_x86_64_op_new();
@@ -888,7 +1022,10 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
 
     ctx_stack_release(ctx, stack_size);
 
-  error:
+  release:
+    while (!list_cg_x86_64_map_value_empty(values)) {
+      list_cg_x86_64_map_value_pop_front(values);
+    }
     list_cg_x86_64_map_value_free(values);
   } break;
   case MIR_NODE_SUBROUTINE_EXTERNAL: {
@@ -905,7 +1042,8 @@ void ctx_stmt_builtin_index(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
 }
 
 // TODO: complex types
-void ctx_stmt_builtin_new(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
+void ctx_stmt_builtin_new(cg_x86_64_ctx *ctx, mir_subroutine *sub,
+                          mir_value *lsv, mir_builtin *builtin) {
   list_cg_x86_64_op *operands;
 
   type_enum spec_type = builtin->spec->type;
@@ -1000,7 +1138,49 @@ void ctx_stmt_builtin_new(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
   } break;
   case TYPE_ARRAY: {
+    type_base *elem_type = ((type_array *)builtin->spec)->elem_type;
 
+    x86_64_type *type = cg_type_to_x86_64(elem_type);
+    ctx_data_push_back(ctx, cg_x86_64_label_new(ctx_data_name(ctx, sub, lsv),
+                                                CG_X86_64_LABEL_DATA));
+    ctx_type_serialize(ctx, type);
+    x86_64_type_free(type);
+
+    // leaq .Ldata, %rdi
+    operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_x86_64_op_new_direct(ctx_data_name(ctx, sub, lsv)));
+    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_LEAQ, operands));
+
+    // mov variadic arguments
+    list_cg_x86_64_map_value *values = list_cg_x86_64_map_value_new();
+    for (list_mir_arg_it it = list_mir_arg_begin(builtin->args); !it.end(&it);
+         it.next(&it)) {
+      mir_node_base *node = it.get(&it);
+      if (node->kind != MIR_NODE_VALUE) {
+        error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
+        goto release;
+      }
+      mir_value           *value = (mir_value *)node;
+      cg_x86_64_map_value *cg_value = ctx_sub_value_find(ctx, value);
+      list_cg_x86_64_map_value_push_back(values, cg_value);
+    }
+    size_t stack_size = ctx_args_value_prepare(ctx, 1, values, 1);
+
+    // call func
+    list_cg_x86_64_op *operands = list_cg_x86_64_op_new();
+    cg_op_push_back(operands,
+                    cg_mode_new_direct_symbol(X86_64_SYMBOL_VALUE_ARRAY));
+    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
+
+    ctx_stack_release(ctx, stack_size);
+
+  release:
+    while (!list_cg_x86_64_map_value_empty(values)) {
+      list_cg_x86_64_map_value_pop_front(values);
+    }
+    list_cg_x86_64_map_value_free(values);
   } break;
   default:
     error("unsupported new type %s %p", type_enum_str(spec_type), builtin);
@@ -1090,8 +1270,8 @@ void ctx_stmt_builtin_cast(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
   ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
 }
 
-void ctx_stmt_store_builtin(cg_x86_64_ctx *ctx, mir_value *lsv,
-                            mir_builtin *rsv) {
+void ctx_stmt_store_builtin(cg_x86_64_ctx *ctx, mir_subroutine *sub,
+                            mir_value *lsv, mir_builtin *rsv) {
   cg_x86_64_map_value *cg_lsv = ctx_sub_value_find(ctx, lsv);
 
   ctx_sub_value_drop(ctx, cg_lsv);
@@ -1179,7 +1359,7 @@ void ctx_stmt_store_builtin(cg_x86_64_ctx *ctx, mir_value *lsv,
     ctx_stmt_builtin_cast(ctx, rsv);
     break;
   case MIR_BUILTIN_NEW:
-    ctx_stmt_builtin_new(ctx, rsv);
+    ctx_stmt_builtin_new(ctx, sub, lsv, rsv);
     break;
   case MIR_BUILTIN_PRINT:
     ctx_stmt_builtin_1(ctx, rsv, X86_64_SYMBOL_PRINT);
@@ -1205,7 +1385,7 @@ static void ctx_stmt_store(cg_x86_64_ctx *ctx, mir_subroutine *sub,
                            mir_builtin *stmt) {
   if (list_mir_arg_size(stmt->args) != 2) {
     error("store requires 2 args");
-    goto error;
+    goto release;
   }
 
   mir_node_base *first;
@@ -1228,7 +1408,8 @@ static void ctx_stmt_store(cg_x86_64_ctx *ctx, mir_subroutine *sub,
       ctx_stmt_store_lit(ctx, sub, (mir_value *)first, (mir_lit *)second);
     } break;
     case MIR_NODE_BUILTIN: {
-      ctx_stmt_store_builtin(ctx, (mir_value *)first, (mir_builtin *)second);
+      ctx_stmt_store_builtin(ctx, sub, (mir_value *)first,
+                             (mir_builtin *)second);
     } break;
     default:
       goto unhandled;
@@ -1251,7 +1432,7 @@ static void ctx_stmt_store(cg_x86_64_ctx *ctx, mir_subroutine *sub,
 
 unhandled:
   error("unexpected pair %d %d", first->kind, second->kind);
-error:
+release:
   return;
 }
 

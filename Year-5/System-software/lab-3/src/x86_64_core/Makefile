@@ -20,7 +20,7 @@ $(sort $(DIRS)):
 	$(MKDIR) $(@:dir/%=%)
 
 
-$(BUILD_DIR)/%.o: %.c $(HDRS) | $(DIRS)
+$(BUILD_DIR)/%.o: %.c $(ALL.HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
 $(BUILD_DIR)/libx86_64_core.a: $(CORE.OBJS)

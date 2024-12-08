@@ -1,0 +1,11 @@
+// method fun_1(a, b): int
+// begin
+//   print!("fun_1");
+// end;
+
+method main():
+var
+begin
+  // fun_1(1, 2);
+  new!<array [] of int>(10, 20);
+end;

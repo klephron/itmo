@@ -152,6 +152,20 @@ static void cg_emit_data(cg_x86_64_ctx *self, string_buffer *buf,
     string_buffer_append(buf, (char *)data->data_ascii);
     string_buffer_append(buf, "\\0\"");
     break;
+  case CG_X86_64_DATA_BYTES:
+    string_buffer_append(buf, ".byte ");
+    size_t i = 0;
+    if (i < data->data_size) {
+      snprintf(sbuf, STRMAXLEN(sbuf), "%#x", data->data_bytes[i]);
+      string_buffer_append(buf, sbuf);
+      ++i;
+    }
+    for (; i < data->data_size; ++i) {
+      string_buffer_append(buf, ", ");
+      snprintf(sbuf, STRMAXLEN(sbuf), "%#x", data->data_bytes[i]);
+      string_buffer_append(buf, sbuf);
+    }
+    break;
   default:
     error("unexpected data kind %d %p", data->kind, data);
   }

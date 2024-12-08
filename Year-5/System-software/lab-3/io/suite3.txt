@@ -1,4 +1,4 @@
-method main3():
+method main():
 var
   e;
 begin

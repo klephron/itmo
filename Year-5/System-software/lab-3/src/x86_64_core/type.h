@@ -32,6 +32,7 @@ typedef struct __attribute__((packed)) x86_64_type_entry_struct {
   };
   uint64_t i_next;
   uint64_t i_child;
+  uint8_t  pad[4];
 } x86_64_type_entry;
 
 // linearized tree structure

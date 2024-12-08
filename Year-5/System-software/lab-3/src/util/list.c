@@ -69,11 +69,15 @@ void list_push_front(list *self, void *data) {
   }
 }
 
-void *list_front(list *self) { return self->head ? self->head->data : NULL; }
+void *list_front(const list *self) {
+  return self->head ? self->head->data : NULL;
+}
 
-void *list_back(list *self) { return self->tail ? self->tail->data : NULL; }
+void *list_back(const list *self) {
+  return self->tail ? self->tail->data : NULL;
+}
 
-int list_empty(list *self) { return !self->head; }
+int list_empty(const list *self) { return !self->head; }
 
 // won't free data
 void *list_pop_front(list *self) {
