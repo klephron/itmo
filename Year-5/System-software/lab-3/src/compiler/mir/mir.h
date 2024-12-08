@@ -124,7 +124,7 @@ typedef enum mir_builtin_enum {
   MIR_BUILTIN_CALL,
   MIR_BUILTIN_INDEX,
   MIR_BUILTIN_CAST,
-  MIR_BUILTIN_NEW,
+  MIR_BUILTIN_MAKE,
   MIR_BUILTIN_DROP,
   MIR_BUILTIN_PRINT,
 } mir_builtin_enum;

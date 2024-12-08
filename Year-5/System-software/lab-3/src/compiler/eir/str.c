@@ -74,8 +74,8 @@ const char *eir_expr_builtin_enum_str(eir_expr_builtin_enum type) {
   switch (type) {
   case EIR_EXPR_BUILTIN_CAST:
     return "CAST";
-  case EIR_EXPR_BUILTIN_NEW:
-    return "NEW";
+  case EIR_EXPR_BUILTIN_MAKE:
+    return "MAKE";
   default:
     return "UNKNOWN";
   }

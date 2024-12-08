@@ -182,8 +182,8 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
   switch (kind) {
   case HIR_EXPR_BUILTIN_CAST:
     return "CAST";
-  case HIR_EXPR_BUILTIN_NEW:
-    return "NEW";
+  case HIR_EXPR_BUILTIN_MAKE:
+    return "MAKE";
   case HIR_EXPR_BUILTIN_PRINT:
     return "PRINT";
   default:

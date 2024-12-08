@@ -338,8 +338,8 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
     case EIR_EXPR_BUILTIN_CAST:
       kind = MIR_BUILTIN_CAST;
       break;
-    case EIR_EXPR_BUILTIN_NEW:
-      kind = MIR_BUILTIN_NEW;
+    case EIR_EXPR_BUILTIN_MAKE:
+      kind = MIR_BUILTIN_MAKE;
       break;
     case EIR_EXPR_BUILTIN_PRINT:
       kind = MIR_BUILTIN_PRINT;

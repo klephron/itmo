@@ -396,8 +396,8 @@ eir_ctx_build_expr_builtin(eir_ctx *ctx, const hir_expr_builtin *builtin) {
     case HIR_EXPR_BUILTIN_CAST:
       kind = EIR_EXPR_BUILTIN_CAST;
       break;
-    case HIR_EXPR_BUILTIN_NEW:
-      kind = EIR_EXPR_BUILTIN_NEW;
+    case HIR_EXPR_BUILTIN_MAKE:
+      kind = EIR_EXPR_BUILTIN_MAKE;
       break;
     case HIR_EXPR_BUILTIN_PRINT:
       kind = EIR_EXPR_BUILTIN_PRINT;

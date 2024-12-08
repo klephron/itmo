@@ -188,7 +188,7 @@ expr_builtin returns [ hir_expr_builtin *v ]
 
 expr_builtin_in returns [ hir_expr_builtin *v ]
   : c='cast!' t=type_ref e15=expr_15 { $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_CAST, $t.v, $e15.v); }
-  | c='new!'  t=type_ref e15=expr_15 { $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_NEW, $t.v, $e15.v); }
+  | c='make!' t=type_ref e15=expr_15 { $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_MAKE, $t.v, $e15.v); }
   | c='print!'           e15=expr_15 { $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_PRINT, NULL, $e15.v); }
   ;
 

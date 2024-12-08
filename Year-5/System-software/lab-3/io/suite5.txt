@@ -8,14 +8,14 @@ var
   a;
 begin
   // fun_1(1, 2);
-  a = new!<array [] of int>(10, 20);
+  a = make!<array [] of int>(10, 20);
   a[4, 3] = cast!<int>(10);
   print!(a[4, 3]);
 
   a = cast!<int>(10);
   print!(a);
 
-  a = new!<array [] of int>(10);
+  a = make!<array [] of int>(10);
   a[4] = cast!<int>(10);
   print!(a[4]);
 

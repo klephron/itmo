@@ -49,7 +49,7 @@ typedef enum hir_expr_binary_enum {
 typedef enum hir_expr_builtin_enum {
   HIR_EXPR_BUILTIN_UNKNOWN,
   HIR_EXPR_BUILTIN_CAST,
-  HIR_EXPR_BUILTIN_NEW,
+  HIR_EXPR_BUILTIN_MAKE,
   HIR_EXPR_BUILTIN_PRINT,
 } hir_expr_builtin_enum;
 

@@ -53,7 +53,7 @@ typedef enum eir_expr_binary_enum {
 typedef enum eir_expr_builtin_enum {
   EIR_EXPR_BUILTIN_UNKNOWN,
   EIR_EXPR_BUILTIN_CAST,
-  EIR_EXPR_BUILTIN_NEW,
+  EIR_EXPR_BUILTIN_MAKE,
   EIR_EXPR_BUILTIN_PRINT,
 } eir_expr_builtin_enum;
 

@@ -3,6 +3,6 @@ var
   e;
 begin
   cast!<int>(e);
-  new!<int>(e);
+  make!<int>(e);
   print!(e);
 end;

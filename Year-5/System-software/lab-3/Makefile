@@ -38,8 +38,9 @@ STDC.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
 TEST.SRC_DIR   := $(CURDIR)/test
 TEST.BUILD_DIR := $(patsubst $(CURDIR)/%,$(BUILD_DIR)/%,$(TEST.SRC_DIR))
 
-RUN.AS_FLAGS := --64 -g
-RUN.LD_FLAGS := -g -z noexecstack
+RUN.AS_FLAGS       := --64 -g
+RUN.LD_FLAGS       := -g -z noexecstack
+RUN.COMPILER_FLAGS := --mir
 
 
 .DEFAULT_GOAL := compiler
@@ -150,9 +151,8 @@ run/asm/%: RUN.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
 run/asm/%: RUN.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
 run/asm/%: RUN.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
 run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a stdc/build/libstdc.a
-	./build/compiler/main --ignore-errors \
-		--mir \
-		-d . -o $(RUN.ASM_FILE) $(RUN.INPUT_FILE)
+	./build/compiler/main $(RUN.COMPILER_FLAGS) \
+		-o $(RUN.ASM_FILE) $(RUN.INPUT_FILE)
 	@echo "--------------------ASSEMBLY($(RUN.ASM_FILE))--------------------"
 	@cat $(RUN.ASM_FILE)
 	@echo "--------------------COMPILE($(RUN.ASM_FILE))--------------------"

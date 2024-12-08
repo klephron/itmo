@@ -1297,8 +1297,8 @@ release:
 }
 
 // TODO: complex types
-void ctx_stmt_builtin_new(cg_x86_64_ctx *ctx, mir_subroutine *sub,
-                          mir_value *lsv, mir_builtin *builtin) {
+void ctx_stmt_builtin_make(cg_x86_64_ctx *ctx, mir_subroutine *sub,
+                           mir_value *lsv, mir_builtin *builtin) {
   list_cg_x86_64_op *operands;
 
   type_enum spec_type = builtin->spec->type;
@@ -1613,8 +1613,8 @@ void ctx_stmt_store_builtin(cg_x86_64_ctx *ctx, mir_subroutine *sub,
   case MIR_BUILTIN_CAST:
     ctx_stmt_builtin_cast(ctx, rsv);
     break;
-  case MIR_BUILTIN_NEW:
-    ctx_stmt_builtin_new(ctx, sub, lsv, rsv);
+  case MIR_BUILTIN_MAKE:
+    ctx_stmt_builtin_make(ctx, sub, lsv, rsv);
     break;
   case MIR_BUILTIN_PRINT:
     ctx_stmt_builtin_1(ctx, rsv, X86_64_SYMBOL_PRINT);

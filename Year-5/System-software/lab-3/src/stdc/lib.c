@@ -28,6 +28,12 @@ uint8_t read_byte() {
   return v;
 }
 
+uint8_t read_char() {
+  uint8_t v;
+  scanf(" %c", &v);
+  return v;
+}
+
 int32_t read_int() {
   int32_t v;
   scanf("%d", &v);

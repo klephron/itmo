@@ -38,7 +38,7 @@ begin
       end;
     until true;
 
-  while (new!<int>(a) == cast!<int>(1)) do begin
+  while (make!<int>(a) == cast!<int>(1)) do begin
     a = 2;
     break;
   end;

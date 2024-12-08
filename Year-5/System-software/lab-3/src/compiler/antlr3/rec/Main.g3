@@ -201,7 +201,7 @@ expr_literal
   ;
 
 expr_builtin
-  : c=('cast!' | 'new!') '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c type_ref ^(ARGS expr_15))
+  : c=('cast!' | 'make!') '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c type_ref ^(ARGS expr_15))
   | c=('print!') '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c ^(ARGS expr_15))
   ;
 
