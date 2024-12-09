@@ -112,12 +112,12 @@ x86_64_core/%:
 	@$(MAKE) --no-print-directory -C $(X86_64_CORE.SRC_DIR) $(patsubst x86_64_core/%,%,$@) $(X86_64_CORE.ENV)
 
 ### Makefile of stdc module
-stdc: stdc/build/stdc.a
+stdc: stdc/build/libstdc.a
 stdc/%:
 	@$(MAKE) --no-print-directory -C $(STDC.SRC_DIR) $(patsubst stdc/%,%,$@) $(STDC.ENV)
 
 ### Makefile of test module
-test/%: util/build/libutil.a compiler/build/libcompiler.a x86_64_core/build/libx86_64_all.a stdc/build/stdc.a
+test/%: util/build/libutil.a compiler/build/libcompiler.a x86_64_core/build/libx86_64_all.a stdc/build/libstdc.a
 	@$(MAKE) --no-print-directory -C $(TEST.SRC_DIR) $(patsubst test/%,%,$@) $(TEST.ENV)
 
 ### Run all tests or specific
@@ -127,11 +127,10 @@ run/test/%: test/build/%
 	$(patsubst run/test/%,$(TEST.BUILD_DIR)/%,$@)
 
 ### Run main executable
-run: compiler/build/main
-	./build/compiler/main io/input.txt
+run: run/asm
 
 ### Run main executable and generate dot
-run/pdf: run/pdf/io/input.txt
+run/pdf: run/pdf/io/suite8.txt
 run/pdf/%: RUN.INPUT_FILE=$(patsubst run/pdf/%,%,$@)
 run/pdf/%: RUN.ASM_FILE=$(patsubst run/pdf/%,%.asm,$@)
 run/pdf/%: compiler/build/main
@@ -145,7 +144,7 @@ run/pdf/%: compiler/build/main
 	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
 
 ### Compile file
-run/asm: run/asm/io/input.txt
+run/asm: run/asm/io/suite8.txt
 run/asm/%: RUN.INPUT_FILE=$(patsubst run/asm/%,%,$@)
 run/asm/%: RUN.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
 run/asm/%: RUN.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
