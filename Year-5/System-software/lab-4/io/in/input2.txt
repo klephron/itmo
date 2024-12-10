@@ -1,0 +1,10 @@
+method fun3():
+begin
+  fun3();
+  fun4();
+end;
+
+method fun4():
+begin
+  fun1();
+end;
