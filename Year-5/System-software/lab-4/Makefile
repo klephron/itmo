@@ -26,7 +26,7 @@ util.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(util.SRC_DIR))
 x86_64_core.SRC_DIR   := $(SRC_DIR)/x86_64_core
 x86_64_core.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(x86_64_core.SRC_DIR))
 x86_64_core.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
-x86_64_core.LIBS      := $(util.BUILD_DIR)/libutil.a
+x86_64_core.LIBS      :=
 
 compiler.SRC_DIR   := $(SRC_DIR)/compiler
 compiler.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(compiler.SRC_DIR))
@@ -147,10 +147,11 @@ debugger: debugger/build/main
 test: test/build
 
 ### Run all tests or specific
-run/test: FORCE test/build
-	for file in $(call rwildcard,$(TEST.BUILD_DIR),*.out); do "$$file"; done;
+run/test: FORCE
+	@for file in $(call rwildcard,$(test.BUILD_DIR),*.out); do echo "Test file: $$file" && "$$file"; done;
 run/test/%: test/build/%
-	$(patsubst run/test/%,$(TEST.BUILD_DIR)/%,$@)
+	@$(eval TEST_FILE=$(patsubst run/test/%,$(test.BUILD_DIR)/%,$@)) \
+		echo "Test file: $(TEST_FILE)" && $(TEST_FILE)
 
 ### Run main executable and generate dot
 run/pdf: run/pdf/io/suite8.txt
