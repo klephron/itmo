@@ -53,7 +53,7 @@ MODULES := util compiler x86_64_core stdc debugger test
 
 .DEFAULT_GOAL := compiler
 .PHONY := clean/build clean/out compiler debugger format help index run/asm run/pdf run/test stdc test util x86_64_core
-.PRECIOUS: $(util.LIBS) $(x86_64_core.LIBS) $(compiler.LIBS) $(debugger.LIBS) $(test.LIBS)
+.PRECIOUS: $(util.LIBS) $(compiler.LIBS) $(x86_64_core.LIBS) $(stdc.LIBS) $(debugger.LIBS) $(test.LIBS)
 
 FORCE:
 
