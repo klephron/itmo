@@ -27,10 +27,17 @@ char *read_string() {
 }
 
 int main() {
-  while (1) {
-    printf("> ");
-    char *s = read_string();
-    printf("%s", s);
-    free(s);
+  char *cmd = NULL;
+  int   exit = 0;
+
+  while (!exit) {
+    printf("(dbg) ");
+    cmd = read_string();
+    if (!strcmp(cmd, "exit")) {
+      exit = 1;
+    } else {
+      printf("%s\n", cmd);
+    }
+    free(cmd);
   }
 }
