@@ -5,6 +5,7 @@
 #include "util/macro.h"
 #include "util/string.h"
 #include <bfd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
@@ -30,7 +31,6 @@ void cmd_echo(context *ctx, const cmd_entry *entry, const char *rest) {
   UNUSED(entry);
 
   context_out_append(ctx, rest);
-  ctx->s_debugger = STATE_DEBUGGER_IDLE;
 }
 
 void cmd_file(context *ctx, const cmd_entry *entry, const char *rest) {
@@ -92,9 +92,7 @@ void cmd_file(context *ctx, const cmd_entry *entry, const char *rest) {
   }
   ctx->fname = name;
 
-  ctx->s_debugger = STATE_DEBUGGER_IDLE;
   ctx->s_target = STATE_TARGET_NOT_RUNNING;
-
   return;
 
 cleanup:
@@ -184,8 +182,6 @@ void cmd_info(context *ctx, const cmd_entry *entry, const char *rest) {
     context_err_appendln(ctx, arg);
     goto cleanup;
   }
-
-  ctx->s_debugger = STATE_DEBUGGER_IDLE;
 
 cleanup:
   if (arg) {

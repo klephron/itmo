@@ -90,6 +90,10 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   }
   self->cmd_prev_rest = strdup(cmd_rest);
 
+  if (ctx->s_debugger == STATE_DEBUGGER_PROCESSING) {
+    ctx->s_debugger = STATE_DEBUGGER_IDLE;
+  }
+
 cleanup:
   if (cmd) {
     free(cmd);

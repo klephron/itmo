@@ -2,7 +2,6 @@
 
 #include "util/string_buffer.h"
 #include <bfd.h>
-#include <stdio.h>
 #include <sys/types.h>
 
 typedef enum state_debugger_enum {
