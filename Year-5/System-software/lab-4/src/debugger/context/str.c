@@ -9,12 +9,6 @@ const char *state_target_enum_str(state_target_enum state) {
     return "NOT_RUNNING";
   case STATE_TARGET_RUNNING:
     return "RUNNING";
-  case STATE_TARGET_STOPPED:
-    return "STOPPED";
-  case STATE_TARGET_EXITED:
-    return "EXITED";
-  case STATE_TARGET_DETACHED:
-    return "DETACHED";
   case STATE_TARGET_UNKNOWN:
   default:
     warn("unexpected state %d", state);

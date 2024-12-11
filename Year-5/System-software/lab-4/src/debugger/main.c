@@ -21,6 +21,7 @@ static void add_cmds(cmd_handler *handler) {
   cmd_handler_cmd_add(handler, cmd_entry_new("file", cmd_file));
   cmd_handler_cmd_add(handler, cmd_entry_new("run", cmd_run));
   cmd_handler_cmd_add(handler, cmd_entry_new("info", cmd_info));
+  cmd_handler_cmd_add(handler, cmd_entry_new("kill", cmd_kill));
 }
 
 int main() {
