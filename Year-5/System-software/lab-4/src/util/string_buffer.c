@@ -69,3 +69,8 @@ char *string_buffer_detach(string_buffer *self) {
 size_t string_buffer_size(string_buffer *self) {
   return (((intptr_t)self->cur) - ((intptr_t)self->data));
 }
+
+void string_buffer_reset(string_buffer *self) {
+  self->cur = self->data;
+  *self->cur = '\0';
+}

@@ -10,23 +10,12 @@ AR          := $(AR)
 BUILD_DIR   := $(BUILD_DIR)
 
 
-LIB_DIR  := $(CURDIR)/lib
+# library files
+SRCS := $(filter-out $(wildcard $(CURDIR)/*.c),$(call rwildcard,$(CURDIR),*.c))
+HDRS := $(filter-out $(wildcard $(CURDIR)/*.h),$(call rwildcard,$(CURDIR),*.h))
+OBJS := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 
-
-SRCS.LIB := $(call rwildcard,$(LIB_DIR), *.c)
-HDRS.LIB := $(call rwildcard,$(LIB_DIR), *.h)
-OBJS.LIB := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS.LIB))
-
-SRCS.OUT := $(filter-out $(SRCS.LIB),$(call rwildcard,$(CURDIR),*.c))
-HDRS.OUT := $(filter-out $(HDRS.LIB),$(call rwildcard,$(CURDIR), *.h))
-TGTS.OUT := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%, $(SRCS.OUT))
-
-SRCS := $(SRCS.OUT) $(SRCS.LIB)
-HDRS := $(HDRS.OUT) $(HDRS.LIB)
-OBJS := $(OBJS.LIB)
-TGTS := $(TGTS.OUT)
-
-DIRS := $(sort $(dir $(OBJS)) $(dir $(TGTS)))
+DIRS := $(sort $(dir $(OBJS)) $(BUILD_DIR))
 $(sort $(DIRS)):
 	$(MKDIR) $(@:dir/%=%)
 
@@ -34,11 +23,13 @@ $(sort $(DIRS)):
 
 
 # object files
-$(BUILD_DIR)/%.o: %.c $(HDRS.LIB) | $(DIRS)
+$(BUILD_DIR)/%.o: %.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
 # libraries
-$(BUILD_DIR)/libdebugger.a: $(OBJS) $(LIBS)
+$(BUILD_DIR)/libdebugger.a: $(OBJS) $(LIBS) | $(DIRS)
+	echo $(OBJS)
+	echo $(call rwildcard,$(CURDIR),*.c)
 	$(AR) rcs $@ $^
 
 # targets

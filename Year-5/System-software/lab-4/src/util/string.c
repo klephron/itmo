@@ -1,5 +1,6 @@
 #include "util/string.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,4 +70,32 @@ int string_all_char_in_symbols(const char *str, const char *symbols) {
     }
   }
   return 1;
+}
+
+char *trim_end(char *str_m) {
+  if (*str_m) {
+    char *end = str_m + strlen(str_m) - 1;
+
+    while (*end && isspace((unsigned char)*end)) {
+      end--;
+    }
+    *(end + 1) = '\0';
+  }
+  return str_m;
+}
+
+char *trim_start(char *str_m) {
+  if (*str_m) {
+    while (*str_m && isspace((unsigned char)*str_m)) {
+      ++str_m;
+    }
+  }
+  return str_m;
+}
+
+char *trim(char *str_m) {
+  char *cur = trim_start(str_m);
+  char *n_str = strdup(cur);
+  free(str_m);
+  return trim_end(n_str);
 }

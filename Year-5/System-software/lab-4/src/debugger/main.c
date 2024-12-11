@@ -1,43 +1,49 @@
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static char *trim_end(char *str) {
-  if (*str) {
-    char *end = str + strlen(str) - 1;
+#include "debugger/cmd/cmd.h"
+#include "debugger/context/context.h"
 
-    while (*end && isspace((unsigned char)*end)) {
-      end--;
-    }
-    *(end + 1) = '\0';
-  }
-  return str;
-}
-
-char *read_string() {
+static char *read_string() {
   char  *line = NULL;
   size_t len = 0;
   getline(&line, &len, stdin);
   if (line == NULL) {
     return NULL;
   }
-  line = trim_end(line);
   return line;
 }
 
-int main() {
-  char *cmd = NULL;
-  int   exit = 0;
+static void add_cmds(cmd_handler *handler) {
+  cmd_handler_cmd_add(handler, cmd_entry_new("exit", cmd_exit));
+  cmd_handler_cmd_add(handler, cmd_entry_new("echo", cmd_echo));
+}
 
-  while (!exit) {
-    printf("(dbg) ");
-    cmd = read_string();
-    if (!strcmp(cmd, "exit")) {
-      exit = 1;
-    } else {
-      printf("%s\n", cmd);
-    }
+int main() {
+  context *ctx = context_new();
+
+  cmd_handler *handler = cmd_handler_new();
+  add_cmds(handler);
+
+  while (ctx->s_debugger != STATE_DEBUGGER_EXITING) {
+    fprintf(stdout, "(dbg) ");
+
+    char *cmd = read_string();
+    cmd_handler_handle(handler, ctx, cmd);
     free(cmd);
+
+    if (string_buffer_size(ctx->buffer_out)) {
+      fprintf(stdout, "%s", string_buffer_data(ctx->buffer_out));
+      string_buffer_reset(ctx->buffer_out);
+    }
+
+    if (ctx->s_debugger == STATE_DEBUGGER_ERROR) {
+      fprintf(stderr, "%s", string_buffer_data(ctx->buffer_err));
+      string_buffer_reset(ctx->buffer_err);
+    }
   }
+
+  cmd_handler_free(handler);
+  context_free(ctx);
 }

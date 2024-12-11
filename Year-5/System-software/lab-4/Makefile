@@ -199,8 +199,13 @@ format:
 
 ### Index project
 index:
-	make clean
-	bear -- make -j$(nproc) util compiler x86_64_core test/build
+	make clean/build
+	bear -- make -j$(nproc) util
+	bear --append -- make -j$(nproc) compiler
+	bear --append -- make -j$(nproc) x86_64_core
+	bear --append -- make -j$(nproc) test/build
+
+clean: clean/build
 
 ### Remove build files
 clean/build:
