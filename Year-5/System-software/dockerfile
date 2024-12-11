@@ -28,5 +28,5 @@ ENTRYPOINT ["bash", "-c", "service ssh restart && /usr/bin/bash" ]
 
 ## Tools
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install --no-install-recommends \
-  bear gdb graphviz libcriterion-dev clang-format \
+  bear gdb graphviz libcriterion-dev clang-format valgrind binutils-dev \
   && rm -rf /var/lib/apt/lists/*

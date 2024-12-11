@@ -1,6 +1,8 @@
 #pragma once
 
 #include "util/string_buffer.h"
+#include <bfd.h>
+#include <stdio.h>
 
 typedef enum state_debugger_enum {
   STATE_DEBUGGER_UNKNOWN,
@@ -12,18 +14,24 @@ typedef enum state_debugger_enum {
 
 typedef enum state_target_enum {
   STATE_TARGET_UNKNOWN,
+  STATE_TARGET_NO_TARGET,
   STATE_TARGET_NOT_RUNNING,
   STATE_TARGET_RUNNING,
   STATE_TARGET_STOPPED,
   STATE_TARGET_EXITED,
-  STATE_TARGET_DETACH, // detached from program?
+  STATE_TARGET_DETACHED, // detached from program?
 } state_target_enum;
 
 typedef struct context_struct {
   state_debugger_enum s_debugger;
   state_target_enum   s_target;
-  string_buffer      *buffer_out;
-  string_buffer      *buffer_err;
+  string_buffer      *buf_out;
+  string_buffer      *buf_err;
+  // internal
+  char     *name;
+  bfd      *abfd;
+  asymbol **abfd_asymbols;
+  int64_t   abfd_asymbols_count;
 } context;
 
 context *context_new();

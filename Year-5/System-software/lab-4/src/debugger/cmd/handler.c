@@ -68,9 +68,9 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
 
   if (it.end(&it)) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
-    string_buffer_append(ctx->buffer_err, "unknown command: ");
-    string_buffer_append(ctx->buffer_err, cmd_start);
-    string_buffer_append(ctx->buffer_err, "\n");
+    string_buffer_append(ctx->buf_err, "unknown command: ");
+    string_buffer_append(ctx->buf_err, cmd_start);
+    string_buffer_append(ctx->buf_err, "\n");
     goto cleanup;
   }
 
