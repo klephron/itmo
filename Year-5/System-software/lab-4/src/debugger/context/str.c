@@ -4,7 +4,7 @@
 const char *state_target_enum_str(state_target_enum state) {
   switch (state) {
   case STATE_TARGET_NO_TARGET:
-    return "UNKNOWN";
+    return "NO_TARGET";
   case STATE_TARGET_NOT_RUNNING:
     return "NOT_RUNNING";
   case STATE_TARGET_RUNNING:

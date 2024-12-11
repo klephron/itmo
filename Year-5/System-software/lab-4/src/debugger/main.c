@@ -4,6 +4,8 @@
 
 #include "debugger/cmd/cmd.h"
 #include "debugger/context/context.h"
+#include "debugger/context/str.h"
+#include "util/log.h"
 
 static char *read_string() {
   char  *line = NULL;
@@ -36,6 +38,9 @@ int main() {
     char *cmd = read_string();
     cmd_handler_handle(handler, ctx, cmd);
     free(cmd);
+
+    debug("debugger: %s, target: %s", state_debugger_enum_str(ctx->s_debugger),
+          state_target_enum_str(ctx->s_target));
 
     if (string_buffer_size(ctx->buf_out)) {
       fprintf(stdout, "%s", string_buffer_data(ctx->buf_out));
