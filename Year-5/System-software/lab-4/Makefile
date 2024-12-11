@@ -9,14 +9,20 @@ AR             ?= ar
 AS             ?= as
 LD             ?= ld
 
-FLAGS_NDEBUG   ?= -DNDEBUG
 FLAGS_SANITIZE ?= -fsanitize=address,undefined,leak
-FLAGS          ?= -g3 -O0 -m64 -Wall -Wextra $(FLAGS_SANITIZE) $(FLAGS_NDEBUG)
+# -DNDEBUG
+FLAGS_APPEND   ?=
+FLAGS          ?= -g3 -O0 -m64 -Wall -Wextra $(FLAGS_SANITIZE) $(FLAGS_APPEND)
 
 BUILD_DIR      ?= $(CURDIR)/build
 GEN_DIR        ?= $(BUILD_DIR)/_gen
 TARGET_DIR     ?= $(BUILD_DIR)
 TARGET_TST_DIR ?= $(BUILD_DIR)/test
+
+RUN.AS_FLAGS       ?= --64 -g
+RUN.LD_FLAGS       ?= -g -z noexecstack
+RUN.COMPILER_FLAGS ?= --mir
+RUN.DL_PATH        ?= /usr/lib64/ld-linux-x86-64.so.2
 
 SRC_DIR := $(CURDIR)/src
 
@@ -44,10 +50,6 @@ debugger.LIBS      := $(x86_64_core.BUILD_DIR)/libx86_64_all.a $(util.BUILD_DIR)
 test.SRC_DIR   := $(CURDIR)/test
 test.BUILD_DIR := $(patsubst $(CURDIR)/%,$(BUILD_DIR)/%,$(test.SRC_DIR))
 test.LIBS      := $(compiler.BUILD_DIR)/libcompiler.a $(util.BUILD_DIR)/libutil.a $(x86_64_core.BUILD_DIR)/libx86_64_all.a $(stdc.BUILD_DIR)/libstdc.a $(debugger.BUILD_DIR)/libdebugger.a
-
-RUN.AS_FLAGS       := --64 -g
-RUN.LD_FLAGS       := -g -z noexecstack
-RUN.COMPILER_FLAGS := --mir
 
 MODULES := util compiler x86_64_core stdc debugger test
 
@@ -181,7 +183,7 @@ run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a stdc/build/lib
 	@echo "--------------------COMPILE($(RUN.ASM_FILE))--------------------"
 	$(AS) $(RUN.AS_FLAGS) -o $(RUN.OBJECT_FILE) $(RUN.ASM_FILE)
 	$(LD) $(RUN.LD_FLAGS) -o $(RUN.OUTPUT_FILE) \
-		-dynamic-linker /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
+		-dynamic-linker $(RUN.DL_PATH) \
 		/usr/lib/x86_64-linux-gnu/crt1.o \
 		/usr/lib/x86_64-linux-gnu/crti.o \
 		-lc \
