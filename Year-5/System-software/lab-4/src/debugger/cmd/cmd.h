@@ -11,3 +11,4 @@ void cmd_kill(context *ctx, const char *rest);
 void cmd_print(context *ctx, const char *rest);
 void cmd_x(context *ctx, const char *rest);
 void cmd_disassemble(context *ctx, const char *rest);
+void cmd_continue(context *ctx, const char *rest);

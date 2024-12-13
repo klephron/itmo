@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 static int do_error_no_target(context *ctx) {
-  if (ctx->s_target == STATE_TARGET_NO_TARGET) {
+  if (context_get_state_target(ctx) == STATE_TARGET_NO_TARGET) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not loaded");
     return 1;
@@ -91,7 +91,6 @@ void cmd_file(context *ctx, const char *rest) {
   }
   ctx->fname = name;
 
-  ctx->s_target = STATE_TARGET_NOT_RUNNING;
   return;
 
 cleanup:
@@ -183,8 +182,9 @@ void cmd_info(context *ctx, const char *rest) {
     context_out_append(ctx, "file: ");
     context_out_append(ctx, ctx->fname);
     context_out_append(ctx, ", status: ");
-    context_out_append(ctx, state_target_enum_str(ctx->s_target));
-    if (ctx->s_target != STATE_TARGET_NOT_RUNNING) {
+    context_out_append(ctx,
+                       state_target_enum_str(context_get_state_target(ctx)));
+    if (context_get_state_target(ctx) != STATE_TARGET_NOT_RUNNING) {
       context_out_append(ctx, ", pid: ");
       snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
       context_out_appendln(ctx, buf);
@@ -195,7 +195,7 @@ void cmd_info(context *ctx, const char *rest) {
     if (do_error_no_target(ctx)) {
       goto cleanup;
     }
-    if (ctx->s_target == STATE_TARGET_NOT_RUNNING) {
+    if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
       ctx->s_debugger = STATE_DEBUGGER_ERROR;
       context_err_appendln(ctx, "target is not running");
       goto cleanup;
@@ -282,7 +282,7 @@ void cmd_run(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (ctx->s_target == STATE_TARGET_RUNNING) {
+  if (context_get_state_target(ctx) == STATE_TARGET_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is already running");
     goto cleanup;
@@ -327,7 +327,6 @@ void cmd_run(context *ctx, const char *rest) {
     char buf[64];
     int  status;
     waitpid(pid, &status, 0);
-    ctx->s_target = STATE_TARGET_RUNNING;
     ctx->pid = pid;
     context_out_append(ctx, "started with pid ");
     snprintf(buf, STRMAXLEN(buf), "%d", pid);
@@ -363,7 +362,7 @@ void cmd_kill(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (ctx->s_target == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_append(ctx, "target is not running\n");
     goto cleanup;
@@ -395,8 +394,6 @@ void cmd_kill(context *ctx, const char *rest) {
     context_out_appendln(ctx, " not by signal");
   }
 
-  ctx->s_target = STATE_TARGET_NOT_RUNNING;
-
 cleanup:
   if (args_str) {
     free(args_str);
@@ -419,7 +416,7 @@ void cmd_print(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (ctx->s_target == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
@@ -619,7 +616,7 @@ void cmd_x(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (ctx->s_target == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
@@ -778,7 +775,8 @@ static int cmd_disassemble_read_memory(bfd_vma memaddr, bfd_byte *addr,
     long data = ptrace(PTRACE_PEEKDATA, ctx->pid, addr_cur, NULL);
     if (errno) {
       ctx->s_debugger = STATE_DEBUGGER_ERROR;
-      context_err_appendln(ctx, "ptrace error while fetching data");
+      context_err_append(ctx, "ptrace error while fetching data: ");
+      context_err_appendln(ctx, strerror(errno));
       return 1;
     }
     uint64_t bytes_to_copy = sizeof(long);
@@ -810,7 +808,7 @@ void cmd_disassemble(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (ctx->s_target == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
@@ -892,4 +890,30 @@ cleanup:
     free(arg_address);
   }
   return;
+}
+
+void cmd_continue(context *ctx, const char *rest) {
+  UNUSED(rest);
+  char *args = NULL;
+
+  if (do_error_no_target(ctx)) {
+    goto cleanup;
+  }
+
+  if (context_get_state_target(ctx) != STATE_TARGET_RUNNING) {
+    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    context_err_appendln(ctx, "target is not running");
+    goto cleanup;
+  }
+
+  if (ptrace(PTRACE_CONT, ctx->pid, NULL, NULL) == -1) {
+    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    context_err_appendln(ctx, "continue failed");
+    goto cleanup;
+  }
+
+cleanup:
+  if (args) {
+    free(args);
+  }
 }

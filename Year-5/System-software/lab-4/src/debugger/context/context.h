@@ -21,7 +21,6 @@ typedef enum state_target_enum {
 
 typedef struct context_struct {
   state_debugger_enum s_debugger;
-  state_target_enum   s_target;
   string_buffer      *buf_out;
   string_buffer      *buf_err;
   // internal
@@ -39,3 +38,5 @@ void context_out_append(context *self, const char *data);
 void context_out_appendln(context *self, const char *data);
 void context_err_append(context *self, const char *data);
 void context_err_appendln(context *self, const char *data);
+
+state_target_enum context_get_state_target(context *self);

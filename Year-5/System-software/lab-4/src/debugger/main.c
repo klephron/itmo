@@ -133,6 +133,8 @@ static int execute(args *args) {
   cmd_handler_register(handler, cmd_entry_new("examine", cmd_x));
   cmd_handler_register(handler, cmd_entry_new("dis", cmd_disassemble));
   cmd_handler_register(handler, cmd_entry_new("disassemble", cmd_disassemble));
+  cmd_handler_register(handler, cmd_entry_new("c", cmd_continue));
+  cmd_handler_register(handler, cmd_entry_new("continue", cmd_continue));
 
   while (ctx->s_debugger != STATE_DEBUGGER_EXITING) {
     FILE *fp = NULL;
@@ -150,7 +152,7 @@ static int execute(args *args) {
     }
 
     debug("debugger: %s, target: %s", state_debugger_enum_str(ctx->s_debugger),
-          state_target_enum_str(ctx->s_target));
+          state_target_enum_str(context_get_state_target(ctx)));
 
     if (string_buffer_size(ctx->buf_out)) {
       fprintf(stdout, "%s", string_buffer_data(ctx->buf_out));
@@ -158,7 +160,7 @@ static int execute(args *args) {
     }
 
     if (ctx->s_debugger == STATE_DEBUGGER_ERROR) {
-      fprintf(stderr, "%s", string_buffer_data(ctx->buf_err));
+      fprintf(stderr, "error: %s", string_buffer_data(ctx->buf_err));
       string_buffer_reset(ctx->buf_err);
       ctx->s_debugger = STATE_DEBUGGER_IDLE;
     }
