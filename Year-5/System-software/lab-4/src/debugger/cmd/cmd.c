@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 static int do_error_no_target(context *ctx) {
-  if (context_get_state_target(ctx) == STATE_TARGET_NO_TARGET) {
+  if (context_get_target_state(ctx) == STATE_TARGET_NO_TARGET) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not loaded");
     return 1;
@@ -183,8 +183,8 @@ void cmd_info(context *ctx, const char *rest) {
     context_out_append(ctx, ctx->fname);
     context_out_append(ctx, ", status: ");
     context_out_append(ctx,
-                       state_target_enum_str(context_get_state_target(ctx)));
-    if (context_get_state_target(ctx) != STATE_TARGET_NOT_RUNNING) {
+                       state_target_enum_str(context_get_target_state(ctx)));
+    if (context_get_target_state(ctx) != STATE_TARGET_NOT_RUNNING) {
       context_out_append(ctx, ", pid: ");
       snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
       context_out_appendln(ctx, buf);
@@ -195,7 +195,7 @@ void cmd_info(context *ctx, const char *rest) {
     if (do_error_no_target(ctx)) {
       goto cleanup;
     }
-    if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
+    if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
       ctx->s_debugger = STATE_DEBUGGER_ERROR;
       context_err_appendln(ctx, "target is not running");
       goto cleanup;
@@ -282,7 +282,7 @@ void cmd_run(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_state_target(ctx) == STATE_TARGET_RUNNING) {
+  if (context_get_target_state(ctx) == STATE_TARGET_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is already running");
     goto cleanup;
@@ -362,7 +362,7 @@ void cmd_kill(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_append(ctx, "target is not running\n");
     goto cleanup;
@@ -416,7 +416,7 @@ void cmd_print(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
@@ -616,7 +616,7 @@ void cmd_x(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
@@ -808,7 +808,7 @@ void cmd_disassemble(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_state_target(ctx) == STATE_TARGET_NOT_RUNNING) {
+  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
@@ -900,7 +900,7 @@ void cmd_continue(context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_state_target(ctx) != STATE_TARGET_RUNNING) {
+  if (context_get_target_state(ctx) != STATE_TARGET_RUNNING) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;

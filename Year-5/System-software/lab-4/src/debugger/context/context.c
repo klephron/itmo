@@ -56,8 +56,8 @@ void context_err_appendln(context *self, const char *data) {
   context_err_append(self, "\n");
 }
 
-state_target_enum context_get_state_target(context *self) {
-  state_target_enum state = STATE_TARGET_UNKNOWN;
+target_state_enum context_get_target_state(context *self) {
+  target_state_enum state = STATE_TARGET_UNKNOWN;
 
   if (!self->fname) {
     state = STATE_TARGET_NO_TARGET;

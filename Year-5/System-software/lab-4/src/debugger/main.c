@@ -152,7 +152,7 @@ static int execute(args *args) {
     }
 
     debug("debugger: %s, target: %s", state_debugger_enum_str(ctx->s_debugger),
-          state_target_enum_str(context_get_state_target(ctx)));
+          state_target_enum_str(context_get_target_state(ctx)));
 
     if (string_buffer_size(ctx->buf_out)) {
       fprintf(stdout, "%s", string_buffer_data(ctx->buf_out));
