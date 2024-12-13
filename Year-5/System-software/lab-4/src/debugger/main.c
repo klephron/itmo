@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "debugger/cmd/cmd.h"
+#include "debugger/cmd/handler.h"
 #include "debugger/context/context.h"
 #include "debugger/context/str.h"
 #include "util/log.h"
@@ -122,6 +123,8 @@ static int execute(args *args) {
   cmd_handler_register(handler, cmd_entry_new("run", cmd_run));
   cmd_handler_register(handler, cmd_entry_new("info", cmd_info));
   cmd_handler_register(handler, cmd_entry_new("kill", cmd_kill));
+  cmd_handler_register(handler, cmd_entry_new("p", cmd_print));
+  cmd_handler_register(handler, cmd_entry_new("print", cmd_print));
 
   while (ctx->s_debugger != STATE_DEBUGGER_EXITING) {
     FILE *fp = NULL;

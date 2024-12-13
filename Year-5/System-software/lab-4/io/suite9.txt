@@ -5,10 +5,7 @@ method main(): void
 var
   a, b, c, r;
 begin
-  a = 10;
-  b = 20;
-  c = make!<array[] of long>(10);
-  r = (a + b) * a;
-  c[2] = r;
-  print!(c[2]);
+  print!(10);
+  print!(20);
+  print!(30);
 end;

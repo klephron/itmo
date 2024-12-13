@@ -8,7 +8,7 @@
 
 typedef struct cmd_entry_struct cmd_entry;
 // updates context state inside of cmd
-typedef void (*cmd)(context *ctx, const cmd_entry *entry, const char *rest);
+typedef void (*cmd)(context *ctx, const char *rest);
 
 typedef struct cmd_entry_struct {
   char *cmd_ref;

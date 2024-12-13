@@ -1,9 +1,3 @@
-echo 'Hello!'
-
-info target
-file io/suite8.txt.out
-info target
+file io/suite9.txt.out
 run
 info target
-kill
-exit

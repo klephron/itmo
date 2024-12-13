@@ -60,7 +60,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   // repeat command if exists
   if (!*cmd_start) {
     if (self->cmd_prev) {
-      self->cmd_prev->handle_ref(ctx, self->cmd_prev, self->cmd_prev_rest);
+      self->cmd_prev->handle_ref(ctx, self->cmd_prev_rest);
     }
     goto cleanup;
   }
@@ -84,7 +84,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   }
 
   ctx->s_debugger = STATE_DEBUGGER_PROCESSING;
-  entry->handle_ref(ctx, entry, cmd_rest);
+  entry->handle_ref(ctx, cmd_rest);
 
   self->cmd_prev = entry;
   if (self->cmd_prev_rest) {
