@@ -120,11 +120,15 @@ static int execute(args *args) {
   cmd_handler_register(handler, cmd_entry_new("exit", cmd_exit));
   cmd_handler_register(handler, cmd_entry_new("echo", cmd_echo));
   cmd_handler_register(handler, cmd_entry_new("file", cmd_file));
+  cmd_handler_register(handler, cmd_entry_new("f", cmd_file));
   cmd_handler_register(handler, cmd_entry_new("run", cmd_run));
+  cmd_handler_register(handler, cmd_entry_new("r", cmd_run));
   cmd_handler_register(handler, cmd_entry_new("info", cmd_info));
+  cmd_handler_register(handler, cmd_entry_new("i", cmd_info));
   cmd_handler_register(handler, cmd_entry_new("kill", cmd_kill));
-  cmd_handler_register(handler, cmd_entry_new("p", cmd_print));
+  cmd_handler_register(handler, cmd_entry_new("k", cmd_kill));
   cmd_handler_register(handler, cmd_entry_new("print", cmd_print));
+  cmd_handler_register(handler, cmd_entry_new("p", cmd_print));
 
   while (ctx->s_debugger != STATE_DEBUGGER_EXITING) {
     FILE *fp = NULL;
