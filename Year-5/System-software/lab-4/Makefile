@@ -105,7 +105,7 @@ define debugger.ENV
 	CC="$(CC)" \
 	FLAGS="$(FLAGS)" \
 	LIBS="$(debugger.LIBS)" \
-	INCS="-I$(SRC_DIR) -lbfd" \
+	INCS="-I$(SRC_DIR) -lbfd -lopcodes" \
 	BUILD_DIR="$(debugger.BUILD_DIR)"
 endef
 

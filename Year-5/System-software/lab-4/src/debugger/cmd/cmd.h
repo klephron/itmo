@@ -9,3 +9,5 @@ void cmd_run(context *ctx, const char *rest);
 void cmd_info(context *ctx, const char *rest);
 void cmd_kill(context *ctx, const char *rest);
 void cmd_print(context *ctx, const char *rest);
+void cmd_x(context *ctx, const char *rest);
+void cmd_disassemble(context *ctx, const char *rest);

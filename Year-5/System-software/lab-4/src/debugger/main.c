@@ -129,6 +129,10 @@ static int execute(args *args) {
   cmd_handler_register(handler, cmd_entry_new("k", cmd_kill));
   cmd_handler_register(handler, cmd_entry_new("print", cmd_print));
   cmd_handler_register(handler, cmd_entry_new("p", cmd_print));
+  cmd_handler_register(handler, cmd_entry_new("x", cmd_x));
+  cmd_handler_register(handler, cmd_entry_new("examine", cmd_x));
+  cmd_handler_register(handler, cmd_entry_new("dis", cmd_disassemble));
+  cmd_handler_register(handler, cmd_entry_new("disassemble", cmd_disassemble));
 
   while (ctx->s_debugger != STATE_DEBUGGER_EXITING) {
     FILE *fp = NULL;
