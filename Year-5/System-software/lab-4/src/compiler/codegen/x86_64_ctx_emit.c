@@ -257,7 +257,7 @@ void cg_emit_label(cg_x86_64_ctx *self, string_buffer *buf,
     string_buffer_append(buf, ":\n");
     break;
   case CG_X86_64_LABEL_DIRECTIVE:
-    info("unexpected label directive %d %p", label->kind, label);
+    warn("unexpected label directive %d %p", label->kind, label);
     break;
   default:
     error("unknown label kind %d %p", label->kind, label);

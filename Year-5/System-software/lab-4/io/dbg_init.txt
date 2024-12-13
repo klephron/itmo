@@ -1,0 +1,9 @@
+echo 'Hello!'
+
+info target
+file io/suite8.txt.out
+info target
+run
+info target
+kill
+exit

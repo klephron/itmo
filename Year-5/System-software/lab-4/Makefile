@@ -19,10 +19,13 @@ GEN_DIR        ?= $(BUILD_DIR)/_gen
 TARGET_DIR     ?= $(BUILD_DIR)
 TARGET_TST_DIR ?= $(BUILD_DIR)/test
 
-RUN.AS_FLAGS       ?= --64 -g
-RUN.LD_FLAGS       ?= -g -z noexecstack
-RUN.COMPILER_FLAGS ?= --mir
-RUN.DL_PATH        ?= /usr/lib64/ld-linux-x86-64.so.2
+PDF.COMPILER_FLAGS ?= --ast --cfg --cg
+
+ASM.AS_FLAGS       ?= --64 -g
+ASM.LD_FLAGS       ?= -g -z noexecstack
+ASM.COMPILER_FLAGS ?= --mir
+ASM.DL_PATH        ?= /usr/lib64/ld-linux-x86-64.so.2
+
 
 SRC_DIR := $(CURDIR)/src
 
@@ -157,42 +160,45 @@ run/test/%: test/build/%
 
 ### Run main executable and generate dot
 run/pdf: run/pdf/io/suite8.txt
-run/pdf/%: RUN.INPUT_FILE=$(patsubst run/pdf/%,%,$@)
-run/pdf/%: RUN.ASM_FILE=$(patsubst run/pdf/%,%.asm,$@)
+run/pdf/%: PDF.INPUT_FILE=$(patsubst run/pdf/%,%,$@)
+run/pdf/%: PDF.ASM_FILE=$(patsubst run/pdf/%,%.asm,$@)
 run/pdf/%: compiler/build/main
-	./build/compiler/main -d . -o $(RUN.ASM_FILE) --ignore-errors \
-		--ast --cfg --cg \
-		--cfg-add-expr --hir-symbols --mir \
-		$(RUN.INPUT_FILE) || true
-	@echo "--------------------ASSEMBLY($(RUN.ASM_FILE))--------------------"
-	@cat $(RUN.ASM_FILE)
-	@echo "--------------------DOT2PDF($(RUN.INPUT_FILE))--------------------"
+	./build/compiler/main -d . -o $(PDF.ASM_FILE) --ignore-errors \
+		$(PDF.COMPILER_FLAGS) \
+		$(PDF.INPUT_FILE) || true
+	@echo "--------------------DOT2PDF($(PDF.INPUT_FILE))--------------------"
 	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
 
 ### Compile file
 run/asm: run/asm/io/suite8.txt
-run/asm/%: RUN.INPUT_FILE=$(patsubst run/asm/%,%,$@)
-run/asm/%: RUN.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
-run/asm/%: RUN.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
-run/asm/%: RUN.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
+run/asm/%: ASM.INPUT_FILE=$(patsubst run/asm/%,%,$@)
+run/asm/%: ASM.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
+run/asm/%: ASM.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
+run/asm/%: ASM.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
 run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a stdc/build/libstdc.a
-	./build/compiler/main $(RUN.COMPILER_FLAGS) \
-		-o $(RUN.ASM_FILE) $(RUN.INPUT_FILE)
-	@echo "--------------------ASSEMBLY($(RUN.ASM_FILE))--------------------"
-	@cat $(RUN.ASM_FILE)
-	@echo "--------------------COMPILE($(RUN.ASM_FILE))--------------------"
-	$(AS) $(RUN.AS_FLAGS) -o $(RUN.OBJECT_FILE) $(RUN.ASM_FILE)
-	$(LD) $(RUN.LD_FLAGS) -o $(RUN.OUTPUT_FILE) \
-		-dynamic-linker $(RUN.DL_PATH) \
+	./build/compiler/main $(ASM.COMPILER_FLAGS) \
+		-o $(ASM.ASM_FILE) $(ASM.INPUT_FILE)
+	@echo "--------------------ASSEMBLY($(ASM.ASM_FILE))--------------------"
+	@cat $(ASM.ASM_FILE)
+	@echo "--------------------COMPILE($(ASM.ASM_FILE))--------------------"
+	$(AS) $(ASM.AS_FLAGS) -o $(ASM.OBJECT_FILE) $(ASM.ASM_FILE)
+	$(LD) $(ASM.LD_FLAGS) -o $(ASM.OUTPUT_FILE) \
+		-dynamic-linker $(ASM.DL_PATH) \
 		/usr/lib/x86_64-linux-gnu/crt1.o \
 		/usr/lib/x86_64-linux-gnu/crti.o \
 		-lc \
-		$(RUN.OBJECT_FILE) \
+		$(ASM.OBJECT_FILE) \
 		$(BUILD_DIR)/x86_64_core/libx86_64_core.a \
 		$(BUILD_DIR)/stdc/libstdc.a \
 		/usr/lib/x86_64-linux-gnu/crtn.o
-	@echo "--------------------RUN($(RUN.OUTPUT_FILE))--------------------"
-	@./$(RUN.OUTPUT_FILE)
+	@echo "--------------------ASM.$(ASM.OUTPUT_FILE))--------------------"
+	@./$(ASM.OUTPUT_FILE)
+
+### Run debugger
+run/dbg: run/dbg/io/dbg_init.txt
+run/dbg/%: DBG.INIT_FILE=$(patsubst run/dbg/%,%,$@)
+run/dbg/%: debugger/build/main
+	./build/debugger/main -i $(DBG.INIT_FILE)
 
 ### Format
 format:
@@ -202,9 +208,10 @@ format:
 ### Index project
 index:
 	make clean/build
-	bear -- make -j$(nproc) util
-	bear --append -- make -j$(nproc) compiler
+	bear          -- make -j$(nproc) util
 	bear --append -- make -j$(nproc) x86_64_core
+	bear --append -- make -j$(nproc) compiler
+	bear --append -- make -j$(nproc) debugger
 	bear --append -- make -j$(nproc) test/build
 
 clean: clean/build

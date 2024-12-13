@@ -66,6 +66,7 @@ const char *hir_expr_unary_enum_str(hir_expr_unary_enum type) {
   case HIR_EXPR_UNARY_DEC:
     return "DEC";
   default:
+    warn("unknown expr_unary_enum %d", type);
     return "UNKNOWN";
   }
 }
@@ -111,6 +112,7 @@ const char *hir_expr_binary_enum_str(hir_expr_binary_enum type) {
   case HIR_EXPR_BINARY_MOD:
     return "MOD";
   default:
+    warn("unknown expr_binary_enum %d", type);
     return "UNKNOWN";
   }
 }
@@ -132,6 +134,7 @@ const char *hir_node_enum_str(hir_node_enum kind) {
   case HIR_NODE_EXPR:
     return "EXPR";
   default:
+    warn("unknown hir_node_enum %d", kind);
     return "UNKNOWN";
   }
 }
@@ -151,7 +154,7 @@ const char *hir_stmt_enum_str(hir_stmt_enum kind) {
   case HIR_STMT_EXPR:
     return "EXPR";
   default:
-    error("unknown stmt enum %d", kind);
+    warn("unknown stmt enum %d", kind);
     return "UNKNOWN";
   }
 }
@@ -173,7 +176,7 @@ const char *hir_expr_enum_str(hir_expr_enum kind) {
   case HIR_EXPR_BUILTIN:
     return "BUILTIN";
   default:
-    error("unknown expr enum %d", kind);
+    warn("unknown expr enum %d", kind);
     return "UNKNOWN";
   }
 }
@@ -187,7 +190,7 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
   case HIR_EXPR_BUILTIN_PRINT:
     return "PRINT";
   default:
-    error("unknown expr builtin enum %d", kind);
+    warn("unknown expr builtin enum %d", kind);
     return "UNKNOWN";
   }
 }
@@ -225,7 +228,7 @@ char *hir_lit_value_str(const hir_lit *lit) {
     return buf;
   }
   default:
-    error("unknown lit type %d", lit->type->type);
+    warn("unknown lit type %d", lit->type->type);
     return strdup("(unknown)");
   }
 }
@@ -258,7 +261,7 @@ const char *hir_binding_enum_str(hir_binding_enum kind) {
   case HIR_BINDING_SUBROUTINE:
     return "SUBROUTINE";
   default:
-    error("unknown binding_enum %d", kind);
+    warn("unknown binding_enum %d", kind);
     return "UNKNOWN";
   }
 }

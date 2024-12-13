@@ -1,5 +1,6 @@
 #include "handler.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
 #include <ctype.h>
@@ -38,8 +39,9 @@ void cmd_handler_free(cmd_handler *self) {
   }
 }
 
-void cmd_handler_cmd_add(cmd_handler *self, cmd_entry *entry) {
+void cmd_handler_register(cmd_handler *self, cmd_entry *entry) {
   hashset_cmd_insert(self->cmds, entry);
+  debug("handler %p added cmd %s", self, entry->cmd_ref);
 }
 
 void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {

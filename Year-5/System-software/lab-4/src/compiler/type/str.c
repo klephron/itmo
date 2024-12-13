@@ -1,5 +1,6 @@
 #include "str.h"
 
+#include "util/log.h"
 #include "util/string_buffer.h"
 #include <stdio.h>
 #include <string.h>
@@ -69,6 +70,7 @@ static void type_str_generic(string_buffer *buffer, const type_base *generic) {
   } break;
   case TYPE_UNKNOWN:
   default:
+    warn("unknown type %d %p", generic->type, generic);
     string_buffer_append(buffer, "unknown");
     break;
   }

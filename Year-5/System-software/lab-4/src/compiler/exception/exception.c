@@ -109,7 +109,7 @@ char *exception_str(const exception *exc) {
     string_buffer_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
     break;
   case EXCEPTION_LEVEL_WARNING:
-    string_buffer_append(buffer, ANSI_COLOR_YELLOW "warning" ANSI_COLOR_RESET);
+    string_buffer_append(buffer, ANSI_COLOR_YELLOW "warn" ANSI_COLOR_RESET);
     break;
   case EXCEPTION_LEVEL_ERROR:
     string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
@@ -144,7 +144,7 @@ char *exception_str(const exception *exc) {
              exc_message);
     break;
   default:
-    info("unknown exception type %d", exc->type);
+    warn("unknown exception type %d", exc->type);
     snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;

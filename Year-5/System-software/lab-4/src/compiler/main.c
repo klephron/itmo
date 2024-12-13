@@ -22,7 +22,7 @@
 LIST_DECLARE_STATIC_INLINE(list_chars, char, container_cmp_chars,
                            container_new_chars, container_delete_chars);
 
-struct args_struct {
+typedef struct args_struct {
   char       *prog_name;
   list_chars *input_files;
   // options
@@ -41,10 +41,10 @@ struct args_struct {
   // status
   int code;
   int help;
-};
+} args;
 
-static struct args_struct *args_new() {
-  struct args_struct *args = MALLOC(struct args_struct);
+static args *args_new() {
+  args *args = MALLOC(struct args_struct);
 
   args->prog_name = NULL;
   args->input_files = list_chars_new();
@@ -72,13 +72,13 @@ static struct args_struct *args_new() {
   return args;
 }
 
-static void args_free(struct args_struct *args) {
+static void args_free(args *args) {
   list_chars_free(args->input_files);
   list_chars_free(args->cg_subroutines);
   free(args);
 }
 
-static void usage(struct args_struct *args) {
+static void usage(args *args) {
   int  buf_len = 256;
   char cg_subroutines[buf_len];
   int  offset = 0;
@@ -107,13 +107,14 @@ static void usage(struct args_struct *args) {
       "(current: %s)\n"
       "--hir-symbols    - print HIR symbols (current: %d)\n"
       "--hir-tree       - print HIR tree (current: %d)\n"
-      "--mir            - print MIR tree (current: %d)\n",
+      "--mir            - print MIR tree (current: %d)\n"
+      "-h               - show help\n",
       args->prog_name, args->output_dir, args->output_file, args->tee,
       args->ignore_errors, args->ast, args->cfg, args->cfg_add_expr, args->cg,
       cg_subroutines, args->hir_symbols, args->hir_tree, args->mir);
 }
 
-static void parse_args(struct args_struct *args, int argc, char *argv[]) {
+static void parse(args *args, int argc, char *argv[]) {
   int           option_index;
   int           has_next;
   struct option long_options[] = {
@@ -191,8 +192,7 @@ static void ensure_dir_exist(const char *filename) {
 }
 
 // ast - ext, dot - file extension
-static char *get_ast_dot_output(const struct args_struct *args,
-                                const ast                *ast) {
+static char *get_ast_dot_output(const args *args, const ast *ast) {
   char *suffix = ".ast.dot";
   char *prefix = join_paths(args->output_dir, ast->name);
 
@@ -203,8 +203,8 @@ static char *get_ast_dot_output(const struct args_struct *args,
   return output;
 }
 
-static char *get_c_dot_output(struct args_struct *args, const char *source,
-                              const char *func, const char *ext) {
+static char *get_c_dot_output(args *args, const char *source, const char *func,
+                              const char *ext) {
   char *suffix = ".dot";
 
   char *prefix = join_paths(args->output_dir, source);
@@ -217,23 +217,22 @@ static char *get_c_dot_output(struct args_struct *args, const char *source,
   return output;
 }
 
-static char *get_cfg_dot_output(struct args_struct *args, const char *source,
+static char *get_cfg_dot_output(args *args, const char *source,
                                 const char *func) {
   return get_c_dot_output(args, source, func, "cfg");
 }
 
-static char *get_cg_dot_output(struct args_struct *args, const char *source,
+static char *get_cg_dot_output(args *args, const char *source,
                                const char *func) {
   return get_c_dot_output(args, source, func, "cg");
 }
 
-static int has_subroutine(struct args_struct *args, const char *subroutine) {
+static int has_subroutine(args *args, const char *subroutine) {
   list_chars_it it = list_chars_find(args->cg_subroutines, subroutine);
   return !it.end(&it);
 }
 
-static void print_exceptions(struct args_struct *args,
-                             list_exception     *exceptions) {
+static void print_exceptions(args *args, list_exception *exceptions) {
   UNUSED(args);
   for (list_exception_it it = list_exception_begin(exceptions); !it.end(&it);
        it.next(&it)) {
@@ -244,8 +243,7 @@ static void print_exceptions(struct args_struct *args,
   }
 }
 
-static void write_dot(struct args_struct *args, const dot_string *dot,
-                      const char *output) {
+static void write_dot(args *args, const dot_string *dot, const char *output) {
   if (args->tee) {
     printf("%s\n", dot->chars);
   }
@@ -255,7 +253,7 @@ static void write_dot(struct args_struct *args, const dot_string *dot,
   fclose(output_fd);
 }
 
-static void write_asm(struct args_struct *args, const char *data) {
+static void write_asm(args *args, const char *data) {
   if (args->tee) {
     printf("%s\n", data);
   }
@@ -300,9 +298,7 @@ LIST_DECLARE_STATIC_INLINE(list_ast, ast, container_cmp_false,
 LIST_DECLARE_STATIC_INLINE(list_source, char, container_cmp_false,
                            container_new_move, container_delete_chars);
 
-static int execute(struct args_struct *args) {
-  int error = 0;
-
+static int execute(args *args) {
   list_source *sources = list_source_new();
   list_lexer  *lexers = list_lexer_new();
   list_stream *streams = list_stream_new();
@@ -322,13 +318,13 @@ static int execute(struct args_struct *args) {
 
     if (list_exception_count_by_level(lexer->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, lexer->exceptions);
 
     if (list_exception_count_by_level(parser->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, parser->exceptions);
 
@@ -340,7 +336,7 @@ static int execute(struct args_struct *args) {
   }
 
   // stage: dot ast
-  if (args->ast && (!error || args->ignore_errors)) {
+  if (args->ast && (!args->code || args->ignore_errors)) {
     for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
       ast        *ast = it.get(&it);
       dot_string *dot = dot_ast(ast);
@@ -355,43 +351,43 @@ static int execute(struct args_struct *args) {
   hir     *hir = hir_new();
   hir_ctx *hir_ctx = hir_ctx_new(hir);
 
-  if (!error || args->ignore_errors) {
+  if (!args->code || args->ignore_errors) {
     for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
       const ast *ast = list_ast_it_get(&it);
       hir_ctx_build(hir_ctx, ast);
     }
     if (list_exception_count_by_level(hir_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, hir_ctx->exceptions);
     hir_ctx_reset_exceptions(hir_ctx);
   }
 
   // stage: hir bind symbols
-  if (!error || args->ignore_errors) {
+  if (!args->code || args->ignore_errors) {
     hir_ctx_bind(hir_ctx);
     if (list_exception_count_by_level(hir_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, hir_ctx->exceptions);
     hir_ctx_reset_exceptions(hir_ctx);
   }
 
   // stage: hir type
-  if (!error || args->ignore_errors) {
+  if (!args->code || args->ignore_errors) {
     hir_ctx_type(hir_ctx);
     if (list_exception_count_by_level(hir_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, hir_ctx->exceptions);
     hir_ctx_reset_exceptions(hir_ctx);
   }
 
   // stage: print hir symbols
-  if (args->hir_symbols && (!error || args->ignore_errors)) {
+  if (args->hir_symbols && (!args->code || args->ignore_errors)) {
     char *globals = hir_list_symbol_str(hir->globals);
     printf("HIR GLOBAL SYMBOLS:\n%s", globals);
     free(globals);
@@ -402,7 +398,7 @@ static int execute(struct args_struct *args) {
   }
 
   // stage: print hir tree
-  if (args->hir_tree && (!error || args->ignore_errors)) {
+  if (args->hir_tree && (!args->code || args->ignore_errors)) {
     char *tree = hir_tree_str(hir);
     printf("HIR TREE:\n%s\n", tree);
     free(tree);
@@ -412,18 +408,18 @@ static int execute(struct args_struct *args) {
   eir_ctx *eir_ctx = eir_ctx_new(eir);
 
   // stage: build eir
-  if (!error || args->ignore_errors) {
+  if (!args->code || args->ignore_errors) {
     eir_ctx_build(eir_ctx, hir);
     if (list_exception_count_by_level(eir_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, eir_ctx->exceptions);
     eir_ctx_reset_exceptions(eir_ctx);
   }
 
   // stage: dot cfg
-  if (args->cfg && (!error || args->ignore_errors)) {
+  if (args->cfg && (!args->code || args->ignore_errors)) {
     for (list_eir_subroutine_it it =
              list_eir_subroutine_begin(eir->subroutines);
          !it.end(&it); it.next(&it)) {
@@ -440,7 +436,7 @@ static int execute(struct args_struct *args) {
   }
 
   // stage: dot cg
-  if (args->cg && (!error || args->ignore_errors)) {
+  if (args->cg && (!args->code || args->ignore_errors)) {
     for (list_eir_subroutine_it it =
              list_eir_subroutine_begin(eir->subroutines);
          !it.end(&it); it.next(&it)) {
@@ -462,19 +458,19 @@ static int execute(struct args_struct *args) {
   mir_ctx *mir_ctx = mir_ctx_new(mir);
 
   // stage: build mir
-  if (!error || args->ignore_errors) {
+  if (!args->code || args->ignore_errors) {
     mir_ctx_build(mir_ctx, eir);
     // optimizations
     mir_ctx_bb_merge(mir_ctx);
     if (list_exception_count_by_level(mir_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, mir_ctx->exceptions);
   }
 
   // stage: print mir tree
-  if (args->mir && (!error || args->ignore_errors)) {
+  if (args->mir && (!args->code || args->ignore_errors)) {
     char *tree = mir_tree_str(mir);
     printf("MIR TREE:\n%s\n", tree);
     free(tree);
@@ -484,17 +480,17 @@ static int execute(struct args_struct *args) {
   cg_x86_64_ctx *cg_ctx = cg_x86_64_ctx_new(cg);
 
   // stage: build x86_64 structs
-  if (!error || args->ignore_errors) {
+  if (!args->code || args->ignore_errors) {
     cg_x86_64_ctx_build(cg_ctx, mir);
     if (list_exception_count_by_level(cg_ctx->exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
-      error = 1;
+      args->code = 1;
     }
     print_exceptions(args, cg_ctx->exceptions);
   }
 
   // stage: emit x86_64 assembly code
-  if (!error || args->ignore_errors) {
+  if (!args->code || args->ignore_errors) {
     char *data = cg_x86_64_ctx_emit(cg_ctx);
     if (data) {
       write_asm(args, data);
@@ -520,14 +516,14 @@ static int execute(struct args_struct *args) {
   list_lexer_free(lexers);
   list_source_free(sources);
 
-  return error && !args->ignore_errors;
+  return args->code && !args->ignore_errors;
 }
 
 int main(int argc, char *argv[]) {
   int code;
 
-  struct args_struct *args = args_new();
-  parse_args(args, argc, argv);
+  args *args = args_new();
+  parse(args, argc, argv);
 
   if (args->help) {
     usage(args);

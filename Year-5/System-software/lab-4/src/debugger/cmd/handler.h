@@ -45,5 +45,5 @@ typedef struct cmd_handler_struct {
 cmd_handler *cmd_handler_new();
 void         cmd_handler_free(cmd_handler *self);
 
-void cmd_handler_cmd_add(cmd_handler *self, cmd_entry *entry);
+void cmd_handler_register(cmd_handler *self, cmd_entry *entry);
 void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd);

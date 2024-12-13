@@ -74,7 +74,7 @@ const char *mir_builtin_enum_str(mir_builtin_enum kind) {
   case MIR_BUILTIN_PRINT:
     return "PRINT";
   default:
-    info("unknown kind %d", kind);
+    warn("unknown kind %d", kind);
     return "UNKNOWN";
   }
 }
