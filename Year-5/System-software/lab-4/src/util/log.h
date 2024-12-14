@@ -27,6 +27,7 @@ int _error(const char *fname, int lineno, const char *fxname, const char *fmt,
 
 #define debug(fmt, ...)
 #define info(fmt, ...)
+#define warn(fmt, ...)
 #define error(fmt, ...)
 
 #endif
