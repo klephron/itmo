@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <sys/ptrace.h>
 
-void cmd_continue(context *ctx, const char *rest) {
+void cmd_continue(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
   UNUSED(rest);
   char *args = NULL;
 
@@ -30,3 +31,5 @@ cleanup:
     free(args);
   }
 }
+
+const char *cmd_continue_desc = "Continue target execution";

@@ -1,23 +1,12 @@
 #pragma once
 
+#include "cmd.h"
 #include "debugger/context/context.h"
 #include "util/container_util.h"
 #include "util/hashset.h"
 
 #include <stdint.h>
 #include <stdlib.h>
-
-typedef struct cmd_entry_struct cmd_entry;
-// updates context state inside of cmd
-typedef void (*cmd)(context *ctx, const char *rest);
-
-typedef struct cmd_entry_struct {
-  char *cmd_ref;
-  cmd   handle_ref;
-} cmd_entry;
-
-cmd_entry *cmd_entry_new(char *cmd_ref, cmd handle_ref);
-void       cmd_entry_free(cmd_entry *self);
 
 static inline int container_cmp_cmd(const void *_lsv, const void *_rsv) {
   const cmd_entry *lsv = _lsv;

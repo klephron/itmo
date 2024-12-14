@@ -1,10 +1,12 @@
 #include "cmd.h"
 
+#include "util/macro.h"
 #include "util/string.h"
 
 #include <stdlib.h>
 
-void cmd_file(context *ctx, const char *rest) {
+void cmd_file(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
   bfd      *abfd = NULL;
   char     *name = NULL;
   asymbol **abfd_asymbols = NULL;
@@ -75,3 +77,5 @@ cleanup:
     free(name);
   }
 }
+
+const char *cmd_file_desc = "Load target";

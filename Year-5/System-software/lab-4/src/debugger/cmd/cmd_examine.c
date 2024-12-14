@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <sys/ptrace.h>
 
-static void cmd_x_print_le_8bytes(context *ctx, uint64_t data, char format,
+static void cmd_examine_le_8bytes(context *ctx, uint64_t data, char format,
                                   size_t size) {
   char   buf[64];
   size_t offset = 0;
@@ -108,7 +108,8 @@ static void cmd_x_print_le_8bytes(context *ctx, uint64_t data, char format,
   }
 }
 
-void cmd_x(context *ctx, const char *rest) {
+void cmd_examine(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
   char *args = trim(strdup(rest));
   char *arg_n = NULL;
   char *arg_format = NULL;
@@ -200,7 +201,7 @@ void cmd_x(context *ctx, const char *rest) {
     uint64_t data = ptrace(PTRACE_PEEKDATA, ctx->pid, addr_cur, NULL);
     snprintf(buf, STRMAXLEN(buf), "0x%lx: ", addr_cur);
     context_out_append(ctx, buf);
-    cmd_x_print_le_8bytes(ctx, data, format, size);
+    cmd_examine_le_8bytes(ctx, data, format, size);
     context_out_appendln(ctx, "");
   }
 
@@ -235,3 +236,5 @@ cleanup:
   }
   return;
 }
+
+const char *cmd_examine_desc = "Examine memory";

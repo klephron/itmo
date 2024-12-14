@@ -9,7 +9,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void cmd_run(context *ctx, const char *rest) {
+void cmd_run(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
   char  *args_str = NULL;
   char **argv = NULL;
   int    do_exit = 0;
@@ -85,3 +86,5 @@ cleanup:
     exit(1);
   }
 }
+
+const char *cmd_run_desc = "Run target";

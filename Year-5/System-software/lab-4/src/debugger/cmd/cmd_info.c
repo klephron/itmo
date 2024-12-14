@@ -28,7 +28,8 @@ static void cmd_info_register_g(context *ctx, struct user_regs_struct *regs,
   context_out_appendln(ctx, "");
 }
 
-void cmd_info(context *ctx, const char *rest) {
+void cmd_info(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
   char *arg;
 
   arg = trim(strdup(rest));
@@ -175,3 +176,5 @@ cleanup:
     free(arg);
   }
 }
+
+const char *cmd_info_desc = "Info registers, sections or symbols";

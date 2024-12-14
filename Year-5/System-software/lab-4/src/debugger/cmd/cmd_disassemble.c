@@ -75,7 +75,8 @@ static void cmd_disassemble_memory_error(int status, bfd_vma memaddr,
   context_err_appendln((context *)info->application_data, buf);
 }
 
-void cmd_disassemble(context *ctx, const char *rest) {
+void cmd_disassemble(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
   char *args = trim(strdup(rest));
   char *arg_address = NULL;
   char *arg_size = NULL;
@@ -167,3 +168,5 @@ cleanup:
   }
   return;
 }
+
+const char *cmd_disassemble_desc = "Disassemble memory";

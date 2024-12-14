@@ -9,7 +9,8 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-void cmd_print(context *ctx, const char *rest) {
+void cmd_print(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
   struct user_regs_struct regs;
   char                    buf[64];
 
@@ -113,3 +114,5 @@ cleanup:
     free(args);
   }
 }
+
+const char *cmd_print_desc = "Print register";

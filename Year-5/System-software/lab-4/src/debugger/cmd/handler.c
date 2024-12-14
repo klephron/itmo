@@ -8,19 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-cmd_entry *cmd_entry_new(char *cmd_ref, cmd handle_ref) {
-  cmd_entry *self = MALLOC(cmd_entry);
-  self->cmd_ref = cmd_ref;
-  self->handle_ref = handle_ref;
-  return self;
-}
-
-void cmd_entry_free(cmd_entry *self) {
-  if (self) {
-    free(self);
-  }
-}
-
 cmd_handler *cmd_handler_new() {
   cmd_handler *self = MALLOC(cmd_handler);
   self->cmds = hashset_cmd_new();
@@ -61,7 +48,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   // repeat command if exists
   if (!*cmd_start) {
     if (self->cmd_prev) {
-      self->cmd_prev->handle_ref(ctx, self->cmd_prev_rest);
+      self->cmd_prev->fn(self, ctx, self->cmd_prev_rest);
     }
     goto cleanup;
   }
@@ -85,7 +72,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   }
 
   ctx->s_debugger = STATE_DEBUGGER_PROCESSING;
-  entry->handle_ref(ctx, cmd_rest);
+  entry->fn(self, ctx, cmd_rest);
 
   self->cmd_prev = entry;
   if (self->cmd_prev_rest) {
