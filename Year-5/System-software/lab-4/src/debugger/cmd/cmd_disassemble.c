@@ -54,7 +54,7 @@ static int fn_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
   for (bfd_vma addr_cur = memaddr; bytes < length; addr_cur += sizeof(long)) {
     long data = ptrace(PTRACE_PEEKDATA, ctx->pid, addr_cur, NULL);
     if (errno) {
-      ctx->s_debugger = STATE_DEBUGGER_ERROR;
+      ctx->s_debugger = DEBUGGER_ERROR;
       context_err_append(ctx, "ptrace error while fetching data: ");
       context_err_appendln(ctx, strerror(errno));
       return 1;
@@ -89,8 +89,8 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
   }
@@ -118,6 +118,35 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   uint64_t size;
   sscanf(arg_size, "%lu", &size);
 
+  cmd_disassemble_at_address(ctx, address, size);
+
+  return;
+
+err_format:
+  ctx->s_debugger = DEBUGGER_ERROR;
+  context_err_append(ctx, "unexpected args ");
+  context_err_appendln(ctx, args);
+  context_err_appendln(ctx, help);
+  goto cleanup;
+
+cleanup:
+  if (args) {
+    free(args);
+  }
+  if (arg_size) {
+    free(arg_size);
+  }
+  if (arg_address) {
+    free(arg_address);
+  }
+  return;
+}
+
+cmd *cmd_disassemble(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}
+
+void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
   string_buffer *buffer = string_buffer_new(0, 0);
 
   struct disassemble_info info;
@@ -147,29 +176,4 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     context_out_appendln(ctx, data);
     free(data);
   }
-
-  return;
-
-err_format:
-  ctx->s_debugger = STATE_DEBUGGER_ERROR;
-  context_err_append(ctx, "unexpected args ");
-  context_err_appendln(ctx, args);
-  context_err_appendln(ctx, help);
-  goto cleanup;
-
-cleanup:
-  if (args) {
-    free(args);
-  }
-  if (arg_size) {
-    free(arg_size);
-  }
-  if (arg_address) {
-    free(arg_address);
-  }
-  return;
-}
-
-cmd *cmd_disassemble(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
 }

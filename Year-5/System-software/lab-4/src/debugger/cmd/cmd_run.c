@@ -13,27 +13,27 @@ static const char *desc = "Run target";
 
 static const char *help = "Usage: <command>";
 
-static void cmd_func(cmd_handler *handler, context *ctx, const char *rest) {
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  char  *args_str = NULL;
+  char  *args = NULL;
   char **argv = NULL;
   int    do_exit = 0;
 
-  args_str = trim(strdup(rest));
+  args = trim(strdup(rest));
 
   if (cmd_error_if_no_target(ctx)) {
     goto cleanup;
   }
 
-  if (context_get_target_state(ctx) == STATE_TARGET_RUNNING) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  if (context_get_target_state(ctx) == TARGET_RUNNING) {
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is already running");
     goto cleanup;
   }
 
   pid_t pid = fork();
   if (pid == -1) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "error while forking");
     goto cleanup;
   }
@@ -44,7 +44,7 @@ static void cmd_func(cmd_handler *handler, context *ctx, const char *rest) {
     size_t size = 4;
     size_t argc = 0;
     argv = malloc(size * sizeof(char *));
-    char *token = strtok(args_str, " ");
+    char *token = strtok(args, " ");
     while (token) {
       if (argc >= size - 1) {
         size *= 2;
@@ -83,8 +83,8 @@ cleanup:
     }
     free(argv);
   }
-  if (args_str) {
-    free(args_str);
+  if (args) {
+    free(args);
   }
   if (do_exit) {
     exit(1);
@@ -92,5 +92,5 @@ cleanup:
 }
 
 cmd *cmd_run(const char *cmd_ref) {
-  return cmd_entry_new(cmd_func, desc, help, cmd_ref);
+  return cmd_entry_new(fn, desc, help, cmd_ref);
 }

@@ -74,7 +74,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       }
     }
     if (!found) {
-      ctx->s_debugger = STATE_DEBUGGER_ERROR;
+      ctx->s_debugger = DEBUGGER_ERROR;
       context_err_appendln(ctx, "command not found");
       fn_all(handler, ctx);
     }

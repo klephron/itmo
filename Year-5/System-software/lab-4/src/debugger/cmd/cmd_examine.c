@@ -128,8 +128,8 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
   }
@@ -216,7 +216,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   return;
 
 err_format:
-  ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  ctx->s_debugger = DEBUGGER_ERROR;
   context_err_append(ctx, "unexpected args ");
   context_err_appendln(ctx, args);
   context_err_appendln(ctx, help);

@@ -5,18 +5,18 @@
 #include <sys/types.h>
 
 typedef enum debugger_state_enum {
-  STATE_DEBUGGER_UNKNOWN,
-  STATE_DEBUGGER_IDLE, // waiting for user input
-  STATE_DEBUGGER_PROCESSING,
-  STATE_DEBUGGER_ERROR,
-  STATE_DEBUGGER_EXITING,
+  DEBUGGER_UNKNOWN,
+  DEBUGGER_IDLE, // waiting for user input
+  DEBUGGER_PROCESSING,
+  DEBUGGER_ERROR,
+  DEBUGGER_EXITING,
 } debugger_state_enum;
 
 typedef enum target_state_enum {
-  STATE_TARGET_UNKNOWN,
-  STATE_TARGET_NO_TARGET,
-  STATE_TARGET_NOT_RUNNING,
-  STATE_TARGET_RUNNING,
+  TARGET_UNKNOWN,
+  TARGET_NO_TARGET,
+  TARGET_NOT_RUNNING,
+  TARGET_RUNNING,
 } target_state_enum;
 
 typedef struct context_struct {

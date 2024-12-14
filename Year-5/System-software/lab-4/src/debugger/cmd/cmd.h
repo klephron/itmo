@@ -31,3 +31,6 @@ cmd_new cmd_info;
 cmd_new cmd_kill;
 cmd_new cmd_print;
 cmd_new cmd_run;
+cmd_new cmd_stepi;
+
+void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size);

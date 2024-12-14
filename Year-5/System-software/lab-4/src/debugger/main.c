@@ -125,6 +125,8 @@ static void register_cmds(cmd_handler *h) {
   cmd_handler_register(h, cmd_continue("c"));
   cmd_handler_register(h, cmd_help("help"));
   cmd_handler_register(h, cmd_help("h"));
+  cmd_handler_register(h, cmd_stepi("stepi"));
+  cmd_handler_register(h, cmd_stepi("si"));
 }
 
 static int execute(args *args) {
@@ -142,7 +144,7 @@ static int execute(args *args) {
   cmd_handler *handler = cmd_handler_new();
   register_cmds(handler);
 
-  while (ctx->s_debugger != STATE_DEBUGGER_EXITING) {
+  while (ctx->s_debugger != DEBUGGER_EXITING) {
     FILE *fp = NULL;
 
     fprintf(stdout, "(dbg) ");
@@ -160,10 +162,10 @@ static int execute(args *args) {
     debug("debugger: %s, target: %s", state_debugger_enum_str(ctx->s_debugger),
           state_target_enum_str(context_get_target_state(ctx)));
 
-    if (ctx->s_debugger == STATE_DEBUGGER_ERROR) {
+    if (ctx->s_debugger == DEBUGGER_ERROR) {
       fprintf(stderr, "error: %s", string_buffer_data(ctx->buf_err));
       string_buffer_reset(ctx->buf_err);
-      ctx->s_debugger = STATE_DEBUGGER_IDLE;
+      ctx->s_debugger = DEBUGGER_IDLE;
     }
 
     if (string_buffer_size(ctx->buf_out)) {

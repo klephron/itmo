@@ -10,7 +10,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   UNUSED(rest);
 
-  ctx->s_debugger = STATE_DEBUGGER_EXITING;
+  ctx->s_debugger = DEBUGGER_EXITING;
 }
 
 cmd *cmd_exit(const char *cmd_ref) {

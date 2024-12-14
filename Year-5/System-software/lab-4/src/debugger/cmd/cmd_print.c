@@ -26,13 +26,13 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (!args || !*args) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "no args specified");
     goto help;
   }
 
-  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
   }
@@ -41,7 +41,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     char *reg = args + 1;
 
     if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs) == -1) {
-      ctx->s_debugger = STATE_DEBUGGER_ERROR;
+      ctx->s_debugger = DEBUGGER_ERROR;
       context_err_appendln(ctx, "failed to get regs");
       goto cleanup;
     }
@@ -99,7 +99,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     }
 
     if (offset == SIZE_MAX) {
-      ctx->s_debugger = STATE_DEBUGGER_ERROR;
+      ctx->s_debugger = DEBUGGER_ERROR;
       context_err_append(ctx, "unknown register ");
       context_err_appendln(ctx, reg);
       goto cleanup;
@@ -109,7 +109,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
              *(unsigned long long *)(((void *)&regs) + offset));
     context_out_appendln(ctx, buf);
   } else {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_append(ctx, "unknown args ");
     context_err_appendln(ctx, args);
     goto help;

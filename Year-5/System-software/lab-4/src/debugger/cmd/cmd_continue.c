@@ -18,14 +18,14 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_target_state(ctx) != STATE_TARGET_RUNNING) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  if (context_get_target_state(ctx) != TARGET_RUNNING) {
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "target is not running");
     goto cleanup;
   }
 
   if (ptrace(PTRACE_CONT, ctx->pid, NULL, NULL) == -1) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "continue failed");
     goto cleanup;
   }

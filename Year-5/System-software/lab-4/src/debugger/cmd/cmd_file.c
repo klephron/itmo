@@ -12,35 +12,35 @@ static const char *help = "Usage: <command> <file>";
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   bfd      *abfd = NULL;
-  char     *name = NULL;
+  char     *args = NULL;
   asymbol **abfd_asymbols = NULL;
 
-  name = trim(strdup(rest));
-  if (!name || !*name) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  args = trim(strdup(rest));
+  if (!args || !*args) {
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "no file specified");
     goto help;
   }
 
   bfd_init();
 
-  abfd = bfd_openr(name, NULL);
+  abfd = bfd_openr(args, NULL);
   if (!abfd) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_append(ctx, "failed to open file ");
-    context_err_appendln(ctx, name);
+    context_err_appendln(ctx, args);
     goto cleanup;
   }
 
   if (!bfd_check_format(abfd, bfd_object)) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "not an object file");
     goto cleanup;
   }
 
   int64_t abfd_asymbols_size = bfd_get_symtab_upper_bound(abfd);
   if (abfd_asymbols_size < 0) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "failed to get symbol table size");
     goto cleanup;
   }
@@ -49,7 +49,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   int64_t abfd_asymbols_count = bfd_canonicalize_symtab(abfd, abfd_asymbols);
   if (abfd_asymbols_count < 0) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_appendln(ctx, "failed to canonicalize symbol table");
     goto cleanup;
   }
@@ -66,7 +66,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   if (ctx->fname) {
     free(ctx->fname);
   }
-  ctx->fname = name;
+  ctx->fname = args;
 
   return;
 
@@ -80,8 +80,8 @@ cleanup:
   if (abfd) {
     bfd_close(abfd);
   }
-  if (name) {
-    free(name);
+  if (args) {
+    free(args);
   }
 }
 

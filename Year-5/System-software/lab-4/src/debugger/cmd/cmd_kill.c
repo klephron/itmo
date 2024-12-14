@@ -14,21 +14,21 @@ static const char *help = "Usage: <command>";
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  char *args_str = NULL;
+  char *args = NULL;
   int   sig = SIGKILL;
   char  buf[64];
 
-  args_str = trim(strdup(rest));
-  if (args_str && *args_str) {
-    sig = atoi(args_str);
+  args = trim(strdup(rest));
+  if (args && *args) {
+    sig = atoi(args);
   }
 
   if (cmd_error_if_no_target(ctx)) {
     goto cleanup;
   }
 
-  if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+  if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_append(ctx, "target is not running\n");
     goto cleanup;
   }
@@ -36,7 +36,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
 
   if (kill(ctx->pid, sig) == -1) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_append(ctx, "failed to kill process with pid ");
     context_err_appendln(ctx, buf);
     goto cleanup;
@@ -60,8 +60,8 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
 cleanup:
-  if (args_str) {
-    free(args_str);
+  if (args) {
+    free(args);
   }
 }
 

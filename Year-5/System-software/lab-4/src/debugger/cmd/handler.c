@@ -57,7 +57,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
       hashset_cmd_find(self->cmds, &(cmd){.cmd_ref = (char *)args_start});
 
   if (it.end(&it)) {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_append(ctx, "unknown command: ");
     context_err_append(ctx, args_start);
     context_err_appendln(ctx, ", try help");
@@ -71,7 +71,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
     ++args_rest;
   }
 
-  ctx->s_debugger = STATE_DEBUGGER_PROCESSING;
+  ctx->s_debugger = DEBUGGER_PROCESSING;
   entry->fn(self, ctx, args_rest);
 
   self->cmd_prev = entry;
@@ -80,8 +80,8 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   }
   self->cmd_prev_rest = strdup(args_rest);
 
-  if (ctx->s_debugger == STATE_DEBUGGER_PROCESSING) {
-    ctx->s_debugger = STATE_DEBUGGER_IDLE;
+  if (ctx->s_debugger == DEBUGGER_PROCESSING) {
+    ctx->s_debugger = DEBUGGER_IDLE;
   }
 
 cleanup:

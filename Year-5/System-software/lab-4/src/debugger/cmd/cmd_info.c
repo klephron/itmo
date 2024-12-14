@@ -35,11 +35,11 @@ static void fn_register_g(context *ctx, struct user_regs_struct *regs,
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  char *arg;
+  char *args;
 
-  arg = trim(strdup(rest));
+  args = trim(strdup(rest));
 
-  if (!strcmp(arg, "sections")) {
+  if (!strcmp(args, "sections")) {
     if (cmd_error_if_no_target(ctx)) {
       goto cleanup;
     }
@@ -64,7 +64,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       section = section->next;
     }
 
-  } else if (!strcmp(arg, "symbols")) {
+  } else if (!strcmp(args, "symbols")) {
     if (cmd_error_if_no_target(ctx)) {
       goto cleanup;
     }
@@ -85,7 +85,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       snprintf(buf, STRMAXLEN(buf), "%#lx", address);
       context_out_appendln(ctx, buf);
     }
-  } else if (!strcmp(arg, "target")) {
+  } else if (!strcmp(args, "target")) {
     if (cmd_error_if_no_target(ctx)) {
       goto cleanup;
     }
@@ -95,19 +95,19 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     context_out_append(ctx, ", status: ");
     context_out_append(ctx,
                        state_target_enum_str(context_get_target_state(ctx)));
-    if (context_get_target_state(ctx) != STATE_TARGET_NOT_RUNNING) {
+    if (context_get_target_state(ctx) != TARGET_NOT_RUNNING) {
       context_out_append(ctx, ", pid: ");
       snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
       context_out_appendln(ctx, buf);
     } else {
       context_out_appendln(ctx, "");
     }
-  } else if (!strcmp(arg, "registers")) {
+  } else if (!strcmp(args, "registers")) {
     if (cmd_error_if_no_target(ctx)) {
       goto cleanup;
     }
-    if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
-      ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
+      ctx->s_debugger = DEBUGGER_ERROR;
       context_err_appendln(ctx, "target is not running");
       goto cleanup;
     }
@@ -115,7 +115,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     struct user_regs_struct regs;
 
     if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs) == -1) {
-      ctx->s_debugger = STATE_DEBUGGER_ERROR;
+      ctx->s_debugger = DEBUGGER_ERROR;
       context_err_appendln(ctx, "failed to get regs");
       goto cleanup;
     }
@@ -147,16 +147,16 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     fn_register_g(ctx, &regs, "gs", offsetof(struct user_regs_struct, gs));
 
   } else {
-    ctx->s_debugger = STATE_DEBUGGER_ERROR;
+    ctx->s_debugger = DEBUGGER_ERROR;
     context_err_append(ctx, "unknown args ");
-    context_err_appendln(ctx, arg);
+    context_err_appendln(ctx, args);
     context_err_appendln(ctx, help);
     goto cleanup;
   }
 
 cleanup:
-  if (arg) {
-    free(arg);
+  if (args) {
+    free(args);
   }
 }
 
