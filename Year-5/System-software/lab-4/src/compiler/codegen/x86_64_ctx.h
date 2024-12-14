@@ -45,11 +45,8 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_cg_x86_64_mir_ref, mir_node_base,
 typedef struct cg_x86_64_ctx_struct {
   cg_x86_64      *cg_ref;
   list_exception *exceptions;
-  // internal
-  list_cg_x86_64_unit *ext_units_ref; // extern declarations
-  list_cg_x86_64_unit *data_units_ref;
-  list_cg_x86_64_unit *text_units_ref; // function bodies
 
+  // internal
   hashset_cg_x86_64_map_value *sub_map_values; // sub var metainfo
   size_t                       sub_stack_size; // offset of rsp from sub call
   size_t                       sub_rbp_offset;

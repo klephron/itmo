@@ -56,14 +56,6 @@ void cg_x86_64_label_free(cg_x86_64_label *self) {
 }
 
 // DIRECTIVE
-cg_x86_64_dir *cg_x86_64_dir_section_new(char *section) {
-  cg_x86_64_dir *self = MALLOC(cg_x86_64_dir);
-  cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DIRECTIVE);
-  self->kind = CG_X86_64_DIR_SECTION;
-  self->section = section;
-  return self;
-}
-
 cg_x86_64_dir *cg_x86_64_dir_globl_new(cg_x86_64_label *label) {
   cg_x86_64_dir *self = MALLOC(cg_x86_64_dir);
   cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DIRECTIVE);
@@ -83,9 +75,6 @@ cg_x86_64_dir *cg_x86_64_dir_extern_new(cg_x86_64_label *label) {
 void cg_x86_64_dir_free(cg_x86_64_dir *self) {
   if (self) {
     switch (self->kind) {
-    case CG_X86_64_DIR_SECTION:
-      free(self->section);
-      break;
     case CG_X86_64_DIR_GLOBL:
     case CG_X86_64_DIR_EXTERN:
       cg_x86_64_label_free(self->label);
@@ -254,16 +243,38 @@ void cg_x86_64_instr_free(cg_x86_64_instr *self) {
   }
 }
 
-// CODEGEN MAIN
+cg_x86_64_section *cg_x86_64_section_new(char *name) {
+  cg_x86_64_section *self = MALLOC(cg_x86_64_section);
+  self->name = name;
+  self->units = list_cg_x86_64_unit_new();
+  return self;
+}
+
+void cg_x86_64_section_free(cg_x86_64_section *self) {
+  if (self) {
+    free(self->name);
+    list_cg_x86_64_unit_free(self->units);
+    free(self);
+  }
+}
+
 cg_x86_64 *cg_x86_64_new() {
   cg_x86_64 *self = MALLOC(cg_x86_64);
-  self->units = list_cg_x86_64_unit_new();
+  self->text = cg_x86_64_section_new(strdup(".text"));
+  self->data = cg_x86_64_section_new(strdup(".data"));
+  self->debug_info = cg_x86_64_section_new(strdup(".u_debug_info"));
+  self->debug_line = cg_x86_64_section_new(strdup(".u_debug_line"));
+  self->debug_str = cg_x86_64_section_new(strdup(".u_debug_str"));
   return self;
 }
 
 void cg_x86_64_free(cg_x86_64 *self) {
   if (self) {
-    list_cg_x86_64_unit_free(self->units);
+    cg_x86_64_section_free(self->text);
+    cg_x86_64_section_free(self->data);
+    cg_x86_64_section_free(self->debug_info);
+    cg_x86_64_section_free(self->debug_line);
+    cg_x86_64_section_free(self->debug_str);
     free(self);
   }
 }

@@ -109,22 +109,19 @@ static char *ctx_local_name(cg_x86_64_ctx *ctx, const char *old) {
 
 __attribute__((__unused__)) static void ctx_data_push_back(cg_x86_64_ctx *ctx,
                                                            void *data) {
-  list_cg_x86_64_unit_push_back(ctx->data_units_ref, (cg_x86_64_unit *)data);
-}
-
-__attribute__((__unused__)) static void ctx_ext_push_back(cg_x86_64_ctx *ctx,
-                                                          void          *data) {
-  list_cg_x86_64_unit_push_back(ctx->ext_units_ref, (cg_x86_64_unit *)data);
+  list_cg_x86_64_unit_push_back(ctx->cg_ref->data->units,
+                                (cg_x86_64_unit *)data);
 }
 
 __attribute__((__unused__)) static void ctx_text_push_back(cg_x86_64_ctx *ctx,
                                                            void *text) {
-  list_cg_x86_64_unit_push_back(ctx->text_units_ref, (cg_x86_64_unit *)text);
+  list_cg_x86_64_unit_push_back(ctx->cg_ref->text->units,
+                                (cg_x86_64_unit *)text);
 }
 
 __attribute__((__unused__)) static void
 ctx_text_push_back_many(cg_x86_64_ctx *ctx, list_cg_x86_64_unit *other) {
-  cg_units_append_move(ctx->text_units_ref, other);
+  cg_units_append_move(ctx->cg_ref->text->units, other);
 }
 
 static void ctx_type_serialize(cg_x86_64_ctx *ctx, x86_64_type *type) {
@@ -1858,18 +1855,8 @@ static void ctx_sub(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
 }
 
 void cg_x86_64_ctx_build(cg_x86_64_ctx *ctx, mir *mir) {
-  list_cg_x86_64_unit *units = ctx->cg_ref->units;
-
-  cg_x86_64_dir *section_data = cg_x86_64_dir_section_new(strdup(".data"));
-  list_cg_x86_64_unit *data_units = list_cg_x86_64_unit_new();
-  ctx->data_units_ref = data_units;
-
-  cg_x86_64_dir *section_text = cg_x86_64_dir_section_new(strdup(".text"));
-
   list_cg_x86_64_unit *globl_units = list_cg_x86_64_unit_new();
-
   list_cg_x86_64_unit *ext_units = list_cg_x86_64_unit_new();
-  ctx->ext_units_ref = ext_units;
 
   ctx->globls = hashset_cg_x86_64_mir_ref_new();
 
@@ -1911,23 +1898,13 @@ void cg_x86_64_ctx_build(cg_x86_64_ctx *ctx, mir *mir) {
     }
   }
 
-  list_cg_x86_64_unit *text_units = list_cg_x86_64_unit_new();
-  ctx->text_units_ref = text_units;
+  cg_units_append_move(ctx->cg_ref->text->units, ext_units);
+  cg_units_append_move(ctx->cg_ref->text->units, globl_units);
 
   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
        !it.end(&it); it.next(&it)) {
     ctx_sub(ctx, it.get(&it));
   }
-
-  // .section .data
-  list_cg_x86_64_unit_push_back(units, (cg_x86_64_unit *)section_data);
-  cg_units_append_move(units, data_units);
-
-  // .section .text
-  list_cg_x86_64_unit_push_back(units, (cg_x86_64_unit *)section_text);
-  cg_units_append_move(units, ext_units);
-  cg_units_append_move(units, globl_units);
-  cg_units_append_move(units, text_units);
 
   hashset_cg_x86_64_mir_ref_free(ctx->globls);
 }

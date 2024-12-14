@@ -42,7 +42,6 @@ cg_x86_64_label *cg_x86_64_label_new(char *name, cg_x86_64_label_enum kind);
 
 typedef enum cg_x86_64_dir_enum {
   CG_X86_64_DIR_UNKNOWN,
-  CG_X86_64_DIR_SECTION,
   CG_X86_64_DIR_GLOBL,
   CG_X86_64_DIR_EXTERN,
 } cg_x86_64_dir_enum;
@@ -51,12 +50,10 @@ typedef struct cg_x86_64_dir_struct {
   cg_x86_64_unit     base;
   cg_x86_64_dir_enum kind;
   union {
-    char            *section;
     cg_x86_64_label *label;
   };
 } cg_x86_64_dir;
 
-cg_x86_64_dir *cg_x86_64_dir_section_new(char *section);
 cg_x86_64_dir *cg_x86_64_dir_globl_new(cg_x86_64_label *label);
 cg_x86_64_dir *cg_x86_64_dir_extern_new(cg_x86_64_label *label);
 
@@ -238,8 +235,20 @@ typedef struct cg_x86_64_instr_struct {
 cg_x86_64_instr *cg_x86_64_instr_new(cg_x86_64_mnem     mnem,
                                      list_cg_x86_64_op *operands);
 
-typedef struct cg_x86_64_struct {
+typedef struct cg_x86_64_section_struct {
+  char                *name;
   list_cg_x86_64_unit *units;
+} cg_x86_64_section;
+
+cg_x86_64_section *cg_x86_64_section_new(char *name);
+void               cg_x86_64_section_free(cg_x86_64_section *self);
+
+typedef struct cg_x86_64_struct {
+  cg_x86_64_section *text;
+  cg_x86_64_section *data;
+  cg_x86_64_section *debug_info;
+  cg_x86_64_section *debug_line;
+  cg_x86_64_section *debug_str;
 } cg_x86_64;
 
 cg_x86_64 *cg_x86_64_new();

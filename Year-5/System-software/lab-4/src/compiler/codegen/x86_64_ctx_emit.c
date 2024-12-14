@@ -270,10 +270,6 @@ void cg_emit_directive(cg_x86_64_ctx *self, string_buffer *buf,
   UNUSED(self);
 
   switch (dir->kind) {
-  case CG_X86_64_DIR_SECTION:
-    string_buffer_append(buf, ".section ");
-    string_buffer_append(buf, dir->section);
-    break;
   case CG_X86_64_DIR_GLOBL:
     string_buffer_append(buf, ".globl ");
     string_buffer_append(buf, dir->label->name);
@@ -290,12 +286,14 @@ void cg_emit_directive(cg_x86_64_ctx *self, string_buffer *buf,
   string_buffer_append(buf, "\n");
 }
 
-char *cg_x86_64_ctx_emit(cg_x86_64_ctx *self) {
+void cg_emit_section(cg_x86_64_ctx *self, string_buffer *buf,
+                     cg_x86_64_section *section) {
 
-  string_buffer *buf = string_buffer_new(0, 0);
+  string_buffer_append(buf, ".section ");
+  string_buffer_append(buf, section->name);
+  string_buffer_append(buf, "\n");
 
-  for (list_cg_x86_64_unit_it it =
-           list_cg_x86_64_unit_begin(self->cg_ref->units);
+  for (list_cg_x86_64_unit_it it = list_cg_x86_64_unit_begin(section->units);
        !it.end(&it); it.next(&it)) {
     cg_x86_64_unit *generic = it.get(&it);
 
@@ -317,6 +315,17 @@ char *cg_x86_64_ctx_emit(cg_x86_64_ctx *self) {
       error("unknown unit %d %p", generic->kind, generic);
     }
   }
+}
+
+char *cg_x86_64_ctx_emit(cg_x86_64_ctx *self) {
+
+  string_buffer *buf = string_buffer_new(0, 0);
+
+  cg_emit_section(self, buf, self->cg_ref->data);
+  cg_emit_section(self, buf, self->cg_ref->text);
+  cg_emit_section(self, buf, self->cg_ref->debug_info);
+  cg_emit_section(self, buf, self->cg_ref->debug_line);
+  cg_emit_section(self, buf, self->cg_ref->debug_str);
 
   return string_buffer_detach(buf);
 }
