@@ -9,7 +9,12 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-void cmd_print(cmd_handler *handler, context *ctx, const char *rest) {
+static const char *desc = "Print register";
+
+static const char *help = "Usage: <command> <register>\n"
+                          "\t<register>: $<name>";
+
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   struct user_regs_struct regs;
   char                    buf[64];
@@ -23,7 +28,7 @@ void cmd_print(cmd_handler *handler, context *ctx, const char *rest) {
   if (!args || !*args) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "no args specified");
-    goto cleanup;
+    goto help;
   }
 
   if (context_get_target_state(ctx) == STATE_TARGET_NOT_RUNNING) {
@@ -107,7 +112,11 @@ void cmd_print(cmd_handler *handler, context *ctx, const char *rest) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_append(ctx, "unknown args ");
     context_err_appendln(ctx, args);
+    goto help;
   }
+
+help:
+  context_err_appendln(ctx, help);
 
 cleanup:
   if (args) {
@@ -115,4 +124,6 @@ cleanup:
   }
 }
 
-const char *cmd_print_desc = "Print register";
+cmd *cmd_print(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

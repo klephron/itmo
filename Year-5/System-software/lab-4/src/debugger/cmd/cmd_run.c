@@ -9,7 +9,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void cmd_run(cmd_handler *handler, context *ctx, const char *rest) {
+static const char *desc = "Run target";
+
+static const char *help = "Usage: <command>";
+
+static void cmd_func(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char  *args_str = NULL;
   char **argv = NULL;
@@ -87,4 +91,6 @@ cleanup:
   }
 }
 
-const char *cmd_run_desc = "Run target";
+cmd *cmd_run(const char *cmd_ref) {
+  return cmd_entry_new(cmd_func, desc, help, cmd_ref);
+}

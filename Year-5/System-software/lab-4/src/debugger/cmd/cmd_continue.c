@@ -5,7 +5,11 @@
 #include <stdlib.h>
 #include <sys/ptrace.h>
 
-void cmd_continue(cmd_handler *handler, context *ctx, const char *rest) {
+static const char *desc = "Continue target execution";
+
+static const char *help = "Usage: <command>";
+
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   UNUSED(rest);
   char *args = NULL;
@@ -32,4 +36,6 @@ cleanup:
   }
 }
 
-const char *cmd_continue_desc = "Continue target execution";
+cmd *cmd_continue(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

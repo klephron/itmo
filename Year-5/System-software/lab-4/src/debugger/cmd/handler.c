@@ -27,26 +27,26 @@ void cmd_handler_free(cmd_handler *self) {
   }
 }
 
-void cmd_handler_register(cmd_handler *self, cmd_entry *entry) {
+void cmd_handler_register(cmd_handler *self, cmd *entry) {
   hashset_cmd_insert(self->cmds, entry);
   debug("handler %p added cmd %s", self, entry->cmd_ref);
 }
 
 void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   char  c_tmp;
-  char *cmd = strdup(cmd_ref);
-  char *cmd_start = trim_start(cmd);
-  char *cmd_rest = cmd_start;
+  char *args = strdup(cmd_ref);
+  char *args_start = trim_start(args);
+  char *args_rest = args_start;
 
-  while (*cmd_rest && !isspace((unsigned char)*cmd_rest)) {
-    ++cmd_rest;
+  while (*args_rest && !isspace((unsigned char)*args_rest)) {
+    ++args_rest;
   }
   // break string to hash it
-  c_tmp = *cmd_rest;
-  *cmd_rest = '\0';
+  c_tmp = *args_rest;
+  *args_rest = '\0';
 
   // repeat command if exists
-  if (!*cmd_start) {
+  if (!*args_start) {
     if (self->cmd_prev) {
       self->cmd_prev->fn(self, ctx, self->cmd_prev_rest);
     }
@@ -54,38 +54,38 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   }
 
   hashset_cmd_it it =
-      hashset_cmd_find(self->cmds, &(cmd_entry){.cmd_ref = (char *)cmd_start});
+      hashset_cmd_find(self->cmds, &(cmd){.cmd_ref = (char *)args_start});
 
   if (it.end(&it)) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
-    string_buffer_append(ctx->buf_err, "unknown command: ");
-    string_buffer_append(ctx->buf_err, cmd_start);
-    string_buffer_append(ctx->buf_err, "\n");
+    context_err_append(ctx, "unknown command: ");
+    context_err_append(ctx, args_start);
+    context_err_appendln(ctx, ", try help");
     goto cleanup;
   }
 
-  cmd_entry *entry = it.get(&it);
+  cmd *entry = it.get(&it);
 
-  *cmd_rest = c_tmp;
-  while (isspace((unsigned char)*cmd_rest)) {
-    ++cmd_rest;
+  *args_rest = c_tmp;
+  while (isspace((unsigned char)*args_rest)) {
+    ++args_rest;
   }
 
   ctx->s_debugger = STATE_DEBUGGER_PROCESSING;
-  entry->fn(self, ctx, cmd_rest);
+  entry->fn(self, ctx, args_rest);
 
   self->cmd_prev = entry;
   if (self->cmd_prev_rest) {
     free(self->cmd_prev_rest);
   }
-  self->cmd_prev_rest = strdup(cmd_rest);
+  self->cmd_prev_rest = strdup(args_rest);
 
   if (ctx->s_debugger == STATE_DEBUGGER_PROCESSING) {
     ctx->s_debugger = STATE_DEBUGGER_IDLE;
   }
 
 cleanup:
-  if (cmd) {
-    free(cmd);
+  if (args) {
+    free(args);
   }
 }

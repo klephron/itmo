@@ -8,7 +8,11 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-void cmd_kill(cmd_handler *handler, context *ctx, const char *rest) {
+static const char *desc = "Kill running target";
+
+static const char *help = "Usage: <command>";
+
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args_str = NULL;
   int   sig = SIGKILL;
@@ -61,4 +65,6 @@ cleanup:
   }
 }
 
-const char *cmd_kill_desc = "Kill running target";
+cmd *cmd_kill(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

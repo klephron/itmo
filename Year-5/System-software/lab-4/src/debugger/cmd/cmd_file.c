@@ -5,7 +5,11 @@
 
 #include <stdlib.h>
 
-void cmd_file(cmd_handler *handler, context *ctx, const char *rest) {
+static const char *desc = "Load target";
+
+static const char *help = "Usage: <command> <file>";
+
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   bfd      *abfd = NULL;
   char     *name = NULL;
@@ -15,7 +19,7 @@ void cmd_file(cmd_handler *handler, context *ctx, const char *rest) {
   if (!name || !*name) {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_appendln(ctx, "no file specified");
-    goto cleanup;
+    goto help;
   }
 
   bfd_init();
@@ -66,6 +70,9 @@ void cmd_file(cmd_handler *handler, context *ctx, const char *rest) {
 
   return;
 
+help:
+  context_err_appendln(ctx, help);
+
 cleanup:
   if (abfd_asymbols) {
     free(abfd_asymbols);
@@ -78,4 +85,6 @@ cleanup:
   }
 }
 
-const char *cmd_file_desc = "Load target";
+cmd *cmd_file(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

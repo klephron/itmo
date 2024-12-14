@@ -104,31 +104,27 @@ static char *next_cmd(FILE *init_fp, FILE **fp_out) {
   return line;
 }
 
-static void add(cmd_handler *h) {
-  cmd_handler_register(h, cmd_entry_new(cmd_exit, cmd_exit_desc, "exit"));
-  cmd_handler_register(h, cmd_entry_new(cmd_echo, cmd_echo_desc, "echo"));
-  cmd_handler_register(h, cmd_entry_new(cmd_file, cmd_file_desc, "file"));
-  cmd_handler_register(h, cmd_entry_new(cmd_file, cmd_file_desc, "f"));
-  cmd_handler_register(h, cmd_entry_new(cmd_run, cmd_run_desc, "run"));
-  cmd_handler_register(h, cmd_entry_new(cmd_run, cmd_run_desc, "r"));
-  cmd_handler_register(h, cmd_entry_new(cmd_info, cmd_info_desc, "info"));
-  cmd_handler_register(h, cmd_entry_new(cmd_info, cmd_info_desc, "i"));
-  cmd_handler_register(h, cmd_entry_new(cmd_kill, cmd_kill_desc, "kill"));
-  cmd_handler_register(h, cmd_entry_new(cmd_kill, cmd_kill_desc, "k"));
-  cmd_handler_register(h, cmd_entry_new(cmd_print, cmd_print_desc, "print"));
-  cmd_handler_register(h, cmd_entry_new(cmd_print, cmd_print_desc, "p"));
-  cmd_handler_register(h,
-                       cmd_entry_new(cmd_examine, cmd_examine_desc, "examine"));
-  cmd_handler_register(h, cmd_entry_new(cmd_examine, cmd_examine_desc, "x"));
-  cmd_handler_register(
-      h, cmd_entry_new(cmd_disassemble, cmd_disassemble_desc, "disassemble"));
-  cmd_handler_register(
-      h, cmd_entry_new(cmd_disassemble, cmd_disassemble_desc, "dis"));
-  cmd_handler_register(
-      h, cmd_entry_new(cmd_continue, cmd_continue_desc, "continue"));
-  cmd_handler_register(h, cmd_entry_new(cmd_continue, cmd_continue_desc, "c"));
-  cmd_handler_register(h, cmd_entry_new(cmd_help, cmd_help_desc, "help"));
-  cmd_handler_register(h, cmd_entry_new(cmd_help, cmd_help_desc, "h"));
+static void register_cmds(cmd_handler *h) {
+  cmd_handler_register(h, cmd_exit("exit"));
+  cmd_handler_register(h, cmd_echo("echo"));
+  cmd_handler_register(h, cmd_file("file"));
+  cmd_handler_register(h, cmd_file("f"));
+  cmd_handler_register(h, cmd_run("run"));
+  cmd_handler_register(h, cmd_run("r"));
+  cmd_handler_register(h, cmd_info("info"));
+  cmd_handler_register(h, cmd_info("i"));
+  cmd_handler_register(h, cmd_kill("kill"));
+  cmd_handler_register(h, cmd_kill("k"));
+  cmd_handler_register(h, cmd_print("print"));
+  cmd_handler_register(h, cmd_print("p"));
+  cmd_handler_register(h, cmd_examine("examine"));
+  cmd_handler_register(h, cmd_examine("x"));
+  cmd_handler_register(h, cmd_disassemble("disassemble"));
+  cmd_handler_register(h, cmd_disassemble("dis"));
+  cmd_handler_register(h, cmd_continue("continue"));
+  cmd_handler_register(h, cmd_continue("c"));
+  cmd_handler_register(h, cmd_help("help"));
+  cmd_handler_register(h, cmd_help("h"));
 }
 
 static int execute(args *args) {
@@ -144,7 +140,7 @@ static int execute(args *args) {
   context *ctx = context_new();
 
   cmd_handler *handler = cmd_handler_new();
-  add(handler);
+  register_cmds(handler);
 
   while (ctx->s_debugger != STATE_DEBUGGER_EXITING) {
     FILE *fp = NULL;
@@ -164,15 +160,15 @@ static int execute(args *args) {
     debug("debugger: %s, target: %s", state_debugger_enum_str(ctx->s_debugger),
           state_target_enum_str(context_get_target_state(ctx)));
 
-    if (string_buffer_size(ctx->buf_out)) {
-      fprintf(stdout, "%s", string_buffer_data(ctx->buf_out));
-      string_buffer_reset(ctx->buf_out);
-    }
-
     if (ctx->s_debugger == STATE_DEBUGGER_ERROR) {
       fprintf(stderr, "error: %s", string_buffer_data(ctx->buf_err));
       string_buffer_reset(ctx->buf_err);
       ctx->s_debugger = STATE_DEBUGGER_IDLE;
+    }
+
+    if (string_buffer_size(ctx->buf_out)) {
+      fprintf(stdout, "%s", string_buffer_data(ctx->buf_out));
+      string_buffer_reset(ctx->buf_out);
     }
   }
 

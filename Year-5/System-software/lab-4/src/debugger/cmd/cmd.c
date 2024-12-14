@@ -4,15 +4,17 @@
 #include "util/macro.h"
 #include <stdlib.h>
 
-cmd_entry *cmd_entry_new(cmd_fn fn, const char *desc_ref, const char *cmd_ref) {
-  cmd_entry *self = MALLOC(cmd_entry);
+cmd *cmd_entry_new(cmd_fn fn, const char *desc_ref, const char *help_ref,
+                   const char *cmd_ref) {
+  cmd *self = MALLOC(cmd);
   self->fn = fn;
   self->desc_ref = desc_ref;
+  self->help_ref = help_ref;
   self->cmd_ref = cmd_ref;
   return self;
 }
 
-void cmd_entry_free(cmd_entry *self) {
+void cmd_entry_free(cmd *self) {
   if (self) {
     free(self);
   }

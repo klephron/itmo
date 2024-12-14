@@ -2,11 +2,17 @@
 
 #include "util/macro.h"
 
-void cmd_exit(cmd_handler *handler, context *ctx, const char *rest) {
+static const char *desc = "Exit debugger";
+
+static const char *help = "Usage: <command>";
+
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   UNUSED(rest);
 
   ctx->s_debugger = STATE_DEBUGGER_EXITING;
 }
 
-const char *cmd_exit_desc = "Exit debugger";
+cmd *cmd_exit(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

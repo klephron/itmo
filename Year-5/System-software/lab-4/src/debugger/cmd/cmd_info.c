@@ -10,8 +10,13 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-static void cmd_info_register_g(context *ctx, struct user_regs_struct *regs,
-                                const char *reg, size_t offset) {
+static const char *desc = "Info registers, sections or symbols";
+
+static const char *help =
+    "Usage: <command> (sections|symbols|target|registers)";
+
+static void fn_register_g(context *ctx, struct user_regs_struct *regs,
+                          const char *reg, size_t offset) {
   char                buf[64];
   unsigned long long *addr = (void *)regs + offset;
 
@@ -28,7 +33,7 @@ static void cmd_info_register_g(context *ctx, struct user_regs_struct *regs,
   context_out_appendln(ctx, "");
 }
 
-void cmd_info(cmd_handler *handler, context *ctx, const char *rest) {
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *arg;
 
@@ -115,59 +120,37 @@ void cmd_info(cmd_handler *handler, context *ctx, const char *rest) {
       goto cleanup;
     }
 
-    cmd_info_register_g(ctx, &regs, "rax",
-                        offsetof(struct user_regs_struct, rax));
-    cmd_info_register_g(ctx, &regs, "rbx",
-                        offsetof(struct user_regs_struct, rbx));
-    cmd_info_register_g(ctx, &regs, "rcx",
-                        offsetof(struct user_regs_struct, rcx));
-    cmd_info_register_g(ctx, &regs, "rdx",
-                        offsetof(struct user_regs_struct, rdx));
-    cmd_info_register_g(ctx, &regs, "rsi",
-                        offsetof(struct user_regs_struct, rsi));
-    cmd_info_register_g(ctx, &regs, "rdi",
-                        offsetof(struct user_regs_struct, rdi));
-    cmd_info_register_g(ctx, &regs, "rbp",
-                        offsetof(struct user_regs_struct, rbp));
-    cmd_info_register_g(ctx, &regs, "rsp",
-                        offsetof(struct user_regs_struct, rsp));
-    cmd_info_register_g(ctx, &regs, "r8",
-                        offsetof(struct user_regs_struct, r8));
-    cmd_info_register_g(ctx, &regs, "r9",
-                        offsetof(struct user_regs_struct, r9));
-    cmd_info_register_g(ctx, &regs, "r10",
-                        offsetof(struct user_regs_struct, r10));
-    cmd_info_register_g(ctx, &regs, "r11",
-                        offsetof(struct user_regs_struct, r11));
-    cmd_info_register_g(ctx, &regs, "r12",
-                        offsetof(struct user_regs_struct, r12));
-    cmd_info_register_g(ctx, &regs, "r13",
-                        offsetof(struct user_regs_struct, r13));
-    cmd_info_register_g(ctx, &regs, "r14",
-                        offsetof(struct user_regs_struct, r14));
-    cmd_info_register_g(ctx, &regs, "r15",
-                        offsetof(struct user_regs_struct, r15));
-    cmd_info_register_g(ctx, &regs, "rip",
-                        offsetof(struct user_regs_struct, rip));
-    cmd_info_register_g(ctx, &regs, "eflags",
-                        offsetof(struct user_regs_struct, eflags));
-    cmd_info_register_g(ctx, &regs, "cs",
-                        offsetof(struct user_regs_struct, cs));
-    cmd_info_register_g(ctx, &regs, "ss",
-                        offsetof(struct user_regs_struct, ss));
-    cmd_info_register_g(ctx, &regs, "ds",
-                        offsetof(struct user_regs_struct, ds));
-    cmd_info_register_g(ctx, &regs, "es",
-                        offsetof(struct user_regs_struct, es));
-    cmd_info_register_g(ctx, &regs, "fs",
-                        offsetof(struct user_regs_struct, fs));
-    cmd_info_register_g(ctx, &regs, "gs",
-                        offsetof(struct user_regs_struct, gs));
+    fn_register_g(ctx, &regs, "rax", offsetof(struct user_regs_struct, rax));
+    fn_register_g(ctx, &regs, "rbx", offsetof(struct user_regs_struct, rbx));
+    fn_register_g(ctx, &regs, "rcx", offsetof(struct user_regs_struct, rcx));
+    fn_register_g(ctx, &regs, "rdx", offsetof(struct user_regs_struct, rdx));
+    fn_register_g(ctx, &regs, "rsi", offsetof(struct user_regs_struct, rsi));
+    fn_register_g(ctx, &regs, "rdi", offsetof(struct user_regs_struct, rdi));
+    fn_register_g(ctx, &regs, "rbp", offsetof(struct user_regs_struct, rbp));
+    fn_register_g(ctx, &regs, "rsp", offsetof(struct user_regs_struct, rsp));
+    fn_register_g(ctx, &regs, "r8", offsetof(struct user_regs_struct, r8));
+    fn_register_g(ctx, &regs, "r9", offsetof(struct user_regs_struct, r9));
+    fn_register_g(ctx, &regs, "r10", offsetof(struct user_regs_struct, r10));
+    fn_register_g(ctx, &regs, "r11", offsetof(struct user_regs_struct, r11));
+    fn_register_g(ctx, &regs, "r12", offsetof(struct user_regs_struct, r12));
+    fn_register_g(ctx, &regs, "r13", offsetof(struct user_regs_struct, r13));
+    fn_register_g(ctx, &regs, "r14", offsetof(struct user_regs_struct, r14));
+    fn_register_g(ctx, &regs, "r15", offsetof(struct user_regs_struct, r15));
+    fn_register_g(ctx, &regs, "rip", offsetof(struct user_regs_struct, rip));
+    fn_register_g(ctx, &regs, "eflags",
+                  offsetof(struct user_regs_struct, eflags));
+    fn_register_g(ctx, &regs, "cs", offsetof(struct user_regs_struct, cs));
+    fn_register_g(ctx, &regs, "ss", offsetof(struct user_regs_struct, ss));
+    fn_register_g(ctx, &regs, "ds", offsetof(struct user_regs_struct, ds));
+    fn_register_g(ctx, &regs, "es", offsetof(struct user_regs_struct, es));
+    fn_register_g(ctx, &regs, "fs", offsetof(struct user_regs_struct, fs));
+    fn_register_g(ctx, &regs, "gs", offsetof(struct user_regs_struct, gs));
 
   } else {
     ctx->s_debugger = STATE_DEBUGGER_ERROR;
     context_err_append(ctx, "unknown args ");
     context_err_appendln(ctx, arg);
+    context_err_appendln(ctx, help);
     goto cleanup;
   }
 
@@ -177,4 +160,6 @@ cleanup:
   }
 }
 
-const char *cmd_info_desc = "Info registers, sections or symbols";
+cmd *cmd_info(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

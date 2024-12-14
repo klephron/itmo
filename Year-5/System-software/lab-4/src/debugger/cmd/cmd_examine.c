@@ -8,8 +8,16 @@
 #include <stdlib.h>
 #include <sys/ptrace.h>
 
-static void cmd_examine_le_8bytes(context *ctx, uint64_t data, char format,
-                                  size_t size) {
+static const char *desc = "Examine memory";
+
+static const char *help = "Usage: <command> <n> <format> <size> <start>\n"
+                          "\t<n>: elements count\n"
+                          "\t<format>: x(hex)|z(hex-left)|d(decimal)\n"
+                          "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)\n"
+                          "\t<start>: start address in hex";
+
+static void fn_le_8bytes(context *ctx, uint64_t data, char format,
+                         size_t size) {
   char   buf[64];
   size_t offset = 0;
 
@@ -108,7 +116,7 @@ static void cmd_examine_le_8bytes(context *ctx, uint64_t data, char format,
   }
 }
 
-void cmd_examine(cmd_handler *handler, context *ctx, const char *rest) {
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args = trim(strdup(rest));
   char *arg_n = NULL;
@@ -201,7 +209,7 @@ void cmd_examine(cmd_handler *handler, context *ctx, const char *rest) {
     uint64_t data = ptrace(PTRACE_PEEKDATA, ctx->pid, addr_cur, NULL);
     snprintf(buf, STRMAXLEN(buf), "0x%lx: ", addr_cur);
     context_out_append(ctx, buf);
-    cmd_examine_le_8bytes(ctx, data, format, size);
+    fn_le_8bytes(ctx, data, format, size);
     context_out_appendln(ctx, "");
   }
 
@@ -211,11 +219,7 @@ err_format:
   ctx->s_debugger = STATE_DEBUGGER_ERROR;
   context_err_append(ctx, "unexpected args ");
   context_err_appendln(ctx, args);
-  context_err_appendln(ctx, "Arguments: <n> <format> <size> <start>");
-  context_err_appendln(ctx, "\t<n>: elements count");
-  context_err_appendln(ctx, "\t<format>: x(hex)|z(hex-left)|d(decimal)");
-  context_err_appendln(ctx, "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)");
-  context_err_appendln(ctx, "\t<start>: start address in hex");
+  context_err_appendln(ctx, help);
   goto cleanup;
 
 cleanup:
@@ -237,4 +241,6 @@ cleanup:
   return;
 }
 
-const char *cmd_examine_desc = "Examine memory";
+cmd *cmd_examine(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

@@ -9,7 +9,13 @@
 #include <stdlib.h>
 #include <sys/ptrace.h>
 
-static int cmd_disassemble_fprintf(void *stream, const char *fmt, ...) {
+static const char *desc = "Disassemble memory";
+
+static const char *help = "Usage: <command> <start> <size>\n"
+                          "\t<start>: start address in hex\n"
+                          "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)";
+
+static int fn_fprintf(void *stream, const char *fmt, ...) {
   char buf[256];
 
   string_buffer *buffer = (string_buffer *)stream;
@@ -24,9 +30,8 @@ static int cmd_disassemble_fprintf(void *stream, const char *fmt, ...) {
   return len;
 }
 
-static int cmd_disassemble_fprintf_styled_ftype(void                   *stream,
-                                                enum disassembler_style style,
-                                                const char *fmt, ...) {
+static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
+                                   const char *fmt, ...) {
   UNUSED(style);
   char           buf[256];
   string_buffer *buffer = (string_buffer *)stream;
@@ -41,9 +46,8 @@ static int cmd_disassemble_fprintf_styled_ftype(void                   *stream,
   return len;
 }
 
-static int cmd_disassemble_read_memory(bfd_vma memaddr, bfd_byte *addr,
-                                       unsigned int             length,
-                                       struct disassemble_info *info) {
+static int fn_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
+                          struct disassemble_info *info) {
   context *ctx = (context *)info->application_data;
 
   uint64_t bytes = 0;
@@ -66,8 +70,8 @@ static int cmd_disassemble_read_memory(bfd_vma memaddr, bfd_byte *addr,
   return 0;
 }
 
-static void cmd_disassemble_memory_error(int status, bfd_vma memaddr,
-                                         struct disassemble_info *info) {
+static void fn_memory_error(int status, bfd_vma memaddr,
+                            struct disassemble_info *info) {
   char buf[256];
 
   snprintf(buf, STRMAXLEN(buf), "memory error at address 0x%lx, status: %d\n",
@@ -75,7 +79,7 @@ static void cmd_disassemble_memory_error(int status, bfd_vma memaddr,
   context_err_appendln((context *)info->application_data, buf);
 }
 
-void cmd_disassemble(cmd_handler *handler, context *ctx, const char *rest) {
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args = trim(strdup(rest));
   char *arg_address = NULL;
@@ -117,14 +121,13 @@ void cmd_disassemble(cmd_handler *handler, context *ctx, const char *rest) {
   string_buffer *buffer = string_buffer_new(0, 0);
 
   struct disassemble_info info;
-  init_disassemble_info(&info, buffer, cmd_disassemble_fprintf,
-                        cmd_disassemble_fprintf_styled_ftype);
+  init_disassemble_info(&info, buffer, fn_fprintf, fn_fprintf_styled_ftype);
 
   info.arch = bfd_arch_i386;
   info.mach = bfd_mach_x86_64;
 
-  info.read_memory_func = cmd_disassemble_read_memory;
-  info.memory_error_func = cmd_disassemble_memory_error;
+  info.read_memory_func = fn_read_memory;
+  info.memory_error_func = fn_memory_error;
 
   info.application_data = ctx;
   disassembler_ftype disasm =
@@ -151,9 +154,7 @@ err_format:
   ctx->s_debugger = STATE_DEBUGGER_ERROR;
   context_err_append(ctx, "unexpected args ");
   context_err_appendln(ctx, args);
-  context_err_appendln(ctx, "Arguments: <start> <size>");
-  context_err_appendln(ctx, "\t<start>: start address in hex");
-  context_err_appendln(ctx, "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)");
+  context_err_appendln(ctx, help);
   goto cleanup;
 
 cleanup:
@@ -169,4 +170,6 @@ cleanup:
   return;
 }
 
-const char *cmd_disassemble_desc = "Disassemble memory";
+cmd *cmd_disassemble(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}
