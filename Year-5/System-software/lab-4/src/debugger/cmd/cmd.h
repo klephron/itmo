@@ -12,3 +12,5 @@ void cmd_print(context *ctx, const char *rest);
 void cmd_x(context *ctx, const char *rest);
 void cmd_disassemble(context *ctx, const char *rest);
 void cmd_continue(context *ctx, const char *rest);
+
+int cmd_error_if_no_target(context *ctx);
