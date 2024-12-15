@@ -27,38 +27,35 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     sscanf(args, "%lu", &n);
   }
 
-  if (cmd_error_if_no_target(ctx)) {
+  if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
     goto cleanup;
   }
 
   for (size_t i = 0; i < n; ++i) {
-    if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_appendln(ctx, "target is not running");
-      goto cleanup;
-    }
-
     if (ptrace(PTRACE_SINGLESTEP, ctx->pid, NULL, NULL) == -1) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_appendln(ctx, "ptrace error");
+      cmd_error(ctx, "ptrace singlestep error");
       goto cleanup;
     }
 
     int status;
-    if (waitpid(ctx->pid, &status, 0) == -1) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_appendln(ctx, "waitpid error");
+    int wres = waitpid(ctx->pid, &status, 0);
+    if (wres == -1) {
+      cmd_error(ctx, "waitpid error");
       goto cleanup;
+    } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
+      ctx->pid = 0;
+    }
+
+    if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
+      break;
     }
   }
 
   if (context_get_target_state(ctx) == TARGET_RUNNING) {
     if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs) == -1) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_appendln(ctx, "failed to get regs");
+      cmd_error(ctx, "failed to get regs");
       goto cleanup;
     }
-
     cmd_disassemble_at_address(ctx, regs.rip, 1);
   }
 

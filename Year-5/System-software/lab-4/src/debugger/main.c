@@ -127,6 +127,8 @@ static void register_cmds(cmd_handler *h) {
   cmd_handler_register(h, cmd_help("h"));
   cmd_handler_register(h, cmd_stepi("stepi"));
   cmd_handler_register(h, cmd_stepi("si"));
+  cmd_handler_register(h, cmd_nexti("nexti"));
+  cmd_handler_register(h, cmd_nexti("ni"));
 }
 
 static int execute(args *args) {

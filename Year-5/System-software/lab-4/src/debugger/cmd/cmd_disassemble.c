@@ -3,11 +3,7 @@
 #include "util/macro.h"
 #include "util/string.h"
 
-#include <dis-asm.h>
-#include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <sys/ptrace.h>
 
 static const char *desc = "Disassemble memory";
 
@@ -15,83 +11,13 @@ static const char *help = "Usage: <command> <start> <size>\n"
                           "\t<start>: start address in hex\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)";
 
-static int fn_fprintf(void *stream, const char *fmt, ...) {
-  char buf[256];
-
-  string_buffer *buffer = (string_buffer *)stream;
-
-  va_list args;
-  va_start(args, fmt);
-
-  int len = vsnprintf(buf, STRMAXLEN(buf), fmt, args);
-  va_end(args);
-
-  string_buffer_append(buffer, buf);
-  return len;
-}
-
-static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
-                                   const char *fmt, ...) {
-  UNUSED(style);
-  char           buf[256];
-  string_buffer *buffer = (string_buffer *)stream;
-
-  va_list args;
-  va_start(args, fmt);
-
-  int len = vsnprintf(buf, STRMAXLEN(buf), fmt, args);
-  va_end(args);
-
-  string_buffer_append(buffer, buf);
-  return len;
-}
-
-static int fn_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
-                          struct disassemble_info *info) {
-  context *ctx = (context *)info->application_data;
-
-  uint64_t bytes = 0;
-  for (bfd_vma addr_cur = memaddr; bytes < length; addr_cur += sizeof(long)) {
-    long data = ptrace(PTRACE_PEEKDATA, ctx->pid, addr_cur, NULL);
-    if (errno) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_append(ctx, "ptrace error while fetching data: ");
-      context_err_appendln(ctx, strerror(errno));
-      return 1;
-    }
-    uint64_t bytes_to_copy = sizeof(long);
-    if (bytes + bytes_to_copy > length) {
-      bytes_to_copy = length - bytes;
-    }
-
-    memcpy(addr + bytes, &data, bytes_to_copy);
-    bytes += bytes_to_copy;
-  }
-  return 0;
-}
-
-static void fn_memory_error(int status, bfd_vma memaddr,
-                            struct disassemble_info *info) {
-  char buf[256];
-
-  snprintf(buf, STRMAXLEN(buf), "memory error at address 0x%lx, status: %d\n",
-           (long)memaddr, status);
-  context_err_appendln((context *)info->application_data, buf);
-}
-
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args = trim(strdup(rest));
   char *arg_address = NULL;
   char *arg_size = NULL;
 
-  if (cmd_error_if_no_target(ctx)) {
-    goto cleanup;
-  }
-
-  if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
-    ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_appendln(ctx, "target is not running");
+  if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
     goto cleanup;
   }
 
@@ -142,11 +68,43 @@ cleanup:
   return;
 }
 
+static int fn_fprintf(void *stream, const char *fmt, ...) {
+  char buf[256];
+
+  string_buffer *buffer = (string_buffer *)stream;
+
+  va_list args;
+  va_start(args, fmt);
+
+  int len = vsnprintf(buf, STRMAXLEN(buf), fmt, args);
+  va_end(args);
+
+  string_buffer_append(buffer, buf);
+  return len;
+}
+
+static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
+                                   const char *fmt, ...) {
+  UNUSED(style);
+  char           buf[256];
+  string_buffer *buffer = (string_buffer *)stream;
+
+  va_list args;
+  va_start(args, fmt);
+
+  int len = vsnprintf(buf, STRMAXLEN(buf), fmt, args);
+  va_end(args);
+
+  string_buffer_append(buffer, buf);
+  return len;
+}
+
 cmd *cmd_disassemble(const char *cmd_ref) {
   return cmd_entry_new(fn, desc, help, cmd_ref);
 }
 
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
+  char           buf[64];
   string_buffer *buffer = string_buffer_new(0, 0);
 
   struct disassemble_info info;
@@ -155,15 +113,18 @@ void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
   info.arch = bfd_arch_i386;
   info.mach = bfd_mach_x86_64;
 
-  info.read_memory_func = fn_read_memory;
-  info.memory_error_func = fn_memory_error;
-
   info.application_data = ctx;
+  info.read_memory_func = cmd_read_memory;
+  info.memory_error_func = cmd_memory_error;
+
   disassembler_ftype disasm =
       disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);
 
   bfd_vma pc = address;
   while (pc < address + size) {
+    snprintf(buf, STRMAXLEN(buf), "0x%016lx\t", pc);
+    string_buffer_append(buffer, buf);
+
     size_t insn_size = disasm(pc, &info);
     pc += insn_size;
     if (pc < address + size) {

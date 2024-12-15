@@ -124,13 +124,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   char *arg_size = NULL;
   char *arg_address = NULL;
 
-  if (cmd_error_if_no_target(ctx)) {
-    goto cleanup;
-  }
-
-  if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
-    ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_appendln(ctx, "target is not running");
+  if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
     goto cleanup;
   }
 

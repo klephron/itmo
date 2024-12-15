@@ -26,15 +26,13 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (context_get_target_state(ctx) == TARGET_RUNNING) {
-    ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_appendln(ctx, "target is already running");
+    cmd_error(ctx, "target is already running");
     goto cleanup;
   }
 
   pid_t pid = fork();
   if (pid == -1) {
-    ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_appendln(ctx, "error while forking");
+    cmd_error(ctx, "error while forking");
     goto cleanup;
   }
 

@@ -86,15 +86,18 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       context_out_appendln(ctx, buf);
     }
   } else if (!strcmp(args, "target")) {
+    char buf[64];
+
     if (cmd_error_if_no_target(ctx)) {
       goto cleanup;
     }
-    char buf[64];
+
     context_out_append(ctx, "file: ");
     context_out_append(ctx, ctx->fname);
     context_out_append(ctx, ", status: ");
     context_out_append(ctx,
                        state_target_enum_str(context_get_target_state(ctx)));
+
     if (context_get_target_state(ctx) != TARGET_NOT_RUNNING) {
       context_out_append(ctx, ", pid: ");
       snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
@@ -103,20 +106,14 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       context_out_appendln(ctx, "");
     }
   } else if (!strcmp(args, "registers")) {
-    if (cmd_error_if_no_target(ctx)) {
-      goto cleanup;
-    }
-    if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_appendln(ctx, "target is not running");
+    if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
       goto cleanup;
     }
 
     struct user_regs_struct regs;
 
     if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs) == -1) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_appendln(ctx, "failed to get regs");
+      cmd_error(ctx, "failed to get regs");
       goto cleanup;
     }
 
