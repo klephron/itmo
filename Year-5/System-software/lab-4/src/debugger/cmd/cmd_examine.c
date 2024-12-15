@@ -125,7 +125,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   char *arg_address = NULL;
 
   if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
-    goto cleanup;
+    goto error_format;
   }
 
   {
@@ -150,7 +150,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (!arg_n || !arg_format || !arg_size || !arg_address) {
-    goto err_format;
+    goto error_format;
   }
 
   size_t n;
@@ -158,7 +158,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   char format;
   if (strlen(arg_format) != 1) {
-    goto err_format;
+    goto error_format;
   } else {
     format = arg_format[0];
     switch (format) {
@@ -168,13 +168,13 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     case 'u':
       break;
     default:
-      goto err_format;
+      goto error_format;
     }
   }
 
   size_t size;
   if (strlen(arg_size) != 1) {
-    goto err_format;
+    goto error_format;
   } else {
     switch (arg_size[0]) {
     case 'b':
@@ -190,7 +190,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       size = 8;
       break;
     default:
-      goto err_format;
+      goto error_format;
     }
   }
 
@@ -206,15 +206,10 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     fn_le_8bytes(ctx, data, format, size);
     context_out_appendln(ctx, "");
   }
-
-  return;
-
-err_format:
-  ctx->s_debugger = DEBUGGER_ERROR;
-  context_err_append(ctx, "unexpected args ");
-  context_err_appendln(ctx, args);
-  context_err_appendln(ctx, help);
   goto cleanup;
+
+error_format:
+  cmd_error_format(ctx, args, help);
 
 cleanup:
   if (args) {

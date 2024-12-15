@@ -10,7 +10,7 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-static const char *desc = "Info registers, sections or symbols";
+static const char *desc = "Info sections, symbols, target, register";
 
 static const char *help =
     "Usage: <command> (sections|symbols|target|registers)";
@@ -142,14 +142,13 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     fn_register_g(ctx, &regs, "es", offsetof(struct user_regs_struct, es));
     fn_register_g(ctx, &regs, "fs", offsetof(struct user_regs_struct, fs));
     fn_register_g(ctx, &regs, "gs", offsetof(struct user_regs_struct, gs));
-
   } else {
-    ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_append(ctx, "unknown args ");
-    context_err_appendln(ctx, args);
-    context_err_appendln(ctx, help);
-    goto cleanup;
+    goto error_format;
   }
+  goto cleanup;
+
+error_format:
+  cmd_error_format(ctx, args, help);
 
 cleanup:
   if (args) {

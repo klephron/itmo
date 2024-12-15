@@ -20,6 +20,7 @@ void cmd_entry_free(cmd *self);
 // utility
 int  cmd_error_if_no_target(context *ctx);
 int  cmd_error_if_not_running(context *ctx);
+void cmd_error_format(context *ctx, const char *args, const char *help);
 void cmd_error(context *ctx, const char *msg);
 
 void cmd_memory_error(int status, bfd_vma memaddr,
@@ -30,6 +31,7 @@ int  cmd_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
 // commands
 typedef cmd *cmd_new(const char *cmd_ref);
 
+cmd_new cmd_break;
 cmd_new cmd_continue;
 cmd_new cmd_disassemble;
 cmd_new cmd_echo;

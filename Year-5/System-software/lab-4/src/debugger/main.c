@@ -129,6 +129,8 @@ static void register_cmds(cmd_handler *h) {
   cmd_handler_register(h, cmd_stepi("si"));
   cmd_handler_register(h, cmd_nexti("nexti"));
   cmd_handler_register(h, cmd_nexti("ni"));
+  cmd_handler_register(h, cmd_break("break"));
+  cmd_handler_register(h, cmd_break("b"));
 }
 
 static int execute(args *args) {

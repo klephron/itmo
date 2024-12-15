@@ -43,6 +43,13 @@ int cmd_error_if_not_running(context *ctx) {
   return 0;
 }
 
+void cmd_error_format(context *ctx, const char *args, const char *help) {
+  ctx->s_debugger = DEBUGGER_ERROR;
+  context_err_append(ctx, "unexpected args ");
+  context_err_appendln(ctx, args);
+  context_err_appendln(ctx, help);
+}
+
 void cmd_memory_error(int status, bfd_vma memaddr,
                       struct disassemble_info *info) {
   char buf[256];

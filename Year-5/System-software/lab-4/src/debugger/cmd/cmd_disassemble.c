@@ -35,7 +35,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (!arg_size || !arg_address) {
-    goto err_format;
+    goto error_format;
   }
 
   uint64_t address;
@@ -45,15 +45,10 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   sscanf(arg_size, "%lu", &size);
 
   cmd_disassemble_at_address(ctx, address, size);
-
-  return;
-
-err_format:
-  ctx->s_debugger = DEBUGGER_ERROR;
-  context_err_append(ctx, "unexpected args ");
-  context_err_appendln(ctx, args);
-  context_err_appendln(ctx, help);
   goto cleanup;
+
+error_format:
+  cmd_error_format(ctx, args, help);
 
 cleanup:
   if (args) {

@@ -20,7 +20,6 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   if (ptrace(PTRACE_CONT, ctx->pid, NULL, NULL) == -1) {
     cmd_error(ctx, "continue failed");
-    goto cleanup;
   }
 
 cleanup:

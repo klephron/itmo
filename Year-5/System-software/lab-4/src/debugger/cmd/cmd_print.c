@@ -26,12 +26,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (!args || !*args) {
-    cmd_error(ctx, "no args specified");
-    goto help;
-  }
-
-  if (cmd_error_if_not_running(ctx)) {
-    goto cleanup;
+    goto error_format;
   }
 
   if (args[0] == '$') {
@@ -105,14 +100,12 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
              *(unsigned long long *)(((void *)&regs) + offset));
     context_out_appendln(ctx, buf);
   } else {
-    ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_append(ctx, "unknown args ");
-    context_err_appendln(ctx, args);
-    goto help;
+    goto error_format;
   }
+  goto cleanup;
 
-help:
-  context_err_appendln(ctx, help);
+error_format:
+  cmd_error_format(ctx, args, help);
 
 cleanup:
   if (args) {

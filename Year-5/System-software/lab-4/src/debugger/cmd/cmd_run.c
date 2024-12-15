@@ -17,7 +17,6 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char  *args = NULL;
   char **argv = NULL;
-  int    do_exit = 0;
 
   args = trim(strdup(rest));
 
@@ -30,40 +29,37 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
+  // parse arguments to command
+  size_t size = 4;
+  size_t argc = 0;
+  argv = malloc(size * sizeof(char *));
+  char *token = strtok(args, " ");
+  while (token) {
+    if (argc >= size - 1) {
+      size *= 2;
+      argv = realloc(argv, size * sizeof(char *));
+    }
+    argv[argc++] = strdup(token);
+    token = strtok(NULL, " ");
+  }
+  argv[argc] = NULL;
+
   pid_t pid = fork();
   if (pid == -1) {
     cmd_error(ctx, "error while forking");
     goto cleanup;
   }
 
-  // child process
   if (pid == 0) {
-    // parse arguments to command
-    size_t size = 4;
-    size_t argc = 0;
-    argv = malloc(size * sizeof(char *));
-    char *token = strtok(args, " ");
-    while (token) {
-      if (argc >= size - 1) {
-        size *= 2;
-        argv = realloc(argv, size * sizeof(char *));
-      }
-      argv[argc++] = strdup(token);
-      token = strtok(NULL, " ");
-    }
-    argv[argc] = NULL;
-
     if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) == -1) {
       perror("ptrace traceme");
-      do_exit = 1;
-      goto cleanup;
+      exit(1);
     }
 
     execvp(ctx->fname, argv);
-    // one error
+    // on error
     perror("execvp");
-    do_exit = 1;
-    goto cleanup;
+    exit(1);
   } else {
     char buf[64];
     int  status;
@@ -76,16 +72,13 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
 cleanup:
   if (argv) {
-    while (*argv) {
-      free(*argv++);
+    for (size_t i = 0; argv[i] != NULL; ++i) {
+      free(argv[i]);
     }
     free(argv);
   }
   if (args) {
     free(args);
-  }
-  if (do_exit) {
-    exit(1);
   }
 }
 
