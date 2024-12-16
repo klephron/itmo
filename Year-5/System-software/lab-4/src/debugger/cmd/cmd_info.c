@@ -203,6 +203,8 @@ static void fn_breakpoints(context *ctx) {
 
     context_out_appendln(ctx, "");
   }
+
+  free(breakpoints);
 }
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {

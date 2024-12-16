@@ -131,3 +131,20 @@ Test(hashset, char_char_it) {
 
   hashset_char_char_free(hashset);
 }
+
+Test(hashset, char_char_erase) {
+  hashset_char_char *hashset = hashset_char_char_new();
+
+  char key[10];
+  char value[10];
+
+  chars_chars data = {.key = key, .value = value};
+
+  for (int i = 0; i < 1000; ++i) {
+    sprintf(key, "%d", i);
+    sprintf(value, "%d", i + 1000);
+    hashset_char_char_insert(hashset, &data);
+  }
+
+  hashset_char_char_free(hashset);
+}

@@ -35,6 +35,7 @@ typedef struct hashset_it_struct {
   hashset           *hashset;
   size_t             bucket_i;
   hashset_list_node *node;
+  hashset_list_node *prev; // previous in the bucket
 } hashset_it;
 
 void       hashset_init(hashset *self, container_f_cmp, container_f_new,
@@ -47,6 +48,8 @@ hashset_it hashset_find(hashset *self, void *data);
 void       hashset_insert(hashset *self, void *data);
 hashset_it hashset_begin(hashset *self);
 void       hashset_replace(hashset *self, hashset_it it, void *data);
+// NOTE: consumes hashset (it invalidates)
+void hashset_erase(hashset *self, hashset_it it);
 
 void *hashset_it_get(hashset_it *it);
 int   hashset_it_end(hashset_it *it);
@@ -122,4 +125,9 @@ int   hashset_it_next(hashset_it *it);
   __attribute__((__unused__)) static inline void hashset_type##_replace(       \
       hashset_type *self, hashset_type##_it it, type *data) {                  \
     hashset_replace(&self->hashset, it.it, (void *)data);                      \
+  }                                                                            \
+                                                                               \
+  __attribute__((__unused__)) static inline void hashset_type##_erase(         \
+      hashset_type *self, hashset_type##_it it) {                              \
+    hashset_erase(&self->hashset, it.it);                                      \
   }

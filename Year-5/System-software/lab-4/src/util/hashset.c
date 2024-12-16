@@ -13,8 +13,14 @@ static void hashset_bucket_free_in(hashset *self, hashset_bucket *bucket) {
 }
 
 static hashset_it hashset_it_make(hashset *hashset, size_t bucket_i,
-                                  hashset_list_node *node) {
-  hashset_it it = {.hashset = hashset, .bucket_i = bucket_i, .node = node};
+                                  hashset_list_node *node,
+                                  hashset_list_node *prev) {
+  hashset_it it = {
+      .hashset = hashset,
+      .bucket_i = bucket_i,
+      .node = node,
+      .prev = prev,
+  };
   return it;
 }
 
@@ -88,8 +94,10 @@ void *hashset_it_get(hashset_it *it) { return it->node->data; }
 
 int hashset_it_next(hashset_it *it) {
   if (it->node) {
+    it->prev = it->node;
     it->node = it->node->next;
     if (!it->node) {
+      it->prev = NULL;
       while (++it->bucket_i < it->hashset->capacity &&
              !it->hashset->buckets[it->bucket_i].head)
         ;
@@ -107,12 +115,14 @@ hashset_it hashset_find(hashset *self, void *data) {
   size_t          index = self->f_hash(data) % self->capacity;
   hashset_bucket *bucket = self->buckets + index;
 
+  hashset_list_node *prev = NULL;
   for (hashset_list_node *node = bucket->head; node; node = node->next) {
     if (!self->f_cmp(node->data, data)) {
-      return hashset_it_make(self, index, node);
+      return hashset_it_make(self, index, node, prev);
     }
+    prev = node;
   }
-  return hashset_it_make(self, 0, NULL);
+  return hashset_it_make(self, 0, NULL, NULL);
 }
 
 void hashset_insert(hashset *self, void *data) {
@@ -147,8 +157,18 @@ hashset_it hashset_begin(hashset *self) {
   for (size_t i = 0; i < self->capacity; ++i) {
     hashset_bucket *bucket = self->buckets + i;
     if (bucket->head) {
-      return hashset_it_make(self, i, bucket->head);
+      return hashset_it_make(self, i, bucket->head, NULL);
     }
   }
-  return hashset_it_make(self, 0, NULL);
+  return hashset_it_make(self, 0, NULL, NULL);
+}
+
+void hashset_erase(hashset *self, hashset_it it) {
+  self->f_delete(it.node->data);
+  if (it.prev) {
+    it.prev->next = it.node->next;
+  } else {
+    self->buckets[it.bucket_i].head = it.node->next;
+  }
+  free(it.node);
 }

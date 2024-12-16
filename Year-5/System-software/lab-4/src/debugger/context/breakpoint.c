@@ -26,8 +26,6 @@ void breakpoint_free(breakpoint *self) {
   }
 }
 
-// -1 -> error
-// 0 -> ok
 int context_bp_place(context *self, breakpoint *bp) {
   if (bp->is_enabled && !bp->is_placed) {
     errno = 0;

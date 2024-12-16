@@ -32,6 +32,7 @@ typedef cmd *cmd_new(const char *cmd_ref);
 
 cmd_new cmd_break;
 cmd_new cmd_continue;
+cmd_new cmd_delete;
 cmd_new cmd_disassemble;
 cmd_new cmd_echo;
 cmd_new cmd_examine;
