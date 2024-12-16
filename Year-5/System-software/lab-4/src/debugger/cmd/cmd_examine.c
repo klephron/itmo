@@ -16,8 +16,8 @@ static const char *help = "Usage: <command> <n> <format> <size> <start>\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)\n"
                           "\t<start>: start address in hex";
 
-static void fn_le_8bytes(context *ctx, uint64_t data, char format,
-                         size_t size) {
+static void fn_out_le_8bytes(context *ctx, uint64_t data, char format,
+                             size_t size) {
   char   buf[64];
   size_t offset = 0;
 
@@ -200,11 +200,18 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   for (uint64_t addr_cur = address, addr_end = address + (n * size);
        addr_cur <= addr_end; addr_cur += sizeof(uint64_t)) {
-    uint64_t data = ptrace(PTRACE_PEEKDATA, ctx->pid, addr_cur, NULL);
-    snprintf(buf, STRMAXLEN(buf), "0x%lx: ", addr_cur);
-    context_out_append(ctx, buf);
-    fn_le_8bytes(ctx, data, format, size);
-    context_out_appendln(ctx, "");
+    uint64_t data;
+    snprintf(buf, STRMAXLEN(buf), "0x%lx", addr_cur);
+    if (context_tg_peekdata(ctx, addr_cur, &data) == TARGET_ERROR) {
+      context_err_append(ctx, "unable to fetch data at address ");
+      context_error(ctx, buf);
+      continue;
+    } else {
+      context_out_append(ctx, buf);
+      context_out_append(ctx, ": ");
+      fn_out_le_8bytes(ctx, data, format, size);
+      context_out_appendln(ctx, "");
+    }
   }
   goto cleanup;
 

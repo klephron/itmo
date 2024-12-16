@@ -25,6 +25,18 @@ int container_cmp_false(const void *lsv, const void *rsv) {
   return 1;
 }
 
+int container_cmp_uint64(const void *_lsv, const void *_rsv) {
+  const uint64_t lsv = (uint64_t)_lsv;
+  const uint64_t rsv = (uint64_t)_rsv;
+  if (lsv == rsv) {
+    return 0;
+  } else if (lsv < rsv) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
+
 int container_cmp_ptr(const void *lsv, const void *rsv) {
   if (lsv == rsv) {
     return 0;
@@ -69,9 +81,9 @@ void container_delete_ptr(void *_data) {
 void container_delete_false(void *_data) { UNUSED(_data); }
 
 // HASH
-size_t container_hash_chars(const void *_data) {
-  const size_t pow = 757;
-  size_t       hash = 353;
+uint64_t container_hash_chars(const void *_data) {
+  const uint64_t pow = 757;
+  uint64_t       hash = 353;
 
   const char *kc = _data;
   while (*kc != '\0') {
@@ -81,12 +93,17 @@ size_t container_hash_chars(const void *_data) {
   return hash;
 }
 
-size_t container_hash_chars_chars(const void *_data) {
+uint64_t container_hash_chars_chars(const void *_data) {
   const chars_chars *data = _data;
   return container_hash_chars(data->key);
 }
 
-size_t container_hash_ptr(const void *_data) {
+uint64_t container_hash_uint64(const void *_data) {
+  uint64_t ad = (uint64_t)_data;
+  return (uint64_t)((13 * ad) ^ (ad >> 15));
+}
+
+uint64_t container_hash_ptr(const void *_data) {
   uintptr_t ad = (uintptr_t)_data;
-  return (size_t)((13 * ad) ^ (ad >> 15));
+  return (uint64_t)((13 * ad) ^ (ad >> 15));
 }

@@ -32,8 +32,8 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   if (args[0] == '$') {
     char *reg = args + 1;
 
-    if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs) == -1) {
-      cmd_error(ctx, "failed to get regs");
+    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      context_error(ctx, "failed to get regs");
       goto cleanup;
     }
 

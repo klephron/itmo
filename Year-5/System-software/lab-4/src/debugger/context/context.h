@@ -1,9 +1,49 @@
 #pragma once
 
+#include "util/container_util.h"
+#include "util/hashset.h"
 #include "util/string_buffer.h"
-#include <bfd.h>
-#include <sys/types.h>
 
+#include <bfd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/user.h>
+
+// breakpoints
+typedef struct breakpoint_struct {
+  size_t   id;
+  uint8_t  data;
+  uint64_t address;
+  char    *file;
+  size_t   line;
+  int      is_enabled;
+  int      is_placed;
+} breakpoint;
+
+breakpoint *breakpoint_new(size_t id, uint8_t data, uint64_t address,
+                           char *file, size_t line);
+void        breakpoint_free(breakpoint *self);
+
+static inline int container_cmp_breakpoint(const void *_lsv, const void *_rsv) {
+  const breakpoint *lsv = _lsv;
+  const breakpoint *rsv = _rsv;
+  int res = container_cmp_uint64((void *)lsv->address, (void *)rsv->address);
+  return res;
+}
+static inline void container_delete_breakpoint(void *_lsv) {
+  return breakpoint_free(_lsv);
+}
+static inline uint64_t container_hash_breakpoint(const void *_lsv) {
+  const breakpoint *lsv = _lsv;
+  uint64_t          res = container_hash_uint64((void *)lsv->address);
+  return res;
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_breakpoint, breakpoint,
+                              container_cmp_breakpoint, container_new_move,
+                              container_delete_breakpoint,
+                              container_hash_breakpoint);
+
+// state
 typedef enum debugger_state_enum {
   DEBUGGER_UNKNOWN,
   DEBUGGER_IDLE, // waiting for user input
@@ -16,19 +56,25 @@ typedef enum target_state_enum {
   TARGET_UNKNOWN,
   TARGET_NO_TARGET,
   TARGET_NOT_RUNNING,
-  TARGET_RUNNING,
+  TARGET_BRKPT,
+  TARGET_TRAPPED,
+  TARGET_ERROR, // only returned by functions, can't be actual state
 } target_state_enum;
 
+// context
 typedef struct context_struct {
   debugger_state_enum s_debugger;
+  target_state_enum   s_target;
   string_buffer      *buf_out;
   string_buffer      *buf_err;
   // internal
-  char     *fname;
-  bfd      *abfd;
-  asymbol **abfd_asymbols;
-  int64_t   abfd_asymbols_count;
-  pid_t     pid;
+  char               *fname;
+  bfd                *abfd;
+  asymbol           **abfd_asymbols;
+  int64_t             abfd_asymbols_count;
+  pid_t               pid;
+  hashset_breakpoint *breaks;
+  size_t              breaks_cnt;
 } context;
 
 context *context_new();
@@ -39,4 +85,29 @@ void context_out_appendln(context *self, const char *data);
 void context_err_append(context *self, const char *data);
 void context_err_appendln(context *self, const char *data);
 
-target_state_enum context_get_target_state(context *self);
+void context_error(context *ctx, const char *msg);
+
+int               context_tg_is_running(context *self);
+target_state_enum context_tg_get_state(context *self);
+target_state_enum context_tg_set(context *self, uint64_t abfd_asymbols_count,
+                                 asymbol **abfd_asymbols, bfd *abfd,
+                                 char *fname);
+target_state_enum context_tg_wait(context *self);
+target_state_enum context_tg_kill(context *self, int signal);
+target_state_enum context_tg_continue(context *self);
+target_state_enum context_tg_stepi(context *self);
+target_state_enum context_tg_peekdata(context *self, uint64_t address,
+                                      uint64_t *data_p);
+target_state_enum context_tg_pokedata(context *self, uint64_t address,
+                                      uint64_t data);
+target_state_enum context_tg_run(context *self, char **argv);
+target_state_enum context_tg_getregs(context                 *self,
+                                     struct user_regs_struct *regs);
+target_state_enum context_tg_setregs(context                 *self,
+                                     struct user_regs_struct *regs);
+
+void              context_tg_brkpt_fix_regs(struct user_regs_struct *regs_p);
+target_state_enum context_tg_brkpt_fix(context *self);
+
+int context_bp_place(context *self, breakpoint *bp);
+int context_bp_remove(context *self, breakpoint *bp);

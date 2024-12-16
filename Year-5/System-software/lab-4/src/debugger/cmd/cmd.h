@@ -21,12 +21,11 @@ void cmd_entry_free(cmd *self);
 int  cmd_error_if_no_target(context *ctx);
 int  cmd_error_if_not_running(context *ctx);
 void cmd_error_format(context *ctx, const char *args, const char *help);
-void cmd_error(context *ctx, const char *msg);
 
-void cmd_memory_error(int status, bfd_vma memaddr,
-                      struct disassemble_info *info);
-int  cmd_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
-                     struct disassemble_info *info);
+void cmd_ctx_memory_error(int status, bfd_vma memaddr,
+                          struct disassemble_info *info);
+int  cmd_ctx_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
+                         struct disassemble_info *info);
 
 // commands
 typedef cmd *cmd_new(const char *cmd_ref);

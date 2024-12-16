@@ -29,28 +29,9 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
 
-  if (kill(ctx->pid, sig) == -1) {
-    ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_append(ctx, "failed to kill process with pid ");
-    context_err_appendln(ctx, buf);
-    goto cleanup;
-  }
-
-  int status;
-  waitpid(ctx->pid, &status, 0);
-
-  context_out_append(ctx, "killed ");
-  context_out_append(ctx, buf);
-
-  if (WIFSIGNALED(status)) {
-    context_out_append(ctx, " by signal ");
-    snprintf(buf, STRMAXLEN(buf), "%d", sig);
-    context_out_append(ctx, buf);
-    context_out_append(ctx, " with status ");
-    snprintf(buf, STRMAXLEN(buf), "%d", WEXITSTATUS(status));
+  if (context_tg_kill(ctx, sig) != TARGET_ERROR) {
+    context_out_append(ctx, "killed child with pid ");
     context_out_appendln(ctx, buf);
-  } else {
-    context_out_appendln(ctx, " not by signal");
   }
 
 cleanup:

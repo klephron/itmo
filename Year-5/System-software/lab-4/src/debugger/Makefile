@@ -27,14 +27,12 @@ $(BUILD_DIR)/%.o: %.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
 # libraries
-$(BUILD_DIR)/libdebugger.a: $(OBJS) $(LIBS) | $(DIRS)
-	echo $(OBJS)
-	echo $(call rwildcard,$(CURDIR),*.c)
+$(BUILD_DIR)/libdebugger.a: $(OBJS) | $(DIRS)
 	$(AR) rcs $@ $^
 
 # targets
 $(BUILD_DIR)/%: $(CURDIR)/%.c $(OBJS) $(LIBS) | $(DIRS)
-	$(CC) $(FLAGS) -o $@ $^ $(INCS) $(LIBS)
+	$(CC) $(FLAGS) -o $@ $^ $(INCS)
 
 
 build/%:

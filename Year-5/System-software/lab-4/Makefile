@@ -52,7 +52,7 @@ debugger.LIBS      := $(x86_64_core.BUILD_DIR)/libx86_64_all.a $(util.BUILD_DIR)
 
 test.SRC_DIR   := $(CURDIR)/test
 test.BUILD_DIR := $(patsubst $(CURDIR)/%,$(BUILD_DIR)/%,$(test.SRC_DIR))
-test.LIBS      := $(compiler.BUILD_DIR)/libcompiler.a $(util.BUILD_DIR)/libutil.a $(x86_64_core.BUILD_DIR)/libx86_64_all.a $(stdc.BUILD_DIR)/libstdc.a $(debugger.BUILD_DIR)/libdebugger.a
+test.LIBS      := $(debugger.BUILD_DIR)/libdebugger.a $(compiler.BUILD_DIR)/libcompiler.a $(x86_64_core.BUILD_DIR)/libx86_64_all.a $(stdc.BUILD_DIR)/libstdc.a  $(util.BUILD_DIR)/libutil.a
 
 MODULES := util compiler x86_64_core stdc debugger test
 
@@ -114,7 +114,7 @@ define test.ENV
 	CC="$(CC)" \
 	FLAGS="$(FLAGS)" \
 	LIBS="$(test.LIBS)" \
-	INCS="-I$(SRC_DIR) -lantlr3c -lcriterion" \
+	INCS="-I$(SRC_DIR) -lantlr3c -lcriterion -lbfd -lopcodes" \
 	BUILD_DIR="$(test.BUILD_DIR)"
 endef
 
@@ -152,7 +152,7 @@ debugger: debugger/build/main
 test: test/build
 
 ### Run all tests or specific
-run/test: FORCE
+run/test: FORCE | test/build
 	@for file in $(call rwildcard,$(test.BUILD_DIR),*.out); do echo "Test file: $$file" && "$$file"; done;
 run/test/%: test/build/%
 	@$(eval TEST_FILE=$(patsubst run/test/%,$(test.BUILD_DIR)/%,$@)) \

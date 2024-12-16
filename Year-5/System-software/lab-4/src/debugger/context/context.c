@@ -1,14 +1,14 @@
 #include "context.h"
 
-#include "debugger/context/str.h"
-#include "util/log.h"
 #include "util/macro.h"
+#include "util/string_buffer.h"
 #include <stdlib.h>
 #include <sys/wait.h>
 
 context *context_new() {
   context *self = MALLOC(context);
   self->s_debugger = DEBUGGER_IDLE;
+  self->s_target = TARGET_NO_TARGET;
   self->buf_out = string_buffer_new(0, 0);
   self->buf_err = string_buffer_new(0, 0);
 
@@ -17,6 +17,8 @@ context *context_new() {
   self->abfd_asymbols = NULL;
   self->abfd_asymbols_count = 0;
   self->pid = 0;
+  self->breaks = hashset_breakpoint_new();
+  self->breaks_cnt = 0;
 
   return self;
 }
@@ -34,6 +36,7 @@ void context_free(context *self) {
     if (self->abfd) {
       bfd_close(self->abfd);
     }
+    hashset_breakpoint_free(self->breaks);
     free(self);
   }
 }
@@ -56,30 +59,7 @@ void context_err_appendln(context *self, const char *data) {
   context_err_append(self, "\n");
 }
 
-target_state_enum context_get_target_state(context *self) {
-  target_state_enum state = TARGET_UNKNOWN;
-
-  if (!self->fname) {
-    state = TARGET_NO_TARGET;
-  } else if (!self->pid) {
-    state = TARGET_NOT_RUNNING;
-  } else {
-    int   status;
-    pid_t child_pid = waitpid(self->pid, &status, WNOHANG);
-    if (child_pid == self->pid) {
-      state = TARGET_NOT_RUNNING;
-    } else if (child_pid == 0) {
-      state = TARGET_RUNNING;
-      // NOTE: on error also set that target is not running
-      // in case when trying to stepi on child or it was killed
-    } else if (child_pid == -1) {
-      info("waitpid returned -1");
-      state = TARGET_NOT_RUNNING;
-    }
-  }
-  if (state == TARGET_NOT_RUNNING) {
-    self->pid = 0;
-  }
-  debug("target state: %s", state_target_enum_str(state));
-  return state;
+void context_error(context *ctx, const char *msg) {
+  ctx->s_debugger = DEBUGGER_ERROR;
+  context_err_appendln(ctx, msg);
 }

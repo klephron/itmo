@@ -24,8 +24,8 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_get_target_state(ctx) == TARGET_RUNNING) {
-    cmd_error(ctx, "target is already running");
+  if (context_tg_is_running(ctx)) {
+    context_error(ctx, "target is already running");
     goto cleanup;
   }
 
@@ -44,30 +44,21 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
   argv[argc] = NULL;
 
-  pid_t pid = fork();
-  if (pid == -1) {
-    cmd_error(ctx, "error while forking");
+  if (context_tg_run(ctx, argv) == TARGET_ERROR) {
+    context_error(ctx, "target is not created");
     goto cleanup;
   }
 
-  if (pid == 0) {
-    if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) == -1) {
-      perror("ptrace traceme");
-      exit(1);
-    }
+  char buf[64];
+  context_out_append(ctx, "started with pid ");
+  snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
+  context_out_appendln(ctx, buf);
 
-    execvp(ctx->fname, argv);
-    // on error
-    perror("execvp");
-    exit(1);
-  } else {
-    char buf[64];
-    int  status;
-    waitpid(pid, &status, 0);
-    ctx->pid = pid;
-    context_out_append(ctx, "started with pid ");
-    snprintf(buf, STRMAXLEN(buf), "%d", pid);
-    context_out_appendln(ctx, buf);
+  for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
+       !it.end(&it); it.next(&it)) {
+    breakpoint *bp = it.get(&it);
+    bp->is_placed = 0;
+    context_bp_place(ctx, bp);
   }
 
 cleanup:

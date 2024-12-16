@@ -6,7 +6,6 @@
 
 #include <ctype.h>
 #include <dis-asm.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ptrace.h>
@@ -51,11 +50,13 @@ static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
+  static const uint64_t int3 = 0xCC;
+  static const uint64_t int_mask = ~0xFF;
+
   char                   *args = NULL;
   size_t                  n = 1;
   struct user_regs_struct regs;
   struct disassemble_info info;
-  const uint64_t          int3 = 0xCC;
   int                     is_call;
 
   args = trim(strdup(rest));
@@ -73,85 +74,76 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   info.arch = bfd_arch_i386;
   info.mach = bfd_mach_x86_64;
   info.application_data = ctx;
-  info.read_memory_func = cmd_read_memory;
-  info.memory_error_func = cmd_memory_error;
+  info.read_memory_func = cmd_ctx_read_memory;
+  info.memory_error_func = cmd_ctx_memory_error;
 
   disassembler_ftype disasm =
       disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);
 
-  if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs) == -1) {
-    cmd_error(ctx, "failed to get regs");
+  if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+    context_error(ctx, "failed to get regs");
     goto cleanup;
   }
 
   for (size_t i = 0; i < n; ++i) {
     is_call = 0;
-    uint64_t data = 0;
 
     bfd_vma pc = regs.rip;
-    size_t  insn_size = disasm(pc, &info);
+
+    // fix rip to disasm properly if already on breakpoint
+    if (context_tg_get_state(ctx) == TARGET_BRKPT) {
+      context_tg_brkpt_fix_regs(&regs);
+    }
+
+    size_t insn_size = disasm(pc, &info);
     pc += insn_size;
 
     if (is_call) {
-      errno = 0;
-      data = ptrace(PTRACE_PEEKDATA, ctx->pid, pc, NULL);
-      if (errno) {
-        cmd_error(ctx, "ptrace peek error");
-        goto cleanup;
+      // 1. create implicit breakpoint
+      // 2. continue
+      // 3. remove implicit breakpoint
+      uint64_t data;
+
+      if (context_tg_peekdata(ctx, pc, &data) == TARGET_ERROR) {
+        context_error(ctx, "unable to peek data");
+        break;
       }
 
-      uint64_t data_int3 = ((data & ~0xFF) | int3);
-      if (ptrace(PTRACE_POKEDATA, ctx->pid, pc, data_int3) == -1) {
-        cmd_error(ctx, "ptrace set breakpoint error");
-        goto cleanup;
+      uint64_t data_int3 = ((data & int_mask) | int3);
+
+      if (context_tg_pokedata(ctx, pc, data_int3) == TARGET_ERROR) {
+        context_error(ctx, "unable to poke data");
+        break;
       }
 
-      if (ptrace(PTRACE_CONT, ctx->pid, NULL, NULL) == -1) {
-        cmd_error(ctx, "ptrace cont error");
-        goto cleanup;
+      if (context_tg_continue(ctx) == TARGET_ERROR) {
+        context_error(ctx, "unable to continue");
+        break;
+      }
+
+      if (context_tg_is_running(ctx) &&
+          context_tg_pokedata(ctx, pc, data) == TARGET_ERROR) {
+        context_error(ctx, "unable to delete implicit breakpoint");
+        break;
       }
     } else {
-      if (ptrace(PTRACE_SINGLESTEP, ctx->pid, NULL, NULL) == -1) {
-        cmd_error(ctx, "ptrace singlestep error");
-        goto cleanup;
+      if (context_tg_stepi(ctx) == TARGET_ERROR) {
+        context_error(ctx, "unable to stepi");
+        break;
       }
     }
 
-    int status;
-    int wres = waitpid(ctx->pid, &status, 0);
-    if (wres == -1) {
-      cmd_error(ctx, "waitpid error");
-      goto cleanup;
-    } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
-      ctx->pid = 0;
-    }
-
-    if (context_get_target_state(ctx) != TARGET_RUNNING) {
+    if (!context_tg_is_running(ctx)) {
       break;
-    }
-
-    if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs)) {
-      cmd_error(ctx, "ptrace getregs after break error");
-      goto cleanup;
-    }
-
-    if (is_call) {
-      regs.rip -= 1;
-
-      if (ptrace(PTRACE_SETREGS, ctx->pid, NULL, &regs)) {
-        cmd_error(ctx, "ptrace setregs after break error");
-        goto cleanup;
-      }
-
-      if (ptrace(PTRACE_POKEDATA, ctx->pid, pc, data) == -1) {
-        cmd_error(ctx, "ptrace remove breakpoint error");
-        goto cleanup;
-      }
     }
   }
 
-  if (context_get_target_state(ctx) == TARGET_RUNNING) {
-    cmd_disassemble_at_address(ctx, regs.rip, 1);
+  if (context_tg_is_running(ctx)) {
+    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      context_error(ctx, "failed to get regs");
+      goto cleanup;
+    }
+    cmd_disassemble_at_address(ctx, is_call ? regs.rip - 1 : regs.rip, 1);
   }
 
 cleanup:

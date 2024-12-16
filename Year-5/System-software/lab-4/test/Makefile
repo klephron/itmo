@@ -17,8 +17,8 @@ $(sort $(DIRS)):
 	$(MKDIR) $(@:dir/%=%)
 
 # compile object files excluding generated
-$(BUILD_DIR)/%.out: %.c $(HDRS) $(LIBS) | $(DIRS)
-	$(CC) $(FLAGS) $< -o $@ $(LIBS) $(INCS)
+$(BUILD_DIR)/%.out: $(CURDIR)/%.c $(LIBS) | $(DIRS)
+	$(CC) $(FLAGS) $^ -o $@ $(INCS)
 
 build/%:
 	@$(MAKE) --no-print-directory $(patsubst build/%,$(BUILD_DIR)/%,$@)

@@ -1,5 +1,4 @@
 #include <criterion/criterion.h>
-#include <string.h>
 
 // static size_t cg_with_align(size_t size, size_t align) {
 //   return ((size + offset - 1) / align + 1) * align - offset;

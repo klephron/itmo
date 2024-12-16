@@ -74,7 +74,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       }
     }
     if (!found) {
-      cmd_error(ctx, "command not found");
+      context_error(ctx, "command not found");
       fn_all(handler, ctx);
     }
   }

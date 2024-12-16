@@ -64,11 +64,11 @@ $(BUILD_DIR)/%.o: $(GEN_DIR)/%.c $(HDRS) | $(DIRS)
 $(BUILD_DIR)/%.o: %.c $(HDRS) | $(DIRS)
 	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
 
-$(BUILD_DIR)/libcompiler.a: $(OBJS) $(LIBS)
+$(BUILD_DIR)/libcompiler.a: $(OBJS)
 	$(AR) rcs $@ $^
 
 $(BUILD_DIR)/%: $(CURDIR)/%.c $(OBJS) $(LIBS)
-	$(CC) $(FLAGS) -o $@ $^ $(INCS) $(LIBS)
+	$(CC) $(FLAGS) -o $@ $^ $(INCS)
 
 
 build/%:

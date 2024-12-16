@@ -4,15 +4,13 @@
 #define STRING_BUFFER_INITIAL_CAPACITY 256
 #define STRING_BUFFER_GROWTH_FACTOR 2
 
-struct string_buffer {
+typedef struct string_buffer_struct {
   char *data;
   char *cur;
 
   size_t capacity;
   double growth_factor;
-};
-
-typedef struct string_buffer string_buffer;
+} string_buffer;
 
 string_buffer *string_buffer_new(int capacity, double growth_factor);
 void           string_buffer_free(string_buffer *self);

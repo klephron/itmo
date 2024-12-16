@@ -32,28 +32,17 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   for (size_t i = 0; i < n; ++i) {
-    if (ptrace(PTRACE_SINGLESTEP, ctx->pid, NULL, NULL) == -1) {
-      cmd_error(ctx, "ptrace singlestep error");
-      goto cleanup;
-    }
-
-    int status;
-    int wres = waitpid(ctx->pid, &status, 0);
-    if (wres == -1) {
-      cmd_error(ctx, "waitpid error");
-      goto cleanup;
-    } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
-      ctx->pid = 0;
-    }
-
-    if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
+    target_state_enum status = context_tg_stepi(ctx);
+    if (status == TARGET_ERROR) {
+      context_error(ctx, "error while stepping");
+    } else if (status == TARGET_NOT_RUNNING) {
       break;
     }
   }
 
-  if (context_get_target_state(ctx) == TARGET_RUNNING) {
-    if (ptrace(PTRACE_GETREGS, ctx->pid, NULL, &regs) == -1) {
-      cmd_error(ctx, "failed to get regs");
+  if (context_tg_is_running(ctx)) {
+    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      context_error(ctx, "failed to get regs");
       goto cleanup;
     }
     cmd_disassemble_at_address(ctx, regs.rip, 1);

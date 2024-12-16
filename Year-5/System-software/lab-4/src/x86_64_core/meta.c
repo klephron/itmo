@@ -1,7 +1,5 @@
 #include "meta.h"
 
-#include "util/log.h"
-
 const char *x86_64_symbol_enum_str(x86_64_symbol_enum kind) {
   switch (kind) {
   case X86_64_SYMBOL_VALUE_INIT:
@@ -105,7 +103,6 @@ const char *x86_64_symbol_enum_str(x86_64_symbol_enum kind) {
   case X86_64_SYMBOL_UNWRAP_ARRAY:
     return "__x86_64_unwrap_array";
   default:
-    error("unknown symbol %d", kind);
     return "<unknown>";
   }
 }

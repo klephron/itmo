@@ -2,7 +2,7 @@
 
 #include "debugger/context/context.h"
 #include "util/macro.h"
-#include <errno.h>
+
 #include <stdlib.h>
 #include <sys/ptrace.h>
 
@@ -22,55 +22,43 @@ void cmd_entry_free(cmd *self) {
   }
 }
 
-void cmd_error(context *ctx, const char *msg) {
-  ctx->s_debugger = DEBUGGER_ERROR;
-  context_err_appendln(ctx, msg);
-}
-
 int cmd_error_if_no_target(context *ctx) {
-  if (context_get_target_state(ctx) == TARGET_NO_TARGET) {
-    cmd_error(ctx, "target is not loaded");
+  if (context_tg_get_state(ctx) == TARGET_NO_TARGET) {
+    context_error(ctx, "target is not loaded");
     return 1;
   }
   return 0;
 }
 
 int cmd_error_if_not_running(context *ctx) {
-  if (context_get_target_state(ctx) == TARGET_NOT_RUNNING) {
-    cmd_error(ctx, "target is not running");
+  if (context_tg_get_state(ctx) == TARGET_NOT_RUNNING) {
+    context_error(ctx, "target is not running");
     return 1;
   }
   return 0;
 }
 
 void cmd_error_format(context *ctx, const char *args, const char *help) {
-  ctx->s_debugger = DEBUGGER_ERROR;
   context_err_append(ctx, "unexpected args ");
   context_err_appendln(ctx, args);
-  context_err_appendln(ctx, help);
+  context_error(ctx, help);
 }
 
-void cmd_memory_error(int status, bfd_vma memaddr,
-                      struct disassemble_info *info) {
-  char buf[256];
-
-  snprintf(buf, STRMAXLEN(buf), "memory error at address 0x%lx, status: %d\n",
-           (long)memaddr, status);
-  context_err_appendln((context *)info->application_data, buf);
+void cmd_ctx_memory_error(int status, bfd_vma memaddr,
+                          struct disassemble_info *info) {
+  UNUSED(status);
+  UNUSED(memaddr);
+  UNUSED(info);
 }
 
-int cmd_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
-                    struct disassemble_info *info) {
-  context *ctx = (context *)info->application_data;
+int cmd_ctx_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
+                        struct disassemble_info *info) {
+  context *ctx = info->application_data;
+  uint64_t data;
 
   uint64_t bytes = 0;
   for (bfd_vma addr_cur = memaddr; bytes < length; addr_cur += sizeof(long)) {
-    errno = 0;
-    long data = ptrace(PTRACE_PEEKDATA, ctx->pid, addr_cur, NULL);
-    if (errno) {
-      ctx->s_debugger = DEBUGGER_ERROR;
-      context_err_append(ctx, "ptrace error while fetching data: ");
-      context_err_appendln(ctx, strerror(errno));
+    if (context_tg_peekdata(ctx, addr_cur, &data) == TARGET_ERROR) {
       return 1;
     }
     uint64_t bytes_to_copy = sizeof(long);

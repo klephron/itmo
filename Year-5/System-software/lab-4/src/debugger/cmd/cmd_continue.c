@@ -12,14 +12,23 @@ static const char *help = "Usage: <command>";
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   UNUSED(rest);
-  char *args = NULL;
+  char                   *args = NULL;
+  struct user_regs_struct regs;
 
   if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
     goto cleanup;
   }
 
-  if (ptrace(PTRACE_CONT, ctx->pid, NULL, NULL) == -1) {
-    cmd_error(ctx, "continue failed");
+  if (context_tg_continue(ctx) == TARGET_ERROR) {
+    context_error(ctx, "error while continue");
+  }
+
+  if (context_tg_is_running(ctx)) {
+    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      context_error(ctx, "failed to get regs");
+      goto cleanup;
+    }
+    cmd_disassemble_at_address(ctx, regs.rip - 1, 1);
   }
 
 cleanup:
