@@ -144,7 +144,7 @@ target_state_enum context_tg_peekdata(context *self, uint64_t address,
   if (!it.end(&it)) {
     breakpoint *b = it.get(&it);
     if (b->is_placed) {
-      data = (data & ~0xFF) | b->data;
+      data = peekdata_bpkpt_with_stored(data, b->data);
     }
   }
 
@@ -161,8 +161,8 @@ target_state_enum context_tg_pokedata(context *self, uint64_t address,
   if (!b_it.end(&b_it)) {
     breakpoint *b = b_it.get(&b_it);
     if (b->is_placed) {
-      b->data = (data & 0xFF);
-      data = (data & ~0xFF) | 0xCC;
+      b->data = peekdata_brkpt_to_store(data);
+      data = peekdata_brkpt_with_int3(data);
     }
   }
 

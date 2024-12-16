@@ -36,8 +36,8 @@ int context_bp_place(context *self, breakpoint *bp) {
       error("errno!");
       return -1;
     }
-    bp->data = data & 0xFF;
-    data = (data & ~0xFF) | 0xCC;
+    bp->data = peekdata_brkpt_to_store(data);
+    data = peekdata_brkpt_with_int3(data);
     if (ptrace(PTRACE_POKEDATA, self->pid, bp->address, data) == -1) {
       error("ptrace!");
       return -1;
@@ -55,7 +55,7 @@ int context_bp_remove(context *self, breakpoint *bp) {
       error("errno!");
       return -1;
     }
-    data = (data & ~0xFF) | bp->data;
+    data = peekdata_bpkpt_with_stored(data, bp->data);
     if (ptrace(PTRACE_POKEDATA, self->pid, bp->address, data) == -1) {
       error("ptrace!");
       return -1;

@@ -111,3 +111,7 @@ target_state_enum context_tg_brkpt_fix(context *self);
 
 int context_bp_place(context *self, breakpoint *bp);
 int context_bp_remove(context *self, breakpoint *bp);
+
+#define peekdata_brkpt_with_int3(data) ((data & ~0xFF) | 0xCC)
+#define peekdata_bpkpt_with_stored(data, stored) ((data & ~0xFF) | stored)
+#define peekdata_brkpt_to_store(data) (data & 0xFF)
