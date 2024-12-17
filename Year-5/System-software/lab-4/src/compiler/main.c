@@ -17,7 +17,6 @@
 #include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
-#include "util/log.h"
 #include "util/macro.h"
 
 LIST_DECLARE_STATIC_INLINE(list_chars, char, container_cmp_chars,

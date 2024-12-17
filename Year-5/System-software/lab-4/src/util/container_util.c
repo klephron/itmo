@@ -1,6 +1,5 @@
 #include "util/container_util.h"
 
-#include "util/log.h"
 #include "util/macro.h"
 
 #include <stdint.h>
