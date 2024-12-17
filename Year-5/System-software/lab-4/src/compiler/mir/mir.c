@@ -59,12 +59,13 @@ void mir_lit_free(mir_lit *self) {
 }
 
 mir_builtin *mir_builtin_new(mir_builtin_enum kind, list_mir_arg *args,
-                             type_base *spec) {
+                             type_base *spec, mir_debug_line *debug_line) {
   mir_builtin *self = MALLOC(mir_builtin);
   mir_node_init(&self->base, MIR_NODE_BUILTIN);
   self->kind = kind;
   self->args = args;
   self->spec = spec;
+  self->debug_line = debug_line;
   return self;
 }
 
@@ -72,21 +73,25 @@ void mir_builtin_free(mir_builtin *self) {
   if (self) {
     list_mir_arg_free(self->args);
     type_free(self->spec);
+    mir_debug_line_free(self->debug_line);
     mir_node_deinit(&self->base);
     free(self);
   }
 }
 
-mir_jmp *mir_jmp_new(mir_value *value_ref, mir_bb *je_ref, mir_bb *jz_ref) {
+mir_jmp *mir_jmp_new(mir_value *value_ref, mir_bb *je_ref, mir_bb *jz_ref,
+                     mir_debug_line *debug_line) {
   mir_jmp *self = MALLOC(mir_jmp);
   self->value_ref = value_ref;
   self->je_ref = je_ref;
   self->jz_ref = jz_ref;
+  self->debug_line = debug_line;
   return self;
 }
 
 void mir_jmp_free(mir_jmp *self) {
   if (self) {
+    mir_debug_line_free(self->debug_line);
     free(self);
   }
 }

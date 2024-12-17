@@ -102,6 +102,20 @@ static void mir_tree_str_type(string_buffer *buffer, size_t pad,
   }
 }
 
+static void mir_tree_str_debug_line(string_buffer *buffer, size_t pad,
+                                    const mir_debug_line *debug_line) {
+  UNUSED(pad);
+  char buf[64];
+  if (debug_line) {
+    string_buffer_append(buffer, debug_line->source_ref);
+    string_buffer_append(buffer, ":");
+    snprintf(buf, STRMAXLEN(buf), "%zu", debug_line->line);
+    string_buffer_append(buffer, buf);
+  } else {
+    string_buffer_append(buffer, "(nil)");
+  }
+}
+
 static void mir_tree_str_subroutine_ext(string_buffer *buffer, size_t pad,
                                         const mir_subroutine_ext *sub) {
   string_buffer_append(buffer, "method ");
@@ -186,6 +200,10 @@ static void mir_tree_str_stmt(string_buffer *buffer, size_t pad,
       mir_tree_str_stmt(buffer, pad, it.get(&it));
     }
     string_buffer_append(buffer, ")");
+    if (builtin->debug_line) {
+      string_buffer_append(buffer, "\t#debug ");
+      mir_tree_str_debug_line(buffer, pad, builtin->debug_line);
+    }
   } break;
   case MIR_NODE_SUBROUTINE: {
     const mir_subroutine *sub = (mir_subroutine *)stmt;
@@ -235,8 +253,12 @@ static void mir_tree_str_jmp(string_buffer *buffer, size_t pad,
       snprintf(buf, STRMAXLEN(buf), "(nil)");
     }
     string_buffer_append(buffer, buf);
-
     string_buffer_append(buffer, ")");
+
+    if (jmp->debug_line) {
+      string_buffer_append(buffer, "\t#debug ");
+      mir_tree_str_debug_line(buffer, pad, jmp->debug_line);
+    }
   } else {
     string_buffer_append(buffer, "return");
   }

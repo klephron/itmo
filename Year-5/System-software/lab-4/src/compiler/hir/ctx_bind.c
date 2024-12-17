@@ -36,10 +36,10 @@ static void hir_ctx_error_symbol_redefinition(hir_ctx          *ctx,
                                               const span       *cur_span) {
   exception *exc = exception_new_f(
       EXCEPTION_LEVEL_ERROR, EXCEPTION_HIR, EXCEPTION_HIR_SYMBOL_REDEFINITION,
-      cur_span->source, cur_span->line_start, cur_span->pos_start,
+      cur_span->source_ref, cur_span->line_start, cur_span->pos_start,
       exception_subtype_hir_str(EXCEPTION_HIR_SYMBOL_REDEFINITION),
       "symbol %s already defined %s %d:%d %d:%d", found->name,
-      found->decl_span->source, found->decl_span->line_start,
+      found->decl_span->source_ref, found->decl_span->line_start,
       found->decl_span->pos_start, found->decl_span->line_end,
       found->decl_span->pos_end);
   list_exception_push_back(ctx->exceptions, exc);
@@ -49,10 +49,10 @@ static void hir_ctx_error_symbol_undefined(hir_ctx *ctx, const char *name,
                                            const span *cur_span) {
   exception *exc = exception_new_f(
       EXCEPTION_LEVEL_ERROR, EXCEPTION_HIR, EXCEPTION_HIR_SYMBOL_UNDEFINED,
-      cur_span->source, cur_span->line_start, cur_span->pos_start,
+      cur_span->source_ref, cur_span->line_start, cur_span->pos_start,
       exception_subtype_hir_str(EXCEPTION_HIR_SYMBOL_UNDEFINED),
       "symbol %s referenced at %s %d:%d %d:%d is not found", name,
-      cur_span->source, cur_span->line_start, cur_span->pos_start,
+      cur_span->source_ref, cur_span->line_start, cur_span->pos_start,
       cur_span->line_end, cur_span->pos_end);
   list_exception_push_back(ctx->exceptions, exc);
 }

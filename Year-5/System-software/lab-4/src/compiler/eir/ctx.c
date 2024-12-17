@@ -90,10 +90,10 @@ void eir_ctx_free(eir_ctx *self) {
 static void eir_error_rvalue_assignment(eir_ctx *ctx, const span *span) {
   exception *exc;
   exc = exception_new_f(
-      EXCEPTION_LEVEL_ERROR, EXCEPTION_EIR, EXCEPTION_EIR_NULL, span->source,
-      span->line_start, span->pos_start,
+      EXCEPTION_LEVEL_ERROR, EXCEPTION_EIR, EXCEPTION_EIR_NULL,
+      span->source_ref, span->line_start, span->pos_start,
       exception_subtype_eir_str(EXCEPTION_EIR_NULL),
-      "expression is rvalue at %s %zu:%zu %zu:%zu", span->source,
+      "expression is rvalue at %s %zu:%zu %zu:%zu", span->source_ref,
       span->line_start, span->pos_start, span->line_end, span->pos_end);
   list_exception_push_back(ctx->exceptions, exc);
 }
@@ -102,9 +102,9 @@ static void eir_error_bad_break(eir_ctx *ctx, const span *span) {
   exception *exc;
   exc = exception_new_f(
       EXCEPTION_LEVEL_ERROR, EXCEPTION_EIR, EXCEPTION_EIR_BAD_BREAK,
-      span->source, span->line_start, span->pos_start,
+      span->source_ref, span->line_start, span->pos_start,
       exception_subtype_eir_str(EXCEPTION_EIR_BAD_BREAK),
-      "can't break at %s %zu:%zu %zu:%zu", span->source, span->line_start,
+      "can't break at %s %zu:%zu %zu:%zu", span->source_ref, span->line_start,
       span->pos_start, span->line_end, span->pos_end);
   list_exception_push_back(ctx->exceptions, exc);
 }

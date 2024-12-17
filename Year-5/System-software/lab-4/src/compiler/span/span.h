@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 typedef struct span_struct {
-  const char *source;
+  const char *source_ref;
   size_t      line_start;
   size_t      line_end;
   size_t      pos_start;

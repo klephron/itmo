@@ -11,18 +11,17 @@ static void mir_ctx_warning_no_return(mir_ctx              *ctx,
       ctx->exceptions,
       exception_new_f(
           EXCEPTION_LEVEL_WARNING, EXCEPTION_MIR, EXCEPTION_MIR_NO_RETURN,
-          eirs->source, eirs->line_start, eirs->pos_start,
+          eirs->source_ref, eirs->line_start, eirs->pos_start,
           exception_subtype_mir_str(EXCEPTION_MIR_NO_RETURN),
           "return value in %s at %s %zu:%zu %zu:%zu is unitialized",
-          eir_sub->binding_ref->name, eirs->source, eirs->line_start,
+          eir_sub->binding_ref->name, eirs->source_ref, eirs->line_start,
           eirs->pos_start, eirs->line_end, eirs->pos_end));
 }
 
 // wraps result in store expression
-static mir_node_base *mir_ctx_build_expr_store(mir_ctx        *ctx,
-                                               mir_subroutine *mir_sub,
-                                               mir_bb         *mir_bb,
-                                               mir_node_base  *mir_expr) {
+static mir_node_base *
+mir_ctx_build_expr_store(mir_ctx *ctx, mir_subroutine *mir_sub, mir_bb *mir_bb,
+                         mir_node_base *mir_expr, mir_debug_line *debug_line) {
   mir_value *store_value = mir_value_new(ctx->value_cnt++, NULL);
   list_mir_value_push_back(mir_sub->tmps, store_value);
 
@@ -30,9 +29,9 @@ static mir_node_base *mir_ctx_build_expr_store(mir_ctx        *ctx,
   list_mir_arg_push_back(store_args, (mir_node_base *)store_value);
   list_mir_arg_push_back(store_args, (mir_node_base *)mir_expr);
 
-  list_mir_node_push_back(
-      mir_bb->stmts,
-      (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, store_args, NULL));
+  list_mir_node_push_back(mir_bb->stmts,
+                          (mir_node_base *)mir_builtin_new(
+                              MIR_BUILTIN_STORE, store_args, NULL, debug_line));
 
   return (mir_node_base *)store_value;
 }
@@ -87,11 +86,12 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
     list_mir_arg *args = list_mir_arg_new();
     list_mir_arg_push_back(args, (mir_node_base *)first);
 
-    mir_builtin *stmt = mir_builtin_new(kind, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(kind, args, NULL, NULL);
 
     if (ret_value) {
-      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)stmt);
+      return mir_ctx_build_expr_store(
+          ctx, mir_sub, mir_bb, (mir_node_base *)stmt,
+          mir_debug_line_from_span(unary->base.span));
     } else {
       return (mir_node_base *)stmt;
     }
@@ -136,21 +136,24 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
       list_mir_arg_push_back(store_args, store_first);
       list_mir_arg_push_back(store_args, store_second);
 
-      mir_node_base *store =
-          (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, store_args, NULL);
+      mir_builtin *store =
+          mir_builtin_new(MIR_BUILTIN_STORE, store_args, NULL, NULL);
 
       if (ret_value) {
-        list_mir_node_push_back(mir_bb->stmts, store);
+        store->debug_line = mir_debug_line_from_span(binary->base.span);
+        list_mir_node_push_back(mir_bb->stmts, (mir_node_base *)store);
 
+        // in case assignment to index
         if (first->kind == EIR_EXPR_IDENTIFIER) {
           return store_first;
         } else {
           return mir_ctx_build_expr_store(
               ctx, mir_sub, mir_bb,
-              mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->first, 0));
+              mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->first, 0),
+              mir_debug_line_from_span(binary->base.span));
         }
       } else {
-        return store;
+        return (mir_node_base *)store;
       }
     }
 
@@ -229,11 +232,12 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
         ctx, mir_sub, mir_bb, binary->second, 1);
     list_mir_arg_push_back(args, (mir_node_base *)args_second);
 
-    mir_builtin *stmt = mir_builtin_new(kind, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(kind, args, NULL, NULL);
 
     if (ret_value) {
-      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)stmt);
+      return mir_ctx_build_expr_store(
+          ctx, mir_sub, mir_bb, (mir_node_base *)stmt,
+          mir_debug_line_from_span(binary->base.span));
     } else {
       return (mir_node_base *)stmt;
     }
@@ -249,8 +253,10 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
     list_mir_arg_push_back(
         args, (mir_node_base *)mir_lit_new(hir_lit_copy(lit->lit)));
 
-    list_mir_node_push_back(mir_bb->stmts, (mir_node_base *)mir_builtin_new(
-                                               MIR_BUILTIN_STORE, args, NULL));
+    list_mir_node_push_back(mir_bb->stmts,
+                            (mir_node_base *)mir_builtin_new(
+                                MIR_BUILTIN_STORE, args, NULL,
+                                mir_debug_line_from_span(lit->base.span)));
     return (mir_node_base *)val;
   } break;
   case EIR_EXPR_IDENTIFIER: {
@@ -292,11 +298,12 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
       list_mir_arg_push_back(args, mir_arg);
     }
 
-    mir_builtin *stmt = mir_builtin_new(MIR_BUILTIN_CALL, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(MIR_BUILTIN_CALL, args, NULL, NULL);
 
     if (ret_value) {
-      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)stmt);
+      return mir_ctx_build_expr_store(
+          ctx, mir_sub, mir_bb, (mir_node_base *)stmt,
+          mir_debug_line_from_span(call->base.span));
     } else {
       return (mir_node_base *)stmt;
     }
@@ -318,11 +325,12 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
       list_mir_arg_push_back(args, mir_arg);
     }
 
-    mir_builtin *stmt = mir_builtin_new(MIR_BUILTIN_INDEX, args, NULL);
+    mir_builtin *stmt = mir_builtin_new(MIR_BUILTIN_INDEX, args, NULL, NULL);
 
     if (ret_value) {
-      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)stmt);
+      return mir_ctx_build_expr_store(
+          ctx, mir_sub, mir_bb, (mir_node_base *)stmt,
+          mir_debug_line_from_span(index->base.span));
     } else {
       return (mir_node_base *)stmt;
     }
@@ -358,10 +366,12 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
       list_mir_arg_push_back(args, mir_arg);
     }
 
-    mir_builtin *stmt = mir_builtin_new(kind, args, spec);
+    mir_builtin *stmt = mir_builtin_new(kind, args, spec, NULL);
+
     if (ret_value) {
-      return mir_ctx_build_expr_store(ctx, mir_sub, mir_bb,
-                                      (mir_node_base *)stmt);
+      return mir_ctx_build_expr_store(
+          ctx, mir_sub, mir_bb, (mir_node_base *)stmt,
+          mir_debug_line_from_span(builtin->base.span));
     } else {
       return (mir_node_base *)stmt;
     }
@@ -420,7 +430,7 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
     mir_bb *bb_next = mir_ctx_build_body(ctx, mir_sub, eir_next->next);
 
     if (bb_next) {
-      bb->jmp = mir_jmp_new(NULL, NULL, bb_next);
+      bb->jmp = mir_jmp_new(NULL, NULL, bb_next, NULL);
     } else {
       bb->jmp = NULL;
       ctx->bb_last = bb;
@@ -435,7 +445,7 @@ static mir_bb *mir_ctx_build_body(mir_ctx *ctx, mir_subroutine *mir_sub,
     mir_bb *bb_jz = mir_ctx_build_body(ctx, mir_sub, eir_cond->jz);
 
     if (bb_jz || bb_je) {
-      bb->jmp = mir_jmp_new(value, bb_je, bb_jz);
+      bb->jmp = mir_jmp_new(value, bb_je, bb_jz, NULL);
     }
   } break;
   default:
@@ -577,7 +587,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
 
     list_mir_node_push_front(
         bb_first_ref->stmts,
-        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, args, NULL));
+        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_STORE, args, NULL, NULL));
   }
 
   list_mir_value_free(value_stack);
@@ -592,7 +602,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
 
     list_mir_node_push_front(
         ctx->bb_last->stmts,
-        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_DROP, args, NULL));
+        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_DROP, args, NULL, NULL));
   }
   for (list_mir_value_it it = list_mir_value_begin(mir_sub->tmps); !it.end(&it);
        it.next(&it)) {
@@ -603,7 +613,7 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
 
     list_mir_node_push_front(
         ctx->bb_last->stmts,
-        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_DROP, args, NULL));
+        (mir_node_base *)mir_builtin_new(MIR_BUILTIN_DROP, args, NULL, NULL));
   }
 
   // assign return value
@@ -611,7 +621,8 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
     list_mir_arg *args = list_mir_arg_new();
     list_mir_arg_push_back(args, (mir_node_base *)mir_sub->ret);
     list_mir_arg_push_back(args, ctx->stmt_last);
-    mir_builtin *ret_stmt = mir_builtin_new(MIR_BUILTIN_STORE, args, NULL);
+    mir_builtin *ret_stmt =
+        mir_builtin_new(MIR_BUILTIN_STORE, args, NULL, NULL);
     list_mir_node_push_front(ctx->bb_last->stmts, (mir_node_base *)ret_stmt);
   } else {
     mir_ctx_warning_no_return(ctx, eir_sub);

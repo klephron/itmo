@@ -9,7 +9,7 @@ static void hir_error_add(hir_ctx *ctx, exception_subtype_hir subtype,
   va_start(args, format);
 
   exc = exception_new_v(EXCEPTION_LEVEL_ERROR, EXCEPTION_HIR, subtype,
-                        span->source, span->line_start, span->pos_start,
+                        span->source_ref, span->line_start, span->pos_start,
                         exception_subtype_hir_str(subtype), format, args);
   list_exception_push_back(ctx->exceptions, exc);
 
@@ -27,7 +27,7 @@ static int hir_ctx_type_type(hir_ctx *ctx, type_base *type) {
     const span  *cs = custom->base.span;
     hir_error_add(ctx, EXCEPTION_HIR_TYPE_UNSUPPORTED, cs,
                   "type %s at %s %d:%d %d:%d is unsupported", custom->name,
-                  cs->source, cs->line_start, cs->pos_start, cs->line_end,
+                  cs->source_ref, cs->line_start, cs->pos_start, cs->line_end,
                   cs->pos_end);
     ok = 0;
   } break;
@@ -60,8 +60,8 @@ static int hir_ctx_type_subroutine_decl(hir_ctx *ctx, hir_subroutine *sub) {
     if (!param->type) {
       hir_error_add(ctx, EXCEPTION_HIR_SUBROUTINE_DECL_INVALID, sub_span,
                     "param %s at %s %d:%d %d:%d type is required",
-                    param->id->name, ps->source, ps->line_start, ps->pos_start,
-                    ps->line_end, ps->pos_end);
+                    param->id->name, ps->source_ref, ps->line_start,
+                    ps->pos_start, ps->line_end, ps->pos_end);
       ok = 0;
     }
   }

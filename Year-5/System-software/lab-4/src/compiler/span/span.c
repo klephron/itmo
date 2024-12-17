@@ -1,22 +1,21 @@
 #include "span.h"
-#include "util/log.h"
 #include "util/macro.h"
 #include <stdlib.h>
 
-span span_make(const char *source, size_t line_start, size_t line_end,
+span span_make(const char *source_ref, size_t line_start, size_t line_end,
                size_t pos_start, size_t pos_end) {
   return (span){
-      .source = source,
+      .source_ref = source_ref,
       .line_start = line_start,
       .line_end = line_end,
       .pos_start = pos_start,
       .pos_end = pos_end,
   };
 }
-span *span_new(const char *source, size_t line_start, size_t line_end,
+span *span_new(const char *source_ref, size_t line_start, size_t line_end,
                size_t pos_start, size_t pos_end) {
   span *self = MALLOC(span);
-  *self = span_make(source, line_start, line_end, pos_start, pos_end);
+  *self = span_make(source_ref, line_start, line_end, pos_start, pos_end);
   return self;
 }
 

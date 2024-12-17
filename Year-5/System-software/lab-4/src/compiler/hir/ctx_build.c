@@ -21,7 +21,7 @@ static span *hir_span_new(ANTLR3_BASE_TREE *first, const char *source) {
 }
 
 static span *hir_span_new_range(const span *first, const span *second) {
-  span *span = span_new(first->source, first->line_start, second->line_end,
+  span *span = span_new(first->source_ref, first->line_start, second->line_end,
                         first->pos_start, second->pos_end);
   return span;
 }
@@ -107,7 +107,7 @@ static void hir_error_add(hir_ctx *ctx, exception_subtype_hir subtype,
   va_start(args, format);
 
   exc = exception_new_v(EXCEPTION_LEVEL_ERROR, EXCEPTION_HIR, subtype,
-                        span->source, span->line_start, span->pos_start,
+                        span->source_ref, span->line_start, span->pos_start,
                         exception_subtype_hir_str(subtype), format, args);
   list_exception_push_back(ctx->exceptions, exc);
 

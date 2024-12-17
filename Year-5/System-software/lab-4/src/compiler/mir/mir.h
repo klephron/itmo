@@ -1,6 +1,7 @@
 #pragma once
 
 #include "compiler/hir/node.h"
+#include "compiler/mir/debug.h"
 #include "compiler/type/type.h"
 
 /*
@@ -134,10 +135,11 @@ typedef struct mir_builtin_struct {
   mir_builtin_enum kind;
   list_mir_arg    *args;
   type_base       *spec;
+  mir_debug_line  *debug_line;
 } mir_builtin;
 
 mir_builtin *mir_builtin_new(mir_builtin_enum kind, list_mir_arg *args,
-                             type_base *spec);
+                             type_base *spec, mir_debug_line *debug_line);
 void         mir_builtin_free(mir_builtin *self);
 
 // CALL
@@ -155,12 +157,14 @@ typedef struct mir_bb_struct mir_bb;
 
 // if value == nil then jmp to jz
 typedef struct mir_jmp_struct {
-  mir_value *value_ref;
-  mir_bb    *je_ref;
-  mir_bb    *jz_ref;
+  mir_value      *value_ref;
+  mir_bb         *je_ref;
+  mir_bb         *jz_ref;
+  mir_debug_line *debug_line;
 } mir_jmp;
 
-mir_jmp *mir_jmp_new(mir_value *value_ref, mir_bb *je_ref, mir_bb *jz_ref);
+mir_jmp *mir_jmp_new(mir_value *value_ref, mir_bb *je_ref, mir_bb *jz_ref,
+                     mir_debug_line *debug_line);
 void     mir_jmp_free(mir_jmp *self);
 
 // BASIC BLOCK
