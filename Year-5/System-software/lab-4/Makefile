@@ -23,7 +23,7 @@ PDF.COMPILER_FLAGS ?= --ast --cfg --cg
 
 ASM.AS_FLAGS       ?= --64 -g
 ASM.LD_FLAGS       ?= -g -z noexecstack
-ASM.COMPILER_FLAGS ?= --mir
+ASM.COMPILER_FLAGS ?=
 ASM.DL_PATH        ?= /usr/lib64/ld-linux-x86-64.so.2
 
 

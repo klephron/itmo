@@ -234,10 +234,7 @@ static char *get_cg_dot_path(args *args, const char *source, const char *func) {
 }
 
 static char *get_asm_path(args *args, const char *source) {
-  char       *cwd = getcwd(NULL, 0);
-  const char *fpath = source + strlen(cwd) + 1;
-  char       *path = join_paths(args->output_dir, fpath);
-  free(cwd);
+  char *path = join_paths(args->output_dir, source);
   return path;
 }
 
