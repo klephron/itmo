@@ -13,7 +13,7 @@
     assign = (void *)node;                                                     \
   } while (0)
 
-static void ctx_sub_value_drop(cg_x86_64_ctx       *ctx,
+static void ctx_value_drop(cg_x86_64_ctx       *ctx,
                                cg_x86_64_map_value *cg_lsv) {
   list_cg_x86_64_op *operands;
 
@@ -238,7 +238,7 @@ static void ctx_stmt_store_lit(cg_x86_64_ctx *ctx, mir_subroutine *sub,
     return;
   }
 
-  ctx_sub_value_drop(ctx, cg_lsv);
+  ctx_value_drop(ctx, cg_lsv);
 
   switch (rsv_type) {
   case TYPE_BOOL: {
@@ -1099,7 +1099,7 @@ void ctx_stmt_store_builtin(cg_x86_64_ctx *ctx, mir_subroutine *sub,
                             mir_value *lsv, mir_builtin *rsv) {
   cg_x86_64_map_value *cg_lsv = ctx_sub_value_find(ctx, lsv);
 
-  ctx_sub_value_drop(ctx, cg_lsv);
+  ctx_value_drop(ctx, cg_lsv);
 
   switch (rsv->kind) {
   case MIR_BUILTIN_PLUS:
@@ -1313,7 +1313,29 @@ static void ctx_stmt_drop(cg_x86_64_ctx *ctx, mir_builtin *stmt) {
   }
 
   cg_x86_64_map_value *cg_lsv = ctx_sub_value_find(ctx, lsv.value);
-  ctx_sub_value_drop(ctx, cg_lsv);
+  ctx_value_drop(ctx, cg_lsv);
+}
+
+static void ctx_stmt(cg_x86_64_ctx *ctx, mir_subroutine *sub,
+                     mir_node_base *stmt) {
+  switch (stmt->kind) {
+  case MIR_NODE_BUILTIN: {
+    mir_builtin *builtin = (mir_builtin *)stmt;
+    switch (builtin->kind) {
+    case MIR_BUILTIN_STORE: {
+      ctx_stmt_store(ctx, sub, builtin);
+    } break;
+    case MIR_BUILTIN_DROP: {
+      ctx_stmt_drop(ctx, builtin);
+    } break;
+    default:
+      error("unexpected builtin kind %d of stmt %p", builtin->kind, stmt);
+    }
+  } break;
+  default:
+    error("unexpected kind %d of stmt %p", stmt->kind, stmt);
+    break;
+  }
 }
 
 // no jump only on last block
@@ -1364,28 +1386,6 @@ static void ctx_jump(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_jmp *jmp) {
   cg_op_push_back(operands, cg_x86_64_op_new_direct(
                                 ctx_block_label(ctx, sub, jmp->jz_ref)));
   ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_JMP, operands));
-}
-
-static void ctx_stmt(cg_x86_64_ctx *ctx, mir_subroutine *sub,
-                     mir_node_base *stmt) {
-  switch (stmt->kind) {
-  case MIR_NODE_BUILTIN: {
-    mir_builtin *builtin = (mir_builtin *)stmt;
-    switch (builtin->kind) {
-    case MIR_BUILTIN_STORE: {
-      ctx_stmt_store(ctx, sub, builtin);
-    } break;
-    case MIR_BUILTIN_DROP: {
-      ctx_stmt_drop(ctx, builtin);
-    } break;
-    default:
-      error("unexpected builtin kind %d of stmt %p", builtin->kind, stmt);
-    }
-  } break;
-  default:
-    error("unexpected kind %d of stmt %p", stmt->kind, stmt);
-    break;
-  }
 }
 
 void ctx_build_block(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_bb *bb) {
