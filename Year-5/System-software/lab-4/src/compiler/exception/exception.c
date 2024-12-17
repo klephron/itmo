@@ -143,6 +143,10 @@ char *exception_str(const exception *exc) {
     snprintf(buf, STRMAXLEN(buf), "(M%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
+  case EXCEPTION_CG:
+    snprintf(buf, STRMAXLEN(buf), "(C%d): %s -> %s", exc->subtype, exc_name,
+             exc_message);
+    break;
   default:
     warn("unknown exception type %d", exc->type);
     snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
@@ -214,6 +218,17 @@ const char *exception_subtype_mir_str(exception_subtype_mir type) {
     return "null";
   case EXCEPTION_MIR_NO_RETURN:
     return "no return";
+  default:
+    return "unknown";
+  }
+}
+
+const char *exception_subtype_cg_str(exception_subtype_cg type) {
+  switch (type) {
+  case EXCEPTION_CG_IMPLICIT_CALLABLE:
+    return "implicit callable";
+  case EXCEPTION_CG_EXTERNAL_SUBROUTINE_ARGC:
+    return "external subroutine argc mismatch";
   default:
     return "unknown";
   }

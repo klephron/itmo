@@ -1,5 +1,6 @@
 #include "util/container_util.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 
 #include <stdint.h>
@@ -70,7 +71,11 @@ void container_delete_chars_chars(void *_data) {
   free(data);
 }
 
-void container_delete_chars(void *_data) { free(_data); }
+void container_delete_chars(void *_data) {
+  if (_data) {
+    free(_data);
+  }
+}
 
 void container_delete_ptr(void *_data) {
   if (_data) {

@@ -8,8 +8,6 @@ void cg_x86_64_ctx_build(cg_x86_64_ctx *ctx, mir *mir) {
   list_cg_x86_64_unit *globl_units = list_cg_x86_64_unit_new();
   list_cg_x86_64_unit *ext_units = list_cg_x86_64_unit_new();
 
-  ctx->globls = hashset_cg_x86_64_mir_ref_new();
-
   // core declarations
   for (int kind = 0; kind < X86_64_SYMBOL_UNKNOWN; ++kind) {
     list_cg_x86_64_unit_push_back(
@@ -48,13 +46,14 @@ void cg_x86_64_ctx_build(cg_x86_64_ctx *ctx, mir *mir) {
     }
   }
 
-  cg_units_append_move(ctx->cg_ref->text->units, ext_units);
-  cg_units_append_move(ctx->cg_ref->text->units, globl_units);
+  cg_units_extend_move(ctx->cg_ref->text->units, ext_units);
+  cg_units_extend_move(ctx->cg_ref->text->units, globl_units);
 
   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
        !it.end(&it); it.next(&it)) {
-    ctx_build_sub(ctx, it.get(&it));
+    ctx_build_sub(ctx, it.get(&it), ctx->debug_subs_cnt++);
   }
 
-  hashset_cg_x86_64_mir_ref_free(ctx->globls);
+  ctx_debug_info_post_push_header(ctx);
+  ctx_debug_info_post_push_files(ctx);
 }

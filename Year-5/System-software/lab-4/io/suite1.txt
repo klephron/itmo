@@ -1,4 +1,3 @@
-method malloc(n: int):int;
 method read():void;
 method write():void;
 

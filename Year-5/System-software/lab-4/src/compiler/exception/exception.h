@@ -11,6 +11,7 @@ typedef enum exception_type_enum {
   EXCEPTION_HIR,
   EXCEPTION_EIR,
   EXCEPTION_MIR,
+  EXCEPTION_CG,
 } exception_type;
 
 typedef enum exception_level_enum {
@@ -60,6 +61,12 @@ typedef enum exception_subtype_mir_enum {
   EXCEPTION_MIR_NO_RETURN,
 } exception_subtype_mir;
 
+typedef enum enception_subtype_cg_enum {
+  EXCEPTION_CG_UNKNOWN,
+  EXCEPTION_CG_IMPLICIT_CALLABLE,
+  EXCEPTION_CG_EXTERNAL_SUBROUTINE_ARGC,
+} exception_subtype_cg;
+
 typedef struct exception_struct {
   exception_level level;
   exception_type  type;
@@ -101,3 +108,4 @@ char      *exception_str(const exception *exc);
 const char *exception_subtype_hir_str(exception_subtype_hir ir);
 const char *exception_subtype_eir_str(exception_subtype_eir ir);
 const char *exception_subtype_mir_str(exception_subtype_mir ir);
+const char *exception_subtype_cg_str(exception_subtype_cg ir);

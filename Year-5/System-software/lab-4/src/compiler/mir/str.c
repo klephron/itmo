@@ -402,3 +402,21 @@ char *mir_tree_str(const mir *mir) {
   string_buffer_append(buffer, "}");
   return string_buffer_detach(buffer);
 }
+
+const char *mir_node_enum_str(mir_node_enum kind) {
+  switch (kind) {
+  case MIR_NODE_VALUE:
+    return "VALUE";
+  case MIR_NODE_LIT:
+    return "LIT";
+  case MIR_NODE_BUILTIN:
+    return "BUILTIN";
+  case MIR_NODE_SUBROUTINE:
+    return "SUBROUTINE";
+  case MIR_NODE_SUBROUTINE_EXTERNAL:
+    return "SUBROUTINE_EXTERNAL";
+  default:
+  case MIR_NODE_UNKNOWN:
+    return "UNKNOWN";
+  }
+}

@@ -18,7 +18,15 @@ size_t cg_with_align(size_t size, size_t align) {
   return ((size - 1) / align + 1) * align;
 }
 
-void cg_units_append_move(list_cg_x86_64_unit *to, list_cg_x86_64_unit *from) {
+void cg_units_push_back(list_cg_x86_64_unit *to, void *from) {
+  list_cg_x86_64_unit_push_back(to, from);
+}
+
+void cg_units_push_front(list_cg_x86_64_unit *to, void *from) {
+  list_cg_x86_64_unit_push_front(to, from);
+}
+
+void cg_units_extend_move(list_cg_x86_64_unit *to, list_cg_x86_64_unit *from) {
   while (!list_cg_x86_64_unit_empty(from)) {
     list_cg_x86_64_unit_push_back(to, list_cg_x86_64_unit_pop_front(from));
   }
@@ -119,4 +127,15 @@ void ctx_stack_release(cg_x86_64_ctx *ctx, size_t stack_size) {
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_ADDQ, operands));
     ctx->sub_stack_size -= stack_size;
   }
+}
+
+void ctx_add_error(cg_x86_64_ctx *ctx, exception_subtype_cg subtype,
+                   const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  list_exception_push_back(
+      ctx->exceptions,
+      exception_new_v(EXCEPTION_LEVEL_ERROR, EXCEPTION_CG, subtype, NULL, 0, 0,
+                      exception_subtype_cg_str(subtype), format, args));
+  va_end(args);
 }

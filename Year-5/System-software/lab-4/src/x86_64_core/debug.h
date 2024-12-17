@@ -5,16 +5,9 @@
 /*
 .u_debug_info
 header:
-- uint64_t files_cnt
 - uint64_t subroutines_cnt
+- uint64_t files_cnt
 content:
-- files (implicit index - pos in array):
-  - file:
-    - uint64_t str_file_index
-  - file:
-    - uint64_t str_file_index
-  - file:
-    - uint64_t str_file_index
 - subroutines (implicit index - pos in array):
   - subroutine:
     - uint64_t address_start
@@ -28,11 +21,18 @@ content:
     - args:
       - arg:
         - uint64_t rbp_offset
-        - uint64_t str_arg_name_index
+        - uint64_t str_index
     - vars:
       - var:
         - uint64_t rbp_offset
-        - uint64_t str_var_name_index
+        - uint64_t str_index
+- files (implicit index - pos in array):
+  - file:
+    - uint64_t str_file_index
+  - file:
+    - uint64_t str_file_index
+  - file:
+    - uint64_t str_file_index
 .u_debug_line
 header:
 - uint64_t entries_cnt
@@ -48,14 +48,10 @@ list of null-terminated strings, index - pos in list (from 0):
 
 // DEBUG_INFO
 typedef struct __attribute__((packed)) x86_64_debug_info_struct {
-  uint64_t files_cnt;
   uint64_t subroutines_cnt;
+  uint64_t files_cnt;
   uint8_t  data[];
 } x86_64_debug_info;
-
-typedef struct __attribute__((packed)) x86_64_debug_info_file_struct {
-  uint64_t str_index;
-} x86_64_debug_info_file;
 
 typedef struct __attribute__((packed)) x86_64_debug_info_sub_struct {
   uint64_t address_start;
@@ -77,6 +73,10 @@ typedef struct __attribute__((packed)) x86_64_debug_info_var_struct {
   uint64_t rbp_offset;
   uint64_t str_index;
 } x86_64_debug_info_var;
+
+typedef struct __attribute__((packed)) x86_64_debug_info_file_struct {
+  uint64_t str_index;
+} x86_64_debug_info_file;
 
 // DEBUG_STR
 typedef struct __attribute__((packed)) x86_64_debug_str_struct {

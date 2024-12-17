@@ -17,10 +17,11 @@
 #include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
+#include "util/log.h"
 #include "util/macro.h"
 
 LIST_DECLARE_STATIC_INLINE(list_chars, char, container_cmp_chars,
-                           container_new_chars, container_delete_chars);
+                           container_new_move, container_delete_chars);
 
 typedef struct args_struct {
   char       *prog_name;
@@ -157,7 +158,7 @@ static void parse(args *args, int argc, char *argv[]) {
       args->output_file = optarg;
       break;
     case 's':
-      list_chars_push_back(args->cg_subroutines, optarg);
+      list_chars_push_back(args->cg_subroutines, strdup(optarg));
       break;
     case 'h':
       args->help = 1;
@@ -175,12 +176,12 @@ static void parse(args *args, int argc, char *argv[]) {
   argv += optind;
 
   for (; argc > 0; --argc, ++argv) {
-    const char *file = argv[0];
-    list_chars_push_back(args->input_files, (void *)file);
+    char *file = argv[0];
+    list_chars_push_back(args->input_files, realpath(file, NULL));
   }
 
   if (list_chars_size(args->cg_subroutines) == 0) {
-    list_chars_push_back(args->cg_subroutines, "main");
+    list_chars_push_back(args->cg_subroutines, strdup("main"));
   }
 }
 
@@ -192,39 +193,53 @@ static void ensure_dir_exist(const char *filename) {
 }
 
 // ast - ext, dot - file extension
-static char *get_ast_dot_output(const args *args, const ast *ast) {
+static char *get_ast_dot_path(const args *args, const ast *ast) {
+  char *cwd = getcwd(NULL, 0);
   char *suffix = ".ast.dot";
-  char *prefix = join_paths(args->output_dir, ast->name);
+
+  const char *fpath = ast->name + strlen(cwd) + 1;
+  char       *prefix = join_paths(args->output_dir, fpath);
 
   char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
   sprintf(output, "%s%s", prefix, suffix);
 
   free(prefix);
+  free(cwd);
   return output;
 }
 
-static char *get_c_dot_output(args *args, const char *source, const char *func,
-                              const char *ext) {
+static char *get_c_dot_path(args *args, const char *source, const char *func,
+                            const char *ext) {
+  char *cwd = getcwd(NULL, 0);
   char *suffix = ".dot";
 
-  char *prefix = join_paths(args->output_dir, source);
+  const char *fpath = source + strlen(cwd) + 1;
+  char       *prefix = join_paths(args->output_dir, fpath);
 
   char *output =
       malloc(strlen(prefix) + strlen(func) + strlen(ext) + strlen(suffix) + 3);
   sprintf(output, "%s.%s.%s%s", prefix, func, ext, suffix);
 
   free(prefix);
+  free(cwd);
   return output;
 }
 
-static char *get_cfg_dot_output(args *args, const char *source,
-                                const char *func) {
-  return get_c_dot_output(args, source, func, "cfg");
+static char *get_cfg_dot_path(args *args, const char *source,
+                              const char *func) {
+  return get_c_dot_path(args, source, func, "cfg");
 }
 
-static char *get_cg_dot_output(args *args, const char *source,
-                               const char *func) {
-  return get_c_dot_output(args, source, func, "cg");
+static char *get_cg_dot_path(args *args, const char *source, const char *func) {
+  return get_c_dot_path(args, source, func, "cg");
+}
+
+static char *get_asm_path(args *args, const char *source) {
+  char       *cwd = getcwd(NULL, 0);
+  const char *fpath = source + strlen(cwd) + 1;
+  char       *path = join_paths(args->output_dir, fpath);
+  free(cwd);
+  return path;
 }
 
 static int has_subroutine(args *args, const char *subroutine) {
@@ -243,27 +258,25 @@ static void print_exceptions(args *args, list_exception *exceptions) {
   }
 }
 
-static void write_dot(args *args, const dot_string *dot, const char *output) {
+static void write_dot(args *args, const dot_string *dot, const char *path) {
   if (args->tee) {
     printf("%s\n", dot->chars);
   }
-  ensure_dir_exist(output);
-  FILE *output_fd = fopen(output, "wb");
+  ensure_dir_exist(path);
+  FILE *output_fd = fopen(path, "wb");
   fwrite(dot->chars, dot->len, 1, output_fd);
   fclose(output_fd);
 }
 
-static void write_asm(args *args, const char *data) {
+static void write_asm(args *args, const char *data, const char *path) {
   if (args->tee) {
     printf("%s\n", data);
   }
-  char *output = join_paths(args->output_dir, args->output_file);
-  ensure_dir_exist(output);
-  if (output) {
-    FILE *output_fd = fopen(output, "wb");
+  ensure_dir_exist(path);
+  if (path) {
+    FILE *output_fd = fopen(path, "wb");
     fwrite(data, strlen(data), 1, output_fd);
     fclose(output_fd);
-    free(output);
   }
 }
 
@@ -340,7 +353,7 @@ static int execute(args *args) {
     for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
       ast        *ast = it.get(&it);
       dot_string *dot = dot_ast(ast);
-      char       *output = get_ast_dot_output(args, ast);
+      char       *output = get_ast_dot_path(args, ast);
       write_dot(args, dot, output);
       free(output);
       dot_string_free(dot);
@@ -428,7 +441,7 @@ static int execute(args *args) {
       const char           *source = sub->binding_ref->decl_span->source_ref;
 
       dot_string *dot = dot_eir_cfg(eir, sub, args->cfg_add_expr);
-      char       *output = get_cfg_dot_output(args, source, sub_name);
+      char       *output = get_cfg_dot_path(args, source, sub_name);
       write_dot(args, dot, output);
       free(output);
       dot_string_free(dot);
@@ -446,7 +459,7 @@ static int execute(args *args) {
 
       if (has_subroutine(args, sub_name)) {
         dot_string *dot = dot_eir_cg(eir, sub);
-        char       *output = get_cg_dot_output(args, source, sub_name);
+        char       *output = get_cg_dot_path(args, source, sub_name);
         write_dot(args, dot, output);
         free(output);
         dot_string_free(dot);
@@ -493,7 +506,9 @@ static int execute(args *args) {
   if (!args->code || args->ignore_errors) {
     char *data = cg_x86_64_ctx_emit(cg_ctx);
     if (data) {
-      write_asm(args, data);
+      char *path = get_asm_path(args, args->output_file);
+      write_asm(args, data, path);
+      free(path);
       free(data);
     }
   }

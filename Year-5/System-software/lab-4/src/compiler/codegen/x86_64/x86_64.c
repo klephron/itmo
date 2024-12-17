@@ -141,9 +141,21 @@ cg_x86_64_data *cg_x86_64_data_new_bytes(size_t size, uint8_t *data) {
   return self;
 }
 
+cg_x86_64_data *cg_x86_64_data_new_label(char *data) {
+  cg_x86_64_data *self = MALLOC(cg_x86_64_data);
+  cg_x86_64_unit_base_init(&self->base, CG_X86_64_UNIT_DATA);
+  self->kind = CG_X86_64_DATA_LABEL;
+  self->data_label = data;
+  self->data_size = sizeof(uint64_t);
+  return self;
+}
+
 void cg_x86_64_data_free(cg_x86_64_data *self) {
   if (self) {
     switch (self->kind) {
+    case CG_X86_64_DATA_LABEL:
+      free(self->data_label);
+      break;
     case CG_X86_64_DATA_ASCII:
       free(self->data_ascii);
       break;

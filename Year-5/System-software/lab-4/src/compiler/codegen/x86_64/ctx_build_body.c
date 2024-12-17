@@ -1,3 +1,4 @@
+#include "compiler/mir/str.h"
 #include "ctx_build.h"
 
 #include "util/log.h"
@@ -13,8 +14,7 @@
     assign = (void *)node;                                                     \
   } while (0)
 
-static void ctx_value_drop(cg_x86_64_ctx       *ctx,
-                               cg_x86_64_map_value *cg_lsv) {
+static void ctx_value_drop(cg_x86_64_ctx *ctx, cg_x86_64_map_value *cg_lsv) {
   list_cg_x86_64_op *operands;
 
   // leaq lsv_off(%rbp), rdi
@@ -611,6 +611,15 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
     // if result void -> __x86_64_value_void()
     // if result pointer -> __x86_64_value_array with 1 element
   case MIR_NODE_SUBROUTINE_EXTERNAL: {
+    size_t type_sz = list_type_size(fun.ext->args);
+    size_t args_sz = list_mir_arg_size(builtin->args) - 1;
+    // TODO: move validation to previous stages
+    if (type_sz != args_sz) {
+      ctx_add_error(ctx, EXCEPTION_CG_EXTERNAL_SUBROUTINE_ARGC,
+                    "%s call expected %zu args, got %zu", fun.ext->name,
+                    type_sz, args_sz);
+      break;
+    }
     list_cg_x86_64_op *operands;
     list_type_it       t_it = list_type_begin(fun.ext->args);
     size_t             argc = 0;
@@ -829,7 +838,9 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
 
   } break;
   default:
-    error("expected subroutine, got %d %p", fun.node->kind, fun.node);
+    ctx_add_error(ctx, EXCEPTION_CG_IMPLICIT_CALLABLE,
+                  "expected subroutine, got %s(%d)",
+                  mir_node_enum_str(fun.node->kind), fun.node->kind);
     return;
   }
 }
@@ -842,7 +853,9 @@ void ctx_stmt_builtin_index(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
        it.next(&it)) {
     mir_node_base *node = it.get(&it);
     if (node->kind != MIR_NODE_VALUE) {
-      error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
+      ctx_add_error(ctx, EXCEPTION_CG_IMPLICIT_CALLABLE, "expected %s, got %s",
+                    mir_node_enum_str(MIR_NODE_VALUE),
+                    mir_node_enum_str(node->kind));
       goto release;
     }
     mir_value           *value = (mir_value *)node;
@@ -1321,6 +1334,16 @@ static void ctx_stmt(cg_x86_64_ctx *ctx, mir_subroutine *sub,
   switch (stmt->kind) {
   case MIR_NODE_BUILTIN: {
     mir_builtin *builtin = (mir_builtin *)stmt;
+
+    // add debug_lines
+    mir_debug_line *debug_line = builtin->debug_line;
+    if (debug_line) {
+      uint64_t line_id = ctx->debug_lines_cnt++;
+      ctx_text_push_back(ctx, cg_x86_64_label_new(ctx_debug_line(ctx, line_id),
+                                                  CG_X86_64_LABEL_INSTR));
+      ctx_debug_add_line(ctx, debug_line, line_id);
+    }
+
     switch (builtin->kind) {
     case MIR_BUILTIN_STORE: {
       ctx_stmt_store(ctx, sub, builtin);

@@ -64,6 +64,7 @@ typedef enum cg_x86_64_data_enum {
   CG_X86_64_DATA_QUAD,  // 8 bytes
   CG_X86_64_DATA_ASCII, // ascii string
   CG_X86_64_DATA_BYTES, // byte array
+  CG_X86_64_DATA_LABEL, // label (quad)
 } cg_x86_64_data_enum;
 
 typedef struct cg_x86_64_data_struct {
@@ -76,6 +77,7 @@ typedef struct cg_x86_64_data_struct {
     uint64_t data_quad;
     uint8_t *data_ascii;
     uint8_t *data_bytes;
+    char    *data_label;
   };
   size_t data_size;
 } cg_x86_64_data;
@@ -86,6 +88,7 @@ cg_x86_64_data *cg_x86_64_data_new_long(uint32_t data);
 cg_x86_64_data *cg_x86_64_data_new_quad(uint64_t data);
 cg_x86_64_data *cg_x86_64_data_new_ascii(uint8_t *data);
 cg_x86_64_data *cg_x86_64_data_new_bytes(size_t size, uint8_t *data);
+cg_x86_64_data *cg_x86_64_data_new_label(char *data);
 
 typedef enum cg_x86_64_reg_enum {
   // 0

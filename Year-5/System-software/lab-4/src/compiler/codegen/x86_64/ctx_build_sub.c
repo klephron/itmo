@@ -225,16 +225,26 @@ static void ctx_sub_args_prologue(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
   }
 }
 
-void ctx_build_sub(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
+void ctx_build_sub(cg_x86_64_ctx *ctx, mir_subroutine *sub,
+                   size_t debug_sub_id) {
   ctx->sub_stack_size = X86_64_ALIGN_REG_64;
   ctx->sub_map_values = hashset_cg_x86_64_map_value_new();
 
   ctx_text_push_back(
       ctx, cg_x86_64_label_new(ctx_sub_label(ctx, sub), CG_X86_64_LABEL_INSTR));
 
+  ctx_text_push_back(ctx,
+                     cg_x86_64_label_new(ctx_debug_sub_start(ctx, debug_sub_id),
+                                         CG_X86_64_LABEL_INSTR));
+
   ctx_sub_prologue(ctx);
+
   ctx_sub_values_prologue(ctx, sub);
   ctx_sub_args_prologue(ctx, sub);
+
+  ctx_text_push_back(
+      ctx, cg_x86_64_label_new(ctx_debug_sub_prologue_end(ctx, debug_sub_id),
+                               CG_X86_64_LABEL_INSTR));
 
   for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !it.end(&it);
        it.next(&it)) {
@@ -243,10 +253,21 @@ void ctx_build_sub(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
 
   int exit = ctx_is_exit(ctx, sub);
 
+  ctx_text_push_back(
+      ctx, cg_x86_64_label_new(ctx_debug_sub_epilogue_start(ctx, debug_sub_id),
+                               CG_X86_64_LABEL_INSTR));
+
   ctx_sub_epilogue(ctx, sub, !exit);
   if (exit) {
     ctx_sub_exit(ctx);
   }
+
+  ctx_text_push_back(ctx,
+                     cg_x86_64_label_new(ctx_debug_sub_end(ctx, debug_sub_id),
+                                         CG_X86_64_LABEL_INSTR));
+
+  // add subroutine to debug info
+  ctx_debug_add_sub(ctx, sub, debug_sub_id);
 
   hashset_cg_x86_64_map_value_free(ctx->sub_map_values);
 }
