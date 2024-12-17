@@ -65,12 +65,12 @@ LIST_DECLARE_STATIC_INLINE(list_mir_node, mir_node_base, container_cmp_false,
 
 // VALUE
 typedef struct mir_value_struct {
-  mir_node_base base;
-  size_t        id;
-  type_base    *type;
+  mir_node_base     base;
+  size_t            id;
+  mir_debug_symbol *debug_symbol;
 } mir_value;
 
-mir_value *mir_value_new(size_t id, type_base *type);
+mir_value *mir_value_new(size_t id, mir_debug_symbol *debug_symbol);
 void       mir_value_free(mir_value *self);
 
 static inline void container_delete_mir_value(void *data) {

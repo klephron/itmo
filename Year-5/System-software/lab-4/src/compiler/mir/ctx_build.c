@@ -245,7 +245,7 @@ static mir_node_base *mir_ctx_build_stmt(mir_ctx *ctx, mir_subroutine *mir_sub,
   } break;
   case EIR_EXPR_LITERAL: {
     const eir_expr_lit *lit = (eir_expr_lit *)eir_expr;
-    mir_value *val = mir_value_new(ctx->value_cnt++, type_copy(lit->lit->type));
+    mir_value          *val = mir_value_new(ctx->value_cnt++, NULL);
     list_mir_value_push_back(mir_sub->tmps, val);
 
     list_mir_arg *args = list_mir_arg_new();
@@ -518,20 +518,15 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   ctx->value_cnt = 0;
 
   // return
-  const type_callable *eir_type = (type_callable *)eir_sub->binding_ref->type;
-
-  type_base *mir_ret_type = type_copy(eir_type->ret_type);
-  if (!mir_ret_type) {
-    mir_ret_type = type_base_new(NULL, TYPE_VOID);
-  }
-  mir_value *mir_ret = mir_value_new(ctx->value_cnt++, mir_ret_type);
+  mir_value *mir_ret = mir_value_new(ctx->value_cnt++, NULL);
   mir_sub->ret = mir_ret;
 
   // params
   for (list_hir_param_it it = list_hir_param_begin(eir_sub->params_ref);
        !it.end(&it); it.next(&it)) {
-    hir_param *param = it.get(&it);
-    mir_value *value = mir_value_new(ctx->value_cnt++, type_copy(param->type));
+    const hir_param *param = it.get(&it);
+    mir_value       *value = mir_value_new(ctx->value_cnt++,
+                                           mir_debug_symbol_new(param->binding_ref));
     list_mir_value_push_back(mir_sub->args, value);
     // add to local var index
     hashset_mir_map_value_insert(ctx->map_lvalues,
@@ -541,8 +536,9 @@ static void mir_ctx_build_subroutine(mir_ctx              *ctx,
   // vars
   for (list_hir_var_it it = list_hir_var_begin(eir_sub->vars_ref); !it.end(&it);
        it.next(&it)) {
-    hir_var   *var = it.get(&it);
-    mir_value *value = mir_value_new(ctx->value_cnt++, type_copy(var->type));
+    const hir_var *var = it.get(&it);
+    mir_value     *value =
+        mir_value_new(ctx->value_cnt++, mir_debug_symbol_new(var->binding_ref));
     list_mir_value_push_back(mir_sub->vars, value);
     // add to local var index
     hashset_mir_map_value_insert(ctx->map_lvalues,

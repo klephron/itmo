@@ -116,6 +116,25 @@ static void mir_tree_str_debug_line(string_buffer *buffer, size_t pad,
   }
 }
 
+static void mir_tree_str_debug_symbol(string_buffer *buffer, size_t pad,
+                                      const mir_debug_symbol *debug_symbol) {
+  UNUSED(pad);
+  if (debug_symbol) {
+    const hir_symbol *binding = debug_symbol->binding_ref;
+    string_buffer_append(buffer, "(name: ");
+    string_buffer_append(buffer, binding->name);
+    char *type = type_str(binding->type);
+    if (type) {
+      string_buffer_append(buffer, ", type: ");
+      string_buffer_append(buffer, type);
+      free(type);
+    }
+    string_buffer_append(buffer, ")");
+  } else {
+    string_buffer_append(buffer, "(nil)");
+  }
+}
+
 static void mir_tree_str_subroutine_ext(string_buffer *buffer, size_t pad,
                                         const mir_subroutine_ext *sub) {
   string_buffer_append(buffer, "method ");
@@ -140,10 +159,12 @@ static void mir_tree_str_value(string_buffer *buffer, size_t pad,
                                const mir_value *value) {
   char buf[32];
   string_buffer_append(buffer, "VALUE(");
-  snprintf(buf, STRMAXLEN(buf), "_%zu, ", value->id);
+  snprintf(buf, STRMAXLEN(buf), "_%zu)", value->id);
   string_buffer_append(buffer, buf);
-  mir_tree_str_type(buffer, pad, value->type);
-  string_buffer_append(buffer, ")");
+  if (value->debug_symbol) {
+    string_buffer_append(buffer, "\t#debug");
+    mir_tree_str_debug_symbol(buffer, pad, value->debug_symbol);
+  }
 }
 
 static void mir_tree_str_stmt(string_buffer *buffer, size_t pad,
@@ -295,16 +316,17 @@ static void mir_tree_str_subroutine(string_buffer *buffer, size_t pad,
   {
     list_mir_value_it it = list_mir_value_begin(sub->args);
     if (!it.end(&it)) {
-      mir_tree_str_type(buffer, pad, it.get(&it)->type);
+      mir_tree_str_type(buffer, pad,
+                        it.get(&it)->debug_symbol->binding_ref->type);
       it.next(&it);
     }
     for (; !it.end(&it); it.next(&it)) {
       string_buffer_append(buffer, ", ");
-      mir_tree_str_type(buffer, pad, it.get(&it)->type);
+      mir_tree_str_type(buffer, pad,
+                        it.get(&it)->debug_symbol->binding_ref->type);
     }
   }
   string_buffer_append(buffer, "): ");
-  mir_tree_str_type(buffer, pad, sub->ret->type);
   string_buffer_appendln(buffer, " {");
   pad += MIR_STR_TAB;
 
@@ -316,21 +338,21 @@ static void mir_tree_str_subroutine(string_buffer *buffer, size_t pad,
        it.next(&it)) {
     string_buffer_append_padding(buffer, pad);
     mir_tree_str_value(buffer, pad, it.get(&it));
-    string_buffer_appendln(buffer, "\t// args");
+    string_buffer_appendln(buffer, "\t// arg");
   }
 
   for (list_mir_value_it it = list_mir_value_begin(sub->vars); !it.end(&it);
        it.next(&it)) {
     string_buffer_append_padding(buffer, pad);
     mir_tree_str_value(buffer, pad, it.get(&it));
-    string_buffer_appendln(buffer, "\t// vars");
+    string_buffer_appendln(buffer, "\t// var");
   }
 
   for (list_mir_value_it it = list_mir_value_begin(sub->tmps); !it.end(&it);
        it.next(&it)) {
     string_buffer_append_padding(buffer, pad);
     mir_tree_str_value(buffer, pad, it.get(&it));
-    string_buffer_appendln(buffer, "\t// tmps");
+    string_buffer_appendln(buffer, "\t// tmp");
   }
 
   for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !it.end(&it);

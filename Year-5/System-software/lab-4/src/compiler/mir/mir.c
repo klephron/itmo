@@ -27,17 +27,17 @@ void mir_node_free(mir_node_base *generic) {
   }
 }
 
-mir_value *mir_value_new(size_t id, type_base *type) {
+mir_value *mir_value_new(size_t id, mir_debug_symbol *debug_symbol) {
   mir_value *self = MALLOC(mir_value);
   mir_node_init(&self->base, MIR_NODE_VALUE);
   self->id = id;
-  self->type = type;
+  self->debug_symbol = debug_symbol;
   return self;
 }
 
 void mir_value_free(mir_value *self) {
   if (self) {
-    type_free(self->type);
+    mir_debug_symbol_free(self->debug_symbol);
     mir_node_deinit(&self->base);
     free(self);
   }
