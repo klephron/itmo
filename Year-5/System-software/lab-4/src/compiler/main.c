@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "compiler/codegen/x86_64.h"
-#include "compiler/codegen/x86_64_ctx.h"
+#include "compiler/codegen/x86_64/ctx.h"
+#include "compiler/codegen/x86_64/x86_64.h"
 #include "compiler/dot/ast.h"
 #include "compiler/dot/eir.h"
 #include "compiler/eir/ctx.h"

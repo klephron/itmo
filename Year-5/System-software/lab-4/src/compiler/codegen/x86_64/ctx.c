@@ -1,4 +1,4 @@
-#include "x86_64_ctx.h"
+#include "ctx.h"
 
 #include "util/macro.h"
 

@@ -1,6 +1,6 @@
 #pragma once
+#include "x86_64.h"
 
-#include "compiler/codegen/x86_64.h"
 #include "compiler/exception/container.h"
 #include "compiler/mir/mir.h"
 #include "util/hashset.h"

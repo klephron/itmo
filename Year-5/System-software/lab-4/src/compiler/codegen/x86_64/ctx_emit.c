@@ -1,4 +1,4 @@
-#include "x86_64_ctx.h"
+#include "ctx.h"
 
 #include "util/log.h"
 #include "util/macro.h"
@@ -172,7 +172,7 @@ static void cg_emit_data(cg_x86_64_ctx *self, string_buffer *buf,
   string_buffer_append(buf, "\n");
 }
 
-void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
+static void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
                    cg_x86_64_instr *instr) {
   list_cg_x86_64_op *operands = instr->operands;
   string_buffer_append(buf, "  ");
@@ -243,7 +243,7 @@ void cg_emit_instr(cg_x86_64_ctx *self, string_buffer *buf,
   string_buffer_append(buf, "\n");
 }
 
-void cg_emit_label(cg_x86_64_ctx *self, string_buffer *buf,
+static void cg_emit_label(cg_x86_64_ctx *self, string_buffer *buf,
                    cg_x86_64_label *label) {
   UNUSED(self);
 
@@ -265,7 +265,7 @@ void cg_emit_label(cg_x86_64_ctx *self, string_buffer *buf,
   }
 }
 
-void cg_emit_directive(cg_x86_64_ctx *self, string_buffer *buf,
+static void cg_emit_directive(cg_x86_64_ctx *self, string_buffer *buf,
                        cg_x86_64_dir *dir) {
   UNUSED(self);
 
@@ -286,7 +286,7 @@ void cg_emit_directive(cg_x86_64_ctx *self, string_buffer *buf,
   string_buffer_append(buf, "\n");
 }
 
-void cg_emit_section(cg_x86_64_ctx *self, string_buffer *buf,
+static void cg_emit_section(cg_x86_64_ctx *self, string_buffer *buf,
                      cg_x86_64_section *section) {
 
   string_buffer_append(buf, ".section ");

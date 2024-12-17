@@ -1,12 +1,7 @@
-#include "x86_64_ctx.h"
+#include "ctx_build.h"
 
 #include "util/log.h"
-#include "util/macro.h"
-#include "x86_64_core/meta.h"
-#include "x86_64_core/type.h"
 #include "x86_64_core/value.h"
-
-#include <stdio.h>
 #include <string.h>
 
 #define cg_mir_node_kind_assign(node, node_kind, assign, assign_kind)          \
@@ -17,385 +12,6 @@
     }                                                                          \
     assign = (void *)node;                                                     \
   } while (0)
-
-static void cg_op_push_back(list_cg_x86_64_op *operands,
-                            cg_x86_64_op      *operand) {
-  list_cg_x86_64_op_push_back(operands, operand);
-}
-
-static cg_x86_64_op *cg_mode_new_direct_symbol(x86_64_symbol_enum kind) {
-  return cg_x86_64_op_new_direct(strdup(x86_64_symbol_enum_str(kind)));
-}
-
-static size_t cg_with_align(size_t size, size_t align) {
-  return ((size - 1) / align + 1) * align;
-}
-
-static void cg_units_append_move(list_cg_x86_64_unit *to,
-                                 list_cg_x86_64_unit *from) {
-  while (!list_cg_x86_64_unit_empty(from)) {
-    list_cg_x86_64_unit_push_back(to, list_cg_x86_64_unit_pop_front(from));
-  }
-  list_cg_x86_64_unit_free(from);
-}
-
-static x86_64_type *cg_type_to_x86_64(type_base *type) {
-  switch (type->type) {
-  case TYPE_BOOL:
-    return x86_64_type_new_simple(X86_64_TYPE_BOOL);
-    break;
-  case TYPE_BYTE:
-    return x86_64_type_new_simple(X86_64_TYPE_BYTE);
-    break;
-  case TYPE_INT:
-    return x86_64_type_new_simple(X86_64_TYPE_INT);
-    break;
-  case TYPE_UINT:
-    return x86_64_type_new_simple(X86_64_TYPE_UINT);
-    break;
-  case TYPE_LONG:
-    return x86_64_type_new_simple(X86_64_TYPE_LONG);
-    break;
-  case TYPE_ULONG:
-    return x86_64_type_new_simple(X86_64_TYPE_ULONG);
-    break;
-  case TYPE_CHAR:
-    return x86_64_type_new_simple(X86_64_TYPE_CHAR);
-    break;
-  case TYPE_STRING:
-    return x86_64_type_new_simple(X86_64_TYPE_STRING);
-    break;
-  case TYPE_VOID:
-    return x86_64_type_new_simple(X86_64_TYPE_VOID);
-    break;
-  // NOTE: metadata is NULL
-  // TODO: don't recreate after each wrap
-  case TYPE_ARRAY: {
-    x86_64_type *elem_type = cg_type_to_x86_64(((type_array *)type)->elem_type);
-    x86_64_type *complex =
-        x86_64_type_new_complex(X86_64_TYPE_ARRAY, elem_type, NULL);
-    x86_64_type_free(elem_type);
-    return complex;
-  }
-  case TYPE_CUSTOM:
-  case TYPE_CALLABLE:
-    error("type %d is not implemented, %p", type->type, type);
-    return NULL;
-  default:
-    error("unknown type %d %p", type->type, type);
-    return NULL;
-  }
-}
-
-static int ctx_is_exit(cg_x86_64_ctx *ctx, const mir_subroutine *sub) {
-  UNUSED(ctx);
-  return !strcmp(sub->name, "main");
-}
-
-static int ctx_is_global(cg_x86_64_ctx *ctx, const mir_node_base *base) {
-  hashset_cg_x86_64_mir_ref_it it =
-      hashset_cg_x86_64_mir_ref_find(ctx->globls, (mir_node_base *)base);
-  return !it.end(&it);
-}
-
-static char *ctx_local_name(cg_x86_64_ctx *ctx, const char *old) {
-  UNUSED(ctx);
-  size_t len = strlen(old);
-  char  *name = malloc(len + 3);
-  memcpy(name, ".L", 2);
-  memcpy(name + 2, old, len + 1);
-  return name;
-}
-
-__attribute__((__unused__)) static void ctx_data_push_back(cg_x86_64_ctx *ctx,
-                                                           void *data) {
-  list_cg_x86_64_unit_push_back(ctx->cg_ref->data->units,
-                                (cg_x86_64_unit *)data);
-}
-
-__attribute__((__unused__)) static void ctx_text_push_back(cg_x86_64_ctx *ctx,
-                                                           void *text) {
-  list_cg_x86_64_unit_push_back(ctx->cg_ref->text->units,
-                                (cg_x86_64_unit *)text);
-}
-
-__attribute__((__unused__)) static void
-ctx_text_push_back_many(cg_x86_64_ctx *ctx, list_cg_x86_64_unit *other) {
-  cg_units_append_move(ctx->cg_ref->text->units, other);
-}
-
-static void ctx_type_serialize(cg_x86_64_ctx *ctx, x86_64_type *type) {
-  if (!type) {
-    return;
-  }
-  size_t   sz = sizeof(x86_64_type) + sizeof(type->entries[0]) * type->count;
-  uint8_t *data = MALLOCN(uint8_t, sz);
-  memcpy(data, type, sz);
-  ctx_data_push_back(ctx, cg_x86_64_data_new_bytes(sz, data));
-}
-
-static void ctx_stack_release(cg_x86_64_ctx *ctx, size_t stack_size) {
-  list_cg_x86_64_op *operands;
-  if (stack_size) {
-    operands = list_cg_x86_64_op_new();
-    cg_op_push_back(operands, cg_x86_64_op_new_immediate(stack_size));
-    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
-    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_ADDQ, operands));
-    ctx->sub_stack_size -= stack_size;
-  }
-}
-
-static cg_x86_64_map_value *ctx_sub_value_find(cg_x86_64_ctx *ctx,
-                                               mir_value     *value) {
-  hashset_cg_x86_64_map_value_it it;
-
-  it = hashset_cg_x86_64_map_value_find(
-      ctx->sub_map_values,
-      &(cg_x86_64_map_value){.value_ref = (mir_value *)value});
-
-  if (it.end(&it)) {
-    error("value %p is not in sub_map_values", value);
-    return NULL;
-  }
-
-  return it.get(&it);
-}
-
-static void ctx_sub_prologue(cg_x86_64_ctx *ctx) {
-  list_cg_x86_64_op *operands;
-
-  // pushq %rbp
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_PUSHQ, operands));
-  // movq %rsp, %rbp
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-
-  ctx->sub_stack_size += X86_64_ALIGN_REG_64;
-  ctx->sub_rbp_offset = ctx->sub_stack_size;
-}
-
-static char *ctx_sub_epilogue_name(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
-  const char epilogue[] = "_ep";
-
-  size_t ssz = strlen(sub->name);
-  size_t lsz = ssz + sizeof(epilogue);
-  char  *label = malloc(lsz);
-  memcpy(label, sub->name, ssz);
-  memcpy(label + ssz, epilogue, sizeof(epilogue));
-  char *local = ctx_local_name(ctx, label);
-  free(label);
-  return local;
-}
-
-static void ctx_sub_epilogue(cg_x86_64_ctx *ctx, mir_subroutine *sub, int ret) {
-  list_cg_x86_64_op *operands;
-
-  ctx_text_push_back(ctx, cg_x86_64_label_new(ctx_sub_epilogue_name(ctx, sub),
-                                              CG_X86_64_LABEL_INSTR));
-
-  // set rax to return value
-  if (sub->ret) {
-    operands = list_cg_x86_64_op_new();
-    cg_x86_64_map_value *cg_ret = ctx_sub_value_find(ctx, sub->ret);
-    cg_op_push_back(
-        operands, cg_x86_64_op_new_base(cg_ret->rbp_offset, CG_X86_64_REG_RBP));
-    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RAX));
-    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  }
-
-  // movq %rsp, %rbp
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RBP));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  // popq %rbp
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_POPQ, operands));
-
-  ctx->sub_stack_size -= X86_64_ALIGN_REG_64;
-  ctx->sub_rbp_offset = 0;
-
-  // ret
-  if (ret) {
-    operands = list_cg_x86_64_op_new();
-    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_RETQ, operands));
-    ctx->sub_stack_size -= X86_64_ALIGN_REG_64;
-  }
-}
-
-static void ctx_sub_exit(cg_x86_64_ctx *ctx) {
-  list_cg_x86_64_op *operands;
-
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_mode_new_direct_symbol(X86_64_SYMBOL_FFLUSH));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
-
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_immediate(60));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RAX));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_XORQ, operands));
-
-  operands = list_cg_x86_64_op_new();
-  ctx_text_push_back(ctx,
-                     cg_x86_64_instr_new(CG_X86_64_MNEM_SYSCALL, operands));
-}
-
-static void ctx_sub_values_prologue(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
-  list_cg_x86_64_op *operands;
-
-  { // reserve memory on stack
-    size_t values = 0;
-
-    values += sub->ret ? 1 : 0;
-    values += list_mir_value_size(sub->args);
-    values += list_mir_value_size(sub->vars);
-    values += list_mir_value_size(sub->tmps);
-
-    size_t rsp_sub =
-        cg_with_align(values * sizeof(x86_64_value), X86_64_ALIGN_CALL);
-
-    operands = list_cg_x86_64_op_new();
-    cg_op_push_back(operands, cg_x86_64_op_new_immediate(rsp_sub));
-    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSP));
-    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_SUBQ, operands));
-
-    ctx->sub_stack_size += rsp_sub;
-  }
-
-  // index values based on rbp
-  size_t rbp_offset = 0;
-  if (sub->ret) {
-    rbp_offset -= sizeof(x86_64_value);
-    hashset_cg_x86_64_map_value_insert(
-        ctx->sub_map_values, cg_x86_64_map_value_new(sub->ret, rbp_offset));
-  }
-
-  for (list_mir_value_it it = list_mir_value_begin(sub->args); !it.end(&it);
-       it.next(&it)) {
-    rbp_offset -= sizeof(x86_64_value);
-    mir_value *value = it.get(&it);
-    hashset_cg_x86_64_map_value_insert(
-        ctx->sub_map_values, cg_x86_64_map_value_new(value, rbp_offset));
-  }
-
-  for (list_mir_value_it it = list_mir_value_begin(sub->vars); !it.end(&it);
-       it.next(&it)) {
-    rbp_offset -= sizeof(x86_64_value);
-    mir_value *value = it.get(&it);
-    hashset_cg_x86_64_map_value_insert(
-        ctx->sub_map_values, cg_x86_64_map_value_new(value, rbp_offset));
-  }
-
-  for (list_mir_value_it it = list_mir_value_begin(sub->tmps); !it.end(&it);
-       it.next(&it)) {
-    rbp_offset -= sizeof(x86_64_value);
-    mir_value *value = it.get(&it);
-    hashset_cg_x86_64_map_value_insert(
-        ctx->sub_map_values, cg_x86_64_map_value_new(value, rbp_offset));
-  }
-}
-
-// copy args to allocated stack
-static void ctx_sub_args_prologue(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
-  list_cg_x86_64_op   *operands;
-  cg_x86_64_map_value *cg;
-  uint64_t             offset = ctx->sub_rbp_offset;
-
-  list_mir_value_it it = list_mir_value_begin(sub->args);
-
-  if (it.end(&it)) {
-    return;
-  }
-  cg = ctx_sub_value_find(ctx, it.get(&it));
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  it.next(&it);
-
-  if (it.end(&it)) {
-    return;
-  }
-  cg = ctx_sub_value_find(ctx, it.get(&it));
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RSI));
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  it.next(&it);
-
-  if (it.end(&it)) {
-    return;
-  }
-  cg = ctx_sub_value_find(ctx, it.get(&it));
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDX));
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  it.next(&it);
-
-  if (it.end(&it)) {
-    return;
-  }
-  cg = ctx_sub_value_find(ctx, it.get(&it));
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RCX));
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  it.next(&it);
-
-  if (it.end(&it)) {
-    return;
-  }
-  cg = ctx_sub_value_find(ctx, it.get(&it));
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R8));
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  it.next(&it);
-
-  if (it.end(&it)) {
-    return;
-  }
-  cg = ctx_sub_value_find(ctx, it.get(&it));
-  operands = list_cg_x86_64_op_new();
-  cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_R9));
-  cg_op_push_back(operands,
-                  cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-  ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-  it.next(&it);
-
-  while (!it.end(&it)) {
-    cg = ctx_sub_value_find(ctx, it.get(&it));
-
-    operands = list_cg_x86_64_op_new();
-    cg_op_push_back(operands, cg_x86_64_op_new_base(offset, CG_X86_64_REG_RBP));
-    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RAX));
-    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-
-    operands = list_cg_x86_64_op_new();
-    cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RAX));
-    cg_op_push_back(operands,
-                    cg_x86_64_op_new_base(cg->rbp_offset, CG_X86_64_REG_RBP));
-    ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_MOVQ, operands));
-    it.next(&it);
-    offset += sizeof(x86_64_value);
-  }
-}
 
 static void ctx_sub_value_drop(cg_x86_64_ctx       *ctx,
                                cg_x86_64_map_value *cg_lsv) {
@@ -415,52 +31,9 @@ static void ctx_sub_value_drop(cg_x86_64_ctx       *ctx,
   ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
 }
 
-static char *ctx_block_name(cg_x86_64_ctx *ctx, mir_subroutine *sub,
-                            mir_bb *bb) {
-  size_t bb_sz = strlen(sub->name) + 1 + 32;
-  char  *bb_name = malloc(bb_sz);
-  snprintf(bb_name, bb_sz, "%s_%zu", sub->name, bb->id);
-  char *local = ctx_local_name(ctx, bb_name);
-  free(bb_name);
-  return local;
-}
-
-static char *ctx_data_name(cg_x86_64_ctx *ctx, mir_subroutine *sub,
-                           mir_value *value) {
-  char buf[32];
-
-  snprintf(buf, STRMAXLEN(buf), "_data_%lu", value->id);
-  size_t d_sz = strlen(sub->name) + strlen(buf) + 1;
-  char  *name = malloc(d_sz);
-  {
-    char *end = name;
-    end = stpcpy(end, sub->name);
-    end = stpcpy(end, buf);
-  }
-  char *local = ctx_local_name(ctx, name);
-  free(name);
-  return local;
-}
-
-static char *ctx_sub_name(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
-  if (ctx_is_global(ctx, (mir_node_base *)sub)) {
-    return strdup(sub->name);
-  } else {
-    return ctx_local_name(ctx, sub->name);
-  }
-}
-
-static char *ctx_ext_name(cg_x86_64_ctx *ctx, mir_subroutine_ext *ext) {
-  if (ctx_is_global(ctx, (mir_node_base *)ext)) {
-    return strdup(ext->name);
-  } else {
-    return ctx_local_name(ctx, ext->name);
-  }
-}
-
-static uint64_t ctx_args_value_prepare(cg_x86_64_ctx *ctx, int variadic,
-                                       const list_cg_x86_64_map_value *values,
-                                       int64_t arg_offset) {
+static uint64_t ctx_args_prepare(cg_x86_64_ctx *ctx, int variadic,
+                                 const list_cg_x86_64_map_value *values,
+                                 int64_t                         arg_offset) {
   list_cg_x86_64_op          *operands;
   cg_x86_64_map_value        *cg;
   size_t                      aligned_rsp_size = 0;
@@ -783,14 +356,14 @@ static void ctx_stmt_store_lit(cg_x86_64_ctx *ctx, mir_subroutine *sub,
     char *str = strdup(rsv->lit->value.v_str);
 
     // add to data region
-    ctx_data_push_back(ctx, cg_x86_64_label_new(ctx_data_name(ctx, sub, lsv),
+    ctx_data_push_back(ctx, cg_x86_64_label_new(ctx_data_label(ctx, sub, lsv),
                                                 CG_X86_64_LABEL_DATA));
     ctx_data_push_back(ctx, cg_x86_64_data_new_ascii((uint8_t *)str));
 
     // movb data_label, %rdi
     operands = list_cg_x86_64_op_new();
     cg_op_push_back(operands,
-                    cg_x86_64_op_new_direct(ctx_data_name(ctx, sub, lsv)));
+                    cg_x86_64_op_new_direct(ctx_data_label(ctx, sub, lsv)));
     cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_LEAQ, operands));
 
@@ -848,7 +421,7 @@ static void ctx_stmt_builtin_l_value(cg_x86_64_ctx     *ctx,
   list_cg_x86_64_op *operands;
   size_t             stack_size;
 
-  stack_size = ctx_args_value_prepare(ctx, variadic, values, 0);
+  stack_size = ctx_args_prepare(ctx, variadic, values, 0);
 
   operands = list_cg_x86_64_op_new();
   cg_op_push_back(operands, cg_mode_new_direct_symbol(symbol));
@@ -1017,12 +590,12 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
       list_cg_x86_64_map_value_push_back(values, arg.cg);
     }
 
-    size_t stack_size = ctx_args_value_prepare(ctx, 0, values, 0);
+    size_t stack_size = ctx_args_prepare(ctx, 0, values, 0);
 
     // call func
     list_cg_x86_64_op *operands = list_cg_x86_64_op_new();
     cg_op_push_back(operands,
-                    cg_x86_64_op_new_direct(ctx_sub_name(ctx, fun.sub)));
+                    cg_x86_64_op_new_direct(ctx_sub_label(ctx, fun.sub)));
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
 
     ctx_stack_release(ctx, stack_size);
@@ -1190,7 +763,7 @@ static void ctx_stmt_builtin_call(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
     // call external function
     operands = list_cg_x86_64_op_new();
     cg_op_push_back(operands,
-                    cg_x86_64_op_new_direct(ctx_ext_name(ctx, fun.ext)));
+                    cg_x86_64_op_new_direct(ctx_ext_label(ctx, fun.ext)));
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_CALL, operands));
 
     // movq %rax, %rdi
@@ -1277,7 +850,7 @@ void ctx_stmt_builtin_index(cg_x86_64_ctx *ctx, mir_builtin *builtin) {
     list_cg_x86_64_map_value_push_back(values, cg_value);
   }
 
-  size_t stack_size = ctx_args_value_prepare(ctx, 1, values, 0);
+  size_t stack_size = ctx_args_prepare(ctx, 1, values, 0);
 
   // call func
   operands = list_cg_x86_64_op_new();
@@ -1393,7 +966,7 @@ void ctx_stmt_builtin_make(cg_x86_64_ctx *ctx, mir_subroutine *sub,
     type_base *elem_type = ((type_array *)builtin->spec)->elem_type;
 
     x86_64_type *type = cg_type_to_x86_64(elem_type);
-    ctx_data_push_back(ctx, cg_x86_64_label_new(ctx_data_name(ctx, sub, lsv),
+    ctx_data_push_back(ctx, cg_x86_64_label_new(ctx_data_label(ctx, sub, lsv),
                                                 CG_X86_64_LABEL_DATA));
     ctx_type_serialize(ctx, type);
     x86_64_type_free(type);
@@ -1401,7 +974,7 @@ void ctx_stmt_builtin_make(cg_x86_64_ctx *ctx, mir_subroutine *sub,
     // leaq .Ldata, %rdi
     operands = list_cg_x86_64_op_new();
     cg_op_push_back(operands,
-                    cg_x86_64_op_new_direct(ctx_data_name(ctx, sub, lsv)));
+                    cg_x86_64_op_new_direct(ctx_data_label(ctx, sub, lsv)));
     cg_op_push_back(operands, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_LEAQ, operands));
 
@@ -1418,7 +991,7 @@ void ctx_stmt_builtin_make(cg_x86_64_ctx *ctx, mir_subroutine *sub,
       cg_x86_64_map_value *cg_value = ctx_sub_value_find(ctx, value);
       list_cg_x86_64_map_value_push_back(values, cg_value);
     }
-    size_t stack_size = ctx_args_value_prepare(ctx, 1, values, 1);
+    size_t stack_size = ctx_args_prepare(ctx, 1, values, 1);
 
     // call func
     list_cg_x86_64_op *operands = list_cg_x86_64_op_new();
@@ -1650,7 +1223,7 @@ void ctx_stmt_store_to_builtin(cg_x86_64_ctx *ctx, mir_builtin *builtin,
     list_cg_x86_64_map_value_push_back(values, cg_value);
   }
 
-  size_t stack_size = ctx_args_value_prepare(ctx, 1, values, 0);
+  size_t stack_size = ctx_args_prepare(ctx, 1, values, 0);
 
   // call func
   operands = list_cg_x86_64_op_new();
@@ -1750,7 +1323,7 @@ static void ctx_jump(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_jmp *jmp) {
   if (!jmp) {
     operands = list_cg_x86_64_op_new();
     cg_op_push_back(operands,
-                    cg_x86_64_op_new_direct(ctx_sub_epilogue_name(ctx, sub)));
+                    cg_x86_64_op_new_direct(ctx_sub_epilogue_label(ctx, sub)));
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_JMP, operands));
     return;
   }
@@ -1782,14 +1355,14 @@ static void ctx_jump(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_jmp *jmp) {
     // je .Lje
     operands = list_cg_x86_64_op_new();
     cg_op_push_back(operands, cg_x86_64_op_new_direct(
-                                  ctx_block_name(ctx, sub, jmp->je_ref)));
+                                  ctx_block_label(ctx, sub, jmp->je_ref)));
     ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_JNZ, operands));
   }
 
   // jmp .Ljz
   operands = list_cg_x86_64_op_new();
-  cg_op_push_back(
-      operands, cg_x86_64_op_new_direct(ctx_block_name(ctx, sub, jmp->jz_ref)));
+  cg_op_push_back(operands, cg_x86_64_op_new_direct(
+                                ctx_block_label(ctx, sub, jmp->jz_ref)));
   ctx_text_push_back(ctx, cg_x86_64_instr_new(CG_X86_64_MNEM_JMP, operands));
 }
 
@@ -1815,8 +1388,8 @@ static void ctx_stmt(cg_x86_64_ctx *ctx, mir_subroutine *sub,
   }
 }
 
-static void ctx_block(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_bb *bb) {
-  ctx_text_push_back(ctx, cg_x86_64_label_new(ctx_block_name(ctx, sub, bb),
+void ctx_build_block(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_bb *bb) {
+  ctx_text_push_back(ctx, cg_x86_64_label_new(ctx_block_label(ctx, sub, bb),
                                               CG_X86_64_LABEL_INSTR));
 
   for (list_mir_node_it it = list_mir_node_begin(bb->stmts); !it.end(&it);
@@ -1826,85 +1399,4 @@ static void ctx_block(cg_x86_64_ctx *ctx, mir_subroutine *sub, mir_bb *bb) {
   }
 
   ctx_jump(ctx, sub, bb->jmp);
-}
-
-static void ctx_sub(cg_x86_64_ctx *ctx, mir_subroutine *sub) {
-  ctx->sub_stack_size = X86_64_ALIGN_REG_64;
-  ctx->sub_map_values = hashset_cg_x86_64_map_value_new();
-
-  ctx_text_push_back(
-      ctx, cg_x86_64_label_new(ctx_sub_name(ctx, sub), CG_X86_64_LABEL_INSTR));
-
-  ctx_sub_prologue(ctx);
-  ctx_sub_values_prologue(ctx, sub);
-  ctx_sub_args_prologue(ctx, sub);
-
-  for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !it.end(&it);
-       it.next(&it)) {
-    ctx_block(ctx, sub, it.get(&it));
-  }
-
-  int exit = ctx_is_exit(ctx, sub);
-
-  ctx_sub_epilogue(ctx, sub, !exit);
-  if (exit) {
-    ctx_sub_exit(ctx);
-  }
-
-  hashset_cg_x86_64_map_value_free(ctx->sub_map_values);
-}
-
-void cg_x86_64_ctx_build(cg_x86_64_ctx *ctx, mir *mir) {
-  list_cg_x86_64_unit *globl_units = list_cg_x86_64_unit_new();
-  list_cg_x86_64_unit *ext_units = list_cg_x86_64_unit_new();
-
-  ctx->globls = hashset_cg_x86_64_mir_ref_new();
-
-  // core declarations
-  for (int kind = 0; kind < X86_64_SYMBOL_UNKNOWN; ++kind) {
-    list_cg_x86_64_unit_push_back(
-        ext_units,
-        (cg_x86_64_unit *)cg_x86_64_dir_extern_new(cg_x86_64_label_new(
-            strdup(x86_64_symbol_enum_str(kind)), CG_X86_64_LABEL_DIRECTIVE)));
-  }
-
-  // executable declarations
-  for (list_mir_subroutine_ext_it it =
-           list_mir_subroutine_ext_begin(mir->sub_exts);
-       !it.end(&it); it.next(&it)) {
-    mir_subroutine_ext *ext = it.get(&it);
-    char               *ext_name = strdup(ext->name);
-
-    list_cg_x86_64_unit_push_back(
-        ext_units,
-        (cg_x86_64_unit *)cg_x86_64_dir_extern_new(
-            cg_x86_64_label_new(ext_name, CG_X86_64_LABEL_DIRECTIVE)));
-
-    hashset_cg_x86_64_mir_ref_insert(ctx->globls, (mir_node_base *)ext);
-  }
-
-  // add to globals
-  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
-       !it.end(&it); it.next(&it)) {
-    mir_subroutine *sub = it.get(&it);
-
-    if (!strcmp(sub->name, "main")) {
-      list_cg_x86_64_unit_push_back(
-          globl_units,
-          (cg_x86_64_unit *)cg_x86_64_dir_globl_new(cg_x86_64_label_new(
-              strdup(sub->name), CG_X86_64_LABEL_DIRECTIVE)));
-
-      hashset_cg_x86_64_mir_ref_insert(ctx->globls, (mir_node_base *)sub);
-    }
-  }
-
-  cg_units_append_move(ctx->cg_ref->text->units, ext_units);
-  cg_units_append_move(ctx->cg_ref->text->units, globl_units);
-
-  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
-       !it.end(&it); it.next(&it)) {
-    ctx_sub(ctx, it.get(&it));
-  }
-
-  hashset_cg_x86_64_mir_ref_free(ctx->globls);
 }

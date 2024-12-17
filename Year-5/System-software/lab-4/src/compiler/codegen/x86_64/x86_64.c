@@ -1,4 +1,4 @@
-#include "compiler/codegen/x86_64.h"
+#include "x86_64.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <string.h>
