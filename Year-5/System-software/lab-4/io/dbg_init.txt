@@ -1,7 +1,4 @@
 file io/suite9.txt.out
 run
 info target
-b 0x401135
-b 0x401131
-dis 0x401131 16
 c

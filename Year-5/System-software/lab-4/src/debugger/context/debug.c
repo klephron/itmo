@@ -1,6 +1,5 @@
 #include "context.h"
 
-#include "util/log.h"
 #include "util/macro.h"
 #include "x86_64_core/debug.h"
 #include <stdio.h>
@@ -191,4 +190,33 @@ void context_dbg_deinit(context *self) {
   free(dbg->strs);
   dbg->strs_cnt = 0;
   dbg->strs = NULL;
+}
+
+int context_dbg_by_source(context *self, debug_line *result, uint64_t file_id,
+                          uint64_t line) {
+  for (uint64_t i = 0; i < self->debug.lines_cnt; ++i) {
+    debug_line debug = self->debug.lines[i];
+    if (debug.file_id == file_id && debug.line == line) {
+      *result = debug;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+// TODO: rewrite to binary search
+int context_dbg_by_address(context *self, debug_line *result,
+                           uint64_t address) {
+  for (uint64_t i = 0; i < self->debug.lines_cnt; ++i) {
+    debug_line debug = self->debug.lines[i];
+    if (debug.address == address) {
+      *result = debug;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+const char *context_dbg_file_by_id(context *self, uint64_t file) {
+  return self->debug.strs[self->debug.files[file]->strs_index];
 }

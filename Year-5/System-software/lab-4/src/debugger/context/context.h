@@ -14,14 +14,14 @@ typedef struct breakpoint_struct {
   size_t   id;
   uint8_t  data;
   uint64_t address;
-  char    *file;
+  uint64_t file_id;
   size_t   line;
   int      is_enabled;
   int      is_placed;
 } breakpoint;
 
 breakpoint *breakpoint_new(size_t id, uint8_t data, uint64_t address,
-                           char *file, size_t line);
+                           uint64_t file_id, size_t line);
 void        breakpoint_free(breakpoint *self);
 
 static inline int container_cmp_breakpoint(const void *_lsv, const void *_rsv) {
@@ -170,6 +170,10 @@ int context_bp_remove(context *self, breakpoint *bp);
 
 void context_dbg_init(context *self);
 void context_dbg_deinit(context *self);
+int  context_dbg_by_source(context *self, debug_line *result, uint64_t file_id,
+                           uint64_t line);
+int context_dbg_by_address(context *self, debug_line *result, uint64_t address);
+const char *context_dbg_file_by_id(context *self, uint64_t file);
 
 #define peekdata_brkpt_with_int3(data) ((data & ~0xFF) | 0xCC)
 #define peekdata_bpkpt_with_stored(data, stored) ((data & ~0xFF) | stored)

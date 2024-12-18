@@ -198,8 +198,9 @@ static void fn_breakpoints(context *ctx) {
     context_out_append(ctx, buf);
 
     context_out_append(ctx, ", file: ");
-    if (b->file) {
-      context_out_append(ctx, b->file);
+    if (b->file_id != UINT64_MAX) {
+      uint64_t strs_idx = ctx->debug.files[b->file_id]->strs_index;
+      context_out_append(ctx, ctx_debug_idx_str(ctx, strs_idx));
     } else {
       context_out_append(ctx, "-");
     }

@@ -6,19 +6,22 @@
 
 static const char *desc = "Set breakpoint at specific location";
 
-static const char *help = "Usage: <command> <address>\n"
-                          "\t<address>: address in hex";
+static const char *help =
+    "Usage: <command> (<address>|<file_id> <line>)\n"
+    "\t<address>: address in hex\n"
+    "\t<file_id>: id of file, see 'info info' or 'info files'\n"
+    "\t<line>: line in file";
 
 static void fn_out_breakpoint(context *ctx, breakpoint *breakpoint) {
   char buf[64];
   context_out_append(ctx, "breakpoint ");
   snprintf(buf, STRMAXLEN(buf), "%zu ", breakpoint->id);
   context_out_append(ctx, buf);
-  snprintf(buf, STRMAXLEN(buf), "at 0x%016lx: ", breakpoint->address);
+  snprintf(buf, STRMAXLEN(buf), "at 0x%lx: ", breakpoint->address);
   context_out_append(ctx, buf);
   context_out_append(ctx, "file ");
-  if (breakpoint->file) {
-    context_out_append(ctx, breakpoint->file);
+  if (breakpoint->file_id != UINT64_MAX) {
+    context_out_append(ctx, context_dbg_file_by_id(ctx, breakpoint->file_id));
   } else {
     context_out_append(ctx, "-");
   }
@@ -35,7 +38,8 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   UNUSED(handler);
   char *args = NULL;
-  char *arg_address = NULL;
+  char *arg_first = NULL;
+  char *arg_second = NULL;
 
   args = trim(strdup(rest));
 
@@ -47,7 +51,11 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     char *token_args = strdup(args);
     char *token = strtok(token_args, " ");
     if (token) {
-      arg_address = strdup(token);
+      arg_first = strdup(token);
+      token = strtok(NULL, " ");
+    }
+    if (token) {
+      arg_second = strdup(token);
       token = strtok(NULL, " ");
     }
     if (token_args) {
@@ -55,22 +63,48 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     }
   }
 
-  if (!arg_address) {
+  if (!arg_first) {
     goto error_format;
   }
 
   uint64_t address;
-  sscanf(arg_address, "%lx", &address);
+  uint64_t file_id = UINT64_MAX;
+  uint64_t line = UINT64_MAX;
+
+  // breakpoint from file+line
+  if (arg_second && *arg_second) {
+    debug_line d_line;
+    sscanf(arg_first, "%lu", &file_id);
+    sscanf(arg_second, "%lu", &line);
+    if (context_dbg_by_source(ctx, &d_line, file_id, line) == -1) {
+      char buf[64];
+      context_err_append(ctx, "debug info for file: ");
+      context_err_append(ctx, context_dbg_file_by_id(ctx, file_id));
+      context_err_append(ctx, buf);
+      context_err_append(ctx, ", line: ");
+      snprintf(buf, STRMAXLEN(buf), "%lu", line);
+      context_err_append(ctx, buf);
+      context_error(ctx, " doesn't exist");
+      goto cleanup;
+    }
+    address = d_line.address;
+  } else {
+    sscanf(arg_first, "%lx", &address);
+  }
 
   hashset_breakpoint_it it =
       hashset_breakpoint_find(ctx->breaks, &(breakpoint){.address = address});
   if (!it.end(&it)) {
-    context_error(ctx, "breakpoint on this address already exists");
+    char buf[64];
+    context_err_append(ctx, "breakpoint on address ");
+    snprintf(buf, STRMAXLEN(buf), "0x%lx", address);
+    context_err_append(ctx, buf);
+    context_error(ctx, " already exists");
     goto cleanup;
   }
 
   breakpoint *breakpoint =
-      breakpoint_new(++ctx->breaks_cnt, 0, address, NULL, UINT64_MAX);
+      breakpoint_new(++ctx->breaks_cnt, 0, address, file_id, line);
   breakpoint->is_enabled = 1;
 
   hashset_breakpoint_insert(ctx->breaks, breakpoint);
@@ -86,8 +120,11 @@ error_format:
   cmd_error_format(ctx, args, help);
 
 cleanup:
-  if (arg_address) {
-    free(arg_address);
+  if (arg_first) {
+    free(arg_first);
+  }
+  if (arg_second) {
+    free(arg_second);
   }
   if (args) {
     free(args);

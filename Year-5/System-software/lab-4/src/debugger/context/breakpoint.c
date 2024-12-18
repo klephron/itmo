@@ -5,12 +5,12 @@
 #include <sys/ptrace.h>
 
 breakpoint *breakpoint_new(size_t id, uint8_t data, uint64_t address,
-                           char *file, size_t line) {
+                           uint64_t file_id, size_t line) {
   breakpoint *self = MALLOC(breakpoint);
   self->id = id;
   self->data = data;
   self->address = address;
-  self->file = file;
+  self->file_id = file_id;
   self->line = line;
   self->is_enabled = 0;
   self->is_placed = 0;
@@ -19,9 +19,6 @@ breakpoint *breakpoint_new(size_t id, uint8_t data, uint64_t address,
 
 void breakpoint_free(breakpoint *self) {
   if (self) {
-    if (self->file) {
-      free(self->file);
-    }
     free(self);
   }
 }
