@@ -192,12 +192,11 @@ void context_dbg_deinit(context *self) {
   dbg->strs = NULL;
 }
 
-int context_dbg_by_source(context *self, debug_line *result, uint64_t file_id,
-                          uint64_t line) {
+int context_dbg_line_by_source(context *self, debug_line *result) {
   for (uint64_t i = 0; i < self->debug.lines_cnt; ++i) {
     debug_line debug = self->debug.lines[i];
-    if (debug.file_id == file_id && debug.line == line) {
-      *result = debug;
+    if (debug.file_id == result->file_id && debug.line == result->line) {
+      result->address = debug.address;
       return 0;
     }
   }
@@ -205,12 +204,12 @@ int context_dbg_by_source(context *self, debug_line *result, uint64_t file_id,
 }
 
 // TODO: rewrite to binary search
-int context_dbg_by_address(context *self, debug_line *result,
-                           uint64_t address) {
+int context_dbg_line_by_address(context *self, debug_line *result) {
   for (uint64_t i = 0; i < self->debug.lines_cnt; ++i) {
     debug_line debug = self->debug.lines[i];
-    if (debug.address == address) {
-      *result = debug;
+    if (debug.address == result->address) {
+      result->file_id = debug.file_id;
+      result->line = debug.line;
       return 0;
     }
   }

@@ -134,6 +134,10 @@ static void register_cmds(cmd_handler *h) {
   cmd_handler_register(h, cmd_delete("delete"));
   cmd_handler_register(h, cmd_delete("d"));
   cmd_handler_register(h, cmd_config("config"));
+  cmd_handler_register(h, cmd_next("next"));
+  cmd_handler_register(h, cmd_next("n"));
+  cmd_handler_register(h, cmd_step("step"));
+  cmd_handler_register(h, cmd_step("s"));
 }
 
 static int execute(args *args) {

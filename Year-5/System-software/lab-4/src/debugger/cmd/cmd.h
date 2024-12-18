@@ -26,6 +26,8 @@ void cmd_ctx_memory_error(int status, bfd_vma memaddr,
                           struct disassemble_info *info);
 int  cmd_ctx_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
                          struct disassemble_info *info);
+void cmd_ctx_align(context *ctx, uint64_t max_cnt, uint64_t cur_cnt);
+void cmd_ctx_out_source_line(context *ctx, debug_line line);
 
 // commands
 typedef cmd *cmd_new(const char *cmd_ref);
@@ -42,9 +44,16 @@ cmd_new cmd_file;
 cmd_new cmd_help;
 cmd_new cmd_info;
 cmd_new cmd_kill;
+cmd_new cmd_next;
 cmd_new cmd_nexti;
 cmd_new cmd_print;
 cmd_new cmd_run;
+cmd_new cmd_step;
 cmd_new cmd_stepi;
 
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size);
+void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
+                           disassembler_ftype *dftype_p, int *is_call_p);
+int  cmd_nexti_fn(context *ctx, disassemble_info *info_p,
+                  disassembler_ftype *dftype_p, int *is_call_p, uint64_t n);
+int  cmd_stepi_fn(context *ctx, uint64_t n);

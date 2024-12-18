@@ -71,3 +71,30 @@ int cmd_ctx_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
   }
   return 0;
 }
+
+void cmd_ctx_align(context *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
+  if (cur_cnt == 0) {
+    cur_cnt = 1;
+  }
+  while (max_cnt && cur_cnt) {
+    max_cnt /= 10;
+    cur_cnt /= 10;
+  }
+  while (max_cnt) {
+    context_out_append(ctx, " ");
+    max_cnt /= 10;
+  }
+}
+
+void cmd_ctx_out_source_line(context *ctx, debug_line line) {
+  char        buf[64];
+  debug_file *file = ctx->debug.files[line.file_id];
+
+  context_out_appendln(ctx, context_dbg_file_by_id(ctx, line.file_id));
+
+  snprintf(buf, STRMAXLEN(buf), "%zu: ", line.line);
+  cmd_ctx_align(ctx, ctx->debug.lines_cnt, line.line);
+
+  context_out_append(ctx, buf);
+  context_out_append(ctx, file->lines[line.line]);
+}

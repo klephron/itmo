@@ -1,4 +1,4 @@
 file io/suite9.txt.out
 run
 info target
-c
+b 0x401203

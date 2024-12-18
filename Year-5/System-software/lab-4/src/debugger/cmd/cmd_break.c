@@ -76,7 +76,9 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     debug_line d_line;
     sscanf(arg_first, "%lu", &file_id);
     sscanf(arg_second, "%lu", &line);
-    if (context_dbg_by_source(ctx, &d_line, file_id, line) == -1) {
+    d_line.file_id = file_id;
+    d_line.line = line;
+    if (context_dbg_line_by_source(ctx, &d_line) == -1) {
       char buf[64];
       context_err_append(ctx, "debug info for file: ");
       context_err_append(ctx, context_dbg_file_by_id(ctx, file_id));

@@ -1,8 +1,5 @@
 #include "context.h"
 
-#include "debugger/context/str.h"
-#include "util/log.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
@@ -25,7 +22,7 @@ int context_tg_is_running(context *self) {
 }
 
 target_state_enum context_tg_get_state(context *self) {
-  debug("target state: %s", state_target_enum_str(self->s_target));
+  // debug("target state: %s", state_target_enum_str(self->s_target));
   assert(self->s_target != TARGET_ERROR);
   return self->s_target;
 }
@@ -224,4 +221,26 @@ target_state_enum context_tg_brkpt_fix(context *self) {
 
 void context_tg_brkpt_fix_regs(struct user_regs_struct *regs_p) {
   regs_p->rip -= 1;
+}
+
+void context_tg_prev_line_reset(context *self) {
+  self->prev_line.address = UINT64_MAX;
+  self->prev_line.line = UINT64_MAX;
+  self->prev_line.file_id = UINT64_MAX;
+}
+
+void context_tg_prev_line_set(context *self, debug_line line) {
+  if (line.line != UINT64_MAX && line.file_id != UINT64_MAX) {
+    self->prev_line = line;
+  }
+}
+
+int context_tg_prev_line_changed(context *self, debug_line line) {
+  if ((line.line != UINT64_MAX) && (line.file_id != UINT64_MAX)) {
+    if ((line.file_id != self->prev_line.file_id) ||
+        (line.line != self->prev_line.line)) {
+      return 1;
+    }
+  }
+  return 0;
 }

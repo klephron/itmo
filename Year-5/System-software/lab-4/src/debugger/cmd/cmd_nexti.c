@@ -1,6 +1,7 @@
 #include "debugger/cmd/cmd.h"
 
 #include "debugger/context/context.h"
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -50,14 +51,9 @@ static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  static const uint64_t int3 = 0xCC;
-  static const uint64_t int_mask = ~0xFF;
-
   char                   *args = NULL;
   size_t                  n = 1;
   struct user_regs_struct regs;
-  struct disassemble_info info;
-  int                     is_call;
 
   args = trim(strdup(rest));
 
@@ -69,25 +65,61 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  init_disassemble_info(&info, &is_call, fn_fprintf, fn_fprintf_styled_ftype);
+  {
+    disassemble_info   info;
+    disassembler_ftype dftype;
+    int                is_call;
 
-  info.arch = bfd_arch_i386;
-  info.mach = bfd_mach_x86_64;
-  info.application_data = ctx;
-  info.read_memory_func = cmd_ctx_read_memory;
-  info.memory_error_func = cmd_ctx_memory_error;
+    cmd_nexti_disasm_init(ctx, &info, &dftype, &is_call);
 
-  disassembler_ftype disasm =
-      disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);
+    if (cmd_nexti_fn(ctx, &info, &dftype, &is_call, n) == -1) {
+      goto cleanup;
+    }
+  }
+
+  if (context_tg_is_running(ctx)) {
+    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      context_error(ctx, "failed to get regs");
+      goto cleanup;
+    }
+
+    if (context_tg_get_state(ctx) == TARGET_BRKPT) {
+      context_tg_brkpt_fix_regs(&regs);
+    }
+
+    debug("here!");
+    cmd_disassemble_at_address(ctx, regs.rip, 1);
+  }
+
+cleanup:
+  if (args) {
+    free(args);
+  }
+}
+
+void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
+                           disassembler_ftype *dftype_p, int *is_call_p) {
+  init_disassemble_info(info_p, is_call_p, fn_fprintf, fn_fprintf_styled_ftype);
+  info_p->arch = bfd_arch_i386;
+  info_p->mach = bfd_mach_x86_64;
+  info_p->application_data = ctx;
+  info_p->read_memory_func = cmd_ctx_read_memory;
+  info_p->memory_error_func = cmd_ctx_memory_error;
+  *dftype_p = disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);
+}
+
+// 0 - ok, -1 - error + outputs to context error
+int cmd_nexti_fn(context *ctx, disassemble_info *info_p,
+                 disassembler_ftype *dftype_p, int *is_call_p, uint64_t n) {
+  struct user_regs_struct regs;
 
   if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
     context_error(ctx, "failed to get regs");
-    goto cleanup;
+    return -1;
   }
 
   for (size_t i = 0; i < n; ++i) {
-    is_call = 0;
-
+    *is_call_p = 0;
     bfd_vma pc = regs.rip;
 
     // fix rip to disasm properly if already on breakpoint
@@ -95,10 +127,10 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       context_tg_brkpt_fix_regs(&regs);
     }
 
-    size_t insn_size = disasm(pc, &info);
+    size_t insn_size = (*dftype_p)(pc, info_p);
     pc += insn_size;
 
-    if (is_call) {
+    if (*is_call_p) {
       // 1. create implicit breakpoint
       // 2. continue
       // 3. remove implicit breakpoint
@@ -109,7 +141,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
         break;
       }
 
-      uint64_t data_int3 = ((data & int_mask) | int3);
+      uint64_t data_int3 = peekdata_brkpt_with_int3(data);
 
       if (context_tg_pokedata(ctx, pc, data_int3) == TARGET_ERROR) {
         context_error(ctx, "unable to poke data");
@@ -137,19 +169,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       break;
     }
   }
-
-  if (context_tg_is_running(ctx)) {
-    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-      context_error(ctx, "failed to get regs");
-      goto cleanup;
-    }
-    cmd_disassemble_at_address(ctx, is_call ? regs.rip - 1 : regs.rip, 1);
-  }
-
-cleanup:
-  if (args) {
-    free(args);
-  }
+  return 0;
 }
 
 cmd *cmd_nexti(const char *cmd_ref) {

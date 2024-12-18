@@ -54,6 +54,20 @@ cleanup:
   }
 }
 
+// 0 - ok, -1 - error
+int cmd_stepi_fn(context *ctx, uint64_t n) {
+  for (size_t i = 0; i < n; ++i) {
+    target_state_enum status = context_tg_stepi(ctx);
+    if (status == TARGET_ERROR) {
+      context_error(ctx, "error while stepping");
+      return -1;
+    } else if (status == TARGET_NOT_RUNNING) {
+      break;
+    }
+  }
+  return 0;
+}
+
 cmd *cmd_stepi(const char *cmd_ref) {
   return cmd_entry_new(fn, desc, help, cmd_ref);
 }

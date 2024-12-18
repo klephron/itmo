@@ -16,20 +16,6 @@ static const char *help = "Usage: <command> "
                           "(sections|symbols|target|registers|breakpoints|"
                           "info|lines|strs|files)";
 
-static void ctx_align_d(context *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
-  if (cur_cnt == 0) {
-    cur_cnt = 1;
-  }
-  while (max_cnt && cur_cnt) {
-    max_cnt /= 10;
-    cur_cnt /= 10;
-  }
-  while (max_cnt) {
-    context_out_append(ctx, " ");
-    max_cnt /= 10;
-  }
-}
-
 static char *ctx_debug_idx_str(context *ctx, uint64_t str_idx) {
   return ctx->debug.strs[str_idx];
 }
@@ -309,7 +295,7 @@ static void fn_debug_lines(context *ctx) {
 
     snprintf(buf, STRMAXLEN(buf), "%zu: ", i);
     context_out_append(ctx, buf);
-    ctx_align_d(ctx, ctx->debug.lines_cnt, i);
+    cmd_ctx_align(ctx, ctx->debug.lines_cnt, i);
 
     context_out_append(ctx, "address: ");
     snprintf(buf, STRMAXLEN(buf), "0x%016lx", line.address);
@@ -358,7 +344,7 @@ static void fn_debug_files(context *ctx) {
     for (uint64_t j = 1; j < file->lines_cnt; ++j) {
       snprintf(buf, STRMAXLEN(buf), "%lu: ", j);
       context_out_append(ctx, buf);
-      ctx_align_d(ctx, file->lines_cnt, j);
+      cmd_ctx_align(ctx, file->lines_cnt, j);
       context_out_append(ctx, file->lines[j]);
     }
   }
