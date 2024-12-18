@@ -28,7 +28,17 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       context_error(ctx, "failed to get regs");
       goto cleanup;
     }
-    cmd_disassemble_at_address(ctx, regs.rip - 1, 1);
+    if (context_tg_get_state(ctx) == TARGET_BRKPT) {
+      context_tg_brkpt_fix_regs(&regs);
+    }
+
+    debug_line curr = ctx->prev_line;
+    curr.address = regs.rip;
+    if (context_dbg_line_by_address(ctx, &curr)) {
+      context_tg_prev_line_set(ctx, curr);
+    }
+
+    cmd_ctx_out_line(ctx, curr);
   }
 
 cleanup:

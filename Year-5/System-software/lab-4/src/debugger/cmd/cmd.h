@@ -28,6 +28,8 @@ int  cmd_ctx_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
                          struct disassemble_info *info);
 void cmd_ctx_align(context *ctx, uint64_t max_cnt, uint64_t cur_cnt);
 void cmd_ctx_out_source_line(context *ctx, debug_line line);
+void cmd_ctx_out_line(context *ctx, debug_line line);
+void cmd_ctx_out_file_header(context *ctx, uint64_t file_id);
 
 // commands
 typedef cmd *cmd_new(const char *cmd_ref);

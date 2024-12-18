@@ -333,18 +333,13 @@ static void fn_debug_files(context *ctx) {
   for (uint64_t i = 0; i < ctx->debug.files_cnt; ++i) {
     debug_file *file = ctx->debug.files[i];
 
-    snprintf(buf, STRMAXLEN(buf), "// id: %lu", i);
-    context_out_append(ctx, buf);
-
-    context_out_append(ctx, ", name: ");
-    uint64_t strs_index = file->strs_index;
-    char    *str = ctx->debug.strs[strs_index];
-    context_out_appendln(ctx, str);
+    cmd_ctx_out_file_header(ctx, i);
 
     for (uint64_t j = 1; j < file->lines_cnt; ++j) {
-      snprintf(buf, STRMAXLEN(buf), "%lu: ", j);
-      context_out_append(ctx, buf);
       cmd_ctx_align(ctx, file->lines_cnt, j);
+      snprintf(buf, STRMAXLEN(buf), "%lu", j);
+      context_out_append(ctx, buf);
+      context_out_append(ctx, "│");
       context_out_append(ctx, file->lines[j]);
     }
   }

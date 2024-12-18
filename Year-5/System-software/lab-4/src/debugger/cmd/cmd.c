@@ -86,15 +86,32 @@ void cmd_ctx_align(context *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
   }
 }
 
+void cmd_ctx_out_file_header(context *ctx, uint64_t file_id) {
+  char buf[64];
+  snprintf(buf, STRMAXLEN(buf), "// id: %zu", file_id);
+  context_out_append(ctx, buf);
+  context_out_append(ctx, ", name: ");
+  context_out_appendln(ctx, context_dbg_file_by_id(ctx, file_id));
+}
+
 void cmd_ctx_out_source_line(context *ctx, debug_line line) {
-  char        buf[64];
+  char buf[64];
+
   debug_file *file = ctx->debug.files[line.file_id];
+  cmd_ctx_out_file_header(ctx, line.file_id);
 
-  context_out_appendln(ctx, context_dbg_file_by_id(ctx, line.file_id));
-
-  snprintf(buf, STRMAXLEN(buf), "%zu: ", line.line);
   cmd_ctx_align(ctx, ctx->debug.lines_cnt, line.line);
+  snprintf(buf, STRMAXLEN(buf), "%zu│", line.line);
 
   context_out_append(ctx, buf);
   context_out_append(ctx, file->lines[line.line]);
+}
+
+void cmd_ctx_out_line(context *ctx, debug_line line) {
+  if (ctx->options.source_lang && line.file_id != UINT64_MAX &&
+      line.line != UINT64_MAX) {
+    cmd_ctx_out_source_line(ctx, line);
+  } else {
+    cmd_disassemble_at_address(ctx, line.address, 1);
+  }
 }

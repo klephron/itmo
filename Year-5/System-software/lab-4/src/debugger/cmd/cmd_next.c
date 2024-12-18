@@ -78,9 +78,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (context_tg_is_running(ctx)) {
-    if (curr.file_id != UINT64_MAX && curr.line != UINT64_MAX) {
-      cmd_ctx_out_source_line(ctx, curr);
-    }
+    cmd_ctx_out_line(ctx, curr);
   }
 
 cleanup:
