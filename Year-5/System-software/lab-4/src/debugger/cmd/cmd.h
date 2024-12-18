@@ -52,6 +52,7 @@ cmd_new cmd_print;
 cmd_new cmd_run;
 cmd_new cmd_step;
 cmd_new cmd_stepi;
+cmd_new cmd_where;
 
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size);
 void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,

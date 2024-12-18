@@ -9,10 +9,12 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-static const char *desc = "Print register";
+static const char *desc = "Print register, argument or variable";
 
-static const char *help = "Usage: <command> <register>\n"
-                          "\t<register>: $<name>";
+static const char *help = "Usage: <command> (<register>|<arg>|<var>)\n"
+                          "\t<register>: $<name>\n"
+                          "\t<arg>: argument name\n"
+                          "\t<var>: variable name";
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);

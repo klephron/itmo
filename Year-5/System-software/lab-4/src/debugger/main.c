@@ -138,6 +138,8 @@ static void register_cmds(cmd_handler *h) {
   cmd_handler_register(h, cmd_next("n"));
   cmd_handler_register(h, cmd_step("step"));
   cmd_handler_register(h, cmd_step("s"));
+  cmd_handler_register(h, cmd_where("where"));
+  cmd_handler_register(h, cmd_where("w"));
 }
 
 static int execute(args *args) {
