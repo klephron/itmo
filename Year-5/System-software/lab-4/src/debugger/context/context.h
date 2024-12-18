@@ -108,6 +108,11 @@ typedef enum target_state_enum {
   TARGET_ERROR, // only returned by functions, can't be actual state
 } target_state_enum;
 
+// options
+typedef struct options_struct {
+  bool source_lang;
+} options;
+
 // context
 typedef struct context_struct {
   debugger_state_enum s_debugger;
@@ -123,6 +128,7 @@ typedef struct context_struct {
   hashset_breakpoint *breaks;
   size_t              breaks_cnt;
   debug_data          debug;
+  options             options;
 } context;
 
 context *context_new();

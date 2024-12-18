@@ -29,6 +29,8 @@ context *context_new() {
   self->debug.strs_cnt = 0;
   self->debug.strs = NULL;
 
+  self->options.source_lang = false;
+
   return self;
 }
 

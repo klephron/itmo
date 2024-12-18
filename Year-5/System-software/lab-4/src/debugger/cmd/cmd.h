@@ -31,6 +31,7 @@ int  cmd_ctx_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
 typedef cmd *cmd_new(const char *cmd_ref);
 
 cmd_new cmd_break;
+cmd_new cmd_config;
 cmd_new cmd_continue;
 cmd_new cmd_delete;
 cmd_new cmd_disassemble;

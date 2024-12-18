@@ -49,6 +49,8 @@ static void fn_all(cmd_handler *handler, context *ctx) {
     context_out_append(ctx, " -- ");
     context_out_appendln(ctx, entry->desc_ref);
   }
+
+  free(entries);
 }
 
 static void fn_one(context *ctx, cmd *entry) {
