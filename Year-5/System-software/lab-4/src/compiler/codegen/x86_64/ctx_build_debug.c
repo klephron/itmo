@@ -60,6 +60,16 @@ void ctx_debug_info_post_push_files(cg_x86_64_ctx *ctx) {
   }
 }
 
+void ctx_debug_line_post_push_header(cg_x86_64_ctx *ctx) {
+  cg_units_push_front(ctx->cg_ref->debug_line->units,
+                      cg_x86_64_data_new_quad(ctx->debug_lines_cnt));
+}
+
+void ctx_debug_str_post_push_header(cg_x86_64_ctx *ctx) {
+  cg_units_push_front(ctx->cg_ref->debug_str->units,
+                      cg_x86_64_data_new_quad(ctx->debug_strs_cnt));
+}
+
 void ctx_debug_add_line(cg_x86_64_ctx *ctx, mir_debug_line *line, uint64_t id) {
   if (!line) {
     return;

@@ -20,6 +20,15 @@ context *context_new() {
   self->breaks = hashset_breakpoint_new();
   self->breaks_cnt = 0;
 
+  self->debug.subroutines_cnt = 0;
+  self->debug.subroutines = NULL;
+  self->debug.files_cnt = 0;
+  self->debug.files = NULL;
+  self->debug.lines_cnt = 0;
+  self->debug.lines = NULL;
+  self->debug.strs_cnt = 0;
+  self->debug.strs = NULL;
+
   return self;
 }
 
@@ -37,6 +46,7 @@ void context_free(context *self) {
       bfd_close(self->abfd);
     }
     hashset_breakpoint_free(self->breaks);
+    context_dbg_deinit(self);
     free(self);
   }
 }

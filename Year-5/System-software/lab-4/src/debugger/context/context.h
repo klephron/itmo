@@ -43,6 +43,53 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_breakpoint, breakpoint,
                               container_delete_breakpoint,
                               container_hash_breakpoint);
 
+// debug
+typedef struct debug_info_arg_struct {
+  int64_t  rbp_offset;
+  uint64_t strs_index;
+} debug_info_arg;
+
+typedef struct debug_info_var_struct {
+  int64_t  rbp_offset;
+  uint64_t strs_index;
+} debug_info_var;
+
+typedef struct debug_info_sub_struct {
+  uint64_t        address_start;
+  uint64_t        address_end;
+  uint64_t        address_prologue_end;
+  uint64_t        address_epilogue_start;
+  uint64_t        strs_index;
+  uint64_t        args_cnt;
+  debug_info_arg *args;
+  uint64_t        vars_cnt;
+  debug_info_var *vars;
+} debug_info_sub;
+
+typedef struct debug_info_file_struct {
+  uint64_t strs_index;
+} debug_info_file;
+
+typedef struct debug_line_struct {
+  uint64_t address;
+  uint64_t file_id;
+  uint64_t line;
+} debug_line;
+
+typedef struct debug_data_struct {
+  // info
+  uint64_t         subroutines_cnt;
+  debug_info_sub **subroutines;
+  uint64_t         files_cnt;
+  debug_info_file *files;
+  // line
+  uint64_t    lines_cnt;
+  debug_line *lines;
+  // str
+  uint64_t strs_cnt;
+  char   **strs;
+} debug_data;
+
 // state
 typedef enum debugger_state_enum {
   DEBUGGER_UNKNOWN,
@@ -75,6 +122,7 @@ typedef struct context_struct {
   pid_t               pid;
   hashset_breakpoint *breaks;
   size_t              breaks_cnt;
+  debug_data          debug;
 } context;
 
 context *context_new();
@@ -111,6 +159,9 @@ target_state_enum context_tg_brkpt_fix(context *self);
 
 int context_bp_place(context *self, breakpoint *bp);
 int context_bp_remove(context *self, breakpoint *bp);
+
+void context_dbg_init(context *self);
+void context_dbg_deinit(context *self);
 
 #define peekdata_brkpt_with_int3(data) ((data & ~0xFF) | 0xCC)
 #define peekdata_bpkpt_with_stored(data, stored) ((data & ~0xFF) | stored)

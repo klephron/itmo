@@ -1,6 +1,7 @@
 #include "cmd.h"
 
 #include "debugger/context/str.h"
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -10,10 +11,11 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-static const char *desc = "Info sections, symbols, target, register";
+static const char *desc = "Show things about program being debugged";
 
-static const char *help =
-    "Usage: <command> (sections|symbols|target|registers)";
+static const char *help = "Usage: <command> "
+                          "(sections|symbols|target|registers|breakpoints|"
+                          "debug_info|debug_line|debug_str|files)";
 
 static void fn_register_g(context *ctx, struct user_regs_struct *regs,
                           const char *reg, size_t offset) {
@@ -37,8 +39,8 @@ static void fn_sections(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
-  asection *section = ctx->abfd->sections;
-  while (section) {
+  for (asection *section = ctx->abfd->sections; section;
+       section = section->next) {
     char          buf[64];
     const char   *name = bfd_section_name(section);
     bfd_vma       address = bfd_section_vma(section);
@@ -54,7 +56,6 @@ static void fn_sections(context *ctx) {
     snprintf(buf, STRMAXLEN(buf), "%#lx", size);
     context_out_append(ctx, buf);
     context_out_appendln(ctx, " bytes");
-    section = section->next;
   }
 }
 
@@ -207,6 +208,138 @@ static void fn_breakpoints(context *ctx) {
   free(breakpoints);
 }
 
+static char *fn_debug_idx_str(context *ctx, uint64_t str_idx) {
+  return ctx->debug.strs[str_idx];
+}
+
+static void fn_debug(context *ctx) {
+  if (cmd_error_if_no_target(ctx)) {
+    return;
+  }
+  char buf[64];
+
+  snprintf(buf, STRMAXLEN(buf), "subroutines_cnt: %zu",
+           ctx->debug.subroutines_cnt);
+  context_out_appendln(ctx, buf);
+
+  snprintf(buf, STRMAXLEN(buf), "files_cnt: %zu", ctx->debug.files_cnt);
+  context_out_appendln(ctx, buf);
+
+  context_out_appendln(ctx, "subroutines: ");
+  for (uint64_t i = 0; i < ctx->debug.subroutines_cnt; ++i) {
+    debug_info_sub *sub = ctx->debug.subroutines[i];
+
+    context_out_append(ctx, "- name: ");
+    context_out_appendln(ctx, fn_debug_idx_str(ctx, sub->strs_index));
+
+    snprintf(buf, STRMAXLEN(buf), "\taddress_start: 0x%lx", sub->address_start);
+    context_out_appendln(ctx, buf);
+
+    snprintf(buf, STRMAXLEN(buf), "\taddress_end: 0x%lx", sub->address_end);
+    context_out_appendln(ctx, buf);
+
+    snprintf(buf, STRMAXLEN(buf), "\taddress_epilogue_start: 0x%lx",
+             sub->address_epilogue_start);
+    context_out_appendln(ctx, buf);
+
+    snprintf(buf, STRMAXLEN(buf), "\taddress_prologue_end: 0x%lx",
+             sub->address_prologue_end);
+    context_out_appendln(ctx, buf);
+
+    snprintf(buf, STRMAXLEN(buf), "\targs_cnt: %lu", sub->args_cnt);
+    context_out_appendln(ctx, buf);
+
+    for (uint64_t j = 0; j < sub->args_cnt; ++j) {
+      debug_info_arg arg = sub->args[j];
+
+      snprintf(buf, STRMAXLEN(buf), "\t- name: %s",
+               fn_debug_idx_str(ctx, arg.strs_index));
+      context_out_append(ctx, buf);
+
+      snprintf(buf, STRMAXLEN(buf), ", rbp_offset: %ld", arg.rbp_offset);
+      context_out_appendln(ctx, buf);
+    }
+
+    snprintf(buf, STRMAXLEN(buf), "\tvars_cnt: %lu", sub->vars_cnt);
+    context_out_appendln(ctx, buf);
+
+    for (uint64_t j = 0; j < sub->vars_cnt; ++j) {
+      debug_info_var var = sub->vars[j];
+
+      snprintf(buf, STRMAXLEN(buf), "\t- name: %s",
+               fn_debug_idx_str(ctx, var.strs_index));
+      context_out_append(ctx, buf);
+
+      snprintf(buf, STRMAXLEN(buf), ", rbp_offset: %ld", var.rbp_offset);
+      context_out_appendln(ctx, buf);
+    }
+  }
+
+  context_out_appendln(ctx, "files: ");
+  for (uint64_t i = 0; i < ctx->debug.files_cnt; ++i) {
+    debug_info_file file = ctx->debug.files[i];
+    snprintf(buf, STRMAXLEN(buf), "- id: %lu", i);
+    context_out_append(ctx, buf);
+    context_out_append(ctx, ", name: ");
+    context_out_appendln(ctx, fn_debug_idx_str(ctx, file.strs_index));
+  }
+}
+
+static void fn_debug_line(context *ctx) {
+  if (cmd_error_if_no_target(ctx)) {
+    return;
+  }
+  char buf[64];
+  for (uint64_t i = 0; i < ctx->debug.lines_cnt; ++i) {
+    debug_line line = ctx->debug.lines[i];
+
+    snprintf(buf, STRMAXLEN(buf), "%zu:\t", i);
+    context_out_append(ctx, buf);
+
+    context_out_append(ctx, "address: ");
+    snprintf(buf, STRMAXLEN(buf), "0x%016lx", line.address);
+    context_out_append(ctx, buf);
+
+    context_out_append(ctx, ", file_id: ");
+    snprintf(buf, STRMAXLEN(buf), "%lu", line.file_id);
+    context_out_append(ctx, buf);
+
+    context_out_append(ctx, ", line: ");
+    snprintf(buf, STRMAXLEN(buf), "%lu", line.line);
+    context_out_append(ctx, buf);
+
+    context_out_appendln(ctx, "");
+  }
+}
+
+static void fn_debug_str(context *ctx) {
+  if (cmd_error_if_no_target(ctx)) {
+    return;
+  }
+  char buf[64];
+  for (uint64_t i = 0; i < ctx->debug.strs_cnt; ++i) {
+    snprintf(buf, STRMAXLEN(buf), "%lu: ", i);
+    context_out_append(ctx, buf);
+    context_out_appendln(ctx, fn_debug_idx_str(ctx, i));
+  }
+}
+
+static void fn_files(context *ctx) {
+  if (cmd_error_if_no_target(ctx)) {
+    return;
+  }
+  char buf[64];
+  for (uint64_t i = 0; i < ctx->debug.files_cnt; ++i) {
+    snprintf(buf, STRMAXLEN(buf), "%lu: ", i);
+    context_out_append(ctx, buf);
+    debug("i: %s", buf);
+    uint64_t strs_index = ctx->debug.files[i].strs_index;
+    debug("idx: %zu", strs_index);
+    char *str = ctx->debug.strs[strs_index];
+    context_out_appendln(ctx, str);
+  }
+}
+
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args;
@@ -222,6 +355,14 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     fn_registers(ctx);
   } else if (!strcmp(args, "breakpoints")) {
     fn_breakpoints(ctx);
+  } else if (!strcmp(args, "debug")) {
+    fn_debug(ctx);
+  } else if (!strcmp(args, "debug_line")) {
+    fn_debug_line(ctx);
+  } else if (!strcmp(args, "debug_str")) {
+    fn_debug_str(ctx);
+  } else if (!strcmp(args, "files")) {
+    fn_files(ctx);
   } else {
     cmd_error_format(ctx, args, help);
   }

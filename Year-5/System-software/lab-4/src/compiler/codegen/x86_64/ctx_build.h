@@ -60,6 +60,8 @@ void  ctx_debug_add_line(cg_x86_64_ctx *ctx, mir_debug_line *line,
                          uint64_t line_id);
 void  ctx_debug_info_post_push_header(cg_x86_64_ctx *ctx);
 void  ctx_debug_info_post_push_files(cg_x86_64_ctx *ctx);
+void  ctx_debug_line_post_push_header(cg_x86_64_ctx *ctx);
+void  ctx_debug_str_post_push_header(cg_x86_64_ctx *ctx);
 
 // sub
 void ctx_build_sub(cg_x86_64_ctx *ctx, mir_subroutine *sub,

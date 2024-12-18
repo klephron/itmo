@@ -195,7 +195,7 @@ run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a stdc/build/lib
 ### Run debugger
 run/dbg: run/dbg/io/dbg_init.txt
 run/dbg/%: DBG.INIT_FILE=$(patsubst run/dbg/%,%,$@)
-run/dbg/%: debugger/build/main run/asm/io/suite9.txt
+run/dbg/%: debugger/build/main
 	./build/debugger/main -i $(DBG.INIT_FILE)
 
 ### Format

@@ -1,6 +1,11 @@
 method read_int(): int;
 method read_char(): char;
 
+method test(k: long):
+begin
+  print!(k);
+end;
+
 method main(): void
 var
   a, b, c, r;

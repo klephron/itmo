@@ -56,4 +56,6 @@ void cg_x86_64_ctx_build(cg_x86_64_ctx *ctx, mir *mir) {
 
   ctx_debug_info_post_push_header(ctx);
   ctx_debug_info_post_push_files(ctx);
+  ctx_debug_line_post_push_header(ctx);
+  ctx_debug_str_post_push_header(ctx);
 }
