@@ -1,7 +1,9 @@
 #include "context.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 #include "x86_64_core/debug.h"
+#include <stdio.h>
 
 void context_dbg_init(context *self) {
   if (!self->abfd) {
@@ -14,6 +16,7 @@ void context_dbg_init(context *self) {
        section = section->next) {
     const char *name = bfd_section_name(section);
 
+    // .u_debug_info
     if (!strcmp(name, ".u_debug_info")) {
       bfd_size_type size = bfd_section_size(section);
       uint8_t      *bytes = malloc(size);
@@ -24,10 +27,10 @@ void context_dbg_init(context *self) {
       dbg->files_cnt = ((x86_64_debug_info *)cur)->files_cnt;
       cur += sizeof(x86_64_debug_info);
 
-      dbg->subroutines = MALLOCN(debug_info_sub *, dbg->subroutines_cnt);
+      dbg->subroutines = MALLOCN(debug_sub *, dbg->subroutines_cnt);
       for (uint64_t i = 0; i < dbg->subroutines_cnt; ++i) {
-        dbg->subroutines[i] = MALLOC(debug_info_sub);
-        debug_info_sub *sub = dbg->subroutines[i];
+        dbg->subroutines[i] = MALLOC(debug_sub);
+        debug_sub *sub = dbg->subroutines[i];
 
         sub->address_start = ((x86_64_debug_info_sub *)cur)->address_start;
         sub->address_end = ((x86_64_debug_info_sub *)cur)->address_end;
@@ -49,23 +52,29 @@ void context_dbg_init(context *self) {
           cur += sizeof(x86_64_debug_info_arg);
         }
 
-        sub->vars = MALLOCN(debug_info_var, sub->vars_cnt);
+        sub->vars = MALLOCN(debug_var, sub->vars_cnt);
         for (uint64_t j = 0; j < sub->vars_cnt; ++j) {
-          debug_info_var *var = sub->vars + j;
+          debug_var *var = sub->vars + j;
           var->rbp_offset = ((x86_64_debug_info_var *)cur)->rbp_offset;
           var->strs_index = ((x86_64_debug_info_var *)cur)->strs_index;
           cur += sizeof(x86_64_debug_info_var);
         }
       }
 
-      dbg->files = MALLOCN(debug_info_file, dbg->files_cnt);
+      dbg->files = MALLOCN(debug_file *, dbg->files_cnt);
       for (uint64_t i = 0; i < dbg->files_cnt; ++i) {
-        debug_info_file *file = dbg->files + i;
+        dbg->files[i] = MALLOC(debug_file);
+        debug_file *file = dbg->files[i];
+
         file->strs_index = ((x86_64_debug_info_file *)cur)->strs_index;
+        file->lines_cnt = 0;
+        file->lines = NULL;
+
         cur += sizeof(x86_64_debug_info_file);
       }
 
       free(bytes);
+      // .u_debug_line
     } else if (!strcmp(name, ".u_debug_line")) {
       bfd_size_type size = bfd_section_size(section);
       uint8_t      *bytes = malloc(size);
@@ -85,6 +94,7 @@ void context_dbg_init(context *self) {
       }
 
       free(bytes);
+      // .u_debug_str
     } else if (!strcmp(name, ".u_debug_str")) {
       bfd_size_type size = bfd_section_size(section);
       uint8_t      *bytes = malloc(size);
@@ -103,29 +113,82 @@ void context_dbg_init(context *self) {
       free(bytes);
     }
   }
+
+  // post init files lines
+  for (uint64_t i = 0; i < self->debug.files_cnt; ++i) {
+    debug_file *file = self->debug.files[i];
+    FILE       *file_fp = NULL;
+    file_fp = fopen(dbg->strs[file->strs_index], "r");
+    if (file_fp) {
+      char  *line = NULL;
+      size_t len = 0;
+      while (getline(&line, &len, file_fp) != -1) {
+        file->lines_cnt++;
+        free(line);
+        line = NULL;
+      }
+      free(line);
+      fclose(file_fp);
+    }
+    file_fp = fopen(dbg->strs[file->strs_index], "r");
+    if (file_fp) {
+      // increase by one to set lines from 1
+      file->lines = MALLOCN(char *, ++file->lines_cnt);
+
+      char  *line = NULL;
+      size_t len = 0;
+
+      uint64_t li = 0;
+      file->lines[li++] = NULL;
+      while (li < file->lines_cnt && getline(&line, &len, file_fp) != -1) {
+        file->lines[li++] = line;
+        line = NULL;
+      }
+      if (line) {
+        free(line);
+      }
+      fclose(file_fp);
+    }
+  }
 }
 
 void context_dbg_deinit(context *self) {
   debug_data *dbg = &self->debug;
 
   for (uint64_t i = 0; i < dbg->subroutines_cnt; ++i) {
-    debug_info_sub *sub = dbg->subroutines[i];
+    debug_sub *sub = dbg->subroutines[i];
     free(sub->args);
     free(sub->vars);
     free(sub);
   }
   free(dbg->subroutines);
+  dbg->subroutines_cnt = 0;
   dbg->subroutines = NULL;
 
+  for (uint64_t i = 0; i < dbg->files_cnt; ++i) {
+    debug_file *file = dbg->files[i];
+    if (file->lines) {
+      for (uint64_t j = 0; j < file->lines_cnt; ++j) {
+        if (file->lines[j]) {
+          free(file->lines[j]);
+        }
+      }
+      free(file->lines);
+    }
+    free(file);
+  }
   free(dbg->files);
+  dbg->files_cnt = 0;
   dbg->files = NULL;
 
   free(dbg->lines);
+  dbg->lines_cnt = 0;
   dbg->lines = NULL;
 
   for (uint64_t i = 0; i < dbg->strs_cnt; ++i) {
     free(dbg->strs[i]);
   }
   free(dbg->strs);
+  dbg->strs_cnt = 0;
   dbg->strs = NULL;
 }

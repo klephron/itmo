@@ -49,12 +49,12 @@ typedef struct debug_info_arg_struct {
   uint64_t strs_index;
 } debug_info_arg;
 
-typedef struct debug_info_var_struct {
+typedef struct debug_var_struct {
   int64_t  rbp_offset;
   uint64_t strs_index;
-} debug_info_var;
+} debug_var;
 
-typedef struct debug_info_sub_struct {
+typedef struct debug_sub_struct {
   uint64_t        address_start;
   uint64_t        address_end;
   uint64_t        address_prologue_end;
@@ -63,12 +63,14 @@ typedef struct debug_info_sub_struct {
   uint64_t        args_cnt;
   debug_info_arg *args;
   uint64_t        vars_cnt;
-  debug_info_var *vars;
-} debug_info_sub;
+  debug_var      *vars;
+} debug_sub;
 
-typedef struct debug_info_file_struct {
+typedef struct debug_file_struct {
   uint64_t strs_index;
-} debug_info_file;
+  uint64_t lines_cnt;
+  char   **lines;
+} debug_file;
 
 typedef struct debug_line_struct {
   uint64_t address;
@@ -78,10 +80,10 @@ typedef struct debug_line_struct {
 
 typedef struct debug_data_struct {
   // info
-  uint64_t         subroutines_cnt;
-  debug_info_sub **subroutines;
-  uint64_t         files_cnt;
-  debug_info_file *files;
+  uint64_t     subroutines_cnt;
+  debug_sub  **subroutines;
+  uint64_t     files_cnt;
+  debug_file **files;
   // line
   uint64_t    lines_cnt;
   debug_line *lines;

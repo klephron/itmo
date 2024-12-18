@@ -15,7 +15,25 @@ static const char *desc = "Show things about program being debugged";
 
 static const char *help = "Usage: <command> "
                           "(sections|symbols|target|registers|breakpoints|"
-                          "debug_info|debug_line|debug_str|files)";
+                          "info|debug_line|debug_str|files)";
+
+static void ctx_align_d(context *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
+  if (cur_cnt == 0) {
+    cur_cnt = 1;
+  }
+  while (max_cnt && cur_cnt) {
+    max_cnt /= 10;
+    cur_cnt /= 10;
+  }
+  while (max_cnt) {
+    context_out_append(ctx, " ");
+    max_cnt /= 10;
+  }
+}
+
+static char *ctx_debug_idx_str(context *ctx, uint64_t str_idx) {
+  return ctx->debug.strs[str_idx];
+}
 
 static void fn_register_g(context *ctx, struct user_regs_struct *regs,
                           const char *reg, size_t offset) {
@@ -208,10 +226,6 @@ static void fn_breakpoints(context *ctx) {
   free(breakpoints);
 }
 
-static char *fn_debug_idx_str(context *ctx, uint64_t str_idx) {
-  return ctx->debug.strs[str_idx];
-}
-
 static void fn_debug(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
@@ -227,10 +241,10 @@ static void fn_debug(context *ctx) {
 
   context_out_appendln(ctx, "subroutines: ");
   for (uint64_t i = 0; i < ctx->debug.subroutines_cnt; ++i) {
-    debug_info_sub *sub = ctx->debug.subroutines[i];
+    debug_sub *sub = ctx->debug.subroutines[i];
 
     context_out_append(ctx, "- name: ");
-    context_out_appendln(ctx, fn_debug_idx_str(ctx, sub->strs_index));
+    context_out_appendln(ctx, ctx_debug_idx_str(ctx, sub->strs_index));
 
     snprintf(buf, STRMAXLEN(buf), "\taddress_start: 0x%lx", sub->address_start);
     context_out_appendln(ctx, buf);
@@ -253,7 +267,7 @@ static void fn_debug(context *ctx) {
       debug_info_arg arg = sub->args[j];
 
       snprintf(buf, STRMAXLEN(buf), "\t- name: %s",
-               fn_debug_idx_str(ctx, arg.strs_index));
+               ctx_debug_idx_str(ctx, arg.strs_index));
       context_out_append(ctx, buf);
 
       snprintf(buf, STRMAXLEN(buf), ", rbp_offset: %ld", arg.rbp_offset);
@@ -264,10 +278,10 @@ static void fn_debug(context *ctx) {
     context_out_appendln(ctx, buf);
 
     for (uint64_t j = 0; j < sub->vars_cnt; ++j) {
-      debug_info_var var = sub->vars[j];
+      debug_var var = sub->vars[j];
 
       snprintf(buf, STRMAXLEN(buf), "\t- name: %s",
-               fn_debug_idx_str(ctx, var.strs_index));
+               ctx_debug_idx_str(ctx, var.strs_index));
       context_out_append(ctx, buf);
 
       snprintf(buf, STRMAXLEN(buf), ", rbp_offset: %ld", var.rbp_offset);
@@ -277,11 +291,11 @@ static void fn_debug(context *ctx) {
 
   context_out_appendln(ctx, "files: ");
   for (uint64_t i = 0; i < ctx->debug.files_cnt; ++i) {
-    debug_info_file file = ctx->debug.files[i];
+    debug_file *file = ctx->debug.files[i];
     snprintf(buf, STRMAXLEN(buf), "- id: %lu", i);
     context_out_append(ctx, buf);
     context_out_append(ctx, ", name: ");
-    context_out_appendln(ctx, fn_debug_idx_str(ctx, file.strs_index));
+    context_out_appendln(ctx, ctx_debug_idx_str(ctx, file->strs_index));
   }
 }
 
@@ -293,8 +307,9 @@ static void fn_debug_line(context *ctx) {
   for (uint64_t i = 0; i < ctx->debug.lines_cnt; ++i) {
     debug_line line = ctx->debug.lines[i];
 
-    snprintf(buf, STRMAXLEN(buf), "%zu:\t", i);
+    snprintf(buf, STRMAXLEN(buf), "%zu: ", i);
     context_out_append(ctx, buf);
+    ctx_align_d(ctx, ctx->debug.lines_cnt, i);
 
     context_out_append(ctx, "address: ");
     snprintf(buf, STRMAXLEN(buf), "0x%016lx", line.address);
@@ -320,7 +335,7 @@ static void fn_debug_str(context *ctx) {
   for (uint64_t i = 0; i < ctx->debug.strs_cnt; ++i) {
     snprintf(buf, STRMAXLEN(buf), "%lu: ", i);
     context_out_append(ctx, buf);
-    context_out_appendln(ctx, fn_debug_idx_str(ctx, i));
+    context_out_appendln(ctx, ctx_debug_idx_str(ctx, i));
   }
 }
 
@@ -330,13 +345,21 @@ static void fn_files(context *ctx) {
   }
   char buf[64];
   for (uint64_t i = 0; i < ctx->debug.files_cnt; ++i) {
-    snprintf(buf, STRMAXLEN(buf), "%lu: ", i);
+    debug_file *file = ctx->debug.files[i];
+
+    snprintf(buf, STRMAXLEN(buf), "// file_%lu: ", i);
     context_out_append(ctx, buf);
-    debug("i: %s", buf);
-    uint64_t strs_index = ctx->debug.files[i].strs_index;
-    debug("idx: %zu", strs_index);
-    char *str = ctx->debug.strs[strs_index];
+
+    uint64_t strs_index = file->strs_index;
+    char    *str = ctx->debug.strs[strs_index];
     context_out_appendln(ctx, str);
+
+    for (uint64_t j = 1; j < file->lines_cnt; ++j) {
+      snprintf(buf, STRMAXLEN(buf), "%lu: ", j);
+      context_out_append(ctx, buf);
+      ctx_align_d(ctx, file->lines_cnt, j);
+      context_out_append(ctx, file->lines[j]);
+    }
   }
 }
 
