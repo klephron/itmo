@@ -1,7 +1,6 @@
 #include "cmd.h"
 
 #include "debugger/context/str.h"
-#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -15,7 +14,7 @@ static const char *desc = "Show things about program being debugged";
 
 static const char *help = "Usage: <command> "
                           "(sections|symbols|target|registers|breakpoints|"
-                          "info|debug_line|debug_str|files)";
+                          "info|lines|strs|files)";
 
 static void ctx_align_d(context *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
   if (cur_cnt == 0) {
@@ -226,7 +225,7 @@ static void fn_breakpoints(context *ctx) {
   free(breakpoints);
 }
 
-static void fn_debug(context *ctx) {
+static void fn_debug_info(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -299,7 +298,7 @@ static void fn_debug(context *ctx) {
   }
 }
 
-static void fn_debug_line(context *ctx) {
+static void fn_debug_lines(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -327,7 +326,7 @@ static void fn_debug_line(context *ctx) {
   }
 }
 
-static void fn_debug_str(context *ctx) {
+static void fn_debug_strs(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -339,7 +338,7 @@ static void fn_debug_str(context *ctx) {
   }
 }
 
-static void fn_files(context *ctx) {
+static void fn_debug_files(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -347,9 +346,10 @@ static void fn_files(context *ctx) {
   for (uint64_t i = 0; i < ctx->debug.files_cnt; ++i) {
     debug_file *file = ctx->debug.files[i];
 
-    snprintf(buf, STRMAXLEN(buf), "// file_%lu: ", i);
+    snprintf(buf, STRMAXLEN(buf), "// id: %lu", i);
     context_out_append(ctx, buf);
 
+    context_out_append(ctx, ", name: ");
     uint64_t strs_index = file->strs_index;
     char    *str = ctx->debug.strs[strs_index];
     context_out_appendln(ctx, str);
@@ -378,14 +378,14 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     fn_registers(ctx);
   } else if (!strcmp(args, "breakpoints")) {
     fn_breakpoints(ctx);
-  } else if (!strcmp(args, "debug")) {
-    fn_debug(ctx);
-  } else if (!strcmp(args, "debug_line")) {
-    fn_debug_line(ctx);
-  } else if (!strcmp(args, "debug_str")) {
-    fn_debug_str(ctx);
+  } else if (!strcmp(args, "info")) {
+    fn_debug_info(ctx);
+  } else if (!strcmp(args, "lines")) {
+    fn_debug_lines(ctx);
+  } else if (!strcmp(args, "strs")) {
+    fn_debug_strs(ctx);
   } else if (!strcmp(args, "files")) {
-    fn_files(ctx);
+    fn_debug_files(ctx);
   } else {
     cmd_error_format(ctx, args, help);
   }
