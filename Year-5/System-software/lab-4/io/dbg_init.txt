@@ -1,4 +1,4 @@
 config source language
-file io/suite2.txt.out
+file io/suite9.txt.out
 run
 info target
