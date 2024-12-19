@@ -113,11 +113,6 @@ static void fn_registers(context *ctx) {
 
   struct user_regs_struct regs;
 
-  if (context_tg_get_state(ctx) != TARGET_NOT_RUNNING) {
-    context_error(ctx, "failed to get regs");
-    return;
-  }
-
   fn_register_g(ctx, &regs, "rax", offsetof(struct user_regs_struct, rax));
   fn_register_g(ctx, &regs, "rbx", offsetof(struct user_regs_struct, rbx));
   fn_register_g(ctx, &regs, "rcx", offsetof(struct user_regs_struct, rcx));

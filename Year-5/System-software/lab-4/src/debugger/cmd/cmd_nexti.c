@@ -87,7 +87,6 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       context_tg_brkpt_fix_regs(&regs);
     }
 
-    debug("here!");
     cmd_disassemble_at_address(ctx, regs.rip, 1);
   }
 
