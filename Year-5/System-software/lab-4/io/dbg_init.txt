@@ -1,7 +1,4 @@
 config source language
-file io/suite9.txt.out
+file io/suite2.txt.out
 run
 info target
-b 0 17
-b 0 24
-c

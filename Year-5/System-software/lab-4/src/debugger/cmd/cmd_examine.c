@@ -147,6 +147,9 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       arg_address = strdup(token);
       token = strtok(NULL, " ");
     }
+    if (token_args) {
+      free(token_args);
+    }
   }
 
   if (!arg_n || !arg_format || !arg_size || !arg_address) {

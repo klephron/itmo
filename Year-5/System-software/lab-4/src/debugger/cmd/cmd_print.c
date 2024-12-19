@@ -274,27 +274,113 @@ static void cmd_data_str_raw(string_buffer *buf, x86_64_type *type, uint64_t ei,
   }
 }
 
-static char *cmd_data_str(x86_64_data *data) {
+static void cmd_data_str(x86_64_data *data, char **type_p, char **value_p) {
   if (!data) {
-    return "(void) ()";
+    if (value_p) {
+      *value_p = strdup("()");
+    }
+    if (type_p) {
+      *type_p = strdup("void");
+    }
+    return;
   }
-  string_buffer *buffer = string_buffer_new(0, 0);
-  string_buffer_append(buffer, "(");
-  cmd_data_str_type(buffer, data->type, 0);
-  string_buffer_append(buffer, ")");
-  string_buffer_append(buffer, " ");
-  cmd_data_str_raw(buffer, data->type, 0, data->raw);
-  return string_buffer_detach(buffer);
+  string_buffer *buf;
+
+  if (value_p) {
+    buf = string_buffer_new(32, 0);
+    cmd_data_str_raw(buf, data->type, 0, data->raw);
+    *value_p = string_buffer_detach(buf);
+  }
+
+  if (type_p) {
+    buf = string_buffer_new(32, 0);
+    cmd_data_str_type(buf, data->type, 0);
+    *type_p = string_buffer_detach(buf);
+  }
 }
 
-static char *cmd_value_str(context *ctx, uint64_t address) {
-  char *result = NULL;
+static void cmd_out_value_str(context *ctx, const char *prefix,
+                              const char *name, cmd_value_str value) {
+  context_out_append(ctx, prefix);
+  context_out_append(ctx, name);
+  if (value.type) {
+    context_out_append(ctx, ": ");
+    context_out_append(ctx, value.type);
+    free(value.type);
+  }
+  context_out_append(ctx, " = ");
+  if (value.value) {
+    context_out_append(ctx, value.value);
+    free(value.value);
+  }
+}
 
-  x86_64_value value = {.data = cmd_peek_data(ctx, address)};
-  result = cmd_data_str(value.data);
+static int cmd_var_arg(context *ctx, const char *rest) {
+  const char             *args = rest;
+  struct user_regs_struct regs;
 
-  __x86_64_value_drop(&value);
-  return result;
+  if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
+    return -1;
+  }
+
+  if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+    context_error(ctx, "failed to get regs");
+    return -1;
+  }
+
+  if (context_tg_get_state(ctx) == TARGET_BRKPT) {
+    context_tg_brkpt_fix_regs(&regs);
+  }
+
+  // get current subroutine based on rsp
+  debug_sub *sub = context_dbg_sub_by_address(ctx, regs.rip);
+  if (!sub) {
+    context_error(ctx, "no debug info about current subroutine");
+    return -1;
+  }
+
+  if (sub->address_prologue_end > regs.rip) {
+    context_error(ctx, "can't get info while in subroutine prologue");
+    return -1;
+  }
+
+  if (sub->address_epilogue_start < regs.rip) {
+    context_error(ctx, "can't get info while in subroutine epilogue");
+    return -1;
+  }
+
+  int found = 0;
+
+  for (uint64_t i = 0; i < sub->args_cnt; ++i) {
+    const debug_arg *arg = sub->args + i;
+    const char      *arg_name = context_dbg_str_by_id(ctx, arg->strs_index);
+    if (!strcmp(arg_name, args)) {
+      uint64_t      address = regs.rbp + arg->rbp_offset;
+      cmd_value_str value = cmd_print_value_str(ctx, address);
+      cmd_out_value_str(ctx, "arg ", arg_name, value);
+      found = 1;
+    }
+  }
+
+  for (uint64_t i = 0; i < sub->vars_cnt; ++i) {
+    const debug_var *var = sub->vars + i;
+    const char      *var_name = context_dbg_str_by_id(ctx, var->strs_index);
+    if (!strcmp(var_name, args)) {
+      uint64_t      address = regs.rbp + var->rbp_offset;
+      cmd_value_str value = cmd_print_value_str(ctx, address);
+      cmd_out_value_str(ctx, "arg ", var_name, value);
+      found = 1;
+    }
+  }
+
+  if (!found) {
+    context_err_append(ctx, "in subroutine ");
+    context_err_append(ctx, context_dbg_str_by_id(ctx, sub->strs_index));
+    context_error(ctx, " arg or var not found");
+    return -1;
+  }
+
+  return 0;
 }
 
 static int fn_register(context *ctx, const char *rest) {
@@ -376,86 +462,6 @@ static int fn_register(context *ctx, const char *rest) {
   return 0;
 }
 
-static int fn_var_arg(context *ctx, const char *rest) {
-  const char             *args = rest;
-  struct user_regs_struct regs;
-
-  if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
-    return -1;
-  }
-
-  if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-    context_error(ctx, "failed to get regs");
-    return -1;
-  }
-
-  if (context_tg_get_state(ctx) == TARGET_BRKPT) {
-    context_tg_brkpt_fix_regs(&regs);
-  }
-
-  // get current subroutine based on rsp
-  debug_sub *sub = context_dbg_sub_by_address(ctx, regs.rip);
-  if (!sub) {
-    context_error(ctx, "no debug info about current subroutine");
-    return -1;
-  }
-
-  if (sub->address_prologue_end > regs.rip) {
-    context_error(ctx, "can't get info while in subroutine prologue");
-    return -1;
-  }
-
-  if (sub->address_epilogue_start < regs.rip) {
-    context_error(ctx, "can't get info while in subroutine epilogue");
-    return -1;
-  }
-
-  int found = 0;
-
-  for (uint64_t i = 0; i < sub->args_cnt; ++i) {
-    const debug_arg *arg = sub->args + i;
-    const char      *arg_name = context_dbg_str_by_id(ctx, arg->strs_index);
-    if (!strcmp(arg_name, args)) {
-      uint64_t address = regs.rbp + arg->rbp_offset;
-      context_out_append(ctx, "arg ");
-      context_out_append(ctx, arg_name);
-      context_out_append(ctx, " = ");
-      char *str = cmd_value_str(ctx, address);
-      if (str) {
-        context_out_appendln(ctx, str);
-        found = 1;
-        free(str);
-      }
-    }
-  }
-
-  for (uint64_t i = 0; i < sub->vars_cnt; ++i) {
-    const debug_var *var = sub->vars + i;
-    const char      *var_name = context_dbg_str_by_id(ctx, var->strs_index);
-    if (!strcmp(var_name, args)) {
-      uint64_t address = regs.rbp + var->rbp_offset;
-      char    *str = cmd_value_str(ctx, address);
-      if (str) {
-        context_out_append(ctx, "var ");
-        context_out_append(ctx, var_name);
-        context_out_append(ctx, " = ");
-        context_out_appendln(ctx, str);
-        found = 1;
-        free(str);
-      }
-    }
-  }
-
-  if (!found) {
-    context_err_append(ctx, "in subroutine ");
-    context_err_append(ctx, context_dbg_str_by_id(ctx, sub->strs_index));
-    context_error(ctx, " arg or var not found");
-    return -1;
-  }
-
-  return 0;
-}
-
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
 
@@ -468,7 +474,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   if (args[0] == '$') {
     fn_register(ctx, args);
   } else {
-    fn_var_arg(ctx, args);
+    cmd_var_arg(ctx, args);
   }
   goto cleanup;
 
@@ -479,6 +485,16 @@ cleanup:
   if (args) {
     free(args);
   }
+}
+
+cmd_value_str cmd_print_value_str(context *ctx, uint64_t address) {
+  cmd_value_str result = {.type = NULL, .value = NULL};
+
+  x86_64_value value = {.data = cmd_peek_data(ctx, address)};
+  cmd_data_str(value.data, &result.type, &result.value);
+  __x86_64_value_drop(&value);
+
+  return result;
 }
 
 cmd *cmd_print(const char *cmd_ref) {

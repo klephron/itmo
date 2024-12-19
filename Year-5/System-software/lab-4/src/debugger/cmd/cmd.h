@@ -60,3 +60,10 @@ void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
 int  cmd_nexti_fn(context *ctx, disassemble_info *info_p,
                   disassembler_ftype *dftype_p, int *is_call_p, uint64_t n);
 int  cmd_stepi_fn(context *ctx, uint64_t n);
+
+typedef struct cmd_value_str {
+  char *type;
+  char *value;
+} cmd_value_str;
+
+cmd_value_str cmd_print_value_str(context *ctx, uint64_t address);

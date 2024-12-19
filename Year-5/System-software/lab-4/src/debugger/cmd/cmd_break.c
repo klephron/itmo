@@ -1,7 +1,6 @@
 #include "debugger/cmd/cmd.h"
 
 #include "debugger/context/context.h"
-#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
 
