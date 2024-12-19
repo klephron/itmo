@@ -250,7 +250,7 @@ static void fn_debug_info(context *ctx) {
     context_out_appendln(ctx, buf);
 
     for (uint64_t j = 0; j < sub->args_cnt; ++j) {
-      debug_info_arg arg = sub->args[j];
+      debug_arg arg = sub->args[j];
 
       snprintf(buf, STRMAXLEN(buf), "\t- name: %s",
                ctx_debug_idx_str(ctx, arg.strs_index));

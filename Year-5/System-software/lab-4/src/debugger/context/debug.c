@@ -43,9 +43,9 @@ void context_dbg_init(context *self) {
         sub->vars_cnt = ((x86_64_debug_info_sub *)cur)->vars_cnt;
         cur += sizeof(x86_64_debug_info_sub);
 
-        sub->args = MALLOCN(debug_info_arg, sub->args_cnt);
+        sub->args = MALLOCN(debug_arg, sub->args_cnt);
         for (uint64_t j = 0; j < sub->args_cnt; ++j) {
-          debug_info_arg *arg = sub->args + j;
+          debug_arg *arg = sub->args + j;
           arg->rbp_offset = ((x86_64_debug_info_arg *)cur)->rbp_offset;
           arg->strs_index = ((x86_64_debug_info_arg *)cur)->strs_index;
           cur += sizeof(x86_64_debug_info_arg);
@@ -216,6 +216,21 @@ int context_dbg_line_by_address(context *self, debug_line *result) {
   return -1;
 }
 
+const char *context_dbg_str_by_id(context *self, uint64_t id) {
+  return self->debug.strs[id];
+}
+
 const char *context_dbg_file_by_id(context *self, uint64_t file) {
-  return self->debug.strs[self->debug.files[file]->strs_index];
+  return context_dbg_str_by_id(self, self->debug.files[file]->strs_index);
+}
+
+// TODO: rewrite to binary search
+debug_sub *context_dbg_sub_by_address(context *self, uint64_t address) {
+  for (uint64_t i = 0; i < self->debug.subroutines_cnt; ++i) {
+    debug_sub *sub = self->debug.subroutines[i];
+    if (sub->address_start <= address && sub->address_end > address) {
+      return sub;
+    }
+  }
+  return NULL;
 }

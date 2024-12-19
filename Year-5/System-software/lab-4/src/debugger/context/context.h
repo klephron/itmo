@@ -47,7 +47,7 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_breakpoint, breakpoint,
 typedef struct debug_info_arg_struct {
   int64_t  rbp_offset;
   uint64_t strs_index;
-} debug_info_arg;
+} debug_arg;
 
 typedef struct debug_var_struct {
   int64_t  rbp_offset;
@@ -55,15 +55,15 @@ typedef struct debug_var_struct {
 } debug_var;
 
 typedef struct debug_sub_struct {
-  uint64_t        address_start;
-  uint64_t        address_end;
-  uint64_t        address_prologue_end;
-  uint64_t        address_epilogue_start;
-  uint64_t        strs_index;
-  uint64_t        args_cnt;
-  debug_info_arg *args;
-  uint64_t        vars_cnt;
-  debug_var      *vars;
+  uint64_t   address_start;
+  uint64_t   address_end;
+  uint64_t   address_prologue_end;
+  uint64_t   address_epilogue_start;
+  uint64_t   strs_index;
+  uint64_t   args_cnt;
+  debug_arg *args;
+  uint64_t   vars_cnt;
+  debug_var *vars;
 } debug_sub;
 
 typedef struct debug_file_struct {
@@ -177,6 +177,8 @@ void        context_dbg_deinit(context *self);
 int         context_dbg_line_by_source(context *self, debug_line *result);
 int         context_dbg_line_by_address(context *self, debug_line *result);
 const char *context_dbg_file_by_id(context *self, uint64_t file);
+const char *context_dbg_str_by_id(context *self, uint64_t id);
+debug_sub  *context_dbg_sub_by_address(context *self, uint64_t address);
 
 #define peekdata_brkpt_with_int3(data) ((data & ~0xFF) | 0xCC)
 #define peekdata_bpkpt_with_stored(data, stored) ((data & ~0xFF) | stored)
