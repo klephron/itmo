@@ -417,7 +417,10 @@ static int fn_var_arg(context *ctx, const char *rest) {
     const char      *arg_name = context_dbg_str_by_id(ctx, arg->strs_index);
     if (!strcmp(arg_name, args)) {
       uint64_t address = regs.rbp + arg->rbp_offset;
-      char    *str = cmd_value_str(ctx, address);
+      context_out_append(ctx, "arg ");
+      context_out_append(ctx, arg_name);
+      context_out_append(ctx, " = ");
+      char *str = cmd_value_str(ctx, address);
       if (str) {
         context_out_appendln(ctx, str);
         found = 1;
@@ -433,6 +436,9 @@ static int fn_var_arg(context *ctx, const char *rest) {
       uint64_t address = regs.rbp + var->rbp_offset;
       char    *str = cmd_value_str(ctx, address);
       if (str) {
+        context_out_append(ctx, "var ");
+        context_out_append(ctx, var_name);
+        context_out_append(ctx, " = ");
         context_out_appendln(ctx, str);
         found = 1;
         free(str);

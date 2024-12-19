@@ -16,6 +16,7 @@ begin
   g = cast!<char>(72);
   h = "example";
   print!(h);
+  test(e);
 end;
 
 method test(k: long):

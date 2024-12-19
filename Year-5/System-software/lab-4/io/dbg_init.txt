@@ -2,5 +2,6 @@ config source language
 file io/suite9.txt.out
 run
 info target
-b 0 18
+b 0 17
+b 0 24
 c
