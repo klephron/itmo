@@ -1,0 +1,93 @@
+#include "cmd.h"
+#include "util/macro.h"
+#include "util/string.h"
+
+static const char *desc = "Configure debugger";
+
+static const char *help = "Usage: <command> <arg>...\n"
+                          "Options:\n"
+                          "* source asm|language - display next command as asm "
+                          "instruction or source line";
+
+static int fn_source(context *ctx, char *rest) {
+  int   status = 0;
+  char *arg = NULL;
+
+  if (!rest || !*rest) {
+    status = -1;
+    goto cleanup;
+  }
+
+  arg = trim(strdup(rest));
+
+  if (!arg) {
+    status = -1;
+    goto cleanup;
+  }
+
+  if (!strcmp(arg, "asm")) {
+    ctx->options.source_lang = false;
+  } else if (!strcmp(arg, "language")) {
+    ctx->options.source_lang = true;
+  } else {
+    status = -1;
+    goto cleanup;
+  }
+
+cleanup:
+  if (arg) {
+    free(arg);
+  }
+  return status;
+}
+
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+  UNUSED(handler);
+  char *args = trim(strdup(rest));
+  char *arg_option = NULL;
+  char *arg_rest = NULL;
+  int   status = 0;
+
+  {
+    char *token_args = strdup(args);
+    char *token = strtok(token_args, " ");
+    if (token) {
+      arg_option = strdup(token);
+      token = strtok(NULL, "");
+    }
+    if (token) {
+      arg_rest = strdup(token);
+    }
+    free(token_args);
+  }
+
+  if (!arg_option) {
+    status = -1;
+  }
+
+  if (status != -1) {
+    if (!strcmp(arg_option, "source")) {
+      status = fn_source(ctx, arg_rest);
+    } else {
+      status = -1;
+    }
+  }
+
+  if (status == -1) {
+    cmd_error_format(ctx, args, help);
+  }
+
+  if (arg_rest) {
+    free(arg_rest);
+  }
+  if (arg_option) {
+    free(arg_option);
+  }
+  if (args) {
+    free(args);
+  }
+}
+
+cmd *cmd_config(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}

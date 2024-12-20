@@ -1,0 +1,91 @@
+#include "cmd.h"
+
+#include "debugger/cmd/handler.h"
+#include "util/math.h"
+#include "util/string.h"
+
+static const char *desc = "Help";
+
+static const char *help = "Usage: <command> [<cmd>]";
+
+static void fn_all(cmd_handler *handler, context *ctx) {
+  context_out_appendln(ctx, "Commands:");
+  size_t first_w = 0;
+  size_t entries_cnt = 0;
+  for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !it.end(&it);
+       it.next(&it)) {
+    cmd *entry = it.get(&it);
+    first_w = max_size_t(first_w, strlen(entry->cmd_ref));
+    ++entries_cnt;
+  }
+
+  // sort elements
+  cmd **entries = malloc(sizeof(cmd *) * entries_cnt);
+
+  size_t i = 0;
+  for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !it.end(&it);
+       it.next(&it)) {
+    cmd *entry = it.get(&it);
+    entries[i++] = entry;
+  }
+
+  for (size_t i = 0; i < entries_cnt - 1; ++i) {
+    for (size_t j = 0; j < entries_cnt - i - 1; ++j) {
+      if (strcmp(entries[j]->cmd_ref, entries[j + 1]->cmd_ref) > 0) {
+        cmd *tmp = entries[j];
+        entries[j] = entries[j + 1];
+        entries[j + 1] = tmp;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < entries_cnt; ++i) {
+    cmd *entry = entries[i];
+    context_out_append(ctx, entry->cmd_ref);
+
+    for (size_t i = 0; i < first_w - strlen(entry->cmd_ref); ++i) {
+      context_out_append(ctx, " ");
+    }
+    context_out_append(ctx, " -- ");
+    context_out_appendln(ctx, entry->desc_ref);
+  }
+
+  free(entries);
+}
+
+static void fn_one(context *ctx, cmd *entry) {
+  context_out_append(ctx, entry->cmd_ref);
+  context_out_append(ctx, " -- ");
+  context_out_appendln(ctx, entry->desc_ref);
+  context_out_appendln(ctx, entry->help_ref);
+}
+
+static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+  char *args = trim(strdup(rest));
+
+  if (!args || !*args) {
+    fn_all(handler, ctx);
+  } else {
+    int found = 0;
+    for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !it.end(&it);
+         it.next(&it)) {
+      cmd *entry = it.get(&it);
+      if (!strcmp(args, entry->cmd_ref)) {
+        fn_one(ctx, entry);
+        found = 1;
+      }
+    }
+    if (!found) {
+      context_error(ctx, "command not found");
+      fn_all(handler, ctx);
+    }
+  }
+
+  if (args) {
+    free(args);
+  }
+}
+
+cmd *cmd_help(const char *cmd_ref) {
+  return cmd_entry_new(fn, desc, help, cmd_ref);
+}
