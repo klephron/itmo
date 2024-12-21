@@ -40,12 +40,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  // fix current address if on breakpoint
-  if (context_tg_get_state(ctx) == TARGET_BRKPT) {
-    context_tg_brkpt_fix_regs(&regs);
-  }
-
-  curr = ctx->prev_line;
+  curr = ctx->line;
 
   disassemble_info   info;
   disassembler_ftype dftype;
@@ -53,7 +48,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   cmd_nexti_disasm_init(ctx, &info, &dftype, &is_call);
 
   for (size_t i = 0; i < n; ++i) {
-    while (!context_tg_prev_line_changed(ctx, curr)) {
+    while (!context_dbg_line_changed(ctx, curr)) {
       if (cmd_nexti_fn(ctx, &info, &dftype, &is_call, n) == -1) {
         goto cleanup;
       }
@@ -67,14 +62,10 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
         goto cleanup;
       }
 
-      if (context_tg_get_state(ctx) == TARGET_BRKPT) {
-        context_tg_brkpt_fix_regs(&regs);
-      }
-
       curr.address = regs.rip;
       context_dbg_line_by_address(ctx, &curr);
     }
-    context_tg_prev_line_set(ctx, curr);
+    context_dbg_line_set(ctx, curr);
   }
 
   if (context_tg_is_running(ctx)) {

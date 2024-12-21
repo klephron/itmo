@@ -131,7 +131,7 @@ typedef struct context_struct {
   size_t              breaks_cnt;
   debug_data          debug;
   options             options;
-  debug_line          prev_line;
+  debug_line          line; // current line
 } context;
 
 context *context_new();
@@ -163,12 +163,6 @@ target_state_enum context_tg_getregs(context                 *self,
 target_state_enum context_tg_setregs(context                 *self,
                                      struct user_regs_struct *regs);
 
-void              context_tg_brkpt_fix_regs(struct user_regs_struct *regs_p);
-target_state_enum context_tg_brkpt_fix(context *self);
-void              context_tg_prev_line_reset(context *self);
-void              context_tg_prev_line_set(context *self, debug_line line);
-int               context_tg_prev_line_changed(context *self, debug_line line);
-
 int context_bp_place(context *self, breakpoint *bp);
 int context_bp_remove(context *self, breakpoint *bp);
 
@@ -179,6 +173,10 @@ int         context_dbg_line_by_address(context *self, debug_line *result);
 const char *context_dbg_file_by_id(context *self, uint64_t file);
 const char *context_dbg_str_by_id(context *self, uint64_t id);
 debug_sub  *context_dbg_sub_by_address(context *self, uint64_t address);
+
+void context_dbg_line_reset(context *self);
+void context_dbg_line_set(context *self, debug_line line);
+int  context_dbg_line_changed(context *self, debug_line line);
 
 #define peekdata_brkpt_with_int3(data) ((data & ~0xFF) | 0xCC)
 #define peekdata_bpkpt_with_stored(data, stored) ((data & ~0xFF) | stored)

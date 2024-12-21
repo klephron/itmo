@@ -10,6 +10,19 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+static void context_tg_brkpt_fix_regs(struct user_regs_struct *regs_p) {
+  regs_p->rip -= 1;
+}
+
+// NOTE: can optimize place calls
+static target_state_enum context_tg_brkpt_fix(context *self) {
+  struct user_regs_struct regs;
+  context_tg_getregs(self, &regs);
+  context_tg_brkpt_fix_regs(&regs);
+  context_tg_setregs(self, &regs);
+  return context_tg_get_state(self);
+}
+
 int context_tg_is_running(context *self) {
   assert(self->s_target != TARGET_ERROR);
   switch (self->s_target) {
@@ -68,6 +81,7 @@ target_state_enum context_tg_wait(context *self) {
     if (ptrace(PTRACE_GETSIGINFO, self->pid, NULL, &siginfo) == 0) {
       if (siginfo.si_code == SI_KERNEL) {
         self->s_target = TARGET_BRKPT;
+        context_tg_brkpt_fix(self);
       } else {
         self->s_target = TARGET_TRAPPED;
       }
@@ -101,8 +115,6 @@ target_state_enum context_tg_stepi(context *self) {
   breakpoint             *b = NULL;
 
   if ((state_before = context_tg_get_state(self)) == TARGET_BRKPT) {
-    context_tg_brkpt_fix(self);
-    self->s_target = TARGET_TRAPPED;
     context_tg_getregs(self, &regs);
 
     hashset_breakpoint_it it = hashset_breakpoint_find(
@@ -208,39 +220,4 @@ target_state_enum context_tg_setregs(context                 *self,
     return TARGET_ERROR;
   }
   return context_tg_get_state(self);
-}
-
-// NOTE: can optimize place calls
-target_state_enum context_tg_brkpt_fix(context *self) {
-  struct user_regs_struct regs;
-  context_tg_getregs(self, &regs);
-  context_tg_brkpt_fix_regs(&regs);
-  context_tg_setregs(self, &regs);
-  return context_tg_get_state(self);
-}
-
-void context_tg_brkpt_fix_regs(struct user_regs_struct *regs_p) {
-  regs_p->rip -= 1;
-}
-
-void context_tg_prev_line_reset(context *self) {
-  self->prev_line.address = UINT64_MAX;
-  self->prev_line.line = UINT64_MAX;
-  self->prev_line.file_id = UINT64_MAX;
-}
-
-void context_tg_prev_line_set(context *self, debug_line line) {
-  if (line.line != UINT64_MAX && line.file_id != UINT64_MAX) {
-    self->prev_line = line;
-  }
-}
-
-int context_tg_prev_line_changed(context *self, debug_line line) {
-  if ((line.line != UINT64_MAX) && (line.file_id != UINT64_MAX)) {
-    if ((line.file_id != self->prev_line.file_id) ||
-        (line.line != self->prev_line.line)) {
-      return 1;
-    }
-  }
-  return 0;
 }

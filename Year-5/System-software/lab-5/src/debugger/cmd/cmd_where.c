@@ -74,10 +74,6 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_tg_get_state(ctx) == TARGET_BRKPT) {
-    context_tg_brkpt_fix_regs(&regs);
-  }
-
   cmd_traverse(ctx, regs.rbp, regs.rip);
 
 cleanup:

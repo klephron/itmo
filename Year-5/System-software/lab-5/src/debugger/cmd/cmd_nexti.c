@@ -1,7 +1,6 @@
 #include "debugger/cmd/cmd.h"
 
 #include "debugger/context/context.h"
-#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -83,10 +82,6 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
       goto cleanup;
     }
 
-    if (context_tg_get_state(ctx) == TARGET_BRKPT) {
-      context_tg_brkpt_fix_regs(&regs);
-    }
-
     cmd_disassemble_at_address(ctx, regs.rip, 1);
   }
 
@@ -120,11 +115,6 @@ int cmd_nexti_fn(context *ctx, disassemble_info *info_p,
   for (size_t i = 0; i < n; ++i) {
     *is_call_p = 0;
     bfd_vma pc = regs.rip;
-
-    // fix rip to disasm properly if already on breakpoint
-    if (context_tg_get_state(ctx) == TARGET_BRKPT) {
-      context_tg_brkpt_fix_regs(&regs);
-    }
 
     size_t insn_size = (*dftype_p)(pc, info_p);
     pc += insn_size;
