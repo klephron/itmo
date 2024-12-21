@@ -313,6 +313,7 @@ static void cmd_out_value_str(context *ctx, const char *prefix,
     context_out_append(ctx, value.value);
     free(value.value);
   }
+  context_out_appendln(ctx, "");
 }
 
 static int cmd_var_arg(context *ctx, const char *rest) {
@@ -326,10 +327,6 @@ static int cmd_var_arg(context *ctx, const char *rest) {
   if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
     context_error(ctx, "failed to get regs");
     return -1;
-  }
-
-  if (context_tg_get_state(ctx) == TARGET_BRKPT) {
-    context_tg_brkpt_fix_regs(&regs);
   }
 
   // get current subroutine based on rsp

@@ -61,7 +61,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     context_bp_place(ctx, bp);
   }
 
-  context_tg_prev_line_reset(ctx);
+  context_dbg_line_reset(ctx);
 
 cleanup:
   if (argv) {

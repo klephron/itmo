@@ -234,3 +234,25 @@ debug_sub *context_dbg_sub_by_address(context *self, uint64_t address) {
   }
   return NULL;
 }
+
+void context_dbg_line_reset(context *self) {
+  self->line.address = UINT64_MAX;
+  self->line.line = UINT64_MAX;
+  self->line.file_id = UINT64_MAX;
+}
+
+void context_dbg_line_set(context *self, debug_line line) {
+  if (line.line != UINT64_MAX && line.file_id != UINT64_MAX) {
+    self->line = line;
+  }
+}
+
+int context_dbg_line_changed(context *self, debug_line line) {
+  if ((line.line != UINT64_MAX) && (line.file_id != UINT64_MAX)) {
+    if ((line.file_id != self->line.file_id) ||
+        (line.line != self->line.line)) {
+      return 1;
+    }
+  }
+  return 0;
+}

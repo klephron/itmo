@@ -46,9 +46,11 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
     breakpoint *b = it.get(&it);
 
-    if (context_tg_is_running(ctx) && (!id || b->id == id)) {
+    if (!id || b->id == id) {
       ++deleted;
-      context_bp_remove(ctx, b);
+      if (context_tg_is_running(ctx)) {
+        context_bp_remove(ctx, b);
+      }
       if (id) {
         hashset_breakpoint_erase(ctx->breaks, it);
         break;
