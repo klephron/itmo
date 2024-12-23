@@ -14,9 +14,14 @@ public class World {
 
     public PostOffices offices = new PostOffices();
     public Transports transports = new Transports();
+    public Actors actors = new Actors();
+
+    public class Actors {
+
+    }
 
     public class PostOffices {
-        Elements<PostOffice> postOffices = new Elements<>();
+        private Elements<PostOffice> postOffices = new Elements<>();
 
         public Long add(PostOffice office) {
             var r = postOffices.insert(office);
@@ -26,7 +31,7 @@ public class World {
     }
 
     public class Transports {
-        Elements<Transport> transports = new Elements<>();
+        private Elements<Transport> transports = new Elements<>();
 
         public Long add(Transport transport) {
             var r = transports.insert(transport);
