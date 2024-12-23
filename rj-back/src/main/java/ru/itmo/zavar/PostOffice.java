@@ -22,7 +22,6 @@ public class PostOffice extends Coordinates {
         Map<Mark, Long> result = new HashMap<>();
 
         boolean b = tryToApplyMarks(value, result);
-
         if (!b) {
             throw new MailException("Not enough marks to cover the value of given letter");
         } else {
@@ -79,7 +78,7 @@ public class PostOffice extends Coordinates {
                 throw new MarkException(mark.name().concat(" mark is over"));
             }
         } else {
-            throw new MarkException(mark.name().concat(" mark is not exists"));
+            throw new MarkException(mark.name().concat(" mark does not exist"));
         }
     }
 }
