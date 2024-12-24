@@ -3,10 +3,24 @@ package ru.itmo.zavar;
 import java.time.Duration;
 import java.util.logging.Logger;
 
+import reactor.core.publisher.Flux;
+import reactor.netty.http.server.HttpServer;
+
 public class Main {
     private static final Logger logger = Logger.getLogger(World.class.getName());
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void serve() {
+        HttpServer.create()
+                .port(12021)
+                .route(routes -> routes.get("/stream",
+                        (request, response) -> response.sendString(Flux.interval(Duration.ofSeconds(1))
+                                .map(i -> "Data chunk " + i + "\n"))))
+                .bindNow()
+                .onDispose()
+                .block();
+    }
+
+    public static void world() throws InterruptedException {
         World world = new World();
 
         PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"));
@@ -31,12 +45,18 @@ public class Main {
         world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
         world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
         world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()), e -> logger.warning(e.toString()));
+        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()),
+                e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.actors.sendMail(actor1, postOffice1, mail1);
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.actors.receiveMail(actor1, postOffice1, m -> logger.fine(m.toString()));
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        // serve();
+        world();
     }
 }
