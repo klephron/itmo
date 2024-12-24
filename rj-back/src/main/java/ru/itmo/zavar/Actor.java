@@ -25,8 +25,8 @@ public abstract class Actor {
     public class Schedule {
         private Map<Task, Void> tasks = new HashMap<>();
 
-        public void addTaskMailReceive(Mono<Mail> mono, Consumer<? super Mail> consumer) {
-            var task = new MailReceiveOneTask(mono, consumer);
+        public void addTaskMailReceive(Mono<Mail> mono, Consumer<? super Mail> onOne, Consumer<Throwable> onError) {
+            var task = new MailReceiveOneTask(mono, onOne, onError);
             tasks.put(task, null);
             task.receive();
         }
@@ -50,11 +50,12 @@ public abstract class Actor {
         public class MailReceiveOneTask extends Task {
             private final Mono<Mail> mono;
             private final Consumer<? super Mail> consumer;
+            private final Consumer<? super Throwable> errorConsumer;
 
             void receive() {
                 mono.doOnSuccess(v -> {
                     this.onSuccess();
-                }).subscribe(consumer);
+                }).subscribe(consumer, errorConsumer);
             }
 
         }

@@ -2,6 +2,8 @@ package ru.itmo.zavar;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,25 +13,31 @@ import reactor.core.publisher.Mono;
 @Getter
 public class World {
     public static final Logger logger = Logger.getLogger(World.class.getName());
+    static {
+        logger.setUseParentHandlers(false);
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setFormatter(new LogFormatter());
+        logger.addHandler(handler);
+    }
 
     public PostOffices offices = new PostOffices();
     public Transports transports = new Transports();
     public Actors actors = new Actors();
 
     public class Actors {
-        private Map<Actor, Actor.Schedule> actors = new HashMap<>();
+        private Map<Actor, Actor.Schedule> entries = new HashMap<>();
 
         public void add(Actor actor) {
-            if (actors.containsKey(actor)) {
+            if (entries.containsKey(actor)) {
                 logger.log(Level.INFO, "actor already exists");
                 return;
             }
-            actors.put(actor, actor.new Schedule());
+            entries.put(actor, actor.new Schedule());
             logger.log(Level.INFO, "added actor " + actor.toString());
         }
 
         public Actor.Schedule getSchedule(Actor actor) {
-            Actor.Schedule schedule = actors.get(actor);
+            Actor.Schedule schedule = entries.get(actor);
             if (schedule == null) {
                 logger.log(Level.WARNING, "actor doesn't exist");
                 return null;
@@ -37,33 +45,51 @@ public class World {
             return schedule;
         }
 
-        public void receiveMail(Actor actor, PostOffice postOffice) {
-            Actor.Schedule schedule = this.getSchedule(actor);
-            // schedule.addTaskMailReceive();
+        public Actor get(Actor actor) {
+            if (entries.containsKey(actor)) {
+                return actor;
+            }
+            logger.log(Level.INFO, "acot doesn't exists");
+            return null;
         }
 
-        public void sendMail(Actor actor, PostOffice office, Mail mail) {
+        public void receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne, Consumer<Throwable> onError) {
+            Actor actor = actors.get(_actor);
+            PostOffice office = offices.get(_office);
             Actor.Schedule schedule = this.getSchedule(actor);
-            PostOffice postOffice = offices.get(office);
+            Mono<Mail> mono = office.receiveMailOne(actor);
+            schedule.addTaskMailReceive(mono, onOne, onError);
+        }
+
+        public void receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne) {
+            receiveMail(_actor, _office, onOne, (e) -> {
+                logger.log(Level.WARNING, e.toString());
+            });
+        }
+
+        public void sendMail(Actor _actor, PostOffice _office, Mail mail) {
+            Actor actor = actors.get(_actor);
+            PostOffice postOffice = offices.get(_office);
+            Actor.Schedule schedule = this.getSchedule(actor);
             Mono<Mail> mono = schedule.addTaskMailSend(mail);
             postOffice.applyMailOne(mono);
         }
     }
 
     public class PostOffices {
-        private Map<PostOffice, Void> postOffices = new HashMap<>();
+        private Map<PostOffice, Void> entries = new HashMap<>();
 
         public void add(PostOffice office) {
-            if (postOffices.containsKey(office)) {
+            if (entries.containsKey(office)) {
                 logger.log(Level.INFO, "office already exists");
                 return;
             }
-            postOffices.put(office, null);
+            entries.put(office, null);
             logger.log(Level.INFO, "added office " + office.toString());
         }
 
         public PostOffice get(PostOffice office) {
-            if (postOffices.containsKey(office)) {
+            if (entries.containsKey(office)) {
                 return office;
             }
             logger.log(Level.INFO, "post office isn't present");
@@ -72,14 +98,14 @@ public class World {
     }
 
     public class Transports {
-        private Map<Transport, Void> transports = new HashMap<>();
+        private Map<Transport, Void> entries = new HashMap<>();
 
         public void add(Transport transport) {
-            if (transports.containsKey(transport)) {
+            if (entries.containsKey(transport)) {
                 logger.log(Level.INFO, "transport already exists");
                 return;
             }
-            transports.put(transport, null);
+            entries.put(transport, null);
             logger.log(Level.INFO, "added transport " + transport.toString());
         }
     }
