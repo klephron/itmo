@@ -86,7 +86,7 @@ public class Mail {
         }
     }
 
-    public record Data(String text) {
+    public static record Data(String text) {
     }
 
     public enum Status {
