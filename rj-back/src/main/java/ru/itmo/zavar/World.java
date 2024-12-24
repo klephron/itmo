@@ -2,7 +2,6 @@ package ru.itmo.zavar;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,45 +16,41 @@ public class World {
     public Actors actors = new Actors();
 
     public class Actors {
+        private Map<Actor, Void> actors = new HashMap<>();
 
+        public void add(Actor actor) {
+            if (actors.containsKey(actor)) {
+                logger.log(Level.INFO, "actor already exists");
+                return;
+            }
+            actors.put(actor, null);
+            logger.log(Level.INFO, "added actor " + actor.toString());
+        }
     }
 
     public class PostOffices {
-        private Elements<PostOffice> postOffices = new Elements<>();
+        private Map<PostOffice, Void> postOffices = new HashMap<>();
 
-        public Long add(PostOffice office) {
-            var r = postOffices.insert(office);
-            logger.log(Level.INFO, "created postOffice with id=" + r.toString());
-            return r;
+        public void add(PostOffice office) {
+            if (postOffices.containsKey(office)) {
+                logger.log(Level.INFO, "office already exists");
+                return;
+            }
+            postOffices.put(office, null);
+            logger.log(Level.INFO, "added office " + office.toString());
         }
     }
 
     public class Transports {
-        private Elements<Transport> transports = new Elements<>();
+        private Map<Transport, Void> transports = new HashMap<>();
 
-        public Long add(Transport transport) {
-            var r = transports.insert(transport);
-            logger.log(Level.INFO, "created transport with id=" + r.toString());
-            return r;
-        }
-    }
-
-    private class Elements<T> {
-        private AtomicLong counter = new AtomicLong(0L);
-        private final Map<Long, T> elements = new HashMap<>();
-
-        public Long insert(T e) {
-            Long id = counter.incrementAndGet();
-            elements.put(id, e);
-            return id;
-        }
-
-        public Long remove(Long id) {
-            T e = elements.remove(id);
-            if (e == null) {
-                return 0L;
+        public void add(Transport transport) {
+            if (transports.containsKey(transport)) {
+                logger.log(Level.INFO, "transport already exists");
+                return;
             }
-            return id;
+            transports.put(transport, null);
+            logger.log(Level.INFO, "added transport " + transport.toString());
         }
     }
 }

@@ -13,7 +13,7 @@ public final class IndividualActor extends Actor {
     private final String surname;
     private final String patronymic;
 
-    public IndividualActor(Actor.Address address, String name, String surname, String patronymic) {
+    public IndividualActor(Address address, String name, String surname, String patronymic) {
         super(address);
         this.name = name;
         this.surname = surname;
