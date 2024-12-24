@@ -17,7 +17,8 @@ public class LogFormatter extends Formatter {
     public static final String ANSI_PURPLE = "\u001B[35m";
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_WHITE = "\u001B[37m";
-    public static final String ANSI_GRAY = "\u001B[61m";
+    public static final String ANSI_GRAY = "\u001B[90m";
+    public static final String ANSI_LIGHT_GRAY = "\u001B[38;2;192;192;192m";
 
     @Override
     public String format(LogRecord record) {

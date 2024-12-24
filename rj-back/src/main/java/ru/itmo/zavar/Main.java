@@ -1,11 +1,11 @@
 package ru.itmo.zavar;
 
-import static ru.itmo.zavar.World.logger;
-
 import java.time.Duration;
-import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main {
+    private static final Logger logger = Logger.getLogger(World.class.getName());
+
     public static void main(String[] args) throws InterruptedException {
         World world = new World();
 
@@ -27,12 +27,16 @@ public class Main {
         world.actors.sendMail(actor1, postOffice1, mail4);
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMail(actor1, postOffice1, m -> System.out.println(m));
-        world.actors.receiveMail(actor1, postOffice1, m -> System.out.println(m));
-        world.actors.receiveMail(actor1, postOffice1, m -> System.out.println(m));
-        world.actors.receiveMail(actor1, postOffice1, m -> System.out.println(m));
-        world.actors.receiveMail(actor1, postOffice1, m -> System.out.println(m));
+        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()), e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
+
         world.actors.sendMail(actor1, postOffice1, mail1);
+        Thread.sleep(Duration.ofSeconds(1L));
+
+        world.actors.receiveMail(actor1, postOffice1, m -> logger.fine(m.toString()));
     }
 }

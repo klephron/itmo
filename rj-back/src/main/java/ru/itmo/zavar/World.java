@@ -17,7 +17,9 @@ public class World {
         logger.setUseParentHandlers(false);
         ConsoleHandler handler = new ConsoleHandler();
         handler.setFormatter(new LogFormatter());
+        handler.setLevel(Level.ALL);
         logger.addHandler(handler);
+        logger.setLevel(Level.ALL);
     }
 
     public PostOffices offices = new PostOffices();
@@ -33,7 +35,7 @@ public class World {
                 return;
             }
             entries.put(actor, actor.new Schedule());
-            logger.log(Level.INFO, "added actor " + actor.toString());
+            logger.fine("added actor " + actor.toString());
         }
 
         public Actor.Schedule getSchedule(Actor actor) {
@@ -49,7 +51,7 @@ public class World {
             if (entries.containsKey(actor)) {
                 return actor;
             }
-            logger.log(Level.INFO, "acot doesn't exists");
+            logger.log(Level.INFO, "actot doesn't exists");
             return null;
         }
 
@@ -85,7 +87,7 @@ public class World {
                 return;
             }
             entries.put(office, null);
-            logger.log(Level.INFO, "added office " + office.toString());
+            logger.fine("added office " + office.toString());
         }
 
         public PostOffice get(PostOffice office) {
@@ -106,7 +108,7 @@ public class World {
                 return;
             }
             entries.put(transport, null);
-            logger.log(Level.INFO, "added transport " + transport.toString());
+            logger.fine("added transport " + transport.toString());
         }
     }
 }

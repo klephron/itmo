@@ -39,9 +39,9 @@ public abstract class Actor {
 
         public abstract class Task {
             void onSuccess() {
-                logger.log(Level.INFO, "task is done, removing");
+                logger.fine("task is done, removing");
                 tasks.remove(this);
-                logger.log(Level.INFO, "task is removed");
+                logger.fine("task is removed");
             }
 
         }
