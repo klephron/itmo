@@ -26,6 +26,13 @@ public class World {
     public Transports transports = new Transports();
     public Actors actors = new Actors();
 
+    public void stop() {
+        for (var office : offices.entries.keySet()) {
+            office.close();
+            logger.fine("closed " + office.toString());
+        }
+    }
+
     public class Actors {
         private Map<Actor, Actor.Schedule> entries = new HashMap<>();
 
@@ -41,7 +48,7 @@ public class World {
         public Actor.Schedule getSchedule(Actor actor) {
             Actor.Schedule schedule = entries.get(actor);
             if (schedule == null) {
-                logger.log(Level.WARNING, "actor doesn't exist");
+                logger.warning("actor doesn't exist");
                 return null;
             }
             return schedule;
@@ -65,7 +72,7 @@ public class World {
 
         public void receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne) {
             receiveMail(_actor, _office, onOne, (e) -> {
-                logger.log(Level.WARNING, e.toString());
+                logger.warning(e.toString());
             });
         }
 
@@ -81,20 +88,24 @@ public class World {
     public class PostOffices {
         private Map<PostOffice, Void> entries = new HashMap<>();
 
-        public void add(PostOffice office) {
-            if (entries.containsKey(office)) {
-                logger.log(Level.INFO, "office already exists");
+        public void add(PostOffice _office) {
+            if (entries.containsKey(_office)) {
+                logger.info("office already exists");
                 return;
             }
-            entries.put(office, null);
-            logger.fine("added office " + office.toString());
+            entries.put(_office, null);
+            PostOffice office = this.get(_office);
+            if (office != null) {
+                office.open();
+                logger.fine("opened office " + _office.toString());
+            }
         }
 
         public PostOffice get(PostOffice office) {
             if (entries.containsKey(office)) {
                 return office;
             }
-            logger.log(Level.INFO, "post office isn't present");
+            logger.info("post office isn't present");
             return null;
         }
     }

@@ -1,24 +1,23 @@
 package ru.itmo.zavar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@RequiredArgsConstructor
 public class Transport {
-    private final long mailCapacity;
     private final double speed;
+    private List<Mail> mails;
 
     @Setter
     private Route route = null;
     private List<Mail> mailList = new ArrayList<>();
 
-    Transport() {
-        mailCapacity = 100;
-        speed = 10;
+    Transport(int size, double speed) {
+        this.speed = speed;
+        mails = Arrays.asList(new Mail[size]);
     }
 }
