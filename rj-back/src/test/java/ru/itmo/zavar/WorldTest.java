@@ -1,6 +1,7 @@
 package ru.itmo.zavar;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
@@ -86,6 +87,44 @@ public class WorldTest {
         // waiting a little to read latest messages
         world.actors.receiveMailMany(actor1, postOffice1, m -> logger.info(m.toString()),
                 e -> logger.warning(e.toString()));
+        Thread.sleep(Duration.ofSeconds(2L));
+
+        world.stop();
+        Schedulers.shutdownNow();
+    }
+
+    @Test
+    public void transportRoute() throws InterruptedException {
+        World world = new World();
+
+        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"));
+        PostOffice postOffice2 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"));
+
+        Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
+                "A1", "B1", "C1");
+
+        Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2, postOffice1));
+        Transport transport1 = new Transport(10, 5D);
+
+        world.offices.add(postOffice1);
+        world.offices.add(postOffice2);
+
+        world.actors.addActor(actor1);
+
+        world.transports.add(transport1);
+        world.transports.setRoute(transport1, route1);
+
+        Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1, postOffice1,
+                Flux.generate(AtomicLong::new, (state, sink) -> {
+                    long i = state.getAndIncrement();
+                    Mail mail = new Mail(i, "subject1", actor1, actor1, new Mail.Data("text"), 10);
+                    sink.next(mail);
+                    return state;
+                }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
+
+        // TODO: handle coordinates to calculate transport time to arrival
+
+        world.actors.deleteActorTask(actor1, task1);
         Thread.sleep(Duration.ofSeconds(2L));
 
         world.stop();

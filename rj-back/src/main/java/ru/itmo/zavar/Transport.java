@@ -5,19 +5,21 @@ import java.util.Arrays;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 public class Transport {
     private final double speed;
-    private List<Mail> mails;
 
-    @Setter
-    private Route route = null;
-    private List<Mail> mailList = new ArrayList<>();
+    private Route<PostOffice> route = null;
+    private List<Mail> mails = new ArrayList<>();
 
     Transport(int size, double speed) {
         this.speed = speed;
         mails = Arrays.asList(new Mail[size]);
+    }
+
+    // TODO: add more complex logic
+    void setRoute(Route<PostOffice> route) {
+        this.route = route;
     }
 }

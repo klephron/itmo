@@ -27,6 +27,7 @@ public class World {
     public PostOffices offices = new PostOffices();
     public Transports transports = new Transports();
     public Actors actors = new Actors();
+    public Coordinates coordinates = new Coordinates();
 
     public void stop() {
         for (var office : offices.entries.keySet()) {
@@ -156,5 +157,25 @@ public class World {
             entries.put(transport, null);
             logger.fine("added transport " + transport.toString());
         }
+
+        public Transport get(Transport transport) {
+            if (entries.containsKey(transport)) {
+                return transport;
+            }
+            logger.info("transport isn't present");
+            return null;
+        }
+
+        public void setRoute(Transport _transport, Route<PostOffice> route) {
+            Transport transport = this.get(_transport);
+            transport.setRoute(route);
+        }
+    }
+
+    // TODO: store here coordinates of objects (when changing coordinates for
+    // example handle it not here, but in relevant services)
+    public class Coordinates {
+        private Map<Coordinates, PostOffice> entries = new HashMap<>();
+
     }
 }
