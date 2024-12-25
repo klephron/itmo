@@ -8,7 +8,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import lombok.Getter;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.itmo.zavar.Actor.Schedule.Task;
 
 @Getter
 public class World {
@@ -36,7 +38,7 @@ public class World {
     public class Actors {
         private Map<Actor, Actor.Schedule> entries = new HashMap<>();
 
-        public void add(Actor actor) {
+        public void addActor(Actor actor) {
             if (entries.containsKey(actor)) {
                 logger.log(Level.INFO, "actor already exists");
                 return;
@@ -54,7 +56,7 @@ public class World {
             return schedule;
         }
 
-        public Actor get(Actor actor) {
+        public Actor getActor(Actor actor) {
             if (entries.containsKey(actor)) {
                 return actor;
             }
@@ -62,26 +64,59 @@ public class World {
             return null;
         }
 
-        public void receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne, Consumer<Throwable> onError) {
-            Actor actor = actors.get(_actor);
+        public Task receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne, Consumer<Throwable> onError) {
+            Actor actor = actors.getActor(_actor);
             PostOffice office = offices.get(_office);
             Actor.Schedule schedule = this.getSchedule(actor);
             Mono<Mail> mono = office.receiveMailOne(actor);
-            schedule.addTaskMailReceive(mono, onOne, onError);
+            var pair = schedule.addTaskMailReceiveOne(mono, onOne, onError);
+            return pair.left;
         }
 
-        public void receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne) {
-            receiveMail(_actor, _office, onOne, (e) -> {
+        public Task receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne) {
+            return receiveMail(_actor, _office, onOne, (e) -> {
                 logger.warning(e.toString());
             });
         }
 
-        public void sendMail(Actor _actor, PostOffice _office, Mail mail) {
-            Actor actor = actors.get(_actor);
+        public Task receiveMailMany(Actor _actor, PostOffice _office, Consumer<Mail> onOne,
+                Consumer<Throwable> onError) {
+            Actor actor = actors.getActor(_actor);
+            PostOffice office = offices.get(_office);
+            Actor.Schedule schedule = this.getSchedule(actor);
+            Flux<Mail> flux = office.receiveMailFlux(actor);
+            var pair = schedule.addTaskMailReceiveFlux(flux, onOne, onError);
+            return pair.left;
+        }
+
+        public Task receiveMailMany(Actor _actor, PostOffice _office, Consumer<Mail> onOne) {
+            return receiveMailMany(_actor, _office, onOne, (e) -> {
+                logger.warning(e.toString());
+            });
+        }
+
+        public Task sendMail(Actor _actor, PostOffice _office, Mail mail) {
+            Actor actor = actors.getActor(_actor);
             PostOffice postOffice = offices.get(_office);
             Actor.Schedule schedule = this.getSchedule(actor);
-            Mono<Mail> mono = schedule.addTaskMailSend(mail);
-            postOffice.applyMailOne(mono);
+            var pair = schedule.addTaskMailSendOne(mail);
+            postOffice.applyMailMono(pair.right);
+            return pair.left;
+        }
+
+        public Task sendMailFlux(Actor _actor, PostOffice _office, Flux<Mail> _flux) {
+            Actor actor = actors.getActor(_actor);
+            PostOffice postOffice = offices.get(_office);
+            Actor.Schedule schedule = this.getSchedule(actor);
+            var pair = schedule.addTaskMailSendFlux(_flux);
+            postOffice.applyMailFlux(pair.right);
+            return pair.left;
+        }
+
+        public void deleteActorTask(Actor _actor, Task task) {
+            Actor actor = actors.getActor(_actor);
+            Actor.Schedule schedule = this.getSchedule(actor);
+            schedule.deleteTask(task);
         }
     }
 
