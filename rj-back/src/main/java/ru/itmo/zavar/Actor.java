@@ -3,7 +3,6 @@ package ru.itmo.zavar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
