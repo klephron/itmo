@@ -24,6 +24,7 @@ import reactor.core.scheduler.Schedulers;
 public class PostOffice {
     @EqualsAndHashCode.Include
     private final Address address;
+    private final Coordinates coordinates;
 
     private final Map<Actor, Deque<Mail>> terminalMails = new HashMap<>();
     private final Map<Address, Deque<Mail>> intermediateMails = new HashMap<>();
@@ -95,7 +96,7 @@ public class PostOffice {
                 sink.complete();
                 return;
             }
-            //logger.fine("received " + mail.toString());
+            // logger.fine("received " + mail.toString());
             sink.next(mail);
         });
     }
