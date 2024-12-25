@@ -87,8 +87,7 @@ public class Transport {
                     this.nextCoordinates = postOffice.getCoordinates();
                     return Mono.delay(delay).map(tick -> counter);
                 })
-                .doOnNext(counter -> this.visitPostOffice(counter))
-                .subscribe();
+                .subscribe(counter -> this.visitPostOffice(counter));
 
         logger.fine("started " + this.toString());
         sink.emitNext(0, EmitFailureHandler.FAIL_FAST);
@@ -124,9 +123,12 @@ public class Transport {
         if (this.sink == null) {
             return;
         }
+
         this.prevNanos = System.nanoTime();
         this.prevCoordinates = this.nextCoordinates;
-        // PostOffice postOffice = route.getStops().get(this.routeNextIndex);
+
+        processPostOffice(route.getStops().get(this.routeNextIndex));
+
         Integer nextIndex = route.getNext(this.routeNextIndex);
         if (nextIndex == null) {
             sink.emitComplete(EmitFailureHandler.FAIL_FAST);
@@ -136,4 +138,7 @@ public class Transport {
         }
     }
 
+    private void processPostOffice(PostOffice postOffice) {
+        logger.fine(postOffice.toString());
+    }
 }
