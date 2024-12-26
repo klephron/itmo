@@ -167,7 +167,8 @@ public class WorldTest {
         Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1, postOffice1,
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
-                    Mail mail = new Mail(i, "from actor1 to actor2 (need to transfer)", actor1, actor2, new Mail.Data(""), 1);
+                    Mail mail = new Mail(i, "from actor1 to actor2 (need to transfer)", actor1, actor2,
+                            new Mail.Data(""), 1);
                     sink.next(mail);
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
@@ -175,7 +176,8 @@ public class WorldTest {
         Actor.Schedule.Task task2 = world.actors.sendMailFlux(actor2, postOffice1,
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
-                    Mail mail = new Mail(i, "from actor2 to actor1 (no need to transfer)", actor2, actor1, new Mail.Data(""), 2);
+                    Mail mail = new Mail(i, "from actor2 to actor1 (no need to transfer)", actor2, actor1,
+                            new Mail.Data(""), 2);
                     sink.next(mail);
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
@@ -184,6 +186,19 @@ public class WorldTest {
 
         world.actors.deleteActorTask(actor1, task1);
         world.actors.deleteActorTask(actor2, task2);
+        Thread.sleep(Duration.ofSeconds(1L));
+
+        world.actors.receiveMailMany(actor2, postOffice2, m -> logger.info("received actor2 " + m.toString()),
+                e -> logger.warning(e.toString()));
+        Thread.sleep(Duration.ofSeconds(1L));
+
+        // should throw warnings
+        world.actors.receiveMailMany(actor1, postOffice2, m -> logger.info("received actor1 " + m.toString()),
+                e -> logger.warning(e.toString()));
+        Thread.sleep(Duration.ofSeconds(1L));
+
+        world.actors.receiveMailMany(actor1, postOffice1, m -> logger.info("received actor1 " + m.toString()),
+                e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.stop();
