@@ -127,18 +127,29 @@ public class Transport {
         this.prevNanos = System.nanoTime();
         this.prevCoordinates = this.nextCoordinates;
 
-        processPostOffice(route.getStops().get(this.routeNextIndex));
+        // process Post Office
+        PostOffice postOffice = route.getStops().get(this.routeNextIndex);
+        Mono<Void> signal = postOffice.transportDeliver(this);
 
-        Integer nextIndex = route.getNext(this.routeNextIndex);
+        // handle on error or complete
+        signal.subscribe(v -> {
+        }, e -> {
+            logger.warning(e.toString());
+            headFurther(counter, this.routeNextIndex);
+        }, () -> {
+            logger.fine("handled " + this.toString() + " at " + postOffice.getClass().getName() + " with "
+                    + postOffice.getAddress());
+            headFurther(counter, this.routeNextIndex);
+        });
+    }
+
+    private void headFurther(Integer counter, int index) {
+        Integer nextIndex = route.getNext(index);
         if (nextIndex == null) {
             sink.emitComplete(EmitFailureHandler.FAIL_FAST);
         } else {
             this.routeNextIndex = nextIndex;
             sink.emitNext(++counter, EmitFailureHandler.FAIL_FAST);
         }
-    }
-
-    private void processPostOffice(PostOffice postOffice) {
-        logger.fine(postOffice.toString());
     }
 }

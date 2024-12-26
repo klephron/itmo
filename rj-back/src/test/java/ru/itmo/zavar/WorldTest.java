@@ -134,4 +134,44 @@ public class WorldTest {
         world.stop();
         Schedulers.shutdownNow();
     }
+
+    @Test
+    public void postOfficeTransfer() throws InterruptedException {
+        World world = new World();
+
+        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
+                new Coordinates(0, 5));
+        PostOffice postOffice2 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
+                new Coordinates(5, 0));
+
+        Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2), true);
+
+        Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
+                "A1", "B1", "C1");
+
+        Transport transport1 = new Transport(10, 5D);
+
+        world.offices.add(postOffice1);
+        world.offices.add(postOffice2);
+        world.transports.add(transport1);
+        world.transports.setRoute(transport1, route1);
+        world.transports.start(transport1);
+
+        world.actors.addActor(actor1);
+        Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1, postOffice1,
+                Flux.generate(AtomicLong::new, (state, sink) -> {
+                    long i = state.getAndIncrement();
+                    Mail mail = new Mail(i, "subject1", actor1, actor1, new Mail.Data("text"), 10);
+                    sink.next(mail);
+                    return state;
+                }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
+
+        Thread.sleep(Duration.ofSeconds(5L));
+
+        world.actors.deleteActorTask(actor1, task1);
+        Thread.sleep(Duration.ofSeconds(1L));
+
+        world.stop();
+        Schedulers.shutdownNow();
+    }
 }

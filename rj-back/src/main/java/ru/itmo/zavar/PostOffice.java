@@ -7,6 +7,8 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,7 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.Sinks.EmitFailureHandler;
 
 @ToString
 @RequiredArgsConstructor
@@ -29,29 +31,39 @@ public class PostOffice {
     private final Map<Actor, Deque<Mail>> terminalMails = new HashMap<>();
     private final Map<Address, Deque<Mail>> intermediateMails = new HashMap<>();
 
-    private final Sinks.Many<Transport> transportSink = Sinks.many().unicast().onBackpressureBuffer();
+    private final Sinks.Many<ImmutablePair<Transport, Sinks.One<Void>>> transportSink = Sinks.many().unicast()
+            .onBackpressureBuffer();
     private Disposable transportSinkSubscription = null;
-    private Status transportStatus = Status.CLOSED;
 
     public void open() {
-        if (transportStatus != Status.CLOSED) {
+        if (isTransportOpen()) {
             return;
         }
         transportSinkSubscription = transportSink.asFlux()
-                .subscribeOn(Schedulers.single())
-                .subscribe(transport -> {
-                    logger.fine("in " + this.toString() + " handling " + transport.toString());
-                });
-        transportStatus = Status.OPENED;
+                .subscribe(pair -> processTransport(pair.left, pair.right));
     }
 
     public void close() {
-        if (transportStatus != Status.OPENED) {
+        if (!isTransportOpen()) {
             return;
         }
         transportSinkSubscription.dispose();
         transportSinkSubscription = null;
-        transportStatus = Status.CLOSED;
+    }
+
+    // NOTE: there are different implementations of it:
+    // 1. returning flux of mails to receive (moving messages between each other)
+    // 2. returning signal of completion (like doing yourself and signalling)
+
+    // returns signal of process completion
+    public Mono<Void> transportDeliver(Transport transport) {
+        if (!isTransportOpen()) {
+            return Mono.error(new PostOfficeException("post office is closed for transport processing"));
+        }
+        Sinks.One<Void> sink = Sinks.one();
+        transportSink.emitNext(new ImmutablePair<Transport, Sinks.One<Void>>(transport, sink),
+                EmitFailureHandler.FAIL_FAST);
+        return sink.asMono();
     }
 
     public void applyMailMono(Mono<Mail> mono) {
@@ -101,8 +113,12 @@ public class PostOffice {
         });
     }
 
-    private enum Status {
-        OPENED,
-        CLOSED
+    private boolean isTransportOpen() {
+        return transportSinkSubscription != null;
+    }
+
+    private void processTransport(Transport transport, Sinks.One<Void> signal) {
+        logger.fine("in " + this.getClass().getName() + " handling " + transport.getClass().getName());
+        signal.emitEmpty(EmitFailureHandler.FAIL_FAST);
     }
 }
