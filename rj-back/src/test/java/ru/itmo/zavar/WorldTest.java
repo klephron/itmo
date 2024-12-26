@@ -148,6 +148,8 @@ public class WorldTest {
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
                 "A1", "B1", "C1");
+        Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188034"), "S3", "14"),
+                "A1", "B1", "C1");
 
         Transport transport1 = new Transport(10, 5D);
 
@@ -156,12 +158,21 @@ public class WorldTest {
         world.transports.add(transport1);
         world.transports.setRoute(transport1, route1);
         world.transports.start(transport1);
-
         world.actors.addActor(actor1);
+        world.actors.addActor(actor2);
+
         Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1, postOffice1,
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
-                    Mail mail = new Mail(i, "subject1", actor1, actor1, new Mail.Data("text"), 10);
+                    Mail mail = new Mail(i, "from actor1 to actor2", actor1, actor2, new Mail.Data(""), 1);
+                    sink.next(mail);
+                    return state;
+                }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
+
+        Actor.Schedule.Task task2 = world.actors.sendMailFlux(actor2, postOffice1,
+                Flux.generate(AtomicLong::new, (state, sink) -> {
+                    long i = state.getAndIncrement();
+                    Mail mail = new Mail(i, "from actor2 to actor1", actor2, actor1, new Mail.Data(""), 2);
                     sink.next(mail);
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
@@ -169,6 +180,7 @@ public class WorldTest {
         Thread.sleep(Duration.ofSeconds(5L));
 
         world.actors.deleteActorTask(actor1, task1);
+        world.actors.deleteActorTask(actor2, task2);
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.stop();

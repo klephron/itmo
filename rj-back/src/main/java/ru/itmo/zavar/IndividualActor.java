@@ -6,7 +6,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 public final class IndividualActor extends Actor {
 
     private final String name;

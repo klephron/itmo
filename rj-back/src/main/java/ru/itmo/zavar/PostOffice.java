@@ -29,7 +29,7 @@ public class PostOffice {
     private final Coordinates coordinates;
 
     private final Map<Actor, Deque<Mail>> terminalMails = new HashMap<>();
-    private final Map<Address, Deque<Mail>> intermediateMails = new HashMap<>();
+    private final Map<PostalAddress, Deque<Mail>> intermediateMails = new HashMap<>();
 
     private final Sinks.Many<ImmutablePair<Transport, Sinks.One<Void>>> transportSink = Sinks.many().unicast()
             .onBackpressureBuffer();
@@ -67,17 +67,11 @@ public class PostOffice {
     }
 
     public void applyMailMono(Mono<Mail> mono) {
-        mono.subscribe(m -> {
-            Deque<Mail> actorMails = terminalMails.computeIfAbsent(m.getReceiver(), k -> new ArrayDeque<>());
-            actorMails.push(m);
-        });
+        mono.subscribe(this::applyMail);
     }
 
     public void applyMailFlux(Flux<Mail> flux) {
-        flux.subscribe(m -> {
-            Deque<Mail> actorMails = terminalMails.computeIfAbsent(m.getReceiver(), k -> new ArrayDeque<>());
-            actorMails.push(m);
-        });
+        flux.subscribe(this::applyMail);
     }
 
     // NOTE: deque can be empty, because if trying to delete value (deque)
@@ -120,5 +114,16 @@ public class PostOffice {
     private void processTransport(Transport transport, Sinks.One<Void> signal) {
         logger.fine("in " + this.getClass().getName() + " handling " + transport.getClass().getName());
         signal.emitEmpty(EmitFailureHandler.FAIL_FAST);
+    }
+
+    private void applyMail(Mail mail) {
+        PostalAddress receiverAddress = mail.getReceiver().getAddress().postalAddress();
+        if (receiverAddress.equals(this.getAddress().postalAddress())) {
+            Deque<Mail> actorMails = terminalMails.computeIfAbsent(mail.getReceiver(), k -> new ArrayDeque<>());
+            actorMails.push(mail);
+        } else {
+            Deque<Mail> addressMails = intermediateMails.computeIfAbsent(receiverAddress, k -> new ArrayDeque<>());
+            addressMails.push(mail);
+        }
     }
 }
