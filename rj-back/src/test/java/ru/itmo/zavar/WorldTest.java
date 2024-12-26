@@ -139,22 +139,25 @@ public class WorldTest {
     public void postOfficeTransfer() throws InterruptedException {
         World world = new World();
 
-        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
+        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "1"), "S1", "12"),
                 new Coordinates(0, 5));
-        PostOffice postOffice2 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
+        PostOffice postOffice2 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "2"), "S1", "12"),
+                new Coordinates(5, 0));
+        PostOffice postOffice3 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "3"), "S1", "12"),
                 new Coordinates(5, 0));
 
-        Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2), true);
+        Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2, postOffice3), true);
 
-        Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
+        Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "1"), "S3", "14"),
                 "A1", "B1", "C1");
-        Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188034"), "S3", "14"),
+        Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "2"), "S3", "14"),
                 "A1", "B1", "C1");
 
         Transport transport1 = new Transport(10, 5D);
 
         world.offices.add(postOffice1);
         world.offices.add(postOffice2);
+        world.offices.add(postOffice3);
         world.transports.add(transport1);
         world.transports.setRoute(transport1, route1);
         world.transports.start(transport1);

@@ -107,15 +107,6 @@ public class PostOffice {
         });
     }
 
-    private boolean isTransportOpen() {
-        return transportSinkSubscription != null;
-    }
-
-    private void processTransport(Transport transport, Sinks.One<Void> signal) {
-        logger.fine("in " + this.getClass().getName() + " handling " + transport.getClass().getName());
-        signal.emitEmpty(EmitFailureHandler.FAIL_FAST);
-    }
-
     private void applyMail(Mail mail) {
         PostalAddress receiverAddress = mail.getReceiver().getAddress().postalAddress();
         if (receiverAddress.equals(this.getAddress().postalAddress())) {
@@ -125,5 +116,15 @@ public class PostOffice {
             Deque<Mail> addressMails = intermediateMails.computeIfAbsent(receiverAddress, k -> new ArrayDeque<>());
             addressMails.push(mail);
         }
+    }
+
+    private boolean isTransportOpen() {
+        return transportSinkSubscription != null;
+    }
+
+    private void processTransport(Transport transport, Sinks.One<Void> signal) {
+
+        logger.fine("in " + this.getClass().getName() + " handling " + transport.getClass().getName());
+        signal.emitEmpty(EmitFailureHandler.FAIL_FAST);
     }
 }
