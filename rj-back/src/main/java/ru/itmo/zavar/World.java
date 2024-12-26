@@ -31,7 +31,7 @@ public class World {
     public void stop() {
         for (var office : offices.entries.keySet()) {
             office.close();
-            logger.fine("closed " + office.toString());
+            logger.fine("closed " + office.getAddress());
         }
     }
 
@@ -60,7 +60,7 @@ public class World {
             if (entries.containsKey(actor)) {
                 return actor;
             }
-            logger.log(Level.INFO, "actot doesn't exists");
+            logger.info("actor doesn't exists");
             return null;
         }
 
@@ -132,7 +132,7 @@ public class World {
             PostOffice office = this.get(_office);
             if (office != null) {
                 office.open();
-                logger.fine("opened office " + _office.toString());
+                logger.fine("opened office " + office.getAddress());
             }
         }
 
@@ -154,7 +154,7 @@ public class World {
                 return;
             }
             entries.put(transport, null);
-            logger.fine("added transport " + transport.toString());
+            logger.fine("added transport " + transport.getNumber());
         }
 
         public Transport get(Transport transport) {

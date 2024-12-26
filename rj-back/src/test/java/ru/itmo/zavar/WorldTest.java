@@ -109,7 +109,7 @@ public class WorldTest {
         Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2), true);
         Route<PostOffice> route2 = new Route<PostOffice>(List.of(postOffice1, postOffice3), true);
 
-        Transport transport1 = new Transport(10, 5D);
+        Transport transport1 = new Transport(10, 5D, "T1");
 
         world.offices.add(postOffice1);
         world.offices.add(postOffice2);
@@ -153,7 +153,7 @@ public class WorldTest {
         Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "2"), "S3", "14"),
                 "A1", "B1", "C1");
 
-        Transport transport1 = new Transport(10, 5D);
+        Transport transport1 = new Transport(10, 5D, "T1");
 
         world.offices.add(postOffice1);
         world.offices.add(postOffice2);
@@ -167,7 +167,7 @@ public class WorldTest {
         Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1, postOffice1,
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
-                    Mail mail = new Mail(i, "from actor1 to actor2", actor1, actor2, new Mail.Data(""), 1);
+                    Mail mail = new Mail(i, "from actor1 to actor2 (need to transfer)", actor1, actor2, new Mail.Data(""), 1);
                     sink.next(mail);
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
@@ -175,7 +175,7 @@ public class WorldTest {
         Actor.Schedule.Task task2 = world.actors.sendMailFlux(actor2, postOffice1,
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
-                    Mail mail = new Mail(i, "from actor2 to actor1", actor2, actor1, new Mail.Data(""), 2);
+                    Mail mail = new Mail(i, "from actor2 to actor1 (no need to transfer)", actor2, actor1, new Mail.Data(""), 2);
                     sink.next(mail);
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));

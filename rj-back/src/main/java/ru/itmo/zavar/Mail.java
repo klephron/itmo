@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-@AllArgsConstructor
 @RequiredArgsConstructor
 @Getter
 @EqualsAndHashCode
@@ -21,42 +20,27 @@ public class Mail {
     private final Mail.Data mailData;
     private final long value;
     @Setter
-    private Mail.Status status = Mail.Status.RAW;
     private ArrayList<Mark> marks;
-    private LocalDateTime createdAt;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+    @Setter
+    private LocalDateTime appliedAt;
+    @Setter
     private LocalDateTime sentAt;
+    @Setter
     private LocalDateTime receivedAt;
 
-    public void applyMarks(ArrayList<Mark> marks) {
-        if (this.marks == null && marks != null) {
-            this.marks = marks;
-        } else {
-            throw new RuntimeException("Marks is already set");
+    public Status getStatus() {
+        if (appliedAt == null) {
+            return Status.CREATED;
         }
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        if (this.createdAt == null && createdAt != null) {
-            this.createdAt = createdAt;
-        } else {
-            throw new RuntimeException("Creation date is already set");
+        if (sentAt == null) {
+            return Status.APPLIED;
         }
-    }
-
-    public void setSentAt(LocalDateTime sentAt) {
-        if (this.sentAt == null && sentAt != null) {
-            this.sentAt = sentAt;
-        } else {
-            throw new RuntimeException("Sent date is already set");
+        if (receivedAt == null) {
+            return Status.SENT;
         }
-    }
-
-    public void setReceivedAt(LocalDateTime receivedAt) {
-        if (this.receivedAt == null && receivedAt != null) {
-            this.receivedAt = receivedAt;
-        } else {
-            throw new RuntimeException("Received date is already set");
-        }
+        return Status.RECEIVED;
     }
 
     public record Mark(Mark.Nominal markNominal, String country, String name) {
@@ -90,8 +74,8 @@ public class Mail {
     }
 
     public enum Status {
-        RAW,
         CREATED,
+        APPLIED,
         SENT,
         RECEIVED
     }

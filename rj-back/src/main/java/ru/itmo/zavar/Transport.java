@@ -3,6 +3,7 @@ package ru.itmo.zavar;
 import static ru.itmo.zavar.World.logger;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -18,9 +19,14 @@ import reactor.core.publisher.Sinks.EmitFailureHandler;
 @Getter
 @ToString
 public class Transport {
+    private final int capacity;
     private final List<Mail> mails;
     private final double speed; // units in second
-    private final Set<PostalAddress> deliveryAddresses;
+    private final String number;
+
+    // should be updated before processing post office
+    private final Set<PostalAddress> loadingAddresses; // which addresses transport loads
+    private final Set<PostalAddress> deliveryAddresses; // which it delivers
 
     // Navigation
     private Route<PostOffice> route;
@@ -33,9 +39,12 @@ public class Transport {
     Sinks.Many<Integer> sink = null;
     Disposable sinkFluxDisposable = null;
 
-    public Transport(int size, double speed, Coordinates latestCoordinates) {
-        this.mails = Arrays.asList(new Mail[size]);
+    public Transport(int capacity, double speed, String number, Coordinates latestCoordinates) {
+        this.capacity = capacity;
+        this.mails = new ArrayList<>(capacity);
         this.speed = speed;
+        this.number = number;
+        this.loadingAddresses = new HashSet<>();
         this.deliveryAddresses = new HashSet<>();
         this.route = null;
         this.routeLatestIndex = 0;
@@ -45,12 +54,8 @@ public class Transport {
         this.latestNanos = System.nanoTime();
     }
 
-    public Transport(int size, double speed) {
-        this(size, speed, new Coordinates(0., 0.));
-    }
-
-    public Transport() {
-        this(100, 10D);
+    public Transport(int size, double speed, String number) {
+        this(size, speed, number, new Coordinates(0., 0.));
     }
 
     // if new route -> start from first element
@@ -64,7 +69,7 @@ public class Transport {
         this.routeNextIndex = 0;
         this.routeLatestIndex = 0;
         // add all except current
-        this.deliveryAddresses.addAll(route.getStops().stream().map(po -> po.getAddress().postalAddress()).toList());
+        this.loadingAddresses.addAll(route.getStops().stream().map(po -> po.getAddress().postalAddress()).toList());
     }
 
     public void start() {
@@ -97,11 +102,11 @@ public class Transport {
                     return Mono.delay(delay).map(tick -> counter);
                 })
                 .subscribe(counter -> {
-                    updateDeliveryAddresses();
+                    updateLoadingDelivery();
                     this.visitPostOffice(counter);
                 });
 
-        logger.fine("started " + this.toString());
+        logger.fine("started " + this.getNumber());
         sink.emitNext(0, EmitFailureHandler.FAIL_FAST);
     }
 
@@ -132,23 +137,26 @@ public class Transport {
     }
 
     // should be called before visiting post office
-    private void updateDeliveryAddresses() {
+    private void updateLoadingDelivery() {
         if (route == null || route.getStops().isEmpty()) {
             return;
         }
         // [to->0, 1, from->2, 3, 4]
         for (int i = this.routeLatestIndex; i < this.routeNextIndex; ++i) {
-            this.deliveryAddresses.add(route.getStops().get(i).getAddress().postalAddress());
+            this.loadingAddresses.add(route.getStops().get(i).getAddress().postalAddress());
         }
         if (this.route.isCyclic() && this.routeLatestIndex > this.routeNextIndex) {
             for (int i = this.routeLatestIndex; i < this.route.getStops().size(); ++i) {
-                this.deliveryAddresses.add(route.getStops().get(i).getAddress().postalAddress());
+                this.loadingAddresses.add(route.getStops().get(i).getAddress().postalAddress());
             }
             for (int i = 0; i < this.routeNextIndex; ++i) {
-                this.deliveryAddresses.add(route.getStops().get(i).getAddress().postalAddress());
+                this.loadingAddresses.add(route.getStops().get(i).getAddress().postalAddress());
             }
         }
-        this.deliveryAddresses.remove(route.getStops().get(this.routeNextIndex).getAddress().postalAddress());
+        this.loadingAddresses.remove(route.getStops().get(this.routeNextIndex).getAddress().postalAddress());
+
+        this.deliveryAddresses.clear();
+        this.deliveryAddresses.add(route.getStops().get(this.routeNextIndex).getAddress().postalAddress());
     }
 
     private void visitPostOffice(Integer counter) {
@@ -162,9 +170,6 @@ public class Transport {
         // process Post Office
         PostOffice postOffice = route.getStops().get(this.routeNextIndex);
         Mono<Void> signal = postOffice.transportDeliver(this);
-
-        logger.fine("delivery addresses when delivering to " + postOffice.getAddress().postalAddress()
-                + " are " + this.getDeliveryAddresses());
 
         // handle on error or complete
         signal.subscribe(v -> {

@@ -2,10 +2,14 @@ package ru.itmo.zavar;
 
 import static ru.itmo.zavar.World.logger;
 
+import java.time.LocalDateTime;
 import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -107,7 +111,9 @@ public class PostOffice {
         });
     }
 
+    // TODO: handle marks
     private void applyMail(Mail mail) {
+        mail.setAppliedAt(LocalDateTime.now());
         PostalAddress receiverAddress = mail.getReceiver().getAddress().postalAddress();
         if (receiverAddress.equals(this.getAddress().postalAddress())) {
             Deque<Mail> actorMails = terminalMails.computeIfAbsent(mail.getReceiver(), k -> new ArrayDeque<>());
@@ -123,8 +129,71 @@ public class PostOffice {
     }
 
     private void processTransport(Transport transport, Sinks.One<Void> signal) {
+        logger.fine("transport " + transport.getNumber() + " with delivery " + transport.getDeliveryAddresses()
+                + " and loading " + transport.getLoadingAddresses() + " visited post office "
+                + this.getAddress().postalAddress());
 
-        logger.fine("in " + this.getClass().getName() + " handling " + transport.getClass().getName());
+        // deliver from transport
+        Iterator<Mail> iterator = transport.getMails().iterator();
+        while (iterator.hasNext()) {
+            Mail mail = iterator.next();
+            PostalAddress receiverAddress = mail.getReceiver().getAddress().postalAddress();
+
+            if (transport.getDeliveryAddresses().contains(receiverAddress)) {
+                if (receiverAddress.equals(this.getAddress().postalAddress())) {
+                    Deque<Mail> actorMails = terminalMails.computeIfAbsent(mail.getReceiver(), k -> new ArrayDeque<>());
+                    actorMails.push(mail);
+                } else {
+                    Deque<Mail> addressMails = intermediateMails.computeIfAbsent(receiverAddress,
+                            k -> new ArrayDeque<>());
+                    addressMails.push(mail);
+                }
+                iterator.remove();
+                logger.fine("transport " + transport.getNumber() + " delivered mail " + mail.getId() + ", "
+                        + mail.getSubject() + " to post office" + this.getAddress().postalAddress());
+            }
+        }
+
+        // load transport
+        PriorityQueue<Deque<Mail>> postalBuckets = new PriorityQueue<Deque<Mail>>(new DequeMailComparator());
+        postalBuckets.addAll(
+                transport.getLoadingAddresses().stream().map(da -> intermediateMails.get(da)).filter(pb -> pb != null)
+                        .toList());
+
+        int mxCount = transport.getCapacity() - transport.getMails().size();
+        for (int i = 0; i < mxCount; ++i) {
+            Deque<Mail> bucket = postalBuckets.poll();
+            if (bucket == null || bucket.isEmpty()) {
+                break;
+            }
+            Mail mail = bucket.pollLast();
+            transport.getMails().addLast(mail);
+            logger.fine("transport " + transport.getNumber() + " loaded mail " + mail.getId() + ", "
+                    + mail.getSubject() + " from post office" + this.getAddress().postalAddress());
+            if (!bucket.isEmpty()) {
+                postalBuckets.add(bucket);
+            }
+        }
+
         signal.emitEmpty(EmitFailureHandler.FAIL_FAST);
+    }
+
+    private class DequeMailComparator implements Comparator<Deque<Mail>> {
+        @Override
+        public int compare(Deque<Mail> lsv, Deque<Mail> rsv) {
+            if (lsv.isEmpty() && rsv.isEmpty()) {
+                return 0;
+            }
+            if (lsv.isEmpty()) {
+                return 1;
+            }
+            if (rsv.isEmpty()) {
+                return -1;
+            }
+            Mail lsvMail = lsv.peekLast();
+            Mail rsvMail = rsv.peekLast();
+            return lsvMail.getAppliedAt().compareTo(rsvMail.getAppliedAt());
+        }
+
     }
 }
