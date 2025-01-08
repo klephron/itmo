@@ -1,8 +1,0 @@
-method main():
-var
-  e;
-begin
-  cast!<int>(e);
-  make!<int>(e);
-  print!(e);
-end;

@@ -15,7 +15,7 @@ tokens {
   ARGS;
   FUNC;
   ELEMS;
-  RETURNS;
+  RETURN;
   BODY;
   CALLER;
   INDEXER;
@@ -27,6 +27,12 @@ tokens {
   CONST_STR;
   TYPE;
   BUILTIN;
+  IMPORT;
+  CLASS;
+  TYPENAMES;
+  PARENTS;
+  MODIFIER;
+  METHODS;
 }
 
 @headers{
@@ -39,6 +45,7 @@ source
 
 source_item
   : func_def
+  | class_def
   ;
 
 
@@ -50,31 +57,63 @@ type_ref
   ;
 
 
+// VARIABLES & PARAMETERS
+// until ';' symbol
+variable_list
+  : (identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR type_ref? identifier*)
+  ;
+
+parameter_list
+  : (parameter (',' parameter)*)?  -> parameter*
+  ;
+
+parameter
+  : identifier (':' type_ref)? -> ^(PARAM identifier type_ref?)
+  ;
+
+
 // FUNCTIONS
 func_def
-  : ls='method' func_signature func_body? ';' -> ^(FUNC[$ls, "FUNC"] func_signature ^(BODY func_body)? )
+  : ls='method' func_signature func_def_sel? ';' -> ^(FUNC[$ls, "FUNC"] func_signature func_def_sel?)
+  ;
+
+func_def_sel
+  : func_body | func_import_spec
   ;
 
 func_signature
-  : identifier '(' arg_def_list ')' (':' type_ref?) -> identifier arg_def_list ^(RETURNS type_ref?)
-  ;
-
-arg_def_list
-  : ls=arg_def (',' arg_def)*  -> ^(PARAMS arg_def*)
-  |                            -> ^(PARAMS )
-  ;
-
-arg_def
-  : iden=identifier (':' type_ref)? -> ^(PARAM identifier type_ref?)
+  : identifier '(' parameter_list ')' (':' type_ref?) -> identifier ^(PARAMS parameter_list) ^(RETURN type_ref?)
   ;
 
 func_body
-  : ('var' func_body_var * ) statement_block -> ^(VARS (func_body_var)* ) ^(statement_block)
-  | statement_block -> ^(VARS ) ^(statement_block)
+  : ('var' variable_list*)? statement_block -> ^(BODY ^(VARS variable_list*) ^(statement_block))
   ;
 
-func_body_var
-  : ( identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR type_ref? identifier*)
+func_import_spec
+  : 'from' (import_entry=str 'in')? import_lib=str -> ^(IMPORT $import_lib $import_entry?)
+  ;
+
+
+// CLASSES
+class_def
+  : 'class' name=identifier class_typename_list? class_parent_list? ('var' variable_list*) class_method_list ';'
+      -> ^(CLASS $name ^(TYPENAMES class_typename_list?) ^(PARENTS class_parent_list?) ^(VARS variable_list*) ^(METHODS class_method_list))
+  ;
+
+class_typename_list
+  : '<' (identifier (',' identifier)* )? '>' -> identifier*
+  ;
+
+class_parent_list
+  : ':' identifier (',' identifier)*  -> identifier*
+  ;
+
+class_method_list
+  : 'begin' class_method* 'end'
+  ;
+
+class_method
+  : (modifier='public' | modifier='private')? func_def -> ^(FUNC func_def ^(MODIFIER $modifier)?)
   ;
 
 

@@ -67,7 +67,7 @@ func_signature [void *FUNC_n] returns [ hir_subroutine *v ]
     type_base *type_ref_v = NULL;
   }
   : id=identifier params=param_def_list
-      ^(RETURNS (type_ref { type_ref_v = $type_ref.v; })?)
+      ^(RETURN (type_ref { type_ref_v = $type_ref.v; })?)
       {
     $v = hir_build_signature(ANTLR3_USERP(), $FUNC_n, $id.v, $params.v, type_ref_v);
   }
