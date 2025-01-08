@@ -105,14 +105,26 @@ public class WebSocketServer {
     }
 
     // @ChannelHandler.Sharable
-    // private static class PingPongWebSocketHandler extends SimpleChannelInboundHandler<PingWebSocketFrame> {
-    //     @Override
-    //     protected void channelRead0(ChannelHandlerContext ctx, PingWebSocketFrame msg) throws Exception {
-    //         ctx.writeAndFlush(new PongWebSocketFrame(msg.content().retain()));
-    //     }
+    // private static class PingPongWebSocketHandler extends
+    // SimpleChannelInboundHandler<PingWebSocketFrame> {
+    // @Override
+    // protected void channelRead0(ChannelHandlerContext ctx, PingWebSocketFrame
+    // msg) throws Exception {
+    // ctx.writeAndFlush(new PongWebSocketFrame(msg.content().retain()));
+    // }
     // }
 
     public static class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
+
+        @Override
+        public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+            logger.info("added handler " + ctx.channel().id());
+        }
+
+        @Override
+        public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+            logger.info("removed handler " + ctx.channel().id());
+        }
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
@@ -135,5 +147,4 @@ public class WebSocketServer {
             }
         }
     }
-
 }
