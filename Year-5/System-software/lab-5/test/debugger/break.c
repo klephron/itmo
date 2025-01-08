@@ -3,12 +3,13 @@
 #include "debugger/context/context.h"
 
 #include <stdint.h>
+#include <stdio.h>
 
 Test(debugger, break_1) {
   hashset_breakpoint *breaks = hashset_breakpoint_new();
 
-  breakpoint *b1 = breakpoint_new(1, 0, 1, UINT64_MAX, UINT64_MAX);
-  breakpoint *b2 = breakpoint_new(2, 12, 1, UINT64_MAX, UINT64_MAX);
+  breakpoint *b1 = breakpoint_new(1, 0, 1, NULL, UINT64_MAX);
+  breakpoint *b2 = breakpoint_new(2, 12, 1, NULL, UINT64_MAX);
 
   hashset_breakpoint_insert(breaks, b1);
 
