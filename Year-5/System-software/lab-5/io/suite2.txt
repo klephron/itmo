@@ -31,9 +31,9 @@ begin
   print!(cast!<char>(80));
   if e == "string" then begin
     print!("is it actually ok?");
-  end; else begin
+  end else begin
     print!("no, not ok");
-  end;
+  end
   fun_2(e, e, e, e, e, e, e, e);
   print!(7 * 720);
   print!(factorial_recursive(10));

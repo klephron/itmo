@@ -4,6 +4,7 @@ MKDIR       := $(MKDIR)
 CP          := $(CP)
 CC          := $(CC)
 FLAGS       := $(FLAGS)
+FLAGS_GEN   := -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-type-limits
 LIBS        := $(LIBS)
 INCS        := $(INCS)
 AR          := $(AR)
@@ -58,7 +59,7 @@ $(GEN_DIR)/%.c $(GEN_DIR)/%.h $(GEN_DIR)/%.tokens: %.g3 | $(DIRS) $(TKNS.ANTLR3_
 
 # compile generated files
 $(BUILD_DIR)/%.o: $(GEN_DIR)/%.c $(HDRS) | $(DIRS)
-	$(CC) $(FLAGS) -c $< -o $@ $(INCS)
+	$(CC) $(FLAGS_GEN) $(FLAGS) -c $< -o $@ $(INCS)
 
 # compile object files excluding generated
 $(BUILD_DIR)/%.o: %.c $(HDRS) | $(DIRS)

@@ -52,7 +52,7 @@ type_ref
 
 // FUNCTIONS
 func_def
-  : ls='method' func_signature (func_body | ';') -> ^(FUNC[$ls, "FUNC"] func_signature ^(BODY func_body)? )
+  : ls='method' func_signature func_body? ';' -> ^(FUNC[$ls, "FUNC"] func_signature ^(BODY func_body)? )
   ;
 
 func_signature
@@ -93,7 +93,7 @@ statement_if
   ;
 
 statement_block
-  : 'begin' statement* 'end' ';' -> ^('begin' statement*)
+  : 'begin' statement* 'end' -> ^('begin' statement*)
   ;
 
 statement_while
@@ -101,12 +101,12 @@ statement_while
   ;
 
 statement_do
-  : 'repeat' statement statement_do_condition -> ^('repeat' statement_do_condition statement)
+  : 'repeat' statement statement_do_condition ';' -> ^('repeat' statement_do_condition statement)
   ;
 
 statement_do_condition
-  : 'while'^ expr ';'!
-  | 'until'^ expr ';'!
+  : 'while'^ expr
+  | 'until'^ expr
   ;
 
 statement_break

@@ -18,7 +18,7 @@ begin
   while i != digits_l do begin
     digits[i] = cast!<int>(0);
     i = i + 1;
-  end;
+  end
 
   ++n;
   while cast!<bool>(--n) do begin
@@ -30,19 +30,19 @@ begin
         digits[s] = cast!<int>(0);
         --ones_c;
         ++s;
-      end;
+      end
       digits[s] = cast!<int>(1);
       ++ones_c;
-    end; else begin
+    end else begin
       while digits[s] == cast!<int>(0) do begin
         digits[s] = cast!<int>(1);
         ++ones_c;
         ++s;
-      end;
+      end
       digits[s] = cast!<int>(0);
       --ones_c;
-    end;
+    end
 
     print!(ones_c);
-  end;
+  end
 end;

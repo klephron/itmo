@@ -1,8 +1,9 @@
 method read():void;
-method write():void;
+method write(a: int):void;
 
 method fun4():
 begin
+  4;
 end;
 
 method fun3():
@@ -23,31 +24,31 @@ begin
   fun3();
 end;
 
-method main():
+method main(a, b):
 var
-  a, b, c, d : int;
+  c, d : int;
   e;
   f, g: array [,] of array [,] of int;
   n;
 begin
   repeat
-      begin
-        a = 4;
-        break;
-      end;
-    until true;
+    begin
+      a = 4;
+      break;
+    end
+  until true;
 
   while (make!<int>(a) == cast!<int>(1)) do begin
     a = 2;
     break;
-  end;
+  end
 
   repeat
-      begin
-        a = 4;
-        break;
-      end;
-    while true;
+    begin
+      a = 4;
+      break;
+    end
+  while true;
 
   4 * 10;
 
@@ -58,15 +59,14 @@ begin
   e = d;
   a[4] = 5;
 
-  main(a, b)()(d);
-  main[a,b][][d];
+  main(a, b);
 
   ++n;
   while (--n) do begin
     a = read();
     write(a);
     if a == 0 then break;
-  end;
+  end
 
   main();
 end;

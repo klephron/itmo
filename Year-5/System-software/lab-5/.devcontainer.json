@@ -15,6 +15,9 @@
     "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:latest": {},
     "ghcr.io/devcontainers-contrib/features/fzf:latest": {},
     "ghcr.io/social-anthrax/eza-devcontainer/eza:0": {},
-    "ghcr.io/jungaretti/features/ripgrep:1": {}
+    "ghcr.io/jungaretti/features/ripgrep:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "nvmInstallPath": "/home/user/.nvm"
+    }
   }
 }
