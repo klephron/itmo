@@ -1,23 +1,22 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.websocket;
 
 import static ru.itmo.zavar.World.logger;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import ru.itmo.zavar.websocket.handler.WebSocketInitialHandler;
 
 public class WebSocketServer {
     public static final int DEFAULT_BOSS_THREADS = 1;
@@ -29,10 +28,16 @@ public class WebSocketServer {
     private int workerThreads;
     private int port;
 
+    private final SessionManager sessionManager;
+    private final WebSocketInitialHandler webSocketInitialHandler;
+
     public WebSocketServer(int port, int bossThreads, int workerThreads) {
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
         this.port = port;
+
+        this.sessionManager = new SessionManager();
+        this.webSocketInitialHandler = new WebSocketInitialHandler(this.sessionManager);
     }
 
     public WebSocketServer(int port) {
@@ -49,6 +54,7 @@ public class WebSocketServer {
         ServerBootstrap boot = new ServerBootstrap();
         boot.group(boss, worker)
                 .channel(NioServerSocketChannel.class)
+                .handler(new LoggingHandler(LogLevel.INFO))
                 .childHandler(getWebSocketServerInitializer());
         try {
             future = boot.bind(port).sync(); // wait until binding
@@ -72,7 +78,7 @@ public class WebSocketServer {
         }
     }
 
-    public ChannelInitializer<Channel> getWebSocketServerInitializer() {
+    private ChannelInitializer<Channel> getWebSocketServerInitializer() {
         return new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel ch) throws Exception {
@@ -80,71 +86,54 @@ public class WebSocketServer {
                 pipeline.addLast(getHttpServerCodec());
                 pipeline.addLast(getHttpObjectAggregator());
                 pipeline.addLast(getWebSocketServerProtocolHandler());
-                pipeline.addLast(getWebSocketFrameHandler());
+                pipeline.addLast(getWebSocketInitialHandler());
             }
         };
     }
 
-    public HttpServerCodec getHttpServerCodec() {
+    private HttpServerCodec getHttpServerCodec() {
         return new HttpServerCodec();
     }
 
-    public HttpObjectAggregator getHttpObjectAggregator() {
+    private HttpObjectAggregator getHttpObjectAggregator() {
         return new HttpObjectAggregator(Integer.MAX_VALUE);
     }
 
-    public WebSocketServerProtocolHandler getWebSocketServerProtocolHandler() {
+    private WebSocketServerProtocolHandler getWebSocketServerProtocolHandler() {
         return new WebSocketServerProtocolHandler(
                 WebSocketServerProtocolConfig.newBuilder()
                         .websocketPath("/ws")
                         .build());
     }
 
-    public WebSocketFrameHandler getWebSocketFrameHandler() {
-        return new WebSocketFrameHandler();
+    private WebSocketInitialHandler getWebSocketInitialHandler() {
+        return webSocketInitialHandler;
     }
 
-    // @ChannelHandler.Sharable
-    // private static class PingPongWebSocketHandler extends
-    // SimpleChannelInboundHandler<PingWebSocketFrame> {
-    // @Override
-    // protected void channelRead0(ChannelHandlerContext ctx, PingWebSocketFrame
-    // msg) throws Exception {
-    // ctx.writeAndFlush(new PongWebSocketFrame(msg.content().retain()));
-    // }
+    // private WebSocketFrameHandler getWebSocketFrameHandler() {
+    //     return new WebSocketFrameHandler();
     // }
 
-    public static class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
+    // private class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
+    //     @Override
+    //     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
+    //         if (frame instanceof TextWebSocketFrame) {
+    //             String request = ((TextWebSocketFrame) frame).text().trim();
+    //             logger.fine("received '" + request + "'");
+    //             String response = request.toUpperCase();
+    //             ctx.channel().writeAndFlush(new TextWebSocketFrame(response));
+    //             logger.fine("sent '" + response + "'");
+    //         } else {
+    //             String message = "unsupported frame type: " + frame.getClass().getName();
+    //             throw new UnsupportedOperationException(message);
+    //         }
+    //     }
 
-        @Override
-        public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-            logger.info("added handler " + ctx.channel().id());
-        }
-
-        @Override
-        public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-            logger.info("removed handler " + ctx.channel().id());
-        }
-
-        @Override
-        protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
-            if (frame instanceof TextWebSocketFrame) {
-                String request = ((TextWebSocketFrame) frame).text().trim();
-                logger.fine("received '" + request + "'");
-                String response = request.toUpperCase();
-                ctx.channel().writeAndFlush(new TextWebSocketFrame(response));
-                logger.fine("sent '" + response + "'");
-            } else {
-                String message = "unsupported frame type: " + frame.getClass().getName();
-                throw new UnsupportedOperationException(message);
-            }
-        }
-
-        @Override
-        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
-                super.userEventTriggered(ctx, evt);
-            }
-        }
-    }
+    //     @Override
+    //     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+    //         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
+    //             super.userEventTriggered(ctx, evt);
+    //         }
+    //     }
+    // }
 }

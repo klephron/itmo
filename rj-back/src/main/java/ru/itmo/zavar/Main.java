@@ -1,6 +1,7 @@
 package ru.itmo.zavar;
 
 import java.util.logging.Logger;
+import ru.itmo.zavar.websocket.WebSocketServer;
 
 public class Main {
     private static final Logger logger = Logger.getLogger(World.class.getName());
@@ -14,6 +15,5 @@ public class Main {
         }));
 
         server.start();
-
     }
 }
