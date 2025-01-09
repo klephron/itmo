@@ -16,7 +16,10 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import ru.itmo.zavar.websocket.handler.WebSocketInitialHandler;
+import ru.itmo.zavar.websocket.pipeline.WebSocketSessionHandler;
+import ru.itmo.zavar.websocket.pipeline.WebSocketTextDecoder;
+import ru.itmo.zavar.websocket.pipeline.WebSocketTextEncoder;
+import ru.itmo.zavar.websocket.pipeline.WebSocketWorldHandler;
 
 public class WebSocketServer {
     public static final int DEFAULT_BOSS_THREADS = 1;
@@ -29,7 +32,10 @@ public class WebSocketServer {
     private int port;
 
     private final SessionManager sessionManager;
-    private final WebSocketInitialHandler webSocketInitialHandler;
+    private final WebSocketSessionHandler webSocketSessionHandler;
+    private final WebSocketWorldHandler webSocketWorldHandler;
+    private final WebSocketTextEncoder webSocketTextEncoder;
+    private final WebSocketTextDecoder webSocketTextDecoder;
 
     public WebSocketServer(int port, int bossThreads, int workerThreads) {
         this.bossThreads = bossThreads;
@@ -37,7 +43,10 @@ public class WebSocketServer {
         this.port = port;
 
         this.sessionManager = new SessionManager();
-        this.webSocketInitialHandler = new WebSocketInitialHandler(this.sessionManager);
+        this.webSocketWorldHandler = new WebSocketWorldHandler();
+        this.webSocketSessionHandler = new WebSocketSessionHandler(this.sessionManager, this.webSocketWorldHandler);
+        this.webSocketTextEncoder = new WebSocketTextEncoder();
+        this.webSocketTextDecoder = new WebSocketTextDecoder();
     }
 
     public WebSocketServer(int port) {
@@ -86,7 +95,9 @@ public class WebSocketServer {
                 pipeline.addLast(getHttpServerCodec());
                 pipeline.addLast(getHttpObjectAggregator());
                 pipeline.addLast(getWebSocketServerProtocolHandler());
-                pipeline.addLast(getWebSocketInitialHandler());
+                pipeline.addLast(getWebSocketTextEncoder());
+                pipeline.addLast(getWebSocketTextDecoder());
+                pipeline.addLast(WebSocketSessionHandler.NAME, getWebSocketSessionHandler());
             }
         };
     }
@@ -106,34 +117,45 @@ public class WebSocketServer {
                         .build());
     }
 
-    private WebSocketInitialHandler getWebSocketInitialHandler() {
-        return webSocketInitialHandler;
+    private WebSocketSessionHandler getWebSocketSessionHandler() {
+        return webSocketSessionHandler;
+    }
+
+    private WebSocketTextEncoder getWebSocketTextEncoder() {
+        return webSocketTextEncoder;
+    }
+
+    private WebSocketTextDecoder getWebSocketTextDecoder() {
+        return webSocketTextDecoder;
     }
 
     // private WebSocketFrameHandler getWebSocketFrameHandler() {
-    //     return new WebSocketFrameHandler();
+    // return new WebSocketFrameHandler();
     // }
 
-    // private class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
-    //     @Override
-    //     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
-    //         if (frame instanceof TextWebSocketFrame) {
-    //             String request = ((TextWebSocketFrame) frame).text().trim();
-    //             logger.fine("received '" + request + "'");
-    //             String response = request.toUpperCase();
-    //             ctx.channel().writeAndFlush(new TextWebSocketFrame(response));
-    //             logger.fine("sent '" + response + "'");
-    //         } else {
-    //             String message = "unsupported frame type: " + frame.getClass().getName();
-    //             throw new UnsupportedOperationException(message);
-    //         }
-    //     }
+    // private class WebSocketFrameHandler extends
+    // SimpleChannelInboundHandler<WebSocketFrame> {
+    // @Override
+    // protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame)
+    // throws Exception {
+    // if (frame instanceof TextWebSocketFrame) {
+    // String request = ((TextWebSocketFrame) frame).text().trim();
+    // logger.fine("received '" + request + "'");
+    // String response = request.toUpperCase();
+    // ctx.channel().writeAndFlush(new TextWebSocketFrame(response));
+    // logger.fine("sent '" + response + "'");
+    // } else {
+    // String message = "unsupported frame type: " + frame.getClass().getName();
+    // throw new UnsupportedOperationException(message);
+    // }
+    // }
 
-    //     @Override
-    //     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-    //         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
-    //             super.userEventTriggered(ctx, evt);
-    //         }
-    //     }
+    // @Override
+    // public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws
+    // Exception {
+    // if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
+    // super.userEventTriggered(ctx, evt);
+    // }
+    // }
     // }
 }

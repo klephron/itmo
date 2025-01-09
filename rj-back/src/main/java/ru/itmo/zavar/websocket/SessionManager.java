@@ -6,29 +6,34 @@ import java.util.HashMap;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class SessionManager {
-    @Getter
     private final HashMap<ChannelId, Session> sessions = new HashMap<>();
 
-    public void addSession(Channel channel) {
-        this.addSession(new Session(channel));
+    public Session addSession(Channel channel) {
+        var session = new Session(channel);
+        return this.addSession(session);
     }
 
-    public void addSession(Session session) {
+    public Session addSession(Session session) {
         sessions.put(session.getChannelId(), session);
         logger.info("added " + session);
+        return session;
     }
 
-    public void removeSession(Session session) {
-        removeSession(session.getChannel());
+    public Session removeSession(Session session) {
+        return this.removeSession(session.getChannel());
     }
 
-    public void removeSession(Channel channel) {
+    public Session removeSession(Channel channel) {
         Session session = sessions.remove(channel.id());
         logger.info("removed " + session);
+        return session;
+    }
+
+    public Session getSession(Channel channel) {
+        return sessions.get(channel.id());
     }
 }
