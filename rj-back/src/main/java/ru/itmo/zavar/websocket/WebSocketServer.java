@@ -128,34 +128,4 @@ public class WebSocketServer {
     private WebSocketTextDecoder getWebSocketTextDecoder() {
         return webSocketTextDecoder;
     }
-
-    // private WebSocketFrameHandler getWebSocketFrameHandler() {
-    // return new WebSocketFrameHandler();
-    // }
-
-    // private class WebSocketFrameHandler extends
-    // SimpleChannelInboundHandler<WebSocketFrame> {
-    // @Override
-    // protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame)
-    // throws Exception {
-    // if (frame instanceof TextWebSocketFrame) {
-    // String request = ((TextWebSocketFrame) frame).text().trim();
-    // logger.fine("received '" + request + "'");
-    // String response = request.toUpperCase();
-    // ctx.channel().writeAndFlush(new TextWebSocketFrame(response));
-    // logger.fine("sent '" + response + "'");
-    // } else {
-    // String message = "unsupported frame type: " + frame.getClass().getName();
-    // throw new UnsupportedOperationException(message);
-    // }
-    // }
-
-    // @Override
-    // public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws
-    // Exception {
-    // if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
-    // super.userEventTriggered(ctx, evt);
-    // }
-    // }
-    // }
 }
