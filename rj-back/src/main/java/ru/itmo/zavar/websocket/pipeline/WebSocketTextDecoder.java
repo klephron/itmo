@@ -21,11 +21,11 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
 
     @Override
     protected void decode(ChannelHandlerContext ctx, TextWebSocketFrame frame, List<Object> out) throws Exception {
+        final String json = frame.text();
         try {
-            final String json = frame.text();
             Message message = gson.fromJson(json, Message.class);
             if (message == null) {
-                ctx.writeAndFlush(new ErrorEvent(null, null, "message is null"));
+                ctx.writeAndFlush(new ErrorEvent(message, "message is null"));
                 return;
             }
 
@@ -40,7 +40,7 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
             // otherwise add just a frame
         } catch (JsonSyntaxException e) {
             logger.warning(e.getMessage());
-            ctx.writeAndFlush(new ErrorEvent(null, null, "bad json syntax"));
+            ctx.writeAndFlush(new ErrorEvent(json, "bad json syntax"));
         }
 
     }

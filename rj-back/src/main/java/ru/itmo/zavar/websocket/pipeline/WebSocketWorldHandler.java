@@ -20,7 +20,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                 ctx.writeAndFlush(new Event(subscribeMessage.getOp()));
                 return;
             default:
-                ctx.writeAndFlush(new ErrorEvent(msg.getOp(), msg, "unknown message op"));
+                ctx.writeAndFlush(new ErrorEvent(msg, "unknown op"));
                 break;
         }
     }
