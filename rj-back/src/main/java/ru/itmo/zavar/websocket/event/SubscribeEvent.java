@@ -13,8 +13,12 @@ import ru.itmo.zavar.websocket.pack.TransportPack;
 public class SubscribeEvent extends Event {
     public static final String EVENT = "subscribe";
 
+    @SerializedName("args")
+    private final Args args;
+
     public SubscribeEvent(Args args) {
         super(EVENT);
+        this.args = args;
     }
 
     @RequiredArgsConstructor

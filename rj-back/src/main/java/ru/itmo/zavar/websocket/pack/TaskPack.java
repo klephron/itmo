@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import ru.itmo.zavar.PostOffice;
 
 @RequiredArgsConstructor
 @Getter
@@ -16,7 +15,7 @@ public class TaskPack {
     @SerializedName("kind")
     private final Kind kind;
     @SerializedName("post_office_id")
-    private final PostOffice postOfficeId;
+    private final Long postOfficeId;
 
     public enum Kind {
         @SerializedName("SEND_MAIL_ONE")
@@ -36,7 +35,7 @@ public class TaskPack {
         @SerializedName("mail")
         private final MailPack mail;
 
-        public SendMailOne(Long id, PostOffice postOfficeId, MailPack mail) {
+        public SendMailOne(Long id, Long postOfficeId, MailPack mail) {
             super(id, Kind.SEND_MAIL_ONE, postOfficeId);
             this.mail = mail;
         }
@@ -50,7 +49,7 @@ public class TaskPack {
         @SerializedName("mail")
         private final MailPack mail;
 
-        public SendMailRepeated(Long id, PostOffice postOfficeId, Integer intervalMs, MailPack mail) {
+        public SendMailRepeated(Long id, Long postOfficeId, Integer intervalMs, MailPack mail) {
             super(id, Kind.SEND_MAIL_REPEATED, postOfficeId);
             this.intervalMs = intervalMs;
             this.mail = mail;
@@ -67,7 +66,7 @@ public class TaskPack {
         @SerializedName("mark")
         private final MarkPack mark;
 
-        public SendMarkRepeated(Long id, Kind kind, PostOffice postOfficeId, Integer intervalMs, Integer n,
+        public SendMarkRepeated(Long id, Kind kind, Long postOfficeId, Integer intervalMs, Integer n,
                 MarkPack mark) {
             super(id, kind, postOfficeId);
             this.intervalMs = intervalMs;

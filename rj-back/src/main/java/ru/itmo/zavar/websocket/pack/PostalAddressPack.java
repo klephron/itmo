@@ -2,9 +2,11 @@ package ru.itmo.zavar.websocket.pack;
 
 import com.google.gson.annotations.SerializedName;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
+@Getter
 public class PostalAddressPack {
     @SerializedName("country")
     private final String country;

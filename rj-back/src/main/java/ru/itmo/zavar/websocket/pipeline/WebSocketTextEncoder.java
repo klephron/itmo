@@ -1,5 +1,7 @@
 package ru.itmo.zavar.websocket.pipeline;
 
+import static ru.itmo.zavar.World.logger;
+
 import java.util.List;
 
 import com.google.gson.Gson;
@@ -16,7 +18,12 @@ public class WebSocketTextEncoder extends MessageToMessageEncoder<Event> {
 
     @Override
     protected void encode(ChannelHandlerContext arg0, Event msg, List<Object> out) throws Exception {
-        out.add(new TextWebSocketFrame(gson.toJson(msg)));
+        try {
+            String json = gson.toJson(msg);
+            out.add(new TextWebSocketFrame(json));
+        } catch (Exception e) {
+            logger.warning(e.getMessage());
+        }
     }
 
 }

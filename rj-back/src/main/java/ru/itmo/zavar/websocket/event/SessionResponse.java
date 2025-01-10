@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 public class SessionResponse extends Event {
-    public static final String EVENT = "subscribe";
+    public static final String EVENT = "session";
 
     @SerializedName("args")
     private final Args args;

@@ -1,5 +1,7 @@
 package ru.itmo.zavar.websocket.pipeline;
 
+import static ru.itmo.zavar.World.logger;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -74,7 +76,8 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
 
     private boolean subscribeOnUpdateNext(Channel channel) {
         channel.writeAndFlush(
-                new SubscribeEvent(new SubscribeEvent.Args(channel.id().asLongText(), null, null, null)));
+                new SubscribeEvent(
+                        new SubscribeEvent.Args(channel.id().asLongText(), null, null, null)));
         return true;
     }
 

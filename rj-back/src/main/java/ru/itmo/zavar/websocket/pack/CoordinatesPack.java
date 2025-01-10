@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public class CoordinatesPack {
     @SerializedName("x")
-    private final double x;
+    private final Double x;
     @SerializedName("y")
-    private final double y;
+    private final Double y;
 }
