@@ -19,9 +19,11 @@ import reactor.core.publisher.Sinks.EmitFailureHandler;
 @ToString
 public class Transport {
     private final int capacity;
-    private final List<Mail> mails;
     private final double speed; // units in second
+    private final double ops; // operations in second (inserts/removes)
     private final String number;
+
+    private final List<Mail> mails;
 
     // should be updated before processing post office
     private final Set<PostalAddress> loadingAddresses; // which addresses transport loads
@@ -40,11 +42,12 @@ public class Transport {
 
     private PostOffice atPostOffice = null;
 
-    public Transport(int capacity, double speed, String number, Coordinates latestCoordinates) {
+    public Transport(int capacity, double speed, double ops, String number, Coordinates latestCoordinates) {
         this.capacity = capacity;
-        this.mails = new ArrayList<>(capacity);
         this.speed = speed;
+        this.ops = ops;
         this.number = number;
+        this.mails = new ArrayList<>(capacity);
         this.loadingAddresses = new HashSet<>();
         this.deliveryAddresses = new HashSet<>();
         this.route = null;
@@ -58,8 +61,8 @@ public class Transport {
         this.atPostOffice = null;
     }
 
-    public Transport(int size, double speed, String number) {
-        this(size, speed, number, new Coordinates(0., 0.));
+    public Transport(int capacity, double speed, double ops, String number) {
+        this(capacity, speed, ops, number, new Coordinates(0., 0.));
     }
 
     // if new route -> start from first element

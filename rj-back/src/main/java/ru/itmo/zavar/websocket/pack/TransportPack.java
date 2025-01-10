@@ -14,12 +14,14 @@ public class TransportPack {
     private final Long id;
     @SerializedName("capacity")
     private final Integer capacity;
-    @SerializedName("mails")
-    private final List<MailPack> mails;
     @SerializedName("speed")
     private final Double speed; // units in second
+    @SerializedName("ops")
+    private final Double ops; // operations per second (insert/remove)
     @SerializedName("number")
     private final String number;
+    @SerializedName("mails")
+    private final List<MailPack> mails;
     @SerializedName("route_mail_ids")
     private final List<Long> routeMails;
     @SerializedName("loading_addresses")

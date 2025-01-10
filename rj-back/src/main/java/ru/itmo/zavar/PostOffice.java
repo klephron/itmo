@@ -2,6 +2,7 @@ package ru.itmo.zavar;
 
 import static ru.itmo.zavar.World.logger;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.Comparator;
@@ -44,7 +45,9 @@ public class PostOffice {
             return;
         }
         transportSinkSubscription = transportSink.asFlux()
-                .subscribe(pair -> processTransport(pair.left, pair.right));
+                .flatMapSequential(pair -> Mono.fromCallable(() -> processTransport(pair.left, pair.right))
+                        .flatMap(delay -> Mono.delay(delay).thenReturn(delay)))
+                .subscribe();
     }
 
     public void close() {
@@ -128,7 +131,11 @@ public class PostOffice {
         return transportSinkSubscription != null;
     }
 
-    private void processTransport(Transport transport, Sinks.One<Void> signal) {
+    // returns process time
+    private Duration processTransport(Transport transport, Sinks.One<Void> signal) {
+        long startNanos = System.nanoTime();
+        int operations = 0;
+
         logger.fine("transport " + transport.getNumber() + " with delivery " + transport.getDeliveryAddresses()
                 + " and loading " + transport.getLoadingAddresses() + " visited post office "
                 + this.getAddress().postalAddress());
@@ -151,6 +158,7 @@ public class PostOffice {
                 iterator.remove();
                 logger.fine("transport " + transport.getNumber() + " delivered mail " + mail.getId() + ", "
                         + mail.getSubject() + " to post office" + this.getAddress().postalAddress());
+                operations += 1;
             }
         }
 
@@ -168,6 +176,7 @@ public class PostOffice {
             }
             Mail mail = bucket.pollLast();
             transport.getMails().addLast(mail);
+            operations += 1;
             logger.fine("transport " + transport.getNumber() + " loaded mail " + mail.getId() + ", "
                     + mail.getSubject() + " from post office" + this.getAddress().postalAddress());
             if (!bucket.isEmpty()) {
@@ -176,6 +185,13 @@ public class PostOffice {
         }
 
         signal.emitEmpty(EmitFailureHandler.FAIL_FAST);
+
+        long delayNanos = (long) ((double) operations / transport.getOps() * 1_000_000_000)
+                - (System.nanoTime() - startNanos);
+        var delay = Duration.ofNanos(delayNanos < 0 ? 0 : delayNanos);
+        logger.fine("delayed by " + delay);
+
+        return delay;
     }
 
     private class DequeMailComparator implements Comparator<Deque<Mail>> {

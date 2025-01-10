@@ -109,7 +109,7 @@ public class WorldTest {
         Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2), true);
         Route<PostOffice> route2 = new Route<PostOffice>(List.of(postOffice1, postOffice3), true);
 
-        Transport transport1 = new Transport(10, 5D, "T1");
+        Transport transport1 = new Transport(10, 5D, 10, "T1");
 
         world.offices.add(postOffice1);
         world.offices.add(postOffice2);
@@ -153,7 +153,7 @@ public class WorldTest {
         Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "2"), "S3", "14"),
                 "A1", "B1", "C1");
 
-        Transport transport1 = new Transport(10, 5D, "T1");
+        Transport transport1 = new Transport(10, 5D, 10, "T1");
 
         world.offices.add(postOffice1);
         world.offices.add(postOffice2);
