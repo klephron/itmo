@@ -6,13 +6,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-public class SessionEvent extends Event {
+public class SessionResponse extends Event {
     public static final String EVENT = "subscribe";
 
     @SerializedName("args")
     private final Args args;
 
-    public SessionEvent(Args args) {
+    public SessionResponse(Args args) {
         super(EVENT);
         this.args = args;
     }

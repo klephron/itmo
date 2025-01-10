@@ -11,7 +11,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelHandler;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import ru.itmo.zavar.websocket.event.ErrorEvent;
+import ru.itmo.zavar.websocket.event.ErrorResponse;
 import ru.itmo.zavar.websocket.message.Message;
 import ru.itmo.zavar.websocket.message.SubscribeMessage;
 
@@ -25,7 +25,7 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
         try {
             Message message = gson.fromJson(json, Message.class);
             if (message == null) {
-                ctx.writeAndFlush(new ErrorEvent(message, "message is null"));
+                ctx.writeAndFlush(new ErrorResponse(message, "message is null"));
                 return;
             }
 
@@ -40,7 +40,7 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
             // otherwise add just a frame
         } catch (JsonSyntaxException e) {
             logger.warning(e.getMessage());
-            ctx.writeAndFlush(new ErrorEvent(json, "bad json syntax"));
+            ctx.writeAndFlush(new ErrorResponse(json, "bad json syntax"));
         }
 
     }

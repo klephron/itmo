@@ -16,6 +16,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import ru.itmo.zavar.World;
 import ru.itmo.zavar.websocket.pipeline.WebSocketSessionHandler;
 import ru.itmo.zavar.websocket.pipeline.WebSocketTextDecoder;
 import ru.itmo.zavar.websocket.pipeline.WebSocketTextEncoder;
@@ -27,6 +28,8 @@ public class WebSocketServer {
     public static final int DEFAULT_PORT = 8080;
 
     private ChannelFuture future;
+
+    private final World world;
     private int bossThreads;
     private int workerThreads;
     private int port;
@@ -37,24 +40,25 @@ public class WebSocketServer {
     private final WebSocketTextEncoder webSocketTextEncoder;
     private final WebSocketTextDecoder webSocketTextDecoder;
 
-    public WebSocketServer(int port, int bossThreads, int workerThreads) {
+    public WebSocketServer(World world, int port, int bossThreads, int workerThreads) {
+        this.world = world;
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
         this.port = port;
 
         this.sessionManager = new SessionManager();
-        this.webSocketWorldHandler = new WebSocketWorldHandler();
+        this.webSocketWorldHandler = new WebSocketWorldHandler(this.sessionManager, this.world);
         this.webSocketSessionHandler = new WebSocketSessionHandler(this.sessionManager, this.webSocketWorldHandler);
         this.webSocketTextEncoder = new WebSocketTextEncoder();
         this.webSocketTextDecoder = new WebSocketTextDecoder();
     }
 
-    public WebSocketServer(int port) {
-        this(port, DEFAULT_BOSS_THREADS, DEFAULT_WORKER_THREADS);
+    public WebSocketServer(World world, int port) {
+        this(world, port, DEFAULT_BOSS_THREADS, DEFAULT_WORKER_THREADS);
     }
 
-    public WebSocketServer() {
-        this(DEFAULT_PORT, DEFAULT_BOSS_THREADS, DEFAULT_WORKER_THREADS);
+    public WebSocketServer(World world) {
+        this(world, DEFAULT_PORT, DEFAULT_BOSS_THREADS, DEFAULT_WORKER_THREADS);
     }
 
     public void start() throws InterruptedException {

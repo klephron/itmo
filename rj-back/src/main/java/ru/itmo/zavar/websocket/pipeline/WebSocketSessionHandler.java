@@ -7,7 +7,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import ru.itmo.zavar.websocket.Session;
 import ru.itmo.zavar.websocket.SessionManager;
-import ru.itmo.zavar.websocket.event.SessionEvent;
+import ru.itmo.zavar.websocket.event.SessionResponse;
 
 // NOTE: can be optimized by replacing this handler with another, but will make state code duplicated
 @ChannelHandler.Sharable
@@ -29,7 +29,11 @@ public class WebSocketSessionHandler extends SimpleChannelInboundHandler<WebSock
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        sessionManager.removeSession(ctx.channel());
+        Session session = sessionManager.getSession(ctx.channel());
+        if (session.getSubscription() != null && session.getSubscription().isSubscribed()) {
+            session.getSubscription().cancel();
+        }
+        sessionManager.removeSession(session);
     }
 
     @Override
@@ -37,8 +41,9 @@ public class WebSocketSessionHandler extends SimpleChannelInboundHandler<WebSock
         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
             Session session = this.sessionManager.addSession(ctx.channel());
             ctx.channel().writeAndFlush(
-                    new SessionEvent(
-                            new SessionEvent.Args(session.getChannelId().asLongText(), SessionEvent.Status.CREATED)));
+                    new SessionResponse(
+                            new SessionResponse.Args(session.getChannelId().asLongText(),
+                                    SessionResponse.Status.CREATED)));
             ctx.pipeline().addAfter(NAME, WebSocketWorldHandler.NAME, webSocketWorldHandler);
         } else {
             super.userEventTriggered(ctx, evt);

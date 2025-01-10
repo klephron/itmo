@@ -20,7 +20,7 @@ public class SubscribeEvent extends Event {
     @RequiredArgsConstructor
     @Getter
     public static class Args {
-        @SerializedName("ups")
+        @SerializedName("session_id")
         private final String sessionId;
         @SerializedName("post_offices")
         private final List<PostOfficePack> postoffices;

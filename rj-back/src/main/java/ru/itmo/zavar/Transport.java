@@ -35,8 +35,8 @@ public class Transport {
     private Coordinates nextCoordinates;
     private double latestNanos;
 
-    Sinks.Many<Integer> sink;
-    Disposable sinkFluxDisposable;
+    private Sinks.Many<Integer> sink;
+    private Disposable sinkFluxDisposable;
 
     private PostOffice atPostOffice = null;
 
@@ -93,7 +93,7 @@ public class Transport {
         this.routeNextIndex = index;
         this.sink = Sinks.many().unicast().onBackpressureBuffer();
 
-        sinkFluxDisposable = sink.asFlux()
+        this.sinkFluxDisposable = sink.asFlux()
                 .flatMap(counter -> {
                     PostOffice postOffice = route.getStops().get(this.routeNextIndex);
                     double distance = Coordinates.getDistance(this.latestCoordinates, postOffice.getCoordinates());
@@ -111,7 +111,7 @@ public class Transport {
                 });
 
         logger.fine("started " + this.getNumber());
-        sink.emitNext(0, EmitFailureHandler.FAIL_FAST);
+        this.sink.emitNext(0, EmitFailureHandler.FAIL_FAST);
     }
 
     // calculate position based on prevCoordinates, nextCoordinates and speed
