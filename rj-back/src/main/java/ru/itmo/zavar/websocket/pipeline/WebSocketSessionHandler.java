@@ -36,7 +36,9 @@ public class WebSocketSessionHandler extends SimpleChannelInboundHandler<WebSock
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
             Session session = this.sessionManager.addSession(ctx.channel());
-            ctx.channel().writeAndFlush(new SessionEvent(session, "created"));
+            ctx.channel().writeAndFlush(
+                    new SessionEvent(
+                            new SessionEvent.Args(session.getChannelId().asLongText(), SessionEvent.Status.CREATED)));
             ctx.pipeline().addAfter(NAME, WebSocketWorldHandler.NAME, webSocketWorldHandler);
         } else {
             super.userEventTriggered(ctx, evt);

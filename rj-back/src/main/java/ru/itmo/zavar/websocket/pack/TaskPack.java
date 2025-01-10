@@ -1,0 +1,78 @@
+package ru.itmo.zavar.websocket.pack;
+
+import com.google.gson.annotations.SerializedName;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import ru.itmo.zavar.PostOffice;
+
+@RequiredArgsConstructor
+@Getter
+// NOTE: generates N marks or N mails each interval (not synced)
+// if interval_ms is null -> do single
+public class TaskPack {
+    @SerializedName("id")
+    private final Long id;
+    @SerializedName("kind")
+    private final Kind kind;
+    @SerializedName("post_office_id")
+    private final PostOffice postOfficeId;
+
+    public enum Kind {
+        @SerializedName("SEND_MAIL_ONE")
+        SEND_MAIL_ONE,
+        @SerializedName("SEND_MAIL_REPEATED")
+        SEND_MAIL_REPEATED,
+        @SerializedName("RECEIVE_MAIL_ONE")
+        RECEIVE_MAIL_ONE,
+        @SerializedName("RECEIVE_MAIL_MANY")
+        RECEIVE_MAIL_MANY,
+        @SerializedName("SEND_MARK_REPEATED")
+        SEND_MARK_REPEATED,
+    }
+
+    @Getter
+    public class SendMailOne extends TaskPack {
+        @SerializedName("mail")
+        private final MailPack mail;
+
+        public SendMailOne(Long id, PostOffice postOfficeId, MailPack mail) {
+            super(id, Kind.SEND_MAIL_ONE, postOfficeId);
+            this.mail = mail;
+        }
+
+    }
+
+    @Getter
+    public class SendMailRepeated extends TaskPack {
+        @SerializedName("interval_ms")
+        private final Integer intervalMs;
+        @SerializedName("mail")
+        private final MailPack mail;
+
+        public SendMailRepeated(Long id, PostOffice postOfficeId, Integer intervalMs, MailPack mail) {
+            super(id, Kind.SEND_MAIL_REPEATED, postOfficeId);
+            this.intervalMs = intervalMs;
+            this.mail = mail;
+        }
+
+    }
+
+    @Getter
+    public class SendMarkRepeated extends TaskPack {
+        @SerializedName("interval_ms")
+        private final Integer intervalMs;
+        @SerializedName("n")
+        private final Integer n;
+        @SerializedName("mark")
+        private final MarkPack mark;
+
+        public SendMarkRepeated(Long id, Kind kind, PostOffice postOfficeId, Integer intervalMs, Integer n,
+                MarkPack mark) {
+            super(id, kind, postOfficeId);
+            this.intervalMs = intervalMs;
+            this.n = n;
+            this.mark = mark;
+        }
+    }
+}

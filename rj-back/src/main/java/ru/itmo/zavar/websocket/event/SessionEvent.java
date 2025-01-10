@@ -4,24 +4,31 @@ import com.google.gson.annotations.SerializedName;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import ru.itmo.zavar.websocket.Session;
 
 @Getter
 public class SessionEvent extends Event {
+    public static final String EVENT = "subscribe";
+
     @SerializedName("args")
     private final Args args;
 
-    public SessionEvent(Session session, String status) {
-        super("session");
-        this.args = new Args(session.getChannelId().asLongText(), status);
+    public SessionEvent(Args args) {
+        super(EVENT);
+        this.args = args;
     }
 
     @RequiredArgsConstructor
     @Getter
-    public class Args {
+    public static class Args {
         @SerializedName("session_id")
         private final String sessionId;
         @SerializedName("status")
-        private final String status;
+        private final Status status;
     }
+
+    public enum Status {
+        @SerializedName("CREATED")
+        CREATED,
+    }
+
 }

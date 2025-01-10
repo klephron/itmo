@@ -35,8 +35,10 @@ public class Transport {
     private Coordinates nextCoordinates;
     private double latestNanos;
 
-    Sinks.Many<Integer> sink = null;
-    Disposable sinkFluxDisposable = null;
+    Sinks.Many<Integer> sink;
+    Disposable sinkFluxDisposable;
+
+    private PostOffice atPostOffice = null;
 
     public Transport(int capacity, double speed, String number, Coordinates latestCoordinates) {
         this.capacity = capacity;
@@ -51,6 +53,9 @@ public class Transport {
         this.latestCoordinates = latestCoordinates;
         this.nextCoordinates = latestCoordinates;
         this.latestNanos = System.nanoTime();
+        this.sink = null;
+        this.sinkFluxDisposable = null;
+        this.atPostOffice = null;
     }
 
     public Transport(int size, double speed, String number) {
@@ -168,6 +173,7 @@ public class Transport {
 
         // process Post Office
         PostOffice postOffice = route.getStops().get(this.routeNextIndex);
+        this.atPostOffice = postOffice;
         Mono<Void> signal = postOffice.transportDeliver(this);
 
         // handle on error or complete
@@ -186,6 +192,7 @@ public class Transport {
     }
 
     private void headFurther(Integer counter) {
+        this.atPostOffice = null;
         Integer nextIndex = route.getNext(this.routeLatestIndex);
         if (nextIndex == null) {
             sink.emitComplete(EmitFailureHandler.FAIL_FAST);
