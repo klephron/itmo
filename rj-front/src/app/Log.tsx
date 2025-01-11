@@ -7,7 +7,7 @@ import { clientUse } from '@state/client';
 
 type Props = {};
 
-export default function LogInfo(props: Props) {
+export default function Log(props: Props) {
   const clientGet = clientUse();
   const logsGet = logsUse();
   const [getLogCommand, setLogCommand] = createSignal('');

@@ -3,9 +3,10 @@ import { SessionResponse } from '@websocket/event/session-response';
 
 import styles from './index.module.scss';
 
-import LogInfo from './LogInfo';
+import Log from './Log';
 import { logsAppend } from '@state/log';
 import { clientSet } from '@state/client';
+import Map from './Map';
 
 export default function App() {
   function onSessionListen(e: SessionResponse) {
@@ -27,8 +28,8 @@ export default function App() {
       <h1>Reactive Java View</h1>
       <div class={styles.outer}>
         <div class={styles.top}>
-          <div class={styles.map}>TODO: MAP</div>
-          <LogInfo />
+          <Map />
+          <Log />
         </div>
         <div class={styles.view}>TODO: VIEW</div>
       </div>

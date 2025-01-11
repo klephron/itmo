@@ -1,12 +1,9 @@
-import { onMount } from 'solid-js';
+import { onCleanup, onMount } from 'solid-js';
+
+import styles from './index.module.scss';
 
 // NOTE: set canvas width and height same as width and height of elements
-type Props = {
-  width: number;
-  height: number;
-};
-
-function Map(props: Props) {
+export default function Map() {
   const zoomFactor = 1.1;
   const zoomMin = 0.2;
   const zoomMax = 5;
@@ -26,6 +23,7 @@ function Map(props: Props) {
   let dragStartCoordinateY = coordinateY;
 
   let canvas: HTMLCanvasElement;
+  let container: HTMLDivElement;
   let ctx: CanvasRenderingContext2D | null;
 
   const objects = generateObjects(1000);
@@ -49,6 +47,11 @@ function Map(props: Props) {
     return objs;
   }
 
+  function onWindowResize() {
+    canvas!.width = container!.offsetWidth;
+    canvas!.height = container!.offsetHeight;
+  }
+
   onMount(() => {
     ctx = canvas!.getContext('2d');
     if (ctx == null) {
@@ -56,7 +59,13 @@ function Map(props: Props) {
       return;
     }
 
+    onWindowResize();
+    window.addEventListener('resize', onWindowResize);
     canvasPlayScene(ctx);
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('resize', onWindowResize);
   });
 
   function onMouseDown(e: MouseEvent) {
@@ -225,23 +234,15 @@ function Map(props: Props) {
   }
 
   return (
-    <canvas
-      ref={canvas!}
-      style={{
-        border: '1px solid grey',
-        'border-radius': '2px',
-        width: props.width + 'px',
-        height: props.height + 'px',
-      }}
-      width={props.width}
-      height={props.height}
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
-      onMouseMove={onMouseMove}
-      onWheel={onWheel}
-      onContextMenu={(e) => e.preventDefault()}
-    ></canvas>
+    <div class={styles.map} ref={container!}>
+      <canvas
+        ref={canvas!}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onMouseMove={onMouseMove}
+        onWheel={onWheel}
+        onContextMenu={(e) => e.preventDefault()}
+      ></canvas>
+    </div>
   );
 }
-
-export default Map;
