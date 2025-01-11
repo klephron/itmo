@@ -18,7 +18,8 @@
     "rootDir": "./",
     "paths": {
       "@websocket/*": ["./src/websocket/*"],
-      "@app/*": ["./src/app/*"]
+      "@app/*": ["./src/app/*"],
+      "@state/*": ["./src/state/*"]
     },
     /* Linting */
     "strict": true,

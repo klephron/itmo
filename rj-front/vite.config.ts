@@ -15,6 +15,10 @@ export default defineConfig({
         find: '@app',
         replacement: fileURLToPath(new URL('./src/app/', import.meta.url)),
       },
+      {
+        find: '@state',
+        replacement: fileURLToPath(new URL('./src/state/', import.meta.url)),
+      },
     ],
   },
 });
