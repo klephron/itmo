@@ -1,4 +1,4 @@
-import { Message } from "./message";
+import { Message } from './message';
 
 export interface SubscribeMessage extends Message {
   args: Args;
