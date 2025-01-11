@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onMount } from "solid-js";
+import { onMount } from 'solid-js';
 
 // NOTE: set canvas width and height same as width and height of elements
 type Props = {
@@ -17,7 +17,7 @@ function Map(props: Props) {
   let zoom = 1;
   let fps = 0;
   let drawTimeMs = 0;
-  let play = true;
+  const play = true;
 
   let isDragging = false;
   let dragStartClientX = 0;
@@ -28,31 +28,31 @@ function Map(props: Props) {
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | null;
 
-  let objects = generateObjects(1000)
+  const objects = generateObjects(1000);
 
   function generateObjects(cnt: number) {
     function getRandomInt(max: number) {
       return Math.floor(Math.random() * max);
     }
 
-    const colors = ["red", "green", "blue", "yellow", "white", "purple"];
+    const colors = ['red', 'green', 'blue', 'yellow', 'white', 'purple'];
     const objs = [];
 
     for (let i = 0; i < cnt; ++i) {
       const obj = {
-        "x": getRandomInt(10000),
-        "y": getRandomInt(10000),
-        "color": colors[getRandomInt(colors.length)]
-      }
-      objs.push(obj)
+        x: getRandomInt(10000),
+        y: getRandomInt(10000),
+        color: colors[getRandomInt(colors.length)],
+      };
+      objs.push(obj);
     }
     return objs;
   }
 
   onMount(() => {
-    ctx = canvas.getContext("2d");
+    ctx = canvas!.getContext('2d');
     if (ctx == null) {
-      alert("2d is not supported");
+      alert('2d is not supported');
       return;
     }
 
@@ -72,8 +72,8 @@ function Map(props: Props) {
 
   function onMouseMove(e: MouseEvent) {
     if (isDragging) {
-      let dragX = (e.clientX - dragStartClientX) / zoom;
-      let dragY = (e.clientY - dragStartClientY) / zoom;
+      const dragX = (e.clientX - dragStartClientX) / zoom;
+      const dragY = (e.clientY - dragStartClientY) / zoom;
 
       coordinateX = dragStartCoordinateX - dragX;
       coordinateY = dragStartCoordinateY - dragY;
@@ -89,8 +89,8 @@ function Map(props: Props) {
   function onWheel(e: WheelEvent) {
     e.preventDefault();
 
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
+    const mouseX = e.clientX - canvas!.offsetLeft;
+    const mouseY = e.clientY - canvas!.offsetTop;
 
     const zoomBefore = zoom;
 
@@ -110,12 +110,12 @@ function Map(props: Props) {
   }
 
   function canvasClear(ctx: CanvasRenderingContext2D) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas!.width, canvas!.height);
   }
 
   function canvasDrawGrid(ctx: CanvasRenderingContext2D) {
-    const width = canvas.width;
-    const height = canvas.height;
+    const width = canvas!.width;
+    const height = canvas!.height;
     const gridWidth = 50;
     const gridHeight = 50;
 
@@ -130,15 +130,11 @@ function Map(props: Props) {
       ctx.moveTo(x - offsetX, -gridHeight);
       ctx.lineTo(x - offsetX, (height + gridHeight) / zoom);
     }
-    for (
-      let y = -gridHeight;
-      y < (height + gridHeight) / zoom;
-      y += gridHeight
-    ) {
+    for (let y = -gridHeight; y < (height + gridHeight) / zoom; y += gridHeight) {
       ctx.moveTo(-gridWidth, y - offsetY);
       ctx.lineTo((width + gridWidth) / zoom, y - offsetY);
     }
-    ctx.strokeStyle = "#ccc";
+    ctx.strokeStyle = '#ccc';
 
     ctx.stroke();
     ctx.restore();
@@ -148,23 +144,23 @@ function Map(props: Props) {
     const infoWidth = 250;
     const infoHeight = 30;
 
-    let width = canvas.width;
+    const width = canvas!.width;
 
-    ctx.fillStyle = "gray";
+    ctx.fillStyle = 'gray';
     ctx.fillRect(width - infoWidth, 0, infoWidth, infoHeight);
 
-    ctx.font = "12px Arial";
-    ctx.fillStyle = "white";
+    ctx.font = '12px Arial';
+    ctx.fillStyle = 'white';
     const text =
-      "X: " +
+      'X: ' +
       coordinateX.toFixed(0) +
-      ", Y: " +
+      ', Y: ' +
       coordinateY.toFixed(0) +
-      ", Z: " +
+      ', Z: ' +
       zoom.toFixed(2) +
-      ", fps: " +
+      ', fps: ' +
       fps.toFixed(0) +
-      ", ms: " +
+      ', ms: ' +
       drawTimeMs.toFixed(0);
 
     const textM = ctx.measureText(text);
@@ -187,7 +183,7 @@ function Map(props: Props) {
       ctx.arc(object.x, object.y, radius, 0, 2 * Math.PI, false);
       ctx.fillStyle = object.color;
       ctx.fill();
-      ctx.strokeStyle = "#003300";
+      ctx.strokeStyle = '#003300';
       ctx.stroke();
     }
 
@@ -232,10 +228,10 @@ function Map(props: Props) {
     <canvas
       ref={canvas!}
       style={{
-        border: "1px solid grey",
-        "border-radius": "2px",
-        width: props.width + "px",
-        height: props.height + "px",
+        border: '1px solid grey',
+        'border-radius': '2px',
+        width: props.width + 'px',
+        height: props.height + 'px',
       }}
       width={props.width}
       height={props.height}
