@@ -13,7 +13,7 @@ public class RoutePack {
     @SerializedName("id")
     private final Long id;
     @SerializedName("post_office_ids")
-    private final List<Long> stops;
+    private final List<Long> postOfficeIds;
     @SerializedName("is_cyclic")
     private final Boolean isCyclic;
 }

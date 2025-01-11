@@ -18,12 +18,12 @@ public class TransportPack {
     private final Double speed; // units in second
     @SerializedName("ops")
     private final Double ops; // operations per second (insert/remove)
-    @SerializedName("number")
-    private final String number;
+    @SerializedName("license_plate")
+    private final String licensePlate;
     @SerializedName("mails")
     private final List<MailPack> mails;
-    @SerializedName("route_mail_ids")
-    private final List<Long> routeMails;
+    @SerializedName("route_post_office_ids")
+    private final List<Long> routePostOfficeIds;
     @SerializedName("loading_addresses")
     private final List<PostalAddressPack> loadingAddresses;
     @SerializedName("delivery_addresses")

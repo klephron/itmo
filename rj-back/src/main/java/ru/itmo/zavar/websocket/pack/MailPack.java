@@ -14,10 +14,10 @@ public class MailPack {
     private final Long id;
     @SerializedName("subject")
     private final String subject;
-    @SerializedName("sender_id")
-    private final String senderId;
-    @SerializedName("receiver_id")
-    private final String receiverId;
+    @SerializedName("sender_actor_id")
+    private final Long senderActorId;
+    @SerializedName("receiver_actor_id")
+    private final Long receiverActorId;
     @SerializedName("text")
     private final String text;
     @SerializedName("value")
@@ -25,7 +25,7 @@ public class MailPack {
     @SerializedName("marks")
     private final List<MarkPack> marks;
     @SerializedName("status")
-    private final String status;
+    private final Status status;
     @SerializedName("created_at")
     private final String createdAt;
     @SerializedName("applied_at")
@@ -34,4 +34,15 @@ public class MailPack {
     private final String sentAt;
     @SerializedName("received_at")
     private final String receivedAt;
+
+    public enum Status {
+        @SerializedName("CREATED")
+        CREATED,
+        @SerializedName("APPLIED")
+        APPLIED,
+        @SerializedName("SENT")
+        SENT,
+        @SerializedName("RECEIVED")
+        RECEIVED,
+    }
 }
