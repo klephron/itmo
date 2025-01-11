@@ -7,6 +7,7 @@ import Log from './Log';
 import { logsAppend } from '@state/log';
 import { clientSet } from '@state/client';
 import Map from './Map';
+import View from './View';
 
 export default function App() {
   function onSessionListen(e: SessionResponse) {
@@ -31,7 +32,7 @@ export default function App() {
           <Map />
           <Log />
         </div>
-        <div class={styles.view}>TODO: VIEW</div>
+        <View />
       </div>
     </>
   );

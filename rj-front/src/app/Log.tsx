@@ -1,13 +1,10 @@
-import { WebSocketClient } from '@websocket/client';
 import { logsUse, logsAppend } from '@state/log';
 import { createSignal } from 'solid-js';
 
 import styles from './index.module.scss';
 import { clientUse } from '@state/client';
 
-type Props = {};
-
-export default function Log(props: Props) {
+export default function Log() {
   const clientGet = clientUse();
   const logsGet = logsUse();
   const [getLogCommand, setLogCommand] = createSignal('');
