@@ -29,7 +29,7 @@ export class WebSocketClient {
 
   /* API METHODS */
   sendGeneric(data: Message, callback: (e: Event) => void) {
-    this.dispatcher.dispatch(data.op, callback)
+    this.dispatcher.onetime(data.op, callback)
     this.ws.send(JSON.stringify(data))
   }
 }
@@ -41,8 +41,8 @@ class Dispatcher {
     this.callbacks = new Map();
   }
 
-  // onetime
-  public dispatch(
+  // add onetime callback
+  public onetime(
     op: string,
     callback: (e: any) => void,
     predicate: (e: any) => boolean = (_) => true
@@ -50,6 +50,7 @@ class Dispatcher {
     this.insert(op, callback, true, predicate);
   }
 
+  // add stream event callback
   public listen(
     op: string,
     callback: (e: any) => void,
