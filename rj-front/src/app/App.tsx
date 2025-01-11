@@ -25,7 +25,7 @@ export default function App() {
 
   return (
     <>
-      <h1>Reactive Java View</h1>
+      <h1>Mail Simulation</h1>
       <div class={styles.outer}>
         <div class={styles.top}>
           <Map />

@@ -7,7 +7,7 @@ export default function Map() {
   const zoomFactor = 1.1;
   const zoomMin = 0.2;
   const zoomMax = 5;
-  const fpsMax = 60;
+  const fpsMax = 10;
 
   let coordinateX = 0;
   let coordinateY = 0;
