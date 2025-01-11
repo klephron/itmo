@@ -5,10 +5,9 @@ import styles from './index.module.scss';
 
 import LogInfo from './LogInfo';
 import { logsAppend } from '@state/log';
+import { clientSet } from '@state/client';
 
 export default function App() {
-  const client = new WebSocketClient('ws://localhost:8088/ws', onSessionListen, onOpen, onClose);
-
   function onSessionListen(e: SessionResponse) {
     logsAppend(JSON.stringify(e), true);
   }
@@ -21,13 +20,15 @@ export default function App() {
     logsAppend('websocket session closed');
   }
 
+  clientSet(new WebSocketClient('ws://localhost:8088/ws', onSessionListen, onOpen, onClose));
+
   return (
     <>
       <h1>Reactive Java View</h1>
       <div class={styles.outer}>
         <div class={styles.top}>
           <div class={styles.map}>TODO: MAP</div>
-          <LogInfo client={client} />
+          <LogInfo />
         </div>
         <div class={styles.view}>TODO: VIEW</div>
       </div>

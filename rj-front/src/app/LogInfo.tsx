@@ -3,12 +3,12 @@ import { logsUse, logsAppend } from '@state/log';
 import { createSignal } from 'solid-js';
 
 import styles from './index.module.scss';
+import { clientUse } from '@state/client';
 
-type Props = {
-  client: WebSocketClient;
-};
+type Props = {};
 
 export default function LogInfo(props: Props) {
+  const clientGet = clientUse();
   const logsGet = logsUse();
   const [getLogCommand, setLogCommand] = createSignal('');
 
@@ -19,7 +19,7 @@ export default function LogInfo(props: Props) {
       logsAppend(cmd, false);
       setLogCommand('');
       const msg = JSON.parse(cmd);
-      props.client.sendGeneric(msg, (e) => {
+      clientGet()!.sendGeneric(msg, (e) => {
         logsAppend(JSON.stringify(e), true);
       });
     } catch (error: any) {
