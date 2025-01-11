@@ -1,12 +1,18 @@
 import { WebSocketClient } from '@websocket/client';
 import { createSignal } from 'solid-js';
+import { logsAppend } from './log';
+import { SessionResponse } from '@websocket/event/session-response';
 
-const [_clientGet, _clientSet] = createSignal<WebSocketClient | undefined>(undefined);
+export const [clientGet, clientSet] = createSignal<WebSocketClient | undefined>(undefined);
 
-export function clientUse() {
-  return _clientGet;
+export function clientOnSessionListen(e: SessionResponse) {
+  logsAppend(JSON.stringify(e), true);
 }
 
-export function clientSet(e: WebSocketClient) {
-  return _clientSet(e);
+export function clientOnOpen() {
+  logsAppend('websocket session opened');
+}
+
+export function clientOnClose() {
+  logsAppend('websocket session closed');
 }

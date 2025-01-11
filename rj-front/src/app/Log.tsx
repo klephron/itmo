@@ -1,12 +1,11 @@
-import { logsUse, logsAppend } from '@state/log';
+import { logsAppend } from '@state/log';
 import { createSignal } from 'solid-js';
 
 import styles from './index.module.scss';
-import { clientUse } from '@state/client';
+import { clientGet } from '@state/client';
+import LogText from './LogText';
 
 export default function Log() {
-  const clientGet = clientUse();
-  const logsGet = logsUse();
   const [getLogCommand, setLogCommand] = createSignal('');
 
   // won't make subscriptions
@@ -34,7 +33,7 @@ export default function Log() {
 
   return (
     <div class={styles.log}>
-      <textarea class={styles.log_textarea} value={logsGet()} disabled></textarea>
+      <LogText />
       <div class={styles.log_input}>
         <button onClick={sendLogCommand}>Send</button>
         <input

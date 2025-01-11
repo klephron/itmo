@@ -1,6 +1,9 @@
 import { Event } from './event/event';
 import { SessionResponse } from './event/session-response';
+import { SubscribeEvent } from './event/subscribe-event';
+import { SubscribeResponse } from './event/subscribe-response';
 import { Message } from './message/message';
+import { SubscribeMessage } from './message/subscribe-message';
 
 export class WebSocketClient {
   ws: WebSocket;
@@ -10,8 +13,8 @@ export class WebSocketClient {
   constructor(
     url: string,
     onSessionListen: (e: SessionResponse) => void,
-    onopen: () => void,
-    onclose: () => void
+    onopen: (ws: WebSocketClient) => void,
+    onclose: (ws: WebSocketClient) => void
   ) {
     this.dispatcher = new Dispatcher();
     this.dispatcher.listen('session', onSessionListen);
@@ -23,14 +26,34 @@ export class WebSocketClient {
       callbacks.forEach((callback) => callback(event));
     };
 
-    this.ws.onopen = onopen;
-    this.ws.onclose = onclose;
+    this.ws.onopen = () => onopen(this);
+    this.ws.onclose = () => onclose(this);
   }
 
   /* API METHODS */
   sendGeneric(data: Message, callback: (e: Event) => void) {
-    this.dispatcher.onetime(data.op, callback)
-    this.ws.send(JSON.stringify(data))
+    this.dispatcher.onetime(data.op!, callback);
+    this.ws.send(JSON.stringify(data));
+  }
+
+  subscribe(
+    data: SubscribeMessage,
+    response: (e: SubscribeResponse) => void,
+    callback: (e: SubscribeEvent) => void
+  ) {
+    data.op = 'subscribe';
+    this.dispatcher.onetime(data.op, response, (e: SubscribeResponse) => {
+      return e.status != null;
+    });
+    this.dispatcher.listen(data.op, callback, (e: SubscribeResponse) => {
+      return e.status == null;
+    });
+    const str = JSON.stringify(data);
+    this.ws.send(str);
+  }
+
+  unsubscribe() {
+    this.dispatcher.callbacks.delete('subscribe');
   }
 }
 

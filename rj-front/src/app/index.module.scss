@@ -12,6 +12,7 @@ body,
   width: calc(100% - 10px);
   margin-left: auto;
   margin-right: auto;
+  gap: 10px;
 }
 
 .top {
@@ -76,4 +77,58 @@ body,
     height: 100%;
     position: absolute;
   }
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-self: stretch;
+  gap: 5px;
+}
+
+.view_top {
+  display: flex;
+  gap: 10px;
+}
+
+.view_config {
+  display: flex;
+  input {
+    box-sizing: border-box;
+    border: 1px solid black;
+    outline: 0;
+    border-right: 0;
+
+    &:hover {
+      pointer-events: none;
+    }
+  }
+
+  button {
+    box-sizing: border-box;
+    border: 0;
+    border: 1px solid black;
+    margin: 0;
+  }
+}
+
+.view_select {
+  border: 1px solid black;
+  display: flex;
+
+  button {
+    border: 0;
+    border-right: 1px solid black;
+    border-radius: 0;
+    width: 100px;
+
+    &:last-of-type {
+      border: 0;
+    }
+  }
+}
+
+.view_data {
+  border: 1px solid black;
 }
