@@ -22,6 +22,8 @@ public class TransportPack {
     private final String licensePlate;
     @SerializedName("mails")
     private final List<MailPack> mails;
+    @SerializedName("mails_count")
+    private final Integer mailsCount;
     @SerializedName("route_post_office_ids")
     private final List<Long> routePostOfficeIds;
     @SerializedName("loading_addresses")
@@ -32,5 +34,4 @@ public class TransportPack {
     private final CoordinatesPack coordinates;
     @SerializedName("at_post_office_id")
     private final Long atPostOffice;
-
 }

@@ -27,7 +27,7 @@ public class Transport {
     private final int capacity;
     private final double speed; // units in second
     private final double ops; // operations in second (inserts/removes)
-    private final String number;
+    private final String licensePlate;
 
     private final List<Mail> mails;
 
@@ -48,11 +48,11 @@ public class Transport {
 
     private PostOffice atPostOffice;
 
-    public Transport(int capacity, double speed, double ops, String number, Coordinates latestCoordinates) {
+    public Transport(int capacity, double speed, double ops, String licensePlate, Coordinates latestCoordinates) {
         this.capacity = capacity;
         this.speed = speed;
         this.ops = ops;
-        this.number = number;
+        this.licensePlate = licensePlate;
         this.mails = new ArrayList<>(capacity);
         this.loadingAddresses = new HashSet<>();
         this.deliveryAddresses = new HashSet<>();
@@ -119,7 +119,7 @@ public class Transport {
                     this.visitPostOffice(counter);
                 });
 
-        logger.fine("started " + this.getNumber());
+        logger.fine("started " + this.getLicensePlate());
         this.sink.emitNext(0, EmitFailureHandler.FAIL_FAST);
     }
 
@@ -147,6 +147,11 @@ public class Transport {
         }
         this.latestNanos = currNano;
         logger.fine("stopped " + this.toString());
+    }
+
+    // TODO: return more precise
+    public Coordinates getEstimatedCoordinates() {
+        return this.getLatestCoordinates();
     }
 
     // should be called before visiting post office

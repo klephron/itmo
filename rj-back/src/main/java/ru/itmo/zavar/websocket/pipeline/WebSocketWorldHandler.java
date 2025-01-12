@@ -2,6 +2,8 @@ package ru.itmo.zavar.websocket.pipeline;
 
 import static ru.itmo.zavar.World.logger;
 
+import java.util.List;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -15,6 +17,10 @@ import ru.itmo.zavar.websocket.event.SubscribeEvent;
 import ru.itmo.zavar.websocket.event.SubscribeResponse;
 import ru.itmo.zavar.websocket.message.Message;
 import ru.itmo.zavar.websocket.message.SubscribeMessage;
+import ru.itmo.zavar.websocket.pack.ActorPack;
+import ru.itmo.zavar.websocket.pack.PackMappers;
+import ru.itmo.zavar.websocket.pack.PostOfficePack;
+import ru.itmo.zavar.websocket.pack.TransportPack;
 
 @ChannelHandler.Sharable
 public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> {
@@ -68,16 +74,34 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
         return new SubscribeResponse(
                 new SubscribeResponse.Args(
                         session.getSubscription().getUps(),
-                        session.getSubscription().getPostOfficeIds(),
-                        session.getSubscription().getTransportIds(),
-                        session.getSubscription().getActorIds()),
+                        session.getSubscription().getPostOfficeIds().stream().toList(),
+                        session.getSubscription().getTransportIds().stream().toList(),
+                        session.getSubscription().getActorIds().stream().toList()),
                 status);
     }
 
-    private boolean subscribeOnUpdateNext(Channel channel) {
+    private boolean subscribeOnUpdateNext(Session.Subscription subscription, Channel channel) {
+        Session.WorldSubscription worldSub = (Session.WorldSubscription) subscription;
+
+        List<PostOfficePack> postOfficePacks = world.offices.getAll().stream()
+                .map(p -> worldSub.getPostOfficeIds().contains(p.getId()) ? PackMappers.postOfficeToPack(p)
+                        : PackMappers.PostOfficeToPackEssential(p))
+                .toList();
+
+        List<TransportPack> transportPacks = world.transports.getAll().stream()
+                .map(p -> worldSub.getTransportIds().contains(p.getId()) ? PackMappers.transportToPack(p)
+                        : PackMappers.transportToPackEssential(p))
+                .toList();
+
+        List<ActorPack> actorPacks = world.actors.getActorAll().stream()
+                .map(p -> worldSub.getActorIds().contains(p.getId()) ? PackMappers.actorToPack(p)
+                        : PackMappers.actorToPackEssential(p))
+                .toList();
+
         channel.writeAndFlush(
                 new SubscribeEvent(
-                        new SubscribeEvent.Args(channel.id().asLongText(), null, null, null)));
+                        new SubscribeEvent.Args(channel.id().asLongText(), postOfficePacks, transportPacks,
+                                actorPacks)));
         return true;
     }
 

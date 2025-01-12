@@ -1,0 +1,298 @@
+package ru.itmo.zavar.websocket.pack;
+
+import static ru.itmo.zavar.World.logger;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import ru.itmo.zavar.Actor;
+import ru.itmo.zavar.Address;
+import ru.itmo.zavar.Coordinates;
+import ru.itmo.zavar.IndividualActor;
+import ru.itmo.zavar.Mail;
+import ru.itmo.zavar.OrganizationActor;
+import ru.itmo.zavar.PostOffice;
+import ru.itmo.zavar.PostalAddress;
+import ru.itmo.zavar.Transport;
+import ru.itmo.zavar.Actor.Schedule;
+import ru.itmo.zavar.Actor.Schedule.Task;
+import ru.itmo.zavar.Mail.Mark;
+
+public class PackMappers {
+    public static PostOfficePack postOfficeToPack(PostOffice office) {
+        List<MailPack> terminalMails = office.getTerminalMails().values().stream()
+                .flatMap(d -> d.stream().map(PackMappers::mailToPack)).toList();
+        List<MailPack> intermediateMails = office.getIntermediateMails().values().stream()
+                .flatMap(d -> d.stream().map(PackMappers::mailToPack)).toList();
+        return new PostOfficePack(office.getId(), addressToPack(office.getAddress()),
+                coordinatesToPack(office.getCoordinates()), terminalMails, intermediateMails,
+                office.getTerminalMailsCount(), office.getIntermediateMailsCount(), office.getTransportsQueued(),
+                office.getTransportsProcessed());
+    }
+
+    public static PostOfficePack PostOfficeToPackEssential(PostOffice office) {
+        return new PostOfficePack(office.getId(), null, coordinatesToPack(office.getCoordinates()), null, null,
+                office.getTerminalMailsCount(), office.getIntermediateMailsCount(), office.getTransportsQueued(),
+                office.getTransportsProcessed());
+    }
+
+    public static PostOffice postOfficeFromPack(PostOfficePack office) {
+        return new PostOffice(addressFromPack(office.getAddress()), coordinatesFromPack(office.getCoordinates()));
+    }
+
+    public static AddressPack addressToPack(Address address) {
+        return new AddressPack(address.postalAddress().country(), address.postalAddress().city(),
+                address.postalAddress().postalCode(), address.street(), address.house());
+    }
+
+    public static Address addressFromPack(AddressPack address) {
+        return new Address(new PostalAddress(address.getCountry(), address.getCity(), address.getPostalCode()),
+                address.getStreet(), address.getHouse());
+    }
+
+    public static CoordinatesPack coordinatesToPack(Coordinates coordinates) {
+        return new CoordinatesPack(coordinates.x(), coordinates.y());
+    }
+
+    public static Coordinates coordinatesFromPack(CoordinatesPack coordinates) {
+        double x;
+        if (coordinates.getX() == null) {
+            logger.warning("CoordinatesPack x is null, set to 0");
+            x = 0;
+        } else {
+            x = coordinates.getX().doubleValue();
+        }
+        double y;
+        if (coordinates.getY() == null) {
+            logger.warning("CoordinatesPack y is null, set to 0");
+            y = 0;
+        } else {
+            y = coordinates.getY().doubleValue();
+        }
+        return new Coordinates(x, y);
+    }
+
+    public static MailPack mailToPack(Mail mail) {
+        return new MailPack(mail.getId(), mail.getSubject(), mail.getSender().getId(), mail.getReceiver().getId(),
+                mail.getMailData().text(), mail.getValue(),
+                mail.getMarks().stream().map(PackMappers::markToPack).toList(), mailStatusToPack(mail.getStatus()),
+                mail.getCreatedAt().toString(), mail.getAppliedAt().toString(), mail.getSentAt().toString(),
+                mail.getReceivedAt().toString());
+    }
+
+    public static Mail mailFromPack(MailPack mail, Actor sender, Actor receiver) {
+        long id;
+        if (mail.getId() == null) {
+            logger.warning("mailpack id is null, set to 0");
+            id = 0;
+        } else {
+            id = mail.getId().longValue();
+        }
+
+        long value;
+        if (mail.getValue() == null) {
+            logger.warning("mailpack value is null, set to 0");
+            value = 0;
+        } else {
+            value = mail.getValue().longValue();
+        }
+        return new Mail(id, mail.getSubject(), sender, receiver, new Mail.Data(mail.getText()), value);
+    }
+
+    public static MarkPack markToPack(Mark mark) {
+        return new MarkPack(nominalToPack(mark.markNominal()), mark.country(), mark.name());
+    }
+
+    public static Mark markFromPack(MarkPack mark) {
+        return new Mark(nominalFromPack(mark.getNominal()), mark.getCountry(), mark.getName());
+    }
+
+    public static Mark.Nominal nominalFromPack(Integer nominal) {
+        switch (nominal) {
+            case 1:
+                return Mark.Nominal.N1;
+            case 10:
+                return Mark.Nominal.N10;
+            case 20:
+                return Mark.Nominal.N20;
+            case 25:
+                return Mark.Nominal.N25;
+            case 50:
+                return Mark.Nominal.N50;
+            case 100:
+                return Mark.Nominal.N100;
+            case 150:
+                return Mark.Nominal.N150;
+            case 200:
+                return Mark.Nominal.N200;
+            case 250:
+                return Mark.Nominal.N250;
+            case 500:
+                return Mark.Nominal.N500;
+            default:
+                logger.warning("mark value is unknown '" + nominal + "'" + ", set to 1");
+                return Mark.Nominal.N1;
+        }
+    }
+
+    public static Integer nominalToPack(Mark.Nominal nominal) {
+        if (nominal == null) {
+            return 0;
+        }
+        return nominal.getValue();
+    }
+
+    public static MailPack.Status mailStatusToPack(Mail.Status status) {
+        switch (status) {
+            case APPLIED:
+                return MailPack.Status.APPLIED;
+            case CREATED:
+                return MailPack.Status.CREATED;
+            case RECEIVED:
+                return MailPack.Status.RECEIVED;
+            case SENT:
+                return MailPack.Status.SENT;
+            default:
+                logger.warning("mail status is unknown '" + status + "'" + ", set to APPLIED");
+                return MailPack.Status.APPLIED;
+        }
+    }
+
+    public static TransportPack transportToPack(Transport transport) {
+        List<Long> route;
+        if (transport.getRoute() == null) {
+            route = null;
+        } else {
+            route = transport.getRoute().getStops().stream().map(p -> p.getId()).toList();
+        }
+
+        List<PostalAddressPack> loadingAddresses;
+        if (transport.getLoadingAddresses() == null) {
+            loadingAddresses = new LinkedList<>();
+        }
+        loadingAddresses = transport.getLoadingAddresses().stream().map(PackMappers::postalAddressToPack).toList();
+
+        List<PostalAddressPack> deliveryAddresses;
+        if (transport.getDeliveryAddresses() == null) {
+            deliveryAddresses = new LinkedList<>();
+        }
+        deliveryAddresses = transport.getDeliveryAddresses().stream().map(PackMappers::postalAddressToPack).toList();
+
+        return new TransportPack(transport.getId(), transport.getCapacity(), transport.getSpeed(), transport.getOps(),
+                transport.getLicensePlate(), transport.getMails().stream().map(PackMappers::mailToPack).toList(),
+                transport.getMails().size(), route,
+                loadingAddresses, deliveryAddresses, coordinatesToPack(transport.getEstimatedCoordinates()),
+                transport.getAtPostOffice() == null ? null : transport.getAtPostOffice().getId());
+    }
+
+    public static TransportPack transportToPackEssential(Transport transport) {
+        return new TransportPack(transport.getId(), null, null, null, null, null, transport.getMails().size(), null,
+                null, null, coordinatesToPack(transport.getEstimatedCoordinates()),
+                transport.getAtPostOffice() == null ? null : transport.getAtPostOffice().getId());
+    }
+
+    public static Transport transportFromPack(TransportPack transport) {
+        int capacity;
+        if (transport.getCapacity() == null) {
+            logger.warning("TransportPack capacity is null, set to 10");
+            capacity = 10;
+        } else {
+            capacity = transport.getCapacity().intValue();
+        }
+
+        double speed;
+        if (transport.getSpeed() == null) {
+            logger.warning("TransportPack speed is null, set to 1");
+            speed = 1;
+        } else {
+            speed = transport.getSpeed().intValue();
+        }
+
+        double ops;
+        if (transport.getOps() == null) {
+            logger.warning("TransportPack ops is null, set to 10");
+            ops = 10;
+        } else {
+            ops = transport.getOps().intValue();
+        }
+
+        return new Transport(capacity, speed, ops,
+                transport.getLicensePlate(), coordinatesFromPack(transport.getCoordinates()));
+    }
+
+    public static PostalAddressPack postalAddressToPack(PostalAddress postalAddress) {
+        return new PostalAddressPack(postalAddress.country(), postalAddress.city(), postalAddress.postalCode());
+    }
+
+    public static PostalAddress postalAddressFromPack(PostalAddressPack postalAddress) {
+        return new PostalAddress(postalAddress.getCountry(), postalAddress.getCity(), postalAddress.getPostalCode());
+    }
+
+    public static ActorPack actorToPack(Actor actor) {
+        List<TaskPack> tasks = actor.getSchedule().getTasks().values().stream().map(PackMappers::taskToPack).toList();
+        if (actor instanceof IndividualActor) {
+            var individualActor = (IndividualActor) actor;
+            return new IndividualActorPack(individualActor.getId(), addressToPack(individualActor.getAddress()), tasks,
+                    individualActor.getName(), individualActor.getSurname(), individualActor.getPatronymic());
+        }
+        if (actor instanceof OrganizationActor) {
+            var organizationActor = (OrganizationActor) actor;
+            return new OrganizationActorPack(organizationActor.getId(), addressToPack(organizationActor.getAddress()),
+                    tasks, organizationActor.getName());
+        }
+        logger.warning("unhandled actor class " + actor);
+        return new ActorPack(null, actor.getId(), addressToPack(actor.getAddress()), tasks);
+    }
+
+    public static ActorPack actorToPackEssential(Actor actor) {
+        if (actor instanceof IndividualActor) {
+            var individualActor = (IndividualActor) actor;
+            return new IndividualActorPack(individualActor.getId(), null, null, null, null, null);
+        }
+        if (actor instanceof OrganizationActor) {
+            var organizationActor = (OrganizationActor) actor;
+            return new OrganizationActorPack(organizationActor.getId(), null, null, null);
+        }
+        logger.warning("unhandled actor class " + actor);
+        return new ActorPack(null, actor.getId(), null, null);
+    }
+
+    public static Actor actorFromPack(ActorPack actor) {
+        switch (actor.getKind()) {
+            case INDIVIDUAL: {
+                var casted = (IndividualActorPack) actor;
+                return new IndividualActor(addressFromPack(casted.getAddress()), casted.getName(), casted.getSurname(),
+                        casted.getPatronymic());
+            }
+            case ORGANIZATION: {
+                var casted = (OrganizationActorPack) actor;
+                return new OrganizationActor(addressFromPack(casted.getAddress()), casted.getName());
+            }
+            default: {
+                logger.warning("unhandled actor class " + actor + ", default to INDIVIDUAL");
+                return new IndividualActor(addressFromPack(actor.getAddress()), null, null, null);
+            }
+        }
+    }
+
+    // TODO: add additional metadata (currently only id and kind available) + marks
+    public static TaskPack taskToPack(Task task) {
+        if (task instanceof Schedule.MailSendOneTask) {
+            var casted = (Schedule.MailSendOneTask) task;
+            return new TaskPack.MailSendOne(casted.getId(), null, null);
+        }
+        if (task instanceof Schedule.MailSendFluxTask) {
+            var casted = (Schedule.MailSendFluxTask) task;
+            return new TaskPack.MailSendRepeated(casted.getId(), null, null, null);
+        }
+        if (task instanceof Schedule.MailReceiveOneTask) {
+            var casted = (Schedule.MailReceiveOneTask) task;
+            return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_ONE, null);
+        }
+        if (task instanceof Schedule.MailReceiveFluxTask) {
+            var casted = (Schedule.MailReceiveFluxTask) task;
+            return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_MANY, null);
+        }
+        return new TaskPack(task.getId(), null, null);
+    }
+}

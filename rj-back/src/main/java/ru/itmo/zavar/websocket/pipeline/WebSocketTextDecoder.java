@@ -41,6 +41,9 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
         } catch (JsonSyntaxException e) {
             logger.warning(e.getMessage());
             ctx.writeAndFlush(new ErrorResponse(json, "bad json syntax"));
+        } catch (Exception e) {
+            logger.warning(e.getMessage());
+            e.printStackTrace();
         }
 
     }

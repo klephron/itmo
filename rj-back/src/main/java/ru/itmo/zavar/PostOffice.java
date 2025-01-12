@@ -152,7 +152,7 @@ public class PostOffice {
         long startNanos = System.nanoTime();
         int operations = 0;
 
-        logger.fine("transport " + transport.getNumber() + " with delivery " + transport.getDeliveryAddresses()
+        logger.fine("transport " + transport.getLicensePlate() + " with delivery " + transport.getDeliveryAddresses()
                 + " and loading " + transport.getLoadingAddresses() + " visited post office "
                 + this.getAddress().postalAddress());
 
@@ -174,7 +174,7 @@ public class PostOffice {
                     ++intermediateMailsCount;
                 }
                 iterator.remove();
-                logger.fine("transport " + transport.getNumber() + " delivered mail " + mail.getId() + ", "
+                logger.fine("transport " + transport.getLicensePlate() + " delivered mail " + mail.getId() + ", "
                         + mail.getSubject() + " to post office" + this.getAddress().postalAddress());
                 operations += 1;
             }
@@ -196,7 +196,7 @@ public class PostOffice {
             transport.getMails().addLast(mail);
             operations += 1;
             --intermediateMailsCount;
-            logger.fine("transport " + transport.getNumber() + " loaded mail " + mail.getId() + ", "
+            logger.fine("transport " + transport.getLicensePlate() + " loaded mail " + mail.getId() + ", "
                     + mail.getSubject() + " from post office" + this.getAddress().postalAddress());
             if (!bucket.isEmpty()) {
                 postalBuckets.add(bucket);

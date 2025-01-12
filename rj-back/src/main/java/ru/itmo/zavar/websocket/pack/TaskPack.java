@@ -31,11 +31,11 @@ public class TaskPack {
     }
 
     @Getter
-    public class SendMailOne extends TaskPack {
+    public static class MailSendOne extends TaskPack {
         @SerializedName("mail")
         private final MailPack mail;
 
-        public SendMailOne(Long id, Long postOfficeId, MailPack mail) {
+        public MailSendOne(Long id, Long postOfficeId, MailPack mail) {
             super(id, Kind.SEND_MAIL_ONE, postOfficeId);
             this.mail = mail;
         }
@@ -43,13 +43,13 @@ public class TaskPack {
     }
 
     @Getter
-    public class SendMailRepeated extends TaskPack {
+    public static class MailSendRepeated extends TaskPack {
         @SerializedName("interval_ms")
         private final Integer intervalMs;
         @SerializedName("mail")
         private final MailPack mail;
 
-        public SendMailRepeated(Long id, Long postOfficeId, Integer intervalMs, MailPack mail) {
+        public MailSendRepeated(Long id, Long postOfficeId, Integer intervalMs, MailPack mail) {
             super(id, Kind.SEND_MAIL_REPEATED, postOfficeId);
             this.intervalMs = intervalMs;
             this.mail = mail;
@@ -58,7 +58,7 @@ public class TaskPack {
     }
 
     @Getter
-    public class SendMarkRepeated extends TaskPack {
+    public static class MarkSendRepeated extends TaskPack {
         @SerializedName("interval_ms")
         private final Integer intervalMs;
         @SerializedName("n")
@@ -66,7 +66,7 @@ public class TaskPack {
         @SerializedName("mark")
         private final MarkPack mark;
 
-        public SendMarkRepeated(Long id, Kind kind, Long postOfficeId, Integer intervalMs, Integer n,
+        public MarkSendRepeated(Long id, Kind kind, Long postOfficeId, Integer intervalMs, Integer n,
                 MarkPack mark) {
             super(id, kind, postOfficeId);
             this.intervalMs = intervalMs;

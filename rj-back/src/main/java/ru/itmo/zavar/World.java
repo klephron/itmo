@@ -1,5 +1,7 @@
 package ru.itmo.zavar;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -7,12 +9,10 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import lombok.Getter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.itmo.zavar.Actor.Schedule.Task;
 
-@Getter
 public class World {
     public static final Logger logger = Logger.getLogger(World.class.getName());
     static {
@@ -64,6 +64,10 @@ public class World {
                 return null;
             }
             return entries.get(actorId);
+        }
+
+        public Collection<Actor> getActorAll() {
+            return Collections.unmodifiableCollection(entries.values());
         }
 
         public Task receiveMail(long actorId, long postOfficeId, Consumer<Mail> onOne, Consumer<Throwable> onError) {
@@ -144,6 +148,10 @@ public class World {
             }
             return entries.get(postOfficeId);
         }
+
+        public Collection<PostOffice> getAll() {
+            return Collections.unmodifiableCollection(entries.values());
+        }
     }
 
     public class Transports {
@@ -157,7 +165,7 @@ public class World {
             }
             transport.setId(++idCounter);
             entries.put(transport.getId(), transport);
-            logger.fine("added transport " + transport.getNumber());
+            logger.fine("added transport " + transport.getLicensePlate());
         }
 
         public Transport get(long transportId) {
@@ -166,6 +174,10 @@ public class World {
                 return null;
             }
             return entries.get(transportId);
+        }
+
+        public Collection<Transport> getAll() {
+            return Collections.unmodifiableCollection(entries.values());
         }
 
         public void setRoute(long transportId, Route<PostOffice> route) {

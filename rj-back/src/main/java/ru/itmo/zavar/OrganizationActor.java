@@ -8,7 +8,6 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public final class OrganizationActor extends Actor {
-
     private final String name;
 
     public OrganizationActor(Address address, String name) {

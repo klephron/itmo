@@ -3,7 +3,7 @@ package ru.itmo.zavar.websocket;
 import static ru.itmo.zavar.World.logger;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 
 import org.apache.commons.lang3.builder.ToStringExclude;
 
@@ -63,7 +63,7 @@ public class Session {
                             this.cancel();
                             return;
                         }
-                        boolean hasNext = nextFunc.next(channel);
+                        boolean hasNext = nextFunc.next(this, channel);
                         if (hasNext) {
                             this.sink.emitNext(w, EmitFailureHandler.FAIL_FAST);
                         } else {
@@ -89,18 +89,18 @@ public class Session {
         }
 
         public static interface OnNextFunc {
-            public boolean next(Channel channel);
+            public boolean next(Subscription subscription, Channel channel);
         }
     }
 
     @Getter
     public class WorldSubscription extends Subscription {
-        private final List<Long> postOfficeIds;
-        private final List<Long> transportIds;
-        private final List<Long> actorIds;
+        private final Collection<Long> postOfficeIds;
+        private final Collection<Long> transportIds;
+        private final Collection<Long> actorIds;
 
-        public WorldSubscription(Float ups, OnNextFunc nextFunc, List<Long> postOfficeIds, List<Long> transportIds,
-                List<Long> actorIds) {
+        public WorldSubscription(Float ups, OnNextFunc nextFunc, Collection<Long> postOfficeIds, Collection<Long> transportIds,
+                Collection<Long> actorIds) {
             super(ups, nextFunc);
             this.postOfficeIds = postOfficeIds;
             this.transportIds = transportIds;
