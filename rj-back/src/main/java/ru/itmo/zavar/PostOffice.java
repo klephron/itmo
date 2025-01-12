@@ -43,6 +43,12 @@ public class PostOffice {
             .onBackpressureBuffer();
     private Disposable transportSinkSubscription = null;
 
+    // statistics
+    private long terminalMailsCount = 0;
+    private long intermediateMailsCount = 0;
+    private long transportsQueued = 0;
+    private long transportsProcessed = 0;
+
     public void open() {
         if (isTransportOpen()) {
             return;
@@ -59,6 +65,8 @@ public class PostOffice {
         }
         transportSinkSubscription.dispose();
         transportSinkSubscription = null;
+        transportsQueued = 0;
+        transportsProcessed = 0;
     }
 
     // NOTE: there are different implementations of it:
@@ -73,6 +81,7 @@ public class PostOffice {
         Sinks.One<Void> sink = Sinks.one();
         transportSink.emitNext(new ImmutablePair<Transport, Sinks.One<Void>>(transport, sink),
                 EmitFailureHandler.FAIL_FAST);
+        ++transportsQueued;
         return sink.asMono();
     }
 
@@ -97,6 +106,7 @@ public class PostOffice {
         if (mail == null) {
             return Mono.error(new MailException("no mail to receive"));
         }
+        --terminalMailsCount;
         return Mono.just(mail);
     }
 
@@ -113,6 +123,7 @@ public class PostOffice {
                 return;
             }
             // logger.fine("received " + mail.toString());
+            --terminalMailsCount;
             sink.next(mail);
         });
     }
@@ -124,9 +135,11 @@ public class PostOffice {
         if (receiverAddress.equals(this.getAddress().postalAddress())) {
             Deque<Mail> actorMails = terminalMails.computeIfAbsent(mail.getReceiver(), k -> new ArrayDeque<>());
             actorMails.push(mail);
+            ++terminalMailsCount;
         } else {
             Deque<Mail> addressMails = intermediateMails.computeIfAbsent(receiverAddress, k -> new ArrayDeque<>());
             addressMails.push(mail);
+            ++intermediateMailsCount;
         }
     }
 
@@ -153,10 +166,12 @@ public class PostOffice {
                 if (receiverAddress.equals(this.getAddress().postalAddress())) {
                     Deque<Mail> actorMails = terminalMails.computeIfAbsent(mail.getReceiver(), k -> new ArrayDeque<>());
                     actorMails.push(mail);
+                    ++terminalMailsCount;
                 } else {
                     Deque<Mail> addressMails = intermediateMails.computeIfAbsent(receiverAddress,
                             k -> new ArrayDeque<>());
                     addressMails.push(mail);
+                    ++intermediateMailsCount;
                 }
                 iterator.remove();
                 logger.fine("transport " + transport.getNumber() + " delivered mail " + mail.getId() + ", "
@@ -180,6 +195,7 @@ public class PostOffice {
             Mail mail = bucket.pollLast();
             transport.getMails().addLast(mail);
             operations += 1;
+            --intermediateMailsCount;
             logger.fine("transport " + transport.getNumber() + " loaded mail " + mail.getId() + ", "
                     + mail.getSubject() + " from post office" + this.getAddress().postalAddress());
             if (!bucket.isEmpty()) {
@@ -188,6 +204,7 @@ public class PostOffice {
         }
 
         signal.emitEmpty(EmitFailureHandler.FAIL_FAST);
+        ++transportsProcessed;
 
         long delayNanos = (long) ((double) operations / transport.getOps() * 1_000_000_000)
                 - (System.nanoTime() - startNanos);
