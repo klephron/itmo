@@ -8,7 +8,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
@@ -17,7 +19,11 @@ import reactor.core.publisher.Sinks.EmitFailureHandler;
 
 @Getter
 @ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Transport {
+    @EqualsAndHashCode.Include
+    @Setter
+    private Long id;
     private final int capacity;
     private final double speed; // units in second
     private final double ops; // operations in second (inserts/removes)
@@ -40,7 +46,7 @@ public class Transport {
     private Sinks.Many<Integer> sink;
     private Disposable sinkFluxDisposable;
 
-    private PostOffice atPostOffice = null;
+    private PostOffice atPostOffice;
 
     public Transport(int capacity, double speed, double ops, String number, Coordinates latestCoordinates) {
         this.capacity = capacity;

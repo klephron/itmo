@@ -17,6 +17,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -30,6 +31,8 @@ import reactor.core.publisher.Sinks.EmitFailureHandler;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class PostOffice {
     @EqualsAndHashCode.Include
+    @Setter
+    private Long id;
     private final Address address;
     private final Coordinates coordinates;
 

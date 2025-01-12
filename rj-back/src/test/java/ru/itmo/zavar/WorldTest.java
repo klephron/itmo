@@ -30,24 +30,24 @@ public class WorldTest {
         world.offices.add(postOffice1);
         world.actors.addActor(actor1);
 
-        world.actors.sendMail(actor1, postOffice1, mail1);
-        world.actors.sendMail(actor1, postOffice1, mail2);
-        world.actors.sendMail(actor1, postOffice1, mail3);
-        world.actors.sendMail(actor1, postOffice1, mail4);
+        world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail1);
+        world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail2);
+        world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail3);
+        world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail4);
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1, postOffice1, m -> logger.info(m.toString()),
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.sendMail(actor1, postOffice1, mail1);
+        world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail1);
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMail(actor1, postOffice1, m -> logger.fine(m.toString()));
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.fine(m.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.stop();
@@ -66,7 +66,7 @@ public class WorldTest {
         world.offices.add(postOffice1);
         world.actors.addActor(actor1);
 
-        Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1, postOffice1,
+        Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1.getId(), postOffice1.getId(),
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
                     Mail mail = new Mail(i, "subject1", actor1, actor1, new Mail.Data("text"), 10);
@@ -74,20 +74,20 @@ public class WorldTest {
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
 
-        world.actors.receiveMailMany(actor1, postOffice1, m -> logger.info(m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMailMany(actor1, postOffice1, m -> logger.info(m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(5L));
 
         // stopping task
-        world.actors.deleteActorTask(actor1, task1);
+        world.actors.deleteActorTask(actor1.getId(), task1.getId());
         Thread.sleep(Duration.ofSeconds(1L));
 
         // waiting a little to read latest messages
-        world.actors.receiveMailMany(actor1, postOffice1, m -> logger.info(m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(2L));
 
@@ -115,20 +115,20 @@ public class WorldTest {
         world.offices.add(postOffice2);
 
         world.transports.add(transport1);
-        world.transports.setRoute(transport1, route1);
-        world.transports.start(transport1);
+        world.transports.setRoute(transport1.getId(), route1);
+        world.transports.start(transport1.getId());
         Thread.sleep(Duration.ofSeconds(5L));
 
-        world.transports.stop(transport1);
-        world.transports.start(transport1, 0);
+        world.transports.stop(transport1.getId());
+        world.transports.start(transport1.getId(), 0);
         Thread.sleep(Duration.ofSeconds(4L));
 
-        world.transports.stop(transport1);
-        world.transports.setRoute(transport1, route2);
-        world.transports.start(transport1);
+        world.transports.stop(transport1.getId());
+        world.transports.setRoute(transport1.getId(), route2);
+        world.transports.start(transport1.getId());
         Thread.sleep(Duration.ofSeconds(4L));
 
-        world.transports.stop(transport1);
+        world.transports.stop(transport1.getId());
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.stop();
@@ -159,12 +159,12 @@ public class WorldTest {
         world.offices.add(postOffice2);
         world.offices.add(postOffice3);
         world.transports.add(transport1);
-        world.transports.setRoute(transport1, route1);
-        world.transports.start(transport1);
+        world.transports.setRoute(transport1.getId(), route1);
+        world.transports.start(transport1.getId());
         world.actors.addActor(actor1);
         world.actors.addActor(actor2);
 
-        Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1, postOffice1,
+        Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1.getId(), postOffice1.getId(),
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
                     Mail mail = new Mail(i, "from actor1 to actor2 (need to transfer)", actor1, actor2,
@@ -173,7 +173,7 @@ public class WorldTest {
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
 
-        Actor.Schedule.Task task2 = world.actors.sendMailFlux(actor2, postOffice1,
+        Actor.Schedule.Task task2 = world.actors.sendMailFlux(actor2.getId(), postOffice1.getId(),
                 Flux.generate(AtomicLong::new, (state, sink) -> {
                     long i = state.getAndIncrement();
                     Mail mail = new Mail(i, "from actor2 to actor1 (no need to transfer)", actor2, actor1,
@@ -184,20 +184,23 @@ public class WorldTest {
 
         Thread.sleep(Duration.ofSeconds(5L));
 
-        world.actors.deleteActorTask(actor1, task1);
-        world.actors.deleteActorTask(actor2, task2);
+        world.actors.deleteActorTask(actor1.getId(), task1.getId());
+        world.actors.deleteActorTask(actor2.getId(), task2.getId());
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMailMany(actor2, postOffice2, m -> logger.info("received actor2 " + m.toString()),
+        world.actors.receiveMailMany(actor2.getId(), postOffice2.getId(),
+                m -> logger.info("received actor2 " + m.toString()),
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
         // should throw warnings
-        world.actors.receiveMailMany(actor1, postOffice2, m -> logger.info("received actor1 " + m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice2.getId(),
+                m -> logger.info("received actor1 " + m.toString()),
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMailMany(actor1, postOffice1, m -> logger.info("received actor1 " + m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(),
+                m -> logger.info("received actor1 " + m.toString()),
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 

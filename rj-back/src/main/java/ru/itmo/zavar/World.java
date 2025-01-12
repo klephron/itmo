@@ -29,26 +29,28 @@ public class World {
     public Actors actors = new Actors();
 
     public void stop() {
-        for (var office : offices.entries.keySet()) {
+        for (var office : offices.entries.values()) {
             office.close();
             logger.fine("closed " + office.getAddress());
         }
     }
 
     public class Actors {
-        private Map<Actor, Actor.Schedule> entries = new HashMap<>();
+        private Map<Long, Actor> entries = new HashMap<>();
+        private long idCounter = 0;
 
         public void addActor(Actor actor) {
-            if (entries.containsKey(actor)) {
+            if (actor.getId() != null && entries.containsKey(actor.getId())) {
                 logger.log(Level.INFO, "actor already exists");
                 return;
             }
-            entries.put(actor, actor.new Schedule());
+            actor.setId(++idCounter);
+            entries.put(actor.getId(), actor);
             logger.fine("added actor " + actor.toString());
         }
 
-        public Actor.Schedule getSchedule(Actor actor) {
-            Actor.Schedule schedule = entries.get(actor);
+        public Actor.Schedule getSchedule(long actorId) {
+            Actor.Schedule schedule = entries.get(actorId).getSchedule();
             if (schedule == null) {
                 logger.warning("actor doesn't exist");
                 return null;
@@ -56,132 +58,133 @@ public class World {
             return schedule;
         }
 
-        public Actor getActor(Actor actor) {
-            if (entries.containsKey(actor)) {
-                return actor;
+        public Actor getActor(long actorId) {
+            if (!entries.containsKey(actorId)) {
+                logger.info("actor doesn't exists");
+                return null;
             }
-            logger.info("actor doesn't exists");
-            return null;
+            return entries.get(actorId);
         }
 
-        public Task receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne, Consumer<Throwable> onError) {
-            Actor actor = actors.getActor(_actor);
-            PostOffice office = offices.get(_office);
-            Actor.Schedule schedule = this.getSchedule(actor);
+        public Task receiveMail(long actorId, long postOfficeId, Consumer<Mail> onOne, Consumer<Throwable> onError) {
+            Actor actor = actors.getActor(actorId);
+            PostOffice office = offices.get(postOfficeId);
+            Actor.Schedule schedule = actor.getSchedule();
             Mono<Mail> mono = office.receiveMailOne(actor);
             var pair = schedule.addTaskMailReceiveOne(mono, onOne, onError);
             return pair.left;
         }
 
-        public Task receiveMail(Actor _actor, PostOffice _office, Consumer<Mail> onOne) {
-            return receiveMail(_actor, _office, onOne, (e) -> {
+        public Task receiveMail(long actorId, long postOfficeId, Consumer<Mail> onOne) {
+            return receiveMail(actorId, postOfficeId, onOne, (e) -> {
                 logger.warning(e.toString());
             });
         }
 
-        public Task receiveMailMany(Actor _actor, PostOffice _office, Consumer<Mail> onOne,
+        public Task receiveMailMany(long actorId, long postOfficeId, Consumer<Mail> onOne,
                 Consumer<Throwable> onError) {
-            Actor actor = actors.getActor(_actor);
-            PostOffice office = offices.get(_office);
-            Actor.Schedule schedule = this.getSchedule(actor);
+            Actor actor = actors.getActor(actorId);
+            PostOffice office = offices.get(postOfficeId);
+            Actor.Schedule schedule = actor.getSchedule();
             Flux<Mail> flux = office.receiveMailFlux(actor);
             var pair = schedule.addTaskMailReceiveFlux(flux, onOne, onError);
             return pair.left;
         }
 
-        public Task receiveMailMany(Actor _actor, PostOffice _office, Consumer<Mail> onOne) {
-            return receiveMailMany(_actor, _office, onOne, (e) -> {
+        public Task receiveMailMany(long actorId, long postOfficeId, Consumer<Mail> onOne) {
+            return receiveMailMany(actorId, postOfficeId, onOne, (e) -> {
                 logger.warning(e.toString());
             });
         }
 
-        public Task sendMail(Actor _actor, PostOffice _office, Mail mail) {
-            Actor actor = actors.getActor(_actor);
-            PostOffice postOffice = offices.get(_office);
-            Actor.Schedule schedule = this.getSchedule(actor);
+        public Task sendMail(long actorId, long postOfficeId, Mail mail) {
+            Actor actor = actors.getActor(actorId);
+            PostOffice postOffice = offices.get(postOfficeId);
+            Actor.Schedule schedule = actor.getSchedule();
             var pair = schedule.addTaskMailSendOne(mail);
             postOffice.applyMailMono(pair.right);
             return pair.left;
         }
 
-        public Task sendMailFlux(Actor _actor, PostOffice _office, Flux<Mail> _flux) {
-            Actor actor = actors.getActor(_actor);
-            PostOffice postOffice = offices.get(_office);
-            Actor.Schedule schedule = this.getSchedule(actor);
+        public Task sendMailFlux(long actorId, long postOfficeId, Flux<Mail> _flux) {
+            Actor actor = actors.getActor(actorId);
+            PostOffice postOffice = offices.get(postOfficeId);
+            Actor.Schedule schedule = actor.getSchedule();
             var pair = schedule.addTaskMailSendFlux(_flux);
             postOffice.applyMailFlux(pair.right);
             return pair.left;
         }
 
-        public void deleteActorTask(Actor _actor, Task task) {
-            Actor actor = actors.getActor(_actor);
-            Actor.Schedule schedule = this.getSchedule(actor);
-            schedule.deleteTask(task);
+        public void deleteActorTask(long actorId, long taskId) {
+            Actor actor = actors.getActor(actorId);
+            Actor.Schedule schedule = actor.getSchedule();
+            schedule.deleteTask(taskId);
         }
     }
 
     public class PostOffices {
-        private Map<PostOffice, Void> entries = new HashMap<>();
+        private Map<Long, PostOffice> entries = new HashMap<>();
+        private long idCounter = 0;
 
-        public void add(PostOffice _office) {
-            if (entries.containsKey(_office)) {
+        public void add(PostOffice office) {
+            if (office.getId() != null && entries.containsKey(office.getId())) {
                 logger.info("office already exists");
                 return;
             }
-            entries.put(_office, null);
-            PostOffice office = this.get(_office);
-            if (office != null) {
-                office.open();
-                logger.fine("opened office " + office.getAddress());
-            }
+            office.setId(++idCounter);
+            entries.put(office.getId(), office);
+            office.open();
+            logger.fine("opened office " + office.getAddress());
         }
 
-        public PostOffice get(PostOffice office) {
-            if (entries.containsKey(office)) {
-                return office;
+        public PostOffice get(long postOfficeId) {
+            if (!entries.containsKey(postOfficeId)) {
+                logger.info("post office isn't present");
+                return null;
             }
-            logger.info("post office isn't present");
-            return null;
+            return entries.get(postOfficeId);
         }
     }
 
     public class Transports {
-        private Map<Transport, Void> entries = new HashMap<>();
+        private Map<Long, Transport> entries = new HashMap<>();
+        private long idCounter = 0;
 
         public void add(Transport transport) {
-            if (entries.containsKey(transport)) {
+            if (transport.getId() != null && entries.containsKey(transport.getId())) {
                 logger.log(Level.INFO, "transport already exists");
                 return;
             }
-            entries.put(transport, null);
+            transport.setId(++idCounter);
+            entries.put(transport.getId(), transport);
             logger.fine("added transport " + transport.getNumber());
         }
 
-        public Transport get(Transport transport) {
-            if (entries.containsKey(transport)) {
-                return transport;
+        public Transport get(long transportId) {
+            if (!entries.containsKey(transportId)) {
+                logger.info("transport isn't present");
+                return null;
             }
-            logger.info("transport isn't present");
-            return null;
+            return entries.get(transportId);
         }
 
-        public void setRoute(Transport _transport, Route<PostOffice> route) {
-            Transport transport = this.get(_transport);
+        public void setRoute(long transportId, Route<PostOffice> route) {
+            Transport transport = this.get(transportId);
             transport.setRoute(route);
         }
 
-        public void start(Transport _transport, int index) {
-            Transport transport = this.get(_transport);
+        public void start(long transportId, int index) {
+            Transport transport = this.get(transportId);
             transport.start(index);
         }
 
-        public void start(Transport _transport) {
-            Transport transport = this.get(_transport);
+        public void start(long transportId) {
+            Transport transport = this.get(transportId);
             transport.start();
         }
 
-        public void stop(Transport _transport) {
-            Transport transport = this.get(_transport);
+        public void stop(long transportId) {
+            Transport transport = this.get(transportId);
             transport.stop();
         }
     }
