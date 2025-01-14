@@ -1,9 +1,7 @@
 package ru.itmo.zavar;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -27,6 +25,7 @@ public class World {
     public PostOffices offices = new PostOffices();
     public Transports transports = new Transports();
     public Actors actors = new Actors();
+    public AtomicLong mailIds = new AtomicLong();
 
     public void stop() {
         for (var office : offices.entries.values()) {
@@ -144,7 +143,7 @@ public class World {
         public PostOffice get(long postOfficeId) {
             if (!entries.containsKey(postOfficeId)) {
                 logger.info("post office isn't present");
-                return null;
+                throw new NoSuchElementException("post office " + postOfficeId + " is not present");
             }
             return entries.get(postOfficeId);
         }

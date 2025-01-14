@@ -12,8 +12,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import ru.itmo.zavar.websocket.event.ErrorResponse;
-import ru.itmo.zavar.websocket.message.Message;
-import ru.itmo.zavar.websocket.message.SubscribeMessage;
+import ru.itmo.zavar.websocket.message.*;
 
 @ChannelHandler.Sharable
 public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketFrame> {
@@ -30,12 +29,13 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
             }
 
             switch (message.getOp()) {
-                case SubscribeMessage.OP:
-                    out.add(gson.fromJson(json, SubscribeMessage.class));
-                    break;
-                default:
-                    out.add(message);
-                    break;
+                case SubscribeMessage.OP -> out.add(gson.fromJson(json, SubscribeMessage.class));
+                case AddPostofficeMessage.OP -> out.add(gson.fromJson(json, AddPostofficeMessage.class));
+                case AddTransportMessage.OP -> out.add(gson.fromJson(json, AddTransportMessage.class));
+                case AddActorIndividualMessage.OP -> out.add(gson.fromJson(json, AddActorIndividualMessage.class));
+                case AddActorOrganizationMessage.OP -> out.add(gson.fromJson(json, AddActorOrganizationMessage.class));
+                case AddTaskMessage.OP -> out.add(gson.fromJson(json, AddTaskMessage.class));
+                default -> out.add(message);
             }
             // otherwise add just a frame
         } catch (JsonSyntaxException e) {

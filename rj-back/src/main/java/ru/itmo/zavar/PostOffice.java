@@ -136,10 +136,12 @@ public class PostOffice {
             Deque<Mail> actorMails = terminalMails.computeIfAbsent(mail.getReceiver(), k -> new ArrayDeque<>());
             actorMails.push(mail);
             ++terminalMailsCount;
+            logger.info("Mail added to terminal queue (" + mail.getId() + ")");
         } else {
             Deque<Mail> addressMails = intermediateMails.computeIfAbsent(receiverAddress, k -> new ArrayDeque<>());
             addressMails.push(mail);
             ++intermediateMailsCount;
+            logger.info("Mail added to intermediate queue (" + mail.getId() + ")");
         }
     }
 

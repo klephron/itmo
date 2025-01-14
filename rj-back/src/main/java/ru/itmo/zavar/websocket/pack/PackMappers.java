@@ -5,15 +5,7 @@ import static ru.itmo.zavar.World.logger;
 import java.util.LinkedList;
 import java.util.List;
 
-import ru.itmo.zavar.Actor;
-import ru.itmo.zavar.Address;
-import ru.itmo.zavar.Coordinates;
-import ru.itmo.zavar.IndividualActor;
-import ru.itmo.zavar.Mail;
-import ru.itmo.zavar.OrganizationActor;
-import ru.itmo.zavar.PostOffice;
-import ru.itmo.zavar.PostalAddress;
-import ru.itmo.zavar.Transport;
+import ru.itmo.zavar.*;
 import ru.itmo.zavar.Actor.Schedule;
 import ru.itmo.zavar.Actor.Schedule.Task;
 import ru.itmo.zavar.Mail.Mark;
@@ -273,6 +265,11 @@ public class PackMappers {
                 return new IndividualActor(addressFromPack(actor.getAddress()), null, null, null);
             }
         }
+    }
+
+    public static Route<PostOffice> routePackToRoute(RoutePack routePack, World world) {
+        List<PostOffice> postOffices = routePack.getPostOfficeIds().stream().map(aLong -> world.offices.get(aLong)).toList();
+        return new Route<>(postOffices, routePack.getIsCyclic());
     }
 
     // TODO: add additional metadata (currently only id and kind available) + marks

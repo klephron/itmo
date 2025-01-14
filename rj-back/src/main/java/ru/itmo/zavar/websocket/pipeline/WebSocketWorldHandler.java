@@ -1,29 +1,26 @@
 package ru.itmo.zavar.websocket.pipeline;
 
-import static ru.itmo.zavar.World.logger;
-
+import java.time.Duration;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import ru.itmo.zavar.World;
+import reactor.core.publisher.Flux;
+import ru.itmo.zavar.*;
 import ru.itmo.zavar.websocket.Session;
 import ru.itmo.zavar.websocket.SessionManager;
-import ru.itmo.zavar.websocket.event.ErrorResponse;
-import ru.itmo.zavar.websocket.event.Event;
-import ru.itmo.zavar.websocket.event.SubscribeEvent;
-import ru.itmo.zavar.websocket.event.SubscribeResponse;
-import ru.itmo.zavar.websocket.message.Message;
-import ru.itmo.zavar.websocket.message.SubscribeMessage;
-import ru.itmo.zavar.websocket.pack.ActorPack;
-import ru.itmo.zavar.websocket.pack.PackMappers;
-import ru.itmo.zavar.websocket.pack.PostOfficePack;
-import ru.itmo.zavar.websocket.pack.TransportPack;
+import ru.itmo.zavar.websocket.event.*;
+import ru.itmo.zavar.websocket.message.*;
+import ru.itmo.zavar.websocket.pack.*;
 
 @ChannelHandler.Sharable
 public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> {
+    private static final Logger logger = Logger.getLogger(WebSocketWorldHandler.class.getName());
     public static final String NAME = "world";
     private final SessionManager sessionManager;
     private final World world;
@@ -33,16 +30,126 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
         this.world = world;
     }
 
+    //TODO
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
         switch (msg.getOp()) {
-            case SubscribeMessage.OP:
+            case SubscribeMessage.OP -> {
                 SubscribeMessage subscribeMsg = (SubscribeMessage) msg;
                 ctx.writeAndFlush(subscribe(ctx, subscribeMsg));
-                return;
-            default:
-                ctx.writeAndFlush(new ErrorResponse(msg, "unknown op"));
-                break;
+            }
+            case AddPostofficeMessage.OP -> {
+                AddPostofficeMessage addPostofficeMsg = (AddPostofficeMessage) msg;
+                AddPostofficeMessage.Args args = addPostofficeMsg.getArgs();
+                PostOffice postOffice = new PostOffice(
+                    PackMappers.addressFromPack(args.getAddress()),
+                    PackMappers.coordinatesFromPack(args.getCoordinates())
+                );
+                world.offices.add(postOffice);
+                ctx.writeAndFlush(new SuccessIdResponse(postOffice.getId()));
+
+            }
+            case AddTransportMessage.OP -> {
+                AddTransportMessage addTransportMsg = (AddTransportMessage) msg;
+                AddTransportMessage.Args args = addTransportMsg.getArgs();
+
+                try {
+                    Transport transport = new Transport(
+                        args.getCapacity(),
+                        args.getSpeed(),
+                        args.getOps(),
+                        args.getLicensePlate(),
+                        PackMappers.coordinatesFromPack(args.getCoordinates()),
+                        PackMappers.routePackToRoute(args.getRoute(), world)
+                    );
+                    world.transports.add(transport);
+                    ctx.writeAndFlush(new SuccessIdResponse(transport.getId()));
+                } catch (NoSuchElementException e) {
+                    ctx.writeAndFlush(new ErrorResponse(msg, e.getMessage()));
+                }
+            }
+            case AddActorIndividualMessage.OP -> {
+                AddActorIndividualMessage addActorMsg = (AddActorIndividualMessage) msg;
+                AddActorIndividualMessage.Args args = addActorMsg.getArgs();
+                Actor actor = PackMappers.actorFromPack(args.getActor());
+                world.actors.addActor(actor);
+                ctx.writeAndFlush(new SuccessIdResponse(actor.getId()));
+            }
+            case AddActorOrganizationMessage.OP -> {
+                AddActorOrganizationMessage addActorMsg = (AddActorOrganizationMessage) msg;
+                AddActorOrganizationMessage.Args args = addActorMsg.getArgs();
+                Actor actor = PackMappers.actorFromPack(args.getActor());
+                world.actors.addActor(actor);
+                ctx.writeAndFlush(new SuccessIdResponse(actor.getId()));
+            }
+            case AddTaskMessage.OP -> {
+                AddTaskMessage addTaskMsg = (AddTaskMessage) msg;
+                AddTaskMessage.Args args = addTaskMsg.getArgs();
+                switch (args.getKind()) {
+                    case SEND_MAIL_ONE -> {
+                        Mail mail = new Mail(
+                            world.mailIds.getAndIncrement(),
+                            args.getMailSimplePack().getSubject(),
+                            world.actors.getActor(args.getMailSimplePack().getSenderId()),
+                            world.actors.getActor(args.getMailSimplePack().getReceiverId()),
+                            new Mail.Data(args.getMailSimplePack().getText()),
+                            0
+                        );
+                        world.actors.sendMail(
+                            args.getActorId(),
+                            args.getPostOfficeId(),
+                            mail
+                        );
+                        ctx.writeAndFlush(new SuccessIdResponse(mail.getId()));
+                    }
+                    case RECEIVE_MAIL_ONE -> {
+                        world.actors.receiveMail(
+                            args.getActorId(),
+                            args.getPostOfficeId(),
+                            m -> {
+                                logger.info(m.toString());
+                                ctx.writeAndFlush(new SuccessIdResponse(m.getId()));
+                            },
+                            e -> {
+                                logger.warning(e.toString());
+                                ctx.writeAndFlush(new WarningResponse("Error receiving mail " + e));
+                            }
+                        );
+                    }
+                    case SEND_MAIL_REPEATED -> {
+                        Mail mail = new Mail(
+                            world.mailIds.getAndIncrement(),
+                            args.getMailSimplePack().getSubject(),
+                            world.actors.getActor(args.getMailSimplePack().getSenderId()),
+                            world.actors.getActor(args.getMailSimplePack().getReceiverId()),
+                            new Mail.Data(args.getMailSimplePack().getText()),
+                            0
+                        );
+                        Actor.Schedule.Task sendMailFlux = world.actors.sendMailFlux(args.getActorId(), args.getPostOfficeId(),
+                            Flux.generate(AtomicLong::new, (state, sink) -> {
+                                sink.next(mail);
+                                return state;
+                            }).delayElements(Duration.ofMillis(args.getInterval())).cast(Mail.class));
+                        ctx.writeAndFlush(new SuccessIdResponse(sendMailFlux.getId()));
+                    }
+                    case RECEIVE_MAIL_MANY -> {
+                        world.actors.receiveMailMany(
+                            args.getActorId(),
+                            args.getPostOfficeId(),
+                            m -> {
+                                logger.info(m.toString());
+                                ctx.writeAndFlush(new SuccessIdResponse(m.getId()));
+                            },
+                            e -> {
+                                logger.warning(e.toString());
+                                ctx.writeAndFlush(new WarningResponse("Error receiving mail " + e));
+                            }
+                        );
+                    }
+                    default -> ctx.writeAndFlush(new ErrorResponse(msg, "unsupported kind " + args.getKind()));
+                }
+            }
+            default -> ctx.writeAndFlush(new ErrorResponse(msg, "unknown op"));
         }
     }
 
