@@ -1,12 +1,18 @@
-import { createSignal, Match, onMount, Switch } from 'solid-js';
+import { createEffect, createSignal, Match, onMount, Switch } from 'solid-js';
 import styles from './index.module.scss';
-import { clientGet, clientOnClose, clientOnSessionListen, clientSet } from '@state/client';
+import {
+  clientGet,
+  clientOnClose,
+  clientOnOpen,
+  clientOnSessionListen,
+  clientSet,
+} from '@state/client';
 import ViewPostoffice from './ViewPostoffice';
 import ViewTransport from './ViewTransport';
 import ViewActor from './ViewActor';
 import { WebSocketClient } from '@websocket/client';
-import { logsAppend } from '@state/log';
 import { SubscribeMessage } from '@websocket/message/subscribe-message';
+import { subscriptionGet, subscriptionSet } from '@state/subscription';
 
 type Props = {
   ups: number;
@@ -18,39 +24,30 @@ export default function View(props: Props) {
   const [getServerURL, setServerURL] = createSignal(props.serverUrl);
   const [getUPS, setUPS] = createSignal(String(props.ups));
 
-  // connect while starting
   onMount(() => {
-    updateSubscription();
+    update();
   });
 
-  function subscribeClient(client: WebSocketClient) {
-    const data: SubscribeMessage = {
-      args: {
-        ups: Number(getUPS()),
-        postoffice_ids: [],
-        transport_ids: [],
-        actor_ids: [],
-      },
-    };
-    client.unsubscribe();
-    client.subscribe(
-      data,
-      (e) => {
-        logsAppend(JSON.stringify(e), true);
-      },
-      (e) => {
-        console.log(e);
-      }
-    );
-  }
-
-  function updateSubscription() {
+  function update() {
     if (clientGet() == null || clientGet()!.ws.url != getServerURL()) {
-      clientSet(
-        new WebSocketClient(getServerURL(), clientOnSessionListen, subscribeClient, clientOnClose)
+      new WebSocketClient(
+        getServerURL(),
+        clientOnSessionListen,
+        (c) => {
+          clientOnOpen();
+          clientSet(c);
+        },
+        (_) => {
+          clientOnClose();
+          clientSet(undefined);
+        }
       );
-    } else if (clientGet() != null) {
-      subscribeClient(clientGet()!);
+    }
+    if (subscriptionGet() == null || subscriptionGet()!.args.ups != Number(getUPS())) {
+      const ups = Number(getUPS());
+      subscriptionSet({
+        args: { ups: ups, postoffice_ids: [], transport_ids: [], actor_ids: [] },
+      } as SubscribeMessage);
     }
   }
 
@@ -75,7 +72,7 @@ export default function View(props: Props) {
             value={getUPS()}
             onChange={(e) => setUPS(e.target.value)}
           />
-          <button onClick={updateSubscription}>Update</button>
+          <button onClick={update}>Update</button>
         </div>
       </div>
       <div class={styles.view_data}>
