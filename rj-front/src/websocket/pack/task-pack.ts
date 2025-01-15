@@ -4,7 +4,7 @@ import { MarkPack } from './mark-pack';
 export interface TaskPack {
   id: number;
   kind: Kind;
-  post_office_id: number;
+  postoffice_id: number;
 }
 
 export const Kind = {

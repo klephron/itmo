@@ -1,7 +1,7 @@
 import { createSignal, Match, onMount, Switch } from 'solid-js';
 import styles from './index.module.scss';
 import { clientGet, clientOnClose, clientOnSessionListen, clientSet } from '@state/client';
-import ViewPostOffice from './ViewPostOffice';
+import ViewPostoffice from './ViewPostoffice';
 import ViewTransport from './ViewTransport';
 import ViewActor from './ViewActor';
 import { WebSocketClient } from '@websocket/client';
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export default function View(props: Props) {
-  const [getSelectedView, setSelectedView] = createSignal(SelectedView.POST_OFFICE);
+  const [getSelectedView, setSelectedView] = createSignal(SelectedView.POSTOFFICE);
   const [getServerURL, setServerURL] = createSignal(props.serverUrl);
   const [getUPS, setUPS] = createSignal(String(props.ups));
 
@@ -27,7 +27,7 @@ export default function View(props: Props) {
     const data: SubscribeMessage = {
       args: {
         ups: Number(getUPS()),
-        post_office_ids: [],
+        postoffice_ids: [],
         transport_ids: [],
         actor_ids: [],
       },
@@ -58,7 +58,7 @@ export default function View(props: Props) {
     <div class={styles.view}>
       <div class={styles.view_top}>
         <div class={styles.view_select}>
-          <button onClick={() => setSelectedView(SelectedView.POST_OFFICE)}>Post Offices</button>
+          <button onClick={() => setSelectedView(SelectedView.POSTOFFICE)}>Post Offices</button>
           <button onClick={() => setSelectedView(SelectedView.TRANSPORT)}>Transports</button>
           <button onClick={() => setSelectedView(SelectedView.ACTORS)}>Actors</button>
         </div>
@@ -80,8 +80,8 @@ export default function View(props: Props) {
       </div>
       <div class={styles.view_data}>
         <Switch>
-          <Match when={getSelectedView() == SelectedView.POST_OFFICE}>
-            <ViewPostOffice />
+          <Match when={getSelectedView() == SelectedView.POSTOFFICE}>
+            <ViewPostoffice />
           </Match>
           <Match when={getSelectedView() == SelectedView.TRANSPORT}>
             <ViewTransport />
@@ -96,7 +96,7 @@ export default function View(props: Props) {
 }
 
 enum SelectedView {
-  POST_OFFICE,
+  POSTOFFICE,
   TRANSPORT,
   ACTORS,
 }
