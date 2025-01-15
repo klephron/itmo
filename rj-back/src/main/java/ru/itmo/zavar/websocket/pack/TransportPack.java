@@ -25,14 +25,14 @@ public class TransportPack {
     private final List<MailPack> mails;
     @SerializedName("mails_count")
     private final Integer mailsCount;
-    @SerializedName("route_post_office_ids")
-    private final List<Long> routePostOfficeIds;
+    @SerializedName("route_postoffice_ids")
+    private final List<Long> routePostofficeIds;
     @SerializedName("loading_addresses")
     private final List<PostalAddressPack> loadingAddresses;
     @SerializedName("delivery_addresses")
     private final List<PostalAddressPack> deliveryAddresses;
     @SerializedName("coordinates")
     private final CoordinatesPack coordinates;
-    @SerializedName("at_post_office_id")
-    private final Long atPostOffice;
+    @SerializedName("at_postoffice_id")
+    private final Long atPostoffice;
 }

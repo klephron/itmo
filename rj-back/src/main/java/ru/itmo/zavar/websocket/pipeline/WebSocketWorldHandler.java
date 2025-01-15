@@ -97,7 +97,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                         );
                         world.actors.sendMail(
                             args.getActorId(),
-                            args.getPostOfficeId(),
+                            args.getPostofficeId(),
                             mail
                         );
                         ctx.writeAndFlush(new SuccessIdResponse(mail.getId()));
@@ -105,7 +105,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                     case RECEIVE_MAIL_ONE -> {
                         world.actors.receiveMail(
                             args.getActorId(),
-                            args.getPostOfficeId(),
+                            args.getPostofficeId(),
                             m -> {
                                 logger.info(m.toString());
                                 ctx.writeAndFlush(new SuccessIdResponse(m.getId()));
@@ -125,7 +125,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                             new Mail.Data(args.getMailSimplePack().getText()),
                             0
                         );
-                        Actor.Schedule.Task sendMailFlux = world.actors.sendMailFlux(args.getActorId(), args.getPostOfficeId(),
+                        Actor.Schedule.Task sendMailFlux = world.actors.sendMailFlux(args.getActorId(), args.getPostofficeId(),
                             Flux.generate(AtomicLong::new, (state, sink) -> {
                                 sink.next(mail);
                                 return state;
@@ -135,7 +135,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                     case RECEIVE_MAIL_MANY -> {
                         world.actors.receiveMailMany(
                             args.getActorId(),
-                            args.getPostOfficeId(),
+                            args.getPostofficeId(),
                             m -> {
                                 logger.info(m.toString());
                                 ctx.writeAndFlush(new SuccessIdResponse(m.getId()));
@@ -172,7 +172,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
         session.setSubscription(session.new WorldSubscription(
                 msg.getArgs().getUps(),
                 this::subscribeOnUpdateNext,
-                msg.getArgs().getPostOfficeIds(),
+                msg.getArgs().getPostofficeIds(),
                 msg.getArgs().getTransportIds(),
                 msg.getArgs().getActorIds()));
 

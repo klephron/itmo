@@ -25,9 +25,9 @@ public class Main {
     }
 
     public static void genericWorld(World world) {
-        Postoffice postOffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
+        Postoffice postoffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
                 new Coordinates(0, 10));
-        Postoffice postOffice2 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
+        Postoffice postoffice2 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
                 new Coordinates(0, 10));
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
@@ -41,8 +41,8 @@ public class Main {
         Transport transport2 = new Transport(20, 10D, 20, "T2");
         Transport transport3 = new Transport(30, 5D, 2, "T3");
 
-        world.postoffices.add(postOffice1);
-        world.postoffices.add(postOffice2);
+        world.postoffices.add(postoffice1);
+        world.postoffices.add(postoffice2);
         world.actors.addActor(actor1);
         world.actors.addActor(actor2);
         world.actors.addActor(actor3);

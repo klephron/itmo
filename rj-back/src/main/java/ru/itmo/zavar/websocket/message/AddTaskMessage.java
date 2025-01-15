@@ -27,8 +27,8 @@ public class AddTaskMessage extends Message {
     public static class Args {
         @SerializedName("actor_id")
         private final Long actorId;
-        @SerializedName("post_office_id")
-        private final Long postOfficeId;
+        @SerializedName("postoffice_id")
+        private final Long postofficeId;
         @SerializedName("kind")
         private final TaskPack.Kind kind;
         @SerializedName("interval")

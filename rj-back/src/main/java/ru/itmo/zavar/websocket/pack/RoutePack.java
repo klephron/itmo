@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public class RoutePack {
-    @SerializedName("post_office_ids")
+    @SerializedName("postoffice_ids")
     private final List<Long> postOfficeIds;
     @SerializedName("is_cyclic")
     private final Boolean isCyclic;

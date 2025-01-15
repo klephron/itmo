@@ -28,8 +28,8 @@ public class SubscribeMessage extends Message {
         // updates per second
         @SerializedName("ups")
         private final Float ups;
-        @SerializedName("post_office_ids")
-        private final List<Long> postOfficeIds;
+        @SerializedName("postoffice_ids")
+        private final List<Long> postofficeIds;
         @SerializedName("transport_ids")
         private final List<Long> transportIds;
         @SerializedName("actor_ids")

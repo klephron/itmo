@@ -26,7 +26,7 @@ public class SubscribeEvent extends Event {
     public static class Args {
         @SerializedName("session_id")
         private final String sessionId;
-        @SerializedName("post_offices")
+        @SerializedName("postoffices")
         private final List<PostofficePack> postoffices;
         @SerializedName("transports")
         private final List<TransportPack> transports;

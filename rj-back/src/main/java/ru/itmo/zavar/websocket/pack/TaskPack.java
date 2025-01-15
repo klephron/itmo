@@ -14,8 +14,8 @@ public class TaskPack {
     private final Long id;
     @SerializedName("kind")
     private final Kind kind;
-    @SerializedName("post_office_id")
-    private final Long postOfficeId;
+    @SerializedName("postoffice_id")
+    private final Long postofficeId;
 
     public enum Kind {
         @SerializedName("SEND_MAIL_ONE")
