@@ -7,6 +7,8 @@ import {
   ActorPackKind,
   IndividualActorPack,
   OrganizationActorPack,
+  SendMailOneTaskPack,
+  SendMailRepeatedTaskPack,
   TaskPack,
   TaskPackKind,
 } from '@websocket/pack';
@@ -15,6 +17,7 @@ import styles from './ViewActor.module.scss';
 import { world } from '@state/world';
 import MailTable from './MailTable';
 import TaskTable from './TaskTable';
+import { ActorAddTaskMessage } from '@websocket/message/actor-add-task';
 
 export default function ViewActor() {
   const [getAddKind, setAddKind] = createSignal(ActorPackKind.INDIVIDUAL);
@@ -117,6 +120,7 @@ export default function ViewActor() {
   function TableEntryAddTask({ item }: { item: ActorPack }) {
     const [getTaskKind, setTaskKind] = createSignal(TaskPackKind.SEND_MAIL_ONE);
     const [getMailReceiverId, setMailReceiverId] = createSignal('');
+    const [getPostOfficeId, setPostOfficeId] = createSignal('');
     const [getMailSubject, setMailSubject] = createSignal('');
     const [getMailText, setMailText] = createSignal('');
 
@@ -127,11 +131,53 @@ export default function ViewActor() {
       if (client == null) {
         return;
       }
+      const data = {
+        args: {
+          task: {
+            kind: getTaskKind(),
+            actor_id: Number(item.id),
+            postoffice_id: Number(getPostOfficeId()),
+          },
+        },
+      } as ActorAddTaskMessage;
+
+      switch (getTaskKind()) {
+        case TaskPackKind.SEND_MAIL_ONE: {
+          (data.args.task as SendMailOneTaskPack).mail = {
+            subject: getMailSubject(),
+            text: getMailText(),
+            sender_actor_id: item.id!,
+            receiver_actor_id: Number(getMailReceiverId()),
+          };
+          break;
+        }
+        case TaskPackKind.SEND_MAIL_REPEATED: {
+          (data.args.task as SendMailRepeatedTaskPack).mail = {
+            subject: getMailSubject(),
+            text: getMailText(),
+            sender_actor_id: item.id!,
+            receiver_actor_id: Number(getMailReceiverId()),
+          };
+          (data.args.task as SendMailRepeatedTaskPack).interval_ms = Number(getMailInterval());
+          break;
+        }
+        case TaskPackKind.RECEIVE_MAIL_ONE: {
+          break;
+        }
+        case TaskPackKind.RECEIVE_MAIL_MANY: {
+          break;
+        }
+        case TaskPackKind.SEND_MARK_REPEATED: {
+          break;
+        }
+      }
+      client.actorAddTask(data);
     }
 
     function addTaskClear() {
       setTaskKind(TaskPackKind.SEND_MAIL_ONE);
       setMailReceiverId('');
+      setPostOfficeId('');
       setMailSubject('');
       setMailText('');
     }
@@ -165,15 +211,52 @@ export default function ViewActor() {
               </For>
             </select>
           </div>
+          <div>
+            <span>Postoffice Id</span>
+            <select
+              onChange={(e) => {
+                setPostOfficeId(e.target.value);
+              }}
+            >
+              <For each={world.postoffices == null ? [] : world.postoffices}>
+                {(item, _) => <option value={item.id}>{item.id}</option>}
+              </For>
+            </select>
+          </div>
           <Show when={getTaskKind() == TaskPackKind.SEND_MAIL_REPEATED}>
             <div>
-              <span>Postoffices (ID list)</span>
+              <span>Interval ms</span>
               <input
                 value={getMailInterval()}
                 onChange={(e) => setMailInterval(e.target.value)}
                 placeholder="Interval ms"
               />
             </div>
+          </Show>
+          <Show
+            when={
+              getTaskKind() == TaskPackKind.SEND_MAIL_ONE ||
+              getTaskKind() == TaskPackKind.SEND_MAIL_REPEATED
+            }
+          >
+            <>
+              <div>
+                <span>Mail Subject</span>
+                <input
+                  value={getMailSubject()}
+                  onChange={(e) => setMailSubject(e.target.value)}
+                  placeholder="Mail Subject"
+                />
+              </div>
+              <div>
+                <span>Mail Text</span>
+                <input
+                  value={getMailText()}
+                  onChange={(e) => setMailText(e.target.value)}
+                  placeholder="Mail Text"
+                />
+              </div>
+            </>
           </Show>
         </div>
         <div class={styles.add_task_buttons}>

@@ -15,6 +15,8 @@ public class TaskPack {
     private final Kind kind;
     @SerializedName("postoffice_id")
     private final Long postofficeId;
+    @SerializedName("actor_id")
+    private final Long actorId;
 
     public enum Kind {
         @SerializedName("SEND_MAIL_ONE")
@@ -31,56 +33,42 @@ public class TaskPack {
 
     @Getter
     public static class SendMailOne extends TaskPack {
-        @SerializedName("actor_id")
-        private final Long actorId;
         @SerializedName("mail")
         private final MailPack mail;
 
         public SendMailOne(Long id, Long actorId, Long postOfficeId, MailPack mail) {
-            super(id, Kind.SEND_MAIL_ONE, postOfficeId);
+            super(id, Kind.SEND_MAIL_ONE, postOfficeId, actorId);
             this.mail = mail;
-            this.actorId = actorId;
         }
 
     }
 
     @Getter
     public static class SendMailRepeated extends TaskPack {
-        @SerializedName("actor_id")
-        private final Long actorId;
         @SerializedName("interval_ms")
         private final Integer intervalMs;
         @SerializedName("mail")
         private final MailPack mail;
 
         public SendMailRepeated(Long id, Long actorId, Long postOfficeId, Integer intervalMs, MailPack mail) {
-            super(id, Kind.SEND_MAIL_REPEATED, postOfficeId);
+            super(id, Kind.SEND_MAIL_REPEATED, postOfficeId, actorId);
             this.intervalMs = intervalMs;
             this.mail = mail;
-            this.actorId = actorId;
         }
 
     }
 
     @Getter
     public static class ReceiveMailOne extends TaskPack {
-        @SerializedName("actor_id")
-        private final Long actorId;
-
         public ReceiveMailOne(Long id, Long postOfficeId, Long actorId) {
-            super(id, Kind.RECEIVE_MAIL_ONE, postOfficeId);
-            this.actorId = actorId;
+            super(id, Kind.RECEIVE_MAIL_ONE, postOfficeId, actorId);
         }
     }
 
     @Getter
     public static class ReceiveMailMany extends TaskPack {
-        @SerializedName("actor_id")
-        private final Long actorId;
-
         public ReceiveMailMany(Long id, Long postOfficeId, Long actorId) {
-            super(id, Kind.RECEIVE_MAIL_MANY, postOfficeId);
-            this.actorId = actorId;
+            super(id, Kind.RECEIVE_MAIL_MANY, postOfficeId, actorId);
         }
     }
 
@@ -94,8 +82,8 @@ public class TaskPack {
         private final MarkPack mark;
 
         public MarkSendRepeated(Long id, Kind kind, Long postOfficeId, Integer intervalMs, Integer n,
-                MarkPack mark) {
-            super(id, kind, postOfficeId);
+                MarkPack mark, Long actorId) {
+            super(id, kind, postOfficeId, actorId);
             this.intervalMs = intervalMs;
             this.n = n;
             this.mark = mark;

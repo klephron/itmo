@@ -290,11 +290,11 @@ public class PackMappers {
             return new TaskPack.SendMailRepeated(casted.getId(), casted.getOwnerActor().getId(), null, null, null);
         }
         if (task instanceof Schedule.MailReceiveOneTask casted) {
-            return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_ONE, null);
+            return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_ONE, null, null);
         }
         if (task instanceof Schedule.MailReceiveFluxTask casted) {
-            return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_MANY, null);
+            return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_MANY, null, null);
         }
-        return new TaskPack(task.getId(), null, null);
+        return new TaskPack(task.getId(), null, null, null);
     }
 }

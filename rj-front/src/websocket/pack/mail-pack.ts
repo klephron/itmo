@@ -1,18 +1,18 @@
 import { MarkPack } from './mark-pack';
 
 export interface MailPack {
-  id: number;
+  id?: number;
   subject: string;
   sender_actor_id: number;
   receiver_actor_id: number;
   text: string;
-  value: number;
-  marks: MarkPack[];
-  status: Status;
-  created_at: string;
-  applied_at: string;
-  sent_at: string;
-  received_at: string;
+  value?: number;
+  marks?: MarkPack[];
+  status?: Status;
+  created_at?: string;
+  applied_at?: string;
+  sent_at?: string;
+  received_at?: string;
 }
 
 export const Status = {

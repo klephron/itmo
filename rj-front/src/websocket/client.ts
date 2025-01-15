@@ -10,6 +10,7 @@ import {
   TransportStartMessage,
   TransportStopMessage,
 } from './message';
+import { ActorAddTaskMessage } from './message/actor-add-task';
 
 export class WebSocketClient {
   ws: WebSocket;
@@ -90,22 +91,27 @@ export class WebSocketClient {
   }
 
   transportSetRoute(data: TransportSetRouteMessage) {
-    data.op = 'transport.set_route'
-    this.sendGenericOnetime(data)
+    data.op = 'transport.set_route';
+    this.sendGenericOnetime(data);
   }
 
   transportStart(data: TransportStartMessage) {
-    data.op = 'transport.start'
-    this.sendGenericOnetime(data)
+    data.op = 'transport.start';
+    this.sendGenericOnetime(data);
   }
 
   transportStop(data: TransportStopMessage) {
-    data.op = 'transport.stop'
-    this.sendGenericOnetime(data)
+    data.op = 'transport.stop';
+    this.sendGenericOnetime(data);
   }
 
   actorsAdd(data: ActorsAddMessage) {
     data.op = 'actors.add';
+    this.sendGenericOnetime(data);
+  }
+
+  actorAddTask(data: ActorAddTaskMessage) {
+    data.op = 'actor.add_task';
     this.sendGenericOnetime(data);
   }
 }
