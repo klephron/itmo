@@ -11,6 +11,34 @@
     grid-template-columns: auto auto auto auto;
 
     &_body_row_extra {
+      .operations {
+        &_entries {
+          display: flex;
+
+          .add_task {
+            border: 1px solid black;
+            padding: 5px;
+
+            &_body {
+              div {
+                display: contents;
+              }
+
+              display: inline-grid;
+              grid-template-columns: max-content 1fr;
+              column-gap: 10px;
+            }
+
+            &_buttons {
+              margin-top: 10px;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+            }
+          }
+        }
+      }
+
       .personal {
         div {
           display: contents;

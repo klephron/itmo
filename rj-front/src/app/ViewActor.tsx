@@ -7,6 +7,7 @@ import {
   ActorPackKind,
   IndividualActorPack,
   OrganizationActorPack,
+  TaskPackKind,
 } from '@websocket/pack';
 import { createEffect, createSignal, For, Match, Show, Switch } from 'solid-js';
 import styles from './ViewActor.module.scss';
@@ -109,6 +110,76 @@ export default function ViewActor() {
     }
   }
 
+  function TableEntryAddTask({ item }: { item: ActorPack }) {
+    const [getTaskKind, setTaskKind] = createSignal(TaskPackKind.SEND_MAIL_ONE);
+    const [getMailReceiverId, setMailReceiverId] = createSignal('');
+    const [getMailSubject, setMailSubject] = createSignal('');
+    const [getMailText, setMailText] = createSignal('');
+
+    const [getMailInterval, setMailInterval] = createSignal('');
+
+    function addTaskSubmit() {
+      const client = clientGet();
+      if (client == null) {
+        return;
+      }
+    }
+
+    function addTaskClear() {
+      setTaskKind(TaskPackKind.SEND_MAIL_ONE);
+      setMailReceiverId('');
+      setMailSubject('');
+      setMailText('');
+    }
+
+    return (
+      <div class={styles.add_task}>
+        <h4>Add Task</h4>
+        <div class={styles.add_task_body}>
+          <div>
+            <span>Task Kind</span>
+            <select
+              value={getTaskKind()}
+              onChange={(e) => {
+                setTaskKind(e.target.value);
+              }}
+            >
+              <For each={Object.values(TaskPackKind)}>
+                {(item, _) => <option value={item}>{item}</option>}
+              </For>
+            </select>
+          </div>
+          <div>
+            <span>Task Receiver Id</span>
+            <select
+              onChange={(e) => {
+                setMailReceiverId(e.target.value);
+              }}
+            >
+              <For each={world.actors == null ? [] : world.actors}>
+                {(item, _) => <option value={item.id}>{item.id}</option>}
+              </For>
+            </select>
+          </div>
+          <Show when={getTaskKind() == TaskPackKind.SEND_MAIL_REPEATED}>
+            <div>
+              <span>Postoffices (ID list)</span>
+              <input
+                value={getMailInterval()}
+                onChange={(e) => setMailInterval(e.target.value)}
+                placeholder="Interval ms"
+              />
+            </div>
+          </Show>
+        </div>
+        <div class={styles.add_task_buttons}>
+          <button onClick={addTaskSubmit}>Submit</button>
+          <button onClick={addTaskClear}>Clear</button>
+        </div>
+      </div>
+    );
+  }
+
   function TableEntry(item: ActorPack) {
     return (
       <>
@@ -119,6 +190,12 @@ export default function ViewActor() {
           <div>{item.mails_buffer_count}</div>
         </div>
         <div class={getEntryExtraClass(item)}>
+          <div class={styles.operations}>
+            <h4>Operations</h4>
+            <div class={styles.operations_entries}>
+              <TableEntryAddTask item={item} />
+            </div>
+          </div>
           <div>
             <h4>Personal</h4>
             <div class={styles.personal}>
