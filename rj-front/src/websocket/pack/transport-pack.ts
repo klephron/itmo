@@ -9,9 +9,10 @@ export interface TransportPack {
   ops: number; // double
   license_plate: string;
   mails: MailPack[];
+  mails_count: number;
   route_postoffice_ids: number[];
   loading_addresses: PostalAddressPack[];
   delivery_addresses: PostalAddressPack[];
-  coordinates: CoordinatesPack[];
+  coordinates: CoordinatesPack;
   at_postoffice_id: number;
 }

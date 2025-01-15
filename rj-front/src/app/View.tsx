@@ -1,4 +1,4 @@
-import { createEffect, createSignal, Match, onMount, Switch } from 'solid-js';
+import { createSignal, Match, onMount, Switch } from 'solid-js';
 import styles from './View.module.scss';
 import {
   clientGet,
