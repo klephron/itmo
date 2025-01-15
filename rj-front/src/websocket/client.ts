@@ -6,6 +6,9 @@ import {
   PostofficesAddMessage,
   SubscribeMessage,
   TransportsAddMessage,
+  TransportSetRouteMessage,
+  TransportStartMessage,
+  TransportStopMessage,
 } from './message';
 
 export class WebSocketClient {
@@ -84,6 +87,21 @@ export class WebSocketClient {
   transportsAdd(data: TransportsAddMessage) {
     data.op = 'transports.add';
     this.sendGenericOnetime(data);
+  }
+
+  transportSetRoute(data: TransportSetRouteMessage) {
+    data.op = 'transport.set_route'
+    this.sendGenericOnetime(data)
+  }
+
+  transportStart(data: TransportStartMessage) {
+    data.op = 'transport.start'
+    this.sendGenericOnetime(data)
+  }
+
+  transportStop(data: TransportStopMessage) {
+    data.op = 'transport.stop'
+    this.sendGenericOnetime(data)
   }
 
   actorsAdd(data: ActorsAddMessage) {

@@ -1,5 +1,31 @@
 @import 'View.module.scss';
 
+@mixin transport_operation_mixin {
+  border: 1px solid black;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  &_body {
+    div {
+      display: contents;
+    }
+
+    display: inline-grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 10px;
+  }
+
+
+  &_buttons {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
+
 .transports {
   &_table {
     grid-template-columns: auto auto auto auto auto;
@@ -8,25 +34,21 @@
       .operations {
         &_entries {
           display: flex;
+          gap: 10px;
 
           .set_route {
-            border: 1px solid black;
-            padding: 5px;
+            @include transport_operation_mixin;
+          }
 
-            &_body {
-              div {
-                display: contents;
-              }
+          .start {
+            @include transport_operation_mixin;
+          }
 
-              display: inline-grid;
-              grid-template-columns: max-content 1fr;
-              column-gap: 10px;
-            }
+          .stop {
+            @include transport_operation_mixin;
+
             &_buttons {
-              margin-top: 10px;
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 10px;
+              display: flex;
             }
           }
         }

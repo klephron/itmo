@@ -7,6 +7,7 @@ import {
   ActorPackKind,
   IndividualActorPack,
   OrganizationActorPack,
+  TaskPack,
   TaskPackKind,
 } from '@websocket/pack';
 import { createEffect, createSignal, For, Match, Show, Switch } from 'solid-js';
@@ -25,6 +26,7 @@ export default function ViewActor() {
   const [getAddName, setAddName] = createSignal('');
   const [getAddSurname, setAddSurname] = createSignal('');
   const [getAddPatronymic, setAddPatronymic] = createSignal('');
+  const [getAddMailBufferCapacity, setAddMailBufferCapacity] = createSignal('');
 
   const [getSelectedIds, setSelectedIds] = createSignal(initSelected());
 
@@ -72,6 +74,7 @@ export default function ViewActor() {
           name: getAddName(),
           surname: getAddSurname(),
           patronymic: getAddPatronymic(),
+          mails_buffer_capacity: Number(getAddMailBufferCapacity()),
         },
       },
     };
@@ -87,6 +90,7 @@ export default function ViewActor() {
     setAddName('');
     setAddSurname('');
     setAddPatronymic('');
+    setAddMailBufferCapacity('');
   }
 
   function toggleEntrySelection(e: ActorPack) {
@@ -258,7 +262,11 @@ export default function ViewActor() {
           </div>
           <div>
             <h4>Buffered Mails</h4>
-            {item.mails == null ? <div>Loading...</div> : <MailTable data={item.mails} />}
+            {item.mails_buffer == null ? (
+              <div>Loading...</div>
+            ) : (
+              <MailTable data={item.mails_buffer} />
+            )}
           </div>
         </div>
       </>
@@ -285,6 +293,13 @@ export default function ViewActor() {
           <h4>Operations</h4>
           <div class={styles.add}>
             <h4>Add Actor</h4>
+            <div>
+              <input
+                value={getAddMailBufferCapacity()}
+                onChange={(e) => setAddMailBufferCapacity(e.target.value)}
+                placeholder="Mail Buffer Capacity"
+              />
+            </div>
             <div>
               <select value={getAddKind()} onChange={(e) => setAddKind(e.target.value)}>
                 <option value={ActorPackKind.INDIVIDUAL}>{ActorPackKind.INDIVIDUAL}</option>

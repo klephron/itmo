@@ -1,7 +1,12 @@
 import { clientGet } from '@state/client';
 import { subscriptionGet, subscriptionSet } from '@state/subscription';
 import { setsEqual } from '@util/util';
-import { TransportsAddMessage } from '@websocket/message';
+import {
+  TransportsAddMessage,
+  TransportSetRouteMessage,
+  TransportStartMessage,
+  TransportStopMessage,
+} from '@websocket/message';
 import { RoutePack, TransportPack } from '@websocket/pack';
 import { createEffect, createSignal, For } from 'solid-js';
 import styles from './ViewTransport.module.scss';
@@ -108,6 +113,18 @@ export default function ViewTransport() {
       if (client == null) {
         return;
       }
+      const data: TransportSetRouteMessage = {
+        args: {
+          transport_id: item.id,
+          route: {
+            postoffice_ids: getRoute()
+              .split(',')
+              .map((e) => Number(e)),
+            is_cyclic: getIsCyclic(),
+          },
+        },
+      };
+      client.transportSetRoute(data);
     }
 
     function setRouteClear() {
@@ -144,6 +161,68 @@ export default function ViewTransport() {
     );
   }
 
+  function TableEntryStart({ item }: { item: TransportPack }) {
+    const [getIndex, setIndex] = createSignal('');
+
+    function setRouteSubmit() {
+      const client = clientGet();
+      if (client == null) {
+        return;
+      }
+      const data: TransportStartMessage = {
+        args: {
+          transport_id: item.id,
+          index: Number(getIndex()),
+        },
+      };
+      client.transportStart(data);
+    }
+
+    function setRouteClear() {
+      setIndex('');
+    }
+
+    return (
+      <div class={styles.start}>
+        <h4>Start</h4>
+        <div class={styles.start_body}>
+          <div>
+            <span>Start Index</span>
+            <input value={getIndex()} onChange={(e) => setIndex(e.target.value)}></input>
+          </div>
+        </div>
+        <div class={styles.start_buttons}>
+          <button onClick={setRouteSubmit}>Submit</button>
+          <button onClick={setRouteClear}>Clear</button>
+        </div>
+      </div>
+    );
+  }
+
+  function TableEntryStop({ item }: { item: TransportPack }) {
+    function setRouteSubmit() {
+      const client = clientGet();
+      if (client == null) {
+        return;
+      }
+      const data: TransportStopMessage = {
+        args: {
+          transport_id: item.id,
+        },
+      };
+      client.transportStop(data);
+    }
+
+    return (
+      <div class={styles.stop}>
+        <h4>Close</h4>
+        <div class={styles.stop_buttons}>
+          <button onClick={setRouteSubmit}>Submit</button>
+        </div>
+      </div>
+    );
+  }
+
   function TableEntry(item: TransportPack) {
     return (
       <>
@@ -159,6 +238,8 @@ export default function ViewTransport() {
             <h4>Operations</h4>
             <div class={styles.operations_entries}>
               <TableEntrySetRoute item={item} />
+              <TableEntryStart item={item} />
+              <TableEntryStop item={item} />
             </div>
           </div>
           <div>

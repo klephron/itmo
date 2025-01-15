@@ -7,8 +7,8 @@ export interface ActorPack {
   id?: number;
   address: AddressPack;
   tasks?: TaskPack[];
-  mails?: MailPack[];
   mails_count?: number;
+  mails_buffer?: MailPack[];
   mails_buffer_count?: number;
   mails_buffer_capacity?: number;
 }
