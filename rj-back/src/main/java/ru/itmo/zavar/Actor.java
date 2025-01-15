@@ -1,11 +1,14 @@
 package ru.itmo.zavar;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import lombok.EqualsAndHashCode;
@@ -31,13 +34,31 @@ public abstract class Actor {
     private final Address address;
     private final Schedule schedule;
     private final int bufferCapacity;
-    private final LinkedBlockingQueue<Integer> messageBuffer;
+    @Setter
+    private int bufferCurrentSize;
+    @Setter
+    private AtomicLong mailsCount = new AtomicLong(0);
+    @ToString.Exclude
+    private final LinkedBlockingQueue<Mail> messageBuffer;
 
     public Actor(Address address, int bufferCapacity) {
         this.address = address;
         this.bufferCapacity = bufferCapacity;
         this.messageBuffer = new LinkedBlockingQueue<>(bufferCapacity);
         this.schedule = new Schedule();
+    }
+
+    public void addMailToBuffer(Mail mail) {
+        if (messageBuffer.size() == bufferCapacity) {
+            messageBuffer.poll();
+        }
+        messageBuffer.offer(mail);
+        bufferCurrentSize = messageBuffer.size();
+        mailsCount.getAndIncrement();
+    }
+
+    public List<Mail> getAllMailsInBuffer() {
+        return messageBuffer.stream().toList();
     }
 
     @Getter

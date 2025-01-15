@@ -108,6 +108,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                             args.getPostofficeId(),
                             (mail, actor) -> {
                                 logger.info(mail.toString());
+                                actor.addMailToBuffer(mail);
                             },
                             e -> {
                                 logger.warning(e.toString());
@@ -136,7 +137,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                             args.getPostofficeId(),
                             (mail, actor) -> {
                                 logger.info(mail.toString());
-
+                                actor.addMailToBuffer(mail);
                             },
                             e -> {
                                 logger.warning(e.toString());

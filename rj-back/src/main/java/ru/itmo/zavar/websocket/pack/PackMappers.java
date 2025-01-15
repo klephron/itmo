@@ -227,67 +227,64 @@ public class PackMappers {
 
     public static ActorPack actorToPack(Actor actor) {
         List<TaskPack> tasks = actor.getSchedule().getTasks().values().stream().map(PackMappers::taskToPack).toList();
-        if (actor instanceof IndividualActor) {
-            var individualActor = (IndividualActor) actor;
+        if (actor instanceof IndividualActor individualActor) {
+            List<MailPack> mailPacks = actor.getAllMailsInBuffer().stream().map(PackMappers::mailToPack).toList();
             return new IndividualActorPack(individualActor.getId(), addressToPack(individualActor.getAddress()), tasks,
-                    individualActor.getBufferCapacity(), individualActor.getName(), individualActor.getSurname(), individualActor.getPatronymic());
+                mailPacks, individualActor.getBufferCapacity(), individualActor.getBufferCurrentSize(),
+                individualActor.getMailsCount().get(), individualActor.getName(), individualActor.getSurname(),
+                individualActor.getPatronymic());
         }
-        if (actor instanceof OrganizationActor) {
-            var organizationActor = (OrganizationActor) actor;
+        if (actor instanceof OrganizationActor organizationActor) {
+            List<MailPack> mailPacks = actor.getAllMailsInBuffer().stream().map(PackMappers::mailToPack).toList();
             return new OrganizationActorPack(organizationActor.getId(), addressToPack(organizationActor.getAddress()),
-                    tasks, organizationActor.getBufferCapacity(), organizationActor.getName());
+                    tasks, organizationActor.getBufferCapacity(), organizationActor.getBufferCurrentSize(),
+                organizationActor.getMailsCount().get(), mailPacks, organizationActor.getName());
         }
         logger.warning("unhandled actor class " + actor);
-        return new ActorPack(null, actor.getId(), addressToPack(actor.getAddress()), tasks, 0);
+        return new ActorPack(null, actor.getId(), addressToPack(actor.getAddress()), tasks, 0, 0 , 0, List.of());
     }
 
     public static ActorPack actorToPackEssential(Actor actor) {
-        if (actor instanceof IndividualActor) {
-            var individualActor = (IndividualActor) actor;
-            return new IndividualActorPack(individualActor.getId(), null, null, 0, null, null, null);
+        if (actor instanceof IndividualActor individualActor) {
+            return new IndividualActorPack(individualActor.getId(), null, null, List.of(), 0, 0, 0,null, null, null);
         }
-        if (actor instanceof OrganizationActor) {
-            var organizationActor = (OrganizationActor) actor;
-            return new OrganizationActorPack(organizationActor.getId(), null, null, 0, null);
+        if (actor instanceof OrganizationActor organizationActor) {
+            return new OrganizationActorPack(organizationActor.getId(), null, null, 0, 0, 0, List.of(), null);
         }
         logger.warning("unhandled actor class " + actor);
-        return new ActorPack(null, actor.getId(), null, null, 0);
+        return new ActorPack(null, actor.getId(), null, null, 0, 0, 0, List.of());
     }
 
     public static Actor actorFromPack(ActorPack actor) {
-        switch (actor.getKind()) {
-            case INDIVIDUAL: {
+        return switch (actor.getKind()) {
+            case INDIVIDUAL -> {
                 var casted = (IndividualActorPack) actor;
-                return new IndividualActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(),
+                yield new IndividualActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(),
                     casted.getName(), casted.getSurname(), casted.getPatronymic());
             }
-            case ORGANIZATION: {
+            case ORGANIZATION -> {
                 var casted = (OrganizationActorPack) actor;
-                return new OrganizationActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(), casted.getName());
+                yield new OrganizationActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(), casted.getName());
             }
-            default: {
+            default -> {
                 logger.warning("unhandled actor class " + actor + ", default to INDIVIDUAL");
-                return new IndividualActor(addressFromPack(actor.getAddress()), 0, null, null, null);
+                yield new IndividualActor(addressFromPack(actor.getAddress()), 0, null, null, null);
             }
-        }
+        };
     }
 
     // TODO: add additional metadata (currently only id and kind available) + marks
     public static TaskPack taskToPack(Task task) {
-        if (task instanceof Schedule.MailSendOneTask) {
-            var casted = (Schedule.MailSendOneTask) task;
+        if (task instanceof Schedule.MailSendOneTask casted) {
             return new TaskPack.MailSendOne(casted.getId(), null, null);
         }
-        if (task instanceof Schedule.MailSendFluxTask) {
-            var casted = (Schedule.MailSendFluxTask) task;
+        if (task instanceof Schedule.MailSendFluxTask casted) {
             return new TaskPack.MailSendRepeated(casted.getId(), null, null, null);
         }
-        if (task instanceof Schedule.MailReceiveOneTask) {
-            var casted = (Schedule.MailReceiveOneTask) task;
+        if (task instanceof Schedule.MailReceiveOneTask casted) {
             return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_ONE, null);
         }
-        if (task instanceof Schedule.MailReceiveFluxTask) {
-            var casted = (Schedule.MailReceiveFluxTask) task;
+        if (task instanceof Schedule.MailReceiveFluxTask casted) {
             return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_MANY, null);
         }
         return new TaskPack(task.getId(), null, null);
