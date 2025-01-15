@@ -65,7 +65,7 @@ export default function ViewPostoffice() {
               <div>Transports Queued</div>
               <div>Transports Processed</div>
             </div>
-            <div class={styles.table_body_row_extra}>Lalalala</div>
+            <div class={styles.table_body_row_extra + ' ' + styles.visible}>Lalalala</div>
             <div class={styles.table_body_row}>
               <div>ID</div>
               <div>Terminal Mails Count</div>

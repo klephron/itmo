@@ -157,8 +157,12 @@ input {
 
       &_row_extra {
         grid-column: 1 / -1;
-        display: block;
         border-bottom: 1px solid black;
+        display: none;
+
+        &.visible {
+          display: block;
+        }
       }
     }
   }
