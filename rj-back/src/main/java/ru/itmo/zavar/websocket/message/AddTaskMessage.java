@@ -2,49 +2,43 @@ package ru.itmo.zavar.websocket.message;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import ru.itmo.zavar.websocket.pack.TaskPack;
 
 @Getter
-public class AddTaskMessage extends Message {
+public class AddTaskMessage<T extends TaskPack> extends Message {
     public static final String OP = "actor.add_task";
 
     @SerializedName("args")
-    private final Args args;
+    private final Args<T> args;
 
-    public AddTaskMessage(Long actorId, Long postOfficeId, TaskPack.Kind kind, Long interval, AddTaskMessage.Args.MailSimplePack mailSimplePack) {
+    public AddTaskMessage(T task) {
         super(OP);
-        args = new Args(actorId, postOfficeId, kind, interval, mailSimplePack);
+        args = new Args<T>(task);
     }
 
-    @RequiredArgsConstructor
-    @Getter
     // NOTE: if empty list -> return basic info
     // if null -> return nothing
     // if exists something
-    public static class Args {
-        @SerializedName("actor_id")
-        private final Long actorId;
-        @SerializedName("postoffice_id")
-        private final Long postofficeId;
-        @SerializedName("kind")
-        private final TaskPack.Kind kind;
-        @SerializedName("interval")
-        private final Long interval;
-        @SerializedName("mail")
-        private final MailSimplePack mailSimplePack;
+    @Getter
+    public static class Args<T> {
+        @SerializedName("task")
+        T task;
 
-        @RequiredArgsConstructor
-        @Getter
-        public static class MailSimplePack {
-            @SerializedName("sender_id")
-            private final Long senderId;
-            @SerializedName("receiver_id")
-            private final Long receiverId;
-            @SerializedName("subject")
-            private final String subject;
-            @SerializedName("text")
-            private final String text;
+        public Args(T task) {
+            this.task = task;
+        }
+
+    }
+
+    public static class Generic extends AddTaskMessage<TaskPack> {
+        Generic(TaskPack task) {
+            super(task);
+        }
+    }
+
+    public static class MailsSendOneMessage extends AddTaskMessage<TaskPack.MailSendOne> {
+        MailsSendOneMessage(TaskPack.MailSendOne task) {
+            super(task);
         }
     }
 }

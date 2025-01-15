@@ -8,6 +8,7 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import ru.itmo.zavar.websocket.event.ErrorResponse;
 import ru.itmo.zavar.websocket.message.*;
+import ru.itmo.zavar.websocket.pack.TaskPack;
 
 import java.util.List;
 
@@ -33,7 +34,16 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
                 case AddTransportMessage.OP -> out.add(gson.fromJson(json, AddTransportMessage.class));
                 case AddActorIndividualMessage.OP -> out.add(gson.fromJson(json, AddActorIndividualMessage.class));
                 case AddActorOrganizationMessage.OP -> out.add(gson.fromJson(json, AddActorOrganizationMessage.class));
-                case AddTaskMessage.OP -> out.add(gson.fromJson(json, AddTaskMessage.class));
+                case AddTaskMessage.OP -> {
+                    AddTaskMessage.Generic task = gson.fromJson(json,
+                            AddTaskMessage.Generic.class);
+                    switch(task.getArgs().getTask().getKind()) {
+                        case SEND_MAIL_ONE -> {
+                            out.add(gson.fromJson(json, AddTaskMessage.MailsSendOneMessage.class))
+                        }
+
+                    }
+                }
                 case AddActorMessage.OP -> {
                     AddActorMessage addActorMessage = gson.fromJson(json, AddActorMessage.class);
                     switch (addActorMessage.getArgs().getActor().getKind()) {
