@@ -105,8 +105,8 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                         world.actors.receiveMail(
                             args.getActorId(),
                             args.getPostofficeId(),
-                            m -> {
-                                logger.info(m.toString());
+                            (mail, actor) -> {
+                                logger.info(mail.toString());
                             },
                             e -> {
                                 logger.warning(e.toString());
