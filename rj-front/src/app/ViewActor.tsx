@@ -1,3 +1,270 @@
+import { clientGet } from '@state/client';
+import { subscriptionGet, subscriptionSet } from '@state/subscription';
+import { setsEqual } from '@util/util';
+import { ActorsAddMessage } from '@websocket/message';
+import {
+  ActorPack,
+  ActorPackKind,
+  IndividualActorPack,
+  OrganizationActorPack,
+} from '@websocket/pack';
+import { createEffect, createSignal, For, Match, Show, Switch } from 'solid-js';
+import styles from './ViewActor.module.scss';
+import { world } from '@state/world';
+import MailTable from './MailTable';
+import TaskTable from './TaskTable';
+
 export default function ViewActor() {
-  return <>Actors</>;
+  const [getAddKind, setAddKind] = createSignal(ActorPackKind.INDIVIDUAL);
+  const [getAddCountry, setAddCountry] = createSignal('');
+  const [getAddCity, setAddCity] = createSignal('');
+  const [getAddPostalCode, setAddPostalCode] = createSignal('');
+  const [getAddStreet, setAddStreet] = createSignal('');
+  const [getAddHouse, setAddHouse] = createSignal('');
+  const [getAddName, setAddName] = createSignal('');
+  const [getAddSurname, setAddSurname] = createSignal('');
+  const [getAddPatronymic, setAddPatronymic] = createSignal('');
+
+  const [getSelectedIds, setSelectedIds] = createSignal(initSelected());
+
+  createEffect(() => {
+    updateSubscription();
+  });
+
+  function initSelected() {
+    const subscription = subscriptionGet();
+    if (subscription == null || subscription.args == null || subscription.args.actor_ids == null) {
+      return new Set<number>();
+    }
+    return new Set(subscription.args.actor_ids);
+  }
+
+  function updateSubscription() {
+    const subscription = subscriptionGet();
+    if (subscription == null) {
+      return;
+    }
+    const selectedIds = getSelectedIds();
+    if (!setsEqual(new Set(subscription.args.actor_ids), selectedIds)) {
+      subscription.args.actor_ids = [...selectedIds];
+      subscriptionSet({ ...subscription });
+    }
+  }
+
+  function addSubmit() {
+    const client = clientGet();
+    if (client == null) {
+      return;
+    }
+
+    const data: ActorsAddMessage = {
+      args: {
+        actor: {
+          kind: getAddKind(),
+          address: {
+            country: getAddCountry(),
+            city: getAddCity(),
+            postal_code: getAddPostalCode(),
+            street: getAddStreet(),
+            house: getAddHouse(),
+          },
+          name: getAddName(),
+          surname: getAddSurname(),
+          patronymic: getAddPatronymic(),
+        },
+      },
+    };
+    client.actorsAdd(data);
+  }
+
+  function addClear() {
+    setAddCountry('');
+    setAddCity('');
+    setAddPostalCode('');
+    setAddStreet('');
+    setAddHouse('');
+    setAddName('');
+    setAddSurname('');
+    setAddPatronymic('');
+  }
+
+  function toggleEntrySelection(e: ActorPack) {
+    return () => {
+      const selected = getSelectedIds();
+      if (selected.has(e.id!)) {
+        selected.delete(e.id!);
+      } else {
+        selected.add(e.id!);
+      }
+      setSelectedIds(new Set(selected));
+    };
+  }
+
+  function getEntryExtraClass(e: ActorPack) {
+    const selected = getSelectedIds();
+    if (selected.has(e.id!)) {
+      return styles.actors_table_body_row_extra + ' ' + styles.visible;
+    } else {
+      return styles.actors_table_body_row_extra;
+    }
+  }
+
+  function TableEntry(item: ActorPack) {
+    return (
+      <>
+        <div class={styles.actors_table_body_row} onClick={toggleEntrySelection(item)}>
+          <div>{item.id}</div>
+          <div>{item.kind}</div>
+          <div>{item.mails_count}</div>
+          <div>{item.mails_buffer_count}</div>
+        </div>
+        <div class={getEntryExtraClass(item)}>
+          <div>
+            <h4>Personal</h4>
+            <div class={styles.personal}>
+              <Switch>
+                <Match when={item.kind == ActorPackKind.INDIVIDUAL}>
+                  <div>
+                    <span>Name</span>
+                    <input value={(item as IndividualActorPack).name}></input>
+                  </div>
+                  <div>
+                    <span>Surname</span>
+                    <input value={(item as IndividualActorPack).surname}></input>
+                  </div>
+                  <div>
+                    <span>Patronymic</span>
+                    <input value={(item as IndividualActorPack).patronymic}></input>
+                  </div>
+                </Match>
+                <Match when={item.kind == ActorPackKind.ORGANIZATION}>
+                  <div>
+                    <span>Name</span>
+                    <input value={(item as OrganizationActorPack).name}></input>
+                  </div>
+                </Match>
+              </Switch>
+            </div>
+          </div>
+          <div>
+            <h4>Address</h4>
+            {item.address == null ? (
+              <div>Loading...</div>
+            ) : (
+              <div class={styles.address}>
+                <div>
+                  <span>Country</span>
+                  <input value={item.address.country}></input>
+                </div>
+                <div>
+                  <span>City</span>
+                  <input value={item.address.city}></input>
+                </div>
+                <div>
+                  <span>Postal Code</span>
+                  <input value={item.address.postal_code}></input>
+                </div>
+                <div>
+                  <span>Street</span>
+                  <input value={item.address.street}></input>
+                </div>
+                <div>
+                  <span>House</span>
+                  <input value={item.address.house}></input>
+                </div>
+              </div>
+            )}
+          </div>
+          <div>
+            <h4>Tasks</h4>
+            {item.tasks == null ? <div>Loading...</div> : <TaskTable data={item.tasks} />}
+          </div>
+          <div>
+            <h4>Buffered Mails</h4>
+            {item.mails == null ? <div>Loading...</div> : <MailTable data={item.mails} />}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div class={styles.actors}>
+        <div class={styles.actors_table}>
+          <div class={styles.actors_table_header}>
+            <div>ID</div>
+            <div>Kind</div>
+            <div>Mails Count</div>
+            <div>Mails Buffered Count</div>
+          </div>
+          <div class={styles.actors_table_body}>
+            <For each={world.actors} fallback={<div>Loading...</div>}>
+              {(item, _) => TableEntry(item)}
+            </For>
+          </div>
+        </div>
+        <div class={styles.actors_operations}>
+          <h4>Operations</h4>
+          <div class={styles.add}>
+            <h4>Add Actor</h4>
+            <div>
+              <select value={getAddKind()} onChange={(e) => setAddKind(e.target.value)}>
+                <option value={ActorPackKind.INDIVIDUAL}>{ActorPackKind.INDIVIDUAL}</option>
+                <option value={ActorPackKind.ORGANIZATION}>{ActorPackKind.ORGANIZATION}</option>
+              </select>
+            </div>
+            <div>
+              <input
+                value={getAddCountry()}
+                onChange={(e) => setAddCountry(e.target.value)}
+                placeholder="Country"
+              />
+            </div>
+            <div>
+              <input
+                value={getAddCity()}
+                onChange={(e) => setAddCity(e.target.value)}
+                placeholder="City"
+              />
+            </div>
+            <div>
+              <input
+                value={getAddPostalCode()}
+                onChange={(e) => setAddPostalCode(e.target.value)}
+                placeholder="Postal Code"
+              />
+            </div>
+            <div>
+              <input
+                value={getAddName()}
+                onChange={(e) => setAddName(e.target.value)}
+                placeholder="Name"
+              />
+            </div>
+            <Show when={getAddKind() == ActorPackKind.INDIVIDUAL}>
+              <div>
+                <input
+                  value={getAddSurname()}
+                  onChange={(e) => setAddSurname(e.target.value)}
+                  placeholder="Surname"
+                />
+              </div>
+            </Show>
+            <Show when={getAddKind() == ActorPackKind.INDIVIDUAL}>
+              <div>
+                <input
+                  value={getAddPatronymic()}
+                  onChange={(e) => setAddPatronymic(e.target.value)}
+                  placeholder="Patronymic"
+                />
+              </div>
+            </Show>
+            <button onClick={addSubmit}>Submit</button>
+            <button onClick={addClear}>Clear</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }
