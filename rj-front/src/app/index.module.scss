@@ -6,6 +6,16 @@ body,
   margin: 0;
 }
 
+input {
+  box-sizing: border-box;
+  outline: 0;
+  border-radius: 0;
+
+  &:hover {
+    pointer-events: none;
+  }
+}
+
 .outer {
   display: flex;
   flex-direction: column;
@@ -94,6 +104,7 @@ body,
 
 .view_config {
   display: flex;
+
   input {
     box-sizing: border-box;
     border: 1px solid black;
@@ -130,5 +141,35 @@ body,
 }
 
 .view_data {
-  border: 1px solid black;
+  width: 100%;
+}
+
+.view_postoffices {
+  display: flex;
+  justify-content: space-between;
+
+  .operations {
+    border: 1px solid black;
+
+    h4 {
+      margin: 0px;
+      text-align: center;
+    }
+
+    .add {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid black;
+      padding: 5px;
+    }
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 5px;
+  }
+
+  .info {
+    border: 1px solid black;
+  }
 }

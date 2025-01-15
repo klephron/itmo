@@ -1,9 +1,12 @@
-import { Event } from './event/event';
-import { SessionResponse } from './event/session-response';
-import { SubscribeEvent } from './event/subscribe-event';
-import { SubscribeResponse } from './event/subscribe-response';
-import { Message } from './message/message';
-import { SubscribeMessage } from './message/subscribe-message';
+import { Event } from './event';
+import { SessionResponse, SubscribeEvent, SubscribeResponse } from './event';
+import {
+  ActorsAddMessage,
+  Message,
+  PostofficesAddMessage,
+  SubscribeMessage,
+  TransportsAddMessage,
+} from './message';
 
 export class WebSocketClient {
   ws: WebSocket;
@@ -17,7 +20,7 @@ export class WebSocketClient {
     onclose: (ws: WebSocketClient) => void
   ) {
     this.dispatcher = new Dispatcher();
-    this.dispatcher.listen('session', onSessionListen);
+    this.dispatcher.listen('session', onSessionListen, () => true);
 
     this.ws = new WebSocket(url);
     this.ws.onmessage = (e) => {
@@ -30,30 +33,62 @@ export class WebSocketClient {
     this.ws.onclose = () => onclose(this);
   }
 
-  /* API METHODS */
-  sendGeneric(data: Message, callback: (e: Event) => void) {
-    this.dispatcher.onetime(data.op!, callback);
+  /* GENERIC API METHODS */
+  sendGenericOnetime<T extends Event>(
+    data: Message,
+    onResponse: (e: T) => void = (_) => {},
+    onResponsePredicate: (e: T) => boolean = (_) => true
+  ) {
+    this.dispatcher.onetime(data.op!, onResponse, onResponsePredicate);
     this.ws.send(JSON.stringify(data));
   }
 
-  subscribe(
-    data: SubscribeMessage,
-    response: (e: SubscribeResponse) => void,
-    callback: (e: SubscribeEvent) => void
+  sendGenericListen<T extends Event, U extends Event>(
+    data: Message,
+    onResponse: (e: T) => void = (_) => {},
+    onEvent: (e: U) => void = (_) => {},
+    onResponsePredicate: (e: T) => boolean,
+    OnEventPredicate: (e: U) => boolean
   ) {
-    data.op = 'subscribe';
-    this.dispatcher.onetime(data.op, response, (e: SubscribeResponse) => {
-      return e.status != null;
-    });
-    this.dispatcher.listen(data.op, callback, (e: SubscribeResponse) => {
-      return e.status == null;
-    });
+    this.dispatcher.onetime(data.op!, onResponse, onResponsePredicate);
+    this.dispatcher.listen(data.op!, onEvent, OnEventPredicate);
     const str = JSON.stringify(data);
     this.ws.send(str);
   }
 
+  /* CUSTOM METHOD APIS */
+  subscribe(
+    data: SubscribeMessage,
+    onResponse: (e: SubscribeResponse) => void,
+    onEvent: (e: SubscribeEvent) => void
+  ) {
+    data.op = 'subscribe';
+    this.sendGenericListen(
+      data,
+      onResponse,
+      onEvent,
+      (e: SubscribeResponse) => e.status != null,
+      (e: SubscribeEvent) => (e as any as SubscribeResponse).status == null
+    );
+  }
+
   unsubscribe() {
     this.dispatcher.callbacks.delete('subscribe');
+  }
+
+  postofficesAdd(data: PostofficesAddMessage) {
+    data.op = 'postoffices.add';
+    this.sendGenericOnetime(data);
+  }
+
+  transportsAdd(data: TransportsAddMessage) {
+    data.op = 'transports.add';
+    this.sendGenericOnetime(data);
+  }
+
+  actorsAdd(data: ActorsAddMessage) {
+    data.op = 'actors.add';
+    this.sendGenericOnetime(data);
   }
 }
 
@@ -65,20 +100,12 @@ class Dispatcher {
   }
 
   // add onetime callback
-  public onetime(
-    op: string,
-    callback: (e: any) => void,
-    predicate: (e: any) => boolean = (_) => true
-  ) {
+  public onetime(op: string, callback: (e: any) => void, predicate: (e: any) => boolean) {
     this.insert(op, callback, true, predicate);
   }
 
   // add stream event callback
-  public listen(
-    op: string,
-    callback: (e: any) => void,
-    predicate: (e: any) => boolean = (_) => true
-  ) {
+  public listen(op: string, callback: (e: any) => void, predicate: (e: any) => boolean) {
     this.insert(op, callback, false, predicate);
   }
 

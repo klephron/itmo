@@ -15,7 +15,7 @@ export default function Log() {
       logsAppend(cmd, false);
       setLogCommand('');
       const msg = JSON.parse(cmd);
-      clientGet()!.sendGeneric(msg, (e) => {
+      clientGet()!.sendGenericOnetime(msg, (e) => {
         logsAppend(JSON.stringify(e), true);
       });
     } catch (error: any) {
@@ -38,7 +38,7 @@ export default function Log() {
         <button onClick={sendLogCommand}>Send</button>
         <input
           class={styles.log_input}
-          placeholder="Enter websocket request"
+          placeholder="Enter generic websocket onetime request"
           value={getLogCommand()}
           onKeyDown={onLogCommandChange}
         />

@@ -2,7 +2,7 @@ import { Event } from './event';
 
 export interface SubscribeResponse extends Event {
   args: Args;
-  status: Status;
+  status: SubscribeResponseStatus;
   msg: string;
 }
 
@@ -13,8 +13,9 @@ interface Args {
   actor_ids: number[];
 }
 
-export const Status = {
+export const SubscribeResponseStatus = {
   CREATED: 'CREATED',
   RECREATED: 'RECREATED',
 };
-export type Status = (typeof Status)[keyof typeof Status];
+export type SubscribeResponseStatus =
+  (typeof SubscribeResponseStatus)[keyof typeof SubscribeResponseStatus];

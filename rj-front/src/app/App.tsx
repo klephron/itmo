@@ -12,7 +12,6 @@ const DEFAULT_SERVER_URL: string = 'ws://localhost:8088/ws';
 const DEFAULT_UPS: number = 1;
 
 export default function App() {
-
   // subscribe client on change
   createEffect(() => {
     if (clientGet() != null && subscriptionGet() != null) {

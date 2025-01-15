@@ -6,10 +6,11 @@ export interface SessionResponse extends Event {
 
 export interface Args {
   session_id: string;
-  status: Status;
+  status: SessionResponseStatus;
 }
 
-export const Status = {
+export const SessionResponseStatus = {
   CREATED: 'CREATED',
 };
-export type Status = (typeof Status)[keyof typeof Status];
+export type SessionResponseStatus =
+  (typeof SessionResponseStatus)[keyof typeof SessionResponseStatus];
