@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For } from 'solid-js';
+import { createEffect, createSignal, For, onMount } from 'solid-js';
 import styles from './ViewPostoffice.module.scss';
 import { clientGet } from '@state/client';
 import { PostofficesAddMessage } from '@websocket/message';
@@ -14,12 +14,28 @@ export default function ViewPostoffice() {
   const [getAddPostalCode, setAddPostalCode] = createSignal('');
   const [getAddStreet, setAddStreet] = createSignal('');
   const [getAddHouse, setAddHouse] = createSignal('');
-  const [getAddCoordinatesX, setAddCoordinatesX] = createSignal('0');
-  const [getAddCoordinatesY, setAddCoordinatesY] = createSignal('0');
+  const [getAddCoordinatesX, setAddCoordinatesX] = createSignal('');
+  const [getAddCoordinatesY, setAddCoordinatesY] = createSignal('');
 
-  const [getSelectedIds, setSelectedIds] = createSignal(new Set<number>());
+  const [getSelectedIds, setSelectedIds] = createSignal(initSelected());
 
   createEffect(() => {
+    updateSubscription();
+  });
+
+  function initSelected() {
+    const subscription = subscriptionGet();
+    if (
+      subscription == null ||
+      subscription.args == null ||
+      subscription.args.postoffice_ids == null
+    ) {
+      return new Set<number>();
+    }
+    return new Set(subscription.args.postoffice_ids);
+  }
+
+  function updateSubscription() {
     const subscription = subscriptionGet();
     if (subscription == null) {
       return;
@@ -29,14 +45,14 @@ export default function ViewPostoffice() {
       subscription.args.postoffice_ids = [...selectedIds];
       subscriptionSet({ ...subscription });
     }
-  });
+  }
 
   function addSubmit() {
-    if (clientGet() == null) {
+    const client = clientGet();
+    if (client == null) {
       return;
     }
 
-    const client = clientGet()!;
     const data: PostofficesAddMessage = {
       args: {
         address: {
@@ -61,8 +77,8 @@ export default function ViewPostoffice() {
     setAddPostalCode('');
     setAddStreet('');
     setAddHouse('');
-    setAddCoordinatesX('0');
-    setAddCoordinatesY('0');
+    setAddCoordinatesX('');
+    setAddCoordinatesY('');
   }
 
   function toggleEntrySelection(e: PostofficePack) {
