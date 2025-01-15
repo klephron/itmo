@@ -1,8 +1,57 @@
 @import 'View.module.scss';
 
 .transports {
-  .table {
+  &_table {
     grid-template-columns: auto auto auto auto auto;
+
+    &_body_row_extra {
+      .operations {
+        &_entries {
+          display: flex;
+
+          .set_route {
+            border: 1px solid black;
+            padding: 5px;
+
+            &_body {
+              div {
+                display: contents;
+              }
+
+              display: inline-grid;
+              grid-template-columns: max-content 1fr;
+              column-gap: 10px;
+            }
+            &_buttons {
+              margin-top: 10px;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+            }
+          }
+        }
+      }
+
+      .parameters {
+        div {
+          display: contents;
+        }
+
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
+
+      .route {
+        div {
+          display: contents;
+        }
+
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
+    }
   }
 
   @include view_info_mixin;

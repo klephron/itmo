@@ -96,16 +96,16 @@ export default function ViewPostoffice() {
   function getEntryExtraClass(e: PostofficePack) {
     const selected = getSelectedIds();
     if (selected.has(e.id)) {
-      return styles.table_body_row_extra + ' ' + styles.visible;
+      return styles.postoffices_table_body_row_extra + ' ' + styles.visible;
     } else {
-      return styles.table_body_row_extra;
+      return styles.postoffices_table_body_row_extra;
     }
   }
 
   function tableEntry(item: PostofficePack) {
     return (
       <>
-        <div class={styles.table_body_row} onClick={toggleEntrySelection(item)}>
+        <div class={styles.postoffices_table_body_row} onClick={toggleEntrySelection(item)}>
           <div>{item.id}</div>
           <div>{item.terminal_mails_count}</div>
           <div>{item.intermediate_mails_count}</div>
@@ -118,12 +118,12 @@ export default function ViewPostoffice() {
             {item.coordinates == null ? (
               <div>Loading...</div>
             ) : (
-              <div class={styles.coordinates_entries}>
-                <div class={styles.extra_row}>
+              <div class={styles.coordinates}>
+                <div>
                   <span>X</span>
                   <input value={item.coordinates.x}></input>
                 </div>
-                <div class={styles.extra_row}>
+                <div>
                   <span>Y</span>
                   <input value={item.coordinates.y}></input>
                 </div>
@@ -135,24 +135,24 @@ export default function ViewPostoffice() {
             {item.address == null ? (
               <div>Loading...</div>
             ) : (
-              <div class={styles.address_entries}>
-                <div class={styles.extra_row}>
+              <div class={styles.address}>
+                <div>
                   <span>Country</span>
                   <input value={item.address.country}></input>
                 </div>
-                <div class={styles.extra_row}>
+                <div>
                   <span>City</span>
                   <input value={item.address.city}></input>
                 </div>
-                <div class={styles.extra_row}>
+                <div>
                   <span>Postal Code</span>
                   <input value={item.address.postal_code}></input>
                 </div>
-                <div class={styles.extra_row}>
+                <div>
                   <span>Street</span>
                   <input value={item.address.street}></input>
                 </div>
-                <div class={styles.extra_row}>
+                <div>
                   <span>House</span>
                   <input value={item.address.house}></input>
                 </div>
@@ -183,21 +183,21 @@ export default function ViewPostoffice() {
   return (
     <>
       <div class={styles.postoffices}>
-        <div class={styles.table}>
-          <div class={styles.table_header}>
+        <div class={styles.postoffices_table}>
+          <div class={styles.postoffices_table_header}>
             <div>ID</div>
             <div>Terminal Mails Count</div>
             <div>Intermediate Mails Count</div>
             <div>Transports Queued</div>
             <div>Transports Processed</div>
           </div>
-          <div class={styles.table_body}>
+          <div class={styles.postoffices_table_body}>
             <For each={world.postoffices} fallback={<div>Loading...</div>}>
               {(item, _) => tableEntry(item)}
             </For>
           </div>
         </div>
-        <div class={styles.operations}>
+        <div class={styles.postoffices_operations}>
           <h4>Operations</h4>
           <div class={styles.add}>
             <h4>Add postoffice</h4>

@@ -1,31 +1,29 @@
 @import 'View.module.scss';
 
 .postoffices {
-  .table {
+  &_table {
     grid-template-columns: auto auto auto auto auto;
 
-    .coordinates_entries {
-      display: grid;
-      grid-template-columns: max-content 1fr;
-      column-gap: 10px;
-    }
+    &_body_row_extra {
+      .coordinates {
+        div {
+          display: contents;
+        }
 
-    .address_entries {
-      display: grid;
-      grid-template-columns: max-content 1fr;
-      column-gap: 10px;
-    }
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
 
-    .intermediate_mails {
-      display: grid;
-      grid-template-columns: max-content 1fr;
-      column-gap: 10px;
-    }
+      .address {
+        div {
+          display: contents;
+        }
 
-    .terminal_mails {
-      display: grid;
-      grid-template-columns: max-content 1fr;
-      column-gap: 10px;
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
     }
   }
 
