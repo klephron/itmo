@@ -25,7 +25,7 @@ public class AddActorOrganizationMessage extends Message {
     // if null -> return nothing
     // if exists something
     public static class Args {
-        @SerializedName("organization_actor")
+        @SerializedName("actor")
         private final OrganizationActorPack actor;
     }
 }

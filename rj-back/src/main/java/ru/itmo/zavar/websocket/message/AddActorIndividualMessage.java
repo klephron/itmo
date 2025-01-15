@@ -27,7 +27,7 @@ public class AddActorIndividualMessage extends Message {
     // if null -> return nothing
     // if exists something
     public static class Args {
-        @SerializedName("individual_actor")
+        @SerializedName("actor")
         private final IndividualActorPack actor;
     }
 }

@@ -48,7 +48,7 @@ public class Transport {
 
     private Postoffice atPostOffice;
 
-    public Transport(int capacity, double speed, double ops, String licensePlate, Coordinates latestCoordinates, Route<Postoffice> route) {
+    public Transport(int capacity, double speed, double ops, String licensePlate, Coordinates latestCoordinates) {
         this.capacity = capacity;
         this.speed = speed;
         this.ops = ops;
@@ -56,7 +56,7 @@ public class Transport {
         this.mails = new ArrayList<>(capacity);
         this.loadingAddresses = new HashSet<>();
         this.deliveryAddresses = new HashSet<>();
-        this.route = route;
+        this.route = null;
         this.routeLatestIndex = 0;
         this.routeNextIndex = 0;
         this.latestCoordinates = latestCoordinates;
@@ -65,10 +65,6 @@ public class Transport {
         this.sink = null;
         this.sinkFluxDisposable = null;
         this.atPostOffice = null;
-    }
-
-    public Transport(int capacity, double speed, double ops, String licensePlate, Coordinates latestCoordinates) {
-        this(capacity, speed, ops, licensePlate, latestCoordinates, null);
     }
 
     public Transport(int capacity, double speed, double ops, String number) {

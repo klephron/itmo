@@ -109,6 +109,7 @@ public abstract class Actor {
             void receive() {
                 disposable = mono.doOnSuccess(v -> {
                     this.onEnd();
+                    //TODO BiConsumer
                 }).subscribe(consumer, errorConsumer);
             }
 

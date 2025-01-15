@@ -270,12 +270,6 @@ public class PackMappers {
         }
     }
 
-    public static Route<Postoffice> routePackToRoute(RoutePack routePack, World world) {
-        List<Postoffice> postOffices = routePack.getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong))
-                .toList();
-        return new Route<>(postOffices, routePack.getIsCyclic());
-    }
-
     // TODO: add additional metadata (currently only id and kind available) + marks
     public static TaskPack taskToPack(Task task) {
         if (task instanceof Schedule.MailSendOneTask) {

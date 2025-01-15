@@ -35,6 +35,17 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
                 case AddActorIndividualMessage.OP -> out.add(gson.fromJson(json, AddActorIndividualMessage.class));
                 case AddActorOrganizationMessage.OP -> out.add(gson.fromJson(json, AddActorOrganizationMessage.class));
                 case AddTaskMessage.OP -> out.add(gson.fromJson(json, AddTaskMessage.class));
+                case AddActorMessage.OP -> {
+                    AddActorMessage addActorMessage = gson.fromJson(json, AddActorMessage.class);
+                    switch (addActorMessage.getArgs().getActor().getKind()) {
+                        case INDIVIDUAL -> {
+                            out.add(gson.fromJson(json, AddActorIndividualMessage.class));
+                        }
+                        case ORGANIZATION -> {
+                            out.add(gson.fromJson(json, AddActorOrganizationMessage.class));
+                        }
+                    }
+                }
                 default -> out.add(message);
             }
             // otherwise add just a frame

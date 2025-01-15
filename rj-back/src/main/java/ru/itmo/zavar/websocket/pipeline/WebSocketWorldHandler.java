@@ -46,12 +46,13 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                     PackMappers.coordinatesFromPack(args.getCoordinates())
                 );
                 world.postoffices.add(postOffice);
-                ctx.writeAndFlush(new SuccessIdResponse(postOffice.getId()));
-
             }
             case AddTransportMessage.OP -> {
                 AddTransportMessage addTransportMsg = (AddTransportMessage) msg;
                 AddTransportMessage.Args args = addTransportMsg.getArgs();
+
+                List<Postoffice> postOffices = args.getRoute().getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong)).toList();
+                Route<Postoffice> postofficeRoute = new Route<>(postOffices, args.getRoute().getIsCyclic());
 
                 try {
                     Transport transport = new Transport(
@@ -59,11 +60,12 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                         args.getSpeed(),
                         args.getOps(),
                         args.getLicensePlate(),
-                        PackMappers.coordinatesFromPack(args.getCoordinates()),
-                        PackMappers.routePackToRoute(args.getRoute(), world)
+                        PackMappers.coordinatesFromPack(args.getCoordinates())
                     );
                     world.transports.add(transport);
-                    ctx.writeAndFlush(new SuccessIdResponse(transport.getId()));
+                    world.transports.setRoute(transport.getId(), postofficeRoute);
+                    //TODO
+                    //world.transports.start(transport.getId(), 0);
                 } catch (NoSuchElementException e) {
                     ctx.writeAndFlush(new ErrorResponse(msg, e.getMessage()));
                 }
@@ -73,14 +75,12 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                 AddActorIndividualMessage.Args args = addActorMsg.getArgs();
                 Actor actor = PackMappers.actorFromPack(args.getActor());
                 world.actors.addActor(actor);
-                ctx.writeAndFlush(new SuccessIdResponse(actor.getId()));
             }
             case AddActorOrganizationMessage.OP -> {
                 AddActorOrganizationMessage addActorMsg = (AddActorOrganizationMessage) msg;
                 AddActorOrganizationMessage.Args args = addActorMsg.getArgs();
                 Actor actor = PackMappers.actorFromPack(args.getActor());
                 world.actors.addActor(actor);
-                ctx.writeAndFlush(new SuccessIdResponse(actor.getId()));
             }
             case AddTaskMessage.OP -> {
                 AddTaskMessage addTaskMsg = (AddTaskMessage) msg;
@@ -100,7 +100,6 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                             args.getPostofficeId(),
                             mail
                         );
-                        ctx.writeAndFlush(new SuccessIdResponse(mail.getId()));
                     }
                     case RECEIVE_MAIL_ONE -> {
                         world.actors.receiveMail(
@@ -108,7 +107,6 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                             args.getPostofficeId(),
                             m -> {
                                 logger.info(m.toString());
-                                ctx.writeAndFlush(new SuccessIdResponse(m.getId()));
                             },
                             e -> {
                                 logger.warning(e.toString());
@@ -130,7 +128,6 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                                 sink.next(mail);
                                 return state;
                             }).delayElements(Duration.ofMillis(args.getInterval())).cast(Mail.class));
-                        ctx.writeAndFlush(new SuccessIdResponse(sendMailFlux.getId()));
                     }
                     case RECEIVE_MAIL_MANY -> {
                         world.actors.receiveMailMany(
@@ -138,7 +135,6 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                             args.getPostofficeId(),
                             m -> {
                                 logger.info(m.toString());
-                                ctx.writeAndFlush(new SuccessIdResponse(m.getId()));
                             },
                             e -> {
                                 logger.warning(e.toString());
@@ -147,6 +143,17 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                         );
                     }
                     default -> ctx.writeAndFlush(new ErrorResponse(msg, "unsupported kind " + args.getKind()));
+                }
+            }
+            case AddActorMessage.OP -> {
+                if (msg instanceof AddActorIndividualMessage addActorMsg) {
+                    AddActorIndividualMessage.Args args = addActorMsg.getArgs();
+                    Actor actor = PackMappers.actorFromPack(args.getActor());
+                    world.actors.addActor(actor);
+                } else if (msg instanceof AddActorOrganizationMessage addActorMsg) {
+                    AddActorOrganizationMessage.Args args = addActorMsg.getArgs();
+                    Actor actor = PackMappers.actorFromPack(args.getActor());
+                    world.actors.addActor(actor);
                 }
             }
             default -> ctx.writeAndFlush(new ErrorResponse(msg, "unknown op"));
