@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 import styles from './index.module.scss';
 import { clientGet } from '@state/client';
 import { PostofficesAddMessage } from '@websocket/message';
@@ -37,19 +37,45 @@ export default function ViewPostoffice() {
   }
 
   function addClear() {
-    setAddCountry('')
-    setAddCity('')
-    setAddPostalCode('')
-    setAddStreet('')
-    setAddHouse('')
-    setAddCoordinatesX('0')
-    setAddCoordinatesY('0')
+    setAddCountry('');
+    setAddCity('');
+    setAddPostalCode('');
+    setAddStreet('');
+    setAddHouse('');
+    setAddCoordinatesX('0');
+    setAddCoordinatesY('0');
   }
 
   return (
     <>
-      <div class={styles.view_postoffices}>
-        <div class={styles.info}>Something is here</div>
+      <div class={styles.postoffices}>
+        <div class={styles.table}>
+          <div class={styles.table_header}>
+            <div>ID</div>
+            <div>Terminal Mails Count</div>
+            <div>Intermediate Mails Count</div>
+            <div>Transports Queued</div>
+            <div>Transports Processed</div>
+          </div>
+          <div class={styles.table_body}>
+            <div class={styles.table_body_row}>
+              <div>ID</div>
+              <div>Terminal Mails Count</div>
+              <div>Intermediate Mails Count</div>
+              <div>Transports Queued</div>
+              <div>Transports Processed</div>
+            </div>
+            <div class={styles.table_body_row_extra}>Lalalala</div>
+            <div class={styles.table_body_row}>
+              <div>ID</div>
+              <div>Terminal Mails Count</div>
+              <div>Intermediate Mails Count</div>
+              <div>Transports Queued</div>
+              <div>Transports Processed</div>
+            </div>
+            <div class={styles.table_body_row_extra}>Lalalala</div>
+          </div>
+        </div>
         <div class={styles.operations}>
           <h4>Operations</h4>
           <div class={styles.add}>

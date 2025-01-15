@@ -54,20 +54,18 @@ export default function View(props: Props) {
   return (
     <div class={styles.view}>
       <div class={styles.view_top}>
-        <div class={styles.view_select}>
+        <div class={styles.view_top_select}>
           <button onClick={() => setSelectedView(SelectedView.POSTOFFICE)}>Post Offices</button>
           <button onClick={() => setSelectedView(SelectedView.TRANSPORT)}>Transports</button>
           <button onClick={() => setSelectedView(SelectedView.ACTORS)}>Actors</button>
         </div>
-        <div class={styles.view_config}>
+        <div class={styles.view_top_config}>
           <input
-            class={styles.view_config_server}
             placeholder="Server URL"
             value={getServerURL()}
             onChange={(e) => setServerURL(e.target.value)}
           />
           <input
-            class={styles.view_config_ups}
             placeholder="Updates Per Second"
             value={getUPS()}
             onChange={(e) => setUPS(e.target.value)}
@@ -75,7 +73,7 @@ export default function View(props: Props) {
           <button onClick={update}>Update</button>
         </div>
       </div>
-      <div class={styles.view_data}>
+      <div class={styles.view_bottom}>
         <Switch>
           <Match when={getSelectedView() == SelectedView.POSTOFFICE}>
             <ViewPostoffice />
