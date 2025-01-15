@@ -233,12 +233,16 @@ input {
       .table {
         grid-template-columns: auto auto auto auto;
       }
+
+      @include view_info_mixin;
     }
 
     .actors {
       .table {
         grid-template-columns: auto auto;
       }
+
+      @include view_info_mixin;
     }
   }
 }
