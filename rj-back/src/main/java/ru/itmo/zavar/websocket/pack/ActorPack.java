@@ -19,11 +19,11 @@ public class ActorPack {
     private final List<TaskPack> tasks;
     @SerializedName("mails_buffer_capacity")
     private final int bufferCapacity;
-    @SerializedName("mails_buffer")
+    @SerializedName("mails_buffer_count")
     private final int bufferCurrentSize;
     @SerializedName("mails_count")
     private final long mailsCount;
-    @SerializedName("buffer")
+    @SerializedName("mails_buffer")
     private final List<MailPack> buffer;
 
     public enum Kind {
