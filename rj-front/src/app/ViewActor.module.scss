@@ -1,8 +1,56 @@
 @import 'View.module.scss';
 
 .actors {
-  .table {
-    grid-template-columns: auto auto;
+  &_operations {
+    select {
+      width: 100%;
+    }
+  }
+
+  &_table {
+    grid-template-columns: auto auto auto auto;
+
+    &_body_row_extra {
+      .personal {
+        div {
+          display: contents;
+        }
+
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
+
+      .address {
+        div {
+          display: contents;
+        }
+
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
+
+      .parameters {
+        div {
+          display: contents;
+        }
+
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
+
+      .tasks {
+        div {
+          display: contents;
+        }
+
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+      }
+    }
   }
 
   @include view_info_mixin;

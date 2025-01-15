@@ -1,11 +1,16 @@
 import { AddressPack } from './address-pack';
+import { MailPack } from './mail-pack';
 import { TaskPack } from './task-pack';
 
 export interface ActorPack {
   kind: ActorPackKind;
-  id: number;
+  id?: number;
   address: AddressPack;
-  tasks: TaskPack[];
+  tasks?: TaskPack[];
+  mails?: MailPack[];
+  mails_count?: number;
+  mails_buffer_count?: number;
+  mails_buffer_capacity?: number;
 }
 
 export const ActorPackKind = {

@@ -102,7 +102,7 @@ export default function ViewPostoffice() {
     }
   }
 
-  function tableEntry(item: PostofficePack) {
+  function TableEntry(item: PostofficePack) {
     return (
       <>
         <div class={styles.postoffices_table_body_row} onClick={toggleEntrySelection(item)}>
@@ -193,7 +193,7 @@ export default function ViewPostoffice() {
           </div>
           <div class={styles.postoffices_table_body}>
             <For each={world.postoffices} fallback={<div>Loading...</div>}>
-              {(item, _) => tableEntry(item)}
+              {(item, _) => TableEntry(item)}
             </For>
           </div>
         </div>
