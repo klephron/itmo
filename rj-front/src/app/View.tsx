@@ -55,7 +55,7 @@ export default function View(props: Props) {
     <div class={styles.view}>
       <div class={styles.view_top}>
         <div class={styles.view_top_select}>
-          <button onClick={() => setSelectedView(SelectedView.POSTOFFICE)}>Post Offices</button>
+          <button onClick={() => setSelectedView(SelectedView.POSTOFFICE)}>Postoffices</button>
           <button onClick={() => setSelectedView(SelectedView.TRANSPORT)}>Transports</button>
           <button onClick={() => setSelectedView(SelectedView.ACTORS)}>Actors</button>
         </div>

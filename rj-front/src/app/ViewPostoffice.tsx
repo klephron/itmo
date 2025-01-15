@@ -79,6 +79,7 @@ export default function ViewPostoffice() {
         <div class={styles.operations}>
           <h4>Operations</h4>
           <div class={styles.add}>
+            <h4>Add postoffice</h4>
             <div>
               <input
                 value={getAddCountry()}
