@@ -10,11 +10,7 @@ export default function PostalAddressTable(props: Props) {
     <PagedTable
       data={props.data}
       rowsPerPage={10}
-      headers={[
-        'Country',
-        'City',
-        'Postal Code',
-      ]}
+      headers={['Country', 'City', 'Postal Code']}
       fields={[
         (e: PostalAddressPack) => String(e.country),
         (e: PostalAddressPack) => String(e.city),

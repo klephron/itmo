@@ -230,7 +230,7 @@ export default function ViewTransport() {
           <div>{item.id}</div>
           <div>{item.coordinates.x}</div>
           <div>{item.coordinates.y}</div>
-          <div>{item.at_postoffice_id ?? "-"}</div>
+          <div>{item.at_postoffice_id ?? '-'}</div>
           <div>{item.mails_count}</div>
         </div>
         <div class={getEntryExtraClass(item)}>
