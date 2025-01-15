@@ -2,6 +2,7 @@ package ru.itmo.zavar;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -69,7 +70,7 @@ public class World {
             return Collections.unmodifiableCollection(entries.values());
         }
 
-        public Task receiveMail(long actorId, long postofficeId, Consumer<Mail> onOne, Consumer<Throwable> onError) {
+        public Task receiveMail(long actorId, long postofficeId, BiConsumer<Mail, Actor> onOne, Consumer<Throwable> onError) {
             Actor actor = actors.getActor(actorId);
             Postoffice office = postoffices.get(postofficeId);
             Actor.Schedule schedule = actor.getSchedule();
@@ -84,8 +85,8 @@ public class World {
             });
         }
 
-        public Task receiveMailMany(long actorId, long postofficeId, Consumer<Mail> onOne,
-                Consumer<Throwable> onError) {
+        public Task receiveMailMany(long actorId, long postofficeId, BiConsumer<Mail, Actor> onOne,
+                                    Consumer<Throwable> onError) {
             Actor actor = actors.getActor(actorId);
             Postoffice office = postoffices.get(postofficeId);
             Actor.Schedule schedule = actor.getSchedule();
@@ -94,7 +95,7 @@ public class World {
             return pair.left;
         }
 
-        public Task receiveMailMany(long actorId, long postofficeId, Consumer<Mail> onOne) {
+        public Task receiveMailMany(long actorId, long postofficeId, BiConsumer<Mail, Actor> onOne) {
             return receiveMailMany(actorId, postofficeId, onOne, (e) -> {
                 logger.warning(e.toString());
             });

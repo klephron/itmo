@@ -2,6 +2,7 @@ package ru.itmo.zavar;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -53,7 +54,7 @@ public abstract class Actor {
             return new ImmutablePair<Task, Mono<Mail>>(task, task.send());
         }
 
-        public ImmutablePair<Task, Void> addTaskMailReceiveOne(Mono<Mail> mono, Consumer<? super Mail> onOne,
+        public ImmutablePair<Task, Void> addTaskMailReceiveOne(Mono<Mail> mono, BiConsumer<? super Mail, Actor> onOne,
                 Consumer<Throwable> onError) {
             var task = new MailReceiveOneTask(mono, onOne, onError);
             task.setId(++idCounter);
@@ -62,8 +63,8 @@ public abstract class Actor {
             return new ImmutablePair<Task, Void>(task, null);
         }
 
-        public ImmutablePair<Task, Void> addTaskMailReceiveFlux(Flux<Mail> flux, Consumer<? super Mail> onOne,
-                Consumer<Throwable> onError) {
+        public ImmutablePair<Task, Void> addTaskMailReceiveFlux(Flux<Mail> flux, BiConsumer<? super Mail, Actor> onOne,
+                                                                Consumer<Throwable> onError) {
             var task = new MailReceiveFluxTask(flux, onOne, onError);
             task.setId(++idCounter);
             tasks.put(task.getId(), task);
@@ -95,22 +96,21 @@ public abstract class Actor {
 
         public class MailReceiveOneTask extends Task {
             private final Mono<Mail> mono;
-            private final Consumer<? super Mail> consumer;
+            private final BiConsumer<? super Mail, Actor> biConsumer;
             private final Consumer<? super Throwable> errorConsumer;
             private Disposable disposable = null;
 
-            public MailReceiveOneTask(Mono<Mail> mono, Consumer<? super Mail> consumer,
+            public MailReceiveOneTask(Mono<Mail> mono, BiConsumer<? super Mail, Actor> biConsumer,
                     Consumer<? super Throwable> errorConsumer) {
                 this.mono = mono;
-                this.consumer = consumer;
+                this.biConsumer = biConsumer;
                 this.errorConsumer = errorConsumer;
             }
 
             void receive() {
                 disposable = mono.doOnSuccess(v -> {
                     this.onEnd();
-                    //TODO BiConsumer
-                }).subscribe(consumer, errorConsumer);
+                }).subscribe(mail -> biConsumer.accept(mail, Actor.this), errorConsumer);
             }
 
             @Override
@@ -123,19 +123,21 @@ public abstract class Actor {
 
         public class MailReceiveFluxTask extends Task {
             private final Flux<Mail> flux;
-            private final Consumer<? super Mail> consumer;
+            private final BiConsumer<? super Mail, Actor> biConsumer;
             private final Consumer<? super Throwable> errorConsumer;
             private Disposable disposable = null;
 
-            public MailReceiveFluxTask(Flux<Mail> flux, Consumer<? super Mail> consumer,
+            public MailReceiveFluxTask(Flux<Mail> flux, BiConsumer<? super Mail, Actor> biConsumer,
                     Consumer<? super Throwable> errorConsumer) {
                 this.flux = flux;
-                this.consumer = consumer;
+                this.biConsumer = biConsumer;
                 this.errorConsumer = errorConsumer;
             }
 
             void receive() {
-                disposable = flux.doOnTerminate(this::onEnd).subscribe(consumer, errorConsumer);
+                disposable = flux.doOnTerminate(this::onEnd).subscribe(mail -> {
+                    biConsumer.accept(mail, Actor.this);
+                }, errorConsumer);
             }
 
             @Override

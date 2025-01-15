@@ -51,8 +51,8 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                 AddTransportMessage addTransportMsg = (AddTransportMessage) msg;
                 AddTransportMessage.Args args = addTransportMsg.getArgs();
 
-                List<Postoffice> postOffices = args.getRoute().getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong)).toList();
-                Route<Postoffice> postofficeRoute = new Route<>(postOffices, args.getRoute().getIsCyclic());
+                //List<Postoffice> postOffices = args.getRoute().getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong)).toList();
+                //Route<Postoffice> postofficeRoute = new Route<>(postOffices, args.getRoute().getIsCyclic());
 
                 try {
                     Transport transport = new Transport(
@@ -63,7 +63,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                         PackMappers.coordinatesFromPack(args.getCoordinates())
                     );
                     world.transports.add(transport);
-                    world.transports.setRoute(transport.getId(), postofficeRoute);
+                    //world.transports.setRoute(transport.getId(), postofficeRoute);
                     //TODO
                     //world.transports.start(transport.getId(), 0);
                 } catch (NoSuchElementException e) {
@@ -133,8 +133,9 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                         world.actors.receiveMailMany(
                             args.getActorId(),
                             args.getPostofficeId(),
-                            m -> {
-                                logger.info(m.toString());
+                            (mail, actor) -> {
+                                logger.info(mail.toString());
+
                             },
                             e -> {
                                 logger.warning(e.toString());
@@ -155,6 +156,36 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                     Actor actor = PackMappers.actorFromPack(args.getActor());
                     world.actors.addActor(actor);
                 }
+            }
+            case SetRouteMessage.OP -> {
+                SetRouteMessage setRouteMsg = (SetRouteMessage) msg;
+                SetRouteMessage.Args args = setRouteMsg.getArgs();
+                Transport transport = world.transports.get(args.getTransportId());
+                if (transport == null) {
+                    ctx.writeAndFlush(new ErrorResponse(msg, "transport not found"));
+                } else {
+                    List<Postoffice> postoffices = args.getRoute().getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong)).toList();
+                    Route<Postoffice> postofficeRoute = new Route<>(postoffices, args.getRoute().getIsCyclic());
+                    world.transports.setRoute(args.getTransportId(), postofficeRoute);
+                }
+            }
+            case TransportStartMessage.OP -> {
+                TransportStartMessage transportStartMsg = (TransportStartMessage) msg;
+                TransportStartMessage.Args args = transportStartMsg.getArgs();
+                Transport transport = world.transports.get(args.getTransportId());
+                if (transport == null) {
+                    ctx.writeAndFlush(new ErrorResponse(msg, "transport not found"));
+                }
+                world.transports.start(args.getTransportId(), args.getIndex());
+            }
+            case TransportStopMessage.OP -> {
+                TransportStopMessage transportStopMsg = (TransportStopMessage) msg;
+                TransportStopMessage.Args args = transportStopMsg.getArgs();
+                Transport transport = world.transports.get(args.getTransportId());
+                if (transport == null) {
+                    ctx.writeAndFlush(new ErrorResponse(msg, "transport not found"));
+                }
+                world.transports.stop(args.getTransportId());
             }
             default -> ctx.writeAndFlush(new ErrorResponse(msg, "unknown op"));
         }

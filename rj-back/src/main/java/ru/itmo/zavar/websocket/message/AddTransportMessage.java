@@ -13,9 +13,9 @@ public class AddTransportMessage extends Message {
     @SerializedName("args")
     private final Args args;
 
-    public AddTransportMessage(int capacity, double speed, double ops, String licensePlate, CoordinatesPack coordinates, RoutePack route) {
+    public AddTransportMessage(int capacity, double speed, double ops, String licensePlate, CoordinatesPack coordinates) {
         super(OP);
-        this.args = new Args(capacity, speed, ops, licensePlate, coordinates, route);
+        this.args = new Args(capacity, speed, ops, licensePlate, coordinates);
     }
 
     @RequiredArgsConstructor
@@ -34,7 +34,5 @@ public class AddTransportMessage extends Message {
         private final String licensePlate;
         @SerializedName("coordinates")
         private final CoordinatesPack coordinates;
-        @SerializedName("route")
-        private final RoutePack route;
     }
 }
