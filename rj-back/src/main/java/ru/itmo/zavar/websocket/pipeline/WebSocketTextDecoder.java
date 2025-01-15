@@ -57,6 +57,7 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
                 case TransportSetRouteMessage.OP -> out.add(gson.fromJson(json, TransportSetRouteMessage.class));
                 case TransportStartMessage.OP -> out.add(gson.fromJson(json, TransportStartMessage.class));
                 case TransportStopMessage.OP -> out.add(gson.fromJson(json, TransportStopMessage.class));
+                case StopTaskMessage.OP -> out.add(gson.fromJson(json, StopTaskMessage.class));
                 default -> out.add(message);
             }
             // otherwise add just a frame

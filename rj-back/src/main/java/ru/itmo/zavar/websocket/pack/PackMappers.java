@@ -254,13 +254,13 @@ public class PackMappers {
 
     public static ActorPack actorToPackEssential(Actor actor) {
         if (actor instanceof IndividualActor individualActor) {
-            return new IndividualActorPack(individualActor.getId(), null, null, List.of(), 0, 0, 0,null, null, null);
+            return new IndividualActorPack(individualActor.getId(), null, null, List.of(), actor.getBufferCapacity(), actor.getBufferCurrentSize(), actor.getMailsCount().get(),null, null, null);
         }
         if (actor instanceof OrganizationActor organizationActor) {
-            return new OrganizationActorPack(organizationActor.getId(), null, null, 0, 0, 0, List.of(), null);
+            return new OrganizationActorPack(organizationActor.getId(), null, null, actor.getBufferCapacity(), actor.getBufferCurrentSize(), actor.getMailsCount().get(), List.of(), null);
         }
         logger.warning("unhandled actor class " + actor);
-        return new ActorPack(null, actor.getId(), null, null, 0, 0, 0, List.of());
+        return new ActorPack(null, actor.getId(), null, null, actor.getBufferCapacity(), actor.getBufferCurrentSize(), actor.getMailsCount().get(), List.of());
     }
 
     public static Actor actorFromPack(ActorPack actor) {

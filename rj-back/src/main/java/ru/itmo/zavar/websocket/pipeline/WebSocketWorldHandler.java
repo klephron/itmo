@@ -179,6 +179,11 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                 }
                 world.transports.stop(args.getTransportId());
             }
+            case StopTaskMessage.OP -> {
+                StopTaskMessage stopTaskMsg = (StopTaskMessage) msg;
+                StopTaskMessage.Args args = stopTaskMsg.getArgs();
+                world.actors.deleteActorTask(args.getActorId(), args.getTaskId());
+            }
             default -> ctx.writeAndFlush(new ErrorResponse(msg, "unknown op"));
         }
     }
