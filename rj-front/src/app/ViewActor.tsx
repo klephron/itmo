@@ -119,8 +119,12 @@ export default function ViewActor() {
 
   function TableEntryAddTask({ item }: { item: ActorPack }) {
     const [getTaskKind, setTaskKind] = createSignal(TaskPackKind.SEND_MAIL_ONE);
-    const [getMailReceiverId, setMailReceiverId] = createSignal('');
-    const [getPostOfficeId, setPostOfficeId] = createSignal('');
+    const [getMailReceiverId, setMailReceiverId] = createSignal(
+      world.actors == null || world.actors.length == 0 ? 0 : world.actors[0].id
+    );
+    const [getPostOfficeId, setPostOfficeId] = createSignal(
+      world.postoffices == null || world.postoffices.length == 0 ? 0 : world.postoffices[0].id
+    );
     const [getMailSubject, setMailSubject] = createSignal('');
     const [getMailText, setMailText] = createSignal('');
 
@@ -171,13 +175,16 @@ export default function ViewActor() {
           break;
         }
       }
+      console.log(data);
       client.actorAddTask(data);
     }
 
     function addTaskClear() {
       setTaskKind(TaskPackKind.SEND_MAIL_ONE);
-      setMailReceiverId('');
-      setPostOfficeId('');
+      setMailReceiverId(world.actors == null || world.actors.length == 0 ? 0 : world.actors[0].id);
+      setPostOfficeId(
+        world.postoffices == null || world.postoffices.length == 0 ? 0 : world.postoffices[0].id
+      );
       setMailSubject('');
       setMailText('');
     }
@@ -202,8 +209,9 @@ export default function ViewActor() {
           <div>
             <span>Task Receiver Id</span>
             <select
+              value={getMailReceiverId()}
               onChange={(e) => {
-                setMailReceiverId(e.target.value);
+                setMailReceiverId(Number(e.target.value));
               }}
             >
               <For each={world.actors == null ? [] : world.actors}>
@@ -214,8 +222,9 @@ export default function ViewActor() {
           <div>
             <span>Postoffice Id</span>
             <select
+              value={getPostOfficeId()}
               onChange={(e) => {
-                setPostOfficeId(e.target.value);
+                setPostOfficeId(Number(e.target.value));
               }}
             >
               <For each={world.postoffices == null ? [] : world.postoffices}>
