@@ -9,10 +9,10 @@ export default function ViewPostoffice() {
   const [getAddPostalCode, setAddPostalCode] = createSignal('');
   const [getAddStreet, setAddStreet] = createSignal('');
   const [getAddHouse, setAddHouse] = createSignal('');
-  const [getAddCoordinatesX, setAddCoordinatesX] = createSignal('');
-  const [getAddCoordinatesY, setAddCoordinatesY] = createSignal('');
+  const [getAddCoordinatesX, setAddCoordinatesX] = createSignal('0');
+  const [getAddCoordinatesY, setAddCoordinatesY] = createSignal('0');
 
-  function addPostOffice() {
+  function addSubmit() {
     if (clientGet() == null) {
       return;
     }
@@ -35,6 +35,17 @@ export default function ViewPostoffice() {
     };
     client.postofficesAdd(data);
   }
+
+  function addClear() {
+    setAddCountry('')
+    setAddCity('')
+    setAddPostalCode('')
+    setAddStreet('')
+    setAddHouse('')
+    setAddCoordinatesX('0')
+    setAddCoordinatesY('0')
+  }
+
   return (
     <>
       <div class={styles.view_postoffices}>
@@ -43,30 +54,59 @@ export default function ViewPostoffice() {
           <h4>Operations</h4>
           <div class={styles.add}>
             <div>
-              <input placeholder="Country" />
+              <input
+                value={getAddCountry()}
+                onChange={(e) => setAddCountry(e.target.value)}
+                placeholder="Country"
+              />
             </div>
             <div>
-              <input placeholder="City" />
+              <input
+                value={getAddCity()}
+                onChange={(e) => setAddCity(e.target.value)}
+                placeholder="City"
+              />
             </div>
             <div>
-              <input placeholder="Postal code" />
+              <input
+                value={getAddPostalCode()}
+                onChange={(e) => setAddPostalCode(e.target.value)}
+                placeholder="Postal code"
+              />
             </div>
             <div>
-              <input placeholder="Street" />
+              <input
+                value={getAddStreet()}
+                onChange={(e) => setAddStreet(e.target.value)}
+                placeholder="Street"
+              />
             </div>
             <div>
-              <input placeholder="House" />
+              <input
+                value={getAddHouse()}
+                onChange={(e) => setAddHouse(e.target.value)}
+                placeholder="House"
+              />
             </div>
             <div>
               <span>Coordinates</span>
               <div>
-                <input placeholder="X" />
+                <input
+                  value={getAddCoordinatesX()}
+                  onChange={(e) => setAddCoordinatesX(e.target.value)}
+                  placeholder="X"
+                />
               </div>
               <div>
-                <input placeholder="Y" />
+                <input
+                  value={getAddCoordinatesY()}
+                  onChange={(e) => setAddCoordinatesY(e.target.value)}
+                  placeholder="Y"
+                />
               </div>
             </div>
-            <button onClick={addPostOffice}>Add post office</button>
+            <button onClick={addSubmit}>Submit</button>
+            <button onClick={addClear}>Clear</button>
           </div>
         </div>
       </div>
