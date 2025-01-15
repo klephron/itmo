@@ -1,0 +1,9 @@
+@import 'View.module.scss';
+
+.actors {
+  .table {
+    grid-template-columns: auto auto;
+  }
+
+  @include view_info_mixin;
+}

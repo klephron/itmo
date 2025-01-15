@@ -1,7 +1,7 @@
 import { logsAppend } from '@state/log';
 import { createSignal } from 'solid-js';
 
-import styles from './index.module.scss';
+import styles from './Log.module.scss';
 import { clientGet } from '@state/client';
 import LogText from './LogText';
 

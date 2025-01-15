@@ -67,9 +67,12 @@ public class PackMappers {
     public static MailPack mailToPack(Mail mail) {
         return new MailPack(mail.getId(), mail.getSubject(), mail.getSender().getId(), mail.getReceiver().getId(),
                 mail.getMailData().text(), mail.getValue(),
-                mail.getMarks().stream().map(PackMappers::markToPack).toList(), mailStatusToPack(mail.getStatus()),
-                mail.getCreatedAt().toString(), mail.getAppliedAt().toString(), mail.getSentAt().toString(),
-                mail.getReceivedAt().toString());
+                mail.getMarks() == null ? null : mail.getMarks().stream().map(PackMappers::markToPack).toList(),
+                mailStatusToPack(mail.getStatus()),
+                mail.getCreatedAt() == null ? null : mail.getCreatedAt().toString(),
+                mail.getAppliedAt() == null ? null : mail.getAppliedAt().toString(),
+                mail.getSentAt() == null ? null : mail.getSentAt().toString(),
+                mail.getReceivedAt() == null ? null : mail.getReceivedAt().toString());
     }
 
     public static Mail mailFromPack(MailPack mail, Actor sender, Actor receiver) {
@@ -268,7 +271,8 @@ public class PackMappers {
     }
 
     public static Route<Postoffice> routePackToRoute(RoutePack routePack, World world) {
-        List<Postoffice> postOffices = routePack.getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong)).toList();
+        List<Postoffice> postOffices = routePack.getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong))
+                .toList();
         return new Route<>(postOffices, routePack.getIsCyclic());
     }
 

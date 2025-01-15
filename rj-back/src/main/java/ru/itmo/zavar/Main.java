@@ -1,7 +1,10 @@
 package ru.itmo.zavar;
 
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 import ru.itmo.zavar.websocket.WebSocketServer;
 
@@ -49,5 +52,13 @@ public class Main {
         world.transports.add(transport1);
         world.transports.add(transport2);
         world.transports.add(transport3);
+
+        Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1.getId(), postoffice1.getId(),
+                Flux.generate(AtomicLong::new, (state, sink) -> {
+                    long i = state.getAndIncrement();
+                    Mail mail = new Mail(i, "subject1", actor1, actor1, new Mail.Data("text"), 10);
+                    sink.next(mail);
+                    return state;
+                }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
     }
 }

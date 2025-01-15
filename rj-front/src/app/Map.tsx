@@ -1,6 +1,6 @@
 import { onCleanup, onMount } from 'solid-js';
 
-import styles from './index.module.scss';
+import styles from './Map.module.scss';
 
 // NOTE: set canvas width and height same as width and height of elements
 export default function Map() {

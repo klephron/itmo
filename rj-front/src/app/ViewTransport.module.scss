@@ -1,0 +1,9 @@
+@import 'View.module.scss';
+
+.transports {
+  .table {
+    grid-template-columns: auto auto auto auto;
+  }
+
+  @include view_info_mixin;
+}

@@ -19,7 +19,8 @@
     "paths": {
       "@websocket/*": ["./src/websocket/*"],
       "@app/*": ["./src/app/*"],
-      "@state/*": ["./src/state/*"]
+      "@state/*": ["./src/state/*"],
+      "@util/*": ["./src/util/*"]
     },
     /* Linting */
     "strict": true,

@@ -1,0 +1,42 @@
+.paged_table {
+  table {
+    width: 100%;
+    margin: 0px;
+    border-spacing: 0;
+    border-radius: 0px;
+  }
+
+  &_header {
+    th {
+      border-style: solid;
+      border-color: black;
+      border-width: 1px 0px 1px 1px;
+
+      &:last-of-type {
+        border-right-width: 1px;
+      }
+    }
+  }
+
+  &_body {
+    td {
+      border-style: solid;
+      border-color: black;
+      border-width: 0px 0px 1px 1px;
+      text-align: center;
+
+      &:last-of-type {
+        border-right-width: 1px;
+      }
+    }
+  }
+
+  &_control {
+    margin-top: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 5px;
+  }
+}

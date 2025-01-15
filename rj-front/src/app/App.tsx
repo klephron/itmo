@@ -1,5 +1,5 @@
-import { createEffect } from 'solid-js';
-import styles from './index.module.scss';
+import { batch, createEffect } from 'solid-js';
+import styles from './App.module.scss';
 
 import Log from './Log';
 import Map from './Map';
@@ -7,6 +7,8 @@ import View from './View';
 import { clientGet } from '@state/client';
 import { subscriptionGet } from '@state/subscription';
 import { logsAppend } from '@state/log';
+import { world, worldSet } from '@state/world';
+import { reconcile } from 'solid-js/store';
 
 const DEFAULT_SERVER_URL: string = 'ws://localhost:8088/ws';
 const DEFAULT_UPS: number = 1;
@@ -24,11 +26,19 @@ export default function App() {
           logsAppend(JSON.stringify(e), true);
         },
         (e) => {
-          console.log(e);
+          batch(() => {
+            worldSet('postoffices', reconcile(e.args.postoffices, { key: 'id', merge: true }));
+            worldSet('transports', reconcile(e.args.transports, { key: 'id', merge: true }));
+            worldSet('actors', reconcile(e.args.actors, { key: 'id', merge: true }));
+          });
         }
       );
     }
   });
+
+  createEffect(() => {
+    console.log(world.actors.length, world.postoffices.length, world.transports.length)
+  })
 
   return (
     <>

@@ -1,98 +1,8 @@
-html,
-body,
-#root {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-}
-
-input {
-  box-sizing: border-box;
-  outline: 0;
-  border-radius: 0;
-
-  &:hover {
-    pointer-events: none;
-  }
-}
-
-.outer {
-  display: flex;
-  flex-direction: column;
-  width: calc(100% - 10px);
-  margin-left: auto;
-  margin-right: auto;
-  gap: 10px;
-}
-
-.top {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  width: 100%;
-  margin: 0;
-  gap: 5px;
-}
-
-.log {
-  height: 300px;
-  flex-direction: column;
-  display: flex;
-  flex-grow: 1;
-  border: 1px solid black;
-}
-
-.log_textarea {
-  box-sizing: border-box;
-  align-self: stretch;
-  flex: 1;
-  resize: none;
-  border: 0;
-  border-bottom: 1px solid black;
-  outline: 0;
-  color: #000;
-  white-space: pre;
-  overflow-wrap: normal;
-  overflow-x: scroll;
-}
-
-.log_input {
-  display: flex;
-
-  input {
-    box-sizing: border-box;
-    border: 0;
-    outline: 0;
-    flex-grow: 1;
-
-    &:hover {
-      pointer-events: none;
-    }
-  }
-
-  button {
-    box-sizing: border-box;
-    border: 0;
-    border-right: 1px solid black;
-    margin: 0;
-  }
-}
-
-.map {
-  border: 1px solid black;
-  position: relative;
-
-  canvas {
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-  }
-}
-
 @mixin view_info_mixin {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 5px;
 
   .operations {
     border: 1px solid black;
@@ -150,6 +60,8 @@ input {
           text-align: center;
           border-right: 1px solid black;
           border-bottom: 1px solid black;
+          cursor: pointer;
+          user-select: none;
 
           &:last-child {
             border-right: 0;
@@ -161,9 +73,21 @@ input {
         grid-column: 1 / -1;
         border-bottom: 1px solid black;
         display: none;
+        gap: 5px;
+        padding: 10px;
+
+        h4 {
+          margin: 0px;
+          margin-bottom: 5px;
+        }
 
         &.visible {
-          display: block;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .extra_row {
+          display: contents;
         }
       }
     }
@@ -222,29 +146,5 @@ input {
 
   &_bottom {
     width: 100%;
-
-    .postoffices {
-      .table {
-        grid-template-columns: auto auto auto auto auto;
-      }
-
-      @include view_info_mixin;
-    }
-
-    .transports {
-      .table {
-        grid-template-columns: auto auto auto auto;
-      }
-
-      @include view_info_mixin;
-    }
-
-    .actors {
-      .table {
-        grid-template-columns: auto auto;
-      }
-
-      @include view_info_mixin;
-    }
   }
 }

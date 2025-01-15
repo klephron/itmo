@@ -1,7 +1,12 @@
-import { createSignal, For } from 'solid-js';
-import styles from './index.module.scss';
+import { createEffect, createSignal, For } from 'solid-js';
+import styles from './ViewPostoffice.module.scss';
 import { clientGet } from '@state/client';
 import { PostofficesAddMessage } from '@websocket/message';
+import { world } from '@state/world';
+import { PostofficePack } from '@websocket/pack';
+import { subscriptionGet, subscriptionSet } from '@state/subscription';
+import { setsEqual } from '@util/util';
+import MailTable from './MailTable';
 
 export default function ViewPostoffice() {
   const [getAddCountry, setAddCountry] = createSignal('');
@@ -11,6 +16,20 @@ export default function ViewPostoffice() {
   const [getAddHouse, setAddHouse] = createSignal('');
   const [getAddCoordinatesX, setAddCoordinatesX] = createSignal('0');
   const [getAddCoordinatesY, setAddCoordinatesY] = createSignal('0');
+
+  const [getSelectedIds, setSelectedIds] = createSignal(new Set<number>());
+
+  createEffect(() => {
+    const subscription = subscriptionGet();
+    if (subscription == null) {
+      return;
+    }
+    const selectedIds = getSelectedIds();
+    if (!setsEqual(new Set(subscription.args.postoffice_ids), selectedIds)) {
+      subscription.args.postoffice_ids = [...selectedIds];
+      subscriptionSet({ ...subscription });
+    }
+  });
 
   function addSubmit() {
     if (clientGet() == null) {
@@ -46,6 +65,105 @@ export default function ViewPostoffice() {
     setAddCoordinatesY('0');
   }
 
+  function toggleEntrySelection(e: PostofficePack) {
+    return () => {
+      const selected = getSelectedIds();
+      if (selected.has(e.id)) {
+        selected.delete(e.id);
+      } else {
+        selected.add(e.id);
+      }
+      setSelectedIds(new Set(selected));
+    };
+  }
+
+  function getEntryExtraClass(e: PostofficePack) {
+    const selected = getSelectedIds();
+    if (selected.has(e.id)) {
+      return styles.table_body_row_extra + ' ' + styles.visible;
+    } else {
+      return styles.table_body_row_extra;
+    }
+  }
+
+  function tableEntry(item: PostofficePack) {
+    return (
+      <>
+        <div class={styles.table_body_row} onClick={toggleEntrySelection(item)}>
+          <div>{item.id}</div>
+          <div>{item.terminal_mails_count}</div>
+          <div>{item.intermediate_mails_count}</div>
+          <div>{item.transports_queued}</div>
+          <div>{item.transports_processed}</div>
+        </div>
+        <div class={getEntryExtraClass(item)}>
+          <div>
+            <h4>Coordinates</h4>
+            {item.coordinates == null ? (
+              <div>Loading...</div>
+            ) : (
+              <div class={styles.coordinates_entries}>
+                <div class={styles.extra_row}>
+                  <span>X</span>
+                  <input value={item.coordinates.x}></input>
+                </div>
+                <div class={styles.extra_row}>
+                  <span>Y</span>
+                  <input value={item.coordinates.y}></input>
+                </div>
+              </div>
+            )}
+          </div>
+          <div>
+            <h4>Address</h4>
+            {item.address == null ? (
+              <div>Loading...</div>
+            ) : (
+              <div class={styles.address_entries}>
+                <div class={styles.extra_row}>
+                  <span>Country</span>
+                  <input value={item.address.country}></input>
+                </div>
+                <div class={styles.extra_row}>
+                  <span>City</span>
+                  <input value={item.address.city}></input>
+                </div>
+                <div class={styles.extra_row}>
+                  <span>Postal Code</span>
+                  <input value={item.address.postal_code}></input>
+                </div>
+                <div class={styles.extra_row}>
+                  <span>Street</span>
+                  <input value={item.address.street}></input>
+                </div>
+                <div class={styles.extra_row}>
+                  <span>House</span>
+                  <input value={item.address.house}></input>
+                </div>
+              </div>
+            )}
+          </div>
+          <div>
+            <h4>Itermediate Mails</h4>
+            {item.intermediate_mails == null ? (
+              <div>Loading...</div>
+            ) : (
+              <MailTable data={item.intermediate_mails} />
+            )}
+          </div>
+          <div>
+            <h4>Terminal Mails</h4>
+            {item.terminal_mails == null ? (
+              <div>Loading...</div>
+            ) : (
+              <MailTable data={item.terminal_mails} />
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <div class={styles.postoffices}>
@@ -58,22 +176,9 @@ export default function ViewPostoffice() {
             <div>Transports Processed</div>
           </div>
           <div class={styles.table_body}>
-            <div class={styles.table_body_row}>
-              <div>ID</div>
-              <div>Terminal Mails Count</div>
-              <div>Intermediate Mails Count</div>
-              <div>Transports Queued</div>
-              <div>Transports Processed</div>
-            </div>
-            <div class={styles.table_body_row_extra + ' ' + styles.visible}>Lalalala</div>
-            <div class={styles.table_body_row}>
-              <div>ID</div>
-              <div>Terminal Mails Count</div>
-              <div>Intermediate Mails Count</div>
-              <div>Transports Queued</div>
-              <div>Transports Processed</div>
-            </div>
-            <div class={styles.table_body_row_extra}>Lalalala</div>
+            <For each={world.postoffices} fallback={<div>Loading...</div>}>
+              {(item, _) => tableEntry(item)}
+            </For>
           </div>
         </div>
         <div class={styles.operations}>

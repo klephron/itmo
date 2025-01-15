@@ -1,7 +1,7 @@
 import { logsGet } from '@state/log';
 import { createEffect } from 'solid-js';
 
-import styles from './index.module.scss';
+import styles from './Log.module.scss';
 
 export default function LogText() {
   let text: HTMLTextAreaElement;

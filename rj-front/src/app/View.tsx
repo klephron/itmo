@@ -1,5 +1,5 @@
 import { createEffect, createSignal, Match, onMount, Switch } from 'solid-js';
-import styles from './index.module.scss';
+import styles from './View.module.scss';
 import {
   clientGet,
   clientOnClose,
@@ -43,10 +43,25 @@ export default function View(props: Props) {
         }
       );
     }
-    if (subscriptionGet() == null || subscriptionGet()!.args.ups != Number(getUPS())) {
+    if (subscriptionGet() == null) {
       const ups = Number(getUPS());
       subscriptionSet({
-        args: { ups: ups, postoffice_ids: [], transport_ids: [], actor_ids: [] },
+        args: {
+          ups: ups,
+          postoffice_ids: [],
+          transport_ids: [],
+          actor_ids: [],
+        },
+      } as SubscribeMessage);
+    } else if (subscriptionGet()!.args.ups != Number(getUPS())) {
+      const ups = Number(getUPS());
+      subscriptionSet({
+        args: {
+          ups: ups,
+          postoffice_ids: subscriptionGet()!.args.postoffice_ids,
+          transport_ids: subscriptionGet()!.args.transport_ids,
+          actor_ids: subscriptionGet()!.args.actor_ids,
+        },
       } as SubscribeMessage);
     }
   }
