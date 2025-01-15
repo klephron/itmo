@@ -1,34 +1,42 @@
+@mixin view_operation_mixin {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid black;
+  padding: 5px;
+
+  h4 {
+    padding-bottom: 5px;
+  }
+}
+
+@mixin view_operations_mixin {
+  border: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px;
+
+  h4 {
+    margin: 0px;
+    text-align: center;
+  }
+}
+
 @mixin view_info_mixin {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 5px;
 
-  .operations {
-    border: 1px solid black;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    padding: 5px;
-
-    h4 {
-      margin: 0px;
-      text-align: center;
-    }
+  &_operations {
+    @include view_operations_mixin;
 
     .add {
-      display: flex;
-      flex-direction: column;
-      border: 1px solid black;
-      padding: 5px;
-
-      h4 {
-        padding-bottom: 5px;
-      }
+      @include view_operation_mixin;
     }
   }
 
-  .table {
+  &_table {
     border: 1px solid black;
     border-bottom: 0px solid black;
     width: 100%;

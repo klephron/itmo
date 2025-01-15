@@ -2,10 +2,12 @@ import { clientGet } from '@state/client';
 import { subscriptionGet, subscriptionSet } from '@state/subscription';
 import { setsEqual } from '@util/util';
 import { TransportsAddMessage } from '@websocket/message';
-import { TransportPack } from '@websocket/pack';
+import { RoutePack, TransportPack } from '@websocket/pack';
 import { createEffect, createSignal, For } from 'solid-js';
 import styles from './ViewTransport.module.scss';
 import { world } from '@state/world';
+import MailTable from './MailTable';
+import PostalAddressTable from './PostalAddressTable';
 
 export default function ViewTransport() {
   const [getAddCapacity, setAddCapacity] = createSignal('');
@@ -91,16 +93,61 @@ export default function ViewTransport() {
   function getEntryExtraClass(e: TransportPack) {
     const selected = getSelectedIds();
     if (selected.has(e.id)) {
-      return styles.table_body_row_extra + ' ' + styles.visible;
+      return styles.transports_table_body_row_extra + ' ' + styles.visible;
     } else {
-      return styles.table_body_row_extra;
+      return styles.transports_table_body_row_extra;
     }
   }
 
-  function tableEntry(item: TransportPack) {
+  function TableEntrySetRoute({ item }: { item: TransportPack }) {
+    const [getRoute, setRoute] = createSignal('');
+    const [getIsCyclic, setIsCyclic] = createSignal(true);
+
+    function setRouteSubmit() {
+      const client = clientGet();
+      if (client == null) {
+        return;
+      }
+    }
+
+    function setRouteClear() {
+      setRoute('');
+      setIsCyclic(true);
+    }
+
+    return (
+      <div class={styles.set_route}>
+        <h4>Set Route</h4>
+        <div class={styles.set_route_body}>
+          <div>
+            <span>Postoffices (ID list)</span>
+            <input value={getRoute()} onChange={(e) => setRoute(e.target.value)}></input>
+          </div>
+          <div>
+            <span>Is Cyclic</span>
+            <select
+              value={getIsCyclic() ? 'true' : 'false'}
+              onChange={(e) => {
+                setIsCyclic(e.target.value === 'true');
+              }}
+            >
+              <option value="true">True</option>
+              <option value="false">False</option>
+            </select>
+          </div>
+        </div>
+        <div class={styles.set_route_buttons}>
+          <button onClick={setRouteSubmit}>Submit</button>
+          <button onClick={setRouteClear}>Clear</button>
+        </div>
+      </div>
+    );
+  }
+
+  function TableEntry(item: TransportPack) {
     return (
       <>
-        <div class={styles.table_body_row} onClick={toggleEntrySelection(item)}>
+        <div class={styles.transports_table_body_row} onClick={toggleEntrySelection(item)}>
           <div>{item.id}</div>
           <div>{item.coordinates.x}</div>
           <div>{item.coordinates.y}</div>
@@ -108,7 +155,74 @@ export default function ViewTransport() {
           <div>{item.mails_count}</div>
         </div>
         <div class={getEntryExtraClass(item)}>
-          <div>Extra</div>
+          <div class={styles.operations}>
+            <h4>Operations</h4>
+            <div class={styles.operations_entries}>
+              <TableEntrySetRoute item={item} />
+            </div>
+          </div>
+          <div>
+            <h4>Parameters</h4>
+            <div class={styles.parameters}>
+              <div>
+                <span>License plate</span>
+                <input value={item.license_plate}></input>
+              </div>
+              <div>
+                <span>Capacity</span>
+                <input value={item.capacity}></input>
+              </div>
+              <div>
+                <span>Speed</span>
+                <input value={item.speed}></input>
+              </div>
+              <div>
+                <span>Operations per second</span>
+                <input value={item.speed}></input>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h4>Route</h4>
+            <div class={styles.route}>
+              <div>
+                <span>Route Postoffice IDs</span>
+                <input
+                  value={
+                    item.route == null || item.route.postoffice_ids == null
+                      ? 'not set'
+                      : item.route.postoffice_ids.join(',')
+                  }
+                ></input>
+              </div>
+              <div>
+                <span>Is Cyclic</span>
+                <input
+                  value={item.route == null ? 'not set' : item.route.is_cyclic ? 'true' : 'false'}
+                ></input>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h4>Loading Addresses</h4>
+            {item.loading_addresses == null ? (
+              <div>Loading...</div>
+            ) : (
+              <PostalAddressTable data={item.loading_addresses} />
+            )}
+          </div>
+          <div>
+            <h4>Delivery Addresses</h4>
+            {item.delivery_addresses == null ? (
+              <div>Loading...</div>
+            ) : (
+              <PostalAddressTable data={item.delivery_addresses} />
+            )}
+          </div>
+          <div>
+            <h4>Mails</h4>
+            {item.mails == null ? <div>Loading...</div> : <MailTable data={item.mails} />}
+          </div>
         </div>
       </>
     );
@@ -117,21 +231,21 @@ export default function ViewTransport() {
   return (
     <>
       <div class={styles.transports}>
-        <div class={styles.table}>
-          <div class={styles.table_header}>
+        <div class={styles.transports_table}>
+          <div class={styles.transports_table_header}>
             <div>ID</div>
             <div>Coordinate X</div>
             <div>Coordinate Y</div>
             <div>At PostOffice Id</div>
             <div>Mails Count</div>
           </div>
-          <div class={styles.table_body}>
+          <div class={styles.transports_table_body}>
             <For each={world.transports} fallback={<div>Loading...</div>}>
-              {(item, _) => tableEntry(item)}
+              {(item, _) => TableEntry(item)}
             </For>
           </div>
         </div>
-        <div class={styles.operations}>
+        <div class={styles.transports_operations}>
           <h4>Operations</h4>
           <div class={styles.add}>
             <h4>Add transport</h4>

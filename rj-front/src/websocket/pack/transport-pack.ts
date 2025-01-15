@@ -1,6 +1,7 @@
 import { CoordinatesPack } from './coordinates-pack';
 import { MailPack } from './mail-pack';
 import { PostalAddressPack } from './postal-address-pack';
+import { RoutePack } from './route-pack';
 
 export interface TransportPack {
   id: number;
@@ -10,7 +11,7 @@ export interface TransportPack {
   license_plate: string;
   mails: MailPack[];
   mails_count: number;
-  route_postoffice_ids: number[];
+  route: RoutePack;
   loading_addresses: PostalAddressPack[];
   delivery_addresses: PostalAddressPack[];
   coordinates: CoordinatesPack;
