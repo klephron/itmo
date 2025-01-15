@@ -1,4 +1,4 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.model.address;
 
 public record Address(PostalAddress postalAddress, String street, String house) implements Comparable<Address> {
 

@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.itmo.zavar.websocket.pack.CoordinatesPack;
-import ru.itmo.zavar.websocket.pack.RoutePack;
 
 @Getter
 public class AddTransportMessage extends Message {

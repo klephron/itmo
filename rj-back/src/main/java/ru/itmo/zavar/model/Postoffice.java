@@ -1,29 +1,23 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.model;
 
-import static ru.itmo.zavar.World.logger;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayDeque;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.PriorityQueue;
-
+import lombok.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.publisher.Sinks.EmitFailureHandler;
+import ru.itmo.zavar.exception.MailException;
+import ru.itmo.zavar.exception.PostofficeException;
+import ru.itmo.zavar.model.actor.Actor;
+import ru.itmo.zavar.model.address.Address;
+import ru.itmo.zavar.model.address.PostalAddress;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+
+import static ru.itmo.zavar.model.World.logger;
 
 @ToString
 @RequiredArgsConstructor
@@ -185,7 +179,7 @@ public class Postoffice {
         // load transport
         PriorityQueue<Deque<Mail>> postalBuckets = new PriorityQueue<Deque<Mail>>(new DequeMailComparator());
         postalBuckets.addAll(
-                transport.getLoadingAddresses().stream().map(da -> intermediateMails.get(da)).filter(pb -> pb != null)
+                transport.getLoadingAddresses().stream().map(intermediateMails::get).filter(Objects::nonNull)
                         .toList());
 
         int mxCount = transport.getCapacity() - transport.getMails().size();

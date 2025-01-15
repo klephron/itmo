@@ -1,7 +1,6 @@
 package ru.itmo.zavar.websocket.event;
 
 import com.google.gson.annotations.SerializedName;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

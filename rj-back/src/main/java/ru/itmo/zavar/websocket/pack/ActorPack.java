@@ -1,11 +1,10 @@
 package ru.itmo.zavar.websocket.pack;
 
-import java.util.List;
-
 import com.google.gson.annotations.SerializedName;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Getter

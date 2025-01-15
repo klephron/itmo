@@ -1,14 +1,22 @@
 package ru.itmo.zavar.websocket.pack;
 
-import static ru.itmo.zavar.World.logger;
+import ru.itmo.zavar.model.Coordinates;
+import ru.itmo.zavar.model.Mail;
+import ru.itmo.zavar.model.Mail.Mark;
+import ru.itmo.zavar.model.Postoffice;
+import ru.itmo.zavar.model.Transport;
+import ru.itmo.zavar.model.actor.Actor;
+import ru.itmo.zavar.model.actor.Actor.Schedule;
+import ru.itmo.zavar.model.actor.Actor.Schedule.Task;
+import ru.itmo.zavar.model.actor.IndividualActor;
+import ru.itmo.zavar.model.actor.OrganizationActor;
+import ru.itmo.zavar.model.address.Address;
+import ru.itmo.zavar.model.address.PostalAddress;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import ru.itmo.zavar.*;
-import ru.itmo.zavar.Actor.Schedule;
-import ru.itmo.zavar.Actor.Schedule.Task;
-import ru.itmo.zavar.Mail.Mark;
+import static ru.itmo.zavar.model.World.logger;
 
 public class PackMappers {
     public static PostofficePack postOfficeToPack(Postoffice office) {

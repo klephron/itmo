@@ -1,8 +1,9 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.model.actor;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import ru.itmo.zavar.model.address.Address;
 
 @Getter
 @ToString(callSuper = true)

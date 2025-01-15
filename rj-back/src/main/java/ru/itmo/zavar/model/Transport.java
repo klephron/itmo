@@ -1,12 +1,4 @@
-package ru.itmo.zavar;
-
-import static ru.itmo.zavar.World.logger;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+package ru.itmo.zavar.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -16,6 +8,15 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.publisher.Sinks.EmitFailureHandler;
+import ru.itmo.zavar.model.address.PostalAddress;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static ru.itmo.zavar.model.World.logger;
 
 @Getter
 @ToString

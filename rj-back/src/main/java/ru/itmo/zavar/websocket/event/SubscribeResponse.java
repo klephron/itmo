@@ -1,11 +1,10 @@
 package ru.itmo.zavar.websocket.event;
 
-import java.util.List;
-
 import com.google.gson.annotations.SerializedName;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @Getter
 public class SubscribeResponse extends Event {

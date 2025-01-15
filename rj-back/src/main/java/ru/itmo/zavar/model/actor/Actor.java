@@ -1,4 +1,14 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.model.actor;
+
+import lombok.*;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
+import reactor.core.publisher.Sinks.EmitFailureHandler;
+import ru.itmo.zavar.model.Mail;
+import ru.itmo.zavar.model.address.Address;
 
 import java.util.HashMap;
 import java.util.List;
@@ -8,21 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.google.gson.annotations.SerializedName;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
-import reactor.core.publisher.Sinks.EmitFailureHandler;
-
-import static ru.itmo.zavar.World.logger;
+import static ru.itmo.zavar.model.World.logger;
 
 @Getter
 @ToString
@@ -63,7 +59,7 @@ public abstract class Actor {
 
     @Getter
     public class Schedule {
-        private Map<Long, Task> tasks = new HashMap<>();
+        private final Map<Long, Task> tasks = new HashMap<>();
         private long idCounter = 0;
 
         public ImmutablePair<Task, Flux<Mail>> addTaskMailSendFlux(Flux<Mail> flux) {
@@ -181,7 +177,7 @@ public abstract class Actor {
 
         public class MailSendOneTask extends Task {
             private final Mail mail;
-            private Sinks.One<Mail> sink;
+            private final Sinks.One<Mail> sink;
 
             public MailSendOneTask(Mail mail) {
                 this.mail = mail;
@@ -211,9 +207,7 @@ public abstract class Actor {
             }
 
             Flux<Mail> send() {
-                disposable = flux.subscribe(mail -> {
-                    sink.tryEmitNext(mail);
-                }, error -> sink.tryEmitError(error), () -> sink.tryEmitComplete());
+                disposable = flux.subscribe(sink::tryEmitNext, sink::tryEmitError, sink::tryEmitComplete);
                 return sink.asFlux();
             }
 

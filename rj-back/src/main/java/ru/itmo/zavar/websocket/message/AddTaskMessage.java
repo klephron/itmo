@@ -3,8 +3,6 @@ package ru.itmo.zavar.websocket.message;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import ru.itmo.zavar.Actor;
-import ru.itmo.zavar.Mail;
 import ru.itmo.zavar.websocket.pack.TaskPack;
 
 @Getter

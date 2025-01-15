@@ -1,4 +1,4 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.log;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

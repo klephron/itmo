@@ -1,23 +1,26 @@
 package ru.itmo.zavar.websocket.pipeline;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Logger;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import reactor.core.publisher.Flux;
-import ru.itmo.zavar.*;
+import ru.itmo.zavar.model.*;
+import ru.itmo.zavar.model.actor.Actor;
 import ru.itmo.zavar.websocket.Session;
 import ru.itmo.zavar.websocket.SessionManager;
 import ru.itmo.zavar.websocket.event.*;
 import ru.itmo.zavar.websocket.message.*;
-import ru.itmo.zavar.websocket.pack.*;
+import ru.itmo.zavar.websocket.pack.ActorPack;
+import ru.itmo.zavar.websocket.pack.PackMappers;
+import ru.itmo.zavar.websocket.pack.PostofficePack;
+import ru.itmo.zavar.websocket.pack.TransportPack;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
 @ChannelHandler.Sharable
 public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> {
@@ -31,7 +34,6 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
         this.world = world;
     }
 
-    //TODO
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
         switch (msg.getOp()) {
@@ -52,9 +54,6 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                 AddTransportMessage addTransportMsg = (AddTransportMessage) msg;
                 AddTransportMessage.Args args = addTransportMsg.getArgs();
 
-                //List<Postoffice> postOffices = args.getRoute().getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong)).toList();
-                //Route<Postoffice> postofficeRoute = new Route<>(postOffices, args.getRoute().getIsCyclic());
-
                 try {
                     Transport transport = new Transport(
                         args.getCapacity(),
@@ -64,9 +63,6 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                         PackMappers.coordinatesFromPack(args.getCoordinates())
                     );
                     world.transports.add(transport);
-                    //world.transports.setRoute(transport.getId(), postofficeRoute);
-                    //TODO
-                    //world.transports.start(transport.getId(), 0);
                 } catch (NoSuchElementException e) {
                     ctx.writeAndFlush(new ErrorResponse(msg, e.getMessage()));
                 }

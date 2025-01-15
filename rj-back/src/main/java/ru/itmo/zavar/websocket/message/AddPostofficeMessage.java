@@ -6,8 +6,6 @@ import lombok.RequiredArgsConstructor;
 import ru.itmo.zavar.websocket.pack.AddressPack;
 import ru.itmo.zavar.websocket.pack.CoordinatesPack;
 
-import java.util.List;
-
 @Getter
 public class AddPostofficeMessage extends Message {
     public static final String OP = "postoffices.add";

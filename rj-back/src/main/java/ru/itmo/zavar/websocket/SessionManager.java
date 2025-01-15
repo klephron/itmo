@@ -1,12 +1,12 @@
 package ru.itmo.zavar.websocket;
 
-import static ru.itmo.zavar.World.logger;
-
-import java.util.HashMap;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
 import lombok.RequiredArgsConstructor;
+
+import java.util.HashMap;
+
+import static ru.itmo.zavar.model.World.logger;
 
 @RequiredArgsConstructor
 public class SessionManager {

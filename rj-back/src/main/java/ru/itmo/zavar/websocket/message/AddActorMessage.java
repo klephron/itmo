@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.itmo.zavar.websocket.pack.ActorPack;
-import ru.itmo.zavar.websocket.pack.IndividualActorPack;
 
 @Getter
 public class AddActorMessage extends Message {

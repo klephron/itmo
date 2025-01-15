@@ -1,14 +1,13 @@
 package ru.itmo.zavar.websocket.event;
 
-import java.util.List;
-
 import com.google.gson.annotations.SerializedName;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.itmo.zavar.websocket.pack.ActorPack;
 import ru.itmo.zavar.websocket.pack.PostofficePack;
 import ru.itmo.zavar.websocket.pack.TransportPack;
+
+import java.util.List;
 
 public class SubscribeEvent extends Event {
     public static final String EVENT = "subscribe";

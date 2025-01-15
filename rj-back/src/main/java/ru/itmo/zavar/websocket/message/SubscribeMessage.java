@@ -1,11 +1,10 @@
 package ru.itmo.zavar.websocket.message;
 
-import java.util.List;
-
 import com.google.gson.annotations.SerializedName;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @Getter
 public class SubscribeMessage extends Message {

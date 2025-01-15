@@ -1,4 +1,10 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.model;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.itmo.zavar.log.LogFormatter;
+import ru.itmo.zavar.model.actor.Actor;
+import ru.itmo.zavar.model.actor.Actor.Schedule.Task;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -7,10 +13,6 @@ import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import ru.itmo.zavar.Actor.Schedule.Task;
 
 public class World {
     public static final Logger logger = Logger.getLogger(World.class.getName());
@@ -36,7 +38,7 @@ public class World {
     }
 
     public class Actors {
-        private Map<Long, Actor> entries = new HashMap<>();
+        private final Map<Long, Actor> entries = new HashMap<>();
         private long idCounter = 0;
 
         public void addActor(Actor actor) {
@@ -127,7 +129,7 @@ public class World {
     }
 
     public class Postoffices {
-        private Map<Long, Postoffice> entries = new HashMap<>();
+        private final Map<Long, Postoffice> entries = new HashMap<>();
         private long idCounter = 0;
 
         public void add(Postoffice office) {
@@ -155,7 +157,7 @@ public class World {
     }
 
     public class Transports {
-        private Map<Long, Transport> entries = new HashMap<>();
+        private final Map<Long, Transport> entries = new HashMap<>();
         private long idCounter = 0;
 
         public void add(Transport transport) {

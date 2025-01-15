@@ -1,18 +1,17 @@
 package ru.itmo.zavar.websocket.pipeline;
 
-import static ru.itmo.zavar.World.logger;
-
-import java.util.List;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import ru.itmo.zavar.websocket.event.ErrorResponse;
 import ru.itmo.zavar.websocket.message.*;
+
+import java.util.List;
+
+import static ru.itmo.zavar.model.World.logger;
 
 @ChannelHandler.Sharable
 public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketFrame> {

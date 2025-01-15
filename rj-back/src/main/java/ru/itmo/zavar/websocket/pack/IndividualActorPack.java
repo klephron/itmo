@@ -1,10 +1,9 @@
 package ru.itmo.zavar.websocket.pack;
 
-import java.util.List;
-
 import com.google.gson.annotations.SerializedName;
-
 import lombok.Getter;
+
+import java.util.List;
 
 @Getter
 public class IndividualActorPack extends ActorPack {

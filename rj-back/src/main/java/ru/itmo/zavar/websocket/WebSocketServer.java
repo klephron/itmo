@@ -1,13 +1,7 @@
 package ru.itmo.zavar.websocket;
 
-import static ru.itmo.zavar.World.logger;
-
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -16,11 +10,13 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import ru.itmo.zavar.World;
+import ru.itmo.zavar.model.World;
 import ru.itmo.zavar.websocket.pipeline.WebSocketSessionHandler;
 import ru.itmo.zavar.websocket.pipeline.WebSocketTextDecoder;
 import ru.itmo.zavar.websocket.pipeline.WebSocketTextEncoder;
 import ru.itmo.zavar.websocket.pipeline.WebSocketWorldHandler;
+
+import static ru.itmo.zavar.model.World.logger;
 
 public class WebSocketServer {
     public static final int DEFAULT_BOSS_THREADS = 1;
@@ -30,9 +26,9 @@ public class WebSocketServer {
     private ChannelFuture future;
 
     private final World world;
-    private int bossThreads;
-    private int workerThreads;
-    private int port;
+    private final int bossThreads;
+    private final int workerThreads;
+    private final int port;
 
     private final SessionManager sessionManager;
     private final WebSocketSessionHandler webSocketSessionHandler;
@@ -76,8 +72,6 @@ public class WebSocketServer {
                 logger.info("closed wsserver");
             }).sync();
             // immediately stop when can't bind
-        } catch (InterruptedException e) {
-            throw e;
         } finally {
             boss.shutdownGracefully();
             worker.shutdownGracefully();

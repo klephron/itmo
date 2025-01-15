@@ -1,6 +1,7 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.model;
 
 import lombok.*;
+import ru.itmo.zavar.model.actor.Actor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class Mail {
     @Setter
     private ArrayList<Mark> marks;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
     @Setter
     private LocalDateTime appliedAt;
     @Setter

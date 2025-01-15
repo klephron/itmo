@@ -3,7 +3,6 @@ package ru.itmo.zavar.websocket.message;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import ru.itmo.zavar.websocket.pack.RoutePack;
 
 @Getter
 public class TransportStartMessage extends Message {

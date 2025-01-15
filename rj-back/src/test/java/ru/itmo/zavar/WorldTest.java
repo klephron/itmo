@@ -9,6 +9,11 @@ import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
+import ru.itmo.zavar.model.*;
+import ru.itmo.zavar.model.actor.Actor;
+import ru.itmo.zavar.model.actor.IndividualActor;
+import ru.itmo.zavar.model.address.Address;
+import ru.itmo.zavar.model.address.PostalAddress;
 
 public class WorldTest {
     private static final Logger logger = Logger.getLogger(World.class.getName());
@@ -21,7 +26,7 @@ public class WorldTest {
                 new Coordinates(0, 10));
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
-                "A1", "B1", "C1");
+                10, "A1", "B1", "C1");
         Mail mail1 = new Mail(0, "subject1", actor1, actor1, new Mail.Data("text"), 10);
         Mail mail2 = new Mail(1, "subject1", actor1, actor1, new Mail.Data("text"), 10);
         Mail mail3 = new Mail(2, "subject1", actor1, actor1, new Mail.Data("text"), 10);
@@ -36,18 +41,36 @@ public class WorldTest {
         world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail4);
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()));
-        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+            logger.fine(m.toString());
+            actor.addMailToBuffer(m);
+        });
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+            logger.fine(m.toString());
+            actor.addMailToBuffer(m);
+        });
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+            logger.fine(m.toString());
+            actor.addMailToBuffer(m);
+        });
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+            logger.fine(m.toString());
+            actor.addMailToBuffer(m);
+        });
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+                logger.fine(m.toString());
+                actor.addMailToBuffer(m);
+            },
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail1);
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), m -> logger.fine(m.toString()));
+        world.actors.receiveMail(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+            logger.fine(m.toString());
+            actor.addMailToBuffer(m);
+        });
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.stop();
@@ -61,7 +84,7 @@ public class WorldTest {
         Postoffice postOffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
                 new Coordinates(0, 10));
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
-                "A1", "B1", "C1");
+                10, "A1", "B1", "C1");
 
         world.postoffices.add(postOffice1);
         world.actors.addActor(actor1);
@@ -74,11 +97,17 @@ public class WorldTest {
                     return state;
                 }).delayElements(Duration.ofMillis(500)).cast(Mail.class));
 
-        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+                logger.info(m.toString());
+                actor.addMailToBuffer(m);
+            },
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
-        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+                logger.info(m.toString());
+                actor.addMailToBuffer(m);
+            },
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(5L));
 
@@ -87,7 +116,10 @@ public class WorldTest {
         Thread.sleep(Duration.ofSeconds(1L));
 
         // waiting a little to read latest messages
-        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), m -> logger.info(m.toString()),
+        world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(), (m, actor) -> {
+                logger.info(m.toString());
+                actor.addMailToBuffer(m);
+            },
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(2L));
 
@@ -149,9 +181,9 @@ public class WorldTest {
         Route<Postoffice> route1 = new Route<Postoffice>(List.of(postOffice1, postOffice2, postOffice3), true);
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "1"), "S3", "14"),
-                "A1", "B1", "C1");
+                10, "A1", "B1", "C1");
         Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "2"), "S3", "14"),
-                "A1", "B1", "C1");
+                10, "A1", "B1", "C1");
 
         Transport transport1 = new Transport(10, 5D, 10, "T1");
 
@@ -189,18 +221,27 @@ public class WorldTest {
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.actors.receiveMailMany(actor2.getId(), postOffice2.getId(),
-                m -> logger.info("received actor2 " + m.toString()),
+                (m, actor) -> {
+                    logger.info("received actor2 " + m.toString());
+                    actor.addMailToBuffer(m);
+                },
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
         // should throw warnings
         world.actors.receiveMailMany(actor1.getId(), postOffice2.getId(),
-                m -> logger.info("received actor1 " + m.toString()),
+                (m, actor) -> {
+                    logger.info("received actor1 " + m.toString());
+                    actor.addMailToBuffer(m);
+                },
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 
         world.actors.receiveMailMany(actor1.getId(), postOffice1.getId(),
-                m -> logger.info("received actor1 " + m.toString()),
+                (m, actor) -> {
+                    logger.info("received actor1 " + m.toString());
+                    actor.addMailToBuffer(m);
+                },
                 e -> logger.warning(e.toString()));
         Thread.sleep(Duration.ofSeconds(1L));
 

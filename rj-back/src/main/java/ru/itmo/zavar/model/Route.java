@@ -1,15 +1,15 @@
-package ru.itmo.zavar;
+package ru.itmo.zavar.model;
+
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import lombok.Getter;
-
 @Getter
 public class Route<T> {
     private final List<T> stops;
-    private boolean isCyclic;
+    private final boolean isCyclic;
 
     public Route(List<T> stops, boolean isCyclic) {
         this.stops = Collections.unmodifiableList(new ArrayList<T>(stops));
