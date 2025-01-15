@@ -113,6 +113,10 @@ public abstract class Actor {
                 logger.fine("task is removed");
             }
 
+            public Actor getOwnerActor() {
+                return Actor.this;
+            }
+
             abstract void terminate();
         }
 

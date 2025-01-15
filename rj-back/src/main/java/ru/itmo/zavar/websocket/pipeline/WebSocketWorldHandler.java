@@ -11,10 +11,7 @@ import ru.itmo.zavar.websocket.Session;
 import ru.itmo.zavar.websocket.SessionManager;
 import ru.itmo.zavar.websocket.event.*;
 import ru.itmo.zavar.websocket.message.*;
-import ru.itmo.zavar.websocket.pack.ActorPack;
-import ru.itmo.zavar.websocket.pack.PackMappers;
-import ru.itmo.zavar.websocket.pack.PostofficePack;
-import ru.itmo.zavar.websocket.pack.TransportPack;
+import ru.itmo.zavar.websocket.pack.*;
 
 import java.time.Duration;
 import java.util.List;
@@ -80,57 +77,44 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                 world.actors.addActor(actor);
             }
             case AddTaskMessage.OP -> {
-                AddTaskMessage addTaskMsg = (AddTaskMessage) msg;
-                AddTaskMessage.Args args = addTaskMsg.getArgs();
-                switch (args.getKind()) {
-                    case SEND_MAIL_ONE -> {
+                switch (msg) {
+                    case AddTaskMessage.SendMailOneMessage sendMailOneMessage -> {
+                        TaskPack.SendMailOne task = sendMailOneMessage.getArgs().getTask();
                         Mail mail = new Mail(
                             world.mailIds.getAndIncrement(),
-                            args.getMailSimplePack().getSubject(),
-                            world.actors.getActor(args.getMailSimplePack().getSenderId()),
-                            world.actors.getActor(args.getMailSimplePack().getReceiverId()),
-                            new Mail.Data(args.getMailSimplePack().getText()),
+                            task.getMail().getSubject(),
+                            world.actors.getActor(task.getMail().getSenderActorId()),
+                            world.actors.getActor(task.getMail().getReceiverActorId()),
+                            new Mail.Data(task.getMail().getText()),
                             0
                         );
                         world.actors.sendMail(
-                            args.getActorId(),
-                            args.getPostofficeId(),
+                            task.getActorId(),
+                            task.getPostofficeId(),
                             mail
                         );
                     }
-                    case RECEIVE_MAIL_ONE -> {
-                        world.actors.receiveMail(
-                            args.getActorId(),
-                            args.getPostofficeId(),
-                            (mail, actor) -> {
-                                logger.info(mail.toString());
-                                actor.addMailToBuffer(mail);
-                            },
-                            e -> {
-                                logger.warning(e.toString());
-                                ctx.writeAndFlush(new WarningResponse("Error receiving mail " + e));
-                            }
-                        );
-                    }
-                    case SEND_MAIL_REPEATED -> {
+                    case AddTaskMessage.SendMailRepeatedMessage sendMailRepeatedMessage -> {
+                        TaskPack.SendMailRepeated task = sendMailRepeatedMessage.getArgs().getTask();
                         Mail mail = new Mail(
                             world.mailIds.getAndIncrement(),
-                            args.getMailSimplePack().getSubject(),
-                            world.actors.getActor(args.getMailSimplePack().getSenderId()),
-                            world.actors.getActor(args.getMailSimplePack().getReceiverId()),
-                            new Mail.Data(args.getMailSimplePack().getText()),
+                            task.getMail().getSubject(),
+                            world.actors.getActor(task.getMail().getSenderActorId()),
+                            world.actors.getActor(task.getMail().getReceiverActorId()),
+                            new Mail.Data(task.getMail().getText()),
                             0
                         );
-                        Actor.Schedule.Task sendMailFlux = world.actors.sendMailFlux(args.getActorId(), args.getPostofficeId(),
+                        Actor.Schedule.Task sendMailFlux = world.actors.sendMailFlux(task.getActorId(), task.getPostofficeId(),
                             Flux.generate(AtomicLong::new, (state, sink) -> {
                                 sink.next(mail);
                                 return state;
-                            }).delayElements(Duration.ofMillis(args.getInterval())).cast(Mail.class));
+                            }).delayElements(Duration.ofMillis(task.getIntervalMs())).cast(Mail.class));
                     }
-                    case RECEIVE_MAIL_MANY -> {
-                        world.actors.receiveMailMany(
-                            args.getActorId(),
-                            args.getPostofficeId(),
+                    case AddTaskMessage.ReceiveMailOneMessage receiveMailOneMessage -> {
+                        TaskPack.ReceiveMailOne task = receiveMailOneMessage.getArgs().getTask();
+                        world.actors.receiveMail(
+                            task.getActorId(),
+                            task.getPostofficeId(),
                             (mail, actor) -> {
                                 logger.info(mail.toString());
                                 actor.addMailToBuffer(mail);
@@ -141,7 +125,22 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                             }
                         );
                     }
-                    default -> ctx.writeAndFlush(new ErrorResponse(msg, "unsupported kind " + args.getKind()));
+                    case AddTaskMessage.ReceiveMailManyMessage receiveMailManyMessage -> {
+                        TaskPack.ReceiveMailMany task = receiveMailManyMessage.getArgs().getTask();
+                        world.actors.receiveMailMany(
+                            task.getActorId(),
+                            task.getPostofficeId(),
+                            (mail, actor) -> {
+                                logger.info(mail.toString());
+                                actor.addMailToBuffer(mail);
+                            },
+                            e -> {
+                                logger.warning(e.toString());
+                                ctx.writeAndFlush(new WarningResponse("Error receiving mail " + e));
+                            }
+                        );
+                    }
+                    default -> ctx.writeAndFlush(new ErrorResponse(msg, "unsupported kind task"));
                 }
             }
             case AddActorMessage.OP -> {
@@ -155,9 +154,9 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                     world.actors.addActor(actor);
                 }
             }
-            case SetRouteMessage.OP -> {
-                SetRouteMessage setRouteMsg = (SetRouteMessage) msg;
-                SetRouteMessage.Args args = setRouteMsg.getArgs();
+            case TransportSetRouteMessage.OP -> {
+                TransportSetRouteMessage setRouteMsg = (TransportSetRouteMessage) msg;
+                TransportSetRouteMessage.Args args = setRouteMsg.getArgs();
                 Transport transport = world.transports.get(args.getTransportId());
                 if (transport == null) {
                     ctx.writeAndFlush(new ErrorResponse(msg, "transport not found"));

@@ -31,13 +31,31 @@ public class AddTaskMessage<T extends TaskPack> extends Message {
     }
 
     public static class Generic extends AddTaskMessage<TaskPack> {
-        Generic(TaskPack task) {
+        public Generic(TaskPack task) {
             super(task);
         }
     }
 
-    public static class MailsSendOneMessage extends AddTaskMessage<TaskPack.MailSendOne> {
-        MailsSendOneMessage(TaskPack.MailSendOne task) {
+    public static class SendMailOneMessage extends AddTaskMessage<TaskPack.SendMailOne> {
+        public SendMailOneMessage(TaskPack.SendMailOne task) {
+            super(task);
+        }
+    }
+
+    public static class SendMailRepeatedMessage extends AddTaskMessage<TaskPack.SendMailRepeated> {
+        public SendMailRepeatedMessage(TaskPack.SendMailRepeated task) {
+            super(task);
+        }
+    }
+
+    public static class ReceiveMailOneMessage extends AddTaskMessage<TaskPack.ReceiveMailOne> {
+        public ReceiveMailOneMessage(TaskPack.ReceiveMailOne task) {
+            super(task);
+        }
+    }
+
+    public static class ReceiveMailManyMessage extends AddTaskMessage<TaskPack.ReceiveMailMany> {
+        public ReceiveMailManyMessage(TaskPack.ReceiveMailMany task) {
             super(task);
         }
     }

@@ -8,7 +8,6 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import ru.itmo.zavar.websocket.event.ErrorResponse;
 import ru.itmo.zavar.websocket.message.*;
-import ru.itmo.zavar.websocket.pack.TaskPack;
 
 import java.util.List;
 
@@ -38,10 +37,10 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
                     AddTaskMessage.Generic task = gson.fromJson(json,
                             AddTaskMessage.Generic.class);
                     switch(task.getArgs().getTask().getKind()) {
-                        case SEND_MAIL_ONE -> {
-                            out.add(gson.fromJson(json, AddTaskMessage.MailsSendOneMessage.class))
-                        }
-
+                        case SEND_MAIL_ONE -> out.add(gson.fromJson(json, AddTaskMessage.SendMailOneMessage.class));
+                        case SEND_MAIL_REPEATED -> out.add(gson.fromJson(json, AddTaskMessage.SendMailRepeatedMessage.class));
+                        case RECEIVE_MAIL_MANY -> out.add(gson.fromJson(json, AddTaskMessage.ReceiveMailManyMessage.class));
+                        case RECEIVE_MAIL_ONE -> out.add(gson.fromJson(json, AddTaskMessage.ReceiveMailOneMessage.class));
                     }
                 }
                 case AddActorMessage.OP -> {
@@ -55,7 +54,7 @@ public class WebSocketTextDecoder extends MessageToMessageDecoder<TextWebSocketF
                         }
                     }
                 }
-                case SetRouteMessage.OP -> out.add(gson.fromJson(json, SetRouteMessage.class));
+                case TransportSetRouteMessage.OP -> out.add(gson.fromJson(json, TransportSetRouteMessage.class));
                 case TransportStartMessage.OP -> out.add(gson.fromJson(json, TransportStartMessage.class));
                 case TransportStopMessage.OP -> out.add(gson.fromJson(json, TransportStopMessage.class));
                 default -> out.add(message);

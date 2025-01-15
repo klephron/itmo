@@ -284,10 +284,10 @@ public class PackMappers {
     // TODO: add additional metadata (currently only id and kind available) + marks
     public static TaskPack taskToPack(Task task) {
         if (task instanceof Schedule.MailSendOneTask casted) {
-            return new TaskPack.MailSendOne(casted.getId(), null, null);
+            return new TaskPack.SendMailOne(casted.getId(), casted.getOwnerActor().getId(), null, null);
         }
         if (task instanceof Schedule.MailSendFluxTask casted) {
-            return new TaskPack.MailSendRepeated(casted.getId(), null, null, null);
+            return new TaskPack.SendMailRepeated(casted.getId(), casted.getOwnerActor().getId(), null, null, null);
         }
         if (task instanceof Schedule.MailReceiveOneTask casted) {
             return new TaskPack(casted.getId(), TaskPack.Kind.RECEIVE_MAIL_ONE, null);
