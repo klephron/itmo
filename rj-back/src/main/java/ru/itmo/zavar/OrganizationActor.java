@@ -10,8 +10,8 @@ import lombok.ToString;
 public final class OrganizationActor extends Actor {
     private final String name;
 
-    public OrganizationActor(Address address, String name) {
-        super(address);
+    public OrganizationActor(Address address, int bufferCapacity, String name) {
+        super(address, bufferCapacity);
         this.name = name;
     }
 }

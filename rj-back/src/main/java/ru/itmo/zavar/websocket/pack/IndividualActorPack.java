@@ -15,9 +15,9 @@ public class IndividualActorPack extends ActorPack {
     @SerializedName("patronymic")
     private final String patronymic;
 
-    public IndividualActorPack(Long id, AddressPack address, List<TaskPack> tasks, String name, String surname,
+    public IndividualActorPack(Long id, AddressPack address, List<TaskPack> tasks, int bufferCapacity, String name, String surname,
             String patronymic) {
-        super(ActorPack.Kind.INDIVIDUAL, id, address, tasks);
+        super(ActorPack.Kind.INDIVIDUAL, id, address, tasks, bufferCapacity);
         this.name = name;
         this.surname = surname;
         this.patronymic = patronymic;

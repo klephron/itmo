@@ -173,9 +173,11 @@ public class PackMappers {
         }
         deliveryAddresses = transport.getDeliveryAddresses().stream().map(PackMappers::postalAddressToPack).toList();
 
+        RoutePack routePack = new RoutePack(route, transport.getRoute() != null && transport.getRoute().isCyclic());
+
         return new TransportPack(transport.getId(), transport.getCapacity(), transport.getSpeed(), transport.getOps(),
                 transport.getLicensePlate(), transport.getMails().stream().map(PackMappers::mailToPack).toList(),
-                transport.getMails().size(), route,
+                transport.getMails().size(), routePack,
                 loadingAddresses, deliveryAddresses, coordinatesToPack(transport.getEstimatedCoordinates()),
                 transport.getAtPostOffice() == null ? null : transport.getAtPostOffice().getId());
     }
@@ -228,44 +230,44 @@ public class PackMappers {
         if (actor instanceof IndividualActor) {
             var individualActor = (IndividualActor) actor;
             return new IndividualActorPack(individualActor.getId(), addressToPack(individualActor.getAddress()), tasks,
-                    individualActor.getName(), individualActor.getSurname(), individualActor.getPatronymic());
+                    individualActor.getBufferCapacity(), individualActor.getName(), individualActor.getSurname(), individualActor.getPatronymic());
         }
         if (actor instanceof OrganizationActor) {
             var organizationActor = (OrganizationActor) actor;
             return new OrganizationActorPack(organizationActor.getId(), addressToPack(organizationActor.getAddress()),
-                    tasks, organizationActor.getName());
+                    tasks, organizationActor.getBufferCapacity(), organizationActor.getName());
         }
         logger.warning("unhandled actor class " + actor);
-        return new ActorPack(null, actor.getId(), addressToPack(actor.getAddress()), tasks);
+        return new ActorPack(null, actor.getId(), addressToPack(actor.getAddress()), tasks, 0);
     }
 
     public static ActorPack actorToPackEssential(Actor actor) {
         if (actor instanceof IndividualActor) {
             var individualActor = (IndividualActor) actor;
-            return new IndividualActorPack(individualActor.getId(), null, null, null, null, null);
+            return new IndividualActorPack(individualActor.getId(), null, null, 0, null, null, null);
         }
         if (actor instanceof OrganizationActor) {
             var organizationActor = (OrganizationActor) actor;
-            return new OrganizationActorPack(organizationActor.getId(), null, null, null);
+            return new OrganizationActorPack(organizationActor.getId(), null, null, 0, null);
         }
         logger.warning("unhandled actor class " + actor);
-        return new ActorPack(null, actor.getId(), null, null);
+        return new ActorPack(null, actor.getId(), null, null, 0);
     }
 
     public static Actor actorFromPack(ActorPack actor) {
         switch (actor.getKind()) {
             case INDIVIDUAL: {
                 var casted = (IndividualActorPack) actor;
-                return new IndividualActor(addressFromPack(casted.getAddress()), casted.getName(), casted.getSurname(),
-                        casted.getPatronymic());
+                return new IndividualActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(),
+                    casted.getName(), casted.getSurname(), casted.getPatronymic());
             }
             case ORGANIZATION: {
                 var casted = (OrganizationActorPack) actor;
-                return new OrganizationActor(addressFromPack(casted.getAddress()), casted.getName());
+                return new OrganizationActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(), casted.getName());
             }
             default: {
                 logger.warning("unhandled actor class " + actor + ", default to INDIVIDUAL");
-                return new IndividualActor(addressFromPack(actor.getAddress()), null, null, null);
+                return new IndividualActor(addressFromPack(actor.getAddress()), 0, null, null, null);
             }
         }
     }

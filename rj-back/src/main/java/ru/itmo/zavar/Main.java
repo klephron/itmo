@@ -34,11 +34,11 @@ public class Main {
                 new Coordinates(0, 10));
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
-                "A1", "B1", "C1");
+            10,"A1", "B1", "C1");
         Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188034"), "S3", "14"),
-                "A2", "B2", "C2");
+            10,"A2", "B2", "C2");
         Actor actor3 = new OrganizationActor(new Address(new PostalAddress("Russia", "SPb", "188034"), "S3", "14"),
-                "O3");
+                10, "O3");
 
         Transport transport1 = new Transport(10, 5D, 10, "T1");
         Transport transport2 = new Transport(20, 10D, 20, "T2");

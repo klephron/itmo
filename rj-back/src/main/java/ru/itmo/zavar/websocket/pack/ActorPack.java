@@ -18,6 +18,8 @@ public class ActorPack {
     private final AddressPack address;
     @SerializedName("tasks")
     private final List<TaskPack> tasks;
+    @SerializedName("buffer_capacity")
+    private final int bufferCapacity;
 
     public enum Kind {
         @SerializedName("INDIVIDUAL")

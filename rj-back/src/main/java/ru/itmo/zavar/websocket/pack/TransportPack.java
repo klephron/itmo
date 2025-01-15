@@ -7,7 +7,6 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-//TODO add RoutePack
 @RequiredArgsConstructor
 @Getter
 public class TransportPack {
@@ -25,8 +24,8 @@ public class TransportPack {
     private final List<MailPack> mails;
     @SerializedName("mails_count")
     private final Integer mailsCount;
-    @SerializedName("route_postoffice_ids")
-    private final List<Long> routePostofficeIds;
+    @SerializedName("route")
+    private final RoutePack route;
     @SerializedName("loading_addresses")
     private final List<PostalAddressPack> loadingAddresses;
     @SerializedName("delivery_addresses")

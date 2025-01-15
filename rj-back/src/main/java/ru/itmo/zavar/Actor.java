@@ -2,6 +2,7 @@ package ru.itmo.zavar;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -29,9 +30,13 @@ public abstract class Actor {
     private Long id;
     private final Address address;
     private final Schedule schedule;
+    private final int bufferCapacity;
+    private final LinkedBlockingQueue<Integer> messageBuffer;
 
-    public Actor(Address address) {
+    public Actor(Address address, int bufferCapacity) {
         this.address = address;
+        this.bufferCapacity = bufferCapacity;
+        this.messageBuffer = new LinkedBlockingQueue<>(bufferCapacity);
         this.schedule = new Schedule();
     }
 

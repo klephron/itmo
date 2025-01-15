@@ -79,7 +79,7 @@ public class World {
             return pair.left;
         }
 
-        public Task receiveMail(long actorId, long postofficeId, Consumer<Mail> onOne) {
+        public Task receiveMail(long actorId, long postofficeId, BiConsumer<Mail, Actor> onOne) {
             return receiveMail(actorId, postofficeId, onOne, (e) -> {
                 logger.warning(e.toString());
             });
