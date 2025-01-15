@@ -86,7 +86,7 @@ public abstract class Actor {
         }
 
         public ImmutablePair<Task, Void> addTaskMailReceiveFlux(Flux<Mail> flux, BiConsumer<? super Mail, Actor> onOne,
-                                                                Consumer<Throwable> onError) {
+                Consumer<Throwable> onError) {
             var task = new MailReceiveFluxTask(flux, onOne, onError);
             task.setId(++idCounter);
             tasks.put(task.getId(), task);
@@ -98,7 +98,12 @@ public abstract class Actor {
             if (!tasks.containsKey(taskId)) {
                 return;
             }
-            tasks.get(taskId).terminate();
+            boolean success = tasks.get(taskId).terminate();
+            logger.info("terminated task " + taskId + ", success=" + success);
+            if (!success) {
+                tasks.remove(taskId);
+                logger.info("removed task in force");
+            }
         }
 
         @RequiredArgsConstructor
@@ -117,7 +122,7 @@ public abstract class Actor {
                 return Actor.this;
             }
 
-            abstract void terminate();
+            abstract boolean terminate();
         }
 
         public class MailReceiveOneTask extends Task {
@@ -134,16 +139,17 @@ public abstract class Actor {
             }
 
             void receive() {
-                disposable = mono.doOnSuccess(v -> {
-                    this.onEnd();
-                }).subscribe(mail -> biConsumer.accept(mail, Actor.this), errorConsumer);
+                disposable = mono.doOnTerminate(this::onEnd).subscribe(mail -> biConsumer.accept(mail, Actor.this),
+                        errorConsumer);
             }
 
             @Override
-            void terminate() {
+            boolean terminate() {
                 if (disposable != null) {
                     disposable.dispose();
+                    return true;
                 }
+                return false;
             }
         }
 
@@ -167,10 +173,12 @@ public abstract class Actor {
             }
 
             @Override
-            void terminate() {
+            boolean terminate() {
                 if (disposable != null) {
                     disposable.dispose();
+                    return true;
                 }
+                return false;
             }
         }
 
@@ -190,12 +198,13 @@ public abstract class Actor {
 
             Mono<Mail> send() {
                 sink.emitValue(mail, EmitFailureHandler.FAIL_FAST);
-                return sink.asMono();
+                return sink.asMono().doOnTerminate(this::onEnd);
             }
 
             @Override
-            void terminate() {
+            boolean terminate() {
                 sink.emitEmpty(EmitFailureHandler.FAIL_FAST);
+                return true;
             }
         }
 
@@ -211,15 +220,19 @@ public abstract class Actor {
             }
 
             Flux<Mail> send() {
-                disposable = flux.subscribe(sink::tryEmitNext, sink::tryEmitError, sink::tryEmitComplete);
-                return sink.asFlux();
+                disposable = flux.subscribe(sink::tryEmitNext, sink::tryEmitError,
+                        sink::tryEmitComplete);
+                return sink.asFlux().doOnTerminate(this::onEnd);
             }
 
             @Override
-            void terminate() {
+            boolean terminate() {
                 if (disposable != null) {
                     disposable.dispose();
+                    sink.emitComplete(EmitFailureHandler.FAIL_FAST);
+                    return true;
                 }
+                return false;
             }
         }
     }
