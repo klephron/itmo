@@ -8,7 +8,7 @@ import ru.itmo.zavar.websocket.pack.RoutePack;
 
 @Getter
 public class AddTransportMessage extends Message {
-    public static final String OP = "add-transport";
+    public static final String OP = "transports.add";
 
     @SerializedName("args")
     private final Args args;

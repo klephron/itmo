@@ -11,25 +11,25 @@ import ru.itmo.zavar.Actor.Schedule.Task;
 import ru.itmo.zavar.Mail.Mark;
 
 public class PackMappers {
-    public static PostOfficePack postOfficeToPack(PostOffice office) {
+    public static PostofficePack postOfficeToPack(Postoffice office) {
         List<MailPack> terminalMails = office.getTerminalMails().values().stream()
                 .flatMap(d -> d.stream().map(PackMappers::mailToPack)).toList();
         List<MailPack> intermediateMails = office.getIntermediateMails().values().stream()
                 .flatMap(d -> d.stream().map(PackMappers::mailToPack)).toList();
-        return new PostOfficePack(office.getId(), addressToPack(office.getAddress()),
+        return new PostofficePack(office.getId(), addressToPack(office.getAddress()),
                 coordinatesToPack(office.getCoordinates()), terminalMails, intermediateMails,
                 office.getTerminalMailsCount(), office.getIntermediateMailsCount(), office.getTransportsQueued(),
                 office.getTransportsProcessed());
     }
 
-    public static PostOfficePack PostOfficeToPackEssential(PostOffice office) {
-        return new PostOfficePack(office.getId(), null, coordinatesToPack(office.getCoordinates()), null, null,
+    public static PostofficePack PostOfficeToPackEssential(Postoffice office) {
+        return new PostofficePack(office.getId(), null, coordinatesToPack(office.getCoordinates()), null, null,
                 office.getTerminalMailsCount(), office.getIntermediateMailsCount(), office.getTransportsQueued(),
                 office.getTransportsProcessed());
     }
 
-    public static PostOffice postOfficeFromPack(PostOfficePack office) {
-        return new PostOffice(addressFromPack(office.getAddress()), coordinatesFromPack(office.getCoordinates()));
+    public static Postoffice postOfficeFromPack(PostofficePack office) {
+        return new Postoffice(addressFromPack(office.getAddress()), coordinatesFromPack(office.getCoordinates()));
     }
 
     public static AddressPack addressToPack(Address address) {
@@ -267,8 +267,8 @@ public class PackMappers {
         }
     }
 
-    public static Route<PostOffice> routePackToRoute(RoutePack routePack, World world) {
-        List<PostOffice> postOffices = routePack.getPostOfficeIds().stream().map(aLong -> world.offices.get(aLong)).toList();
+    public static Route<Postoffice> routePackToRoute(RoutePack routePack, World world) {
+        List<Postoffice> postOffices = routePack.getPostOfficeIds().stream().map(aLong -> world.postoffices.get(aLong)).toList();
         return new Route<>(postOffices, routePack.getIsCyclic());
     }
 

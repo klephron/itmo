@@ -29,7 +29,7 @@ import reactor.core.publisher.Sinks.EmitFailureHandler;
 @RequiredArgsConstructor
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class PostOffice {
+public class Postoffice {
     @EqualsAndHashCode.Include
     @Setter
     private Long id;
@@ -76,7 +76,7 @@ public class PostOffice {
     // returns signal of process completion
     public Mono<Void> transportDeliver(Transport transport) {
         if (!isTransportOpen()) {
-            return Mono.error(new PostOfficeException("post office is closed for transport processing"));
+            return Mono.error(new PostofficeException("post office is closed for transport processing"));
         }
         Sinks.One<Void> sink = Sinks.one();
         transportSink.emitNext(new ImmutablePair<Transport, Sinks.One<Void>>(transport, sink),

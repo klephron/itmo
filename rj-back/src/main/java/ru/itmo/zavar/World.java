@@ -22,13 +22,13 @@ public class World {
         logger.setLevel(Level.ALL);
     }
 
-    public PostOffices offices = new PostOffices();
+    public Postoffices postoffices = new Postoffices();
     public Transports transports = new Transports();
     public Actors actors = new Actors();
     public AtomicLong mailIds = new AtomicLong();
 
     public void stop() {
-        for (var office : offices.entries.values()) {
+        for (var office : postoffices.entries.values()) {
             office.close();
             logger.fine("closed " + office.getAddress());
         }
@@ -69,49 +69,49 @@ public class World {
             return Collections.unmodifiableCollection(entries.values());
         }
 
-        public Task receiveMail(long actorId, long postOfficeId, Consumer<Mail> onOne, Consumer<Throwable> onError) {
+        public Task receiveMail(long actorId, long postofficeId, Consumer<Mail> onOne, Consumer<Throwable> onError) {
             Actor actor = actors.getActor(actorId);
-            PostOffice office = offices.get(postOfficeId);
+            Postoffice office = postoffices.get(postofficeId);
             Actor.Schedule schedule = actor.getSchedule();
             Mono<Mail> mono = office.receiveMailOne(actor);
             var pair = schedule.addTaskMailReceiveOne(mono, onOne, onError);
             return pair.left;
         }
 
-        public Task receiveMail(long actorId, long postOfficeId, Consumer<Mail> onOne) {
-            return receiveMail(actorId, postOfficeId, onOne, (e) -> {
+        public Task receiveMail(long actorId, long postofficeId, Consumer<Mail> onOne) {
+            return receiveMail(actorId, postofficeId, onOne, (e) -> {
                 logger.warning(e.toString());
             });
         }
 
-        public Task receiveMailMany(long actorId, long postOfficeId, Consumer<Mail> onOne,
+        public Task receiveMailMany(long actorId, long postofficeId, Consumer<Mail> onOne,
                 Consumer<Throwable> onError) {
             Actor actor = actors.getActor(actorId);
-            PostOffice office = offices.get(postOfficeId);
+            Postoffice office = postoffices.get(postofficeId);
             Actor.Schedule schedule = actor.getSchedule();
             Flux<Mail> flux = office.receiveMailFlux(actor);
             var pair = schedule.addTaskMailReceiveFlux(flux, onOne, onError);
             return pair.left;
         }
 
-        public Task receiveMailMany(long actorId, long postOfficeId, Consumer<Mail> onOne) {
-            return receiveMailMany(actorId, postOfficeId, onOne, (e) -> {
+        public Task receiveMailMany(long actorId, long postofficeId, Consumer<Mail> onOne) {
+            return receiveMailMany(actorId, postofficeId, onOne, (e) -> {
                 logger.warning(e.toString());
             });
         }
 
-        public Task sendMail(long actorId, long postOfficeId, Mail mail) {
+        public Task sendMail(long actorId, long postofficeId, Mail mail) {
             Actor actor = actors.getActor(actorId);
-            PostOffice postOffice = offices.get(postOfficeId);
+            Postoffice postOffice = postoffices.get(postofficeId);
             Actor.Schedule schedule = actor.getSchedule();
             var pair = schedule.addTaskMailSendOne(mail);
             postOffice.applyMailMono(pair.right);
             return pair.left;
         }
 
-        public Task sendMailFlux(long actorId, long postOfficeId, Flux<Mail> _flux) {
+        public Task sendMailFlux(long actorId, long postofficeId, Flux<Mail> _flux) {
             Actor actor = actors.getActor(actorId);
-            PostOffice postOffice = offices.get(postOfficeId);
+            Postoffice postOffice = postoffices.get(postofficeId);
             Actor.Schedule schedule = actor.getSchedule();
             var pair = schedule.addTaskMailSendFlux(_flux);
             postOffice.applyMailFlux(pair.right);
@@ -125,11 +125,11 @@ public class World {
         }
     }
 
-    public class PostOffices {
-        private Map<Long, PostOffice> entries = new HashMap<>();
+    public class Postoffices {
+        private Map<Long, Postoffice> entries = new HashMap<>();
         private long idCounter = 0;
 
-        public void add(PostOffice office) {
+        public void add(Postoffice office) {
             if (office.getId() != null && entries.containsKey(office.getId())) {
                 logger.info("office already exists");
                 return;
@@ -140,7 +140,7 @@ public class World {
             logger.fine("opened office " + office.getAddress());
         }
 
-        public PostOffice get(long postOfficeId) {
+        public Postoffice get(long postOfficeId) {
             if (!entries.containsKey(postOfficeId)) {
                 logger.info("post office isn't present");
                 throw new NoSuchElementException("post office " + postOfficeId + " is not present");
@@ -148,7 +148,7 @@ public class World {
             return entries.get(postOfficeId);
         }
 
-        public Collection<PostOffice> getAll() {
+        public Collection<Postoffice> getAll() {
             return Collections.unmodifiableCollection(entries.values());
         }
     }
@@ -179,7 +179,7 @@ public class World {
             return Collections.unmodifiableCollection(entries.values());
         }
 
-        public void setRoute(long transportId, Route<PostOffice> route) {
+        public void setRoute(long transportId, Route<Postoffice> route) {
             Transport transport = this.get(transportId);
             transport.setRoute(route);
         }

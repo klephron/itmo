@@ -11,7 +11,7 @@ import ru.itmo.zavar.websocket.pack.OrganizationActorPack;
 
 @Getter
 public class AddActorIndividualMessage extends Message {
-    public static final String OP = "add-ind-actor";
+    public static final String OP = "actors.add_ind";
 
     @SerializedName("args")
     private final Args args;

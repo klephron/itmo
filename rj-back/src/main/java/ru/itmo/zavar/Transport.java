@@ -36,7 +36,7 @@ public class Transport {
     private final Set<PostalAddress> deliveryAddresses; // which it delivers
 
     // Navigation
-    private Route<PostOffice> route;
+    private Route<Postoffice> route;
     private int routeLatestIndex;
     private int routeNextIndex;
     private Coordinates latestCoordinates;
@@ -46,9 +46,9 @@ public class Transport {
     private Sinks.Many<Integer> sink;
     private Disposable sinkFluxDisposable;
 
-    private PostOffice atPostOffice;
+    private Postoffice atPostOffice;
 
-    public Transport(int capacity, double speed, double ops, String licensePlate, Coordinates latestCoordinates, Route<PostOffice> route) {
+    public Transport(int capacity, double speed, double ops, String licensePlate, Coordinates latestCoordinates, Route<Postoffice> route) {
         this.capacity = capacity;
         this.speed = speed;
         this.ops = ops;
@@ -81,7 +81,7 @@ public class Transport {
     // 2. recalculate latest coordinates
     // 3. start from beginning
 
-    public void setRoute(Route<PostOffice> route) {
+    public void setRoute(Route<Postoffice> route) {
         this.route = route;
         this.routeNextIndex = 0;
         this.routeLatestIndex = 0;
@@ -108,7 +108,7 @@ public class Transport {
 
         this.sinkFluxDisposable = sink.asFlux()
                 .flatMap(counter -> {
-                    PostOffice postOffice = route.getStops().get(this.routeNextIndex);
+                    Postoffice postOffice = route.getStops().get(this.routeNextIndex);
                     double distance = Coordinates.getDistance(this.latestCoordinates, postOffice.getCoordinates());
                     double delaySeconds = distance / this.speed;
                     Duration delay = Duration.ofMillis((long) (delaySeconds * 1000));
@@ -190,7 +190,7 @@ public class Transport {
         this.latestCoordinates = this.nextCoordinates;
 
         // process Post Office
-        PostOffice postOffice = route.getStops().get(this.routeNextIndex);
+        Postoffice postOffice = route.getStops().get(this.routeNextIndex);
         this.atPostOffice = postOffice;
         Mono<Void> signal = postOffice.transportDeliver(this);
 

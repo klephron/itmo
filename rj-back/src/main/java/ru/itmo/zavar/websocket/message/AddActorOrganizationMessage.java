@@ -9,7 +9,7 @@ import ru.itmo.zavar.websocket.pack.OrganizationActorPack;
 
 @Getter
 public class AddActorOrganizationMessage extends Message {
-    public static final String OP = "add-org-actor";
+    public static final String OP = "actors.add_org";
 
     @SerializedName("args")
     private final Args args;

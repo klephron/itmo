@@ -10,7 +10,7 @@ import java.util.List;
 
 @Getter
 public class AddPostofficeMessage extends Message {
-    public static final String OP = "add-postoffice";
+    public static final String OP = "postoffices.add";
 
     @SerializedName("args")
     private final Args args;

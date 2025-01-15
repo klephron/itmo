@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public class PostOfficePack {
+public class PostofficePack {
     @SerializedName("id")
     private final Long id;
     @SerializedName("address")

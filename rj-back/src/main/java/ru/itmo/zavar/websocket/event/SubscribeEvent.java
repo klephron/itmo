@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.itmo.zavar.websocket.pack.ActorPack;
-import ru.itmo.zavar.websocket.pack.PostOfficePack;
+import ru.itmo.zavar.websocket.pack.PostofficePack;
 import ru.itmo.zavar.websocket.pack.TransportPack;
 
 public class SubscribeEvent extends Event {
@@ -27,7 +27,7 @@ public class SubscribeEvent extends Event {
         @SerializedName("session_id")
         private final String sessionId;
         @SerializedName("post_offices")
-        private final List<PostOfficePack> postoffices;
+        private final List<PostofficePack> postoffices;
         @SerializedName("transports")
         private final List<TransportPack> transports;
         @SerializedName("actors")

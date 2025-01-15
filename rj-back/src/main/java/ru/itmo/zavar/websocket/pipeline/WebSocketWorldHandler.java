@@ -41,11 +41,11 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
             case AddPostofficeMessage.OP -> {
                 AddPostofficeMessage addPostofficeMsg = (AddPostofficeMessage) msg;
                 AddPostofficeMessage.Args args = addPostofficeMsg.getArgs();
-                PostOffice postOffice = new PostOffice(
+                Postoffice postOffice = new Postoffice(
                     PackMappers.addressFromPack(args.getAddress()),
                     PackMappers.coordinatesFromPack(args.getCoordinates())
                 );
-                world.offices.add(postOffice);
+                world.postoffices.add(postOffice);
                 ctx.writeAndFlush(new SuccessIdResponse(postOffice.getId()));
 
             }
@@ -190,7 +190,7 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
     private boolean subscribeOnUpdateNext(Session.Subscription subscription, Channel channel) {
         Session.WorldSubscription worldSub = (Session.WorldSubscription) subscription;
 
-        List<PostOfficePack> postOfficePacks = world.offices.getAll().stream()
+        List<PostofficePack> postOfficePacks = world.postoffices.getAll().stream()
                 .map(p -> worldSub.getPostOfficeIds().contains(p.getId()) ? PackMappers.postOfficeToPack(p)
                         : PackMappers.PostOfficeToPackEssential(p))
                 .toList();

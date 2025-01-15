@@ -17,7 +17,7 @@ public class WorldTest {
     public void sendReceiveOne() throws InterruptedException {
         World world = new World();
 
-        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
+        Postoffice postOffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
                 new Coordinates(0, 10));
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
@@ -27,7 +27,7 @@ public class WorldTest {
         Mail mail3 = new Mail(2, "subject1", actor1, actor1, new Mail.Data("text"), 10);
         Mail mail4 = new Mail(3, "subject1", actor1, actor1, new Mail.Data("text"), 10);
 
-        world.offices.add(postOffice1);
+        world.postoffices.add(postOffice1);
         world.actors.addActor(actor1);
 
         world.actors.sendMail(actor1.getId(), postOffice1.getId(), mail1);
@@ -58,12 +58,12 @@ public class WorldTest {
     public void sendReceiveFlux() throws InterruptedException {
         World world = new World();
 
-        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
+        Postoffice postOffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
                 new Coordinates(0, 10));
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
                 "A1", "B1", "C1");
 
-        world.offices.add(postOffice1);
+        world.postoffices.add(postOffice1);
         world.actors.addActor(actor1);
 
         Actor.Schedule.Task task1 = world.actors.sendMailFlux(actor1.getId(), postOffice1.getId(),
@@ -99,20 +99,20 @@ public class WorldTest {
     public void transportRoute() throws InterruptedException {
         World world = new World();
 
-        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
+        Postoffice postOffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
                 new Coordinates(0, 5));
-        PostOffice postOffice2 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
+        Postoffice postOffice2 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
                 new Coordinates(5, 0));
-        PostOffice postOffice3 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
+        Postoffice postOffice3 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
                 new Coordinates(0, 10));
 
-        Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2), true);
-        Route<PostOffice> route2 = new Route<PostOffice>(List.of(postOffice1, postOffice3), true);
+        Route<Postoffice> route1 = new Route<Postoffice>(List.of(postOffice1, postOffice2), true);
+        Route<Postoffice> route2 = new Route<Postoffice>(List.of(postOffice1, postOffice3), true);
 
         Transport transport1 = new Transport(10, 5D, 10, "T1");
 
-        world.offices.add(postOffice1);
-        world.offices.add(postOffice2);
+        world.postoffices.add(postOffice1);
+        world.postoffices.add(postOffice2);
 
         world.transports.add(transport1);
         world.transports.setRoute(transport1.getId(), route1);
@@ -139,14 +139,14 @@ public class WorldTest {
     public void postOfficeTransfer() throws InterruptedException {
         World world = new World();
 
-        PostOffice postOffice1 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "1"), "S1", "12"),
+        Postoffice postOffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "1"), "S1", "12"),
                 new Coordinates(0, 5));
-        PostOffice postOffice2 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "2"), "S1", "12"),
+        Postoffice postOffice2 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "2"), "S1", "12"),
                 new Coordinates(5, 0));
-        PostOffice postOffice3 = new PostOffice(new Address(new PostalAddress("Russia", "SPb", "3"), "S1", "12"),
+        Postoffice postOffice3 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "3"), "S1", "12"),
                 new Coordinates(5, 0));
 
-        Route<PostOffice> route1 = new Route<PostOffice>(List.of(postOffice1, postOffice2, postOffice3), true);
+        Route<Postoffice> route1 = new Route<Postoffice>(List.of(postOffice1, postOffice2, postOffice3), true);
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "1"), "S3", "14"),
                 "A1", "B1", "C1");
@@ -155,9 +155,9 @@ public class WorldTest {
 
         Transport transport1 = new Transport(10, 5D, 10, "T1");
 
-        world.offices.add(postOffice1);
-        world.offices.add(postOffice2);
-        world.offices.add(postOffice3);
+        world.postoffices.add(postOffice1);
+        world.postoffices.add(postOffice2);
+        world.postoffices.add(postOffice3);
         world.transports.add(transport1);
         world.transports.setRoute(transport1.getId(), route1);
         world.transports.start(transport1.getId());

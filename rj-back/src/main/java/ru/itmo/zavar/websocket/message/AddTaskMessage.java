@@ -9,7 +9,7 @@ import ru.itmo.zavar.websocket.pack.TaskPack;
 
 @Getter
 public class AddTaskMessage extends Message {
-    public static final String OP = "add-task";
+    public static final String OP = "actor.add_task";
 
     @SerializedName("args")
     private final Args args;
