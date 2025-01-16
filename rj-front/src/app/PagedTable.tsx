@@ -1,4 +1,4 @@
-import { createSignal, createMemo } from 'solid-js';
+import { createSignal, createMemo, For } from 'solid-js';
 
 import styles from './PagedTable.module.scss';
 
@@ -28,11 +28,7 @@ export default function PagedTable<T>(props: Props<T>) {
     <div class={styles.paged_table}>
       <table class={styles.paged_table_header}>
         <thead>
-          <tr>
-            {headers.map((key) => (
-              <th>{key}</th>
-            ))}
-          </tr>
+          <For each={headers}>{(key) => <th>{key}</th>}</For>
         </thead>
         <tbody class={styles.paged_table_body}>
           {currentData().map((element, _) => (

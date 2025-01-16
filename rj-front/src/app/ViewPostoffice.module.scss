@@ -1,6 +1,8 @@
-@import 'View.module.scss';
+@use 'View.module.scss' as view;
 
 .postoffices {
+  @include view.info_mixin;
+
   &_table {
     grid-template-columns: auto auto auto auto auto;
 
@@ -8,10 +10,8 @@
 
       .coordinates,
       .address {
-        @include view_group_pairs_mixin;
+        @include view.group_pairs_mixin;
       }
     }
   }
-
-  @include view_info_mixin;
 }

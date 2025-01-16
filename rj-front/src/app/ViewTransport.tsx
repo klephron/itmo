@@ -7,7 +7,7 @@ import {
   TransportStartMessage,
   TransportStopMessage,
 } from '@websocket/message';
-import { RoutePack, TransportPack } from '@websocket/pack';
+import { TransportPack } from '@websocket/pack';
 import { createEffect, createSignal, For } from 'solid-js';
 import styles from './ViewTransport.module.scss';
 import { world } from '@state/world';

@@ -7,7 +7,7 @@ import View from './View';
 import { clientGet } from '@state/client';
 import { subscriptionGet } from '@state/subscription';
 import { logsAppend } from '@state/log';
-import { world, worldSet } from '@state/world';
+import { worldSet } from '@state/world';
 import { reconcile } from 'solid-js/store';
 
 const DEFAULT_SERVER_URL: string = 'ws://localhost:8088/ws';

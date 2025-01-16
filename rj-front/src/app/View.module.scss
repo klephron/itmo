@@ -1,4 +1,4 @@
-@mixin view_operation_mixin {
+@mixin operation_mixin {
   display: flex;
   flex-direction: column;
   border: 1px solid black;
@@ -9,7 +9,7 @@
   }
 }
 
-@mixin view_operations_mixin {
+@mixin operations_mixin {
   border: 1px solid black;
   display: flex;
   flex-direction: column;
@@ -22,17 +22,17 @@
   }
 }
 
-@mixin view_info_mixin {
+@mixin info_mixin {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 5px;
 
   &_operations {
-    @include view_operations_mixin;
+    @include operations_mixin;
 
     .add {
-      @include view_operation_mixin;
+      @include operation_mixin;
     }
   }
 
@@ -103,7 +103,7 @@
   }
 }
 
-@mixin view_group_pairs_mixin {
+@mixin group_pairs_mixin {
   div {
     display: contents;
   }

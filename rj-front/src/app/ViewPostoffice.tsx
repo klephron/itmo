@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, onMount } from 'solid-js';
+import { createEffect, createSignal, For } from 'solid-js';
 import styles from './ViewPostoffice.module.scss';
 import { clientGet } from '@state/client';
 import { PostofficesAddMessage } from '@websocket/message';

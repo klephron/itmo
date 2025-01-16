@@ -1,6 +1,8 @@
-@import 'View.module.scss';
+@use 'View.module.scss' as view;
 
 .actors {
+  @include view.info_mixin;
+
   &_operations {
     select {
       width: 100%;
@@ -43,10 +45,8 @@
       .address,
       .parameters,
       .tasks {
-        @include view_group_pairs_mixin;
+        @include view.group_pairs_mixin;
       }
     }
   }
-
-  @include view_info_mixin;
 }

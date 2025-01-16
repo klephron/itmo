@@ -9,7 +9,6 @@ import {
   OrganizationActorPack,
   SendMailOneTaskPack,
   SendMailRepeatedTaskPack,
-  TaskPack,
   TaskPackKind,
 } from '@websocket/pack';
 import { createEffect, createSignal, For, Match, Show, Switch } from 'solid-js';
