@@ -138,7 +138,7 @@ export default function ViewTransport() {
         <div class={styles.set_route_body}>
           <div>
             <span>Postoffices (ID list)</span>
-            <input value={getRoute()} onChange={(e) => setRoute(e.target.value)}></input>
+            <input value={getRoute()} onChange={(e) => setRoute(e.target.value)} placeholder="ex. 1,2,3"></input>
           </div>
           <div>
             <span>Is Cyclic</span>
@@ -188,7 +188,7 @@ export default function ViewTransport() {
         <div class={styles.start_body}>
           <div>
             <span>Start Index</span>
-            <input value={getIndex()} onChange={(e) => setIndex(e.target.value)}></input>
+            <input value={getIndex()} onChange={(e) => setIndex(e.target.value)} placeholder="0"></input>
           </div>
         </div>
         <div class={styles.start_buttons}>
@@ -271,7 +271,7 @@ export default function ViewTransport() {
                 <input
                   value={
                     item.route == null || item.route.postoffice_ids == null
-                      ? 'not set'
+                      ? '-'
                       : item.route.postoffice_ids.join(',')
                   }
                 ></input>
@@ -279,7 +279,7 @@ export default function ViewTransport() {
               <div>
                 <span>Is Cyclic</span>
                 <input
-                  value={item.route == null ? 'not set' : item.route.is_cyclic ? 'true' : 'false'}
+                  value={item.route == null ? '-' : item.route.is_cyclic ? 'true' : 'false'}
                 ></input>
               </div>
             </div>

@@ -162,11 +162,12 @@ public class PackMappers {
     }
 
     public static TransportPack transportToPack(Transport transport) {
-        List<Long> route;
+        RoutePack route;
         if (transport.getRoute() == null) {
             route = null;
         } else {
-            route = transport.getRoute().getStops().stream().map(p -> p.getId()).toList();
+            route = new RoutePack(transport.getRoute().getStops().stream().map(p -> p.getId()).toList(),
+                    transport.getRoute().isCyclic());
         }
 
         List<PostalAddressPack> loadingAddresses;
@@ -181,11 +182,9 @@ public class PackMappers {
         }
         deliveryAddresses = transport.getDeliveryAddresses().stream().map(PackMappers::postalAddressToPack).toList();
 
-        RoutePack routePack = new RoutePack(route, transport.getRoute() != null && transport.getRoute().isCyclic());
-
         return new TransportPack(transport.getId(), transport.getCapacity(), transport.getSpeed(), transport.getOps(),
                 transport.getLicensePlate(), transport.getMails().stream().map(PackMappers::mailToPack).toList(),
-                transport.getMails().size(), routePack,
+                transport.getMails().size(), route,
                 loadingAddresses, deliveryAddresses, coordinatesToPack(transport.getEstimatedCoordinates()),
                 transport.getAtPostOffice() == null ? null : transport.getAtPostOffice().getId());
     }
@@ -238,29 +237,32 @@ public class PackMappers {
         if (actor instanceof IndividualActor individualActor) {
             List<MailPack> mailPacks = actor.getAllMailsInBuffer().stream().map(PackMappers::mailToPack).toList();
             return new IndividualActorPack(individualActor.getId(), addressToPack(individualActor.getAddress()), tasks,
-                mailPacks, individualActor.getBufferCapacity(), individualActor.getBufferCurrentSize(),
-                individualActor.getMailsCount().get(), individualActor.getName(), individualActor.getSurname(),
-                individualActor.getPatronymic());
+                    mailPacks, individualActor.getBufferCapacity(), individualActor.getBufferCurrentSize(),
+                    individualActor.getMailsCount().get(), individualActor.getName(), individualActor.getSurname(),
+                    individualActor.getPatronymic());
         }
         if (actor instanceof OrganizationActor organizationActor) {
             List<MailPack> mailPacks = actor.getAllMailsInBuffer().stream().map(PackMappers::mailToPack).toList();
             return new OrganizationActorPack(organizationActor.getId(), addressToPack(organizationActor.getAddress()),
                     tasks, organizationActor.getBufferCapacity(), organizationActor.getBufferCurrentSize(),
-                organizationActor.getMailsCount().get(), mailPacks, organizationActor.getName());
+                    organizationActor.getMailsCount().get(), mailPacks, organizationActor.getName());
         }
         logger.warning("unhandled actor class " + actor);
-        return new ActorPack(null, actor.getId(), addressToPack(actor.getAddress()), tasks, 0, 0 , 0, List.of());
+        return new ActorPack(null, actor.getId(), addressToPack(actor.getAddress()), tasks, 0, 0, 0, List.of());
     }
 
     public static ActorPack actorToPackEssential(Actor actor) {
         if (actor instanceof IndividualActor individualActor) {
-            return new IndividualActorPack(individualActor.getId(), null, null, List.of(), actor.getBufferCapacity(), actor.getBufferCurrentSize(), actor.getMailsCount().get(),null, null, null);
+            return new IndividualActorPack(individualActor.getId(), null, null, List.of(), actor.getBufferCapacity(),
+                    actor.getBufferCurrentSize(), actor.getMailsCount().get(), null, null, null);
         }
         if (actor instanceof OrganizationActor organizationActor) {
-            return new OrganizationActorPack(organizationActor.getId(), null, null, actor.getBufferCapacity(), actor.getBufferCurrentSize(), actor.getMailsCount().get(), List.of(), null);
+            return new OrganizationActorPack(organizationActor.getId(), null, null, actor.getBufferCapacity(),
+                    actor.getBufferCurrentSize(), actor.getMailsCount().get(), List.of(), null);
         }
         logger.warning("unhandled actor class " + actor);
-        return new ActorPack(null, actor.getId(), null, null, actor.getBufferCapacity(), actor.getBufferCurrentSize(), actor.getMailsCount().get(), List.of());
+        return new ActorPack(null, actor.getId(), null, null, actor.getBufferCapacity(), actor.getBufferCurrentSize(),
+                actor.getMailsCount().get(), List.of());
     }
 
     public static Actor actorFromPack(ActorPack actor) {
@@ -268,11 +270,12 @@ public class PackMappers {
             case INDIVIDUAL -> {
                 var casted = (IndividualActorPack) actor;
                 yield new IndividualActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(),
-                    casted.getName(), casted.getSurname(), casted.getPatronymic());
+                        casted.getName(), casted.getSurname(), casted.getPatronymic());
             }
             case ORGANIZATION -> {
                 var casted = (OrganizationActorPack) actor;
-                yield new OrganizationActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(), casted.getName());
+                yield new OrganizationActor(addressFromPack(casted.getAddress()), casted.getBufferCapacity(),
+                        casted.getName());
             }
             default -> {
                 logger.warning("unhandled actor class " + actor + ", default to INDIVIDUAL");
