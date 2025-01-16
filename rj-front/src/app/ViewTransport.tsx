@@ -138,7 +138,11 @@ export default function ViewTransport() {
         <div class={styles.set_route_body}>
           <div>
             <span>Postoffices (ID list)</span>
-            <input value={getRoute()} onChange={(e) => setRoute(e.target.value)} placeholder="ex. 1,2,3"></input>
+            <input
+              value={getRoute()}
+              onChange={(e) => setRoute(e.target.value)}
+              placeholder="ex. 1,2,3"
+            ></input>
           </div>
           <div>
             <span>Is Cyclic</span>
@@ -188,7 +192,11 @@ export default function ViewTransport() {
         <div class={styles.start_body}>
           <div>
             <span>Start Index</span>
-            <input value={getIndex()} onChange={(e) => setIndex(e.target.value)} placeholder="0"></input>
+            <input
+              value={getIndex()}
+              onChange={(e) => setIndex(e.target.value)}
+              placeholder="0"
+            ></input>
           </div>
         </div>
         <div class={styles.start_buttons}>
@@ -246,10 +254,6 @@ export default function ViewTransport() {
             <h4>Parameters</h4>
             <div class={styles.parameters}>
               <div>
-                <span>License plate</span>
-                <input value={item.license_plate}></input>
-              </div>
-              <div>
                 <span>Capacity</span>
                 <input value={item.capacity}></input>
               </div>
@@ -260,6 +264,10 @@ export default function ViewTransport() {
               <div>
                 <span>Operations per second</span>
                 <input value={item.speed}></input>
+              </div>
+              <div>
+                <span>License plate</span>
+                <input value={item.license_plate}></input>
               </div>
             </div>
           </div>

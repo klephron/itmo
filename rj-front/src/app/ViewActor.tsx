@@ -175,7 +175,6 @@ export default function ViewActor() {
           break;
         }
       }
-      console.log(data);
       client.actorAddTask(data);
     }
 
@@ -207,7 +206,7 @@ export default function ViewActor() {
             </select>
           </div>
           <div>
-            <span>Task Receiver Id</span>
+            <span>Receiver Id</span>
             <select
               value={getMailReceiverId()}
               onChange={(e) => {
@@ -290,6 +289,15 @@ export default function ViewActor() {
             <h4>Operations</h4>
             <div class={styles.operations_entries}>
               <TableEntryAddTask item={item} />
+            </div>
+          </div>
+          <div>
+            <h4>Parameters</h4>
+            <div class={styles.parameters}>
+              <div>
+                <span>Buffer capacity</span>
+                <input value={item.mails_buffer_capacity}></input>
+              </div>
             </div>
           </div>
           <div>

@@ -101,6 +101,7 @@ public class Postoffice {
             return Mono.error(new MailException("no mail to receive"));
         }
         --terminalMailsCount;
+        mail.setReceivedAt(LocalDateTime.now());
         return Mono.just(mail);
     }
 
@@ -118,6 +119,7 @@ public class Postoffice {
             }
             // logger.fine("received " + mail.toString());
             --terminalMailsCount;
+            mail.setReceivedAt(LocalDateTime.now());
             sink.next(mail);
         });
     }
@@ -189,6 +191,7 @@ public class Postoffice {
                 break;
             }
             Mail mail = bucket.pollLast();
+            mail.setSentAt(LocalDateTime.now());
             transport.getMails().addLast(mail);
             operations += 1;
             --intermediateMailsCount;

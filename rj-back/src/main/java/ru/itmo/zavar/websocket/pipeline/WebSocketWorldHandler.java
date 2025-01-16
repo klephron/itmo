@@ -92,16 +92,16 @@ public class WebSocketWorldHandler extends SimpleChannelInboundHandler<Message> 
                     }
                     case AddTaskMessage.SendMailRepeatedMessage sendMailRepeatedMessage -> {
                         TaskPack.SendMailRepeated task = sendMailRepeatedMessage.getArgs().getTask();
-                        Mail mail = new Mail(
-                                world.mailIds.getAndIncrement(),
-                                task.getMail().getSubject(),
-                                world.actors.getActor(task.getMail().getSenderActorId()),
-                                world.actors.getActor(task.getMail().getReceiverActorId()),
-                                new Mail.Data(task.getMail().getText()),
-                                0);
-                        Actor.Schedule.Task sendMailFlux = world.actors.sendMailFlux(task.getActorId(),
+                        world.actors.sendMailFlux(task.getActorId(),
                                 task.getPostofficeId(),
                                 Flux.generate(AtomicLong::new, (state, sink) -> {
+                                    Mail mail = new Mail(
+                                            world.mailIds.getAndIncrement(),
+                                            task.getMail().getSubject(),
+                                            world.actors.getActor(task.getMail().getSenderActorId()),
+                                            world.actors.getActor(task.getMail().getReceiverActorId()),
+                                            new Mail.Data(task.getMail().getText()),
+                                            0);
                                     sink.next(mail);
                                     return state;
                                 }).delayElements(Duration.ofMillis(task.getIntervalMs())).cast(Mail.class));

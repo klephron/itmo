@@ -3,6 +3,8 @@ package ru.itmo.zavar.model;
 import lombok.*;
 import ru.itmo.zavar.model.actor.Actor;
 
+import static ru.itmo.zavar.model.World.logger;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,11 +27,11 @@ public class Mail {
 
     private final LocalDateTime createdAt = LocalDateTime.now();
     @Setter
-    private LocalDateTime appliedAt;
+    private LocalDateTime appliedAt; // applied by post office (from sender to postoffice)
     @Setter
-    private LocalDateTime sentAt;
+    private LocalDateTime sentAt; // loaded by transport
     @Setter
-    private LocalDateTime receivedAt;
+    private LocalDateTime receivedAt; // received by receiver
 
     public Status getStatus() {
         if (appliedAt == null) {

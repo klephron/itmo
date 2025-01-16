@@ -36,10 +36,6 @@ export default function App() {
     }
   });
 
-  createEffect(() => {
-    console.log(world.actors.length, world.postoffices.length, world.transports.length);
-  });
-
   return (
     <>
       <h1>Mail Simulation</h1>

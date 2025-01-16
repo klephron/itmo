@@ -11,6 +11,7 @@ import ru.itmo.zavar.model.address.PostalAddress;
 import ru.itmo.zavar.websocket.WebSocketServer;
 
 import java.time.Duration;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
@@ -37,12 +38,12 @@ public class Main {
         Postoffice postoffice1 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188032"), "S1", "12"),
                 new Coordinates(0, 10));
         Postoffice postoffice2 = new Postoffice(new Address(new PostalAddress("Russia", "SPb", "188034"), "S1", "12"),
-                new Coordinates(0, 10));
+                new Coordinates(10, 0));
 
         Actor actor1 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188032"), "S3", "14"),
-            10,"A1", "B1", "C1");
+                10, "A1", "B1", "C1");
         Actor actor2 = new IndividualActor(new Address(new PostalAddress("Russia", "SPb", "188034"), "S3", "14"),
-            10,"A2", "B2", "C2");
+                10, "A2", "B2", "C2");
         Actor actor3 = new OrganizationActor(new Address(new PostalAddress("Russia", "SPb", "188034"), "S3", "14"),
                 10, "O3");
 

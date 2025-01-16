@@ -20,10 +20,16 @@ import static ru.itmo.zavar.model.World.logger;
 
 public class PackMappers {
     public static PostofficePack postOfficeToPack(Postoffice office) {
+        for (var queue : office.getTerminalMails().values()) {
+            logger.fine("here in queue" + queue.size());
+            logger.fine(queue.stream().map(e -> e.getAppliedAt()).toList().toString());
+        }
         List<MailPack> terminalMails = office.getTerminalMails().values().stream()
                 .flatMap(d -> d.stream().map(PackMappers::mailToPack)).toList();
         List<MailPack> intermediateMails = office.getIntermediateMails().values().stream()
                 .flatMap(d -> d.stream().map(PackMappers::mailToPack)).toList();
+        // logger.fine(terminalMails.stream().map(e ->
+        // e.getAppliedAt()).toList().toString());
         return new PostofficePack(office.getId(), addressToPack(office.getAddress()),
                 coordinatesToPack(office.getCoordinates()), terminalMails, intermediateMails,
                 office.getTerminalMailsCount(), office.getIntermediateMailsCount(), office.getTransportsQueued(),
