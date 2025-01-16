@@ -265,6 +265,11 @@ export default function ViewTransport() {
                 <span>Operations per second</span>
                 <input value={item.speed}></input>
               </div>
+            </div>
+          </div>
+          <div>
+            <h4>Personal</h4>
+            <div class={styles.personal}>
               <div>
                 <span>License plate</span>
                 <input value={item.license_plate}></input>

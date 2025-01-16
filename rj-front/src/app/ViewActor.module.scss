@@ -39,44 +39,11 @@
         }
       }
 
-      .personal {
-        div {
-          display: contents;
-        }
-
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        column-gap: 10px;
-      }
-
-      .address {
-        div {
-          display: contents;
-        }
-
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        column-gap: 10px;
-      }
-
-      .parameters {
-        div {
-          display: contents;
-        }
-
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        column-gap: 10px;
-      }
-
+      .personal,
+      .address,
+      .parameters,
       .tasks {
-        div {
-          display: contents;
-        }
-
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        column-gap: 10px;
+        @include view_group_pairs_mixin;
       }
     }
   }
