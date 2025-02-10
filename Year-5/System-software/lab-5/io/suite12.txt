@@ -1,0 +1,5 @@
+method main():
+begin
+  (a.b + b.c.d)(1)[](a + 3, 4 + 5);
+  make!<int>().d;
+end;

@@ -5,7 +5,7 @@
       "label": "Build",
       "type": "process",
       "command": "make",
-      "args": ["build"],
+      "args": ["compiler"],
       "options": {
         "cwd": "${workspaceFolder}"
       },

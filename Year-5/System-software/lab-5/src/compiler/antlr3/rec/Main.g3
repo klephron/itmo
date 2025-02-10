@@ -33,6 +33,8 @@ tokens {
   PARENTS;
   MODIFIER;
   METHODS;
+  METHOD;
+  MEMBER;
 }
 
 @headers{
@@ -59,10 +61,11 @@ type_ref
 
 // VARIABLES & PARAMETERS
 // until ';' symbol
-variable_list
+variable_entry
   : (identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR type_ref? identifier*)
   ;
 
+// NOTE: not using fake tokens for lists because if list is empty then transition to this rule won't be made
 parameter_list
   : (parameter (',' parameter)*)?  -> parameter*
   ;
@@ -74,11 +77,11 @@ parameter
 
 // FUNCTIONS
 func_def
-  : ls='method' func_signature func_def_sel? ';' -> ^(FUNC[$ls, "FUNC"] func_signature func_def_sel?)
+  : ls='method' func_signature func_def_sel -> ^(FUNC[$ls, "FUNC"] func_signature func_def_sel?)
   ;
 
 func_def_sel
-  : func_body | func_import_spec
+  : (func_body | func_import_spec) (';'!)? | ';'!
   ;
 
 func_signature
@@ -86,7 +89,7 @@ func_signature
   ;
 
 func_body
-  : ('var' variable_list*)? statement_block -> ^(BODY ^(VARS variable_list*) ^(statement_block))
+  : ('var' variable_entry*)? statement_block -> ^(BODY ^(VARS variable_entry*) ^(statement_block))
   ;
 
 func_import_spec
@@ -96,8 +99,8 @@ func_import_spec
 
 // CLASSES
 class_def
-  : 'class' name=identifier class_typename_list? class_parent_list? ('var' variable_list*) class_method_list ';'
-      -> ^(CLASS $name ^(TYPENAMES class_typename_list?) ^(PARENTS class_parent_list?) ^(VARS variable_list*) ^(METHODS class_method_list))
+  : 'class' name=identifier class_typename_list? class_parent_list? ('var' variable_entry*) class_method_list ';'
+      -> ^(CLASS $name ^(TYPENAMES class_typename_list?) ^(PARENTS class_parent_list?) ^(VARS variable_entry*) ^(METHODS class_method_list))
   ;
 
 class_typename_list
@@ -109,11 +112,11 @@ class_parent_list
   ;
 
 class_method_list
-  : 'begin' class_method* 'end'
+  : 'begin'! class_method* 'end'!
   ;
 
 class_method
-  : (modifier='public' | modifier='private')? func_def -> ^(FUNC func_def ^(MODIFIER $modifier)?)
+  : (modifier='public' | modifier='private')? func_def -> ^(METHOD func_def ^(MODIFIER $modifier)?)
   ;
 
 
@@ -213,36 +216,45 @@ expr_3
 
 expr_2
   : ('--' | '++' | '!' | '~' | '+' | '-')^ expr_2
-  | expr_01
+  | expr_1
   ;
 
-expr_01
-  : expr_builtin | expr_literal | expr_place_caller_indexer | expr_braces_caller_indexer
+// first argument - member/args
+// second - expr_0
+expr_1
+  : (expr_0_brackets | expr_0_identifier | expr_0_builtin) ( expr_1_caller^ | expr_1_indexer^ | expr_1_member^ )*
+  | expr_0_literal
   ;
 
-caller_indexer
+expr_1_caller
   : '(' expr_15 ')' -> ^(CALLER ^(ARGS expr_15))
-  | '[' expr_15 ']' -> ^(INDEXER ^(ARGS expr_15))
   ;
 
-// (priority 0-1) braces or call/index
-expr_braces_caller_indexer
-  : '('! expr ')'! (caller_indexer^)*
+expr_1_indexer
+  : '[' expr_15 ']' -> ^(INDEXER ^(ARGS expr_15))
   ;
 
-// (priority 0-1) identifier or call/index
-expr_place_caller_indexer
-  : identifier (caller_indexer^)*
+expr_1_member
+  : '.' identifier -> ^(MEMBER identifier)
   ;
 
-expr_literal
-  : bool | str | rune | hex | bits | dec
+expr_0_brackets
+  : '('! expr ')'!
   ;
 
-expr_builtin
+expr_0_identifier
+  : identifier
+  ;
+
+expr_0_builtin
   : c=('cast!' | 'make!') '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c type_ref ^(ARGS expr_15))
   | c=('print!') '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c ^(ARGS expr_15))
   ;
+
+expr_0_literal
+  : bool | str | rune | hex | bits | dec
+  ;
+
 
 // TERMINALS
 identifier: IDENTIFIER;

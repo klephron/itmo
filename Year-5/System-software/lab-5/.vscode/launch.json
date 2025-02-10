@@ -1,29 +1,28 @@
 {
   "version": "0.2.0",
   "configurations": [
-
     {
       "name": "[project]: debug",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/main",
-      "args": ["io/input.txt"],
+      "program": "${workspaceFolder}/build/compiler/main",
+      "args": [],
       "cwd": "${workspaceFolder}",
       "environment": [],
       "preLaunchTask": "Build",
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
       "setupCommands": [
-          {
-              "description": "Enable pretty-printing for gdb",
-              "text": "-enable-pretty-printing",
-              "ignoreFailures": true
-          },
-          {
-              "description": "Set Disassembly Flavor to Intel",
-              "text": "-gdb-set disassembly-flavor intel",
-              "ignoreFailures": true
-          }
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set Disassembly Flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
       ]
     }
   ]

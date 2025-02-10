@@ -36,5 +36,5 @@ begin
   public method one(): int from "read" in "example";
   public method two(): int;
   method three(): int begin
-  end;
+  end
 end;
