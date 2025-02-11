@@ -75,7 +75,7 @@ char *dirname(const char *file_path) {
   return dir_path;
 }
 
-const char *read_file(const char *path) {
+char *read_file(const char *path) {
   char *buffer = 0;
   long  length;
   FILE *f = fopen(path, "rb");

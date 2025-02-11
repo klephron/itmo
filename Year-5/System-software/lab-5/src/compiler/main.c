@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "compiler/ast/ast.h"
 #include "compiler/codegen/x86_64/ctx.h"
 #include "compiler/codegen/x86_64/x86_64.h"
 #include "compiler/dot/ast.h"
@@ -10,10 +11,8 @@
 #include "compiler/exception/exception.h"
 #include "compiler/hir/ctx.h"
 #include "compiler/hir/str.h"
-#include "compiler/lexer/lexer.h"
 #include "compiler/mir/ctx.h"
 #include "compiler/mir/str.h"
-#include "compiler/parser/parser.h"
 #include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
@@ -245,6 +244,9 @@ static int has_subroutine(args *args, const char *subroutine) {
 
 static void print_exceptions(args *args, list_exception *exceptions) {
   UNUSED(args);
+  if (!exceptions) {
+    return;
+  }
   for (list_exception_it it = list_exception_begin(exceptions); !it.end(&it);
        it.next(&it)) {
     exception *exc = it.get(&it);
@@ -259,9 +261,11 @@ static void write_dot(args *args, const dot_string *dot, const char *path) {
     printf("%s\n", dot->chars);
   }
   ensure_dir_exist(path);
-  FILE *output_fd = fopen(path, "wb");
-  fwrite(dot->chars, dot->len, 1, output_fd);
-  fclose(output_fd);
+  if (path) {
+    FILE *output_fd = fopen(path, "wb");
+    fwrite(dot->chars, dot->len, 1, output_fd);
+    fclose(output_fd);
+  }
 }
 
 static void write_asm(args *args, const char *data, const char *path) {
@@ -276,27 +280,6 @@ static void write_asm(args *args, const char *data, const char *path) {
   }
 }
 
-static inline void container_delete_lexer(void *data) {
-  lexer *lexer = data;
-  lexer_free(lexer);
-}
-LIST_DECLARE_STATIC_INLINE(list_lexer, lexer, container_cmp_false,
-                           container_new_move, container_delete_lexer);
-
-static inline void container_delete_token_stream(void *data) {
-  lexer_token_stream *stream = data;
-  lexer_token_stream_free(stream);
-}
-LIST_DECLARE_STATIC_INLINE(list_stream, lexer_token_stream, container_cmp_false,
-                           container_new_move, container_delete_token_stream);
-
-static inline void container_delete_parser(void *data) {
-  parser *parser = data;
-  parser_free(parser);
-}
-LIST_DECLARE_STATIC_INLINE(list_parser, parser, container_cmp_false,
-                           container_new_move, container_delete_parser);
-
 static inline void container_delete_ast(void *data) {
   ast *ast = data;
   ast_free(ast);
@@ -304,44 +287,27 @@ static inline void container_delete_ast(void *data) {
 LIST_DECLARE_STATIC_INLINE(list_ast, ast, container_cmp_false,
                            container_new_move, container_delete_ast);
 
-LIST_DECLARE_STATIC_INLINE(list_source, char, container_cmp_false,
-                           container_new_move, container_delete_chars);
-
 static int execute(args *args) {
-  list_source *sources = list_source_new();
-  list_lexer  *lexers = list_lexer_new();
-  list_stream *streams = list_stream_new();
-  list_parser *parsers = list_parser_new();
-  list_ast    *asts = list_ast_new();
+  list_ast *asts = list_ast_new();
 
   // stage: tokenize and parse to AST
   for (list_chars_it it = list_chars_begin(args->input_files); !it.end(&it);
        it.next(&it)) {
     const char *path = it.get(&it);
-    const char *data = read_file(path);
+    char       *source = read_file(path);
 
-    lexer              *lexer = lexer_new(data, strlen(data), path);
-    lexer_token_stream *stream = lexer_token_stream_new(lexer);
-    parser             *parser = parser_new(stream);
-    ast                *ast = parser_parse(parser);
+    ast *ast = ast_build(path, source);
 
-    if (list_exception_count_by_level(lexer->exceptions,
+    if (list_exception_count_by_level(ast_lexer_exceptions(ast),
+                                      EXCEPTION_LEVEL_ERROR) ||
+        list_exception_count_by_level(ast_parser_exceptions(ast),
                                       EXCEPTION_LEVEL_ERROR)) {
       args->code = 1;
     }
-    print_exceptions(args, lexer->exceptions);
-
-    if (list_exception_count_by_level(parser->exceptions,
-                                      EXCEPTION_LEVEL_ERROR)) {
-      args->code = 1;
-    }
-    print_exceptions(args, parser->exceptions);
+    print_exceptions(args, ast_lexer_exceptions(ast));
+    print_exceptions(args, ast_parser_exceptions(ast));
 
     list_ast_push_back(asts, ast);
-    list_parser_push_back(parsers, parser);
-    list_stream_push_back(streams, stream);
-    list_lexer_push_back(lexers, lexer);
-    list_source_push_back(sources, (char *)data);
   }
 
   // stage: dot ast
@@ -522,10 +488,6 @@ static int execute(args *args) {
   hir_free(hir);
 
   list_ast_free(asts);
-  list_parser_free(parsers);
-  list_stream_free(streams);
-  list_lexer_free(lexers);
-  list_source_free(sources);
 
   return args->code && !args->ignore_errors;
 }

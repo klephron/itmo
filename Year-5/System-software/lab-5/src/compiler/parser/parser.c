@@ -46,13 +46,13 @@ static void parser_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   list_exception_push_back(userp->exceptions, exc);
 }
 
-parser *parser_new(const lexer_token_stream *tokens) {
+parser *parser_new(const lexer_token_stream *token_stream) {
   parser *self = MALLOC(parser);
-  self->tokens = tokens;
-  self->parser = MainParserNew(tokens->tokens);
+  self->token_stream = token_stream;
+  self->parser = MainParserNew(token_stream->tokens);
   self->exceptions = list_exception_new();
   self->userp = (parser_userp){.exceptions = self->exceptions,
-                               .stream_name = tokens->name};
+                               .stream_name = token_stream->name};
 
   self->parser->pParser->rec->state->userp = &self->userp;
   self->parser->pParser->rec->displayRecognitionError = parser_display_error;
@@ -69,7 +69,7 @@ void parser_free(parser *self) {
   }
 }
 
-ast *parser_parse(parser *self) {
+ANTLR3_BASE_TREE *parser_parse(parser *self) {
   MainParser_source_return result = self->parser->source(self->parser);
-  return ast_new(result.tree, self->userp.stream_name);
+  return result.tree;
 }

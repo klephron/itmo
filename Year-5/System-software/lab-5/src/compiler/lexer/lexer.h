@@ -26,4 +26,3 @@ void   lexer_free(lexer *);
 
 lexer_token_stream *lexer_token_stream_new(lexer *self);
 void                lexer_token_stream_free(lexer_token_stream *self);
-const char         *lexer_get_input_file(lexer *self);

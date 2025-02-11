@@ -6,4 +6,4 @@ int   dir_create(const char *path);
 int   dir_create_p(const char *dir);
 char *dirname(const char *file_path);
 
-const char *read_file(const char *path);
+char *read_file(const char *path);
