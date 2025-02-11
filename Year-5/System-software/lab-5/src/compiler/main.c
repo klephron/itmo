@@ -198,12 +198,12 @@ static char *get_ast_dot_path(const args *args, const ast *ast) {
   const char *fpath = ast->name + strlen(cwd) + 1;
   char       *prefix = join_paths(args->output_dir, fpath);
 
-  char *output = malloc(strlen(prefix) + strlen(suffix) + 1);
-  sprintf(output, "%s%s", prefix, suffix);
+  char *path = malloc(strlen(prefix) + strlen(suffix) + 1);
+  sprintf(path, "%s%s", prefix, suffix);
 
   free(prefix);
   free(cwd);
-  return output;
+  return path;
 }
 
 static char *get_c_dot_path(args *args, const char *source, const char *func,
@@ -214,13 +214,13 @@ static char *get_c_dot_path(args *args, const char *source, const char *func,
   const char *fpath = source + strlen(cwd) + 1;
   char       *prefix = join_paths(args->output_dir, fpath);
 
-  char *output =
+  char *path =
       malloc(strlen(prefix) + strlen(func) + strlen(ext) + strlen(suffix) + 3);
-  sprintf(output, "%s.%s.%s%s", prefix, func, ext, suffix);
+  sprintf(path, "%s.%s.%s%s", prefix, func, ext, suffix);
 
   free(prefix);
   free(cwd);
-  return output;
+  return path;
 }
 
 static char *get_cfg_dot_path(args *args, const char *source,
@@ -262,9 +262,9 @@ static void write_dot(args *args, const dot_string *dot, const char *path) {
   }
   ensure_dir_exist(path);
   if (path) {
-    FILE *output_fd = fopen(path, "wb");
-    fwrite(dot->chars, dot->len, 1, output_fd);
-    fclose(output_fd);
+    FILE *path_fd = fopen(path, "wb");
+    fwrite(dot->chars, dot->len, 1, path_fd);
+    fclose(path_fd);
   }
 }
 
@@ -274,16 +274,13 @@ static void write_asm(args *args, const char *data, const char *path) {
   }
   ensure_dir_exist(path);
   if (path) {
-    FILE *output_fd = fopen(path, "wb");
-    fwrite(data, strlen(data), 1, output_fd);
-    fclose(output_fd);
+    FILE *path_fd = fopen(path, "wb");
+    fwrite(data, strlen(data), 1, path_fd);
+    fclose(path_fd);
   }
 }
 
-static inline void container_delete_ast(void *data) {
-  ast *ast = data;
-  ast_free(ast);
-}
+static inline void container_delete_ast(void *data) { ast_free(data); }
 LIST_DECLARE_STATIC_INLINE(list_ast, ast, container_cmp_false,
                            container_new_move, container_delete_ast);
 
@@ -315,9 +312,9 @@ static int execute(args *args) {
     for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
       ast        *ast = it.get(&it);
       dot_string *dot = dot_ast(ast);
-      char       *output = get_ast_dot_path(args, ast);
-      write_dot(args, dot, output);
-      free(output);
+      char       *path = get_ast_dot_path(args, ast);
+      write_dot(args, dot, path);
+      free(path);
       dot_string_free(dot);
     }
   }
