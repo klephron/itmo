@@ -54,9 +54,9 @@ typedef enum hir_expr_builtin_enum {
 } hir_expr_builtin_enum;
 
 typedef struct hir_expr_base_struct {
-  hir_base      base;
-  hir_expr_enum kind;
-  type_base    *type;
+  hir_base       base;
+  hir_expr_enum  kind;
+  hir_type_base *type;
 } hir_expr_base;
 
 void hir_expr_free(hir_expr_base *generic);
@@ -73,7 +73,7 @@ typedef struct hir_expr_unary_struct {
   hir_expr_base      *first;
 } hir_expr_unary;
 
-hir_expr_unary *hir_expr_unary_new(span *span, type_base *type,
+hir_expr_unary *hir_expr_unary_new(span *span, hir_type_base *type,
                                    hir_expr_unary_enum op,
                                    hir_expr_base      *first);
 void            hir_expr_unary_free(hir_expr_unary *self);
@@ -85,7 +85,7 @@ typedef struct hir_expr_binary_struct {
   hir_expr_base       *second;
 } hir_expr_binary;
 
-hir_expr_binary *hir_expr_binary_new(span *span, type_base *type,
+hir_expr_binary *hir_expr_binary_new(span *span, hir_type_base *type,
                                      hir_expr_binary_enum op,
                                      hir_expr_base       *first,
                                      hir_expr_base       *second);
@@ -96,7 +96,7 @@ typedef struct hir_expr_lit_struct {
   hir_lit      *lit;
 } hir_expr_lit;
 
-hir_expr_lit *hir_expr_lit_new(span *span, type_base *type, hir_lit *lit);
+hir_expr_lit *hir_expr_lit_new(span *span, hir_type_base *type, hir_lit *lit);
 void          hir_expr_lit_free(hir_expr_lit *self);
 
 typedef struct hir_expr_id {
@@ -105,7 +105,7 @@ typedef struct hir_expr_id {
   hir_symbol   *binding_ref;
 } hir_expr_id;
 
-hir_expr_id *hir_expr_id_new(span *span, type_base *type, hir_id *id,
+hir_expr_id *hir_expr_id_new(span *span, hir_type_base *type, hir_id *id,
                              hir_symbol *binding_ref);
 void         hir_expr_id_free(hir_expr_id *self);
 
@@ -115,7 +115,7 @@ typedef struct hir_expr_call {
   list_hir_expr *args;
 } hir_expr_call;
 
-hir_expr_call *hir_expr_call_new(span *span, type_base *type,
+hir_expr_call *hir_expr_call_new(span *span, hir_type_base *type,
                                  hir_expr_base *callee, list_hir_expr *args);
 void           hir_expr_call_free(hir_expr_call *self);
 
@@ -125,7 +125,7 @@ typedef struct hir_expr_index {
   list_hir_expr *args;
 } hir_expr_index;
 
-hir_expr_index *hir_expr_index_new(span *span, type_base *type,
+hir_expr_index *hir_expr_index_new(span *span, hir_type_base *type,
                                    hir_expr_base *indexed, list_hir_expr *args);
 void            hir_expr_index_free(hir_expr_index *self);
 
@@ -135,7 +135,7 @@ typedef struct hir_expr_builtin {
   list_hir_expr        *args;
 } hir_expr_builtin;
 
-hir_expr_builtin *hir_expr_builtin_new(span *span, type_base *type,
+hir_expr_builtin *hir_expr_builtin_new(span *span, hir_type_base *type,
                                        hir_expr_builtin_enum kind,
                                        list_hir_expr        *args);
 void              hir_expr_builtin_free(hir_expr_builtin *self);

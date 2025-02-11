@@ -54,24 +54,24 @@ typedef union hir_lit_u_union {
 } hir_lit_u;
 
 typedef struct hir_lit_struct {
-  hir_base   base;
-  type_base *type;
-  hir_lit_u  value;
+  hir_base       base;
+  hir_type_base *type;
+  hir_lit_u      value;
 } hir_lit;
 
-hir_lit *hir_lit_new(span *span, type_base *type, hir_lit_u value);
+hir_lit *hir_lit_new(span *span, hir_type_base *type, hir_lit_u value);
 hir_lit *hir_lit_copy(const hir_lit *self);
 void     hir_lit_free(hir_lit *self);
 
 // PARAM
 typedef struct hir_param {
-  hir_base    base;
-  hir_id     *id;
-  type_base  *type;
-  hir_symbol *binding_ref;
+  hir_base       base;
+  hir_id        *id;
+  hir_type_base *type;
+  hir_symbol    *binding_ref;
 } hir_param;
 
-hir_param *hir_param_new(span *span, hir_id *id, type_base *type,
+hir_param *hir_param_new(span *span, hir_id *id, hir_type_base *type,
                          hir_symbol *binding_ref);
 void       hir_param_free(hir_param *self);
 
@@ -83,13 +83,13 @@ LIST_DECLARE_STATIC_INLINE(list_hir_param, hir_param, container_cmp_false,
 
 // VAR
 typedef struct hir_var {
-  hir_base    base;
-  hir_id     *id;
-  type_base  *type;
-  hir_symbol *binding_ref;
+  hir_base       base;
+  hir_id        *id;
+  hir_type_base *type;
+  hir_symbol    *binding_ref;
 } hir_var;
 
-hir_var *hir_var_new(span *span, hir_id *id, type_base *type,
+hir_var *hir_var_new(span *span, hir_id *id, hir_type_base *type,
                      hir_symbol *binding_ref);
 void     hir_var_free(hir_var *self);
 

@@ -1,5 +1,7 @@
 # system-software-lab-5
 
+>
+
 > TODO: update
 
 ## Dev-environment
@@ -42,6 +44,7 @@ Make Targets:
 ```sh
 make help
 ```
+
 ```
 Targets:
   clean/build                 Remove build files
@@ -168,3 +171,8 @@ Options:
 -i <file>  - init file (current: (null))
 -h         - show help
 ```
+
+## Additional INFO
+
+- `*_ref` means - i don't manage this struct (i don't free it)
+- `const *` means - i don't update struct

@@ -6,7 +6,7 @@
 #include <antlr3basetree.h>
 
 typedef struct ast_struct {
-  const char         *name;
+  const char         *name_ref;
   char               *source;
   lexer              *lexer;
   lexer_token_stream *token_stream;
@@ -14,7 +14,7 @@ typedef struct ast_struct {
   ANTLR3_BASE_TREE   *tree;
 } ast;
 
-ast *ast_build(const char *name, char *source);
+ast *ast_build(const char *name_ref, char *source);
 void ast_free(ast *self);
 
 list_exception *ast_lexer_exceptions(ast *self);

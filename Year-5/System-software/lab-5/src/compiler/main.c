@@ -9,8 +9,7 @@
 #include "compiler/dot/eir.h"
 #include "compiler/eir/ctx.h"
 #include "compiler/exception/exception.h"
-#include "compiler/hir/ctx.h"
-#include "compiler/hir/str.h"
+#include "compiler/hir/hir.h"
 #include "compiler/mir/ctx.h"
 #include "compiler/mir/str.h"
 #include "util/container_util.h"
@@ -195,7 +194,7 @@ static char *get_ast_dot_path(const args *args, const ast *ast) {
   char *cwd = getcwd(NULL, 0);
   char *suffix = ".ast.dot";
 
-  const char *fpath = ast->name + strlen(cwd) + 1;
+  const char *fpath = ast->name_ref + strlen(cwd) + 1;
   char       *prefix = join_paths(args->output_dir, fpath);
 
   char *path = malloc(strlen(prefix) + strlen(suffix) + 1);
@@ -320,168 +319,165 @@ static int execute(args *args) {
   }
 
   // stage: build hir + handle exceptions
-  hir     *hir = hir_new();
-  hir_ctx *hir_ctx = hir_ctx_new(hir);
+  hir *hir = NULL;
+  // if (!args->code || args->ignore_errors) {
+  //   for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
+  //     const ast *ast = list_ast_it_get(&it);
+  //     hir_ctx_build(hir_ctx, ast);
+  //   }
+  //   if (list_exception_count_by_level(hir_ctx->exceptions,
+  //                                     EXCEPTION_LEVEL_ERROR)) {
+  //     args->code = 1;
+  //   }
+  //   print_exceptions(args, hir_ctx->exceptions);
+  //   hir_ctx_reset_exceptions(hir_ctx);
+  // }
 
-  if (!args->code || args->ignore_errors) {
-    for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
-      const ast *ast = list_ast_it_get(&it);
-      hir_ctx_build(hir_ctx, ast);
-    }
-    if (list_exception_count_by_level(hir_ctx->exceptions,
-                                      EXCEPTION_LEVEL_ERROR)) {
-      args->code = 1;
-    }
-    print_exceptions(args, hir_ctx->exceptions);
-    hir_ctx_reset_exceptions(hir_ctx);
-  }
+  // // stage: hir bind symbols
+  // if (!args->code || args->ignore_errors) {
+  //   hir_ctx_bind(hir_ctx);
+  //   if (list_exception_count_by_level(hir_ctx->exceptions,
+  //                                     EXCEPTION_LEVEL_ERROR)) {
+  //     args->code = 1;
+  //   }
+  //   print_exceptions(args, hir_ctx->exceptions);
+  //   hir_ctx_reset_exceptions(hir_ctx);
+  // }
 
-  // stage: hir bind symbols
-  if (!args->code || args->ignore_errors) {
-    hir_ctx_bind(hir_ctx);
-    if (list_exception_count_by_level(hir_ctx->exceptions,
-                                      EXCEPTION_LEVEL_ERROR)) {
-      args->code = 1;
-    }
-    print_exceptions(args, hir_ctx->exceptions);
-    hir_ctx_reset_exceptions(hir_ctx);
-  }
+  // // stage: hir type
+  // if (!args->code || args->ignore_errors) {
+  //   hir_ctx_type(hir_ctx);
+  //   if (list_exception_count_by_level(hir_ctx->exceptions,
+  //                                     EXCEPTION_LEVEL_ERROR)) {
+  //     args->code = 1;
+  //   }
+  //   print_exceptions(args, hir_ctx->exceptions);
+  //   hir_ctx_reset_exceptions(hir_ctx);
+  // }
 
-  // stage: hir type
-  if (!args->code || args->ignore_errors) {
-    hir_ctx_type(hir_ctx);
-    if (list_exception_count_by_level(hir_ctx->exceptions,
-                                      EXCEPTION_LEVEL_ERROR)) {
-      args->code = 1;
-    }
-    print_exceptions(args, hir_ctx->exceptions);
-    hir_ctx_reset_exceptions(hir_ctx);
-  }
+  // // stage: print hir symbols
+  // if (args->hir_symbols && (!args->code || args->ignore_errors)) {
+  //   char *globals = hir_list_symbol_str(hir->globals);
+  //   printf("HIR GLOBAL SYMBOLS:\n%s", globals);
+  //   free(globals);
 
-  // stage: print hir symbols
-  if (args->hir_symbols && (!args->code || args->ignore_errors)) {
-    char *globals = hir_list_symbol_str(hir->globals);
-    printf("HIR GLOBAL SYMBOLS:\n%s", globals);
-    free(globals);
+  //   char *locals = hir_list_symbol_str(hir->locals);
+  //   printf("HIR LOCAL SYMBOLS:\n%s", locals);
+  //   free(locals);
+  // }
 
-    char *locals = hir_list_symbol_str(hir->locals);
-    printf("HIR LOCAL SYMBOLS:\n%s", locals);
-    free(locals);
-  }
+  // // stage: print hir tree
+  // if (args->hir_tree && (!args->code || args->ignore_errors)) {
+  //   char *tree = hir_tree_str(hir);
+  //   printf("HIR TREE:\n%s\n", tree);
+  //   free(tree);
+  // }
 
-  // stage: print hir tree
-  if (args->hir_tree && (!args->code || args->ignore_errors)) {
-    char *tree = hir_tree_str(hir);
-    printf("HIR TREE:\n%s\n", tree);
-    free(tree);
-  }
+  // eir     *eir = eir_new();
+  // eir_ctx *eir_ctx = eir_ctx_new(eir);
 
-  eir     *eir = eir_new();
-  eir_ctx *eir_ctx = eir_ctx_new(eir);
+  // // stage: build eir
+  // if (!args->code || args->ignore_errors) {
+  //   eir_ctx_build(eir_ctx, hir);
+  //   if (list_exception_count_by_level(eir_ctx->exceptions,
+  //                                     EXCEPTION_LEVEL_ERROR)) {
+  //     args->code = 1;
+  //   }
+  //   print_exceptions(args, eir_ctx->exceptions);
+  //   eir_ctx_reset_exceptions(eir_ctx);
+  // }
 
-  // stage: build eir
-  if (!args->code || args->ignore_errors) {
-    eir_ctx_build(eir_ctx, hir);
-    if (list_exception_count_by_level(eir_ctx->exceptions,
-                                      EXCEPTION_LEVEL_ERROR)) {
-      args->code = 1;
-    }
-    print_exceptions(args, eir_ctx->exceptions);
-    eir_ctx_reset_exceptions(eir_ctx);
-  }
+  // // stage: dot cfg
+  // if (args->cfg && (!args->code || args->ignore_errors)) {
+  //   for (list_eir_subroutine_it it =
+  //            list_eir_subroutine_begin(eir->subroutines);
+  //        !it.end(&it); it.next(&it)) {
+  //     const eir_subroutine *sub = it.get(&it);
+  //     const char           *sub_name = sub->binding_ref->name;
+  //     const char           *source = sub->binding_ref->decl_span->source_ref;
 
-  // stage: dot cfg
-  if (args->cfg && (!args->code || args->ignore_errors)) {
-    for (list_eir_subroutine_it it =
-             list_eir_subroutine_begin(eir->subroutines);
-         !it.end(&it); it.next(&it)) {
-      const eir_subroutine *sub = it.get(&it);
-      const char           *sub_name = sub->binding_ref->name;
-      const char           *source = sub->binding_ref->decl_span->source_ref;
+  //     dot_string *dot = dot_eir_cfg(eir, sub, args->cfg_add_expr);
+  //     char       *output = get_cfg_dot_path(args, source, sub_name);
+  //     write_dot(args, dot, output);
+  //     free(output);
+  //     dot_string_free(dot);
+  //   }
+  // }
 
-      dot_string *dot = dot_eir_cfg(eir, sub, args->cfg_add_expr);
-      char       *output = get_cfg_dot_path(args, source, sub_name);
-      write_dot(args, dot, output);
-      free(output);
-      dot_string_free(dot);
-    }
-  }
+  // // stage: dot cg
+  // if (args->cg && (!args->code || args->ignore_errors)) {
+  //   for (list_eir_subroutine_it it =
+  //            list_eir_subroutine_begin(eir->subroutines);
+  //        !it.end(&it); it.next(&it)) {
+  //     const eir_subroutine *sub = it.get(&it);
+  //     const char           *sub_name = sub->binding_ref->name;
+  //     const char           *source = sub->binding_ref->decl_span->source_ref;
 
-  // stage: dot cg
-  if (args->cg && (!args->code || args->ignore_errors)) {
-    for (list_eir_subroutine_it it =
-             list_eir_subroutine_begin(eir->subroutines);
-         !it.end(&it); it.next(&it)) {
-      const eir_subroutine *sub = it.get(&it);
-      const char           *sub_name = sub->binding_ref->name;
-      const char           *source = sub->binding_ref->decl_span->source_ref;
+  //     if (has_subroutine(args, sub_name)) {
+  //       dot_string *dot = dot_eir_cg(eir, sub);
+  //       char       *output = get_cg_dot_path(args, source, sub_name);
+  //       write_dot(args, dot, output);
+  //       free(output);
+  //       dot_string_free(dot);
+  //     }
+  //   }
+  // }
 
-      if (has_subroutine(args, sub_name)) {
-        dot_string *dot = dot_eir_cg(eir, sub);
-        char       *output = get_cg_dot_path(args, source, sub_name);
-        write_dot(args, dot, output);
-        free(output);
-        dot_string_free(dot);
-      }
-    }
-  }
+  // mir     *mir = mir_new();
+  // mir_ctx *mir_ctx = mir_ctx_new(mir);
 
-  mir     *mir = mir_new();
-  mir_ctx *mir_ctx = mir_ctx_new(mir);
+  // // stage: build mir
+  // if (!args->code || args->ignore_errors) {
+  //   mir_ctx_build(mir_ctx, eir);
+  //   // optimizations
+  //   mir_ctx_bb_merge(mir_ctx);
+  //   if (list_exception_count_by_level(mir_ctx->exceptions,
+  //                                     EXCEPTION_LEVEL_ERROR)) {
+  //     args->code = 1;
+  //   }
+  //   print_exceptions(args, mir_ctx->exceptions);
+  // }
 
-  // stage: build mir
-  if (!args->code || args->ignore_errors) {
-    mir_ctx_build(mir_ctx, eir);
-    // optimizations
-    mir_ctx_bb_merge(mir_ctx);
-    if (list_exception_count_by_level(mir_ctx->exceptions,
-                                      EXCEPTION_LEVEL_ERROR)) {
-      args->code = 1;
-    }
-    print_exceptions(args, mir_ctx->exceptions);
-  }
+  // // stage: print mir tree
+  // if (args->mir && (!args->code || args->ignore_errors)) {
+  //   char *tree = mir_tree_str(mir);
+  //   printf("MIR TREE:\n%s\n", tree);
+  //   free(tree);
+  // }
 
-  // stage: print mir tree
-  if (args->mir && (!args->code || args->ignore_errors)) {
-    char *tree = mir_tree_str(mir);
-    printf("MIR TREE:\n%s\n", tree);
-    free(tree);
-  }
+  // cg_x86_64     *cg = cg_x86_64_new();
+  // cg_x86_64_ctx *cg_ctx = cg_x86_64_ctx_new(cg);
 
-  cg_x86_64     *cg = cg_x86_64_new();
-  cg_x86_64_ctx *cg_ctx = cg_x86_64_ctx_new(cg);
+  // // stage: build x86_64 structs
+  // if (!args->code || args->ignore_errors) {
+  //   cg_x86_64_ctx_build(cg_ctx, mir);
+  //   if (list_exception_count_by_level(cg_ctx->exceptions,
+  //                                     EXCEPTION_LEVEL_ERROR)) {
+  //     args->code = 1;
+  //   }
+  //   print_exceptions(args, cg_ctx->exceptions);
+  // }
 
-  // stage: build x86_64 structs
-  if (!args->code || args->ignore_errors) {
-    cg_x86_64_ctx_build(cg_ctx, mir);
-    if (list_exception_count_by_level(cg_ctx->exceptions,
-                                      EXCEPTION_LEVEL_ERROR)) {
-      args->code = 1;
-    }
-    print_exceptions(args, cg_ctx->exceptions);
-  }
+  // // stage: emit x86_64 assembly code
+  // if (!args->code || args->ignore_errors) {
+  //   char *data = cg_x86_64_ctx_emit(cg_ctx);
+  //   if (data) {
+  //     char *path = get_asm_path(args, args->output_file);
+  //     write_asm(args, data, path);
+  //     free(path);
+  //     free(data);
+  //   }
+  // }
 
-  // stage: emit x86_64 assembly code
-  if (!args->code || args->ignore_errors) {
-    char *data = cg_x86_64_ctx_emit(cg_ctx);
-    if (data) {
-      char *path = get_asm_path(args, args->output_file);
-      write_asm(args, data, path);
-      free(path);
-      free(data);
-    }
-  }
+  // cg_x86_64_ctx_free(cg_ctx);
+  // cg_x86_64_free(cg);
 
-  cg_x86_64_ctx_free(cg_ctx);
-  cg_x86_64_free(cg);
+  // mir_ctx_free(mir_ctx);
+  // mir_free(mir);
 
-  mir_ctx_free(mir_ctx);
-  mir_free(mir);
+  // eir_ctx_free(eir_ctx);
+  // eir_free(eir);
 
-  eir_ctx_free(eir_ctx);
-  eir_free(eir);
-
-  hir_ctx_free(hir_ctx);
   hir_free(hir);
 
   list_ast_free(asts);

@@ -100,7 +100,7 @@ static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
 }
 
 void hir_ctx_build(hir_ctx *ctx, const ast *ast) {
-  ctx->ast_stream_ref = ast->name;
+  ctx->ast_stream_ref = ast->name_ref;
 
   pANTLR3_COMMON_TREE_NODE_STREAM nodes =
       antlr3CommonTreeNodeStreamNewTree(ast->tree, ANTLR3_SIZE_HINT);

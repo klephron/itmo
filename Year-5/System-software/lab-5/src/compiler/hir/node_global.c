@@ -5,9 +5,9 @@
 
 // SUBROUTINE
 hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
-                                   list_hir_param *params, type_base *ret_type,
-                                   list_hir_var *vars, void *body,
-                                   hir_symbol *binding_ref) {
+                                   list_hir_param *params,
+                                   hir_type_base *ret_type, list_hir_var *vars,
+                                   void *body, hir_symbol *binding_ref) {
   hir_subroutine *self = MALLOC(hir_subroutine);
   hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
   self->id = id;

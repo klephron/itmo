@@ -28,7 +28,7 @@ static void lexer_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   exh.offset = recognizer->state->exception->charPositionInLine;
 
   userp = recognizer->state->userp;
-  exh.stream = (char *)userp->name;
+  exh.stream = (char *)userp->name_ref;
 
   if (recognizer->state) {
     exh.subtype = EXCEPTION_LEXER_MATCHING;
@@ -47,13 +47,14 @@ static void lexer_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   list_exception_push_back(userp->exceptions, exc);
 }
 
-lexer *lexer_new(const char *data, size_t len, const char *name) {
+lexer *lexer_new(const char *data_ref, size_t len, const char *name_ref) {
   lexer *self = MALLOC(lexer);
-  self->stream = antlr3StringStreamNew((pANTLR3_UINT8)data, ANTLR3_ENC_UTF8,
-                                       len, (pANTLR3_UINT8)name);
+  self->stream = antlr3StringStreamNew((pANTLR3_UINT8)data_ref, ANTLR3_ENC_UTF8,
+                                       len, (pANTLR3_UINT8)name_ref);
   self->lexer = MainLexerNew(self->stream);
   self->exceptions = list_exception_new();
-  self->userp = (lexer_userp){.exceptions = self->exceptions, .name = name};
+  self->userp =
+      (lexer_userp){.exceptions = self->exceptions, .name_ref = name_ref};
 
   self->lexer->pLexer->rec->state->userp = &self->userp;
   self->lexer->pLexer->rec->displayRecognitionError = lexer_display_error;
@@ -77,7 +78,7 @@ lexer_token_stream *lexer_token_stream_new(lexer *self) {
   lexer_token_stream *stream = MALLOC(lexer_token_stream);
   stream->tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT,
                                                     TOKENSOURCE(self->lexer));
-  stream->name = (const char *)self->userp.name;
+  stream->name_ref = self->userp.name_ref;
   return stream;
 }
 

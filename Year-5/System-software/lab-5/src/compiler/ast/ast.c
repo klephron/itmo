@@ -3,11 +3,11 @@
 #include "compiler/parser/parser.h"
 #include "util/macro.h"
 
-static ast *ast_new(const char *name, char *source, lexer *lexer,
+static ast *ast_new(const char *name_ref, char *source, lexer *lexer,
                     lexer_token_stream *token_stream, parser *parser,
                     ANTLR3_BASE_TREE *tree) {
   ast *self = MALLOC(ast);
-  self->name = name;
+  self->name_ref = name_ref;
   self->source = source;
   self->lexer = lexer;
   self->token_stream = token_stream;

@@ -272,10 +272,10 @@ type_base *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   return type_base_new(span, TYPE_VOID);
 }
 
-type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id) {
+type_unresolved *hir_build_type_custom(hir_ctx *ctx, hir_id *id) {
   UNUSED(ctx);
-  hir_id_data  id_data = hir_id_pop(id);
-  type_custom *custom = type_custom_new(id_data.span, id_data.name);
+  hir_id_data      id_data = hir_id_pop(id);
+  type_unresolved *custom = type_unresolved_new(id_data.span, id_data.name);
   return custom;
 }
 

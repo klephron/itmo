@@ -3,7 +3,7 @@
 #include "util/macro.h"
 
 void hir_expr_base_init(hir_expr_base *self, span *span, hir_expr_enum kind,
-                        type_base *type) {
+                        hir_type_base *type) {
   hir_base_init(&self->base, span, HIR_NODE_EXPR);
   self->kind = kind;
   self->type = type;
@@ -38,7 +38,7 @@ void hir_expr_free(hir_expr_base *generic) {
   }
 }
 
-hir_expr_unary *hir_expr_unary_new(span *span, type_base *type,
+hir_expr_unary *hir_expr_unary_new(span *span, hir_type_base *type,
                                    hir_expr_unary_enum op,
                                    hir_expr_base      *first) {
   hir_expr_unary *self = MALLOC(hir_expr_unary);
@@ -56,7 +56,7 @@ void hir_expr_unary_free(hir_expr_unary *self) {
   }
 }
 
-hir_expr_binary *hir_expr_binary_new(span *span, type_base *type,
+hir_expr_binary *hir_expr_binary_new(span *span, hir_type_base *type,
                                      hir_expr_binary_enum op,
                                      hir_expr_base       *first,
                                      hir_expr_base       *second) {
@@ -77,7 +77,7 @@ void hir_expr_binary_free(hir_expr_binary *self) {
   }
 }
 
-hir_expr_lit *hir_expr_lit_new(span *span, type_base *type, hir_lit *lit) {
+hir_expr_lit *hir_expr_lit_new(span *span, hir_type_base *type, hir_lit *lit) {
 
   hir_expr_lit *self = MALLOC(hir_expr_lit);
   hir_expr_base_init(&self->base, span, HIR_EXPR_LITERAL, type);
@@ -93,7 +93,7 @@ void hir_expr_lit_free(hir_expr_lit *self) {
   }
 }
 
-hir_expr_id *hir_expr_id_new(span *span, type_base *type, hir_id *id,
+hir_expr_id *hir_expr_id_new(span *span, hir_type_base *type, hir_id *id,
                              hir_symbol *binding_ref) {
 
   hir_expr_id *self = MALLOC(hir_expr_id);
@@ -112,7 +112,7 @@ void hir_expr_id_free(hir_expr_id *self) {
   }
 }
 
-hir_expr_call *hir_expr_call_new(span *span, type_base *type,
+hir_expr_call *hir_expr_call_new(span *span, hir_type_base *type,
                                  hir_expr_base *callee, list_hir_expr *args) {
 
   hir_expr_call *self = MALLOC(hir_expr_call);
@@ -131,7 +131,7 @@ void hir_expr_call_free(hir_expr_call *self) {
   }
 }
 
-hir_expr_index *hir_expr_index_new(span *span, type_base *type,
+hir_expr_index *hir_expr_index_new(span *span, hir_type_base *type,
                                    hir_expr_base *indexed,
                                    list_hir_expr *args) {
   hir_expr_index *self = MALLOC(hir_expr_index);
@@ -150,7 +150,7 @@ void hir_expr_index_free(hir_expr_index *self) {
   }
 }
 
-hir_expr_builtin *hir_expr_builtin_new(span *span, type_base *type,
+hir_expr_builtin *hir_expr_builtin_new(span *span, hir_type_base *type,
                                        hir_expr_builtin_enum kind,
                                        list_hir_expr        *args) {
   hir_expr_builtin *self = MALLOC(hir_expr_builtin);

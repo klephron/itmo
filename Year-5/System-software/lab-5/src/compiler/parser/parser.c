@@ -29,7 +29,7 @@ static void parser_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   theToken = (pANTLR3_COMMON_TOKEN)(recognizer->state->exception->token);
 
   userp = recognizer->state->userp;
-  exh.stream = (char *)userp->stream_name;
+  exh.stream = (char *)userp->name_ref;
 
   ttext = theToken->toString(theToken);
 
@@ -46,13 +46,13 @@ static void parser_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   list_exception_push_back(userp->exceptions, exc);
 }
 
-parser *parser_new(const lexer_token_stream *token_stream) {
+parser *parser_new(const lexer_token_stream *token_stream_ref) {
   parser *self = MALLOC(parser);
-  self->token_stream = token_stream;
-  self->parser = MainParserNew(token_stream->tokens);
+  self->token_stream_ref = token_stream_ref;
+  self->parser = MainParserNew(token_stream_ref->tokens);
   self->exceptions = list_exception_new();
   self->userp = (parser_userp){.exceptions = self->exceptions,
-                               .stream_name = token_stream->name};
+                               .name_ref = token_stream_ref->name_ref};
 
   self->parser->pParser->rec->state->userp = &self->userp;
   self->parser->pParser->rec->displayRecognitionError = parser_display_error;
