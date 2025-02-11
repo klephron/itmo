@@ -1,6 +1,7 @@
 #include "compiler/span/str.h"
 #include "str.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/string_buffer.h"
 #include <stdio.h>
@@ -105,14 +106,6 @@ static void hir_tree_str_id(string_buffer *buffer, size_t pad,
   string_buffer_append(buffer, "}");
 }
 
-static void hir_tree_str_symbol(string_buffer *buffer, size_t pad,
-                                const hir_symbol *symbol) {
-  UNUSED(pad);
-  char buf[16];
-  snprintf(buf, STRMAXLEN(buf), "%p", symbol);
-  string_buffer_append(buffer, buf);
-}
-
 static void hir_tree_str_lit(string_buffer *buffer, size_t pad,
                              const hir_lit *lit) {
   if (!lit) {
@@ -164,11 +157,6 @@ static void hir_tree_str_param(string_buffer *buffer, size_t pad,
   hir_tree_str_type(buffer, pad, param->type);
   string_buffer_appendln(buffer, "");
 
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_append(buffer, "symbol: ");
-  hir_tree_str_symbol(buffer, pad, param->binding_ref);
-  string_buffer_appendln(buffer, "");
-
   pad -= HIR_STR_TAB;
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "}");
@@ -192,11 +180,6 @@ static void hir_tree_str_var(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "type: ");
   hir_tree_str_type(buffer, pad, var->type);
-  string_buffer_appendln(buffer, "");
-
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_append(buffer, "symbol: ");
-  hir_tree_str_symbol(buffer, pad, var->binding_ref);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
@@ -339,11 +322,6 @@ static void hir_tree_str_expr_id(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "id: ");
   hir_tree_str_id(buffer, pad, expr->id);
-  string_buffer_appendln(buffer, "");
-
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_append(buffer, "binding: ");
-  hir_tree_str_symbol(buffer, pad, expr->binding_ref);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;
@@ -695,11 +673,6 @@ static void hir_tree_str_subroutine(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_append(buffer, "body: ");
   hir_tree_str_stmt_block(buffer, pad, subroutine->body);
-  string_buffer_appendln(buffer, "");
-
-  string_buffer_append_padding(buffer, pad);
-  string_buffer_append(buffer, "binding: ");
-  hir_tree_str_symbol(buffer, pad, subroutine->binding_ref);
   string_buffer_appendln(buffer, "");
 
   pad -= HIR_STR_TAB;

@@ -19,3 +19,7 @@ void ast_free(ast *self);
 
 list_exception *ast_lexer_exceptions(ast *self);
 list_exception *ast_parser_exceptions(ast *self);
+
+static inline void container_delete_ast(void *data) { ast_free(data); }
+LIST_DECLARE_STATIC_INLINE(list_ast, ast, container_cmp_false,
+                           container_new_move, container_delete_ast);

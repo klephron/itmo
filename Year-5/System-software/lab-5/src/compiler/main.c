@@ -10,6 +10,7 @@
 #include "compiler/eir/ctx.h"
 #include "compiler/exception/exception.h"
 #include "compiler/hir/hir.h"
+#include "compiler/hir_build/hir_build.h"
 #include "compiler/mir/ctx.h"
 #include "compiler/mir/str.h"
 #include "util/container_util.h"
@@ -279,10 +280,6 @@ static void write_asm(args *args, const char *data, const char *path) {
   }
 }
 
-static inline void container_delete_ast(void *data) { ast_free(data); }
-LIST_DECLARE_STATIC_INLINE(list_ast, ast, container_cmp_false,
-                           container_new_move, container_delete_ast);
-
 static int execute(args *args) {
   list_ast *asts = list_ast_new();
 
@@ -319,41 +316,25 @@ static int execute(args *args) {
   }
 
   // stage: build hir + handle exceptions
-  hir *hir = NULL;
-  // if (!args->code || args->ignore_errors) {
-  //   for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
-  //     const ast *ast = list_ast_it_get(&it);
-  //     hir_ctx_build(hir_ctx, ast);
-  //   }
-  //   if (list_exception_count_by_level(hir_ctx->exceptions,
-  //                                     EXCEPTION_LEVEL_ERROR)) {
-  //     args->code = 1;
-  //   }
-  //   print_exceptions(args, hir_ctx->exceptions);
-  //   hir_ctx_reset_exceptions(hir_ctx);
-  // }
+  hir          *hir = NULL;
+  symbol_table *symbol_table = NULL;
+  type_table   *type_table = NULL;
 
-  // // stage: hir bind symbols
-  // if (!args->code || args->ignore_errors) {
-  //   hir_ctx_bind(hir_ctx);
-  //   if (list_exception_count_by_level(hir_ctx->exceptions,
-  //                                     EXCEPTION_LEVEL_ERROR)) {
-  //     args->code = 1;
-  //   }
-  //   print_exceptions(args, hir_ctx->exceptions);
-  //   hir_ctx_reset_exceptions(hir_ctx);
-  // }
+  if (!args->code || args->ignore_errors) {
 
-  // // stage: hir type
-  // if (!args->code || args->ignore_errors) {
-  //   hir_ctx_type(hir_ctx);
-  //   if (list_exception_count_by_level(hir_ctx->exceptions,
-  //                                     EXCEPTION_LEVEL_ERROR)) {
-  //     args->code = 1;
-  //   }
-  //   print_exceptions(args, hir_ctx->exceptions);
-  //   hir_ctx_reset_exceptions(hir_ctx);
-  // }
+    hir_build_result result = hir_build(asts);
+    hir = result.hir;
+    symbol_table = result.symbol_table;
+    type_table = result.type_table;
+
+    if (list_exception_count_by_level(result.exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      args->code = 1;
+    }
+
+    print_exceptions(args, result.exceptions);
+    list_exception_free(result.exceptions);
+  }
 
   // // stage: print hir symbols
   // if (args->hir_symbols && (!args->code || args->ignore_errors)) {
@@ -479,6 +460,8 @@ static int execute(args *args) {
   // eir_free(eir);
 
   hir_free(hir);
+  symbol_table_free(symbol_table);
+  type_table_free(type_table);
 
   list_ast_free(asts);
 

@@ -11,3 +11,6 @@ typedef struct symbol_entry_struct {
 typedef struct symbol_table_struct {
 
 } symbol_table;
+
+symbol_table *symbol_table_new();
+void          symbol_table_free(symbol_table *self);

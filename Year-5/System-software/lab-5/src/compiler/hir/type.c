@@ -48,7 +48,7 @@ static void hir_type_class_free(hir_type_class *self) {
   }
 }
 
-const char *type_enum_str(hir_type_enum type) {
+const char *hir_type_enum_str(hir_type_enum type) {
   switch (type) {
   case HIR_TYPE_BOOL:
     return "BOOL";
@@ -80,20 +80,20 @@ const char *type_enum_str(hir_type_enum type) {
   }
 }
 
-hir_type_base *type_base_new(span *span, hir_type_enum type) {
+hir_type_base *hir_type_base_new(span *span, hir_type_enum type) {
   hir_type_base *self = MALLOC(hir_type_base);
   hir_type_base_init(self, type, span);
   return self;
 }
 
-const char *type_base_str(hir_type_base *self) {
+const char *hir_type_base_str(hir_type_base *self) {
   if (self) {
-    return type_enum_str(self->type);
+    return hir_type_enum_str(self->type);
   }
   return "<null>";
 }
 
-void type_free(hir_type_base *generic) {
+void hir_type_free(hir_type_base *generic) {
   if (generic) {
     switch (generic->type) {
     case HIR_TYPE_CUSTOM:
@@ -109,7 +109,7 @@ void type_free(hir_type_base *generic) {
 }
 
 // if both types are not null and different -> not equal
-int type_equals(const hir_type_base *lsv, const hir_type_base *rsv) {
+int hir_type_equals(const hir_type_base *lsv, const hir_type_base *rsv) {
   if (!lsv || !rsv) {
     return 1;
   }
@@ -125,7 +125,7 @@ int type_equals(const hir_type_base *lsv, const hir_type_base *rsv) {
   case HIR_TYPE_ARRAY: {
     hir_type_array *lsv_arr = (hir_type_array *)lsv;
     hir_type_array *rsv_arr = (hir_type_array *)rsv;
-    return type_equals(lsv_arr->elem_type, rsv_arr->elem_type);
+    return hir_type_equals(lsv_arr->elem_type, rsv_arr->elem_type);
   }
   case HIR_TYPE_CLASS: {
     hir_type_class *lsv_cl = (hir_type_class *)lsv;
@@ -161,17 +161,17 @@ hir_type_base *hir_type_copy(const hir_type_base *self) {
   }
   case HIR_TYPE_CLASS: {
     hir_type_class *class = (hir_type_class *)self;
-    return (hir_type_base *)type_class_new(span_copy(self->span),
-                                           strdup(class->name),
-                                           list_hir_type_copy(class->templates),
-                                           list_hir_type_copy(class->parents));
+    return (hir_type_base *)hir_type_class_new(
+        span_copy(self->span), strdup(class->name),
+        list_hir_type_copy(class->templates),
+        list_hir_type_copy(class->parents));
   }
   default:
-    return type_base_new(span_copy(self->span), self->type);
+    return hir_type_base_new(span_copy(self->span), self->type);
   }
 }
 
-int list_type_equals(const list_hir_type *lsv, const list_hir_type *rsv) {
+int list_hir_type_equals(const list_hir_type *lsv, const list_hir_type *rsv) {
   size_t lsize = list_hir_type_size(lsv);
   size_t rsize = list_hir_type_size(rsv);
   if (lsize != rsize) {
@@ -179,7 +179,7 @@ int list_type_equals(const list_hir_type *lsv, const list_hir_type *rsv) {
   }
   for (list_node *lit = lsv->list.head, *rit = rsv->list.head; lit;
        lit = lit->next, rit = rit->next) {
-    int ret = type_equals(lit->data, rit->data);
+    int ret = hir_type_equals(lit->data, rit->data);
     if (!ret) {
       return 0;
     }
@@ -215,8 +215,9 @@ hir_type_array *hir_type_array_new(span *span, hir_type_base *elem_type) {
   return self;
 }
 
-hir_type_class *type_class_new(span *span, char *name, list_hir_type *templates,
-                               list_hir_type *parents) {
+hir_type_class *hir_type_class_new(span *span, char *name,
+                                   list_hir_type *templates,
+                                   list_hir_type *parents) {
   hir_type_class *self = MALLOC(hir_type_class);
   hir_type_base_init(&self->base, HIR_TYPE_CLASS, span);
   self->name = name;

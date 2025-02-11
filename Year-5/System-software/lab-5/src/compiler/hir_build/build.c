@@ -1,0 +1,75 @@
+#include "build.h"
+
+#include "compiler/antlr3/tree/HirBuilder.h"
+#include "util/macro.h"
+
+static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
+                                        pANTLR3_UINT8          *token) {
+  UNUSED(token);
+
+  hir_build_initial_ctx *ctx = recognizer->state->userp;
+  exception             *exc = NULL;
+
+  pANTLR3_STRING    ttext;
+  pANTLR3_BASE_TREE theBaseTree;
+
+  exception_helper exh;
+  exh.level = EXCEPTION_LEVEL_ERROR;
+  exh.stream = (char *)ctx->ast_cur_ref->name_ref;
+  exh.type = EXCEPTION_TREE;
+  exh.subtype = EXCEPTION_TREE_UNEXPECTED_NODE;
+  exh.line = 0;
+  exh.offset = 0;
+  exh.name = recognizer->state->exception->message;
+
+  switch (recognizer->type) {
+  case ANTLR3_TYPE_TREE_PARSER:
+    theBaseTree = (pANTLR3_BASE_TREE)(recognizer->state->exception->token);
+    ttext = theBaseTree->toStringTree(theBaseTree);
+
+    if (theBaseTree != NULL) {
+      exc = exception_new_from_helper(
+          &exh, "at offset %d near %s",
+          theBaseTree->getCharPositionInLine(theBaseTree), ttext->chars);
+    }
+    break;
+  }
+
+  if (!exc) {
+    return;
+  }
+
+  list_exception_push_back(ctx->exceptions, exc);
+}
+
+hir_build_initial_result hir_build_initial(const list_ast *asts) {
+  hir *hir = hir_new();
+
+  hir_build_initial_ctx ctx = {
+      .hir_ref = hir,
+      .exceptions = list_exception_new(),
+  };
+
+  for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
+    const ast *ast = it.get(&it);
+    ctx.ast_cur_ref = ast;
+
+    ANTLR3_COMMON_TREE_NODE_STREAM *nodes =
+        antlr3CommonTreeNodeStreamNewTree(ast->tree, ANTLR3_SIZE_HINT);
+    HirBuilder *builder = HirBuilderNew(nodes);
+
+    builder->pTreeParser->rec->state->userp = &ctx;
+    builder->pTreeParser->rec->displayRecognitionError =
+        hir_ctx_build_display_error;
+
+    builder->source(builder);
+
+    builder->free(builder);
+    nodes->free(nodes);
+  }
+
+  return (hir_build_initial_result){
+      .hir = hir,
+      .exceptions = ctx.exceptions,
+  };
+}

@@ -82,5 +82,6 @@ typedef struct hir_type_class_struct {
   list_hir_type *parents;
 } hir_type_class;
 
-hir_type_class *type_class_new(span *span, char *name, list_hir_type *templates,
-                               list_hir_type *parents);
+hir_type_class *hir_type_class_new(span *span, char *name,
+                                   list_hir_type *templates,
+                                   list_hir_type *parents);

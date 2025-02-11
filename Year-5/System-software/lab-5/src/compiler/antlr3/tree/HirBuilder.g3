@@ -10,7 +10,7 @@ options {
 @header {
 #include "util/log.h"
 #include "compiler/antlr3/antlr3.h"
-#include "compiler/hir/ctx_build.h"
+#include "compiler/hir_build/build_funcs.h"
 }
 
 @members {
@@ -27,7 +27,7 @@ source_item
 
 
 // TYPES
-type_ref returns [type_base *v]
+type_ref returns [hir_type_base *v]
   : ^(TYPE t='bool')  { $v = hir_build_type_bool(ANTLR3_USERP(), $t); }
   | ^(TYPE t='byte')  { $v = hir_build_type_byte(ANTLR3_USERP(), $t); }
   | ^(TYPE t='int')   { $v = hir_build_type_int(ANTLR3_USERP(), $t); }
@@ -37,9 +37,9 @@ type_ref returns [type_base *v]
   | ^(TYPE t='char')  { $v = hir_build_type_char(ANTLR3_USERP(), $t); }
   | ^(TYPE t='string'){ $v = hir_build_type_string(ANTLR3_USERP(), $t); }
   | ^(TYPE t='void'){ $v = hir_build_type_void(ANTLR3_USERP(), $t); }
-  | ^(TYPE id=identifier) { $v = (type_base *) hir_build_type_custom(ANTLR3_USERP(), $id.v); }
+  | ^(TYPE id=identifier) { $v = (hir_type_base *) hir_build_type_custom(ANTLR3_USERP(), $id.v); }
   | ^(TYPE ^(r='array' tr=type_ref ^(ELEMS  ','*)))
-    { $v = (type_base *) hir_build_type_array(ANTLR3_USERP(), $r, $ELEMS, $tr.v); }
+    { $v = (hir_type_base *) hir_build_type_array(ANTLR3_USERP(), $r, $ELEMS, $tr.v); }
   ;
 
 
@@ -64,7 +64,7 @@ func_def
 
 func_signature [void *FUNC_n] returns [ hir_subroutine *v ]
   @init {
-    type_base *type_ref_v = NULL;
+    hir_type_base *type_ref_v = NULL;
   }
   : id=identifier params=param_def_list
       ^(RETURN (type_ref { type_ref_v = $type_ref.v; })?)
@@ -84,7 +84,7 @@ param_def_list returns [ list_hir_param *v ]
 
 param_def returns [ hir_param *v ]
   @init {
-    type_base *type_ref_v = NULL;
+    hir_type_base *type_ref_v = NULL;
   }
   : ^(PARAM identifier (type_ref { type_ref_v = $type_ref.v; })?) {
     $v = hir_build_param(ANTLR3_USERP(), $identifier.v, type_ref_v);
@@ -93,7 +93,7 @@ param_def returns [ hir_param *v ]
 
 func_body_var returns [ list_hir_var *v ]
   @init {
-    type_base *tr_v = NULL;
+    hir_type_base *tr_v = NULL;
     list_hir_id *ids = list_hir_id_new();
   }
   : ^(VAR (type_ref { tr_v = $type_ref.v; })? (identifier {

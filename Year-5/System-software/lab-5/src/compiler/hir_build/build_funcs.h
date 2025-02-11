@@ -1,6 +1,12 @@
 #pragma once
 
-#include "compiler/hir/ctx.h"
+#include "build.h"
+
+#include "compiler/hir/node.h"
+#include "compiler/hir/node_global.h"
+#include <antlr3basetree.h>
+
+typedef hir_build_initial_ctx hir_ctx;
 
 hir_id *hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 
@@ -11,26 +17,26 @@ hir_lit *hir_build_bits(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_lit *hir_build_dec(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_lit *hir_build_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 
-type_base   *hir_build_type_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_byte(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_int(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_uint(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_long(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_ulong(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_char(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_base   *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id);
-type_array  *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
-                                  ANTLR3_BASE_TREE *dimensions,
-                                  type_base        *elem_type);
+hir_type_base   *hir_build_type_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_byte(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_int(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_uint(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_long(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_ulong(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_char(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id);
+hir_type_array  *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                      ANTLR3_BASE_TREE *dimensions,
+                                      hir_type_base    *elem_type);
 
-hir_param      *hir_build_param(hir_ctx *ctx, hir_id *id, type_base *type);
+hir_param      *hir_build_param(hir_ctx *ctx, hir_id *id, hir_type_base *type);
 hir_subroutine *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
                                     hir_id *id, list_hir_param *params,
-                                    type_base *ret_type);
+                                    hir_type_base *ret_type);
 list_hir_var   *hir_build_body_var(hir_ctx *ctx, list_hir_id *ids,
-                                   type_base *type);
+                                   hir_type_base *type);
 void            hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
                                           list_hir_var *second);
 void            hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
@@ -52,7 +58,8 @@ hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
 
 hir_expr_builtin *hir_build_expr_builtin(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                          hir_expr_builtin_enum kind,
-                                         type_base *type, list_hir_expr *expr);
+                                         hir_type_base        *type,
+                                         list_hir_expr        *expr);
 hir_expr_builtin *hir_build_expr_builtin_print(hir_ctx          *ctx,
                                                ANTLR3_BASE_TREE *node,
                                                list_hir_expr    *expr);

@@ -1,16 +1,10 @@
 #include "str.h"
-#include "compiler/span/str.h"
-#include "compiler/type/str.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include "util/math.h"
-#include "util/string_buffer.h"
 #include <stdio.h>
 #include <string.h>
 
-// TYPES
-
-// EXPRESSION_ENUM
 const char *hir_expr_unary_enum_str(hir_expr_unary_enum type) {
   switch (type) {
   case HIR_EXPR_UNARY_PLUS:
