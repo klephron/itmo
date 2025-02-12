@@ -5,7 +5,7 @@
 #include "compiler/hir/hir.h"
 
 typedef struct hir_build_initial_ctx_struct {
-  const hir      *hir_ref;
+  hir            *hir_ref;
   list_exception *exceptions;
   const ast      *ast_cur_ref;
 } hir_build_initial_ctx;

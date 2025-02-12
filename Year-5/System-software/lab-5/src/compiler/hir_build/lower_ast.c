@@ -1,4 +1,4 @@
-#include "build.h"
+#include "lower_ast.h"
 
 #include "compiler/antlr3/tree/HirBuilder.h"
 #include "util/macro.h"

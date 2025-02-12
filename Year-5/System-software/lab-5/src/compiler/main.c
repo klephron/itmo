@@ -10,6 +10,7 @@
 #include "compiler/eir/ctx.h"
 #include "compiler/exception/exception.h"
 #include "compiler/hir/hir.h"
+#include "compiler/hir/str.h"
 #include "compiler/hir_build/hir_build.h"
 #include "compiler/mir/ctx.h"
 #include "compiler/mir/str.h"
@@ -34,8 +35,9 @@ typedef struct args_struct {
   int         cfg_add_expr;
   int         cg;
   list_chars *cg_subroutines;
-  int         hir_symbols;
   int         hir_tree;
+  int         symbol_table;
+  int         type_table;
   int         mir;
   // status
   int code;
@@ -60,8 +62,9 @@ static args *args_new() {
   args->cg = 0;
   args->cg_subroutines = list_chars_new();
 
-  args->hir_symbols = 0;
   args->hir_tree = 0;
+  args->symbol_table = 0;
+  args->type_table = 0;
 
   args->mir = 0;
 
@@ -104,13 +107,16 @@ static void usage(args *args) {
       "--cg             - add call graph output (current: %d)\n"
       "-s <subroutine>  - set or add subroutine for call graph generation"
       "(current: %s)\n"
-      "--hir-symbols    - print HIR symbols (current: %d)\n"
-      "--hir-tree       - print HIR tree (current: %d)\n"
+      "--hir-tree       - print hir tree (current: %d)\n"
+      "--symbol-table   - print symbol table (current: %d)\n"
+      "--type-table     - print type table (current: %d)\n"
       "--mir            - print MIR tree (current: %d)\n"
-      "-h               - show help\n",
+      "-h\n"
+      "--help           - show help\n",
       args->prog_name, args->output_dir, args->output_file, args->tee,
       args->ignore_errors, args->ast, args->cfg, args->cfg_add_expr, args->cg,
-      cg_subroutines, args->hir_symbols, args->hir_tree, args->mir);
+      cg_subroutines, args->hir_tree, args->symbol_table, args->type_table,
+      args->mir);
 }
 
 static void parse(args *args, int argc, char *argv[]) {
@@ -123,9 +129,11 @@ static void parse(args *args, int argc, char *argv[]) {
       {"cfg", no_argument, &args->cfg, 1},
       {"cfg-add-expr", no_argument, &args->cfg_add_expr, 1},
       {"cg", no_argument, &args->cg, 1},
-      {"hir-symbols", no_argument, &args->hir_symbols, 1},
       {"hir-tree", no_argument, &args->hir_tree, 1},
+      {"symbol-table", no_argument, &args->symbol_table, 1},
+      {"type-table", no_argument, &args->type_table, 1},
       {"mir", no_argument, &args->mir, 1},
+      {"help", no_argument, &args->help, 1},
   };
 
   if (argc > 0) {
@@ -146,6 +154,9 @@ static void parse(args *args, int argc, char *argv[]) {
       break;
     case 0:
       if (long_options[option_index].flag) {
+        if (args->help) {
+          has_next = 0;
+        }
         break;
       }
       break;
@@ -336,6 +347,13 @@ static int execute(args *args) {
     list_exception_free(result.exceptions);
   }
 
+  // stage: print hir tree
+  if (args->hir_tree && (!args->code || args->ignore_errors)) {
+    char *tree = hir_tree_str(hir);
+    printf("HIR TREE:\n%s\n", tree);
+    free(tree);
+  }
+
   // // stage: print hir symbols
   // if (args->hir_symbols && (!args->code || args->ignore_errors)) {
   //   char *globals = hir_list_symbol_str(hir->globals);
@@ -345,13 +363,6 @@ static int execute(args *args) {
   //   char *locals = hir_list_symbol_str(hir->locals);
   //   printf("HIR LOCAL SYMBOLS:\n%s", locals);
   //   free(locals);
-  // }
-
-  // // stage: print hir tree
-  // if (args->hir_tree && (!args->code || args->ignore_errors)) {
-  //   char *tree = hir_tree_str(hir);
-  //   printf("HIR TREE:\n%s\n", tree);
-  //   free(tree);
   // }
 
   // eir     *eir = eir_new();

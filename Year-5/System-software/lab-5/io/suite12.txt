@@ -1,7 +1,7 @@
-method main():
+method main(a: A<A<B, C>, C<D>>):
+var
+  a: A;
+  b,c: B<C,D>;
 begin
-end;
-
-method main2():
-begin
+  b << c;
 end;

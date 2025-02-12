@@ -26,6 +26,7 @@ static void hir_type_custom_free(hir_type_custom *self) {
     if (self->name) {
       free(self->name);
     }
+    list_hir_type_free(self->templates);
     hir_type_base_deinit(&self->base);
     free(self);
   }

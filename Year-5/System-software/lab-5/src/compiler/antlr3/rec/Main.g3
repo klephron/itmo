@@ -29,12 +29,15 @@ tokens {
   BUILTIN;
   IMPORT;
   CLASS;
+  TEMPLATE;
   TYPENAMES;
   PARENTS;
   MODIFIER;
   METHODS;
   METHOD;
   MEMBER;
+  OP_SHR;
+  OP_SHL;
 }
 
 @headers{
@@ -54,42 +57,48 @@ source_item
 // TYPES
 type_ref
   : (tr='bool' | tr='byte' | tr='int' | tr='uint' | tr='long' | tr='ulong' | tr='char' | tr='string' | tr='void') -> ^(TYPE $tr)
-  | identifier -> ^(TYPE identifier)
+  | identifier type_template? -> ^(TYPE identifier type_template?)
   | 'array' '[' (elems+=',')* ']' 'of' type_ref -> ^(TYPE ^('array' ^(type_ref) ^(ELEMS $elems*)))
+  ;
+
+type_template
+  : '<' (type_ref (',' type_ref)* )? '>' -> ^(TEMPLATE type_ref*)
   ;
 
 
 // VARIABLES & PARAMETERS
 // until ';' symbol
-variable_entry
+var_entry
   : (identifier (',' identifier)* (':' type_ref)? ';' ) -> ^(VAR type_ref? identifier*)
   ;
 
-// NOTE: not using fake tokens for lists because if list is empty then transition to this rule won't be made
-parameter_list
-  : (parameter (',' parameter)*)?  -> parameter*
+// NOTE: full rule should be ^(PARAMS param*)
+// not using fake tokens for lists because if empty then transition to this rule won't be made.
+param_list
+  : (param (',' param)*)?  -> param*
   ;
 
-parameter
+param
   : identifier (':' type_ref)? -> ^(PARAM identifier type_ref?)
   ;
 
 
 // FUNCTIONS
 func_def
-  : ls='method' func_signature func_def_sel -> ^(FUNC[$ls, "FUNC"] func_signature func_def_sel?)
+  : ls='method' func_signature func_def_sel -> ^(FUNC[$ls, "FUNC"] func_signature func_def_sel)
   ;
 
+// NOTE: can be resolved to empty
 func_def_sel
   : (func_body | func_import_spec) (';'!)? | ';'!
   ;
 
 func_signature
-  : identifier '(' parameter_list ')' (':' type_ref?) -> identifier ^(PARAMS parameter_list) ^(RETURN type_ref?)
+  : identifier '(' param_list ')' (':' type_ref?) -> identifier ^(PARAMS param_list) ^(RETURN type_ref?)
   ;
 
 func_body
-  : ('var' variable_entry*)? statement_block -> ^(BODY ^(VARS variable_entry*) ^(statement_block))
+  : ('var' var_entry*)? statement_block -> ^(BODY ^(VARS var_entry*) ^(statement_block))
   ;
 
 func_import_spec
@@ -99,8 +108,8 @@ func_import_spec
 
 // CLASSES
 class_def
-  : 'class' name=identifier class_typename_list? class_parent_list? ('var' variable_entry*) class_method_list ';'
-      -> ^(CLASS $name ^(TYPENAMES class_typename_list?) ^(PARENTS class_parent_list?) ^(VARS variable_entry*) ^(METHODS class_method_list))
+  : 'class' name=identifier class_typename_list? class_parent_list? ('var' var_entry*) class_method_list ';'
+      -> ^(CLASS $name ^(TYPENAMES class_typename_list?) ^(PARENTS class_parent_list?) ^(VARS var_entry*) ^(METHODS class_method_list))
   ;
 
 class_typename_list
@@ -108,7 +117,7 @@ class_typename_list
   ;
 
 class_parent_list
-  : ':' identifier (',' identifier)*  -> identifier*
+  : ':' type_ref (',' type_ref)*  -> type_ref*
   ;
 
 class_method_list
@@ -202,8 +211,17 @@ expr_6
   : expr_5 (('<' | '<=' | '>' | '>=')^ expr_5)*
   ;
 
+// NOTE: rewritten to allow template resolution, now a > > b is same as a >> b
 expr_5
-  : expr_4 (('>>' | '<<')^ expr_4)*
+  : expr_4 ((expr_5_shl^ | expr_5_shr^) expr_4)*
+  ;
+
+expr_5_shr
+  : op='>' '>' -> ^(OP_SHR[$op, ">>"])
+  ;
+
+expr_5_shl
+  : op='<' '<' -> ^(OP_SHL[$op, "<<"])
   ;
 
 expr_4

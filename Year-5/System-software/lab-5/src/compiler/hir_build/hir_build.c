@@ -1,6 +1,6 @@
 #include "hir_build.h"
 
-#include "compiler/hir_build/build.h"
+#include "compiler/hir_build/lower_ast.h"
 
 hir_build_result hir_build(const list_ast *asts) {
   hir_build_initial_result initial_result = hir_build_initial(asts);

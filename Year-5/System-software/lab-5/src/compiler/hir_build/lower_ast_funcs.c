@@ -1,7 +1,8 @@
-#include "build_funcs.h"
+#include "lower_ast_funcs.h"
 
 #include "compiler/antlr3/antlr3.h"
 #include "compiler/exception/container.h"
+#include "compiler/hir/str.h"
 #include "compiler/span/span.h"
 #include "util/log.h"
 #include "util/macro.h"
@@ -276,12 +277,16 @@ hir_type_base *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   return hir_type_base_new(span, HIR_TYPE_VOID);
 }
 
-hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id) {
+hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id,
+                                       list_hir_type *templates) {
   UNUSED(ctx);
-  hir_id_data id_data = hir_id_pop(id);
-  // TODO: templates
+  hir_id_data      id_data = hir_id_pop(id);
   hir_type_custom *custom =
-      hir_type_custom_new(id_data.span, id_data.name, NULL);
+      hir_type_custom_new(id_data.span, id_data.name, templates);
+
+  char *str = hir_type_str((hir_type_base *)custom);
+  free(str);
+
   return custom;
 }
 
@@ -328,11 +333,11 @@ hir_subroutine *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
   span_free(root_span);
   // debug("%zu:%zu %zu:%zu", span->line_start, span->pos_start, span->line_end,
   // span->pos_end);
-  return hir_subroutine_new(span, id, params, ret_type, NULL, NULL);
+  return hir_subroutine_new(span, id, params, ret_type, NULL);
 }
 
-list_hir_var *hir_build_body_var(hir_ctx *ctx, list_hir_id *ids,
-                                 hir_type_base *type) {
+list_hir_var *hir_build_var_entry(hir_ctx *ctx, list_hir_id *ids,
+                                  hir_type_base *type) {
   UNUSED(ctx);
   list_hir_var *var_list = list_hir_var_new();
 
@@ -352,7 +357,7 @@ list_hir_var *hir_build_body_var(hir_ctx *ctx, list_hir_id *ids,
   return var_list;
 }
 
-void hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
+void hir_build_var_list_extend(hir_ctx *ctx, list_hir_var *first,
                                list_hir_var *second) {
   UNUSED(ctx);
   size_t size = list_hir_var_size(second);
@@ -364,10 +369,21 @@ void hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
 }
 
 void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
-                    list_hir_var *vars, hir_stmt_block *body) {
-  subroutine->vars = vars;
+                    hir_subroutine_body *body) {
   subroutine->body = body;
   list_hir_subroutine_push_back(ctx->hir_ref->subroutines, subroutine);
+}
+
+hir_subroutine_body *hir_build_func_body_block(hir_ctx *ctx, list_hir_var *vars,
+                                               hir_stmt_block *body) {
+  UNUSED(ctx);
+  return hir_subroutine_body_new_block(vars, body);
+}
+
+hir_subroutine_body *hir_build_func_body_import(hir_ctx *ctx, hir_lit *lib,
+                                                hir_lit *entry) {
+  UNUSED(ctx);
+  return hir_subroutine_body_new_import(entry, lib);
 }
 
 // EXPRESSIONS

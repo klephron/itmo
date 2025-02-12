@@ -28,7 +28,7 @@ typedef enum hir_type_enum {
   HIR_TYPE_CLASS,
 } hir_type_enum;
 
-const char *type_enum_str(hir_type_enum type);
+const char *hir_type_enum_str(hir_type_enum type);
 
 // BASE
 typedef struct hir_type_base_struct {

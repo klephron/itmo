@@ -10,7 +10,7 @@ options {
 @header {
 #include "util/log.h"
 #include "compiler/antlr3/antlr3.h"
-#include "compiler/hir_build/build_funcs.h"
+#include "compiler/hir_build/lower_ast_funcs.h"
 }
 
 @members {
@@ -23,11 +23,15 @@ source
 
 source_item
   : func_def
+//  | class_def
   ;
 
 
 // TYPES
 type_ref returns [hir_type_base *v]
+  @init {
+    list_hir_type *tp_v = NULL;
+  }
   : ^(TYPE t='bool')  { $v = hir_build_type_bool(ANTLR3_USERP(), $t); }
   | ^(TYPE t='byte')  { $v = hir_build_type_byte(ANTLR3_USERP(), $t); }
   | ^(TYPE t='int')   { $v = hir_build_type_int(ANTLR3_USERP(), $t); }
@@ -37,61 +41,24 @@ type_ref returns [hir_type_base *v]
   | ^(TYPE t='char')  { $v = hir_build_type_char(ANTLR3_USERP(), $t); }
   | ^(TYPE t='string'){ $v = hir_build_type_string(ANTLR3_USERP(), $t); }
   | ^(TYPE t='void'){ $v = hir_build_type_void(ANTLR3_USERP(), $t); }
-  | ^(TYPE id=identifier) { $v = (hir_type_base *) hir_build_type_custom(ANTLR3_USERP(), $id.v); }
+  | ^(TYPE id=identifier (tp=type_template { tp_v = $tp.v; })? ) {
+      $v = (hir_type_base *) hir_build_type_custom(ANTLR3_USERP(), $id.v, tp_v);
+    }
   | ^(TYPE ^(r='array' tr=type_ref ^(ELEMS  ','*)))
     { $v = (hir_type_base *) hir_build_type_array(ANTLR3_USERP(), $r, $ELEMS, $tr.v); }
   ;
 
-
-// FUNCTIONS
-func_def
+type_template returns [list_hir_type *v]
   @init {
-    list_hir_var *vars = NULL;
-    void *block = NULL;
+    list_hir_type *ret_v = list_hir_type_new();
   }
-  : ^(FUNC
-      func_signature[$FUNC]
-      (^(BODY
-        ^(VARS { vars = list_hir_var_new(); } (func_body_var {
-            hir_build_body_var_extend(ANTLR3_USERP(), vars, $func_body_var.v);
-          }) *)
-        (statement_block) { block = $statement_block.v; }
-      ))?
-    ) {
-    hir_build_func(ANTLR3_USERP(), $func_signature.v, vars, block);
-  }
-  ;
-
-func_signature [void *FUNC_n] returns [ hir_subroutine *v ]
-  @init {
-    hir_type_base *type_ref_v = NULL;
-  }
-  : id=identifier params=param_def_list
-      ^(RETURN (type_ref { type_ref_v = $type_ref.v; })?)
-      {
-    $v = hir_build_signature(ANTLR3_USERP(), $FUNC_n, $id.v, $params.v, type_ref_v);
-  }
-  ;
-
-param_def_list returns [ list_hir_param *v ]
-  @init {
-    list_hir_param *ret_v = list_hir_param_new();
-  }
-  : ^(PARAMS (param_def { list_hir_param_push_back(ret_v, $param_def.v); })*) {
+  : ^(TEMPLATE (type_ref { list_hir_type_push_back(ret_v, $type_ref.v); })* ) {
     $v = ret_v;
   }
   ;
 
-param_def returns [ hir_param *v ]
-  @init {
-    hir_type_base *type_ref_v = NULL;
-  }
-  : ^(PARAM identifier (type_ref { type_ref_v = $type_ref.v; })?) {
-    $v = hir_build_param(ANTLR3_USERP(), $identifier.v, type_ref_v);
-  }
-  ;
-
-func_body_var returns [ list_hir_var *v ]
+// VARIABLES & PARAMETERS
+var_entry returns [ list_hir_var *v ]
   @init {
     hir_type_base *tr_v = NULL;
     list_hir_id *ids = list_hir_id_new();
@@ -100,10 +67,71 @@ func_body_var returns [ list_hir_var *v ]
         list_hir_id_push_back(ids, $identifier.v);
       } )*
     ) {
-    $v = hir_build_body_var(ANTLR3_USERP(), ids, tr_v);
+    $v = hir_build_var_entry(ANTLR3_USERP(), ids, tr_v);
   }
   ;
 
+param_list returns [ list_hir_param *v ]
+  @init {
+    list_hir_param *ret_v = list_hir_param_new();
+  }
+  : ^(PARAMS (param { list_hir_param_push_back(ret_v, $param.v); })*) {
+    $v = ret_v;
+  }
+  ;
+
+param returns [ hir_param *v ]
+  @init {
+    hir_type_base *type_ref_v = NULL;
+  }
+  : ^(PARAM identifier (type_ref { type_ref_v = $type_ref.v; })?) {
+    $v = hir_build_param(ANTLR3_USERP(), $identifier.v, type_ref_v);
+  }
+  ;
+
+// FUNCTIONS
+func_def
+  @init {
+    hir_subroutine_body *func_def_sel_v = NULL;
+  }
+  : ^(FUNC func_signature[$FUNC] (func_def_sel { func_def_sel_v = $func_def_sel.v; })? ) {
+    hir_build_func(ANTLR3_USERP(), $func_signature.v, func_def_sel_v);
+  }
+  ;
+
+func_def_sel returns [hir_subroutine_body *v]
+  : func_body { $v = $func_body.v; }
+  | func_import_spec { $v = $func_import_spec.v; }
+  ;
+
+func_signature [void *FUNC_t] returns [ hir_subroutine *v ]
+  @init {
+    hir_type_base *type_ref_v = NULL;
+  }
+  : id=identifier param_list ^(RETURN (type_ref { type_ref_v = $type_ref.v; })?) {
+    $v = hir_build_signature(ANTLR3_USERP(), $FUNC_t, $id.v, $param_list.v, type_ref_v);
+  }
+  ;
+
+func_body returns [hir_subroutine_body *v]
+  @init {
+    list_hir_var *vars = list_hir_var_new();
+  }
+  : ^(BODY ^(VARS (var_entry {
+      hir_build_var_list_extend(ANTLR3_USERP(), vars, $var_entry.v);
+    })*) statement_block) {
+    $v = hir_build_func_body_block(ANTLR3_USERP(), vars, $statement_block.v);
+  }
+  ;
+
+func_import_spec returns [hir_subroutine_body *v]
+  @init {
+    hir_lit *import_entry_v = NULL;
+  }
+  : ^(IMPORT import_lib=str (import_entry=str { import_entry_v = $import_entry.v; }) ) {
+    $v = hir_build_func_body_import(ANTLR3_USERP(), $import_lib.v, import_entry_v);
+  }
+  ;
 
 //STATEMENTS
 statement returns [ hir_stmt_base *v ]
@@ -238,8 +266,8 @@ expr_6 returns [ hir_expr_binary *v ]
   ;
 
 expr_5 returns [ hir_expr_binary *v ]
-  : ^(op='<<' e1=expr e2=expr) { $v = hir_build_expr_binary(ANTLR3_USERP(), $e1.v, $e2.v, $op, HIR_EXPR_BINARY_BITWISE_SHIFT_LEFT); }
-  | ^(op='>>' e1=expr e2=expr) { $v = hir_build_expr_binary(ANTLR3_USERP(), $e1.v, $e2.v, $op, HIR_EXPR_BINARY_BITWISE_SHIFT_RIGHT); }
+  : ^(op=OP_SHL e1=expr e2=expr) { $v = hir_build_expr_binary(ANTLR3_USERP(), $e1.v, $e2.v, $op, HIR_EXPR_BINARY_BITWISE_SHIFT_LEFT); }
+  | ^(op=OP_SHR e1=expr e2=expr) { $v = hir_build_expr_binary(ANTLR3_USERP(), $e1.v, $e2.v, $op, HIR_EXPR_BINARY_BITWISE_SHIFT_RIGHT); }
   ;
 
 expr_4 returns [ hir_expr_base *v ]

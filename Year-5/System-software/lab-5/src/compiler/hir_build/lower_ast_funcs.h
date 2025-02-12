@@ -1,6 +1,6 @@
 #pragma once
 
-#include "build.h"
+#include "lower_ast.h"
 
 #include "compiler/hir/node.h"
 #include "compiler/hir/node_global.h"
@@ -26,21 +26,27 @@ hir_type_base   *hir_build_type_ulong(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_type_base   *hir_build_type_char(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_type_base   *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_type_base   *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id);
+hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id,
+                                       list_hir_type *templates);
 hir_type_array  *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                       ANTLR3_BASE_TREE *dimensions,
                                       hir_type_base    *elem_type);
 
-hir_param      *hir_build_param(hir_ctx *ctx, hir_id *id, hir_type_base *type);
-hir_subroutine *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
-                                    hir_id *id, list_hir_param *params,
-                                    hir_type_base *ret_type);
-list_hir_var   *hir_build_body_var(hir_ctx *ctx, list_hir_id *ids,
-                                   hir_type_base *type);
-void            hir_build_body_var_extend(hir_ctx *ctx, list_hir_var *first,
-                                          list_hir_var *second);
-void            hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
-                               list_hir_var *vars, hir_stmt_block *body);
+hir_param    *hir_build_param(hir_ctx *ctx, hir_id *id, hir_type_base *type);
+list_hir_var *hir_build_var_entry(hir_ctx *ctx, list_hir_id *ids,
+                                  hir_type_base *type);
+void          hir_build_var_list_extend(hir_ctx *ctx, list_hir_var *first,
+                                        list_hir_var *second);
+
+hir_subroutine      *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
+                                         hir_id *id, list_hir_param *params,
+                                         hir_type_base *ret_type);
+void                 hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
+                                    hir_subroutine_body *body);
+hir_subroutine_body *hir_build_func_body_block(hir_ctx *ctx, list_hir_var *vars,
+                                               hir_stmt_block *body);
+hir_subroutine_body *hir_build_func_body_import(hir_ctx *ctx, hir_lit *lib,
+                                                hir_lit *entry);
 
 hir_expr_lit    *hir_build_expr_lit(hir_ctx *ctx, hir_lit *lit);
 hir_expr_id     *hir_build_expr_id(hir_ctx *ctx, hir_id *id);
