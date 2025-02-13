@@ -49,49 +49,10 @@ static void hir_type_class_free(hir_type_class *self) {
   }
 }
 
-const char *hir_type_enum_str(hir_type_enum type) {
-  switch (type) {
-  case HIR_TYPE_BOOL:
-    return "BOOL";
-  case HIR_TYPE_BYTE:
-    return "BYTE";
-  case HIR_TYPE_INT:
-    return "INT";
-  case HIR_TYPE_UINT:
-    return "UINT";
-  case HIR_TYPE_LONG:
-    return "LONG";
-  case HIR_TYPE_ULONG:
-    return "ULONG";
-  case HIR_TYPE_CHAR:
-    return "CHAR";
-  case HIR_TYPE_STRING:
-    return "STRING";
-  case HIR_TYPE_VOID:
-    return "VOID";
-  case HIR_TYPE_CUSTOM:
-    return "CUSTOM";
-  case HIR_TYPE_ARRAY:
-    return "ARRAY";
-  case HIR_TYPE_CLASS:
-    return "CLASS";
-  case HIR_TYPE_UNKNOWN:
-  default:
-    return "UNKNOWN";
-  }
-}
-
 hir_type_base *hir_type_base_new(span *span, hir_type_enum type) {
   hir_type_base *self = MALLOC(hir_type_base);
   hir_type_base_init(self, type, span);
   return self;
-}
-
-const char *hir_type_base_str(hir_type_base *self) {
-  if (self) {
-    return hir_type_enum_str(self->type);
-  }
-  return "<null>";
 }
 
 void hir_type_free(hir_type_base *generic) {

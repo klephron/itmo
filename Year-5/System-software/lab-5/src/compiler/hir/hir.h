@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compiler/hir/node_global.h"
+#include "compiler/hir/node_subroutine.h"
 #include "compiler/resolve/symbol_table.h"
 #include "compiler/resolve/type_table.h"
 

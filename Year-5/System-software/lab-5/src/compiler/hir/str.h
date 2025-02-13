@@ -15,4 +15,6 @@ const char *hir_expr_enum_str(hir_expr_enum kind);
 const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind);
 char       *hir_lit_value_str(const hir_lit *lit);
 
-char *hir_tree_str(const hir *hir);
+const char *hir_type_enum_str(hir_type_enum type);
+char       *hir_tree_str(const hir *hir);
+const char *hir_type_base_str(hir_type_base *type);

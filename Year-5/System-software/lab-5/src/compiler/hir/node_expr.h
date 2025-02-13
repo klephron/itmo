@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compiler/hir/node.h"
+#include "compiler/hir/node_basic.h"
 
 typedef enum hir_expr_enum {
   HIR_EXPR_UNKNOWN,

@@ -1,6 +1,6 @@
-#include "node_global.h"
+#include "node_subroutine.h"
 
-#include "compiler/hir/node.h"
+#include "compiler/hir/node_basic.h"
 #include "util/log.h"
 #include "util/macro.h"
 

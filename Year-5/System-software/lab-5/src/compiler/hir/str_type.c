@@ -83,6 +83,45 @@ static void string_buffer_append_type(string_buffer       *buffer,
   }
 }
 
+const char *hir_type_enum_str(hir_type_enum type) {
+  switch (type) {
+  case HIR_TYPE_BOOL:
+    return "BOOL";
+  case HIR_TYPE_BYTE:
+    return "BYTE";
+  case HIR_TYPE_INT:
+    return "INT";
+  case HIR_TYPE_UINT:
+    return "UINT";
+  case HIR_TYPE_LONG:
+    return "LONG";
+  case HIR_TYPE_ULONG:
+    return "ULONG";
+  case HIR_TYPE_CHAR:
+    return "CHAR";
+  case HIR_TYPE_STRING:
+    return "STRING";
+  case HIR_TYPE_VOID:
+    return "VOID";
+  case HIR_TYPE_CUSTOM:
+    return "CUSTOM";
+  case HIR_TYPE_ARRAY:
+    return "ARRAY";
+  case HIR_TYPE_CLASS:
+    return "CLASS";
+  case HIR_TYPE_UNKNOWN:
+  default:
+    return "UNKNOWN";
+  }
+}
+
+const char *hir_type_base_str(hir_type_base *self) {
+  if (self) {
+    return hir_type_enum_str(self->type);
+  }
+  return "<null>";
+}
+
 char *hir_type_str(const hir_type_base *generic) {
   if (generic) {
     string_buffer *buffer = string_buffer_new(16, 0);

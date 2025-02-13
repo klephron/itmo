@@ -2,8 +2,7 @@
 
 #include "lower_ast.h"
 
-#include "compiler/hir/node.h"
-#include "compiler/hir/node_global.h"
+#include "compiler/hir/node_subroutine.h"
 #include <antlr3basetree.h>
 
 typedef hir_build_initial_ctx hir_ctx;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "compiler/hir/node.h"
+#include "compiler/hir/node_basic.h"
 #include "compiler/hir/node_stmt.h"
 
 // SUBROUTINE
