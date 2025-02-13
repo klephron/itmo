@@ -1,0 +1,17 @@
+@use 'View.module.scss' as view;
+
+.postoffices {
+  @include view.info_mixin;
+
+  &_table {
+    grid-template-columns: auto auto auto auto auto;
+
+    &_body_row_extra {
+
+      .coordinates,
+      .address {
+        @include view.group_pairs_mixin;
+      }
+    }
+  }
+}

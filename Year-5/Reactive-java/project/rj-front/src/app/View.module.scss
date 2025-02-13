@@ -1,0 +1,165 @@
+@mixin operation_mixin {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid black;
+  padding: 5px;
+
+  h4 {
+    padding-bottom: 5px;
+  }
+}
+
+@mixin operations_mixin {
+  border: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px;
+
+  h4 {
+    margin: 0px;
+    text-align: center;
+  }
+}
+
+@mixin info_mixin {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 5px;
+
+  &_operations {
+    @include operations_mixin;
+
+    .add {
+      @include operation_mixin;
+    }
+  }
+
+  &_table {
+    border: 1px solid black;
+    border-bottom: 0px solid black;
+    width: 100%;
+    font-size: 14px;
+    display: grid;
+
+    &_header {
+      display: contents;
+      font-weight: bold;
+
+      div {
+        text-align: center;
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+
+        &:last-child {
+          border-right: 0;
+        }
+      }
+    }
+
+    &_body {
+      display: contents;
+
+      &_row {
+        display: contents;
+
+        div {
+          background-color: rgb(233, 233, 237);
+          text-align: center;
+          border-right: 1px solid black;
+          border-bottom: 1px solid black;
+          cursor: pointer;
+          user-select: none;
+
+          &:last-child {
+            border-right: 0;
+          }
+        }
+      }
+
+      &_row_extra {
+        grid-column: 1 / -1;
+        border-bottom: 1px solid black;
+        display: none;
+        gap: 5px;
+        padding: 10px;
+
+        h4 {
+          margin: 0px;
+          margin-bottom: 5px;
+        }
+
+        &.visible {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .extra_row {
+          display: contents;
+        }
+      }
+    }
+  }
+}
+
+@mixin group_pairs_mixin {
+  div {
+    display: contents;
+  }
+
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 10px;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-self: stretch;
+  gap: 5px;
+
+  &_top {
+    display: flex;
+    gap: 10px;
+
+    &_select {
+      border: 1px solid black;
+      display: flex;
+
+      button {
+        border: 0;
+        border-right: 1px solid black;
+        border-radius: 0;
+        width: 100px;
+
+        &:last-of-type {
+          border: 0;
+        }
+      }
+    }
+
+    &_config {
+      display: flex;
+
+      input {
+        box-sizing: border-box;
+        border: 1px solid black;
+        outline: 0;
+        border-right: 0;
+      }
+
+      button {
+        box-sizing: border-box;
+        border: 0;
+        border: 1px solid black;
+        margin: 0;
+      }
+    }
+  }
+
+  &_bottom {
+    width: 100%;
+  }
+}

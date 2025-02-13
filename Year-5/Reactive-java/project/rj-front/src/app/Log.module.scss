@@ -1,0 +1,39 @@
+.log {
+  height: 300px;
+  flex-direction: column;
+  display: flex;
+  flex-grow: 1;
+  border: 1px solid black;
+
+  &_textarea {
+    box-sizing: border-box;
+    align-self: stretch;
+    flex: 1;
+    resize: none;
+    border: 0;
+    border-bottom: 1px solid black;
+    outline: 0;
+    color: #000;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: scroll;
+  }
+
+  &_input {
+    display: flex;
+
+    input {
+      box-sizing: border-box;
+      border: 0;
+      outline: 0;
+      flex-grow: 1;
+    }
+
+    button {
+      box-sizing: border-box;
+      border: 0;
+      border-right: 1px solid black;
+      margin: 0;
+    }
+  }
+}

@@ -1,0 +1,65 @@
+@use 'View.module.scss' as view;
+
+@mixin transport_operation_mixin {
+  border: 1px solid black;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  &_body {
+    div {
+      display: contents;
+    }
+
+    display: inline-grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 10px;
+  }
+
+  &_buttons {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
+
+.transports {
+  @include view.info_mixin;
+
+  &_table {
+    grid-template-columns: auto auto auto auto auto;
+
+    &_body_row_extra {
+      .operations {
+        &_entries {
+          display: flex;
+          gap: 10px;
+
+          .set_route {
+            @include transport_operation_mixin;
+          }
+
+          .start {
+            @include transport_operation_mixin;
+          }
+
+          .stop {
+            @include transport_operation_mixin;
+
+            &_buttons {
+              display: flex;
+            }
+          }
+        }
+      }
+
+      .parameters,
+      .personal,
+      .route {
+        @include view.group_pairs_mixin;
+      }
+    }
+  }
+}

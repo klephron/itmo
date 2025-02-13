@@ -1,0 +1,21 @@
+export default {
+  extends: ['stylelint-config-standard-scss'],
+  plugins: [],
+  rules: {
+    'rule-empty-line-before': ['always'],
+    'selector-class-pattern': null,
+    'color-hex-length': null,
+    'declaration-empty-line-before': null,
+    'length-zero-no-unit': true,
+    'alpha-value-notation': null,
+    'color-function-notation': null,
+    'shorthand-property-no-redundant-values': null,
+    'declaration-block-no-redundant-longhand-properties': null,
+    'media-feature-range-notation': null,
+    'at-rule-no-unknown': null,
+    'scss/at-rule-no-unknown': true,
+    'scss/dollar-variable-pattern': '^foo',
+    'scss/selector-no-redundant-nesting-selector': true,
+  },
+  ignoreFiles: ['dist/**', 'node_modules/**'],
+};

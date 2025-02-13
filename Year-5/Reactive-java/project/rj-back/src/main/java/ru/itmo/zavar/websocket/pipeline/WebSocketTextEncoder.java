@@ -1,0 +1,28 @@
+package ru.itmo.zavar.websocket.pipeline;
+
+import com.google.gson.Gson;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageEncoder;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import ru.itmo.zavar.websocket.event.Event;
+
+import java.util.List;
+
+import static ru.itmo.zavar.model.World.logger;
+
+@ChannelHandler.Sharable
+public class WebSocketTextEncoder extends MessageToMessageEncoder<Event> {
+    private final Gson gson = new Gson();
+
+    @Override
+    protected void encode(ChannelHandlerContext arg0, Event msg, List<Object> out) throws Exception {
+        try {
+            String json = gson.toJson(msg);
+            out.add(new TextWebSocketFrame(json));
+        } catch (Exception e) {
+            logger.warning(e.getMessage());
+        }
+    }
+
+}

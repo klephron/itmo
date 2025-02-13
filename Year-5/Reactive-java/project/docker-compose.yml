@@ -1,0 +1,13 @@
+services:
+  backend:
+    build: rj-back
+    ports:
+      - "8088:8088"
+
+  frontend:
+    build: rj-front
+    ports:
+      - "8081:80"
+    depends_on:
+      backend:
+        condition: service_started
