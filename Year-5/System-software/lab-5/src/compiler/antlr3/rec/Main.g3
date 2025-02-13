@@ -108,8 +108,8 @@ func_import_spec
 
 // CLASSES
 class_def
-  : 'class' name=identifier class_typename_list? class_parent_list? ('var' var_entry*) class_method_list ';'
-      -> ^(CLASS $name ^(TYPENAMES class_typename_list?) ^(PARENTS class_parent_list?) ^(VARS var_entry*) ^(METHODS class_method_list))
+  : class='class' name=identifier class_typename_list? class_parent_list? ('var' var_entry*) class_method_list ';'
+      -> ^(CLASS[$class, "CLASS"] $name ^(TYPENAMES class_typename_list?) ^(PARENTS class_parent_list?) ^(VARS var_entry*) ^(METHODS class_method_list))
   ;
 
 class_typename_list

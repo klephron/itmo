@@ -4,7 +4,6 @@
 #include "util/log.h"
 #include "util/macro.h"
 
-// SUBROUTINE
 hir_subroutine_body *hir_subroutine_body_new_block(list_hir_var   *vars,
                                                    hir_stmt_block *block) {
   hir_subroutine_body *self = MALLOC(hir_subroutine_body);

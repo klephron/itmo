@@ -368,10 +368,11 @@ void hir_build_var_list_extend(hir_ctx *ctx, list_hir_var *first,
   list_hir_var_free(second);
 }
 
-void hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
-                    hir_subroutine_body *body) {
+hir_subroutine *hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
+                               hir_subroutine_body *body) {
+  UNUSED(ctx);
   subroutine->body = body;
-  list_hir_subroutine_push_back(ctx->hir_ref->subroutines, subroutine);
+  return subroutine;
 }
 
 hir_subroutine_body *hir_build_func_body_block(hir_ctx *ctx, list_hir_var *vars,
@@ -384,6 +385,40 @@ hir_subroutine_body *hir_build_func_body_import(hir_ctx *ctx, hir_lit *lib,
                                                 hir_lit *entry) {
   UNUSED(ctx);
   return hir_subroutine_body_new_import(entry, lib);
+}
+
+// CLASS
+hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
+                             hir_method_modifier_enum modifier,
+                             hir_subroutine          *func) {
+  UNUSED(ctx);
+  if (!root || modifier == HIR_METHOD_MODIFIER_ENUM_ABSCENT) {
+    span *root_span = hir_span_new(root, ctx->ast_cur_ref->name_ref);
+    span *span = hir_span_new_range(root_span, func->base.span);
+    span_free(root_span);
+    return hir_method_new(span, modifier, func);
+  } else {
+    span *span = span_copy(func->base.span);
+    return hir_method_new(span, modifier, func);
+  }
+}
+
+hir_class *hir_build_class(hir_ctx *ctx, ANTLR3_BASE_TREE *root, hir_id *id,
+                           list_hir_id *typenames, list_hir_type *parents,
+                           list_hir_var *fields, list_hir_method *methods) {
+  span *root_span = hir_span_new(root, ctx->ast_cur_ref->name_ref);
+  span *span;
+  if (list_hir_type_size(parents)) {
+    span = hir_span_new_range(root_span, list_hir_type_back(parents)->span);
+  } else if (list_hir_id_size(typenames)) {
+    span =
+        hir_span_new_range(root_span, list_hir_id_back(typenames)->base.span);
+  } else {
+    span = hir_span_new_range(root_span, id->base.span);
+  }
+  span_free(root_span);
+
+  return hir_class_new(span, id, typenames, parents, fields, methods);
 }
 
 // EXPRESSIONS
@@ -523,4 +558,13 @@ hir_stmt_break *hir_build_stmt_break(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 hir_stmt_expr *hir_build_stmt_expr(hir_ctx *ctx, hir_expr_base *expr) {
   UNUSED(ctx);
   return hir_stmt_expr_new(span_copy(expr->base.span), expr);
+}
+
+// HIR
+void hir_build_hir_func(hir_ctx *ctx, hir_subroutine *func) {
+  list_hir_subroutine_push_back(ctx->hir_ref->subroutines, func);
+}
+
+void hir_build_hir_class(hir_ctx *ctx, hir_class *class) {
+  list_hir_class_push_back(ctx->hir_ref->classes, class);
 }

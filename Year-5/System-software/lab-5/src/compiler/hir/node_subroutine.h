@@ -4,7 +4,6 @@
 #include "compiler/hir/node_basic.h"
 #include "compiler/hir/node_stmt.h"
 
-// SUBROUTINE
 typedef enum hir_subroutine_body_enum {
   HIR_SUBROUTINE_BODY_UNKNOWN,
   HIR_SUBROUTINE_BODY_IMPORT,

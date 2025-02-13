@@ -1,6 +1,7 @@
 #include "node.h"
 
 #include "compiler/hir/node_basic.h"
+#include "compiler/hir/node_class.h"
 #include "compiler/hir/node_subroutine.h"
 #include "util/log.h"
 
@@ -28,7 +29,13 @@ void hir_node_free(hir_base *generic) {
       return hir_expr_free((hir_expr_base *)generic);
     case HIR_NODE_STMT:
       return hir_stmt_free((hir_stmt_base *)generic);
+    case HIR_NODE_CLASS:
+      return hir_class_free((hir_class *)generic);
+    case HIR_NODE_METHOD:
+      return hir_method_free((hir_method *)generic);
+      break;
     case HIR_NODE_UNKNOWN:
+    default:
       error("deleting unknown generic node");
       break;
     }

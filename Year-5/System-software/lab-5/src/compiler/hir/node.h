@@ -11,6 +11,8 @@ typedef enum hir_node_enum {
   HIR_NODE_SUBROUTINE,
   HIR_NODE_STMT,
   HIR_NODE_EXPR,
+  HIR_NODE_CLASS,
+  HIR_NODE_METHOD,
 } hir_node_enum;
 
 typedef struct hir_base_struct {
