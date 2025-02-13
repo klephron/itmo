@@ -1,0 +1,9 @@
+Benchmark;                                             (count);  Mode;  Cnt;          Score;          Error;  Units
+MailBenchmark.statsBenchmarkWithDelayAndWithParallel;      500;  avgt;    3;  507166425,000;  9106210,858;  ns/op
+MailBenchmark.statsBenchmarkWithDelayAndWithParallel;     2000;  avgt;    3;  507370540,000;  7849303,020;  ns/op
+MailBenchmark.statsBenchmarkWithDelayAndWithParallel;     8000;  avgt;    3;  508090823,333; 23037952,118;  ns/op
+MailBenchmark.statsBenchmarkWithDelayAndWithParallel;    32000;  avgt;    3;  510923188,333; 21552123,504;  ns/op
+MailBenchmark.statsReactiveBenchmarkWithDelay;             500;  avgt;    3;  507899483,333; 14052208,943;  ns/op
+MailBenchmark.statsReactiveBenchmarkWithDelay;            2000;  avgt;    3;  508166301,667; 25924216,325;  ns/op
+MailBenchmark.statsReactiveBenchmarkWithDelay;            8000;  avgt;    3;  510366971,667;  4484142,351;  ns/op
+MailBenchmark.statsReactiveBenchmarkWithDelay;           32000;  avgt;    3;  510668875,000; 29181988,194;  ns/op
