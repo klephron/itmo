@@ -87,6 +87,10 @@ const char *hir_node_enum_str(hir_node_enum kind) {
     return "STMT";
   case HIR_NODE_EXPR:
     return "EXPR";
+  case HIR_NODE_CLASS:
+    return "CLASS";
+  case HIR_NODE_METHOD:
+    return "METHOD";
   default:
     warn("unknown hir_node_enum %d", kind);
     return "UNKNOWN";
@@ -180,5 +184,21 @@ char *hir_lit_value_str(const hir_lit *lit) {
   default:
     warn("unexpected lit type %d", lit->type->type);
     return strdup("(unknown)");
+  }
+}
+
+const char *hir_method_modifier_enum_str(hir_method_modifier_enum kind) {
+  switch (kind) {
+  case HIR_METHOD_MODIFIER_ENUM_ABSCENT:
+    return "ABSCENT";
+  case HIR_METHOD_MODIFIER_ENUM_PUBLIC:
+    return "PUBLIC";
+  case HIR_METHOD_MODIFIER_ENUM_PRIVATE:
+    return "PRIVATE";
+    break;
+  case HIR_METHOD_MODIFIER_ENUM_UNKNOWN:
+  default:
+    warn("unexpected method modifier kind %d", kind);
+    return "UNKNOWN";
   }
 }

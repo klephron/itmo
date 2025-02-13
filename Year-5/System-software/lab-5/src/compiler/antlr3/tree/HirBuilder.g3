@@ -130,7 +130,7 @@ func_import_spec returns [hir_subroutine_body *v]
   @init {
     hir_lit *import_entry_v = NULL;
   }
-  : ^(IMPORT import_lib=str (import_entry=str { import_entry_v = $import_entry.v; }) ) {
+  : ^(IMPORT import_lib=str (import_entry=str { import_entry_v = $import_entry.v; })? ) {
       $v = hir_build_func_body_import(ANTLR3_USERP(), $import_lib.v, import_entry_v);
     }
   ;

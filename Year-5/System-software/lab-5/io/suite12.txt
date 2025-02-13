@@ -1,6 +1,10 @@
 class C<A> : A<A<>>, B
 var
+  a: A<A>;
+  b, c: B<T>;
 begin
+  public method one(): int from "read" in "example";
+  public method two(): int from "example";
 end;
 
 method main():

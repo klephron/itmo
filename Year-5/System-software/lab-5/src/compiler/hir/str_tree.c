@@ -715,13 +715,123 @@ static void hir_tree_str_subroutine(string_buffer *buffer, size_t pad,
   string_buffer_append(buffer, "}");
 }
 
+static void hir_tree_str_method(string_buffer *buffer, size_t pad,
+                                const hir_method *method) {
+  string_buffer_appendln(buffer, "{");
+  pad += HIR_STR_TAB;
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "base: ");
+  hir_tree_str_base(buffer, pad, &method->base);
+  string_buffer_appendln(buffer, "");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "modifier: ");
+  string_buffer_appendln(buffer,
+                         hir_method_modifier_enum_str(method->modifier));
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "subroutine: ");
+  hir_tree_str_subroutine(buffer, pad, method->subroutine);
+  string_buffer_appendln(buffer, "");
+
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "}");
+}
+
+static void hir_tree_str_class(string_buffer *buffer, size_t pad,
+                               const hir_class *class) {
+  string_buffer_appendln(buffer, "{");
+  pad += HIR_STR_TAB;
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "base: ");
+  hir_tree_str_base(buffer, pad, &class->base);
+  string_buffer_appendln(buffer, "");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "id: ");
+  hir_tree_str_id(buffer, pad, class->id);
+  string_buffer_appendln(buffer, "");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "typenames: [");
+  pad += HIR_STR_TAB;
+  for (list_hir_id_it it = list_hir_id_begin(class->typenames); !it.end(&it);
+       it.next(&it)) {
+    string_buffer_append_padding(buffer, pad);
+    hir_tree_str_id(buffer, pad, it.get(&it));
+    string_buffer_appendln(buffer, "");
+  }
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "]");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "parents: [");
+  pad += HIR_STR_TAB;
+  for (list_hir_type_it it = list_hir_type_begin(class->parents); !it.end(&it);
+       it.next(&it)) {
+    string_buffer_append_padding(buffer, pad);
+    hir_tree_str_type(buffer, pad, it.get(&it));
+    string_buffer_appendln(buffer, "");
+  }
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "]");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "fields: [");
+  pad += HIR_STR_TAB;
+  for (list_hir_var_it it = list_hir_var_begin(class->fields); !it.end(&it);
+       it.next(&it)) {
+    string_buffer_append_padding(buffer, pad);
+    hir_tree_str_var(buffer, pad, it.get(&it));
+    string_buffer_appendln(buffer, "");
+  }
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "]");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "methods: [");
+  pad += HIR_STR_TAB;
+  for (list_hir_method_it it = list_hir_method_begin(class->methods);
+       !it.end(&it); it.next(&it)) {
+    string_buffer_append_padding(buffer, pad);
+    hir_tree_str_method(buffer, pad, it.get(&it));
+    string_buffer_appendln(buffer, "");
+  }
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "]");
+
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_append(buffer, "}");
+}
+
 char *hir_tree_str(const hir *hir) {
   string_buffer *buffer = string_buffer_new(0, 0);
   string_buffer_appendln(buffer, "{");
   size_t pad = HIR_STR_TAB;
 
   string_buffer_append_padding(buffer, pad);
-  string_buffer_appendln(buffer, "SUBROUTINES: [");
+  string_buffer_appendln(buffer, "classes: [");
+  pad += HIR_STR_TAB;
+  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !it.end(&it);
+       it.next(&it)) {
+    string_buffer_append_padding(buffer, pad);
+    hir_tree_str_class(buffer, pad, it.get(&it));
+    string_buffer_appendln(buffer, "");
+  }
+  pad -= HIR_STR_TAB;
+  string_buffer_append_padding(buffer, HIR_STR_TAB);
+  string_buffer_appendln(buffer, "]");
+
+  string_buffer_append_padding(buffer, pad);
+  string_buffer_appendln(buffer, "subroutines: [");
   pad += HIR_STR_TAB;
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
        !it.end(&it); it.next(&it)) {
