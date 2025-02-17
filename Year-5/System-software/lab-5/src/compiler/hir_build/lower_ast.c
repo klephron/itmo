@@ -50,8 +50,8 @@ hir_build_initial_result hir_build_initial(const list_ast *asts) {
       .exceptions = list_exception_new(),
   };
 
-  for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
-    const ast *ast = it.get(&it);
+  for (list_ast_it it = list_ast_begin(asts); !END(it); NEXT(it)) {
+    const ast *ast = GET(it);
     ctx.ast_cur_ref = ast;
 
     ANTLR3_COMMON_TREE_NODE_STREAM *nodes =

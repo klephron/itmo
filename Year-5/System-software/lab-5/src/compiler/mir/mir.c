@@ -171,8 +171,8 @@
 //     // delete blocks before, because it can reference globals
 //     if (self->subs) {
 //       for (list_mir_subroutine_it it = list_mir_subroutine_begin(self->subs);
-//            !it.end(&it); it.next(&it)) {
-//         mir_subroutine *sub = it.get(&it);
+//            !END(it); NEXT(it)) {
+//         mir_subroutine *sub = GET(it);
 //         list_mir_bb_free(sub->bbs);
 //         sub->bbs = NULL;
 //       }

@@ -12,18 +12,18 @@
 // {
 //   hashset_hir_ctx_scope_entry_it it = hashset_hir_ctx_scope_entry_find(
 //       self->hashset, &(hir_ctx_scope_entry){.name_ref = name});
-//   if (it.end(&it)) {
+//   if (END(it)) {
 //     return NULL;
 //   }
-//   return it.get(&it)->binding_ref;
+//   return GET(it)->binding_ref;
 // }
 
 // static hir_symbol *hir_ctx_find_symbol(hir_ctx *ctx, char *name) {
 //   list_hir_ctx_scope *scopes = ctx->scopes;
 
 //   for (list_hir_ctx_scope_it it = list_hir_ctx_scope_begin(scopes);
-//        !it.end(&it); it.next(&it)) {
-//     hir_ctx_scope *scope = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     hir_ctx_scope *scope = GET(it);
 //     hir_symbol    *found = hir_ctx_scope_find_symbol(scope, name);
 //     if (found) {
 //       return found;
@@ -87,9 +87,9 @@
 //   case HIR_EXPR_CALL: {
 //     hir_expr_call *call = (hir_expr_call *)generic;
 //     hir_ctx_bind_expr(ctx, call->callee);
-//     for (list_hir_expr_it it = list_hir_expr_begin(call->args); !it.end(&it);
-//          it.next(&it)) {
-//       hir_expr_base *expr = it.get(&it);
+//     for (list_hir_expr_it it = list_hir_expr_begin(call->args); !END(it);
+//          NEXT(it)) {
+//       hir_expr_base *expr = GET(it);
 //       hir_ctx_bind_expr(ctx, expr);
 //     }
 //   } break;
@@ -97,18 +97,18 @@
 //     hir_expr_index *index = (hir_expr_index *)generic;
 //     hir_ctx_bind_expr(ctx, index->indexed);
 //     for (list_hir_expr_it it = list_hir_expr_begin(index->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       hir_expr_base *expr = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       hir_expr_base *expr = GET(it);
 //       hir_ctx_bind_expr(ctx, expr);
 //     }
 //   } break;
 //   case HIR_EXPR_BUILTIN: {
 //     hir_expr_builtin *builtin = (hir_expr_builtin *)generic;
 //     for (list_hir_expr_it it = list_hir_expr_begin(builtin->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       hir_expr_base *expr = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       hir_expr_base *expr = GET(it);
 //       hir_ctx_bind_expr(ctx, expr);
 //     }
 //   } break;
@@ -136,9 +136,9 @@
 //     list_hir_ctx_scope_push_front(ctx->scopes, root_scope);
 
 //     for (list_hir_stmt_it it = list_hir_stmt_begin(stmt->stmts);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       hir_stmt_base *stmt = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       hir_stmt_base *stmt = GET(it);
 //       hir_ctx_bind_stmt(ctx, stmt);
 //     }
 
@@ -172,8 +172,8 @@
 //   list_hir_ctx_scope_push_front(ctx->scopes, root_scope);
 
 //   for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
-//        !it.end(&it); it.next(&it)) {
-//     hir_param *param = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     hir_param *param = GET(it);
 //     char      *name = param->id->name;
 
 //     const hir_symbol *found = hir_ctx_find_symbol(ctx, name);
@@ -192,8 +192,8 @@
 
 //   if (subroutine->vars) {
 //     for (list_hir_var_it it = list_hir_var_begin(subroutine->vars);
-//          !it.end(&it); it.next(&it)) {
-//       hir_var *var = it.get(&it);
+//          !END(it); NEXT(it)) {
+//       hir_var *var = GET(it);
 //       char    *name = var->id->name;
 
 //       const hir_symbol *found = hir_ctx_find_symbol(ctx, name);
@@ -224,14 +224,14 @@
 
 //   for (list_hir_subroutine_it it =
 //            list_hir_subroutine_begin(ctx->hir_ref->subroutines);
-//        !it.end(&it); it.next(&it)) {
-//     hir_subroutine *subroutine = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     hir_subroutine *subroutine = GET(it);
 
 //     // add to global symbol table
 //     list_type *types = list_type_new();
 //     for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
-//          !it.end(&it); it.next(&it)) {
-//       type_base *type = it.get(&it)->type;
+//          !END(it); NEXT(it)) {
+//       type_base *type = GET(it)->type;
 //       list_type_push_back(types, type_copy(type));
 //     }
 //     hir_symbol *symbol =
@@ -255,8 +255,8 @@
 
 //   for (list_hir_subroutine_it it =
 //            list_hir_subroutine_begin(ctx->hir_ref->subroutines);
-//        !it.end(&it); it.next(&it)) {
-//     hir_subroutine *subroutine = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     hir_subroutine *subroutine = GET(it);
 //     hir_ctx_bind_subroutine(ctx, subroutine);
 //   }
 

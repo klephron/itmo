@@ -39,9 +39,9 @@
 //     ok &= hir_ctx_type_type(ctx, callable->ret_type);
 //     // NOTE: params are local symbols, no need to check
 //     // for (list_type_it it = list_type_begin(callable->param_types);
-//     // !it.end(&it);
-//     //      it.next(&it)) {
-//     //   ok &= hir_ctx_type_type(ctx, it.get(&it));
+//     // !END(it);
+//     //      NEXT(it)) {
+//     //   ok &= hir_ctx_type_type(ctx, GET(it));
 //     // }
 //   } break;
 //   default:
@@ -54,9 +54,9 @@
 //   int         ok = 1;
 //   const span *sub_span = sub->base.span;
 //   for (list_hir_param_it it = list_hir_param_begin(sub->params);
-//   !it.end(&it);
-//        it.next(&it)) {
-//     hir_param  *param = it.get(&it);
+//   !END(it);
+//        NEXT(it)) {
+//     hir_param  *param = GET(it);
 //     const span *ps = param->base.span;
 //     if (!param->type) {
 //       hir_error_add(ctx, EXCEPTION_HIR_SUBROUTINE_DECL_INVALID, sub_span,
@@ -76,20 +76,20 @@
 
 // void hir_ctx_type(hir_ctx *ctx) {
 //   for (list_hir_symbol_it it = list_hir_symbol_begin(ctx->hir_ref->globals);
-//        !it.end(&it); it.next(&it)) {
-//     const hir_symbol *symbol = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     const hir_symbol *symbol = GET(it);
 //     hir_ctx_type_type(ctx, symbol->type);
 //   }
 //   for (list_hir_symbol_it it = list_hir_symbol_begin(ctx->hir_ref->locals);
-//        !it.end(&it); it.next(&it)) {
-//     const hir_symbol *symbol = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     const hir_symbol *symbol = GET(it);
 //     hir_ctx_type_type(ctx, symbol->type);
 //   }
 
 //   for (list_hir_subroutine_it it =
 //            list_hir_subroutine_begin(ctx->hir_ref->subroutines);
-//        !it.end(&it); it.next(&it)) {
-//     hir_subroutine *subroutine = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     hir_subroutine *subroutine = GET(it);
 //     if (!subroutine->body) {
 //       hir_ctx_type_subroutine_decl(ctx, subroutine);
 //     }

@@ -1,4 +1,5 @@
 #include "type_table.h"
+
 #include "util/macro.h"
 #include <stdlib.h>
 

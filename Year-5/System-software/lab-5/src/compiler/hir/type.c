@@ -154,9 +154,9 @@ list_hir_type *list_hir_type_copy(const list_hir_type *in) {
     return NULL;
   }
   list_hir_type *nlist = list_hir_type_new();
-  for (list_hir_type_it it = list_hir_type_begin((list_hir_type *)in);
-       !it.end(&it); it.next(&it)) {
-    list_hir_type_push_back(nlist, hir_type_copy(it.get(&it)));
+  for (list_hir_type_it it = list_hir_type_begin((list_hir_type *)in); !END(it);
+       NEXT(it)) {
+    list_hir_type_push_back(nlist, hir_type_copy(GET(it)));
   }
   return nlist;
 }

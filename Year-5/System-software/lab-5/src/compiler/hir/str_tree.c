@@ -333,10 +333,9 @@ static void hir_tree_str_list_expr(string_buffer *buffer, size_t pad,
                                    list_hir_expr *list) {
   string_buffer_appendln(buffer, "[");
   pad += HIR_STR_TAB;
-  for (list_hir_expr_it it = list_hir_expr_begin(list); !it.end(&it);
-       it.next(&it)) {
+  for (list_hir_expr_it it = list_hir_expr_begin(list); !END(it); NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_expr(buffer, pad, it.get(&it));
+    hir_tree_str_expr(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -510,10 +509,10 @@ static void hir_tree_str_stmt_block(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_appendln(buffer, "stmts: [");
   pad += HIR_STR_TAB;
-  for (list_hir_stmt_it it = list_hir_stmt_begin(stmt->stmts); !it.end(&it);
-       it.next(&it)) {
+  for (list_hir_stmt_it it = list_hir_stmt_begin(stmt->stmts); !END(it);
+       NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_stmt(buffer, pad, it.get(&it));
+    hir_tree_str_stmt(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -648,9 +647,9 @@ static void hir_tree_str_subroutine_body(string_buffer *buffer, size_t pad,
     string_buffer_appendln(buffer, "vars: [");
     pad += HIR_STR_TAB;
     for (list_hir_var_it it = list_hir_var_begin(body->body.block.vars);
-         !it.end(&it); it.next(&it)) {
+         !END(it); NEXT(it)) {
       string_buffer_append_padding(buffer, pad);
-      hir_tree_str_var(buffer, pad, it.get(&it));
+      hir_tree_str_var(buffer, pad, GET(it));
       string_buffer_appendln(buffer, "");
     }
     pad -= HIR_STR_TAB;
@@ -691,9 +690,9 @@ static void hir_tree_str_subroutine(string_buffer *buffer, size_t pad,
   string_buffer_appendln(buffer, "params: [");
   pad += HIR_STR_TAB;
   for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
-       !it.end(&it); it.next(&it)) {
+       !END(it); NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_param(buffer, pad, it.get(&it));
+    hir_tree_str_param(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -758,10 +757,10 @@ static void hir_tree_str_class(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_appendln(buffer, "typenames: [");
   pad += HIR_STR_TAB;
-  for (list_hir_id_it it = list_hir_id_begin(class->typenames); !it.end(&it);
-       it.next(&it)) {
+  for (list_hir_id_it it = list_hir_id_begin(class->typenames); !END(it);
+       NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_id(buffer, pad, it.get(&it));
+    hir_tree_str_id(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -771,10 +770,10 @@ static void hir_tree_str_class(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_appendln(buffer, "parents: [");
   pad += HIR_STR_TAB;
-  for (list_hir_type_it it = list_hir_type_begin(class->parents); !it.end(&it);
-       it.next(&it)) {
+  for (list_hir_type_it it = list_hir_type_begin(class->parents); !END(it);
+       NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_type(buffer, pad, it.get(&it));
+    hir_tree_str_type(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -784,10 +783,10 @@ static void hir_tree_str_class(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_appendln(buffer, "fields: [");
   pad += HIR_STR_TAB;
-  for (list_hir_var_it it = list_hir_var_begin(class->fields); !it.end(&it);
-       it.next(&it)) {
+  for (list_hir_var_it it = list_hir_var_begin(class->fields); !END(it);
+       NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_var(buffer, pad, it.get(&it));
+    hir_tree_str_var(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -797,10 +796,10 @@ static void hir_tree_str_class(string_buffer *buffer, size_t pad,
   string_buffer_append_padding(buffer, pad);
   string_buffer_appendln(buffer, "methods: [");
   pad += HIR_STR_TAB;
-  for (list_hir_method_it it = list_hir_method_begin(class->methods);
-       !it.end(&it); it.next(&it)) {
+  for (list_hir_method_it it = list_hir_method_begin(class->methods); !END(it);
+       NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_method(buffer, pad, it.get(&it));
+    hir_tree_str_method(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -820,10 +819,10 @@ char *hir_tree_str(const hir *hir) {
   string_buffer_append_padding(buffer, pad);
   string_buffer_appendln(buffer, "classes: [");
   pad += HIR_STR_TAB;
-  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !it.end(&it);
-       it.next(&it)) {
+  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
+       NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_class(buffer, pad, it.get(&it));
+    hir_tree_str_class(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;
@@ -834,9 +833,9 @@ char *hir_tree_str(const hir *hir) {
   string_buffer_appendln(buffer, "subroutines: [");
   pad += HIR_STR_TAB;
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
-       !it.end(&it); it.next(&it)) {
+       !END(it); NEXT(it)) {
     string_buffer_append_padding(buffer, pad);
-    hir_tree_str_subroutine(buffer, pad, it.get(&it));
+    hir_tree_str_subroutine(buffer, pad, GET(it));
     string_buffer_appendln(buffer, "");
   }
   pad -= HIR_STR_TAB;

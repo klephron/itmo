@@ -359,9 +359,9 @@
 //                                               const hir_expr_call *call) {
 //   if (call) {
 //     list_eir_expr *list = list_eir_expr_new();
-//     for (list_hir_expr_it it = list_hir_expr_begin(call->args); !it.end(&it);
-//          it.next(&it)) {
-//       list_eir_expr_push_back(list, eir_ctx_build_expr(ctx, it.get(&it)));
+//     for (list_hir_expr_it it = list_hir_expr_begin(call->args); !END(it);
+//          NEXT(it)) {
+//       list_eir_expr_push_back(list, eir_ctx_build_expr(ctx, GET(it)));
 //     }
 
 //     return (eir_expr_base *)eir_expr_call_new(
@@ -376,9 +376,9 @@
 //   if (index) {
 //     list_eir_expr *list = list_eir_expr_new();
 //     for (list_hir_expr_it it = list_hir_expr_begin(index->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       list_eir_expr_push_back(list, eir_ctx_build_expr(ctx, it.get(&it)));
+//     !END(it);
+//          NEXT(it)) {
+//       list_eir_expr_push_back(list, eir_ctx_build_expr(ctx, GET(it)));
 //     }
 
 //     return (eir_expr_base *)eir_expr_index_new(
@@ -393,9 +393,9 @@
 //   if (builtin) {
 //     list_eir_expr *args = list_eir_expr_new();
 //     for (list_hir_expr_it it = list_hir_expr_begin(builtin->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       list_eir_expr_push_back(args, eir_ctx_build_expr(ctx, it.get(&it)));
+//     !END(it);
+//          NEXT(it)) {
+//       list_eir_expr_push_back(args, eir_ctx_build_expr(ctx, GET(it)));
 //     }
 
 //     eir_expr_builtin_enum kind;
@@ -498,9 +498,9 @@
 
 //   list_eir_scope_push_front(ctx->scope_stack, scope);
 
-//   for (list_hir_stmt_it it = list_hir_stmt_begin(stmt->stmts); !it.end(&it);
-//        it.next(&it)) {
-//     hir_stmt_base *stmt = it.get(&it);
+//   for (list_hir_stmt_it it = list_hir_stmt_begin(stmt->stmts); !END(it);
+//        NEXT(it)) {
+//     hir_stmt_base *stmt = GET(it);
 //     eir_scope     *child = eir_ctx_build_stmt(ctx, stmt);
 //     if (child) {
 //       eir_block_set_next(scope->cur, child->begin);
@@ -669,9 +669,9 @@
 
 //   for (list_hir_subroutine_it it =
 //   list_hir_subroutine_begin(hir->subroutines);
-//        !it.end(&it); it.next(&it)) {
+//        !END(it); NEXT(it)) {
 //     list_eir_subroutine_push_back(ctx->eir_ref->subroutines,
 //                                   eir_ctx_build_subroutine(ctx,
-//                                   it.get(&it)));
+//                                   GET(it)));
 //   }
 // }

@@ -143,13 +143,13 @@
 //   string_buffer_append(buffer, "(");
 //   {
 //     list_type_it it = list_type_begin(sub->args);
-//     if (!it.end(&it)) {
-//       mir_tree_str_type(buffer, pad, it.get(&it));
-//       it.next(&it);
+//     if (!END(it)) {
+//       mir_tree_str_type(buffer, pad, GET(it));
+//       NEXT(it);
 //     }
-//     for (; !it.end(&it); it.next(&it)) {
+//     for (; !END(it); NEXT(it)) {
 //       string_buffer_append(buffer, ", ");
-//       mir_tree_str_type(buffer, pad, it.get(&it));
+//       mir_tree_str_type(buffer, pad, GET(it));
 //     }
 //   }
 //   string_buffer_append(buffer, "): ");
@@ -213,13 +213,13 @@
 
 //     string_buffer_append(buffer, "(");
 //     list_mir_arg_it it = list_mir_arg_begin(builtin->args);
-//     if (!it.end(&it)) {
-//       mir_tree_str_stmt(buffer, pad, it.get(&it));
-//       it.next(&it);
+//     if (!END(it)) {
+//       mir_tree_str_stmt(buffer, pad, GET(it));
+//       NEXT(it);
 //     }
-//     for (; !it.end(&it); it.next(&it)) {
+//     for (; !END(it); NEXT(it)) {
 //       string_buffer_append(buffer, ", ");
-//       mir_tree_str_stmt(buffer, pad, it.get(&it));
+//       mir_tree_str_stmt(buffer, pad, GET(it));
 //     }
 //     string_buffer_append(buffer, ")");
 //     if (builtin->debug_line) {
@@ -293,10 +293,10 @@
 //   string_buffer_appendln(buffer, buf);
 //   pad += MIR_STR_TAB;
 
-//   for (list_mir_node_it it = list_mir_node_begin(bb->stmts); !it.end(&it);
-//        it.next(&it)) {
+//   for (list_mir_node_it it = list_mir_node_begin(bb->stmts); !END(it);
+//        NEXT(it)) {
 //     string_buffer_append_padding(buffer, pad);
-//     mir_tree_str_stmt(buffer, pad, it.get(&it));
+//     mir_tree_str_stmt(buffer, pad, GET(it));
 //     string_buffer_appendln(buffer, "");
 //   }
 
@@ -316,15 +316,15 @@
 //   string_buffer_append(buffer, "(");
 //   {
 //     list_mir_value_it it = list_mir_value_begin(sub->args);
-//     if (!it.end(&it)) {
+//     if (!END(it)) {
 //       mir_tree_str_type(buffer, pad,
-//                         it.get(&it)->debug_symbol->binding_ref->type);
-//       it.next(&it);
+//                         GET(it)->debug_symbol->binding_ref->type);
+//       NEXT(it);
 //     }
-//     for (; !it.end(&it); it.next(&it)) {
+//     for (; !END(it); NEXT(it)) {
 //       string_buffer_append(buffer, ", ");
 //       mir_tree_str_type(buffer, pad,
-//                         it.get(&it)->debug_symbol->binding_ref->type);
+//                         GET(it)->debug_symbol->binding_ref->type);
 //     }
 //   }
 //   string_buffer_append(buffer, "): ");
@@ -335,31 +335,31 @@
 //   mir_tree_str_value(buffer, pad, sub->ret);
 //   string_buffer_appendln(buffer, "\t// ret");
 
-//   for (list_mir_value_it it = list_mir_value_begin(sub->args); !it.end(&it);
-//        it.next(&it)) {
+//   for (list_mir_value_it it = list_mir_value_begin(sub->args); !END(it);
+//        NEXT(it)) {
 //     string_buffer_append_padding(buffer, pad);
-//     mir_tree_str_value(buffer, pad, it.get(&it));
+//     mir_tree_str_value(buffer, pad, GET(it));
 //     string_buffer_appendln(buffer, "\t// arg");
 //   }
 
-//   for (list_mir_value_it it = list_mir_value_begin(sub->vars); !it.end(&it);
-//        it.next(&it)) {
+//   for (list_mir_value_it it = list_mir_value_begin(sub->vars); !END(it);
+//        NEXT(it)) {
 //     string_buffer_append_padding(buffer, pad);
-//     mir_tree_str_value(buffer, pad, it.get(&it));
+//     mir_tree_str_value(buffer, pad, GET(it));
 //     string_buffer_appendln(buffer, "\t// var");
 //   }
 
-//   for (list_mir_value_it it = list_mir_value_begin(sub->tmps); !it.end(&it);
-//        it.next(&it)) {
+//   for (list_mir_value_it it = list_mir_value_begin(sub->tmps); !END(it);
+//        NEXT(it)) {
 //     string_buffer_append_padding(buffer, pad);
-//     mir_tree_str_value(buffer, pad, it.get(&it));
+//     mir_tree_str_value(buffer, pad, GET(it));
 //     string_buffer_appendln(buffer, "\t// tmp");
 //   }
 
-//   for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !it.end(&it);
-//        it.next(&it)) {
+//   for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !END(it);
+//        NEXT(it)) {
 //     string_buffer_append_padding(buffer, pad);
-//     mir_tree_str_bb(buffer, pad, it.get(&it));
+//     mir_tree_str_bb(buffer, pad, GET(it));
 //     string_buffer_appendln(buffer, "");
 //   }
 
@@ -378,9 +378,9 @@
 //   pad += MIR_STR_TAB;
 //   for (list_mir_subroutine_ext_it it =
 //            list_mir_subroutine_ext_begin(mir->sub_exts);
-//        !it.end(&it); it.next(&it)) {
+//        !END(it); NEXT(it)) {
 //     string_buffer_append_padding(buffer, pad);
-//     mir_tree_str_subroutine_ext(buffer, pad, it.get(&it));
+//     mir_tree_str_subroutine_ext(buffer, pad, GET(it));
 //     string_buffer_appendln(buffer, "");
 //   }
 //   pad -= MIR_STR_TAB;
@@ -391,9 +391,9 @@
 //   string_buffer_appendln(buffer, "SUBROUTINES: [");
 //   pad += MIR_STR_TAB;
 //   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
-//        !it.end(&it); it.next(&it)) {
+//        !END(it); NEXT(it)) {
 //     string_buffer_append_padding(buffer, pad);
-//     mir_tree_str_subroutine(buffer, pad, it.get(&it));
+//     mir_tree_str_subroutine(buffer, pad, GET(it));
 //     string_buffer_appendln(buffer, "");
 //   }
 //   pad -= MIR_STR_TAB;

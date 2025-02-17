@@ -121,8 +121,8 @@ target_state_enum context_tg_stepi(context *self) {
         self->breaks, &(breakpoint){.address = regs.rip});
 
     // in case of implicit breakpoints (handled not by ctx->breaks)
-    if (!it.end(&it)) {
-      b = it.get(&it);
+    if (!END(it)) {
+      b = GET(it);
       context_bp_remove(self, b);
     }
   }
@@ -153,8 +153,8 @@ target_state_enum context_tg_peekdata(context *self, uint64_t address,
   hashset_breakpoint_it it =
       hashset_breakpoint_find(self->breaks, &(breakpoint){.address = address});
 
-  if (!it.end(&it)) {
-    breakpoint *b = it.get(&it);
+  if (!END(it)) {
+    breakpoint *b = GET(it);
     if (b->is_placed) {
       data = peekdata_bpkpt_with_stored(data, b->data);
     }
@@ -170,8 +170,8 @@ target_state_enum context_tg_pokedata(context *self, uint64_t address,
   hashset_breakpoint_it b_it =
       hashset_breakpoint_find(self->breaks, &(breakpoint){.address = address});
 
-  if (!b_it.end(&b_it)) {
-    breakpoint *b = b_it.get(&b_it);
+  if (!END(b_it)) {
+    breakpoint *b = GET(b_it);
     if (b->is_placed) {
       b->data = peekdata_brkpt_to_store(data);
       data = peekdata_brkpt_with_int3(data);

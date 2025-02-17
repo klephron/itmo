@@ -84,9 +84,9 @@ static void usage(args *args) {
   int  buf_len = 256;
   char cg_subroutines[buf_len];
   int  offset = 0;
-  for (list_chars_it it = list_chars_begin(args->cg_subroutines); !it.end(&it);
-       it.next(&it)) {
-    char *sub = it.get(&it);
+  for (list_chars_it it = list_chars_begin(args->cg_subroutines); !END(it);
+       NEXT(it)) {
+    char *sub = GET(it);
     offset +=
         snprintf(cg_subroutines + offset, buf_len - offset - 1, "%s,", sub);
   }
@@ -250,7 +250,7 @@ static char *get_asm_path(args *args, const char *source) {
 
 static int has_subroutine(args *args, const char *subroutine) {
   list_chars_it it = list_chars_find(args->cg_subroutines, subroutine);
-  return !it.end(&it);
+  return !END(it);
 }
 
 static void print_exceptions(args *args, list_exception *exceptions) {
@@ -258,9 +258,9 @@ static void print_exceptions(args *args, list_exception *exceptions) {
   if (!exceptions) {
     return;
   }
-  for (list_exception_it it = list_exception_begin(exceptions); !it.end(&it);
-       it.next(&it)) {
-    exception *exc = it.get(&it);
+  for (list_exception_it it = list_exception_begin(exceptions); !END(it);
+       NEXT(it)) {
+    exception *exc = GET(it);
     char      *msg = exception_str(exc);
     fprintf(stderr, "%s\n", msg);
     free(msg);
@@ -295,9 +295,9 @@ static int execute(args *args) {
   list_ast *asts = list_ast_new();
 
   // stage: tokenize and parse to AST
-  for (list_chars_it it = list_chars_begin(args->input_files); !it.end(&it);
-       it.next(&it)) {
-    const char *path = it.get(&it);
+  for (list_chars_it it = list_chars_begin(args->input_files); !END(it);
+       NEXT(it)) {
+    const char *path = GET(it);
     char       *source = read_file(path);
 
     ast *ast = ast_build(path, source);
@@ -316,8 +316,8 @@ static int execute(args *args) {
 
   // stage: dot ast
   if (args->ast && (!args->code || args->ignore_errors)) {
-    for (list_ast_it it = list_ast_begin(asts); !it.end(&it); it.next(&it)) {
-      ast        *ast = it.get(&it);
+    for (list_ast_it it = list_ast_begin(asts); !END(it); NEXT(it)) {
+      ast        *ast = GET(it);
       dot_string *dot = dot_ast(ast);
       char       *path = get_ast_dot_path(args, ast);
       write_dot(args, dot, path);
@@ -383,8 +383,8 @@ static int execute(args *args) {
   // if (args->cfg && (!args->code || args->ignore_errors)) {
   //   for (list_eir_subroutine_it it =
   //            list_eir_subroutine_begin(eir->subroutines);
-  //        !it.end(&it); it.next(&it)) {
-  //     const eir_subroutine *sub = it.get(&it);
+  //        !END(it); NEXT(it)) {
+  //     const eir_subroutine *sub = GET(it);
   //     const char           *sub_name = sub->binding_ref->name;
   //     const char           *source = sub->binding_ref->decl_span->source_ref;
 
@@ -400,8 +400,8 @@ static int execute(args *args) {
   // if (args->cg && (!args->code || args->ignore_errors)) {
   //   for (list_eir_subroutine_it it =
   //            list_eir_subroutine_begin(eir->subroutines);
-  //        !it.end(&it); it.next(&it)) {
-  //     const eir_subroutine *sub = it.get(&it);
+  //        !END(it); NEXT(it)) {
+  //     const eir_subroutine *sub = GET(it);
   //     const char           *sub_name = sub->binding_ref->name;
   //     const char           *source = sub->binding_ref->decl_span->source_ref;
 

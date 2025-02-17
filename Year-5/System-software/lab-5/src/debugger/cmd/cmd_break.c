@@ -97,7 +97,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   hashset_breakpoint_it it =
       hashset_breakpoint_find(ctx->breaks, &(breakpoint){.address = address});
-  if (!it.end(&it)) {
+  if (!END(it)) {
     char buf[64];
     context_err_append(ctx, "breakpoint on address ");
     snprintf(buf, STRMAXLEN(buf), "0x%lx", address);

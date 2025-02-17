@@ -56,7 +56,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   hashset_cmd_it it =
       hashset_cmd_find(self->cmds, &(cmd){.cmd_ref = (char *)args_start});
 
-  if (it.end(&it)) {
+  if (END(it)) {
     ctx->s_debugger = DEBUGGER_ERROR;
     context_err_append(ctx, "unknown command: ");
     context_err_append(ctx, args_start);
@@ -64,7 +64,7 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
     goto cleanup;
   }
 
-  cmd *entry = it.get(&it);
+  cmd *entry = GET(it);
 
   *args_rest = c_tmp;
   while (isspace((unsigned char)*args_rest)) {

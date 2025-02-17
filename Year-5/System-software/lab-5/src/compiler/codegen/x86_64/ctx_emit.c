@@ -235,14 +235,14 @@
 //     break;
 //   }
 //   list_cg_x86_64_op_it op_it = list_cg_x86_64_op_begin(operands);
-//   if (!op_it.end(&op_it)) {
+//   if (!END(op_it)) {
 //     string_buffer_append(buf, " ");
-//     cg_emit_mode(self, buf, op_it.get(&op_it));
-//     op_it.next(&op_it);
+//     cg_emit_mode(self, buf, GET(op_it));
+//     NEXT(op_it);
 //   }
-//   for (; !op_it.end(&op_it); op_it.next(&op_it)) {
+//   for (; !END(op_it); NEXT(op_it)) {
 //     string_buffer_append(buf, ", ");
-//     cg_emit_mode(self, buf, op_it.get(&op_it));
+//     cg_emit_mode(self, buf, GET(op_it));
 //   }
 //   string_buffer_append(buf, "\n");
 // }
@@ -298,8 +298,8 @@
 //   string_buffer_append(buf, "\n");
 
 //   for (list_cg_x86_64_unit_it it = list_cg_x86_64_unit_begin(section->units);
-//        !it.end(&it); it.next(&it)) {
-//     cg_x86_64_unit *generic = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     cg_x86_64_unit *generic = GET(it);
 
 //     switch (generic->kind) {
 //     case CG_X86_64_UNIT_DATA:

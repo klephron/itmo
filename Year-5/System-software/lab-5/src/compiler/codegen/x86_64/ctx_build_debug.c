@@ -54,8 +54,8 @@
 //   list_cg_x86_64_unit *info_units = ctx->cg_ref->debug_info->units;
 //   for (hashset_cg_x86_64_debug_str_it it =
 //            hashset_cg_x86_64_debug_str_begin(ctx->debug_files_idx);
-//        !it.end(&it); it.next(&it)) {
-//     cg_x86_64_debug_str *debug_str = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     cg_x86_64_debug_str *debug_str = GET(it);
 //     cg_units_push_back(info_units,
 //     cg_x86_64_data_new_quad(debug_str->str_id));
 //   }
@@ -83,7 +83,7 @@
 //       ctx->debug_files_idx,
 //       &(cg_x86_64_debug_str){.chars_ref = line->source_ref});
 
-//   if (it.end(&it)) {
+//   if (END(it)) {
 //     file_id = ctx->debug_files_cnt++;
 //     char    *source = strdup(line->source_ref);
 //     uint64_t str_id = ctx_debug_add_str(ctx, source);
@@ -91,7 +91,7 @@
 //         ctx->debug_files_idx,
 //         cg_x86_64_debug_str_new_file(file_id, str_id, source));
 //   } else {
-//     file_id = it.get(&it)->file_id;
+//     file_id = GET(it)->file_id;
 //   }
 
 //   // add entry: [address, file_num, line_num]
@@ -127,9 +127,9 @@
 //   cg_units_push_back(info_units, cg_x86_64_data_new_quad(vars_cnt));
 
 //   // fill args array
-//   for (list_mir_value_it it = list_mir_value_begin(sub->args); !it.end(&it);
-//        it.next(&it)) {
-//     mir_value           *value = it.get(&it);
+//   for (list_mir_value_it it = list_mir_value_begin(sub->args); !END(it);
+//        NEXT(it)) {
+//     mir_value           *value = GET(it);
 //     cg_x86_64_map_value *cg = ctx_sub_value_find(ctx, value);
 //     // rbp_offset
 //     cg_units_push_back(info_units, cg_x86_64_data_new_quad(cg->rbp_offset));
@@ -141,9 +141,9 @@
 //   }
 
 //   // fill vars array
-//   for (list_mir_value_it it = list_mir_value_begin(sub->vars); !it.end(&it);
-//        it.next(&it)) {
-//     mir_value           *value = it.get(&it);
+//   for (list_mir_value_it it = list_mir_value_begin(sub->vars); !END(it);
+//        NEXT(it)) {
+//     mir_value           *value = GET(it);
 //     cg_x86_64_map_value *cg = ctx_sub_value_find(ctx, value);
 //     // rbp_offset
 //     cg_units_push_back(info_units, cg_x86_64_data_new_quad(cg->rbp_offset));

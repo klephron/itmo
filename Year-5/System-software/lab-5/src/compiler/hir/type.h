@@ -41,14 +41,14 @@ void hir_type_free(hir_type_base *generic);
 int  hir_type_equals(const hir_type_base *lsv, const hir_type_base *rsv);
 hir_type_base *hir_type_copy(const hir_type_base *generic);
 
-static inline int container_cmp_type(const void *lsv, const void *rsv) {
+static inline int container_cmp_hir_type(const void *lsv, const void *rsv) {
   return !hir_type_equals(lsv, rsv);
 }
-static inline void container_delete_type(void *self) {
+static inline void container_delete_hir_type(void *self) {
   return hir_type_free(self);
 }
-LIST_DECLARE_STATIC_INLINE(list_hir_type, hir_type_base, container_cmp_type,
-                           container_new_move, container_delete_type);
+LIST_DECLARE_STATIC_INLINE(list_hir_type, hir_type_base, container_cmp_hir_type,
+                           container_new_move, container_delete_hir_type);
 
 int list_hir_type_equals(const list_hir_type *lsv, const list_hir_type *rsv);
 list_hir_type *list_hir_type_copy(const list_hir_type *in);

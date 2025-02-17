@@ -58,7 +58,7 @@
 
 //   switch (arg_offset) {
 //   case 0:
-//     if (it.end(&it)) {
+//     if (END(it)) {
 //       if (variadic) {
 //         cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RDI));
 //         list_cg_x86_64_unit_push_back(
@@ -69,7 +69,7 @@
 //       variadic = 0;
 //       break;
 //     }
-//     cg = it.get(&it);
+//     cg = GET(it);
 //     operands = list_cg_x86_64_op_new();
 //     cg_op_push_back(operands,
 //                     cg_x86_64_op_new_base(cg->rbp_offset,
@@ -78,10 +78,10 @@
 //     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit
 //     *)cg_x86_64_instr_new(
 //                                              CG_X86_64_MNEM_MOVQ, operands));
-//     it.next(&it);
+//     NEXT(it);
 //     __attribute__((fallthrough));
 //   case 1:
-//     if (it.end(&it)) {
+//     if (END(it)) {
 //       if (variadic) {
 //         cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RSI));
 //         list_cg_x86_64_unit_push_back(
@@ -92,7 +92,7 @@
 //       variadic = 0;
 //       break;
 //     }
-//     cg = it.get(&it);
+//     cg = GET(it);
 //     operands = list_cg_x86_64_op_new();
 //     cg_op_push_back(operands,
 //                     cg_x86_64_op_new_base(cg->rbp_offset,
@@ -101,10 +101,10 @@
 //     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit
 //     *)cg_x86_64_instr_new(
 //                                              CG_X86_64_MNEM_MOVQ, operands));
-//     it.next(&it);
+//     NEXT(it);
 //     __attribute__((fallthrough));
 //   case 2:
-//     if (it.end(&it)) {
+//     if (END(it)) {
 //       if (variadic) {
 //         cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RDX));
 //         list_cg_x86_64_unit_push_back(
@@ -115,7 +115,7 @@
 //       variadic = 0;
 //       break;
 //     }
-//     cg = it.get(&it);
+//     cg = GET(it);
 //     operands = list_cg_x86_64_op_new();
 //     cg_op_push_back(operands,
 //                     cg_x86_64_op_new_base(cg->rbp_offset,
@@ -124,10 +124,10 @@
 //     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit
 //     *)cg_x86_64_instr_new(
 //                                              CG_X86_64_MNEM_MOVQ, operands));
-//     it.next(&it);
+//     NEXT(it);
 //     __attribute__((fallthrough));
 //   case 3:
-//     if (it.end(&it)) {
+//     if (END(it)) {
 //       if (variadic) {
 //         cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_RCX));
 //         list_cg_x86_64_unit_push_back(
@@ -138,7 +138,7 @@
 //       variadic = 0;
 //       break;
 //     }
-//     cg = it.get(&it);
+//     cg = GET(it);
 //     operands = list_cg_x86_64_op_new();
 //     cg_op_push_back(operands,
 //                     cg_x86_64_op_new_base(cg->rbp_offset,
@@ -147,10 +147,10 @@
 //     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit
 //     *)cg_x86_64_instr_new(
 //                                              CG_X86_64_MNEM_MOVQ, operands));
-//     it.next(&it);
+//     NEXT(it);
 //     __attribute__((fallthrough));
 //   case 4:
-//     if (it.end(&it)) {
+//     if (END(it)) {
 //       if (variadic) {
 //         cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_R8));
 //         list_cg_x86_64_unit_push_back(
@@ -161,7 +161,7 @@
 //       variadic = 0;
 //       break;
 //     }
-//     cg = it.get(&it);
+//     cg = GET(it);
 //     operands = list_cg_x86_64_op_new();
 //     cg_op_push_back(operands,
 //                     cg_x86_64_op_new_base(cg->rbp_offset,
@@ -170,10 +170,10 @@
 //     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit
 //     *)cg_x86_64_instr_new(
 //                                              CG_X86_64_MNEM_MOVQ, operands));
-//     it.next(&it);
+//     NEXT(it);
 //     __attribute__((fallthrough));
 //   case 5:
-//     if (it.end(&it)) {
+//     if (END(it)) {
 //       if (variadic) {
 //         cg_op_push_back(v_ops, cg_x86_64_op_new_register(CG_X86_64_REG_R9));
 //         list_cg_x86_64_unit_push_back(
@@ -184,7 +184,7 @@
 //       variadic = 0;
 //       break;
 //     }
-//     cg = it.get(&it);
+//     cg = GET(it);
 //     operands = list_cg_x86_64_op_new();
 //     cg_op_push_back(operands,
 //                     cg_x86_64_op_new_base(cg->rbp_offset,
@@ -193,11 +193,11 @@
 //     list_cg_x86_64_unit_push_back(texts, (cg_x86_64_unit
 //     *)cg_x86_64_instr_new(
 //                                              CG_X86_64_MNEM_MOVQ, operands));
-//     it.next(&it);
+//     NEXT(it);
 //     __attribute__((fallthrough));
 //   case 6:
-//     while (!it.end(&it)) {
-//       cg = it.get(&it);
+//     while (!END(it)) {
+//       cg = GET(it);
 //       operands = list_cg_x86_64_op_new();
 //       cg_op_push_back(operands,
 //                       cg_x86_64_op_new_base(cg->rbp_offset,
@@ -206,7 +206,7 @@
 //           texts, (cg_x86_64_unit *)cg_x86_64_instr_new(CG_X86_64_MNEM_PUSHQ,
 //                                                        operands));
 //       ctx->sub_stack_size += sizeof(x86_64_value);
-//       it.next(&it);
+//       NEXT(it);
 //     }
 //     __attribute__((fallthrough));
 //   default:
@@ -518,9 +518,9 @@
 //   } a1, a2;
 
 //   list_mir_arg_it it = list_mir_arg_begin(builtin->args);
-//   a1.node = it.get(&it);
-//   it.next(&it);
-//   a2.node = it.get(&it);
+//   a1.node = GET(it);
+//   NEXT(it);
+//   a2.node = GET(it);
 
 //   cg_mir_node_kind_assign(a1.node, a1.node->kind, a1.value, MIR_NODE_VALUE);
 //   cg_mir_node_kind_assign(a2.node, a2.node->kind, a2.value, MIR_NODE_VALUE);
@@ -545,7 +545,7 @@
 //   } a1;
 
 //   list_mir_arg_it it = list_mir_arg_begin(builtin->args);
-//   a1.node = it.get(&it);
+//   a1.node = GET(it);
 
 //   cg_mir_node_kind_assign(a1.node, a1.node->kind, a1.value, MIR_NODE_VALUE);
 
@@ -567,9 +567,9 @@
 //   } a1, a2;
 
 //   list_mir_arg_it it = list_mir_arg_begin(builtin->args);
-//   a1.node = it.get(&it);
-//   it.next(&it);
-//   a2.node = it.get(&it);
+//   a1.node = GET(it);
+//   NEXT(it);
+//   a2.node = GET(it);
 
 //   cg_mir_node_kind_assign(a1.node, a1.node->kind, a1.value, MIR_NODE_VALUE);
 //   cg_mir_node_kind_assign(a2.node, a2.node->kind, a2.value, MIR_NODE_VALUE);
@@ -593,9 +593,9 @@
 //   } a1, a2;
 
 //   list_mir_arg_it it = list_mir_arg_begin(builtin->args);
-//   a1.node = it.get(&it);
-//   it.next(&it);
-//   a2.node = it.get(&it);
+//   a1.node = GET(it);
+//   NEXT(it);
+//   a2.node = GET(it);
 
 //   cg_mir_node_kind_assign(a1.node, a1.node->kind, a1.value, MIR_NODE_VALUE);
 //   cg_mir_node_kind_assign(a2.node, a2.node->kind, a2.value, MIR_NODE_VALUE);
@@ -619,7 +619,7 @@
 //   } fun;
 
 //   list_mir_arg_it it = list_mir_arg_begin(builtin->args);
-//   fun.node = it.get(&it);
+//   fun.node = GET(it);
 
 //   switch (fun.node->kind) {
 //   case MIR_NODE_SUBROUTINE: {
@@ -631,8 +631,8 @@
 //       cg_x86_64_map_value *cg;
 //     } arg;
 
-//     while (it.next(&it)) {
-//       arg.node = it.get(&it);
+//     while (NEXT(it)) {
+//       arg.node = GET(it);
 
 //       if (arg.node->kind != MIR_NODE_VALUE) {
 //         error("expected %d as argument, got %d %p", MIR_NODE_VALUE,
@@ -686,10 +686,10 @@
 //     // NOTE:
 //     // 1. unwrap arguments (pushed to front, so reverse order)
 //     // 2. stack here isn't aligned, but doesn't matter (too lazy)
-//     for (it.next(&it); !it.end(&it); it.next(&it), t_it.next(&t_it), ++argc)
+//     for (NEXT(it); !END(it); NEXT(it), NEXT(t_it), ++argc)
 //     {
-//       mir_node_base *node = it.get(&it);
-//       type_base     *type = t_it.get(&t_it);
+//       mir_node_base *node = GET(it);
+//       type_base     *type = GET(t_it);
 
 //       if (node->kind != MIR_NODE_VALUE) {
 //         error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
@@ -925,9 +925,9 @@
 //   list_cg_x86_64_op        *operands;
 //   list_cg_x86_64_map_value *values = list_cg_x86_64_map_value_new();
 
-//   for (list_mir_arg_it it = list_mir_arg_begin(builtin->args); !it.end(&it);
-//        it.next(&it)) {
-//     mir_node_base *node = it.get(&it);
+//   for (list_mir_arg_it it = list_mir_arg_begin(builtin->args); !END(it);
+//        NEXT(it)) {
+//     mir_node_base *node = GET(it);
 //     if (node->kind != MIR_NODE_VALUE) {
 //       ctx_add_error(ctx, EXCEPTION_CG_IMPLICIT_CALLABLE, "expected %s, got
 //       %s",
@@ -1091,9 +1091,9 @@
 //     // mov variadic arguments
 //     list_cg_x86_64_map_value *values = list_cg_x86_64_map_value_new();
 //     for (list_mir_arg_it it = list_mir_arg_begin(builtin->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       mir_node_base *node = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       mir_node_base *node = GET(it);
 //       if (node->kind != MIR_NODE_VALUE) {
 //         error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
 //         goto release;
@@ -1329,9 +1329,9 @@
 //   list_cg_x86_64_map_value_push_back(values, cg_rsv);
 
 //   // to
-//   for (list_mir_arg_it it = list_mir_arg_begin(builtin->args); !it.end(&it);
-//        it.next(&it)) {
-//     mir_node_base *node = it.get(&it);
+//   for (list_mir_arg_it it = list_mir_arg_begin(builtin->args); !END(it);
+//        NEXT(it)) {
+//     mir_node_base *node = GET(it);
 //     if (node->kind != MIR_NODE_VALUE) {
 //       error("expected VALUE(%d) kind, got %d", MIR_NODE_VALUE, node->kind);
 //       goto release;
@@ -1371,9 +1371,9 @@
 
 //   {
 //     list_mir_arg_it it = list_mir_arg_begin(stmt->args);
-//     first = it.get(&it);
-//     it.next(&it);
-//     second = it.get(&it);
+//     first = GET(it);
+//     NEXT(it);
+//     second = GET(it);
 //   }
 
 //   switch (first->kind) {
@@ -1528,9 +1528,9 @@
 //   ctx_text_push_back(ctx, cg_x86_64_label_new(ctx_block_label(ctx, sub, bb),
 //                                               CG_X86_64_LABEL_INSTR));
 
-//   for (list_mir_node_it it = list_mir_node_begin(bb->stmts); !it.end(&it);
-//        it.next(&it)) {
-//     mir_node_base *stmt = it.get(&it);
+//   for (list_mir_node_it it = list_mir_node_begin(bb->stmts); !END(it);
+//        NEXT(it)) {
+//     mir_node_base *stmt = GET(it);
 //     ctx_stmt(ctx, sub, stmt);
 //   }
 

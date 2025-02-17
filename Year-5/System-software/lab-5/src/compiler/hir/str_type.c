@@ -1,5 +1,6 @@
 #include "str.h"
 #include "util/log.h"
+#include "util/macro.h"
 #include "util/string_buffer.h"
 
 static void string_buffer_append_type(string_buffer       *buffer,
@@ -12,12 +13,12 @@ static void string_buffer_append_type_list(string_buffer       *buffer,
   if (list && list_hir_type_size(list)) {
     string_buffer_append(buffer, prefix);
     list_hir_type_it it = list_hir_type_begin(list);
-    if (!it.end(&it)) {
-      string_buffer_append_type(buffer, it.get(&it));
+    if (!END(it)) {
+      string_buffer_append_type(buffer, GET(it));
     }
-    while (it.next(&it)) {
+    while (NEXT(it)) {
       string_buffer_append(buffer, ", ");
-      string_buffer_append_type(buffer, it.get(&it));
+      string_buffer_append_type(buffer, GET(it));
     }
     string_buffer_append(buffer, suffix);
   }

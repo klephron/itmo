@@ -90,19 +90,19 @@
 //       ctx->sub_map_values,
 //       &(cg_x86_64_map_value){.value_ref = (mir_value *)value});
 
-//   if (it.end(&it)) {
+//   if (END(it)) {
 //     error("value %p is not in sub_map_values", value);
 //     return NULL;
 //   }
 
-//   return it.get(&it);
+//   return GET(it);
 // }
 
 // // requires hashset to be filled
 // int ctx_in_globals(cg_x86_64_ctx *ctx, const mir_node_base *base) {
 //   hashset_cg_x86_64_mir_ref_it it =
 //       hashset_cg_x86_64_mir_ref_find(ctx->globls, (mir_node_base *)base);
-//   return !it.end(&it);
+//   return !END(it);
 // }
 
 // int ctx_is_exit(cg_x86_64_ctx *ctx, const mir_subroutine *sub) {

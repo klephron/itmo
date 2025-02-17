@@ -42,9 +42,9 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   size_t deleted = 0;
 
   for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
-       !it.end(&it); it.next(&it)) {
+       !END(it); NEXT(it)) {
 
-    breakpoint *b = it.get(&it);
+    breakpoint *b = GET(it);
 
     if (!id || b->id == id) {
       ++deleted;

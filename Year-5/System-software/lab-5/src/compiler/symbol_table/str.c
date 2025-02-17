@@ -95,8 +95,8 @@
 
 //   for (list_hir_symbol_it it =
 //            list_hir_symbol_begin((list_hir_symbol *)symbols);
-//        !it.end(&it); it.next(&it)) {
-//     const hir_symbol *symbol = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     const hir_symbol *symbol = GET(it);
 //     hir_symbol_table  table = hir_symbol_to_table(symbol);
 
 //     size_t id_s = strlen(table.id_ptr);
@@ -171,8 +171,8 @@
 //   // body
 //   for (list_hir_symbol_it it =
 //            list_hir_symbol_begin((list_hir_symbol *)symbols);
-//        !it.end(&it); it.next(&it)) {
-//     const hir_symbol *symbol = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     const hir_symbol *symbol = GET(it);
 //     hir_symbol_table  table = hir_symbol_to_table(symbol);
 
 //     string_buffer_append(buffer, "│");

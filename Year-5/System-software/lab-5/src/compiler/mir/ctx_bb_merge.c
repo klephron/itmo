@@ -55,10 +55,10 @@
 
 //   // if already traversed than return its predecessor list
 //   hashset_mir_bb_it bb_it = hashset_mir_bb_find(hs_visited, (mir_bb *)bb);
-//   if (!bb_it.end(&bb_it)) {
+//   if (!END(bb_it)) {
 //     hashset_mir_bb_preds_it it =
 //         hashset_mir_bb_preds_find(hs_preds, &(mir_bb_preds){.bb = bb});
-//     return it.get(&it);
+//     return GET(it);
 //   }
 //   hashset_mir_bb_insert(hs_visited, (mir_bb *)bb);
 
@@ -98,7 +98,7 @@
 //   // if more than 1 reference to next block
 //   hashset_mir_bb_preds_it it = hashset_mir_bb_preds_find(
 //       hs_preds, &(mir_bb_preds){.bb = b->jmp->jz_ref});
-//   mir_bb_preds *preds = it.get(&it);
+//   mir_bb_preds *preds = GET(it);
 //   if (list_mir_bb_ref_size(preds->preds) > 1) {
 //     return NULL;
 //   }
@@ -122,22 +122,22 @@
 
 //   hashset_mir_bb_preds_it preds_it =
 //       hashset_mir_bb_preds_find(hs_preds, &(mir_bb_preds){.bb = bb});
-//   mir_bb_preds *bb_preds = preds_it.get(&preds_it);
+//   mir_bb_preds *bb_preds = GET(preds_it);
 
 //   // update all predecessors
 //   for (list_mir_bb_ref_it it = list_mir_bb_ref_begin(bb_preds->preds);
-//        !it.end(&it); it.next(&it)) {
-//     mir_bb *pred_bb = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     mir_bb *pred_bb = GET(it);
 
 //     // check if not already deleted
 //     hashset_mir_bb_it it = hashset_mir_bb_find(hs_deleted, pred_bb);
-//     if (!it.end(&it)) {
+//     if (!END(it)) {
 //       continue;
 //     }
 
 //     hashset_mir_bb_preds_it next_it =
 //         hashset_mir_bb_preds_find(hs_preds, &(mir_bb_preds){.bb = next_bb});
-//     mir_bb_preds *next_preds = next_it.get(&next_it);
+//     mir_bb_preds *next_preds = GET(next_it);
 
 //     if (pred_bb->jmp->je_ref == bb) {
 //       pred_bb->jmp->je_ref = next_bb;
@@ -183,14 +183,14 @@
 
 //   // check
 //   // for (hashset_mir_bb_preds_it it = hashset_mir_bb_preds_begin(hs_preds);
-//   //      !it.end(&it); it.next(&it)) {
-//   //   mir_bb_preds *bb_preds = it.get(&it);
+//   //      !END(it); NEXT(it)) {
+//   //   mir_bb_preds *bb_preds = GET(it);
 
 //   //   debug("bb%zu", bb_preds->bb->id);
 //   //   for (list_mir_bb_ref_it pred_it =
 //   list_mir_bb_ref_begin(bb_preds->preds);
-//   //        !pred_it.end(&pred_it); pred_it.next(&pred_it)) {
-//   //     debug("  bb%zu", pred_it.get(&pred_it)->id);
+//   //        !END(pred_it); NEXT(pred_it)) {
+//   //     debug("  bb%zu", GET(pred_it)->id);
 //   //   }
 //   // }
 
@@ -219,7 +219,7 @@
 // void mir_ctx_bb_merge(mir_ctx *ctx) {
 //   for (list_mir_subroutine_it it =
 //            list_mir_subroutine_begin(ctx->mir_ref->subs);
-//        !it.end(&it); it.next(&it)) {
-//     mir_ctx_bb_merge_subroutine(ctx, it.get(&it));
+//        !END(it); NEXT(it)) {
+//     mir_ctx_bb_merge_subroutine(ctx, GET(it));
 //   }
 // }

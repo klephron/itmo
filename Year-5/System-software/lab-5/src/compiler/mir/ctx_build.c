@@ -126,13 +126,13 @@
 //             &(mir_map_value){.hir_ref = ((eir_expr_id
 //             *)first)->binding_ref});
 
-//         if (map_id.end(&map_id)) {
+//         if (END(map_id)) {
 //           error("unknown identifier %p", first);
 //           mir_node_free(store_second);
 //           return NULL;
 //         }
 
-//         store_first = (mir_node_base *)map_id.get(&map_id)->mir_ref;
+//         store_first = (mir_node_base *)GET(map_id)->mir_ref;
 //       } else {
 //         store_first =
 //             mir_ctx_build_stmt(ctx, mir_sub, mir_bb, binary->first, 0);
@@ -271,15 +271,15 @@
 //     // identifier
 //     hashset_mir_map_value_it v_it = hashset_mir_map_value_find(
 //         ctx->map_lvalues, &(mir_map_value){.hir_ref = id->binding_ref});
-//     if (!v_it.end(&v_it)) {
-//       const mir_value *val = v_it.get(&v_it)->mir_ref;
+//     if (!END(v_it)) {
+//       const mir_value *val = GET(v_it)->mir_ref;
 //       return (mir_node_base *)val;
 //     }
 
 //     hashset_mir_map_sub_it s_it = hashset_mir_map_sub_find(
 //         ctx->map_subs, &(mir_map_sub){.hir_ref = id->binding_ref});
-//     if (!s_it.end(&s_it)) {
-//       const mir_node_base *val = s_it.get(&s_it)->mir_ref;
+//     if (!END(s_it)) {
+//       const mir_node_base *val = GET(s_it)->mir_ref;
 //       return (mir_node_base *)val;
 //     }
 
@@ -296,9 +296,9 @@
 //         mir_ctx_build_stmt(ctx, mir_sub, mir_bb, call->callee, 1);
 //     list_mir_arg_push_back(args, callee);
 
-//     for (list_eir_expr_it it = list_eir_expr_begin(call->args); !it.end(&it);
-//          it.next(&it)) {
-//       const eir_expr_base *eir_arg = it.get(&it);
+//     for (list_eir_expr_it it = list_eir_expr_begin(call->args); !END(it);
+//          NEXT(it)) {
+//       const eir_expr_base *eir_arg = GET(it);
 //       mir_node_base       *mir_arg =
 //           mir_ctx_build_stmt(ctx, mir_sub, mir_bb, eir_arg, 1);
 //       list_mir_arg_push_back(args, mir_arg);
@@ -324,9 +324,9 @@
 //     list_mir_arg_push_back(args, indexed);
 
 //     for (list_eir_expr_it it = list_eir_expr_begin(index->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       const eir_expr_base *eir_arg = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       const eir_expr_base *eir_arg = GET(it);
 //       mir_node_base       *mir_arg =
 //           mir_ctx_build_stmt(ctx, mir_sub, mir_bb, eir_arg, 1);
 //       list_mir_arg_push_back(args, mir_arg);
@@ -366,9 +366,9 @@
 
 //     list_mir_arg *args = list_mir_arg_new();
 //     for (list_eir_expr_it it = list_eir_expr_begin(builtin->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       const eir_expr_base *eir_arg = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       const eir_expr_base *eir_arg = GET(it);
 //       mir_node_base       *mir_arg =
 //           mir_ctx_build_stmt(ctx, mir_sub, mir_bb, eir_arg, 1);
 //       list_mir_arg_push_back(args, mir_arg);
@@ -402,8 +402,8 @@
 //   hashset_mir_map_bb_it it =
 //       hashset_mir_map_bb_find(ctx->map_bbs, &(mir_map_bb){.hir_ref =
 //       eir_bb});
-//   if (!it.end(&it)) {
-//     return (mir_bb *)it.get(&it)->mir_ref;
+//   if (!END(it)) {
+//     return (mir_bb *)GET(it)->mir_ref;
 //   }
 
 //   mir_bb *bb = mir_bb_new(eir_bb->id, list_mir_node_new(), NULL);
@@ -428,7 +428,7 @@
 //       } else {
 //         hashset_mir_map_bb_it next_it = hashset_mir_map_bb_find(
 //             ctx->map_bbs, &(mir_map_bb){.hir_ref = eir_next->next});
-//         is_last_stmt = next_it.end(&next_it);
+//         is_last_stmt = END(next_it);
 //       }
 //     }
 
@@ -518,11 +518,11 @@
 //   // get mapping
 //   hashset_mir_map_sub_it sub_it = hashset_mir_map_sub_find(
 //       ctx->map_subs, &(mir_map_sub){.hir_ref = eir_sub->binding_ref});
-//   if (sub_it.end(&sub_it)) {
+//   if (END(sub_it)) {
 //     error("can't get preserved subroutine from index for %p", eir_sub);
 //     return;
 //   }
-//   mir_subroutine *mir_sub = (mir_subroutine *)sub_it.get(&sub_it)->mir_ref;
+//   mir_subroutine *mir_sub = (mir_subroutine *)GET(sub_it)->mir_ref;
 
 //   ctx->map_lvalues = hashset_mir_map_value_new();
 //   ctx->value_cnt = 0;
@@ -533,8 +533,8 @@
 
 //   // params
 //   for (list_hir_param_it it = list_hir_param_begin(eir_sub->params_ref);
-//        !it.end(&it); it.next(&it)) {
-//     const hir_param *param = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     const hir_param *param = GET(it);
 //     mir_value       *value = mir_value_new(ctx->value_cnt++,
 //                                            mir_debug_symbol_new(param->binding_ref));
 //     list_mir_value_push_back(mir_sub->args, value);
@@ -546,9 +546,9 @@
 
 //   // vars
 //   for (list_hir_var_it it = list_hir_var_begin(eir_sub->vars_ref);
-//   !it.end(&it);
-//        it.next(&it)) {
-//     const hir_var *var = it.get(&it);
+//   !END(it);
+//        NEXT(it)) {
+//     const hir_var *var = GET(it);
 //     mir_value     *value =
 //         mir_value_new(ctx->value_cnt++,
 //         mir_debug_symbol_new(var->binding_ref));
@@ -575,15 +575,15 @@
 
 //   list_mir_value_push_back(value_stack, mir_sub->ret);
 //   for (list_mir_value_it it = list_mir_value_begin(mir_sub->vars);
-//   !it.end(&it);
-//        it.next(&it)) {
-//     mir_value *first = it.get(&it);
+//   !END(it);
+//        NEXT(it)) {
+//     mir_value *first = GET(it);
 //     list_mir_value_push_front(value_stack, first);
 //   }
 //   for (list_mir_value_it it = list_mir_value_begin(mir_sub->tmps);
-//   !it.end(&it);
-//        it.next(&it)) {
-//     mir_value *first = it.get(&it);
+//   !END(it);
+//        NEXT(it)) {
+//     mir_value *first = GET(it);
 //     list_mir_value_push_front(value_stack, first);
 //   }
 
@@ -606,9 +606,9 @@
 
 //   // cleanup vars and tmps
 //   for (list_mir_value_it it = list_mir_value_begin(mir_sub->vars);
-//   !it.end(&it);
-//        it.next(&it)) {
-//     mir_value *first = it.get(&it);
+//   !END(it);
+//        NEXT(it)) {
+//     mir_value *first = GET(it);
 
 //     list_mir_arg *args = list_mir_arg_new();
 //     list_mir_arg_push_back(args, (mir_node_base *)first);
@@ -619,9 +619,9 @@
 //         NULL));
 //   }
 //   for (list_mir_value_it it = list_mir_value_begin(mir_sub->tmps);
-//   !it.end(&it);
-//        it.next(&it)) {
-//     mir_value *first = it.get(&it);
+//   !END(it);
+//        NEXT(it)) {
+//     mir_value *first = GET(it);
 
 //     list_mir_arg *args = list_mir_arg_new();
 //     list_mir_arg_push_front(args, (mir_node_base *)first);
@@ -648,14 +648,14 @@
 // void mir_ctx_build(mir_ctx *ctx, const eir *eir) {
 //   for (list_eir_subroutine_it it =
 //   list_eir_subroutine_begin(eir->subroutines);
-//        !it.end(&it); it.next(&it)) {
-//     const eir_subroutine *sub = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     const eir_subroutine *sub = GET(it);
 //     mir_ctx_build_subroutine_before(ctx, sub);
 //   }
 //   for (list_eir_subroutine_it it =
 //   list_eir_subroutine_begin(eir->subroutines);
-//        !it.end(&it); it.next(&it)) {
-//     const eir_subroutine *sub = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     const eir_subroutine *sub = GET(it);
 //     mir_ctx_build_subroutine(ctx, sub);
 //   }
 // }

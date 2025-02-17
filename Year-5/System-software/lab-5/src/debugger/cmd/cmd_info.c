@@ -144,15 +144,15 @@ static void fn_breakpoints(context *ctx) {
   char   buf[64];
   size_t cnt = 0;
   for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
-       !it.end(&it); it.next(&it)) {
+       !END(it); NEXT(it)) {
     ++cnt;
   }
 
   breakpoint **breakpoints = MALLOCN(breakpoint *, cnt);
   size_t       i = 0;
   for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
-       !it.end(&it); it.next(&it)) {
-    breakpoints[i++] = it.get(&it);
+       !END(it); NEXT(it)) {
+    breakpoints[i++] = GET(it);
   }
 
   if (cnt > 0) {

@@ -20,8 +20,8 @@
 //   // executable declarations
 //   for (list_mir_subroutine_ext_it it =
 //            list_mir_subroutine_ext_begin(mir->sub_exts);
-//        !it.end(&it); it.next(&it)) {
-//     mir_subroutine_ext *ext = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     mir_subroutine_ext *ext = GET(it);
 //     char               *ext_name = strdup(ext->name);
 
 //     list_cg_x86_64_unit_push_back(
@@ -34,8 +34,8 @@
 
 //   // add to globals
 //   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
-//        !it.end(&it); it.next(&it)) {
-//     mir_subroutine *sub = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     mir_subroutine *sub = GET(it);
 
 //     if (!strcmp(sub->name, "main")) {
 //       list_cg_x86_64_unit_push_back(
@@ -51,8 +51,8 @@
 //   cg_units_extend_move(ctx->cg_ref->text->units, globl_units);
 
 //   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
-//        !it.end(&it); it.next(&it)) {
-//     ctx_build_sub(ctx, it.get(&it), ctx->debug_subs_cnt++);
+//        !END(it); NEXT(it)) {
+//     ctx_build_sub(ctx, GET(it), ctx->debug_subs_cnt++);
 //   }
 
 //   ctx_debug_info_post_push_header(ctx);

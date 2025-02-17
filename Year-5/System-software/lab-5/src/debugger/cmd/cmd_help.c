@@ -12,9 +12,9 @@ static void fn_all(cmd_handler *handler, context *ctx) {
   context_out_appendln(ctx, "Commands:");
   size_t first_w = 0;
   size_t entries_cnt = 0;
-  for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !it.end(&it);
-       it.next(&it)) {
-    cmd *entry = it.get(&it);
+  for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !END(it);
+       NEXT(it)) {
+    cmd *entry = GET(it);
     first_w = max_size_t(first_w, strlen(entry->cmd_ref));
     ++entries_cnt;
   }
@@ -23,9 +23,9 @@ static void fn_all(cmd_handler *handler, context *ctx) {
   cmd **entries = malloc(sizeof(cmd *) * entries_cnt);
 
   size_t i = 0;
-  for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !it.end(&it);
-       it.next(&it)) {
-    cmd *entry = it.get(&it);
+  for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !END(it);
+       NEXT(it)) {
+    cmd *entry = GET(it);
     entries[i++] = entry;
   }
 
@@ -67,9 +67,9 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     fn_all(handler, ctx);
   } else {
     int found = 0;
-    for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !it.end(&it);
-         it.next(&it)) {
-      cmd *entry = it.get(&it);
+    for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !END(it);
+         NEXT(it)) {
+      cmd *entry = GET(it);
       if (!strcmp(args, entry->cmd_ref)) {
         fn_one(ctx, entry);
         found = 1;

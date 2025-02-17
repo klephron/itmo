@@ -55,8 +55,8 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   context_out_appendln(ctx, buf);
 
   for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
-       !it.end(&it); it.next(&it)) {
-    breakpoint *bp = it.get(&it);
+       !END(it); NEXT(it)) {
+    breakpoint *bp = GET(it);
     bp->is_placed = 0;
     context_bp_place(ctx, bp);
   }

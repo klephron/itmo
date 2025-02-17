@@ -329,9 +329,9 @@
 //     call->callee); if (child) {
 //       list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id, child));
 //     }
-//     for (list_eir_expr_it it = list_eir_expr_begin(call->args); !it.end(&it);
-//          it.next(&it)) {
-//       eir_expr_base *arg = it.get(&it); // NOTE: may be very bad
+//     for (list_eir_expr_it it = list_eir_expr_begin(call->args); !END(it);
+//          NEXT(it)) {
+//       eir_expr_base *arg = GET(it); // NOTE: may be very bad
 //       size_t         arg_id = cfg_traverse_expr_traverse(st, buffer, arg);
 //       if (arg_id) {
 //         list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id,
@@ -347,9 +347,9 @@
 //       list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id, child));
 //     }
 //     for (list_eir_expr_it it = list_eir_expr_begin(index->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       eir_expr_base *arg = it.get(&it); // NOTE: may be very bad
+//     !END(it);
+//          NEXT(it)) {
+//       eir_expr_base *arg = GET(it); // NOTE: may be very bad
 //       size_t         arg_id = cfg_traverse_expr_traverse(st, buffer, arg);
 //       if (arg_id) {
 //         list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id,
@@ -361,9 +361,9 @@
 //   case EIR_EXPR_BUILTIN: {
 //     eir_expr_builtin *builtin = (eir_expr_builtin *)expr;
 //     for (list_eir_expr_it it = list_eir_expr_begin(builtin->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       eir_expr_base *arg = it.get(&it); // NOTE: may be very bad
+//     !END(it);
+//          NEXT(it)) {
+//       eir_expr_base *arg = GET(it); // NOTE: may be very bad
 //       size_t         arg_id = cfg_traverse_expr_traverse(st, buffer, arg);
 //       if (arg_id) {
 //         list_expr_edge_push_back(st->expr_edges, dot_expr_edge_new(id,
@@ -383,8 +383,8 @@
 //   char buf[128];
 
 //   for (list_expr_edge_it it = list_expr_edge_begin(st->expr_edges);
-//        !it.end(&it); it.next(&it)) {
-//     dot_expr_edge *edge = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     dot_expr_edge *edge = GET(it);
 //     snprintf(buf, sizeof(buf) - 1, "expr_%zu_%zu -> expr_%zu_%zu;\n",
 //              st->ptr->id, edge->id_from, st->ptr->id, edge->id_to);
 //     string_buffer_append(buffer, buf);
@@ -428,8 +428,8 @@
 //   hashset_block_it it =
 //       hashset_block_find(ctx->blocks, &(dot_block){.ptr = root});
 
-//   if (!it.end(&it)) {
-//     return ((dot_block *)it.get(&it))->ptr->id;
+//   if (!END(it)) {
+//     return ((dot_block *)GET(it))->ptr->id;
 //   }
 
 //   dot_block *st;
@@ -509,8 +509,8 @@
 // static void cfg_link(dot_ctx_cfg *cfg, string_buffer *buffer) {
 //   char buf[256];
 //   for (list_block_edge_it it = list_block_edge_begin(cfg->block_edges);
-//        !it.end(&it); it.next(&it)) {
-//     dot_block_edge *edge = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     dot_block_edge *edge = GET(it);
 //     snprintf(buf, sizeof(buf) - 1, "block_%zu -> block_%zu", edge->id_from,
 //              edge->id_to);
 //     string_buffer_append(buffer, buf);
@@ -652,12 +652,12 @@
 //     hashset_subsymbol_it it = hashset_subsymbol_find(
 //         ctx->subindex, &(subsymbol){.symbol = sub_id->binding_ref});
 
-//     if (it.end(&it)) {
+//     if (END(it)) {
 //       error("identifer is not found");
 //       break;
 //     }
 
-//     const eir_subroutine *sub_child = it.get(&it)->subroutine;
+//     const eir_subroutine *sub_child = GET(it)->subroutine;
 //     size_t                child = cg_traverse(ctx, buffer, eir, sub_child);
 
 //     if (child) {
@@ -671,9 +671,9 @@
 //     eir_expr_index *index = (eir_expr_index *)expr;
 //     cg_traverse_expr(ctx, dsub, buffer, eir, index->indexed);
 //     for (list_eir_expr_it it = list_eir_expr_begin(index->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       eir_expr_base *arg = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       eir_expr_base *arg = GET(it);
 //       cg_traverse_expr(ctx, dsub, buffer, eir, arg);
 //     }
 //     break;
@@ -681,9 +681,9 @@
 //   case EIR_EXPR_BUILTIN: {
 //     eir_expr_builtin *builtin = (eir_expr_builtin *)expr;
 //     for (list_eir_expr_it it = list_eir_expr_begin(builtin->args);
-//     !it.end(&it);
-//          it.next(&it)) {
-//       eir_expr_base *arg = it.get(&it);
+//     !END(it);
+//          NEXT(it)) {
+//       eir_expr_base *arg = GET(it);
 //       cg_traverse_expr(ctx, dsub, buffer, eir, arg);
 //     }
 //     break;
@@ -703,7 +703,7 @@
 //   hashset_block_it it =
 //       hashset_block_find(dsub->blocks, &(dot_block){.ptr = root});
 
-//   if (!it.end(&it)) {
+//   if (!END(it)) {
 //     return;
 //   }
 
@@ -750,8 +750,8 @@
 //   hashset_subroutine_it it = hashset_subroutine_find(
 //       ctx->subroutines, &(dot_subroutine){.ptr = (eir_subroutine *)sub});
 
-//   if (!it.end(&it)) {
-//     return ((dot_subroutine *)it.get(&it))->id;
+//   if (!END(it)) {
+//     return ((dot_subroutine *)GET(it))->id;
 //   }
 
 //   dot_subroutine *dsub;
@@ -776,8 +776,8 @@
 //   char buf[64];
 //   for (list_subroutine_edge_it it =
 //            list_subroutine_edge_begin(ctx->subroutine_edges);
-//        !it.end(&it); it.next(&it)) {
-//     dot_subroutine_edge *edge = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     dot_subroutine_edge *edge = GET(it);
 //     snprintf(buf, sizeof(buf) - 1, "subroutine_%zu -> subroutine_%zu;\n",
 //              edge->id_from, edge->id_to);
 //     string_buffer_append(buffer, buf);
@@ -791,8 +791,8 @@
 
 //   for (list_eir_subroutine_it it =
 //   list_eir_subroutine_begin(eir->subroutines);
-//        !it.end(&it); it.next(&it)) {
-//     eir_subroutine *it_sub = it.get(&it);
+//        !END(it); NEXT(it)) {
+//     eir_subroutine *it_sub = GET(it);
 //     hashset_subsymbol_insert(ctx->subindex,
 //                              subsymbol_new(it_sub->binding_ref, it_sub));
 //   }
