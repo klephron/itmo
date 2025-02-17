@@ -2,6 +2,7 @@
 
 #include "compiler/span/span.h"
 #include "compiler/type_table/type.h"
+#include "util/hashset.h"
 
 typedef struct type_entry_struct {
   char      *id;
@@ -9,8 +10,26 @@ typedef struct type_entry_struct {
   span      *span;
 } type_entry;
 
-typedef struct type_table_struct {
+type_entry *type_entry_new(char *id, type_base *type, span *span);
+void        type_entry_free(type_entry *self);
 
+static inline int container_cmp_type_entry(const void *lsv, const void *rsv) {
+  return container_cmp_chars(((const type_entry *)lsv)->id,
+                             ((const type_entry *)rsv)->id);
+}
+static inline void container_delete_type_entry(void *lsv) {
+  type_entry_free(lsv);
+}
+static inline uint64_t container_hash_type_entry(const void *lsv) {
+  return container_hash_chars(((const type_entry *)lsv)->id);
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_type_entry, type_entry,
+                              container_cmp_type_entry, container_new_move,
+                              container_delete_type_entry,
+                              container_hash_type_entry);
+
+typedef struct type_table_struct {
+  hashset_type_entry *entries;
 } type_table;
 
 type_table *type_table_new();
