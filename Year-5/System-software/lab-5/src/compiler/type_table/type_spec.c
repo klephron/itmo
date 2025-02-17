@@ -78,7 +78,7 @@ type_spec_enum type_calc_spec(const type_base *generic) {
     }
     default:
       error("type_specialized currently can be attached ONLY to classes");
-      break;
+      return TYPE_SPEC_UNSET;
     }
   }
 

@@ -1,4 +1,5 @@
 #include "context.h"
+#include "util/macro.h"
 
 #include <assert.h>
 #include <errno.h>

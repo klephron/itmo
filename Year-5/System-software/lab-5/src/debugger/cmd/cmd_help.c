@@ -1,6 +1,7 @@
 #include "cmd.h"
 
 #include "debugger/cmd/handler.h"
+#include "util/macro.h"
 #include "util/math.h"
 #include "util/string.h"
 

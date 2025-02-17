@@ -3,6 +3,8 @@
 #include "util/container_util.h"
 #include "util/list.h"
 
+typedef struct type_entry_struct type_entry;
+
 typedef enum type_enum {
   TYPE_UNKNOWN,
   TYPE_PRIMITIVE,
@@ -20,11 +22,15 @@ typedef enum type_spec_enum {
 } type_spec_enum;
 
 typedef struct type_base_struct {
-  type_enum kind;
-  // maybe add type_entry_ref?
+  type_enum   kind;
+  type_entry *type_entry_ref;
 } type_base;
 
-void           type_free(type_base *generic);
+void type_free(type_base *generic);
+
+void        type_set_type_entry(type_base *generic, type_entry *type_entry_ref);
+type_entry *type_get_type_entry(type_base *generic);
+
 type_spec_enum type_calc_spec(const type_base *generic);
 type_spec_enum type_get_spec(const type_base *generic);
 

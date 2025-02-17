@@ -8,6 +8,7 @@ static void type_base_deinit(type_base *base) { UNUSED(base); }
 
 static void type_base_init(type_base *base, type_enum kind) {
   base->kind = kind;
+  base->type_entry_ref = NULL;
 }
 
 static void type_primitive_free(type_primitive *self) {
@@ -135,4 +136,32 @@ void type_free(type_base *generic) {
   }
 }
 
-int type_is_full_spec(const type_base *generic);
+void type_set_type_entry(type_base *generic, type_entry *type_entry_ref) {
+  if (!generic) {
+    error("can set type_entry %p, type is null", type_entry_ref);
+    return;
+  }
+
+  switch (generic->kind) {
+  case TYPE_PRIMITIVE:
+  case TYPE_ARRAY:
+  case TYPE_CALLABLE:
+  case TYPE_CLASS:
+  case TYPE_TYPENAME:
+  case TYPE_SPECIALIZED:
+    generic->type_entry_ref = type_entry_ref;
+    break;
+  case TYPE_UNKNOWN:
+  default:
+    error("unexpected type_entry kind %d %p", generic->kind, generic);
+    break;
+  }
+}
+
+type_entry *type_get_type_entry(type_base *generic) {
+  if (!generic) {
+    error("can get type_entry, type is null");
+    return NULL;
+  }
+  return generic->type_entry_ref;
+}
