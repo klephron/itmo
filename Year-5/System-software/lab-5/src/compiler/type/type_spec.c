@@ -1,4 +1,5 @@
-#include "spec.h"
+#include "type.h"
+
 #include "util/log.h"
 #include "util/macro.h"
 
@@ -81,6 +82,30 @@ type_spec_enum type_calc_spec(const type_base *generic) {
     }
   }
 
+  case TYPE_UNKNOWN:
+  default:
+    error("unexpected type kind %d %p", generic->kind, generic);
+    return TYPE_SPEC_UNSET;
+  }
+}
+
+type_spec_enum type_get_spec(const type_base *generic) {
+  if (!generic) {
+    return TYPE_SPEC_UNSET;
+  }
+  switch (generic->kind) {
+  case TYPE_PRIMITIVE:
+    return TYPE_SPEC_FULL;
+  case TYPE_TYPENAME:
+    return TYPE_SPEC_NOT_FULL;
+  case TYPE_ARRAY:
+    return ((const type_array *)generic)->spec;
+  case TYPE_CALLABLE:
+    return ((const type_callable *)generic)->spec;
+  case TYPE_CLASS:
+    return ((const type_class *)generic)->spec;
+  case TYPE_SPECIALIZED:
+    return ((const type_specialized *)generic)->spec;
   case TYPE_UNKNOWN:
   default:
     error("unexpected type kind %d %p", generic->kind, generic);

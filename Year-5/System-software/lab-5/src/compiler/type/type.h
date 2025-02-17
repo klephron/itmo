@@ -24,7 +24,10 @@ typedef struct type_base_struct {
   // maybe add type_entry_ref?
 } type_base;
 
-void               type_free(type_base *generic);
+void           type_free(type_base *generic);
+type_spec_enum type_calc_spec(const type_base *generic);
+type_spec_enum type_get_spec(const type_base *generic);
+
 static inline void container_delete_type(void *data) { type_free(data); }
 LIST_DECLARE_STATIC_INLINE(list_type, type_base, container_cmp_false,
                            container_new_move, container_delete_type);
@@ -53,9 +56,10 @@ typedef struct type_primitive_struct {
 type_primitive *type_primitive_new(type_primitive_enum type);
 
 // NOTE:
-// full specialization - all templates match actual types (recursively)
-// partial specialization - (a = C<int, T>) or even (a = C<int, B<T>>)
-
+// * full specialization - all templates match actual types (recursively)
+// * partial specialization - (a = C<int, T>) or even (a = C<int, B<T>>)
+// * calculation of `spec` is not done inside constructor (cuz it may fail)
+//
 typedef struct type_array_struct {
   type_base      base;
   type_base     *element_ref;
