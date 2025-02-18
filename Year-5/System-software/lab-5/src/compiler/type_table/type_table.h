@@ -34,3 +34,5 @@ typedef struct type_table_struct {
 
 type_table *type_table_new();
 void        type_table_free(type_table *self);
+
+void type_table_insert(type_table *self, char *id, type_base *type, span *span);

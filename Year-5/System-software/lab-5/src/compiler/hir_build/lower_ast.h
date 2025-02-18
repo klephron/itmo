@@ -1,7 +1,7 @@
 #pragma once
 
 #include "compiler/ast/ast.h"
-#include "compiler/exception/container.h"
+#include "compiler/exception/list.h"
 #include "compiler/hir/hir.h"
 
 typedef struct hir_build_initial_ctx_struct {

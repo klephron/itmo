@@ -1,7 +1,6 @@
 #include "lower_ast_funcs.h"
 
 #include "compiler/antlr3/antlr3.h"
-#include "compiler/exception/container.h"
 #include "compiler/hir/str.h"
 #include "compiler/span/span.h"
 #include "util/log.h"

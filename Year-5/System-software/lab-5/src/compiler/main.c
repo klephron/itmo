@@ -333,7 +333,7 @@ static int execute(args *args) {
 
   if (!args->code || args->ignore_errors) {
 
-    hir_build_result result = hir_build(asts);
+    hir_build_result result = hir_build(asts, args->ignore_errors);
     hir = result.hir;
     symbol_table = result.symbol_table;
     type_table = result.type_table;

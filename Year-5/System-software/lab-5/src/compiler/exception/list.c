@@ -1,4 +1,4 @@
-#include "container.h"
+#include "list.h"
 #include "util/macro.h"
 
 size_t list_exception_count_by_type(const list_exception *list,
@@ -29,4 +29,15 @@ size_t list_exception_count_by_level(const list_exception *list,
     }
   }
   return cnt;
+}
+
+void list_exception_extend(list_exception *self, list_exception *list) {
+  if (!self || !list) {
+    return;
+  }
+
+  while (!list_exception_empty(list)) {
+    list_exception_push_back(self, list_exception_pop_front(list));
+  }
+  list_exception_free(list);
 }

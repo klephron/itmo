@@ -32,3 +32,8 @@ void type_table_free(type_table *self) {
     free(self);
   }
 }
+
+void type_table_insert(type_table *self, char *id, type_base *type,
+                       span *span) {
+  hashset_type_entry_insert(self->entries, type_entry_new(id, type, span));
+}
