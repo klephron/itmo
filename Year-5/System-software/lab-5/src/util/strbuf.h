@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stddef.h>
-#define STRING_BUFFER_INITIAL_CAPACITY 256
-#define STRING_BUFFER_GROWTH_FACTOR 2
+#define STRBUF_INITIAL_CAPACITY 256
+#define STRBUF_GROWTH_FACTOR 2
 
 typedef struct strbuf_struct {
   char *data;
