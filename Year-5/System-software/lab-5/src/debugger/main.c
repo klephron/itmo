@@ -176,14 +176,14 @@ static int execute(args *args) {
           state_target_enum_str(context_tg_get_state(ctx)));
 
     if (ctx->s_debugger == DEBUGGER_ERROR) {
-      fprintf(stderr, "error: %s", string_buffer_data(ctx->buf_err));
-      string_buffer_reset(ctx->buf_err);
+      fprintf(stderr, "error: %s", strbuf_data(ctx->buf_err));
+      strbuf_reset(ctx->buf_err);
       ctx->s_debugger = DEBUGGER_IDLE;
     }
 
-    if (string_buffer_size(ctx->buf_out)) {
-      fprintf(stdout, "%s", string_buffer_data(ctx->buf_out));
-      string_buffer_reset(ctx->buf_out);
+    if (strbuf_size(ctx->buf_out)) {
+      fprintf(stdout, "%s", strbuf_data(ctx->buf_out));
+      strbuf_reset(ctx->buf_out);
     }
   }
 

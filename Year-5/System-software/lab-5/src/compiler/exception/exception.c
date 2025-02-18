@@ -9,7 +9,7 @@
 #include "util/colors.h"
 #include "util/log.h"
 #include "util/macro.h"
-#include "util/string_buffer.h"
+#include "util/strbuf.h"
 
 void exception_free(exception *exc) {
   if (exc) {
@@ -102,20 +102,20 @@ char *exception_str(const exception *exc) {
     }
   }
 
-  string_buffer *buffer = string_buffer_new(sizeof(buf), 0);
+  strbuf *buffer = strbuf_new(sizeof(buf), 0);
 
   switch (exc->level) {
   case EXCEPTION_LEVEL_INFO:
-    string_buffer_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
+    strbuf_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
     break;
   case EXCEPTION_LEVEL_WARNING:
-    string_buffer_append(buffer, ANSI_COLOR_YELLOW "warn" ANSI_COLOR_RESET);
+    strbuf_append(buffer, ANSI_COLOR_YELLOW "warn" ANSI_COLOR_RESET);
     break;
   case EXCEPTION_LEVEL_ERROR:
-    string_buffer_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
+    strbuf_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
     break;
   default:
-    string_buffer_append(buffer, "unknown");
+    strbuf_append(buffer, "unknown");
     break;
   }
 
@@ -153,15 +153,15 @@ char *exception_str(const exception *exc) {
              exc_message);
     break;
   }
-  string_buffer_append(buffer, buf);
-  string_buffer_append(buffer, "\n");
+  strbuf_append(buffer, buf);
+  strbuf_append(buffer, "\n");
 
   snprintf(buf, STRMAXLEN(buf),
            ANSI_COLOR_BLUE "  -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
            exc->line, exc->offset);
-  string_buffer_append(buffer, buf);
+  strbuf_append(buffer, buf);
 
-  return string_buffer_detach(buffer);
+  return strbuf_detach(buffer);
 }
 
 exception *exception_new_from_helper(const exception_helper *helper,
@@ -189,10 +189,14 @@ const char *exception_subtype_hir_str(exception_subtype_hir type) {
     return "symbol redefinition";
   case EXCEPTION_HIR_SYMBOL_UNDEFINED:
     return "symbol undefined";
-  case EXCEPTION_HIR_SUBROUTINE_DECL_INVALID:
-    return "invalid subroutine declaration";
+  case EXCEPTION_HIR_TYPE_REDEFINITION:
+    return "symbol redefinition";
+  case EXCEPTION_HIR_TYPE_UNDEFINED:
+    return "symbol undefined";
   case EXCEPTION_HIR_TYPE_UNSUPPORTED:
     return "type unsupported";
+  case EXCEPTION_HIR_SUBROUTINE_DECL_INVALID:
+    return "invalid subroutine declaration";
   case EXCEPTION_HIR_UNKNOWN:
   default:
     return "unknown";

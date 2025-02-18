@@ -1,19 +1,19 @@
-#include "util/string_buffer.h"
+#include "util/strbuf.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-void string_buffer_free(string_buffer *buffer) {
+void strbuf_free(strbuf *buffer) {
   if (buffer) {
     free(buffer->data);
     free(buffer);
   }
 }
 
-string_buffer *string_buffer_new(int capacity, double growth_factor) {
-  string_buffer *self = MALLOC(string_buffer);
+strbuf *strbuf_new(int capacity, double growth_factor) {
+  strbuf *self = MALLOC(strbuf);
   if (capacity > 0) {
     self->capacity = capacity;
   } else {
@@ -30,9 +30,9 @@ string_buffer *string_buffer_new(int capacity, double growth_factor) {
   return self;
 }
 
-static void string_buffer_resize(string_buffer *self) {
+static void string_buffer_resize(strbuf *self) {
   size_t new_capacity = self->capacity * self->growth_factor;
-  size_t size = string_buffer_size(self);
+  size_t size = strbuf_size(self);
 
   if (new_capacity < self->capacity) {
     error("string_buffer new_capacity is less than previous");
@@ -43,9 +43,9 @@ static void string_buffer_resize(string_buffer *self) {
   self->capacity = new_capacity;
 }
 
-void string_buffer_append(string_buffer *self, const char *data) {
+void strbuf_append(strbuf *self, const char *data) {
   size_t data_size = strlen(data) * sizeof(char);
-  size_t size = string_buffer_size(self);
+  size_t size = strbuf_size(self);
 
   while (size + data_size >= self->capacity) {
     string_buffer_resize(self);
@@ -55,22 +55,22 @@ void string_buffer_append(string_buffer *self, const char *data) {
   self->cur += (data_size / sizeof(char));
 }
 
-char *string_buffer_data(string_buffer *self) { return self->data; }
+char *strbuf_data(strbuf *self) { return self->data; }
 
-char *string_buffer_detach(string_buffer *self) {
+char *strbuf_detach(strbuf *self) {
   char *data = NULL;
   if (self) {
-    data = string_buffer_data(self);
+    data = strbuf_data(self);
     free(self);
   }
   return data;
 }
 
-size_t string_buffer_size(string_buffer *self) {
+size_t strbuf_size(strbuf *self) {
   return (((intptr_t)self->cur) - ((intptr_t)self->data));
 }
 
-void string_buffer_reset(string_buffer *self) {
+void strbuf_reset(strbuf *self) {
   self->cur = self->data;
   *self->cur = '\0';
 }

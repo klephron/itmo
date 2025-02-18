@@ -1,7 +1,7 @@
 #include "context.h"
 
 #include "util/macro.h"
-#include "util/string_buffer.h"
+#include "util/strbuf.h"
 #include <stdlib.h>
 #include <sys/wait.h>
 
@@ -9,8 +9,8 @@ context *context_new() {
   context *self = MALLOC(context);
   self->s_debugger = DEBUGGER_IDLE;
   self->s_target = TARGET_NO_TARGET;
-  self->buf_out = string_buffer_new(0, 0);
-  self->buf_err = string_buffer_new(0, 0);
+  self->buf_out = strbuf_new(0, 0);
+  self->buf_err = strbuf_new(0, 0);
 
   self->fname = NULL;
   self->abfd = NULL;
@@ -35,8 +35,8 @@ context *context_new() {
 
 void context_free(context *self) {
   if (self) {
-    string_buffer_free(self->buf_out);
-    string_buffer_free(self->buf_err);
+    strbuf_free(self->buf_out);
+    strbuf_free(self->buf_err);
     if (self->fname) {
       free(self->fname);
     }
@@ -53,7 +53,7 @@ void context_free(context *self) {
 }
 
 void context_out_append(context *self, const char *data) {
-  string_buffer_append(self->buf_out, data);
+  strbuf_append(self->buf_out, data);
 }
 
 void context_out_appendln(context *self, const char *data) {
@@ -62,7 +62,7 @@ void context_out_appendln(context *self, const char *data) {
 }
 
 void context_err_append(context *self, const char *data) {
-  string_buffer_append(self->buf_err, data);
+  strbuf_append(self->buf_err, data);
 }
 
 void context_err_appendln(context *self, const char *data) {

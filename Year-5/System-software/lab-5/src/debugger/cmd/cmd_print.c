@@ -154,58 +154,57 @@ cleanup:
   return result;
 }
 
-static void cmd_data_str_type(string_buffer *buf, x86_64_type *type,
-                              uint64_t ei) {
+static void cmd_data_str_type(strbuf *buf, x86_64_type *type, uint64_t ei) {
   x86_64_type_entry *entry = type->entries + ei;
   switch (entry->kind) {
   case X86_64_TYPE_VOID:
-    string_buffer_append(buf, "void");
+    strbuf_append(buf, "void");
     break;
   case X86_64_TYPE_BOOL:
-    string_buffer_append(buf, "bool");
+    strbuf_append(buf, "bool");
     break;
   case X86_64_TYPE_BYTE:
-    string_buffer_append(buf, "byte");
+    strbuf_append(buf, "byte");
     break;
   case X86_64_TYPE_INT:
-    string_buffer_append(buf, "int");
+    strbuf_append(buf, "int");
     break;
   case X86_64_TYPE_UINT:
-    string_buffer_append(buf, "uint");
+    strbuf_append(buf, "uint");
     break;
   case X86_64_TYPE_LONG:
-    string_buffer_append(buf, "long");
+    strbuf_append(buf, "long");
     break;
   case X86_64_TYPE_ULONG:
-    string_buffer_append(buf, "ulong");
+    strbuf_append(buf, "ulong");
     break;
   case X86_64_TYPE_CHAR:
-    string_buffer_append(buf, "char");
+    strbuf_append(buf, "char");
     break;
   case X86_64_TYPE_STRING:
-    string_buffer_append(buf, "string");
+    strbuf_append(buf, "string");
     break;
   case X86_64_TYPE_ARRAY:
-    string_buffer_append(buf, "array[");
+    strbuf_append(buf, "array[");
     cmd_data_str_type(buf, type, entry->i_child);
-    string_buffer_append(buf, "]");
+    strbuf_append(buf, "]");
     break;
   case X86_64_TYPE_OBJECT:
-    string_buffer_append(buf, "<object>");
+    strbuf_append(buf, "<object>");
     break;
   default:
-    string_buffer_append(buf, "<unknown>");
+    strbuf_append(buf, "<unknown>");
     break;
   }
 }
 
-static void cmd_data_str_raw(string_buffer *buf, x86_64_type *type, uint64_t ei,
+static void cmd_data_str_raw(strbuf *buf, x86_64_type *type, uint64_t ei,
                              uint8_t *raw) {
   x86_64_type_entry *entry = type->entries + ei;
   char               tmp[64];
   switch (entry->kind) {
   case X86_64_TYPE_VOID:
-    string_buffer_append(buf, "()");
+    strbuf_append(buf, "()");
     break;
   case X86_64_TYPE_BOOL: {
     uint8_t res = *raw;
@@ -214,46 +213,46 @@ static void cmd_data_str_raw(string_buffer *buf, x86_64_type *type, uint64_t ei,
     } else {
       snprintf(tmp, STRMAXLEN(tmp), "false");
     }
-    string_buffer_append(buf, tmp);
+    strbuf_append(buf, tmp);
   } break;
   case X86_64_TYPE_BYTE: {
     uint8_t res = *raw;
     snprintf(tmp, STRMAXLEN(tmp), "%d", res);
-    string_buffer_append(buf, tmp);
+    strbuf_append(buf, tmp);
   } break;
   case X86_64_TYPE_INT: {
     int32_t res = *(int32_t *)raw;
     snprintf(tmp, STRMAXLEN(tmp), "%d", res);
-    string_buffer_append(buf, tmp);
+    strbuf_append(buf, tmp);
   } break;
   case X86_64_TYPE_UINT: {
     uint32_t res = *(uint32_t *)raw;
     snprintf(tmp, STRMAXLEN(tmp), "%u", res);
-    string_buffer_append(buf, tmp);
+    strbuf_append(buf, tmp);
   } break;
   case X86_64_TYPE_LONG: {
     int64_t res = *(int64_t *)raw;
     snprintf(tmp, STRMAXLEN(tmp), "%ld", res);
-    string_buffer_append(buf, tmp);
+    strbuf_append(buf, tmp);
   } break;
   case X86_64_TYPE_ULONG: {
     uint64_t res = *(uint64_t *)raw;
     snprintf(tmp, STRMAXLEN(tmp), "%lu", res);
-    string_buffer_append(buf, tmp);
+    strbuf_append(buf, tmp);
   } break;
   case X86_64_TYPE_CHAR: {
     uint8_t res = *(uint8_t *)raw;
     snprintf(tmp, STRMAXLEN(tmp), "%c", res);
-    string_buffer_append(buf, tmp);
+    strbuf_append(buf, tmp);
   } break;
   case X86_64_TYPE_STRING: {
     uint8_t *res = (uint8_t *)raw;
-    string_buffer_append(buf, "\"");
-    string_buffer_append(buf, (char *)res);
-    string_buffer_append(buf, "\"");
+    strbuf_append(buf, "\"");
+    strbuf_append(buf, (char *)res);
+    strbuf_append(buf, "\"");
   } break;
   case X86_64_TYPE_ARRAY: {
-    string_buffer_append(buf, "[");
+    strbuf_append(buf, "[");
     uint64_t i = 0;
     if (i < entry->meta_array->count) {
       uint8_t *raw_cur = raw + entry->meta_array->size * i;
@@ -261,15 +260,15 @@ static void cmd_data_str_raw(string_buffer *buf, x86_64_type *type, uint64_t ei,
       ++i;
     }
     for (; i < entry->meta_array->count; ++i) {
-      string_buffer_append(buf, ", ");
+      strbuf_append(buf, ", ");
       uint8_t *raw_cur = raw + entry->meta_array->size * i;
       cmd_data_str_raw(buf, type, entry->i_child, raw_cur);
     }
-    string_buffer_append(buf, "]");
+    strbuf_append(buf, "]");
   } break;
   case X86_64_TYPE_OBJECT: {
   default:
-    string_buffer_append(buf, "<unknown>");
+    strbuf_append(buf, "<unknown>");
   } break;
   }
 }
@@ -284,18 +283,18 @@ static void cmd_data_str(x86_64_data *data, char **type_p, char **value_p) {
     }
     return;
   }
-  string_buffer *buf;
+  strbuf *buf;
 
   if (value_p) {
-    buf = string_buffer_new(32, 0);
+    buf = strbuf_new(32, 0);
     cmd_data_str_raw(buf, data->type, 0, data->raw);
-    *value_p = string_buffer_detach(buf);
+    *value_p = strbuf_detach(buf);
   }
 
   if (type_p) {
-    buf = string_buffer_new(32, 0);
+    buf = strbuf_new(32, 0);
     cmd_data_str_type(buf, data->type, 0);
-    *type_p = string_buffer_detach(buf);
+    *type_p = strbuf_detach(buf);
   }
 }
 

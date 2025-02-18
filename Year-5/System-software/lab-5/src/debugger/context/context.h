@@ -2,7 +2,7 @@
 
 #include "util/container_util.h"
 #include "util/hashset.h"
-#include "util/string_buffer.h"
+#include "util/strbuf.h"
 
 #include <bfd.h>
 #include <stdlib.h>
@@ -119,8 +119,8 @@ typedef struct options_struct {
 typedef struct context_struct {
   debugger_state_enum s_debugger;
   target_state_enum   s_target;
-  string_buffer      *buf_out;
-  string_buffer      *buf_err;
+  strbuf             *buf_out;
+  strbuf             *buf_err;
   // internal
   char               *fname;
   bfd                *abfd;

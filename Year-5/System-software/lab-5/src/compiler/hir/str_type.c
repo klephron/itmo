@@ -1,85 +1,85 @@
 #include "str.h"
 #include "util/log.h"
 #include "util/macro.h"
-#include "util/string_buffer.h"
+#include "util/strbuf.h"
 
-static void string_buffer_append_type(string_buffer       *buffer,
+static void string_buffer_append_type(strbuf              *buffer,
                                       const hir_type_base *generic);
 
-static void string_buffer_append_type_list(string_buffer       *buffer,
+static void string_buffer_append_type_list(strbuf              *buffer,
                                            const list_hir_type *list,
                                            const char          *prefix,
                                            const char          *suffix) {
   if (list && list_hir_type_size(list)) {
-    string_buffer_append(buffer, prefix);
+    strbuf_append(buffer, prefix);
     list_hir_type_it it = list_hir_type_begin(list);
     if (!END(it)) {
       string_buffer_append_type(buffer, GET(it));
     }
     while (NEXT(it)) {
-      string_buffer_append(buffer, ", ");
+      strbuf_append(buffer, ", ");
       string_buffer_append_type(buffer, GET(it));
     }
-    string_buffer_append(buffer, suffix);
+    strbuf_append(buffer, suffix);
   }
 }
 
-static void string_buffer_append_type(string_buffer       *buffer,
+static void string_buffer_append_type(strbuf              *buffer,
                                       const hir_type_base *generic) {
   if (!generic) {
-    string_buffer_append(buffer, "-");
+    strbuf_append(buffer, "-");
     return;
   }
 
   switch (generic->type) {
   case HIR_TYPE_BOOL:
-    string_buffer_append(buffer, "bool");
+    strbuf_append(buffer, "bool");
     break;
   case HIR_TYPE_BYTE:
-    string_buffer_append(buffer, "byte");
+    strbuf_append(buffer, "byte");
     break;
   case HIR_TYPE_INT:
-    string_buffer_append(buffer, "int");
+    strbuf_append(buffer, "int");
     break;
   case HIR_TYPE_UINT:
-    string_buffer_append(buffer, "uint");
+    strbuf_append(buffer, "uint");
     break;
   case HIR_TYPE_LONG:
-    string_buffer_append(buffer, "long");
+    strbuf_append(buffer, "long");
     break;
   case HIR_TYPE_ULONG:
-    string_buffer_append(buffer, "ulong");
+    strbuf_append(buffer, "ulong");
     break;
   case HIR_TYPE_CHAR:
-    string_buffer_append(buffer, "char");
+    strbuf_append(buffer, "char");
     break;
   case HIR_TYPE_STRING:
-    string_buffer_append(buffer, "string");
+    strbuf_append(buffer, "string");
     break;
   case HIR_TYPE_VOID:
-    string_buffer_append(buffer, "void");
+    strbuf_append(buffer, "void");
     break;
   case HIR_TYPE_CUSTOM: {
     hir_type_custom *custom = (hir_type_custom *)generic;
-    string_buffer_append(buffer, custom->name);
+    strbuf_append(buffer, custom->name);
     string_buffer_append_type_list(buffer, custom->templates, "<", ">");
   } break;
   case HIR_TYPE_ARRAY: {
     hir_type_array *array = (hir_type_array *)generic;
-    string_buffer_append(buffer, "array[");
+    strbuf_append(buffer, "array[");
     string_buffer_append_type(buffer, array->elem_type);
-    string_buffer_append(buffer, "]");
+    strbuf_append(buffer, "]");
   } break;
   case HIR_TYPE_CLASS: {
     hir_type_class *class = (hir_type_class *)generic;
-    string_buffer_append(buffer, "class ");
-    string_buffer_append(buffer, class->name);
+    strbuf_append(buffer, "class ");
+    strbuf_append(buffer, class->name);
     string_buffer_append_type_list(buffer, class->templates, "<", ">");
     string_buffer_append_type_list(buffer, class->parents, " : ", "");
   } break;
   case HIR_TYPE_UNKNOWN:
     warn("unknown type %d %p", generic->type, generic);
-    string_buffer_append(buffer, "unknown");
+    strbuf_append(buffer, "unknown");
     break;
   }
 }
@@ -125,9 +125,9 @@ const char *hir_type_base_str(hir_type_base *self) {
 
 char *hir_type_str(const hir_type_base *generic) {
   if (generic) {
-    string_buffer *buffer = string_buffer_new(16, 0);
+    strbuf *buffer = strbuf_new(16, 0);
     string_buffer_append_type(buffer, generic);
-    return string_buffer_detach(buffer);
+    return strbuf_detach(buffer);
   }
   return NULL;
 }

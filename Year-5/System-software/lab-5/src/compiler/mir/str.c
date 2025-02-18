@@ -3,7 +3,7 @@
 // #include "compiler/type/str.h"
 // #include "util/log.h"
 // #include "util/macro.h"
-// #include "util/string_buffer.h"
+// #include "util/strbuf.h"
 // #include <stdio.h>
 
 // #define MIR_STR_TAB 2

@@ -8,7 +8,7 @@
 // #include "util/log.h"
 // #include "util/macro.h"
 // #include "util/string.h"
-// #include "util/string_buffer.h"
+// #include "util/strbuf.h"
 
 // #include <stdio.h>
 // #include <stdlib.h>

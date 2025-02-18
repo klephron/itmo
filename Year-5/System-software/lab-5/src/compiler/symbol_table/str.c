@@ -67,15 +67,6 @@
 //   };
 // }
 
-// static inline void string_buffer_append_cell(string_buffer *buffer,
-//                                              size_t max_len, const char
-//                                              *field, const char *space) {
-//   string_buffer_append(buffer, field);
-//   for (size_t i = 0; i < max_len - strlen(field); ++i) {
-//     string_buffer_append(buffer, space);
-//   }
-// }
-
 // char *hir_list_symbol_str(const list_hir_symbol *symbols) {
 //   string_buffer *buffer = string_buffer_new(0, 0);
 

@@ -2,6 +2,7 @@
 
 #include "compiler/antlr3/antlr3.h"
 #include "compiler/hir/str.h"
+#include "compiler/hir_build/exception.h"
 #include "compiler/span/span.h"
 #include "util/log.h"
 #include "util/macro.h"
@@ -105,15 +106,10 @@ static ulong hir_build_str2ulong(const char *str, int base,
 // ERRORS
 static void hir_error_add(hir_ctx *ctx, exception_subtype_hir subtype,
                           const span *span, const char *format, ...) {
-  exception *exc;
-  va_list    args;
+
+  va_list args;
   va_start(args, format);
-
-  exc = exception_new_v(EXCEPTION_LEVEL_ERROR, EXCEPTION_HIR, subtype,
-                        span->source_ref, span->line_start, span->pos_start,
-                        exception_subtype_hir_str(subtype), format, args);
-  list_exception_push_back(ctx->exceptions, exc);
-
+  hir_exception_add_error_v(ctx->exceptions, subtype, span, format, args);
   va_end(args);
 }
 

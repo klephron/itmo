@@ -1,8 +1,10 @@
 #include "bind_symbols.h"
 
 hir_bind_symbols_result hir_bind_symbols(hir *hir) {
-  return (hir_bind_symbols_result){
-      .symbol_table = NULL,
-      .exceptions = NULL,
+  hir_bind_symbols_result result = {
+      .symbol_table = symbol_table_new(),
+      .exceptions = list_exception_new(),
   };
+
+  return result;
 }

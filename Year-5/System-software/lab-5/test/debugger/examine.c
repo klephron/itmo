@@ -4,9 +4,9 @@
 
 #include "util/log.h"
 #include "util/macro.h"
-#include "util/string_buffer.h"
+#include "util/strbuf.h"
 
-static void print_le_8bytes(string_buffer *buffer, uint64_t data, char format,
+static void print_le_8bytes(strbuf *buffer, uint64_t data, char format,
                             size_t size) {
   char   buf[64];
   size_t offset = 0;
@@ -101,18 +101,18 @@ static void print_le_8bytes(string_buffer *buffer, uint64_t data, char format,
       return;
     }
     offset += size;
-    string_buffer_append(buffer, buf);
-    string_buffer_append(buffer, " ");
+    strbuf_append(buffer, buf);
+    strbuf_append(buffer, " ");
   }
 }
 
 Test(debugger, examine_format_hex_8) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'x', 8);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -120,11 +120,11 @@ Test(debugger, examine_format_hex_8) {
 
 Test(debugger, examine_format_hex_4) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'x', 4);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -132,11 +132,11 @@ Test(debugger, examine_format_hex_4) {
 
 Test(debugger, examine_format_hex_2) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'x', 2);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -144,11 +144,11 @@ Test(debugger, examine_format_hex_2) {
 
 Test(debugger, examine_format_hex_1) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'x', 1);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -156,11 +156,11 @@ Test(debugger, examine_format_hex_1) {
 
 Test(debugger, examine_format_z_8) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'z', 8);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -168,11 +168,11 @@ Test(debugger, examine_format_z_8) {
 
 Test(debugger, examine_format_z_4) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'z', 4);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -180,11 +180,11 @@ Test(debugger, examine_format_z_4) {
 
 Test(debugger, examine_format_z_2) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'z', 2);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -192,11 +192,11 @@ Test(debugger, examine_format_z_2) {
 
 Test(debugger, examine_format_z_1) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'z', 1);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -204,11 +204,11 @@ Test(debugger, examine_format_z_1) {
 
 Test(debugger, examine_format_d_8) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'd', 8);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -216,11 +216,11 @@ Test(debugger, examine_format_d_8) {
 
 Test(debugger, examine_format_d_4) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'd', 4);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -228,11 +228,11 @@ Test(debugger, examine_format_d_4) {
 
 Test(debugger, examine_format_d_2) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'd', 2);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -240,11 +240,11 @@ Test(debugger, examine_format_d_2) {
 
 Test(debugger, examine_format_d_1) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'd', 1);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -252,11 +252,11 @@ Test(debugger, examine_format_d_1) {
 
 Test(debugger, examine_format_u_8) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'u', 8);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -264,11 +264,11 @@ Test(debugger, examine_format_u_8) {
 
 Test(debugger, examine_format_u_4) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'u', 4);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -276,11 +276,11 @@ Test(debugger, examine_format_u_4) {
 
 Test(debugger, examine_format_u_2) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'u', 2);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);
@@ -288,11 +288,11 @@ Test(debugger, examine_format_u_2) {
 
 Test(debugger, examine_format_u_1) {
   uint64_t       data = 0xFFF0DEAD;
-  string_buffer *buffer = string_buffer_new(0, 0);
+  strbuf *buffer = strbuf_new(0, 0);
 
   print_le_8bytes(buffer, data, 'u', 1);
 
-  char *res = string_buffer_detach(buffer);
+  char *res = strbuf_detach(buffer);
   debug("%s", res);
 
   free(res);

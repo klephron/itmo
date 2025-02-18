@@ -65,15 +65,15 @@ cleanup:
 }
 
 typedef struct dis_ctx_struct {
-  context       *ctx;
-  string_buffer *buffer;
-  int            error;
+  context *ctx;
+  strbuf  *buffer;
+  int      error;
 } dis_ctx;
 
 static int fn_fprintf(void *stream, const char *fmt, ...) {
   char buf[256];
 
-  string_buffer *buffer = (string_buffer *)stream;
+  strbuf *buffer = (strbuf *)stream;
 
   va_list args;
   va_start(args, fmt);
@@ -81,15 +81,15 @@ static int fn_fprintf(void *stream, const char *fmt, ...) {
   int len = vsnprintf(buf, STRMAXLEN(buf), fmt, args);
   va_end(args);
 
-  string_buffer_append(buffer, buf);
+  strbuf_append(buffer, buf);
   return len;
 }
 
 static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
                                    const char *fmt, ...) {
   UNUSED(style);
-  char           buf[256];
-  string_buffer *buffer = (string_buffer *)stream;
+  char    buf[256];
+  strbuf *buffer = (strbuf *)stream;
 
   va_list args;
   va_start(args, fmt);
@@ -97,7 +97,7 @@ static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
   int len = vsnprintf(buf, STRMAXLEN(buf), fmt, args);
   va_end(args);
 
-  string_buffer_append(buffer, buf);
+  strbuf_append(buffer, buf);
   return len;
 }
 
@@ -111,7 +111,7 @@ static void fn_memory_error(int status, bfd_vma memaddr,
   dis->error = 1;
 
   snprintf(buf, STRMAXLEN(buf), "[unable to peek data]");
-  string_buffer_append(dis->buffer, buf);
+  strbuf_append(dis->buffer, buf);
 }
 
 static int fn_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
@@ -140,8 +140,8 @@ cmd *cmd_disassemble(const char *cmd_ref) {
 }
 
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
-  char           buf[64];
-  string_buffer *buffer = string_buffer_new(0, 0);
+  char    buf[64];
+  strbuf *buffer = strbuf_new(0, 0);
 
   struct disassemble_info info;
   init_disassemble_info(&info, buffer, fn_fprintf, fn_fprintf_styled_ftype);
@@ -160,15 +160,15 @@ void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
   bfd_vma pc = address;
   while (pc < address + size) {
     snprintf(buf, STRMAXLEN(buf), "0x%016lx: \t", pc);
-    string_buffer_append(buffer, buf);
+    strbuf_append(buffer, buf);
 
     size_t insn_size = disasm(pc, &info);
     pc += insn_size;
-    context_out_appendln(ctx, string_buffer_data(buffer));
-    string_buffer_reset(buffer);
+    context_out_appendln(ctx, strbuf_data(buffer));
+    strbuf_reset(buffer);
   }
   if (dis.error) {
     context_error(ctx, "error occured while disassembling");
   }
-  string_buffer_free(buffer);
+  strbuf_free(buffer);
 }

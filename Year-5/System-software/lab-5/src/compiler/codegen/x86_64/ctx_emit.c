@@ -2,7 +2,7 @@
 
 // #include "util/log.h"
 // #include "util/macro.h"
-// #include "util/string_buffer.h"
+// #include "util/strbuf.h"
 // #include <stdio.h>
 
 // static const char *cg_reg_str(cg_x86_64_reg reg) {

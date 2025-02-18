@@ -14,6 +14,7 @@
 #include "compiler/hir_build/hir_build.h"
 #include "compiler/mir/ctx.h"
 #include "compiler/mir/str.h"
+#include "compiler/type_table/str.h"
 #include "util/container_util.h"
 #include "util/file.h"
 #include "util/list.h"
@@ -351,7 +352,18 @@ static int execute(args *args) {
   if (args->hir_tree && (!args->code || args->ignore_errors)) {
     char *tree = hir_tree_str(hir);
     printf("HIR TREE:\n%s\n", tree);
-    free(tree);
+    if (tree) {
+      free(tree);
+    }
+  }
+
+  // stage: print type table
+  if (args->type_table && (!args->code || args->ignore_errors)) {
+    char *table = type_table_str(type_table);
+    printf("TYPE TABLE:\n%s\n", table);
+    if (table) {
+      free(table);
+    }
   }
 
   // // stage: print hir symbols
