@@ -5,7 +5,7 @@
 #include "util/hashset.h"
 
 typedef struct type_entry_struct {
-  char      *id;
+  char      *name; // used inside scope resolution
   type_base *type;
   span      *span;
 } type_entry;
@@ -14,14 +14,13 @@ type_entry *type_entry_new(char *id, type_base *type, span *span);
 void        type_entry_free(type_entry *self);
 
 static inline int container_cmp_type_entry(const void *lsv, const void *rsv) {
-  return container_cmp_chars(((const type_entry *)lsv)->id,
-                             ((const type_entry *)rsv)->id);
+  return container_cmp_ptr(lsv, rsv);
 }
 static inline void container_delete_type_entry(void *lsv) {
   type_entry_free(lsv);
 }
 static inline uint64_t container_hash_type_entry(const void *lsv) {
-  return container_hash_chars(((const type_entry *)lsv)->id);
+  return container_hash_ptr(lsv);
 }
 HASHSET_DECLARE_STATIC_INLINE(hashset_type_entry, type_entry,
                               container_cmp_type_entry, container_new_move,

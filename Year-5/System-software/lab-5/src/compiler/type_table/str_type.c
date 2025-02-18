@@ -1,5 +1,7 @@
 #include "str.h"
 #include "util/log.h"
+#include "util/macro.h"
+#include <string.h>
 
 const char *type_enum_str(type_enum kind) {
   switch (kind) {
@@ -20,4 +22,9 @@ const char *type_enum_str(type_enum kind) {
     warn("unknown type kind %d", kind);
     return "UNKNOWN";
   }
+}
+
+char *type_str(type_base *generic) {
+  UNUSED(generic);
+  return strdup("(type)");
 }

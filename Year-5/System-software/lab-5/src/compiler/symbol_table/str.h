@@ -1,3 +1,5 @@
-// #pragma once
+#pragma once
 
-// char *hir_list_symbol_str(const list_hir_symbol *symbols);
+#include "compiler/symbol_table/symbol_table.h"
+
+char *symbol_table_str(const symbol_table *table);

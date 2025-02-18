@@ -2,6 +2,7 @@
 
 #include "util/container.h"
 #include <stddef.h>
+#include <stdlib.h>
 
 #define HASHTABLE_LOAD_FACTOR 0.75
 #define HASHTABLE_GROWTH_FACTOR 2

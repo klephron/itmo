@@ -14,6 +14,7 @@
 #include "compiler/hir_build/hir_build.h"
 #include "compiler/mir/ctx.h"
 #include "compiler/mir/str.h"
+#include "compiler/symbol_table/str.h"
 #include "compiler/type_table/str.h"
 #include "util/container_util.h"
 #include "util/file.h"
@@ -360,7 +361,16 @@ static int execute(args *args) {
   // stage: print type table
   if (args->type_table && (!args->code || args->ignore_errors)) {
     char *table = type_table_str(type_table);
-    printf("TYPE TABLE:\n%s\n", table);
+    printf("%s", table);
+    if (table) {
+      free(table);
+    }
+  }
+
+  // stage: print symbol table
+  if (args->symbol_table && (!args->code || args->ignore_errors)) {
+    char *table = symbol_table_str(symbol_table);
+    printf("%s", table);
     if (table) {
       free(table);
     }

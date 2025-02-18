@@ -1,206 +1,64 @@
-// #include "symbol_table.h"
+#include "str.h"
 
-// // HIR_SYMBOL
-// typedef struct hir_symbol_table_struct {
-//   char *id_ptr;
-//   char *name;
-//   char *bind_kind;
-//   char *bind_parent;
-//   char *type;
-//   char *span;
-// } hir_symbol_table;
+#include "compiler/span/str.h"
+#include "compiler/type_table/str.h"
+#include "compiler/type_table/type_table.h"
+#include "util/macro.h"
+#include "util/math.h"
+#include "util/strtable.h"
+#include <stdio.h>
+#include <string.h>
 
-// static void hir_symbol_table_deinit(hir_symbol_table *self) {
-//   if (self) {
-//     free(self->id_ptr);
-//     free(self->name);
-//     free(self->bind_kind);
-//     free(self->bind_parent);
-//     free(self->type);
-//     free(self->span);
-//   }
-// }
+LIST_DECLARE_STATIC_INLINE(list_chars, char, container_cmp_false,
+                           container_new_chars, container_delete_chars);
 
-// const char *hir_binding_enum_str(hir_binding_enum kind) {
-//   switch (kind) {
-//   case HIR_BINDING_GLOBAL:
-//     return "GLOBAL";
-//   case HIR_BINDING_SUBROUTINE:
-//     return "SUBROUTINE";
-//   default:
-//     warn("unknown binding_enum %d", kind);
-//     return "UNKNOWN";
-//   }
-// }
+static inline void container_delete_list_chars(void *data) {
+  list_chars_free(data);
+}
+LIST_DECLARE_STATIC_INLINE(list_list_chars, list_chars, container_cmp_false,
+                           container_new_move, container_delete_list_chars);
 
-// static void hir_binding_parent_str(string_buffer    *buffer,
-//                                    const hir_symbol *parent) {
-//   if (parent) {
-//     hir_binding_parent_str(buffer, parent->bind_parent_ref);
-//     if (parent->bind_parent_ref) {
-//       string_buffer_append(buffer, "::");
-//     }
-//     string_buffer_append(buffer, parent->name);
-//   }
-// }
+char *symbol_table_str(const symbol_table *table) {
+  if (!table) {
+    return NULL;
+  }
 
-// static hir_symbol_table hir_symbol_to_table(const hir_symbol *symbol) {
-//   char id_ptr[16];
-//   snprintf(id_ptr, STRMAXLEN(id_ptr), "%p", symbol);
+  list_chars *header = list_chars_new();
+  list_chars_push_back(header, "ID(PTR)");
+  list_chars_push_back(header, "NAME");
+  list_chars_push_back(header, "TYPE_ID");
+  list_chars_push_back(header, "TYPE");
+  list_chars_push_back(header, "SPAN");
 
-//   string_buffer *bind_parent_buffer = string_buffer_new(16, 0);
-//   if (symbol->bind_parent_ref) {
-//     hir_binding_parent_str(bind_parent_buffer, symbol->bind_parent_ref);
-//   } else {
-//     string_buffer_append(bind_parent_buffer, "-");
-//   }
+  list_list_chars *body = list_list_chars_new();
+  for (hashset_symbol_entry_it it = hashset_symbol_entry_begin(table->entries);
+       !END(it); NEXT(it)) {
+    list_chars         *row = list_chars_new();
+    char                buf[64];
+    const symbol_entry *entry = GET(it);
+    // ID
+    snprintf(buf, STRMAXLEN(buf), "%p", entry);
+    list_chars_push_back(row, buf);
+    // NAME
+    list_chars_push_back(row, entry->name);
+    // TYPE_ID
+    snprintf(buf, STRMAXLEN(buf), "%p", entry->type_ref);
+    list_chars_push_back(row, buf);
+    // TYPE
+    list_chars_push_back(row, type_str(entry->type_ref->type));
+    // SPAN
+    if (entry->span) {
+      char *span_s = span_str(entry->span);
+      list_chars_push_back(row, span_s);
+      free(span_s);
+    }
+    list_list_chars_push_back(body, row);
+  }
 
-//   char *type = hir_type_str(symbol->type);
+  char *result = strtable_build("SYMBOL TABLE", &header->list, &body->list);
 
-//   return (hir_symbol_table){
-//       .id_ptr = strdup(id_ptr),
-//       .name = strdup(symbol->name),
-//       .bind_kind = strdup(hir_binding_enum_str(symbol->bind_kind)),
-//       .bind_parent = string_buffer_detach(bind_parent_buffer),
-//       .type = type ? type : strdup("-"),
-//       .span = span_str(symbol->decl_span),
-//   };
-// }
+  list_list_chars_free(body);
+  list_chars_free(header);
 
-// char *hir_list_symbol_str(const list_hir_symbol *symbols) {
-//   string_buffer *buffer = string_buffer_new(0, 0);
-
-//   const char *id_h = "ID(PTR)";
-//   const char *name_h = "NAME";
-//   const char *bind_kind_h = "BIND_KIND";
-//   const char *bind_parent_h = "BIND_PARENT";
-//   const char *type_h = "TYPE";
-//   const char *span_h = "SPAN";
-
-//   size_t id_ms = strlen(id_h);
-//   size_t name_ms = strlen(name_h);
-//   size_t bind_kind_ms = strlen(bind_kind_h);
-//   size_t bind_parent_ms = strlen(bind_parent_h);
-//   size_t type_ms = strlen(type_h);
-//   size_t span_ms = strlen(span_h);
-
-//   for (list_hir_symbol_it it =
-//            list_hir_symbol_begin((list_hir_symbol *)symbols);
-//        !END(it); NEXT(it)) {
-//     const hir_symbol *symbol = GET(it);
-//     hir_symbol_table  table = hir_symbol_to_table(symbol);
-
-//     size_t id_s = strlen(table.id_ptr);
-//     size_t name_s = strlen(table.name);
-//     size_t bind_kind_s = strlen(table.bind_kind);
-//     size_t bind_parent_s = strlen(table.bind_parent);
-//     size_t type_s = strlen(table.type);
-//     size_t span_s = strlen(table.span);
-
-//     id_ms = max_size_t(id_ms, id_s);
-//     name_ms = max_size_t(name_ms, name_s);
-//     bind_kind_ms = max_size_t(bind_kind_ms, bind_kind_s);
-//     bind_parent_ms = max_size_t(bind_parent_ms, bind_parent_s);
-//     type_ms = max_size_t(type_ms, type_s);
-//     span_ms = max_size_t(span_ms, span_s);
-
-//     hir_symbol_table_deinit(&table);
-//   }
-
-//   // separator
-//   {
-//     string_buffer_append(buffer, "┌");
-//     string_buffer_append_cell(buffer, id_ms, "", "─");
-//     string_buffer_append(buffer, "┬");
-//     string_buffer_append_cell(buffer, name_ms, "", "─");
-//     string_buffer_append(buffer, "┬");
-//     string_buffer_append_cell(buffer, bind_kind_ms, "", "─");
-//     string_buffer_append(buffer, "┬");
-//     string_buffer_append_cell(buffer, bind_parent_ms, "", "─");
-//     string_buffer_append(buffer, "┬");
-//     string_buffer_append_cell(buffer, type_ms, "", "─");
-//     string_buffer_append(buffer, "┬");
-//     string_buffer_append_cell(buffer, span_ms, "", "─");
-//     string_buffer_append(buffer, "┐\n");
-//   }
-
-//   // header
-//   {
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, id_ms, id_h, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, name_ms, name_h, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, bind_kind_ms, bind_kind_h,
-//     HIR_STR_SPACE); string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, bind_parent_ms, bind_parent_h,
-//                               HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, type_ms, type_h, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, span_ms, span_h, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│\n");
-//   }
-
-//   // separator
-//   {
-//     string_buffer_append(buffer, "├");
-//     string_buffer_append_cell(buffer, id_ms, "", "─");
-//     string_buffer_append(buffer, "┼");
-//     string_buffer_append_cell(buffer, name_ms, "", "─");
-//     string_buffer_append(buffer, "┼");
-//     string_buffer_append_cell(buffer, bind_kind_ms, "", "─");
-//     string_buffer_append(buffer, "┼");
-//     string_buffer_append_cell(buffer, bind_parent_ms, "", "─");
-//     string_buffer_append(buffer, "┼");
-//     string_buffer_append_cell(buffer, type_ms, "", "─");
-//     string_buffer_append(buffer, "┼");
-//     string_buffer_append_cell(buffer, span_ms, "", "─");
-//     string_buffer_append(buffer, "┤\n");
-//   }
-
-//   // body
-//   for (list_hir_symbol_it it =
-//            list_hir_symbol_begin((list_hir_symbol *)symbols);
-//        !END(it); NEXT(it)) {
-//     const hir_symbol *symbol = GET(it);
-//     hir_symbol_table  table = hir_symbol_to_table(symbol);
-
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, id_ms, table.id_ptr, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, name_ms, table.name, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, bind_kind_ms, table.bind_kind,
-//                               HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, bind_parent_ms, table.bind_parent,
-//                               HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, type_ms, table.type, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│");
-//     string_buffer_append_cell(buffer, span_ms, table.span, HIR_STR_SPACE);
-//     string_buffer_append(buffer, "│\n");
-
-//     hir_symbol_table_deinit(&table);
-//   }
-
-//   // separator
-//   {
-//     string_buffer_append(buffer, "└");
-//     string_buffer_append_cell(buffer, id_ms, "", "─");
-//     string_buffer_append(buffer, "┴");
-//     string_buffer_append_cell(buffer, name_ms, "", "─");
-//     string_buffer_append(buffer, "┴");
-//     string_buffer_append_cell(buffer, bind_kind_ms, "", "─");
-//     string_buffer_append(buffer, "┴");
-//     string_buffer_append_cell(buffer, bind_parent_ms, "", "─");
-//     string_buffer_append(buffer, "┴");
-//     string_buffer_append_cell(buffer, type_ms, "", "─");
-//     string_buffer_append(buffer, "┴");
-//     string_buffer_append_cell(buffer, span_ms, "", "─");
-//     string_buffer_append(buffer, "┘\n");
-//   }
-
-//   return string_buffer_detach(buffer);
-// }
+  return result;
+}

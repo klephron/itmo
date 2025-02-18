@@ -23,7 +23,7 @@ Test(strtable, no_columns) {
 
   list_list_chars_push_back(body, list_chars_new());
 
-  char *table = strtable_build(&header->list, &body->list);
+  char *table = strtable_build(NULL, &header->list, &body->list);
   debug("\n%s", table);
   free(table);
 
@@ -39,7 +39,7 @@ Test(strtable, no_body) {
   snprintf(buf, STRMAXLEN(buf), "header_%zu", (size_t)0);
   list_chars_push_back(header, buf);
 
-  char *table = strtable_build(&header->list, &body->list);
+  char *table = strtable_build(NULL, &header->list, &body->list);
   debug("\n%s", table);
   free(table);
 
@@ -66,7 +66,7 @@ Test(strtable, basic_one_column) {
     list_list_chars_push_back(body, row);
   }
 
-  char *table = strtable_build(&header->list, &body->list);
+  char *table = strtable_build(NULL, &header->list, &body->list);
   debug("\n%s", table);
   free(table);
 
@@ -93,7 +93,7 @@ Test(strtable, basic_many_columns_header_more_width) {
     list_list_chars_push_back(body, row);
   }
 
-  char *table = strtable_build(&header->list, &body->list);
+  char *table = strtable_build(NULL, &header->list, &body->list);
   debug("\n%s", table);
   free(table);
 
@@ -120,7 +120,7 @@ Test(strtable, basic_many_columns_header_less_width) {
     list_list_chars_push_back(body, row);
   }
 
-  char *table = strtable_build(&header->list, &body->list);
+  char *table = strtable_build(NULL, &header->list, &body->list);
   debug("\n%s", table);
   free(table);
 
@@ -147,7 +147,7 @@ Test(strtable, different_body_columns_less) {
     list_list_chars_push_back(body, row);
   }
 
-  char *table = strtable_build(&header->list, &body->list);
+  char *table = strtable_build(NULL, &header->list, &body->list);
   debug("\n%s", table);
   free(table);
 
@@ -174,7 +174,19 @@ Test(strtable, different_body_columns_greater) {
     list_list_chars_push_back(body, row);
   }
 
-  char *table = strtable_build(&header->list, &body->list);
+  char *table = strtable_build(NULL, &header->list, &body->list);
+  debug("\n%s", table);
+  free(table);
+
+  list_list_chars_free(body);
+  list_chars_free(header);
+}
+
+Test(strtable, title_no_body) {
+  list_chars      *header = list_chars_new();
+  list_list_chars *body = list_list_chars_new();
+
+  char *table = strtable_build("Example", &header->list, &body->list);
   debug("\n%s", table);
   free(table);
 

@@ -28,7 +28,7 @@ static type_entry *hir_ctx_scopes_find(const hir_ctx *ctx, const char *id) {
        NEXT(it)) {
     hashset_type_entry_ref   *scope = GET(it);
     hashset_type_entry_ref_it scope_it =
-        hashset_type_entry_ref_find(scope, &(type_entry){.id = (char *)id});
+        hashset_type_entry_ref_find(scope, &(type_entry){.name = (char *)id});
 
     if (!END(scope_it)) {
       return GET(scope_it);

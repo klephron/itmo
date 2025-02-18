@@ -5,7 +5,7 @@
 
 type_entry *type_entry_new(char *id, type_base *type, span *span) {
   type_entry *self = MALLOC(type_entry);
-  self->id = id;
+  self->name = id;
   self->type = type;
   self->span = span;
   return self;
@@ -13,7 +13,7 @@ type_entry *type_entry_new(char *id, type_base *type, span *span) {
 
 void type_entry_free(type_entry *self) {
   if (self) {
-    free(self->id);
+    free(self->name);
     type_free(self->type);
     span_free(self->span);
     free(self);

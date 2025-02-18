@@ -16,6 +16,7 @@
 #define STRTABLE_CROSS_BOT "┴"
 
 // uses generic list to not depend of specific list implementation (move/delete)
+// * title - NULL or string. If NULL - won't add title
 // * header - list of char*
 // * rows - list of list char*
-char *strtable_build(const list *header, const list *rows);
+char *strtable_build(const char *title, const list *header, const list *rows);
