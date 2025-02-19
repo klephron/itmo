@@ -1,16 +1,20 @@
 #include "node_expr.h"
+#include "compiler/hir/node.h"
 #include "util/log.h"
 #include "util/macro.h"
 
 void hir_expr_base_init(hir_expr_base *self, span *span, hir_expr_enum kind,
                         hir_type_base *type) {
   hir_base_init(&self->base, span, HIR_NODE_EXPR);
+  self->state = HIR_STATE_INITIAL;
   self->kind = kind;
-  self->type = type;
+  self->type_hir = type;
 }
 
 void hir_expr_base_deinit(hir_expr_base *self) {
-  hir_type_free(self->type);
+  if (!(self->state & HIR_STATE_BIND_TYPE)) {
+    hir_type_free(self->type_hir);
+  }
   hir_base_deinit(&self->base);
 }
 
@@ -97,13 +101,15 @@ hir_expr_id *hir_expr_id_new(span *span, hir_type_base *type, hir_id *id) {
 
   hir_expr_id *self = MALLOC(hir_expr_id);
   hir_expr_base_init(&self->base, span, HIR_EXPR_IDENTIFIER, type);
-  self->id = id;
+  self->id_hir = id;
   return self;
 }
 
 void hir_expr_id_free(hir_expr_id *self) {
   if (self) {
-    hir_id_free(self->id);
+    if (!(self->base.state & HIR_STATE_BIND_SYMBOL)) {
+      hir_id_free(self->id_hir);
+    }
     hir_expr_base_deinit(&self->base);
     free(self);
   }

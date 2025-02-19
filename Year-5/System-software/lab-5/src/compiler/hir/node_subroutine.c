@@ -48,18 +48,23 @@ hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
                                    hir_subroutine_body *body) {
   hir_subroutine *self = MALLOC(hir_subroutine);
   hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
-  self->id = id;
+  self->state = HIR_STATE_INITIAL;
+  self->id_hir = id;
   self->params = params;
-  self->ret_type = ret_type;
+  self->type_ret = ret_type;
   self->body = body;
   return self;
 }
 
 void hir_subroutine_free(hir_subroutine *self) {
   if (self) {
-    hir_id_free(self->id);
+    if (!(self->state & HIR_STATE_BIND_SYMBOL)) {
+      hir_id_free(self->id_hir);
+    }
     list_hir_param_free(self->params);
-    hir_type_free(self->ret_type);
+    if (!(self->state & HIR_STATE_BIND_TYPE)) {
+      hir_type_free(self->type_ret);
+    }
     hir_subroutine_body_free(self->body);
     hir_base_deinit(&self->base);
     free(self);

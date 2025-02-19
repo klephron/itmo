@@ -2,6 +2,12 @@
 
 #include "compiler/span/span.h"
 
+typedef enum hir_state_enum {
+  HIR_STATE_INITIAL,
+  HIR_STATE_BIND_TYPE = 0b01,
+  HIR_STATE_BIND_SYMBOL = 0b10,
+} hir_state_enum;
+
 typedef enum hir_node_enum {
   HIR_NODE_UNKNOWN,
   HIR_NODE_ID,

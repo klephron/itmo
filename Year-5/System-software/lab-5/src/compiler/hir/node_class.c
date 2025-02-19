@@ -1,4 +1,5 @@
 #include "node_class.h"
+#include "compiler/hir/node.h"
 #include "util/macro.h"
 
 hir_method *hir_method_new(span *span, hir_method_modifier_enum modifier,
@@ -23,7 +24,8 @@ hir_class *hir_class_new(span *span, hir_id *id, list_hir_id *typenames,
                          list_hir_method *methods) {
   hir_class *self = MALLOC(hir_class);
   hir_base_init(&self->base, span, HIR_NODE_CLASS);
-  self->id = id;
+  self->state = HIR_STATE_INITIAL;
+  self->id_hir = id;
   self->typenames = typenames;
   self->parents = parents;
   self->fields = fields;
@@ -33,9 +35,13 @@ hir_class *hir_class_new(span *span, hir_id *id, list_hir_id *typenames,
 
 void hir_class_free(hir_class *self) {
   if (self) {
-    hir_id_free(self->id);
-    list_hir_id_free(self->typenames);
-    list_hir_type_free(self->parents);
+    if (!(self->state & HIR_STATE_BIND_SYMBOL)) {
+      hir_id_free(self->id_hir);
+    }
+    if (!(self->state & HIR_STATE_BIND_TYPE)) {
+      list_hir_id_free(self->typenames);
+      list_hir_type_free(self->parents);
+    }
     list_hir_var_free(self->fields);
     list_hir_method_free(self->methods);
     hir_base_deinit(&self->base);

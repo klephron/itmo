@@ -56,7 +56,11 @@ typedef enum hir_expr_builtin_enum {
 typedef struct hir_expr_base_struct {
   hir_base       base;
   hir_expr_enum  kind;
-  hir_type_base *type;
+  hir_state_enum state;
+  union {
+    hir_type_base *type_hir;
+    type_entry    *type_ref;
+  };
 } hir_expr_base;
 
 void hir_expr_free(hir_expr_base *generic);
@@ -101,7 +105,10 @@ void          hir_expr_lit_free(hir_expr_lit *self);
 
 typedef struct hir_expr_id {
   hir_expr_base base;
-  hir_id       *id;
+  union {
+    hir_id       *id_hir;
+    symbol_entry *id_ref;
+  };
 } hir_expr_id;
 
 hir_expr_id *hir_expr_id_new(span *span, hir_type_base *type, hir_id *id);

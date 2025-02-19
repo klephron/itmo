@@ -25,10 +25,17 @@ typedef struct hir_subroutine_body {
 } hir_subroutine_body;
 
 typedef struct hir_subroutine {
-  hir_base             base;
-  hir_id              *id;
-  list_hir_param      *params;
-  hir_type_base       *ret_type;
+  hir_base       base;
+  hir_state_enum state;
+  union {
+    hir_id       *id_hir;
+    symbol_entry *id_ref;
+  };
+  list_hir_param *params;
+  union {
+    hir_type_base *type_ret;
+    type_entry    *type_ref;
+  };
   hir_subroutine_body *body;
 } hir_subroutine;
 

@@ -2,6 +2,7 @@
 
 #include "compiler/hir/node.h"
 #include "compiler/hir/type.h"
+#include "compiler/symbol_table/symbol_table.h"
 
 // ID
 typedef struct hir_id_struct {
@@ -45,8 +46,15 @@ void     hir_lit_free(hir_lit *self);
 // PARAM
 typedef struct hir_param {
   hir_base       base;
-  hir_id        *id;
-  hir_type_base *type;
+  hir_state_enum state;
+  union {
+    hir_id       *id_hir;
+    symbol_entry *id_ref;
+  };
+  union {
+    hir_type_base *type_hir;
+    type_entry    *type_ref;
+  };
 } hir_param;
 
 hir_param *hir_param_new(span *span, hir_id *id, hir_type_base *type);
@@ -61,8 +69,15 @@ LIST_DECLARE_STATIC_INLINE(list_hir_param, hir_param, container_cmp_false,
 // VAR
 typedef struct hir_var {
   hir_base       base;
-  hir_id        *id;
-  hir_type_base *type;
+  hir_state_enum state;
+  union {
+    hir_id       *id_hir;
+    symbol_entry *id_ref;
+  };
+  union {
+    hir_type_base *type_hir;
+    type_entry    *type_ref;
+  };
 } hir_var;
 
 hir_var *hir_var_new(span *span, hir_id *id, hir_type_base *type);

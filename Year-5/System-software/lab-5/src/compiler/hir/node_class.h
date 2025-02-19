@@ -29,10 +29,19 @@ LIST_DECLARE_STATIC_INLINE(list_hir_method, hir_method, container_cmp_false,
                            container_new_move, container_delete_hir_method);
 
 typedef struct hir_class_struct {
-  hir_base         base;
-  hir_id          *id;
-  list_hir_id     *typenames;
-  list_hir_type   *parents;
+  hir_base       base;
+  hir_state_enum state;
+  union {
+    hir_id       *id_hir;
+    symbol_entry *id_ref;
+  };
+  union {
+    struct {
+      list_hir_id   *typenames;
+      list_hir_type *parents;
+    };
+    type_entry *type_ref;
+  };
   list_hir_var    *fields;
   list_hir_method *methods;
 } hir_class;
