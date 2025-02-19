@@ -4,6 +4,7 @@
 #include "compiler/type_table/type_table.h"
 
 const char *type_enum_str(type_enum kind);
-char       *type_str(type_base *generic);
+char       *type_str(const type_base *generic);
+const char *type_spec_enum_str(type_spec_enum spec);
 
 char *type_table_str(const type_table *table);

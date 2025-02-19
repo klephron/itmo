@@ -86,12 +86,14 @@ type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params);
 // primary template
 typedef struct type_class_struct {
   type_base      base;
+  char          *id;
   list_type_ref *typenames;
   list_type_ref *parents;
   type_spec_enum spec;
 } type_class;
 
-type_class *type_class_new(list_type_ref *typenames, list_type_ref *parents);
+type_class *type_class_new(char *id, list_type_ref *typenames,
+                           list_type_ref *parents);
 
 typedef struct type_typename_struct {
   type_base base;
@@ -107,7 +109,7 @@ typedef struct type_specialized_struct {
   type_base base;
   // list sizes should be the same.
   type_base     *type_ref;
-  list_type_ref *templates;
+  list_type_ref *templates; // maybe pointers to pointers?
   list_type_ref *specs;
   type_spec_enum spec;
 } type_specialized;

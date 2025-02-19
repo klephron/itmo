@@ -2,6 +2,7 @@
 #include "compiler/hir_build/exception.h"
 #include "util/log.h"
 #include "util/macro.h"
+#include <string.h>
 
 // CONTEXT
 HASHSET_DECLARE_STATIC_INLINE(hashset_type_entry_ref, type_entry,
@@ -37,6 +38,11 @@ static type_entry *hir_ctx_scopes_find(const hir_ctx *ctx, const char *id) {
   return NULL;
 }
 
+static void hir_ctx_scopes_insert(hir_ctx *ctx, type_entry *entry_ref) {
+  hashset_type_entry_ref *scope = list_hir_scope_front(ctx->scopes);
+  hashset_type_entry_ref_insert(scope, entry_ref);
+}
+
 static void hir_ctx_scopes_push(hir_ctx *ctx) {
   list_hir_scope_push_front(ctx->scopes, hashset_type_entry_ref_new());
 }
@@ -61,10 +67,32 @@ static void hir_ctx_error_add(hir_ctx *ctx, exception_subtype_hir subtype,
 // TODO:
 // ACTUAL VISITOR FUNCTIONS
 // first pass. bind class name and typenames, adding them to global scope
+static inline void hir_add_builtin_helper(hir_ctx *ctx, const char *id,
+                                          const void *type_base) {
+  hir_ctx_scopes_insert(ctx, type_table_emplace(ctx->type_table, strdup(id),
+                                                (void *)type_base, NULL));
+}
+
+static void hir_add_builtin(hir_ctx *ctx) {
+  hir_add_builtin_helper(ctx, "bool", type_primitive_new(TYPE_PRIMITIVE_BOOL));
+  hir_add_builtin_helper(ctx, "byte", type_primitive_new(TYPE_PRIMITIVE_BYTE));
+  hir_add_builtin_helper(ctx, "int", type_primitive_new(TYPE_PRIMITIVE_INT));
+  hir_add_builtin_helper(ctx, "uint", type_primitive_new(TYPE_PRIMITIVE_UINT));
+  hir_add_builtin_helper(ctx, "long", type_primitive_new(TYPE_PRIMITIVE_LONG));
+  hir_add_builtin_helper(ctx, "ulong",
+                         type_primitive_new(TYPE_PRIMITIVE_ULONG));
+  hir_add_builtin_helper(ctx, "char", type_primitive_new(TYPE_PRIMITIVE_CHAR));
+  hir_add_builtin_helper(ctx, "string",
+                         type_primitive_new(TYPE_PRIMITIVE_STRING));
+  hir_add_builtin_helper(ctx, "void", type_primitive_new(TYPE_PRIMITIVE_VOID));
+}
+
 static void hir_bind_class_1(hir_ctx *ctx, hir_class *class) {
-  if (hir_ctx_scopes_find(ctx, class->id->name)) {
+  type_entry *prev_def;
+  if ((prev_def = hir_ctx_scopes_find(ctx, class->id->name))) {
     hir_ctx_error_add(ctx, EXCEPTION_HIR_TYPE_REDEFINITION, class->base.span,
                       "");
+    return;
   }
 }
 
@@ -89,6 +117,8 @@ hir_bind_types_result hir_bind_types(hir *hir) {
 
   // push global scope
   hir_ctx_scopes_push(&ctx);
+
+  hir_add_builtin(&ctx);
 
   // bind classes to global scope
   for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);

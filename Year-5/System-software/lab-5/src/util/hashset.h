@@ -46,7 +46,7 @@ hashset   *hashset_new(container_f_cmp, container_f_new, container_f_delete,
 void       hashset_deinit(hashset *self);
 void       hashset_free(hashset *self);
 hashset_it hashset_find(hashset *self, void *data);
-void       hashset_insert(hashset *self, void *data);
+hashset_it hashset_insert(hashset *self, void *data);
 hashset_it hashset_begin(hashset *self);
 void       hashset_replace(hashset *self, hashset_it it, void *data);
 // NOTE: consumes hashset (it invalidates)
@@ -108,9 +108,14 @@ int   hashset_it_next(hashset_it *it);
     };                                                                         \
   }                                                                            \
                                                                                \
-  __attribute__((__unused__)) static inline void hashset_type##_insert(        \
-      hashset_type *self, type *data) {                                        \
-    hashset_insert(&self->hashset, (void *)data);                              \
+  __attribute__((__unused__)) static inline hashset_type##_it                  \
+      hashset_type##_insert(hashset_type *self, type *data) {                  \
+    return (hashset_type##_it){                                                \
+        .it = hashset_insert(&self->hashset, (void *)data),                    \
+        .get = hashset_type##_it_get,                                          \
+        .next = hashset_type##_it_next,                                        \
+        .end = hashset_type##_it_end,                                          \
+    };                                                                         \
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline hashset_type##_it                  \

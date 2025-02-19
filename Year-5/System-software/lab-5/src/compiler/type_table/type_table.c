@@ -33,7 +33,10 @@ void type_table_free(type_table *self) {
   }
 }
 
-void type_table_insert(type_table *self, char *id, type_base *type,
-                       span *span) {
-  hashset_type_entry_insert(self->entries, type_entry_new(id, type, span));
+type_entry *type_table_emplace(type_table *self, char *id, type_base *type,
+                               span *span) {
+  type_entry *entry = type_entry_new(id, type, span);
+  type->type_entry_ref = entry;
+  hashset_type_entry_it it = hashset_type_entry_insert(self->entries, entry);
+  return GET(it);
 }

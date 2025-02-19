@@ -3,29 +3,25 @@
 #include "util/macro.h"
 #include "util/strbuf.h"
 
-static void string_buffer_append_type(strbuf              *buffer,
-                                      const hir_type_base *generic);
+static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic);
 
-static void string_buffer_append_type_list(strbuf              *buffer,
-                                           const list_hir_type *list,
-                                           const char          *prefix,
-                                           const char          *suffix) {
+static void strbuf_append_type_list(strbuf *buffer, const list_hir_type *list,
+                                    const char *prefix, const char *suffix) {
   if (list && list_hir_type_size(list)) {
     strbuf_append(buffer, prefix);
     list_hir_type_it it = list_hir_type_begin(list);
     if (!END(it)) {
-      string_buffer_append_type(buffer, GET(it));
+      strbuf_append_type(buffer, GET(it));
     }
     while (NEXT(it)) {
       strbuf_append(buffer, ", ");
-      string_buffer_append_type(buffer, GET(it));
+      strbuf_append_type(buffer, GET(it));
     }
     strbuf_append(buffer, suffix);
   }
 }
 
-static void string_buffer_append_type(strbuf              *buffer,
-                                      const hir_type_base *generic) {
+static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
   if (!generic) {
     strbuf_append(buffer, "-");
     return;
@@ -62,20 +58,20 @@ static void string_buffer_append_type(strbuf              *buffer,
   case HIR_TYPE_CUSTOM: {
     hir_type_custom *custom = (hir_type_custom *)generic;
     strbuf_append(buffer, custom->name);
-    string_buffer_append_type_list(buffer, custom->templates, "<", ">");
+    strbuf_append_type_list(buffer, custom->templates, "<", ">");
   } break;
   case HIR_TYPE_ARRAY: {
     hir_type_array *array = (hir_type_array *)generic;
     strbuf_append(buffer, "array[");
-    string_buffer_append_type(buffer, array->elem_type);
+    strbuf_append_type(buffer, array->elem_type);
     strbuf_append(buffer, "]");
   } break;
   case HIR_TYPE_CLASS: {
     hir_type_class *class = (hir_type_class *)generic;
     strbuf_append(buffer, "class ");
     strbuf_append(buffer, class->name);
-    string_buffer_append_type_list(buffer, class->templates, "<", ">");
-    string_buffer_append_type_list(buffer, class->parents, " : ", "");
+    strbuf_append_type_list(buffer, class->templates, "<", ">");
+    strbuf_append_type_list(buffer, class->parents, " : ", "");
   } break;
   case HIR_TYPE_UNKNOWN:
     warn("unknown type %d %p", generic->type, generic);
@@ -120,13 +116,13 @@ const char *hir_type_base_str(hir_type_base *self) {
   if (self) {
     return hir_type_enum_str(self->type);
   }
-  return "<null>";
+  return "(nil)";
 }
 
 char *hir_type_str(const hir_type_base *generic) {
   if (generic) {
     strbuf *buffer = strbuf_new(16, 0);
-    string_buffer_append_type(buffer, generic);
+    strbuf_append_type(buffer, generic);
     return strbuf_detach(buffer);
   }
   return NULL;

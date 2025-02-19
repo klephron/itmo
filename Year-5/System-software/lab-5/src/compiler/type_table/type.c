@@ -35,6 +35,9 @@ static void type_callable_free(type_callable *self) {
 
 static void type_class_free(type_class *self) {
   if (self) {
+    if (self->id) {
+      free(self->id);
+    }
     list_type_ref_free(self->typenames);
     list_type_ref_free(self->parents);
     type_base_deinit(&self->base);
@@ -84,9 +87,11 @@ type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params) {
   return self;
 }
 
-type_class *type_class_new(list_type_ref *typenames, list_type_ref *parents) {
+type_class *type_class_new(char *id, list_type_ref *typenames,
+                           list_type_ref *parents) {
   type_class *self = MALLOC(type_class);
   type_base_init(&self->base, TYPE_CLASS);
+  self->id = id;
   self->typenames = typenames;
   self->parents = parents;
   self->spec = TYPE_SPEC_UNSET;

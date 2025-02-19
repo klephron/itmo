@@ -125,7 +125,7 @@ hashset_it hashset_find(hashset *self, void *data) {
   return hashset_it_make(self, 0, NULL, NULL);
 }
 
-void hashset_insert(hashset *self, void *data) {
+hashset_it hashset_insert(hashset *self, void *data) {
   if ((float)self->size / self->capacity > self->load_factor) {
     hashset_grow(self);
   }
@@ -133,11 +133,14 @@ void hashset_insert(hashset *self, void *data) {
   size_t          index = self->f_hash(data) % self->capacity;
   hashset_bucket *bucket = self->buckets + index;
 
+  hashset_list_node *prev = NULL;
   for (hashset_list_node *node = bucket->head; node; node = node->next) {
     if (!self->f_cmp(node->data, data)) {
       self->f_delete(node->data);
       node->data = self->f_new(data);
-      return;
+      return hashset_it_make(self, index, node, prev);
+    } else {
+      prev = node;
     }
   }
 
@@ -146,6 +149,7 @@ void hashset_insert(hashset *self, void *data) {
   node->next = bucket->head;
   bucket->head = node;
   self->size += 1;
+  return hashset_it_make(self, index, node, NULL);
 }
 
 void hashset_replace(hashset *self, hashset_it it, void *data) {
