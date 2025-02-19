@@ -165,6 +165,10 @@ static void hir_tree_str_param(strbuf *buffer, size_t pad,
   strbuf_appendln(buffer, "");
 
   strbuf_append_padding(buffer, pad);
+  strbuf_append(buffer, "state: ");
+  strbuf_appendln(buffer, hir_state_enum_str(param->state));
+
+  strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "id: ");
   if (param->state & HIR_STATE_BIND_SYMBOL) {
     hir_tree_str_symbol_entry(buffer, pad, param->id_ref);
@@ -195,6 +199,10 @@ static void hir_tree_str_var(strbuf *buffer, size_t pad, const hir_var *var) {
   strbuf_append(buffer, "base: ");
   hir_tree_str_base(buffer, pad, &var->base);
   strbuf_appendln(buffer, "");
+
+  strbuf_append_padding(buffer, pad);
+  strbuf_append(buffer, "state: ");
+  strbuf_appendln(buffer, hir_state_enum_str(var->state));
 
   strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "id: ");
@@ -232,6 +240,10 @@ static void hir_tree_str_expr_base(strbuf *buffer, size_t pad,
   strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "kind: ");
   strbuf_appendln(buffer, hir_expr_enum_str(expr->kind));
+
+  strbuf_append_padding(buffer, pad);
+  strbuf_append(buffer, "state: ");
+  strbuf_appendln(buffer, hir_state_enum_str(expr->state));
 
   strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "type: ");
@@ -720,6 +732,10 @@ static void hir_tree_str_subroutine(strbuf *buffer, size_t pad,
   strbuf_appendln(buffer, "");
 
   strbuf_append_padding(buffer, pad);
+  strbuf_append(buffer, "state: ");
+  strbuf_appendln(buffer, hir_state_enum_str(subroutine->state));
+
+  strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "id: ");
   if (subroutine->state & HIR_STATE_BIND_SYMBOL) {
     hir_tree_str_symbol_entry(buffer, pad, subroutine->id_ref);
@@ -798,13 +814,8 @@ static void hir_tree_str_class(strbuf *buffer, size_t pad,
   strbuf_appendln(buffer, "");
 
   strbuf_append_padding(buffer, pad);
-  strbuf_append(buffer, "id: ");
-  if (class->state & HIR_STATE_BIND_SYMBOL) {
-    hir_tree_str_symbol_entry(buffer, pad, class->id_ref);
-  } else {
-    hir_tree_str_id(buffer, pad, class->id_hir);
-  }
-  strbuf_appendln(buffer, "");
+  strbuf_append(buffer, "state: ");
+  strbuf_appendln(buffer, hir_state_enum_str(class->state));
 
   if (class->state & HIR_STATE_BIND_TYPE) {
     strbuf_append_padding(buffer, pad);
@@ -812,6 +823,11 @@ static void hir_tree_str_class(strbuf *buffer, size_t pad,
     hir_tree_str_type_entry(buffer, pad, class->type_ref);
     strbuf_appendln(buffer, "");
   } else {
+    strbuf_append_padding(buffer, pad);
+    strbuf_append(buffer, "id: ");
+    hir_tree_str_id(buffer, pad, class->id);
+    strbuf_appendln(buffer, "");
+
     strbuf_append_padding(buffer, pad);
     strbuf_appendln(buffer, "typenames: [");
     pad += HIR_STR_TAB;

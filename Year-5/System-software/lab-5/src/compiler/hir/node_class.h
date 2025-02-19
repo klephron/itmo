@@ -32,11 +32,8 @@ typedef struct hir_class_struct {
   hir_base       base;
   hir_state_enum state;
   union {
-    hir_id       *id_hir;
-    symbol_entry *id_ref;
-  };
-  union {
     struct {
+      hir_id        *id;
       list_hir_id   *typenames;
       list_hir_type *parents;
     };

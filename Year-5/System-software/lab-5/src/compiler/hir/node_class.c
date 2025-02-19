@@ -25,7 +25,7 @@ hir_class *hir_class_new(span *span, hir_id *id, list_hir_id *typenames,
   hir_class *self = MALLOC(hir_class);
   hir_base_init(&self->base, span, HIR_NODE_CLASS);
   self->state = HIR_STATE_INITIAL;
-  self->id_hir = id;
+  self->id = id;
   self->typenames = typenames;
   self->parents = parents;
   self->fields = fields;
@@ -35,10 +35,8 @@ hir_class *hir_class_new(span *span, hir_id *id, list_hir_id *typenames,
 
 void hir_class_free(hir_class *self) {
   if (self) {
-    if (!(self->state & HIR_STATE_BIND_SYMBOL)) {
-      hir_id_free(self->id_hir);
-    }
     if (!(self->state & HIR_STATE_BIND_TYPE)) {
+      hir_id_free(self->id);
       list_hir_id_free(self->typenames);
       list_hir_type_free(self->parents);
     }

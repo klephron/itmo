@@ -202,3 +202,21 @@ const char *hir_method_modifier_enum_str(hir_method_modifier_enum kind) {
     return "UNKNOWN";
   }
 }
+
+const char *hir_state_enum_str(hir_state_enum state) {
+  switch (state) {
+  case HIR_STATE_INITIAL:
+    return "INITIAL";
+  case HIR_STATE_BIND_TYPE:
+    return "BIND_TYPE";
+  case HIR_STATE_BIND_SYMBOL:
+    return "BIND_SYMBOL";
+    break;
+  case HIR_STATE_BIND_SYMBOL_AND_TYPE:
+    return "BIND_SYMBOL | BIND_TYPE";
+    break;
+  default:
+    error("unexpected hir state %d", state);
+    return "UNKNOWN";
+  }
+}

@@ -90,7 +90,7 @@ static void hir_bind_builtin(hir_ctx *ctx) {
 
 static void hir_bind_class_1(hir_ctx *ctx, hir_class *class) {
   type_entry *prev_def;
-  if ((prev_def = hir_ctx_scopes_find(ctx, class->id_hir->name))) {
+  if ((prev_def = hir_ctx_scopes_find(ctx, class->id->name))) {
     hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_REDEFINITION, class->base.span, "");
     return;
   }
