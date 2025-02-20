@@ -26,7 +26,7 @@ char *type_table_str(const type_table *table) {
   list_chars_push_back(header, "ID(PTR)");
   list_chars_push_back(header, "NAME");
   list_chars_push_back(header, "TYPE");
-  list_chars_push_back(header, "TYPE_SPEC");
+  list_chars_push_back(header, "TYPE_MONO");
   list_chars_push_back(header, "SPAN");
   list_chars_push_back(header, "EXTRA");
 
@@ -51,11 +51,11 @@ char *type_table_str(const type_table *table) {
       list_chars_push_back(row, "-");
     }
     // TYPE_SPEC
-    type_spec_enum spec;
-    if ((spec = type_get_spec(entry->type)) == TYPE_SPEC_UNSET) {
-      spec = type_calc_spec(entry->type);
+    type_mono_enum spec;
+    if ((spec = type_get_mono(entry->type)) == TYPE_MONO_UNSET) {
+      spec = type_calc_mono(entry->type);
     }
-    list_chars_push_back(row, (char *)type_spec_enum_str(spec));
+    list_chars_push_back(row, (char *)type_mono_enum_str(spec));
     // SPAN
     if (entry->span) {
       char *span_s = span_str(entry->span);

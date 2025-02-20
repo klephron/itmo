@@ -12,14 +12,14 @@ typedef enum type_enum {
   TYPE_CALLABLE,
   TYPE_CLASS,
   TYPE_TYPENAME,
-  TYPE_SPECIALIZED,
+  TYPE_MONO,
 } type_enum;
 
-typedef enum type_spec_enum {
-  TYPE_SPEC_UNSET,
-  TYPE_SPEC_FULL,
-  TYPE_SPEC_NOT_FULL
-} type_spec_enum;
+typedef enum type_mono_enum {
+  TYPE_MONO_UNSET,
+  TYPE_MONO_FULL,
+  TYPE_MONO_NOT_FULL
+} type_mono_enum;
 
 typedef struct type_base_struct {
   type_enum   kind;
@@ -31,8 +31,8 @@ void type_free(type_base *generic);
 void        type_set_type_entry(type_base *generic, type_entry *type_entry_ref);
 type_entry *type_get_type_entry(type_base *generic);
 
-type_spec_enum type_calc_spec(const type_base *generic);
-type_spec_enum type_get_spec(const type_base *generic);
+type_mono_enum type_calc_mono(const type_base *generic);
+type_mono_enum type_get_mono(const type_base *generic);
 
 static inline void container_delete_type(void *data) { type_free(data); }
 LIST_DECLARE_STATIC_INLINE(list_type, type_base, container_cmp_false,
@@ -69,7 +69,7 @@ type_primitive *type_primitive_new(type_primitive_enum type);
 typedef struct type_array_struct {
   type_base      base;
   type_base     *element_ref;
-  type_spec_enum spec;
+  type_mono_enum spec;
 } type_array;
 
 type_array *type_array_new(type_base *element_ref);
@@ -78,7 +78,7 @@ typedef struct type_callable_struct {
   type_base      base;
   type_base     *ret_ref;
   list_type_ref *params;
-  type_spec_enum spec;
+  type_mono_enum spec;
 } type_callable;
 
 type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params);
@@ -89,7 +89,7 @@ typedef struct type_class_struct {
   char          *id;
   list_type_ref *typenames;
   list_type_ref *parents;
-  type_spec_enum spec;
+  type_mono_enum spec;
 } type_class;
 
 type_class *type_class_new(char *id, list_type_ref *typenames,
@@ -105,15 +105,14 @@ typedef struct type_typename_struct {
 type_typename *type_typename_new(char *id, type_base *source_ref);
 
 // if type_ref=class templates go in order as typenames of class
-typedef struct type_specialized_struct {
+typedef struct type_mono_struct {
   type_base base;
   // list sizes should be the same.
   type_base     *type_ref;
   list_type_ref *templates; // maybe pointers to pointers?
   list_type_ref *specs;
-  type_spec_enum spec;
-} type_specialized;
+  type_mono_enum spec;
+} type_mono;
 
-type_specialized *type_specialized_new(type_base     *type_ref,
-                                       list_type_ref *templates,
-                                       list_type_ref *specs);
+type_mono *type_mono_new(type_base *type_ref, list_type_ref *templates,
+                         list_type_ref *specs);

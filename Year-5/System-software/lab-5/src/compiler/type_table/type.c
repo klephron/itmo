@@ -54,7 +54,7 @@ static void type_typename_free(type_typename *self) {
   }
 }
 
-static void type_specialized_free(type_specialized *self) {
+static void type_mono_free(type_mono *self) {
   if (self) {
     list_type_ref_free(self->templates);
     list_type_ref_free(self->specs);
@@ -74,7 +74,7 @@ type_array *type_array_new(type_base *element_ref) {
   type_array *self = MALLOC(type_array);
   type_base_init(&self->base, TYPE_ARRAY);
   self->element_ref = element_ref;
-  self->spec = TYPE_SPEC_UNSET;
+  self->spec = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -83,7 +83,7 @@ type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params) {
   type_base_init(&self->base, TYPE_CALLABLE);
   self->ret_ref = ret_ref;
   self->params = params;
-  self->spec = TYPE_SPEC_UNSET;
+  self->spec = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -94,7 +94,7 @@ type_class *type_class_new(char *id, list_type_ref *typenames,
   self->id = id;
   self->typenames = typenames;
   self->parents = parents;
-  self->spec = TYPE_SPEC_UNSET;
+  self->spec = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -107,14 +107,13 @@ type_typename *type_typename_new(char *id, type_base *source_ref) {
 }
 
 // can only specialize classes
-type_specialized *type_specialized_new(type_base     *type_ref,
-                                       list_type_ref *templates,
-                                       list_type_ref *specs) {
-  type_specialized *self = MALLOC(type_specialized);
+type_mono *type_mono_new(type_base *type_ref, list_type_ref *templates,
+                         list_type_ref *specs) {
+  type_mono *self = MALLOC(type_mono);
   self->type_ref = type_ref;
   self->templates = templates;
   self->specs = specs;
-  self->spec = TYPE_SPEC_UNSET;
+  self->spec = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -131,8 +130,8 @@ void type_free(type_base *generic) {
       return type_class_free((type_class *)generic);
     case TYPE_TYPENAME:
       return type_typename_free((type_typename *)generic);
-    case TYPE_SPECIALIZED:
-      return type_specialized_free((type_specialized *)generic);
+    case TYPE_MONO:
+      return type_mono_free((type_mono *)generic);
     case TYPE_UNKNOWN:
     default:
       error("unexpected type_entry kind %d %p", generic->kind, generic);
@@ -153,7 +152,7 @@ void type_set_type_entry(type_base *generic, type_entry *type_entry_ref) {
   case TYPE_CALLABLE:
   case TYPE_CLASS:
   case TYPE_TYPENAME:
-  case TYPE_SPECIALIZED:
+  case TYPE_MONO:
     generic->type_entry_ref = type_entry_ref;
     break;
   case TYPE_UNKNOWN:

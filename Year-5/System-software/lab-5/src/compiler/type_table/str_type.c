@@ -97,8 +97,8 @@ static void strbuf_append_type_typename(strbuf              *buffer,
   strbuf_append(buffer, type->id);
 }
 
-static void strbuf_append_type_specialized(strbuf                 *buffer,
-                                           const type_specialized *type) {
+static void strbuf_append_type_specialized(strbuf          *buffer,
+                                           const type_mono *type) {
   strbuf_append(buffer, "specof ");
   strbuf_append_type(buffer, type->type_ref);
   strbuf_append(buffer, " with (");
@@ -140,8 +140,8 @@ static void strbuf_append_type(strbuf *buffer, const type_base *generic) {
   case TYPE_TYPENAME:
     strbuf_append_type_typename(buffer, (const type_typename *)generic);
     break;
-  case TYPE_SPECIALIZED:
-    strbuf_append_type_specialized(buffer, (const type_specialized *)generic);
+  case TYPE_MONO:
+    strbuf_append_type_specialized(buffer, (const type_mono *)generic);
     break;
   case TYPE_UNKNOWN:
   default:
@@ -162,7 +162,7 @@ const char *type_enum_str(type_enum kind) {
     return "CLASS";
   case TYPE_TYPENAME:
     return "TYPENAME";
-  case TYPE_SPECIALIZED:
+  case TYPE_MONO:
     return "SPECIALIZED";
   case TYPE_UNKNOWN:
   default:
@@ -180,13 +180,13 @@ char *type_str(const type_base *generic) {
   return NULL;
 }
 
-const char *type_spec_enum_str(type_spec_enum spec) {
+const char *type_mono_enum_str(type_mono_enum spec) {
   switch (spec) {
-  case TYPE_SPEC_UNSET:
+  case TYPE_MONO_UNSET:
     return "UNSET";
-  case TYPE_SPEC_FULL:
+  case TYPE_MONO_FULL:
     return "FULL";
-  case TYPE_SPEC_NOT_FULL:
+  case TYPE_MONO_NOT_FULL:
     return "NOT_FULL";
   default:
     warn("unknown type_spec %d", spec);

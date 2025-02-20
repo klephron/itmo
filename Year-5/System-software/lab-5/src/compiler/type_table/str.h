@@ -5,6 +5,6 @@
 
 const char *type_enum_str(type_enum kind);
 char       *type_str(const type_base *generic);
-const char *type_spec_enum_str(type_spec_enum spec);
+const char *type_mono_enum_str(type_mono_enum spec);
 
 char *type_table_str(const type_table *table);
