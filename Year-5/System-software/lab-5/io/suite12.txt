@@ -14,6 +14,25 @@ begin
     b, c: B<string>;
   begin
     cast!<B<B<int>>>();
-    make!<long>();
+    make!<array [] of string>();
   end
+end;
+
+method main(): void
+begin
+end;
+
+class A<T>
+var
+begin
+end;
+
+class A<T, U>
+var
+begin
+end;
+
+class B<T, U> : A<A<T>>, A<T, U>, A<int>
+var
+begin
 end;

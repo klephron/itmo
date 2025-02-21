@@ -100,7 +100,9 @@ static char *type_table_str_extra(const type_entry *entry) {
     type_table_str_extra_ref(buffer, parent_entry->type);
   } break;
   case TYPE_MONO: {
-    strbuf_append(buffer, "TODO");
+    const type_mono *self = (const type_mono *)entry->type;
+    strbuf_append(buffer, "instantiates ");
+    type_table_str_extra_ref(buffer, self->type_ref);
   } break;
   default:
     break;
