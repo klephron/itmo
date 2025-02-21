@@ -1,22 +1,19 @@
-class C<A> : A<A<>>, B
+class A
 var
-  a: A<A>;
-  b, c: B<T>;
 begin
-  public method one(): int from "read" in "example";
-  public method two(): int from "example";
 end;
 
-class C<A> : A<A<>>, B
+class A<T>
 var
-  a: A<A>;
-  b, c: B<T>;
 begin
-  public method one(): int from "read" in "example";
-  public method two(): int from "example";
 end;
 
-method main():
+class B<A>
+var
+begin
+end;
+
+class C<A>
 var
 begin
 end;

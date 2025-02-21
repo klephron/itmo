@@ -67,14 +67,13 @@ type_mono_enum type_calc_mono(const type_base *generic) {
       const type_class *attached = (const type_class *)self->type_ref;
 
       size_t typenames_sz = list_type_ref_size(attached->typenames);
-      size_t templates_sz = list_type_ref_size(self->templates);
-      size_t specs_sz = list_type_ref_size(self->specs);
-      if (typenames_sz != templates_sz || typenames_sz != specs_sz) {
-        error("typenames size is not equal to templates or specs size");
+      size_t types_sz = list_type_ref_size(self->types);
+      if (typenames_sz != types_sz) {
+        error("typenames size is not equal to types size");
         return TYPE_MONO_UNSET;
       }
 
-      return type_calc_mono_list(self->specs);
+      return type_calc_mono_list(self->types);
     }
     default:
       error("type_mono currently can be attached ONLY to classes");
@@ -99,13 +98,13 @@ type_mono_enum type_get_mono(const type_base *generic) {
   case TYPE_TYPENAME:
     return TYPE_MONO_NOT_FULL;
   case TYPE_ARRAY:
-    return ((const type_array *)generic)->spec;
+    return ((const type_array *)generic)->mono_kind;
   case TYPE_CALLABLE:
-    return ((const type_callable *)generic)->spec;
+    return ((const type_callable *)generic)->mono_kind;
   case TYPE_CLASS:
-    return ((const type_class *)generic)->spec;
+    return ((const type_class *)generic)->mono_kind;
   case TYPE_MONO:
-    return ((const type_mono *)generic)->spec;
+    return ((const type_mono *)generic)->mono_kind;
   case TYPE_UNKNOWN:
   default:
     error("unexpected type kind %d %p", generic->kind, generic);

@@ -1,0 +1,87 @@
+make[1]: '/workspaces/lab-5/build/util/libutil.a' is up to date.
+make[1]: '/workspaces/lab-5/build/x86_64_core/libx86_64_all.a' is up to date.
+cc -g3 -O0 -m64 -Wall -Wextra -fsanitize=address,undefined,leak  -c hir_build/bind_types.c -o /workspaces/lab-5/build/compiler/hir_build/bind_types.o -I/workspaces/lab-5/build/_gen -I/workspaces/lab-5/src -lantlr3c
+cc -g3 -O0 -m64 -Wall -Wextra -fsanitize=address,undefined,leak  -o /workspaces/lab-5/build/compiler/main /workspaces/lab-5/src/compiler/main.c /workspaces/lab-5/build/compiler/ast/ast.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx_build_body.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx_build.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx_build_debug.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx_build_label.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx_build_sub.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx_build_util.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx.o /workspaces/lab-5/build/compiler/codegen/x86_64/ctx_emit.o /workspaces/lab-5/build/compiler/codegen/x86_64/x86_64.o /workspaces/lab-5/build/compiler/dot/ast.o /workspaces/lab-5/build/compiler/dot/dot.o /workspaces/lab-5/build/compiler/dot/eir.o /workspaces/lab-5/build/compiler/eir/ctx.o /workspaces/lab-5/build/compiler/eir/eir.o /workspaces/lab-5/build/compiler/eir/str.o /workspaces/lab-5/build/compiler/exception/exception.o /workspaces/lab-5/build/compiler/exception/list.o /workspaces/lab-5/build/compiler/hir/hir.o /workspaces/lab-5/build/compiler/hir/node_basic.o /workspaces/lab-5/build/compiler/hir/node.o /workspaces/lab-5/build/compiler/hir/node_class.o /workspaces/lab-5/build/compiler/hir/node_expr.o /workspaces/lab-5/build/compiler/hir/node_stmt.o /workspaces/lab-5/build/compiler/hir/node_subroutine.o /workspaces/lab-5/build/compiler/hir/str_hir.o /workspaces/lab-5/build/compiler/hir/str_tree.o /workspaces/lab-5/build/compiler/hir/str_type.o /workspaces/lab-5/build/compiler/hir/type.o /workspaces/lab-5/build/compiler/hir_build/bind_symbols.o /workspaces/lab-5/build/compiler/hir_build/bind_types.o /workspaces/lab-5/build/compiler/hir_build/exception.o /workspaces/lab-5/build/compiler/hir_build/expand_templates.o /workspaces/lab-5/build/compiler/hir_build/hir_build.o /workspaces/lab-5/build/compiler/hir_build/lower_ast.o /workspaces/lab-5/build/compiler/hir_build/lower_ast_funcs.o /workspaces/lab-5/build/compiler/lexer/lexer.o /workspaces/lab-5/build/compiler/mir/ctx_bb_merge.o /workspaces/lab-5/build/compiler/mir/ctx_build.o /workspaces/lab-5/build/compiler/mir/ctx.o /workspaces/lab-5/build/compiler/mir/debug.o /workspaces/lab-5/build/compiler/mir/mir.o /workspaces/lab-5/build/compiler/mir/str.o /workspaces/lab-5/build/compiler/parser/parser.o /workspaces/lab-5/build/compiler/span/span.o /workspaces/lab-5/build/compiler/span/str.o /workspaces/lab-5/build/compiler/symbol_table/str.o /workspaces/lab-5/build/compiler/symbol_table/symbol_table.o /workspaces/lab-5/build/compiler/type_table/str_table.o /workspaces/lab-5/build/compiler/type_table/str_type.o /workspaces/lab-5/build/compiler/type_table/type.o /workspaces/lab-5/build/compiler/type_table/type_cmp.o /workspaces/lab-5/build/compiler/type_table/type_spec.o /workspaces/lab-5/build/compiler/type_table/type_table.o /workspaces/lab-5/build/compiler/antlr3/rec/MainLexer.o /workspaces/lab-5/build/compiler/antlr3/rec/MainParser.o /workspaces/lab-5/build/compiler/antlr3/tree/HirBuilder.o /workspaces/lab-5/build/util/libutil.a /workspaces/lab-5/build/x86_64_core/libx86_64_all.a -I/workspaces/lab-5/build/_gen -I/workspaces/lab-5/src -lantlr3c
+./build/compiler/main -d . -o io/suite12.txt.asm --ignore-errors \
+	--ast --cfg --cg --symbol-table --type-table --hir-tree \
+	io/suite12.txt || true
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 1[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 2[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 3[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 4[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 5[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 6[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 7[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 8[0m
+[90m[debug hir_build/bind_types.c:186:hir_ctx_scopes_insert_global]: scope_size: 9[0m
+[90m[debug hir_build/bind_types.c:180:hir_ctx_scopes_insert]: scope_size: 10[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:180:hir_ctx_scopes_insert]: scope_size: 11[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:180:hir_ctx_scopes_insert]: scope_size: 1[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:180:hir_ctx_scopes_insert]: scope_size: 12[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:180:hir_ctx_scopes_insert]: scope_size: 13[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:180:hir_ctx_scopes_insert]: scope_size: 1[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:191:hir_ctx_scopes_push]: scope_height: 2[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 1[0m
+[90m[debug hir_build/bind_types.c:197:hir_ctx_scopes_pop]: scope_height: 0[0m
+HIR TREE:
+{
+  classes: [
+  ]
+  subroutines: [
+  ]
+}
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│TYPE TABLE                                                                                                                                    │
+├──────────────┬────────────────────┬─────────┬──────────────────────────────────────────┬─────────────────────────────────────────────────────┤
+│PTR           │TYPE                │TYPE_MONO│SPAN                                      │EXTRA                                                │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x6020000022b0│bool                │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002350│byte                │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x6020000023f0│int                 │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002490│uint                │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002530│long                │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x6020000025d0│ulong               │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002670│char                │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002710│string              │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x6020000027b0│void                │FULL     │built-in                                  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002870│class A             │FULL     │/workspaces/lab-5/io/suite12.txt 1:0 1:7  │                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002970│class A <typename T>│NOT_FULL │/workspaces/lab-5/io/suite12.txt 6:0 6:9  │typename T -> ID(0x602000002a30)                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002a30│typename T          │NOT_FULL │/workspaces/lab-5/io/suite12.txt 6:8 6:9  │references class A <typename T> -> ID(0x602000002970)│
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002b30│class B             │FULL     │/workspaces/lab-5/io/suite12.txt 11:0 11:9│                                                     │
+├──────────────┼────────────────────┼─────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+│0x602000002cb0│class C             │FULL     │/workspaces/lab-5/io/suite12.txt 16:0 16:9│                                                     │
+└──────────────┴────────────────────┴─────────┴──────────────────────────────────────────┴─────────────────────────────────────────────────────┘
+┌──────────────────────────┐
+│SYMBOL TABLE              │
+├───┬────┬───────┬────┬────┤
+│PTR│NAME│TYPE_ID│TYPE│SPAN│
+└───┴────┴───────┴────┴────┘
+--------------------DOT2PDF(io/suite12.txt)--------------------
+for file in $(find io -type f -name "*.dot"); do dot -Tpdf "$file" -o "${file%.dot}.pdf" || true; done

@@ -1,5 +1,6 @@
 #include "compiler/hir/node.h"
 #include "compiler/span/str.h"
+#include "compiler/type_table/str.h"
 #include "str.h"
 
 #include "util/log.h"
@@ -48,9 +49,13 @@ static void strbuf_appendln(strbuf *buffer, const char *data) {
 
 static void hir_tree_str_span(strbuf *buffer, size_t pad, const span *span) {
   UNUSED(pad);
-  char *s = span_str(span);
-  strbuf_append(buffer, s);
-  free(s);
+  if (span) {
+    char *s = span_str(span);
+    strbuf_append(buffer, s);
+    free(s);
+  } else {
+    strbuf_append(buffer, "(nil)");
+  }
 }
 
 static void hir_tree_str_type(strbuf *buffer, size_t pad,
@@ -150,8 +155,13 @@ static void hir_tree_str_type_entry(strbuf *buffer, size_t pad,
   strbuf_append(buffer, "type_table(");
   snprintf(buf, STRMAXLEN(buf), "%p", entry_ref);
   strbuf_append(buffer, buf);
-  strbuf_append(buffer, ") // ");
-  strbuf_append(buffer, entry_ref->name);
+  strbuf_append(buffer, ")");
+  char *type_s = type_str(entry_ref->type);
+  if (type_s) {
+    strbuf_append(buffer, " // ");
+    strbuf_append(buffer, type_s);
+    free(type_s);
+  }
 }
 
 static void hir_tree_str_param(strbuf *buffer, size_t pad,

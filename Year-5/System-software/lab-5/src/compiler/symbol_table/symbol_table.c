@@ -22,19 +22,20 @@ void symbol_entry_free(symbol_entry *self) {
 
 symbol_table *symbol_table_new() {
   symbol_table *self = MALLOC(symbol_table);
-  self->entries = hashset_symbol_entry_new();
+  self->entries = list_symbol_entry_new();
   return self;
 }
 
 void symbol_table_free(symbol_table *self) {
   if (self) {
-    hashset_symbol_entry_free(self->entries);
+    list_symbol_entry_free(self->entries);
     free(self);
   }
 }
 
-void symbol_table_insert(symbol_table *self, char *id, type_entry *type_ref,
-                         span *span) {
-  hashset_symbol_entry_insert(self->entries,
-                              symbol_entry_new(id, type_ref, span));
+symbol_entry *symbol_table_emplace(symbol_table *self, char *id,
+                                   type_entry *type_ref, span *span) {
+  symbol_entry *entry = symbol_entry_new(id, type_ref, span);
+  list_symbol_entry_push_back(self->entries, entry);
+  return entry;
 }

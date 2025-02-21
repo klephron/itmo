@@ -56,8 +56,7 @@ static void type_typename_free(type_typename *self) {
 
 static void type_mono_free(type_mono *self) {
   if (self) {
-    list_type_ref_free(self->templates);
-    list_type_ref_free(self->specs);
+    list_type_ref_free(self->types);
     type_base_deinit(&self->base);
     free(self);
   }
@@ -74,7 +73,7 @@ type_array *type_array_new(type_base *element_ref) {
   type_array *self = MALLOC(type_array);
   type_base_init(&self->base, TYPE_ARRAY);
   self->element_ref = element_ref;
-  self->spec = TYPE_MONO_UNSET;
+  self->mono_kind = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -83,7 +82,7 @@ type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params) {
   type_base_init(&self->base, TYPE_CALLABLE);
   self->ret_ref = ret_ref;
   self->params = params;
-  self->spec = TYPE_MONO_UNSET;
+  self->mono_kind = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -94,7 +93,7 @@ type_class *type_class_new(char *id, list_type_ref *typenames,
   self->id = id;
   self->typenames = typenames;
   self->parents = parents;
-  self->spec = TYPE_MONO_UNSET;
+  self->mono_kind = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -107,13 +106,12 @@ type_typename *type_typename_new(char *id, type_base *source_ref) {
 }
 
 // can only specialize classes
-type_mono *type_mono_new(type_base *type_ref, list_type_ref *templates,
-                         list_type_ref *specs) {
+type_mono *type_mono_new(type_base *type_ref, list_type_ref *types) {
   type_mono *self = MALLOC(type_mono);
+  type_base_init(&self->base, TYPE_MONO);
   self->type_ref = type_ref;
-  self->templates = templates;
-  self->specs = specs;
-  self->spec = TYPE_MONO_UNSET;
+  self->types = types;
+  self->mono_kind = TYPE_MONO_UNSET;
   return self;
 }
 

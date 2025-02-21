@@ -102,17 +102,12 @@ static void strbuf_append_type_specialized(strbuf          *buffer,
   strbuf_append(buffer, "specof ");
   strbuf_append_type(buffer, type->type_ref);
   strbuf_append(buffer, " with (");
-  list_type_ref_it itt = list_type_ref_begin(type->templates);
-  list_type_ref_it its = list_type_ref_begin(type->specs);
-  if (!END(itt) && !END(its)) {
-    strbuf_append_type(buffer, GET(itt));
-    strbuf_append(buffer, " -> ");
-    strbuf_append_type(buffer, GET(its));
-    for (NEXT(itt), NEXT(its); !END(itt) && !END(its); NEXT(itt), NEXT(its)) {
+  list_type_ref_it itm = list_type_ref_begin(type->types);
+  if (!END(itm)) {
+    strbuf_append_type(buffer, GET(itm));
+    for (NEXT(itm); !END(itm); NEXT(itm)) {
       strbuf_append(buffer, ", ");
-      strbuf_append_type(buffer, GET(itt));
-      strbuf_append(buffer, " -> ");
-      strbuf_append_type(buffer, GET(its));
+      strbuf_append_type(buffer, GET(itm));
     }
   }
   strbuf_append(buffer, ")");
@@ -120,7 +115,7 @@ static void strbuf_append_type_specialized(strbuf          *buffer,
 
 static void strbuf_append_type(strbuf *buffer, const type_base *generic) {
   if (!generic) {
-    strbuf_append(buffer, "-");
+    strbuf_append(buffer, "any");
     return;
   }
 
@@ -163,7 +158,7 @@ const char *type_enum_str(type_enum kind) {
   case TYPE_TYPENAME:
     return "TYPENAME";
   case TYPE_MONO:
-    return "SPECIALIZED";
+    return "MONOMORPHIZED";
   case TYPE_UNKNOWN:
   default:
     warn("unknown type kind %d", kind);

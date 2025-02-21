@@ -23,7 +23,7 @@ static void strbuf_append_type_list(strbuf *buffer, const list_hir_type *list,
 
 static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
   if (!generic) {
-    strbuf_append(buffer, "-");
+    strbuf_append(buffer, "any");
     return;
   }
 
@@ -66,13 +66,6 @@ static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
     strbuf_append_type(buffer, array->elem_type);
     strbuf_append(buffer, "]");
   } break;
-  case HIR_TYPE_CLASS: {
-    hir_type_class *class = (hir_type_class *)generic;
-    strbuf_append(buffer, "class ");
-    strbuf_append(buffer, class->name);
-    strbuf_append_type_list(buffer, class->templates, "<", ">");
-    strbuf_append_type_list(buffer, class->parents, " : ", "");
-  } break;
   case HIR_TYPE_UNKNOWN:
     warn("unknown type %d %p", generic->type, generic);
     strbuf_append(buffer, "unknown");
@@ -104,8 +97,6 @@ const char *hir_type_enum_str(hir_type_enum type) {
     return "CUSTOM";
   case HIR_TYPE_ARRAY:
     return "ARRAY";
-  case HIR_TYPE_CLASS:
-    return "CLASS";
   case HIR_TYPE_UNKNOWN:
   default:
     return "UNKNOWN";

@@ -24,14 +24,14 @@ char *symbol_table_str(const symbol_table *table) {
   }
 
   list_chars *header = list_chars_new();
-  list_chars_push_back(header, "ID(PTR)");
+  list_chars_push_back(header, "PTR");
   list_chars_push_back(header, "NAME");
   list_chars_push_back(header, "TYPE_ID");
   list_chars_push_back(header, "TYPE");
   list_chars_push_back(header, "SPAN");
 
   list_list_chars *body = list_list_chars_new();
-  for (hashset_symbol_entry_it it = hashset_symbol_entry_begin(table->entries);
+  for (list_symbol_entry_it it = list_symbol_entry_begin(table->entries);
        !END(it); NEXT(it)) {
     list_chars         *row = list_chars_new();
     char                buf[64];

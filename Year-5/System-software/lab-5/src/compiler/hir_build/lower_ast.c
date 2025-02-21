@@ -43,11 +43,14 @@ static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
 }
 
 hir_build_initial_result hir_build_initial(const list_ast *asts) {
-  hir *hir = hir_new();
+  hir_build_initial_result result = {
+      .hir = hir_new(),
+      .exceptions = list_exception_new(),
+  };
 
   hir_build_initial_ctx ctx = {
-      .hir_ref = hir,
-      .exceptions = list_exception_new(),
+      .hir_ref = result.hir,
+      .exceptions = result.exceptions,
   };
 
   for (list_ast_it it = list_ast_begin(asts); !END(it); NEXT(it)) {
@@ -68,8 +71,5 @@ hir_build_initial_result hir_build_initial(const list_ast *asts) {
     nodes->free(nodes);
   }
 
-  return (hir_build_initial_result){
-      .hir = hir,
-      .exceptions = ctx.exceptions,
-  };
+  return result;
 }

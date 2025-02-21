@@ -387,6 +387,12 @@ hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
                              hir_method_modifier_enum modifier,
                              hir_subroutine          *func) {
   UNUSED(ctx);
+
+  // add this as implicit first parameter
+  list_hir_param_push_front(
+      func->params,
+      hir_param_new(NULL, hir_id_new(NULL, strdup("this")), NULL));
+
   if (!root || modifier == HIR_METHOD_MODIFIER_ENUM_ABSCENT) {
     span *root_span = hir_span_new(root, ctx->ast_cur_ref->name_ref);
     span *span = hir_span_new_range(root_span, func->base.span);

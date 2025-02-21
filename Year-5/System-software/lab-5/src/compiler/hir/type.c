@@ -1,5 +1,6 @@
 #include "type.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 
 #include <assert.h>
@@ -40,13 +41,8 @@ static void hir_type_array_free(hir_type_array *self) {
   }
 }
 
-static void hir_type_class_free(hir_type_class *self) {
-  if (self) {
-    list_hir_type_free(self->templates);
-    list_hir_type_free(self->parents);
-    hir_type_base_deinit(&self->base);
-    free(self);
-  }
+static inline uint64_t hash_combine(uint64_t seed, uint64_t value) {
+  return seed ^ (value + 0x9e3779b9 + (seed << 6) + (seed >> 2));
 }
 
 hir_type_base *hir_type_base_new(span *span, hir_type_enum type) {
@@ -62,46 +58,9 @@ void hir_type_free(hir_type_base *generic) {
       return hir_type_custom_free((hir_type_custom *)generic);
     case HIR_TYPE_ARRAY:
       return hir_type_array_free((hir_type_array *)generic);
-    case HIR_TYPE_CLASS:
-      return hir_type_class_free((hir_type_class *)generic);
     default:
       return hir_type_base_free(generic);
     }
-  }
-}
-
-// if both types are not null and different -> not equal
-int hir_type_equals(const hir_type_base *lsv, const hir_type_base *rsv) {
-  if (!lsv || !rsv) {
-    return 1;
-  }
-  if (lsv->type != rsv->type) {
-    return 0;
-  }
-  switch (lsv->type) {
-  case HIR_TYPE_CUSTOM: {
-    hir_type_custom *lsv_unr = (hir_type_custom *)lsv;
-    hir_type_custom *rsv_unr = (hir_type_custom *)rsv;
-    return !strcmp(lsv_unr->name, rsv_unr->name);
-  }
-  case HIR_TYPE_ARRAY: {
-    hir_type_array *lsv_arr = (hir_type_array *)lsv;
-    hir_type_array *rsv_arr = (hir_type_array *)rsv;
-    return hir_type_equals(lsv_arr->elem_type, rsv_arr->elem_type);
-  }
-  case HIR_TYPE_CLASS: {
-    hir_type_class *lsv_cl = (hir_type_class *)lsv;
-    hir_type_class *rsv_cl = (hir_type_class *)rsv;
-    if (!list_hir_type_equals(lsv_cl->parents, rsv_cl->parents)) {
-      return 0;
-    }
-    if (!list_hir_type_equals(lsv_cl->templates, rsv_cl->templates)) {
-      return 0;
-    }
-    return 1;
-  }
-  default:
-    return 1;
   }
 }
 
@@ -114,42 +73,104 @@ hir_type_base *hir_type_copy(const hir_type_base *self) {
     hir_type_custom *custom = (hir_type_custom *)self;
     return (hir_type_base *)hir_type_custom_new(
         span_copy(self->span), strdup(custom->name),
-        list_hir_type_copy(custom->templates));
+        hir_type_copy_list(custom->templates));
   }
   case HIR_TYPE_ARRAY: {
     hir_type_array *array = (hir_type_array *)self;
     return (hir_type_base *)hir_type_array_new(span_copy(self->span),
                                                hir_type_copy(array->elem_type));
   }
-  case HIR_TYPE_CLASS: {
-    hir_type_class *class = (hir_type_class *)self;
-    return (hir_type_base *)hir_type_class_new(
-        span_copy(self->span), strdup(class->name),
-        list_hir_type_copy(class->templates),
-        list_hir_type_copy(class->parents));
-  }
   default:
     return hir_type_base_new(span_copy(self->span), self->type);
   }
 }
 
-int list_hir_type_equals(const list_hir_type *lsv, const list_hir_type *rsv) {
-  size_t lsize = list_hir_type_size(lsv);
-  size_t rsize = list_hir_type_size(rsv);
-  if (lsize != rsize) {
+int hir_type_cmp(const hir_type_base *lsv, const hir_type_base *rsv) {
+  if (lsv == rsv) {
     return 0;
   }
-  for (list_node *lit = lsv->list.head, *rit = rsv->list.head; lit;
-       lit = lit->next, rit = rit->next) {
-    int ret = hir_type_equals(lit->data, rit->data);
-    if (!ret) {
-      return 0;
-    }
+
+  if (lsv->type > rsv->type) {
+    return 1;
+  } else if (lsv->type < rsv->type) {
+    return -1;
   }
-  return 1;
+
+  switch (lsv->type) {
+  case HIR_TYPE_BOOL:
+  case HIR_TYPE_BYTE:
+  case HIR_TYPE_INT:
+  case HIR_TYPE_UINT:
+  case HIR_TYPE_LONG:
+  case HIR_TYPE_ULONG:
+  case HIR_TYPE_CHAR:
+  case HIR_TYPE_STRING:
+  case HIR_TYPE_VOID:
+    return 0;
+  case HIR_TYPE_CUSTOM: {
+    const hir_type_custom *l = (hir_type_custom *)lsv;
+    const hir_type_custom *r = (hir_type_custom *)rsv;
+
+    int cmp = strcmp(l->name, r->name);
+    if (cmp) {
+      return cmp;
+    }
+
+    return hir_type_cmp_list(l->templates, r->templates);
+  }
+  case HIR_TYPE_ARRAY: {
+    const hir_type_array *l = (hir_type_array *)lsv;
+    const hir_type_array *r = (hir_type_array *)rsv;
+
+    return hir_type_cmp(l->elem_type, r->elem_type);
+  }
+  default:
+    error("unexpected hir type kind %d %p", lsv->type, lsv);
+    return 0;
+    break;
+  }
 }
 
-list_hir_type *list_hir_type_copy(const list_hir_type *in) {
+uint64_t hir_type_hash(const hir_type_base *lsv) {
+  if (!lsv) {
+    return 0;
+  }
+
+  uint64_t hash = 5381;
+
+  hash = hash_combine(hash, (uint64_t)lsv->type);
+
+  switch (lsv->type) {
+  case HIR_TYPE_BOOL:
+  case HIR_TYPE_BYTE:
+  case HIR_TYPE_INT:
+  case HIR_TYPE_UINT:
+  case HIR_TYPE_LONG:
+  case HIR_TYPE_ULONG:
+  case HIR_TYPE_CHAR:
+  case HIR_TYPE_STRING:
+  case HIR_TYPE_VOID:
+    break;
+  case HIR_TYPE_CUSTOM: {
+    const hir_type_custom *l = (const hir_type_custom *)lsv;
+    hash = hash_combine(hash, container_hash_chars(l->name));
+    hash = hash_combine(hash, hir_type_hash_list(l->templates));
+    break;
+  }
+  case HIR_TYPE_ARRAY: {
+    const hir_type_array *l = (const hir_type_array *)lsv;
+    hash = hash_combine(hash, hir_type_hash(l->elem_type));
+    break;
+  }
+  default:
+    error("unexpected hir type kind %d %p", lsv->type, lsv);
+    return 0;
+  }
+
+  return hash;
+}
+
+list_hir_type *hir_type_copy_list(const list_hir_type *in) {
   if (!in) {
     return NULL;
   }
@@ -159,6 +180,44 @@ list_hir_type *list_hir_type_copy(const list_hir_type *in) {
     list_hir_type_push_back(nlist, hir_type_copy(GET(it)));
   }
   return nlist;
+}
+
+int hir_type_cmp_list(const list_hir_type *lsv, const list_hir_type *rsv) {
+  if (lsv == rsv) {
+    return 0;
+  }
+
+  size_t lsz = lsv ? list_hir_type_size(lsv) : 0;
+  size_t rsz = rsv ? list_hir_type_size(rsv) : 0;
+  if (lsz > rsz) {
+    return 1;
+  } else if (lsz < rsz) {
+    return -1;
+  } else if (!lsz) {
+    return 0;
+  }
+
+  for (list_hir_type_it lit = list_hir_type_begin(lsv),
+                        rit = list_hir_type_begin(rsv);
+       !END(lit) && !END(rit); NEXT(lit), NEXT(rit)) {
+    int cmp = hir_type_cmp(GET(lit), GET(rit));
+    if (!cmp) {
+      return cmp;
+    }
+  }
+
+  return 0;
+}
+
+uint64_t hir_type_hash_list(const list_hir_type *list) {
+  uint64_t hash = 5381;
+  if (!list) {
+    return hash;
+  }
+  for (list_hir_type_it it = list_hir_type_begin(list); !END(it); NEXT(it)) {
+    hash = hash_combine(hash, hir_type_hash(GET(it)));
+  }
+  return hash;
 }
 
 hir_type_custom *hir_type_custom_new(span *span, char *name,
@@ -174,16 +233,5 @@ hir_type_array *hir_type_array_new(span *span, hir_type_base *elem_type) {
   hir_type_array *self = MALLOC(hir_type_array);
   hir_type_base_init(&self->base, HIR_TYPE_ARRAY, span);
   self->elem_type = elem_type;
-  return self;
-}
-
-hir_type_class *hir_type_class_new(span *span, char *name,
-                                   list_hir_type *templates,
-                                   list_hir_type *parents) {
-  hir_type_class *self = MALLOC(hir_type_class);
-  hir_type_base_init(&self->base, HIR_TYPE_CLASS, span);
-  self->name = name;
-  self->templates = templates;
-  self->parents = parents;
   return self;
 }
