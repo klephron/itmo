@@ -60,6 +60,16 @@ typedef struct hir_ctx_struct {
   type_table     *type_table;
 } hir_ctx;
 
+static hir_scope_entry *hir_ctx_scopes_insert(hir_ctx         *ctx,
+                                              hir_scope_entry *entry);
+static hir_scope_entry *hir_ctx_scopes_insert_global(hir_ctx         *ctx,
+                                                     hir_scope_entry *entry);
+static hir_scope_entry *hir_ctx_scopes_insert_sel(hir_ctx         *ctx,
+                                                  hir_scope_entry *entry,
+                                                  hir_scope       *scope);
+static void             hir_ctx_scopes_push(hir_ctx *ctx);
+static void             hir_ctx_scopes_pop(hir_ctx *ctx);
+
 static void hir_ctx_deinit(hir_ctx *ctx) { list_hir_scope_free(ctx->scopes); }
 
 static inline type_entry *
@@ -147,13 +157,28 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
     type_entry *type_ref = hir_ctx_table_emplace(
         ctx, (type_base *)mono, span_copy(template->type_ref->span));
 
-    hir_scope_it it = hir_scope_insert(
-        scope,
-        hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref));
-    entry = GET(it);
+    entry = hir_ctx_scopes_insert_sel(
+        ctx,
+        hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref),
+        scope);
 
   } break;
+
   case HIR_TYPE_ARRAY: {
+    const hir_type_array *self = (hir_type_array *)base;
+
+    hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, self->elem_type);
+    if (!sub_entry) {
+      return NULL;
+    }
+
+    type_array *array = type_array_new(sub_entry->type_ref->type);
+    type_entry *type_ref = hir_ctx_table_emplace(ctx, (type_base *)array, NULL);
+
+    entry = hir_ctx_scopes_insert_global(
+        ctx,
+        hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref));
+
   } break;
   case HIR_TYPE_BOOL:
   case HIR_TYPE_BYTE:
@@ -174,16 +199,29 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
   return entry;
 }
 
-static void hir_ctx_scopes_insert(hir_ctx *ctx, hir_scope_entry *entry) {
-  hir_scope *scope = list_hir_scope_front(ctx->scopes);
-  hir_scope_insert(scope, entry);
+static hir_scope_entry *hir_ctx_scopes_insert(hir_ctx         *ctx,
+                                              hir_scope_entry *entry) {
+  hir_scope   *scope = list_hir_scope_front(ctx->scopes);
+  hir_scope_it it = hir_scope_insert(scope, entry);
   debug("scope_size: %zu", scope->hashset.size);
+  return GET(it);
 }
 
-static void hir_ctx_scopes_insert_global(hir_ctx *ctx, hir_scope_entry *entry) {
-  hir_scope *scope = list_hir_scope_back(ctx->scopes);
-  hir_scope_insert(scope, entry);
+static hir_scope_entry *hir_ctx_scopes_insert_global(hir_ctx         *ctx,
+                                                     hir_scope_entry *entry) {
+  hir_scope   *scope = list_hir_scope_back(ctx->scopes);
+  hir_scope_it it = hir_scope_insert(scope, entry);
   debug("scope_size: %zu", scope->hashset.size);
+  return GET(it);
+}
+
+static hir_scope_entry *hir_ctx_scopes_insert_sel(hir_ctx         *ctx,
+                                                  hir_scope_entry *entry,
+                                                  hir_scope       *scope) {
+  UNUSED(ctx);
+  hir_scope_it it = hir_scope_insert(scope, entry);
+  debug("scope_size: %zu", scope->hashset.size);
+  return GET(it);
 }
 
 static void hir_ctx_scopes_push(hir_ctx *ctx) {
