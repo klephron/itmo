@@ -311,46 +311,180 @@ static void hir_bind_builtin(hir_ctx *ctx) {
                    NULL)));
 }
 
-static void hir_bind_subroutine(hir_ctx *ctx, hir_subroutine *subroutine) {
-  // HANDLE SUBROUTINE TYPE
-  // type_entry *ret_entry = hir_bind_subroutine_match(ctx,
-  // subroutine->type_ret); hir_type_free(subroutine->type_ret);
+static void hir_bind_subroutine_signature(hir_ctx        *ctx,
+                                          hir_subroutine *subroutine) {
+  hir_scope_entry *ret_entry =
+      hir_ctx_scopes_resolve(ctx, subroutine->type_ret);
 
-  // list_type_ref *params = list_type_ref_new();
-  // for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
-  //      !END(it); NEXT(it)) {
-  //   hir_param *param = GET(it);
+  if (!ret_entry) {
+    char *type_s = hir_type_str(ret_entry->type_hir);
+    hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, subroutine->base.span,
+                  "return type %s can't be resolved", type_s);
+    free(type_s);
+    return;
+  }
 
-  //   if (!(param->state & HIR_STATE_BIND_TYPE)) {
-  //     type_entry *param_entry = hir_bind_subroutine_match(ctx,
-  //     param->type_hir);
+  list_type_ref *params = list_type_ref_new();
+  for (list_hir_param_it it = list_hir_param_begin(subroutine->params);
+       !END(it); NEXT(it)) {
+    hir_param *param = GET(it);
 
-  //     hir_type_free(param->type_hir);
-  //     param->type_ref = param_entry;
-  //     param->state |= HIR_STATE_BIND_TYPE;
-  //   }
+    if (!(param->state & HIR_STATE_BIND_TYPE)) {
+      if (param->type_ref) {
+        hir_scope_entry *param_entry =
+            hir_ctx_scopes_resolve(ctx, param->type_hir);
 
-  //   list_type_ref_push_back(params,
-  //                           param->type_ref ? param->type_ref->type : NULL);
-  // }
+        if (!param_entry) {
+          char *type_s = hir_type_str(ret_entry->type_hir);
+          hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED,
+                        subroutine->base.span,
+                        "param with type %s can't be resolved", type_s);
+          free(type_s);
 
-  // type_callable *callable =
-  //     type_callable_new(ret_entry ? ret_entry->type : NULL, params);
-  // type_entry *entry = type_table_emplace(
-  //     ctx->type_table, strdup(subroutine->id_hir->name), (type_base
-  //     *)callable, span_copy(subroutine->base.span));
+          list_type_ref_free(params);
+          return;
+        }
 
-  // subroutine->type_ref = entry;
-  // subroutine->state |= HIR_STATE_BIND_TYPE;
+        hir_type_free(param->type_hir);
+        param->type_ref = param_entry->type_ref;
+      }
+      param->state |= HIR_STATE_BIND_TYPE;
+    }
 
-  // HANDLE SUBROUTINE BODY
+    list_type_ref_push_back(params,
+                            param->type_ref ? param->type_ref->type : NULL);
+  }
+
+  type_callable *callable =
+      type_callable_new(ret_entry ? ret_entry->type_ref->type : NULL, params);
+
+  // NOTE: added to type table, but not inside scope resolution
+  // callable types can't be declared using grammar
+  hir_ctx_table_emplace(ctx, (type_base *)callable,
+                        span_copy(subroutine->base.span));
+
+  hir_type_free(subroutine->type_ret);
+  subroutine->type_ref = ret_entry->type_ref;
+  subroutine->state |= HIR_STATE_BIND_TYPE;
 }
 
-// add classes with templates
-static type_class *hir_bind_class_1(hir_ctx *ctx, hir_class *hir_class) {
+static void hir_bind_subroutine_body_vars(hir_ctx *ctx, list_hir_var *vars) {
+  for (list_hir_var_it it = list_hir_var_begin(vars); !END(it); NEXT(it)) {
+    hir_var *var = GET(it);
+
+    hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, var->type_hir);
+    if (!entry) {
+      const char *var_s = (var->state & HIR_STATE_BIND_SYMBOL)
+                              ? var->id_ref->name
+                              : var->id_hir->name;
+      char       *type_s = hir_type_str(var->type_hir);
+
+      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
+                    "var %s type %s can't be resolved", var_s, type_s);
+
+      free(type_s);
+      continue;
+    }
+
+    hir_type_free(var->type_hir);
+    var->type_ref = entry->type_ref;
+    var->state |= HIR_STATE_BIND_TYPE;
+  }
+}
+
+static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
+  if (!base) {
+    return;
+  }
+
+  if (base->type_hir) {
+    hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, base->type_hir);
+    if (!entry) {
+      char *type_s = hir_type_str(base->type_hir);
+
+      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, base->base.span,
+                    "expr type %s can't be resolved", type_s);
+
+      free(type_s);
+    }
+  }
+}
+
+static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
+  if (!base) {
+    return;
+  }
+  switch (base->kind) {
+  case HIR_STMT_IF: {
+    hir_stmt_if *self = (hir_stmt_if *)base;
+    hir_bind_subroutine_body_expr(ctx, self->cond);
+    hir_bind_subroutine_body_stmt(ctx, self->je);
+    hir_bind_subroutine_body_stmt(ctx, self->jz);
+  } break;
+  case HIR_STMT_BLOCK: {
+    hir_stmt_block *self = (hir_stmt_block *)base;
+    for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
+         NEXT(it)) {
+      hir_bind_subroutine_body_stmt(ctx, GET(it));
+    }
+  } break;
+  case HIR_STMT_WHILE: {
+    hir_stmt_while *self = (hir_stmt_while *)base;
+    hir_bind_subroutine_body_expr(ctx, self->cond);
+    hir_bind_subroutine_body_stmt(ctx, self->stmt);
+  } break;
+  case HIR_STMT_DO: {
+    hir_stmt_do *self = (hir_stmt_do *)base;
+    hir_bind_subroutine_body_stmt(ctx, self->stmt);
+    hir_bind_subroutine_body_expr(ctx, self->cond);
+  } break;
+  case HIR_STMT_BREAK: {
+  } break;
+  case HIR_STMT_EXPR: {
+    hir_stmt_expr *self = (hir_stmt_expr *)base;
+    hir_bind_subroutine_body_expr(ctx, self->expr);
+  } break;
+  default:
+  case HIR_STMT_UNKNOWN:
+    error("unexpected stmt kind %d %p", base->kind, base);
+    break;
+  }
+}
+
+static void hir_bind_subroutine_body_block(hir_ctx        *ctx,
+                                           hir_stmt_block *block) {
+  if (!block) {
+    return;
+  }
+  hir_bind_subroutine_body_stmt(ctx, (hir_stmt_base *)block);
+}
+
+static void hir_bind_subroutine_body(hir_ctx *ctx, hir_subroutine_body *body) {
+  if (body) {
+    switch (body->kind) {
+    case HIR_SUBROUTINE_BODY_UNKNOWN:
+      break;
+    case HIR_SUBROUTINE_BODY_IMPORT:
+      break;
+    case HIR_SUBROUTINE_BODY_BLOCK:
+      hir_bind_subroutine_body_vars(ctx, body->body.block.vars);
+      hir_bind_subroutine_body_block(ctx, body->body.block.block);
+      break;
+    default:
+      error("unexpected block subroutine kind %d", body->kind);
+    }
+  }
+}
+
+static void hir_bind_subroutine(hir_ctx *ctx, hir_subroutine *subroutine) {
+  hir_bind_subroutine_signature(ctx, subroutine);
+  hir_bind_subroutine_body(ctx, subroutine->body);
+}
+
+// adds class to type table
+static type_class *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
   hir_scope_entry *found;
 
-  // ADD CLASS TO TYPE_TABLE
   hir_type_custom *hir_class_type = hir_type_custom_new(
       NULL, strdup(hir_class->id->name), list_hir_type_new());
 
@@ -374,18 +508,24 @@ static type_class *hir_bind_class_1(hir_ctx *ctx, hir_class *hir_class) {
                                      list_type_ref_new());
   type_entry *class_entry =
       hir_ctx_table_emplace(ctx, (type_base *)class, hir_class->base.span);
+
   hir_ctx_scopes_insert(
       ctx, hir_scope_entry_new((hir_type_base *)hir_class_type, class_entry));
+  hir_class_type = NULL;
 
   // cleanup hir class id and span, now bound to type table
-  hir_class_type = NULL;
   hir_class->id->name = NULL;
   hir_id_free(hir_class->id);
   hir_class->id = NULL;
   hir_class->base.span = NULL;
 
-  // ADD TYPENAMES TO TYPE_TABLE
-  hir_ctx_scopes_push(ctx);
+  return class;
+}
+
+// adds typenames to type table
+static void hir_bind_class_typenames(hir_ctx *ctx, hir_class *hir_class,
+                                     type_class *class) {
+  hir_scope_entry *found;
 
   for (list_hir_id_it it = list_hir_id_begin(hir_class->typenames); !END(it);
        NEXT(it)) {
@@ -422,31 +562,15 @@ static type_class *hir_bind_class_1(hir_ctx *ctx, hir_class *hir_class) {
   }
   list_hir_id_free(hir_class->typenames);
   hir_class->typenames = NULL;
-
-  hir_ctx_scopes_pop(ctx);
-  return class;
 }
 
 // second pass.
 // 1. bind parents (check if relevant classes exist)
 // 2. resolve mono types in make! expressions.
-static void hir_bind_class_2(hir_ctx *ctx, hir_class *hir_class,
-                             type_class *class) {
+static void hir_bind_class_parents(hir_ctx *ctx, hir_class *hir_class,
+                                   type_class *class) {
   hir_scope_entry *found;
 
-  hir_ctx_scopes_push(ctx);
-
-  // add typenames to scope
-  for (list_type_ref_it it = list_type_ref_begin(class->typenames); !END(it);
-       NEXT(it)) {
-    type_typename *typename = (type_typename *)GET(it);
-    hir_ctx_scopes_insert(
-        ctx, hir_scope_entry_new((hir_type_base *)hir_type_custom_new(
-                                     NULL, strdup(typename->id), NULL),
-                                 typename->base.type_entry_ref));
-  }
-
-  // BIND PARENTS
   for (list_hir_type_it it = list_hir_type_begin(hir_class->parents); !END(it);
        NEXT(it)) {
 
@@ -463,8 +587,8 @@ static void hir_bind_class_2(hir_ctx *ctx, hir_class *hir_class,
 
     if (!(found = hir_ctx_scopes_resolve(ctx, (hir_type_base *)hir_parent))) {
       char *type_s = hir_type_str((hir_type_base *)hir_parent);
-      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_NULL, hir_base->span,
-                    "parent with type %s not found in type table", type_s);
+      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, hir_base->span,
+                    "parent with type %s can't be resolved", type_s);
       free(type_s);
       break;
     }
@@ -481,7 +605,12 @@ static void hir_bind_class_2(hir_ctx *ctx, hir_class *hir_class,
     list_type_ref_push_back(class->parents, found->type_ref->type);
   }
 
-  // RESOLVE MONO make! INSTANTIATIONS
+  list_hir_type_free(hir_class->parents);
+  hir_class->parents = NULL;
+}
+
+static void hir_bind_class_methods(hir_ctx *ctx, hir_class *hir_class,
+                                   type_class *class) {
   for (list_hir_method_it it = list_hir_method_begin(hir_class->methods);
        !END(it); NEXT(it)) {
     hir_method *method = GET(it);
@@ -494,8 +623,53 @@ static void hir_bind_class_2(hir_ctx *ctx, hir_class *hir_class,
 
     hir_bind_subroutine(ctx, method->subroutine);
   }
+}
 
-  hir_ctx_scopes_pop(ctx);
+static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
+  list_type_ref *classes = list_type_ref_new();
+
+  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
+       NEXT(it)) {
+    type_class *class = hir_bind_class_id(ctx, GET(it));
+
+    if (class) {
+      hir_ctx_scopes_push(ctx);
+      hir_bind_class_typenames(ctx, GET(it), class);
+      hir_ctx_scopes_pop(ctx);
+    }
+
+    list_type_ref_push_back(classes, (type_base *)class);
+  }
+
+  list_type_ref_it classes_it = list_type_ref_begin(classes);
+
+  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
+       NEXT(it), NEXT(classes_it)) {
+    hir_class *hir_class = GET(it);
+    type_class *class = (type_class *)GET(classes_it);
+
+    if (class) {
+      hir_ctx_scopes_push(ctx);
+
+      // add typenames to scope
+      for (list_type_ref_it it = list_type_ref_begin(class->typenames);
+           !END(it); NEXT(it)) {
+        type_typename *typename = (type_typename *)GET(it);
+        hir_ctx_scopes_insert(
+            ctx, hir_scope_entry_new((hir_type_base *)hir_type_custom_new(
+                                         NULL, strdup(typename->id), NULL),
+                                     typename->base.type_entry_ref));
+      }
+
+      hir_bind_class_parents(ctx, hir_class, class);
+      hir_bind_class_methods(ctx, hir_class, class);
+
+      hir_class->state |= HIR_STATE_BIND_TYPE;
+
+      hir_ctx_scopes_pop(ctx);
+    }
+  }
+  list_type_ref_free(classes);
 }
 
 hir_bind_types_result hir_bind_types(hir *hir) {
@@ -514,28 +688,7 @@ hir_bind_types_result hir_bind_types(hir *hir) {
   hir_ctx_scopes_push(&ctx);
 
   hir_bind_builtin(&ctx);
-
-  // bind classes to global scope
-  list_type_ref *class_types = list_type_ref_new();
-
-  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
-       NEXT(it)) {
-    type_class *class = hir_bind_class_1(&ctx, GET(it));
-    list_type_ref_push_back(class_types, (type_base *)class);
-  }
-
-  list_type_ref_it class_types_it =
-      list_type_ref_begin(class_types); // to stop if step 1 failed
-
-  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
-       NEXT(it), NEXT(class_types_it)) {
-
-    type_class *class = (type_class *)GET(class_types_it);
-    if (class) {
-      hir_bind_class_2(&ctx, GET(it), class);
-    }
-  }
-  list_type_ref_free(class_types);
+  hir_bind_classes(&ctx, hir);
 
   // bind subroutines to global scope
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
