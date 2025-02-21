@@ -31,16 +31,16 @@ hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
     result.type_table = r.type_table;
   }
 
-  if (result.exceptions &&
-      (list_exception_empty(result.exceptions) || ignore_errors)) {
+  // if (result.exceptions &&
+  //     (list_exception_empty(result.exceptions) || ignore_errors)) {
 
-    hir_expand_templates_result r =
-        hir_expand_templates(result.hir, result.type_table);
+  //   hir_expand_templates_result r =
+  //       hir_expand_templates(result.hir, result.type_table);
 
-    list_exception_extend(result.exceptions, r.exceptions);
-    hir_free(result.hir);
-    result.hir = r.hir;
-  }
+  //   list_exception_extend(result.exceptions, r.exceptions);
+  //   hir_free(result.hir);
+  //   result.hir = r.hir;
+  // }
 
   if (result.exceptions &&
       (list_exception_empty(result.exceptions) || ignore_errors)) {

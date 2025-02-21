@@ -330,7 +330,7 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
     hir_param *param = GET(it);
 
     if (!(param->state & HIR_STATE_BIND_TYPE)) {
-      if (param->type_ref) {
+      if (param->type_hir) {
         hir_scope_entry *param_entry =
             hir_ctx_scopes_resolve(ctx, param->type_hir);
 
@@ -342,7 +342,7 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
           free(type_s);
 
           list_type_ref_free(params);
-          return;
+          return; // can't parse subroutine type signature
         }
 
         hir_type_free(param->type_hir);
@@ -397,16 +397,23 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
     return;
   }
 
-  if (base->type_hir) {
-    hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, base->type_hir);
-    if (!entry) {
-      char *type_s = hir_type_str(base->type_hir);
+  if (!(base->state & HIR_STATE_BIND_TYPE)) {
+    if (base->type_hir) {
+      hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, base->type_hir);
+      if (!entry) {
+        char *type_s = hir_type_str(base->type_hir);
 
-      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, base->base.span,
-                    "expr type %s can't be resolved", type_s);
+        hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, base->base.span,
+                      "expr type %s can't be resolved", type_s);
 
-      free(type_s);
+        free(type_s);
+        return;
+      }
+
+      hir_type_free(base->type_hir);
+      base->type_ref = entry->type_ref;
     }
+    base->state |= HIR_STATE_BIND_TYPE;
   }
 }
 
