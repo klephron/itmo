@@ -147,7 +147,6 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
 
       if (!sub_entry) {
         type_free((type_base *)mono);
-        hir_type_free((hir_type_base *)basic);
         return NULL;
       }
 
@@ -435,6 +434,18 @@ static void hir_bind_class_2(hir_ctx *ctx, hir_class *hir_class,
                              type_class *class) {
   hir_scope_entry *found;
 
+  hir_ctx_scopes_push(ctx);
+
+  // add typenames to scope
+  for (list_type_ref_it it = list_type_ref_begin(class->typenames); !END(it);
+       NEXT(it)) {
+    type_typename *typename = (type_typename *)GET(it);
+    hir_ctx_scopes_insert(
+        ctx, hir_scope_entry_new((hir_type_base *)hir_type_custom_new(
+                                     NULL, strdup(typename->id), NULL),
+                                 typename->base.type_entry_ref));
+  }
+
   // BIND PARENTS
   for (list_hir_type_it it = list_hir_type_begin(hir_class->parents); !END(it);
        NEXT(it)) {
@@ -470,24 +481,12 @@ static void hir_bind_class_2(hir_ctx *ctx, hir_class *hir_class,
     list_type_ref_push_back(class->parents, found->type_ref->type);
   }
 
-  // RESOLVE MONO make! instantiations
-  // self type is already in type table.
-  hir_ctx_scopes_push(ctx);
-
-  // add typenames to scope
-  for (list_type_ref_it it = list_type_ref_begin(class->typenames); !END(it);
-       NEXT(it)) {
-    type_typename *typename = (type_typename *)GET(it);
-    hir_ctx_scopes_insert(
-        ctx, hir_scope_entry_new((hir_type_base *)hir_type_custom_new(
-                                     NULL, strdup(typename->id), NULL),
-                                 typename->base.type_entry_ref));
-  }
-
+  // RESOLVE MONO make! INSTANTIATIONS
   for (list_hir_method_it it = list_hir_method_begin(hir_class->methods);
        !END(it); NEXT(it)) {
     hir_method *method = GET(it);
 
+    // this is first param during hir construction
     hir_param *first = list_hir_param_front(method->subroutine->params);
     hir_type_free(first->type_hir);
     first->type_ref = class->base.type_entry_ref;
