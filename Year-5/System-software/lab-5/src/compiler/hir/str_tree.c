@@ -11,30 +11,33 @@
 #define HIR_STR_TAB 2
 #define HIR_STR_SPACE " "
 
-static void hir_tree_str_stmt_if(strbuf *buffer, size_t pad, hir_stmt_if *stmt);
+static void hir_tree_str_stmt_if(strbuf *buffer, size_t pad,
+                                 const hir_stmt_if *stmt);
 static void hir_tree_str_stmt_block(strbuf *buffer, size_t pad,
-                                    hir_stmt_block *stmt);
+                                    const hir_stmt_block *stmt);
 static void hir_tree_str_stmt_while(strbuf *buffer, size_t pad,
-                                    hir_stmt_while *stmt);
-static void hir_tree_str_stmt_do(strbuf *buffer, size_t pad, hir_stmt_do *stmt);
+                                    const hir_stmt_while *stmt);
+static void hir_tree_str_stmt_do(strbuf *buffer, size_t pad,
+                                 const hir_stmt_do *stmt);
 static void hir_tree_str_stmt_break(strbuf *buffer, size_t pad,
-                                    hir_stmt_break *stmt);
+                                    const hir_stmt_break *stmt);
 static void hir_tree_str_stmt_expr(strbuf *buffer, size_t pad,
-                                   hir_stmt_expr *stmt);
+                                   const hir_stmt_expr *stmt);
 
 static void hir_tree_str_expr_unary(strbuf *buffer, size_t pad,
-                                    hir_expr_unary *expr);
+                                    const hir_expr_unary *expr);
 static void hir_tree_str_expr_binary(strbuf *buffer, size_t pad,
-                                     hir_expr_binary *expr);
+                                     const hir_expr_binary *expr);
 static void hir_tree_str_expr_lit(strbuf *buffer, size_t pad,
-                                  hir_expr_lit *expr);
-static void hir_tree_str_expr_id(strbuf *buffer, size_t pad, hir_expr_id *expr);
+                                  const hir_expr_lit *expr);
+static void hir_tree_str_expr_id(strbuf *buffer, size_t pad,
+                                 const hir_expr_id *expr);
 static void hir_tree_str_expr_call(strbuf *buffer, size_t pad,
-                                   hir_expr_call *expr);
+                                   const hir_expr_call *expr);
 static void hir_tree_str_expr_index(strbuf *buffer, size_t pad,
-                                    hir_expr_index *expr);
+                                    const hir_expr_index *expr);
 static void hir_tree_str_expr_builtin(strbuf *buffer, size_t pad,
-                                      hir_expr_builtin *expr);
+                                      const hir_expr_builtin *expr);
 
 static void strbuf_append_padding(strbuf *buffer, size_t size) {
   for (size_t i = 0; i < size; ++i) {
@@ -138,7 +141,7 @@ static void hir_tree_str_lit(strbuf *buffer, size_t pad, const hir_lit *lit) {
 }
 
 static void hir_tree_str_symbol_entry(strbuf *buffer, size_t pad,
-                                      symbol_entry *entry_ref) {
+                                      const symbol_entry *entry_ref) {
   UNUSED(pad);
   char buf[64];
   strbuf_append(buffer, "symbol_table(");
@@ -149,8 +152,14 @@ static void hir_tree_str_symbol_entry(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_type_entry(strbuf *buffer, size_t pad,
-                                    type_entry *entry_ref) {
+                                    const type_entry *entry_ref) {
   UNUSED(pad);
+
+  if (!entry_ref) {
+    strbuf_append(buffer, "(nil/any)");
+    return;
+  }
+
   char buf[64];
   strbuf_append(buffer, "type_table(");
   snprintf(buf, STRMAXLEN(buf), "%p", entry_ref);
@@ -238,7 +247,7 @@ static void hir_tree_str_var(strbuf *buffer, size_t pad, const hir_var *var) {
 }
 
 static void hir_tree_str_expr_base(strbuf *buffer, size_t pad,
-                                   hir_expr_base *expr) {
+                                   const hir_expr_base *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -269,7 +278,8 @@ static void hir_tree_str_expr_base(strbuf *buffer, size_t pad,
   strbuf_append(buffer, "}");
 }
 
-static void hir_tree_str_expr(strbuf *buffer, size_t pad, hir_expr_base *expr) {
+static void hir_tree_str_expr(strbuf *buffer, size_t pad,
+                              const hir_expr_base *expr) {
   if (!expr) {
     strbuf_append(buffer, "(nil)");
   }
@@ -294,7 +304,7 @@ static void hir_tree_str_expr(strbuf *buffer, size_t pad, hir_expr_base *expr) {
 }
 
 static void hir_tree_str_expr_unary(strbuf *buffer, size_t pad,
-                                    hir_expr_unary *expr) {
+                                    const hir_expr_unary *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -318,7 +328,7 @@ static void hir_tree_str_expr_unary(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_expr_binary(strbuf *buffer, size_t pad,
-                                     hir_expr_binary *expr) {
+                                     const hir_expr_binary *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -347,7 +357,7 @@ static void hir_tree_str_expr_binary(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_expr_lit(strbuf *buffer, size_t pad,
-                                  hir_expr_lit *expr) {
+                                  const hir_expr_lit *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -367,7 +377,7 @@ static void hir_tree_str_expr_lit(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_expr_id(strbuf *buffer, size_t pad,
-                                 hir_expr_id *expr) {
+                                 const hir_expr_id *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -391,7 +401,7 @@ static void hir_tree_str_expr_id(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_list_expr(strbuf *buffer, size_t pad,
-                                   list_hir_expr *list) {
+                                   const list_hir_expr *list) {
   strbuf_appendln(buffer, "[");
   pad += HIR_STR_TAB;
   for (list_hir_expr_it it = list_hir_expr_begin(list); !END(it); NEXT(it)) {
@@ -405,7 +415,7 @@ static void hir_tree_str_list_expr(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_expr_call(strbuf *buffer, size_t pad,
-                                   hir_expr_call *expr) {
+                                   const hir_expr_call *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -430,7 +440,7 @@ static void hir_tree_str_expr_call(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_expr_index(strbuf *buffer, size_t pad,
-                                    hir_expr_index *expr) {
+                                    const hir_expr_index *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -455,7 +465,7 @@ static void hir_tree_str_expr_index(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_expr_builtin(strbuf *buffer, size_t pad,
-                                      hir_expr_builtin *expr) {
+                                      const hir_expr_builtin *expr) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -480,7 +490,7 @@ static void hir_tree_str_expr_builtin(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_stmt_base(strbuf *buffer, size_t pad,
-                                   hir_stmt_base *stmt) {
+                                   const hir_stmt_base *stmt) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -498,7 +508,8 @@ static void hir_tree_str_stmt_base(strbuf *buffer, size_t pad,
   strbuf_append(buffer, "}");
 }
 
-static void hir_tree_str_stmt(strbuf *buffer, size_t pad, hir_stmt_base *stmt) {
+static void hir_tree_str_stmt(strbuf *buffer, size_t pad,
+                              const hir_stmt_base *stmt) {
   if (!stmt) {
     strbuf_append(buffer, "(nil)");
     return;
@@ -522,7 +533,7 @@ static void hir_tree_str_stmt(strbuf *buffer, size_t pad, hir_stmt_base *stmt) {
 }
 
 static void hir_tree_str_stmt_if(strbuf *buffer, size_t pad,
-                                 hir_stmt_if *stmt) {
+                                 const hir_stmt_if *stmt) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -552,7 +563,7 @@ static void hir_tree_str_stmt_if(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_stmt_block(strbuf *buffer, size_t pad,
-                                    hir_stmt_block *stmt) {
+                                    const hir_stmt_block *stmt) {
   if (!stmt) {
     strbuf_append(buffer, "(nil)");
     return;
@@ -585,7 +596,7 @@ static void hir_tree_str_stmt_block(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_stmt_while(strbuf *buffer, size_t pad,
-                                    hir_stmt_while *stmt) {
+                                    const hir_stmt_while *stmt) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -610,7 +621,7 @@ static void hir_tree_str_stmt_while(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_stmt_do(strbuf *buffer, size_t pad,
-                                 hir_stmt_do *stmt) {
+                                 const hir_stmt_do *stmt) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -645,7 +656,7 @@ static void hir_tree_str_stmt_do(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_stmt_break(strbuf *buffer, size_t pad,
-                                    hir_stmt_break *stmt) {
+                                    const hir_stmt_break *stmt) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -660,7 +671,7 @@ static void hir_tree_str_stmt_break(strbuf *buffer, size_t pad,
 }
 
 static void hir_tree_str_stmt_expr(strbuf *buffer, size_t pad,
-                                   hir_stmt_expr *stmt) {
+                                   const hir_stmt_expr *stmt) {
   strbuf_appendln(buffer, "{");
   pad += HIR_STR_TAB;
 
@@ -683,7 +694,7 @@ static void hir_tree_str_subroutine_body(strbuf *buffer, size_t pad,
                                          const hir_subroutine_body *body) {
 
   if (!body) {
-    strbuf_appendln(buffer, "(nil)");
+    strbuf_append(buffer, "(nil)");
     return;
   }
 

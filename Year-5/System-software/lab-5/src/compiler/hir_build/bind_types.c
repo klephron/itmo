@@ -317,7 +317,7 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
       hir_ctx_scopes_resolve(ctx, subroutine->type_ret);
 
   if (!ret_entry) {
-    char *type_s = hir_type_str(ret_entry->type_hir);
+    char *type_s = hir_type_str(subroutine->type_ret);
     hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, subroutine->base.span,
                   "return type %s can't be resolved", type_s);
     free(type_s);
@@ -664,6 +664,7 @@ static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
       hir_bind_class_parents(ctx, hir_class, class);
       hir_bind_class_methods(ctx, hir_class, class);
 
+      hir_class->type_ref = class->base.type_entry_ref;
       hir_class->state |= HIR_STATE_BIND_TYPE;
 
       hir_ctx_scopes_pop(ctx);
