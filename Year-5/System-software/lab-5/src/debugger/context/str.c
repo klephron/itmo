@@ -3,8 +3,6 @@
 
 const char *state_target_enum_str(target_state_enum state) {
   switch (state) {
-  case TARGET_UNKNOWN:
-    return "UNKNOWN";
   case TARGET_NO_TARGET:
     return "NO_TARGET";
   case TARGET_NOT_RUNNING:
@@ -15,7 +13,10 @@ const char *state_target_enum_str(target_state_enum state) {
     return "BRKPT";
   case TARGET_TRAPPED:
     return "TRAPPED";
+  case TARGET_UNKNOWN:
+    break;
   }
+  warn("unknown target state %d", state);
   return "UNKNOWN";
 }
 
@@ -30,8 +31,8 @@ const char *state_debugger_enum_str(debugger_state_enum state) {
   case DEBUGGER_EXITING:
     return "EXITING";
   case DEBUGGER_UNKNOWN:
-  default:
-    warn("unexpected state %d", state);
-    return "UNKNOWN";
+    break;
   }
+  warn("unknown debugger state %d", state);
+  return "UNKNOWN";
 }

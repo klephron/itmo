@@ -298,9 +298,10 @@ static void hir_tree_str_expr(strbuf *buffer, size_t pad,
     return hir_tree_str_expr_index(buffer, pad, (hir_expr_index *)expr);
   case HIR_EXPR_BUILTIN:
     return hir_tree_str_expr_builtin(buffer, pad, (hir_expr_builtin *)expr);
-  default:
-    error("unknown expr kind %d", expr->kind);
+  case HIR_EXPR_UNKNOWN:
+    break;
   }
+  warn("unknown expr kind %d", expr->kind);
 }
 
 static void hir_tree_str_expr_unary(strbuf *buffer, size_t pad,
@@ -527,9 +528,10 @@ static void hir_tree_str_stmt(strbuf *buffer, size_t pad,
     return hir_tree_str_stmt_break(buffer, pad, (hir_stmt_break *)stmt);
   case HIR_STMT_EXPR:
     return hir_tree_str_stmt_expr(buffer, pad, (hir_stmt_expr *)stmt);
-  default:
-    error("unknown stmt kind %d", stmt->kind);
+  case HIR_STMT_UNKNOWN:
+    break;
   }
+  warn("unknown stmt kind %d", stmt->kind);
 }
 
 static void hir_tree_str_stmt_if(strbuf *buffer, size_t pad,
@@ -735,6 +737,7 @@ static void hir_tree_str_subroutine_body(strbuf *buffer, size_t pad,
   case HIR_SUBROUTINE_BODY_UNKNOWN:
   default:
     warn("unknown subroutine body kind %d %p", body->kind, body);
+    break;
   }
 
   pad -= HIR_STR_TAB;

@@ -252,8 +252,7 @@ statement_expression returns [ hir_stmt_expr *v ]
 
 // EXPRESSIONS
 expr returns [ hir_expr_base *v ]
-  : expr_builtin { $v = (hir_expr_base *) $expr_builtin.v; }
-  | expr_14 { $v = (hir_expr_base *) $expr_14.v; }
+  : expr_14 { $v = (hir_expr_base *) $expr_14.v; }
   | expr_12 { $v = (hir_expr_base *) $expr_12.v; }
   | expr_11 { $v = (hir_expr_base *) $expr_11.v; }
   | expr_10 { $v = (hir_expr_base *) $expr_10.v; }
@@ -265,30 +264,16 @@ expr returns [ hir_expr_base *v ]
   | expr_4 { $v = (hir_expr_base *) $expr_4.v; }
   | expr_3 { $v = (hir_expr_base *) $expr_3.v; }
   | expr_2 { $v = (hir_expr_base *) $expr_2.v; }
-  | expr_caller { $v = (hir_expr_base *) $expr_caller.v; }
-  | expr_indexer { $v = (hir_expr_base *) $expr_indexer.v; }
-  | expr_literal { $v = (hir_expr_base *) $expr_literal.v; }
-  | expr_identifier { $v = (hir_expr_base *) $expr_identifier.v; }
+  | expr_1_caller     { $v = (hir_expr_base *) $expr_1_caller.v; }
+  | expr_1_indexer    { $v = (hir_expr_base *) $expr_1_indexer.v; }
+  | expr_1_member     { $v = (hir_expr_base *) $expr_1_member.v; }
+  | expr_0_identifier { $v = (hir_expr_base *) $expr_0_identifier.v; }
+  | expr_0_builtin    { $v = (hir_expr_base *) $expr_0_builtin.v; }
+  | expr_0_literal    { $v = (hir_expr_base *) $expr_0_literal.v; }
   ;
 
 
 // OPERATORS
-expr_builtin returns [ hir_expr_builtin *v ]
-  : ^(BUILTIN expr_builtin_in) { $v = $expr_builtin_in.v; }
-  ;
-
-expr_builtin_in returns [ hir_expr_builtin *v ]
-  : c='cast!' t=type_ref e15=expr_15 {
-      $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_CAST, $t.v, $e15.v);
-    }
-  | c='make!' t=type_ref e15=expr_15 {
-      $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_MAKE, $t.v, $e15.v);
-    }
-  | c='print!'           e15=expr_15 {
-      $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_PRINT, NULL, $e15.v);
-    }
-  ;
-
 expr_15 returns [ list_hir_expr *v ]
   @init {
     list_hir_expr *args = list_hir_expr_new();
@@ -406,27 +391,48 @@ expr_2 returns [ hir_expr_unary *v ]
   | ^(op='~' expr) { $v = hir_build_expr_unary(ANTLR3_USERP(), $expr.v, $op, HIR_EXPR_UNARY_BITWISE_NOT); }
   ;
 
-expr_caller returns [ hir_expr_call *v ]
+expr_1_caller returns [ hir_expr_call *v ]
   : ^(CALLER expr_15 expr) {
       $v = hir_build_expr_caller(ANTLR3_USERP(), $expr.v, $expr_15.v);
     }
   ;
 
-expr_indexer returns [ hir_expr_index *v ]
+expr_1_indexer returns [ hir_expr_index *v ]
   : ^(INDEXER expr_15 expr) {
       $v = hir_build_expr_indexer(ANTLR3_USERP(), $expr.v, $expr_15.v);
     }
   ;
 
-expr_literal returns [ hir_expr_lit *v ]
-  : (lit=bool | lit=str | lit=rune | lit=hex | lit=bits | lit=dec) {
-      $v = hir_build_expr_lit(ANTLR3_USERP(), $lit.v);
+expr_1_member returns [ hir_expr_binary *v ] // swapped
+  : ^(MEMBER e1=expr e2=expr) {
+      $v = hir_build_expr_binary(ANTLR3_USERP(), $e2.v, $e1.v, $MEMBER, HIR_EXPR_BINARY_MEMBER);
     }
   ;
 
-expr_identifier returns [ hir_expr_id *v ]
+expr_0_identifier returns [ hir_expr_id *v ]
   : identifier {
       $v = hir_build_expr_id(ANTLR3_USERP(), $identifier.v);
+    }
+  ;
+
+expr_0_builtin returns [ hir_expr_builtin *v ]
+  : ^(BUILTIN
+      ((c='cast!' t=type_ref e15=expr_15 {
+          $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_CAST, $t.v, $e15.v);
+        })
+      |(c='make!' t=type_ref e15=expr_15 {
+          $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_MAKE, $t.v, $e15.v);
+        })
+      |(c='print!'           e15=expr_15 {
+          $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_PRINT, NULL, $e15.v);
+        })
+      )
+    )
+  ;
+
+expr_0_literal returns [ hir_expr_lit *v ]
+  : (lit=bool | lit=str | lit=rune | lit=hex | lit=bits | lit=dec) {
+      $v = hir_build_expr_lit(ANTLR3_USERP(), $lit.v);
     }
   ;
 

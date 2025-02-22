@@ -36,9 +36,9 @@ void hir_expr_free(hir_expr_base *generic) {
     case HIR_EXPR_BUILTIN:
       return hir_expr_builtin_free((hir_expr_builtin *)generic);
     case HIR_EXPR_UNKNOWN:
-    default:
-      error("unknown expr type %d, %p", generic->kind, generic);
+      break;
     }
+    error("unknown expr type %d, %p", generic->kind, generic);
   }
 }
 

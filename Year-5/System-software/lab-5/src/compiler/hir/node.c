@@ -35,9 +35,8 @@ void hir_node_free(hir_base *generic) {
       return hir_method_free((hir_method *)generic);
       break;
     case HIR_NODE_UNKNOWN:
-    default:
-      error("deleting unknown generic node");
       break;
     }
+    error("unknown generic node %d %p", generic->kind, generic);
   }
 }

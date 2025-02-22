@@ -19,10 +19,11 @@ const char *hir_expr_unary_enum_str(hir_expr_unary_enum type) {
     return "INC";
   case HIR_EXPR_UNARY_DEC:
     return "DEC";
-  default:
-    warn("unknown expr_unary_enum %d", type);
-    return "UNKNOWN";
+  case HIR_EXPR_UNARY_UNKNOWN:
+    break;
   }
+  warn("unknown expr_unary_enum %d", type);
+  return "UNKNOWN";
 }
 
 const char *hir_expr_binary_enum_str(hir_expr_binary_enum type) {
@@ -65,10 +66,13 @@ const char *hir_expr_binary_enum_str(hir_expr_binary_enum type) {
     return "DIV";
   case HIR_EXPR_BINARY_MOD:
     return "MOD";
-  default:
-    warn("unknown expr_binary_enum %d", type);
-    return "UNKNOWN";
+  case HIR_EXPR_BINARY_MEMBER:
+    return "MEMBER";
+  case HIR_EXPR_BINARY_UNKNOWN:
+    break;
   }
+  warn("unknown expr_binary_enum %d", type);
+  return "UNKNOWN";
 }
 
 const char *hir_node_enum_str(hir_node_enum kind) {
@@ -91,10 +95,11 @@ const char *hir_node_enum_str(hir_node_enum kind) {
     return "CLASS";
   case HIR_NODE_METHOD:
     return "METHOD";
-  default:
-    warn("unknown hir_node_enum %d", kind);
-    return "UNKNOWN";
+  case HIR_NODE_UNKNOWN:
+    break;
   }
+  warn("unknown hir_node_enum %d", kind);
+  return "UNKNOWN";
 }
 
 const char *hir_stmt_enum_str(hir_stmt_enum kind) {
@@ -111,10 +116,11 @@ const char *hir_stmt_enum_str(hir_stmt_enum kind) {
     return "BREAK";
   case HIR_STMT_EXPR:
     return "EXPR";
-  default:
-    warn("unknown stmt enum %d", kind);
-    return "UNKNOWN";
+  case HIR_STMT_UNKNOWN:
+    break;
   }
+  warn("unknown stmt enum %d", kind);
+  return "UNKNOWN";
 }
 
 const char *hir_expr_enum_str(hir_expr_enum kind) {
@@ -133,10 +139,11 @@ const char *hir_expr_enum_str(hir_expr_enum kind) {
     return "INDEX";
   case HIR_EXPR_BUILTIN:
     return "BUILTIN";
-  default:
-    warn("unknown expr enum %d", kind);
-    return "UNKNOWN";
+  case HIR_EXPR_UNKNOWN:
+    break;
   }
+  warn("unknown expr enum %d", kind);
+  return "UNKNOWN";
 }
 
 const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
@@ -147,10 +154,11 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
     return "MAKE";
   case HIR_EXPR_BUILTIN_PRINT:
     return "PRINT";
-  default:
-    warn("unknown expr builtin enum %d", kind);
-    return "UNKNOWN";
+  case HIR_EXPR_BUILTIN_UNKNOWN:
+    break;
   }
+  warn("unknown expr builtin enum %d", kind);
+  return "UNKNOWN";
 }
 
 char *hir_lit_value_str(const hir_lit *lit) {
@@ -181,10 +189,13 @@ char *hir_lit_value_str(const hir_lit *lit) {
     snprintf(buf, 31, "%lu", lit->value.v_ulong);
     return buf;
   }
-  default:
-    warn("unexpected lit type %d", lit->type->type);
-    return strdup("(unknown)");
+  case HIR_TYPE_CUSTOM:
+  case HIR_TYPE_ARRAY:
+  case HIR_TYPE_UNKNOWN:
+    break;
   }
+  warn("unexpected lit type %d", lit->type->type);
+  return strdup("(unknown)");
 }
 
 const char *hir_method_modifier_enum_str(hir_method_modifier_enum kind) {
@@ -195,12 +206,11 @@ const char *hir_method_modifier_enum_str(hir_method_modifier_enum kind) {
     return "PUBLIC";
   case HIR_METHOD_MODIFIER_ENUM_PRIVATE:
     return "PRIVATE";
-    break;
   case HIR_METHOD_MODIFIER_ENUM_UNKNOWN:
-  default:
-    warn("unexpected method modifier kind %d", kind);
-    return "UNKNOWN";
+    break;
   }
+  warn("unexpected method modifier kind %d", kind);
+  return "UNKNOWN";
 }
 
 const char *hir_state_enum_str(hir_state_enum state) {
@@ -214,9 +224,7 @@ const char *hir_state_enum_str(hir_state_enum state) {
     break;
   case HIR_STATE_BIND_SYMBOL_AND_TYPE:
     return "BIND_SYMBOL | BIND_TYPE";
-    break;
-  default:
-    error("unexpected hir state %d", state);
-    return "UNKNOWN";
   }
+  error("unexpected hir state %d", state);
+  return "UNKNOWN";
 }

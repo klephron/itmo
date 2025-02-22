@@ -12,7 +12,7 @@
 
 static span *hir_span_new(ANTLR3_BASE_TREE *first, const char *source) {
   if (!first || !first->getToken(first)) {
-    debug("span is set to default");
+    // debug("span is set to default");
     return span_new(source, 0, 0, 0, 0);
   }
   ANTLR3_COMMON_TOKEN *first_token = first->getToken(first);

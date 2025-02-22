@@ -114,6 +114,7 @@ char *exception_str(const exception *exc) {
   case EXCEPTION_LEVEL_ERROR:
     strbuf_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
     break;
+  case EXCEPTION_LEVEL_UNKNOWN:
   default:
     strbuf_append(buffer, "unknown");
     break;
@@ -147,6 +148,7 @@ char *exception_str(const exception *exc) {
     snprintf(buf, STRMAXLEN(buf), "(C%d): %s -> %s", exc->subtype, exc_name,
              exc_message);
     break;
+  case EXCEPTION_UNKNOWN:
   default:
     warn("unknown exception type %d", exc->type);
     snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
@@ -197,10 +199,15 @@ const char *exception_subtype_hir_str(exception_subtype_hir type) {
     return "type unsupported";
   case EXCEPTION_HIR_SUBROUTINE_DECL_INVALID:
     return "invalid subroutine declaration";
+  case EXCEPTION_HIR_TYPE_UNEXPECTED:
+    return "type unexpected";
+  case EXCEPTION_HIR_TYPE_UNRESOLVED:
+    return "type unresolved";
   case EXCEPTION_HIR_UNKNOWN:
-  default:
-    return "unknown";
+    break;
   }
+  warn("unknown exception subtype %d", type);
+  return "unknown";
 }
 
 const char *exception_subtype_eir_str(exception_subtype_eir type) {
@@ -211,20 +218,22 @@ const char *exception_subtype_eir_str(exception_subtype_eir type) {
     return "rvalue assignment";
   case EXCEPTION_EIR_BAD_BREAK:
     return "bad break";
-  default:
-    return "unknown";
+  case EXCEPTION_EIR_UNKNOWN:
+    break;
   }
+  warn("unknown exception subtype %d", type);
+  return "unknown";
 }
 
 const char *exception_subtype_mir_str(exception_subtype_mir type) {
   switch (type) {
-  case EXCEPTION_MIR_UNKNOWN:
-    return "null";
   case EXCEPTION_MIR_NO_RETURN:
     return "no return";
-  default:
-    return "unknown";
+  case EXCEPTION_MIR_UNKNOWN:
+    break;
   }
+  warn("unknown exception subtype %d", type);
+  return "unknown";
 }
 
 const char *exception_subtype_cg_str(exception_subtype_cg type) {
@@ -233,7 +242,9 @@ const char *exception_subtype_cg_str(exception_subtype_cg type) {
     return "implicit callable";
   case EXCEPTION_CG_EXTERNAL_SUBROUTINE_ARGC:
     return "external subroutine argc mismatch";
-  default:
-    return "unknown";
+  case EXCEPTION_CG_UNKNOWN:
+    break;
   }
+  warn("unknown exception subtype %d", type);
+  return "unknown";
 }
