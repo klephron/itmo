@@ -404,8 +404,8 @@ expr_1_indexer returns [ hir_expr_index *v ]
   ;
 
 expr_1_member returns [ hir_expr_binary *v ] // swapped
-  : ^(MEMBER e1=expr e2=expr) {
-      $v = hir_build_expr_binary(ANTLR3_USERP(), $e2.v, $e1.v, $MEMBER, HIR_EXPR_BINARY_MEMBER);
+  : ^(MEMBER identifier expr) {
+      $v = hir_build_expr_member(ANTLR3_USERP(), $expr.v, $identifier.v, $MEMBER);
     }
   ;
 

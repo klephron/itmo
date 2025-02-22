@@ -35,8 +35,12 @@ typedef union hir_lit_u_union {
 
 typedef struct hir_lit_struct {
   hir_base       base;
-  hir_type_base *type;
-  hir_lit_u      value;
+  hir_state_enum state;
+  union {
+    hir_type_base *type_hir;
+    type_entry    *type_ref;
+  };
+  hir_lit_u value;
 } hir_lit;
 
 hir_lit *hir_lit_new(span *span, hir_type_base *type, hir_lit_u value);

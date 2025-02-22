@@ -4,6 +4,7 @@
 #include "compiler/hir/str.h"
 #include "compiler/hir_build/exception.h"
 #include "compiler/span/span.h"
+#include "compiler/span/str.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include <antlr3basetree.h>
@@ -383,7 +384,7 @@ hir_subroutine_body *hir_build_func_body_import(hir_ctx *ctx, hir_lit *lib,
 }
 
 // CLASS
-hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
+hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *mod_t,
                              hir_method_modifier_enum modifier,
                              hir_subroutine          *func) {
   UNUSED(ctx);
@@ -393,13 +394,13 @@ hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
       func->params,
       hir_param_new(NULL, hir_id_new(NULL, strdup("this")), NULL));
 
-  if (!root || modifier == HIR_METHOD_MODIFIER_ENUM_ABSCENT) {
-    span *root_span = hir_span_new(root, ctx->ast_cur_ref->name_ref);
-    span *span = hir_span_new_range(root_span, func->base.span);
-    span_free(root_span);
+  if (!mod_t || modifier == HIR_METHOD_MODIFIER_ENUM_ABSCENT) {
+    span *span = span_copy(func->base.span);
     return hir_method_new(span, modifier, func);
   } else {
-    span *span = span_copy(func->base.span);
+    span *mod_span = hir_span_new(mod_t, ctx->ast_cur_ref->name_ref);
+    span *span = hir_span_new_range(mod_span, func->base.span);
+    span_free(mod_span);
     return hir_method_new(span, modifier, func);
   }
 }
@@ -482,6 +483,24 @@ hir_expr_binary *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
   return hir_expr_binary_new(
       hir_span_new_range(first->base.span, second->base.span), NULL, op, first,
       second);
+}
+
+// convert id to literal because it is not actually a symbol
+hir_expr_binary *hir_build_expr_member(hir_ctx *ctx, hir_expr_base *first,
+                                       hir_id           *second,
+                                       ANTLR3_BASE_TREE *op_node) {
+  UNUSED(ctx);
+  UNUSED(op_node);
+
+  hir_id_data data = hir_id_pop(second);
+  span       *expr_span = hir_span_new_range(first->base.span, data.span);
+
+  return hir_expr_binary_new(
+      expr_span, NULL, HIR_EXPR_BINARY_MEMBER, first,
+      (hir_expr_base *)hir_expr_lit_new(
+          NULL, NULL,
+          hir_lit_new(data.span, hir_type_base_new(NULL, HIR_TYPE_STRING),
+                      (hir_lit_u){.v_str = data.name})));
 }
 
 hir_expr_builtin *hir_build_expr_builtin(hir_ctx *ctx, ANTLR3_BASE_TREE *node,

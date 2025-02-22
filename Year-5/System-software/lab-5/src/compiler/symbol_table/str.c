@@ -42,15 +42,27 @@ char *symbol_table_str(const symbol_table *table) {
     // NAME
     list_chars_push_back(row, entry->name);
     // TYPE_ID
-    snprintf(buf, STRMAXLEN(buf), "%p", entry->type_ref);
+    if (entry->type_ref) {
+      snprintf(buf, STRMAXLEN(buf), "%p", entry->type_ref);
+    } else {
+      snprintf(buf, STRMAXLEN(buf), "-");
+    }
     list_chars_push_back(row, buf);
     // TYPE
-    list_chars_push_back(row, type_str(entry->type_ref->type));
+    char *type_s = type_str(entry->type_ref ? entry->type_ref->type : NULL);
+    if (type_s) {
+      list_chars_push_back(row, type_s);
+      free(type_s);
+    } else {
+      list_chars_push_back(row, "-");
+    }
     // SPAN
     if (entry->span) {
       char *span_s = span_str(entry->span);
       list_chars_push_back(row, span_s);
       free(span_s);
+    } else {
+      list_chars_push_back(row, "implicit");
     }
     list_list_chars_push_back(body, row);
   }

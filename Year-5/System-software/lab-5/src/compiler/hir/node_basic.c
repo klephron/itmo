@@ -2,6 +2,7 @@
 
 #include "compiler/hir/node.h"
 #include "compiler/span/span.h"
+#include "util/log.h"
 #include "util/macro.h"
 #include <string.h>
 
@@ -39,7 +40,8 @@ void hir_id_free(hir_id *id) {
 hir_lit *hir_lit_new(span *span, hir_type_base *type, hir_lit_u value) {
   hir_lit *self = MALLOC(hir_lit);
   hir_base_init(&self->base, span, HIR_NODE_LIT);
-  self->type = type;
+  self->state = HIR_STATE_INITIAL;
+  self->type_hir = type;
   self->value = value;
   return self;
 }
@@ -47,34 +49,81 @@ hir_lit *hir_lit_new(span *span, hir_type_base *type, hir_lit_u value) {
 hir_lit *hir_lit_copy(const hir_lit *self) {
   if (self) {
     hir_lit_u u;
-    switch (self->type->type) {
-    case HIR_TYPE_STRING:
-      u.v_str = strdup(self->value.v_str);
-      break;
-    case HIR_TYPE_CHAR:
-      u.v_char = strdup(self->value.v_char);
-      break;
-    default:
-      u = self->value;
-      break;
+
+    if (self->state & HIR_STATE_BIND_TYPE) {
+      switch (self->type_ref->type->kind) {
+      case TYPE_PRIMITIVE: {
+        type_primitive *type = (type_primitive *)self->type_ref->type;
+        switch (type->type) {
+        case TYPE_PRIMITIVE_CHAR:
+          u.v_str = strdup(self->value.v_str);
+          break;
+        case TYPE_PRIMITIVE_STRING:
+          u.v_char = strdup(self->value.v_char);
+          break;
+        default:
+          u = self->value;
+          break;
+        }
+      } break;
+      default:
+        error("unexpected type kind %d when type is binded %p",
+              self->type_ref->type->kind, self);
+        return NULL;
+      }
+
+      hir_lit *out = hir_lit_new(span_copy(self->base.span), NULL, u);
+      out->state |= HIR_STATE_BIND_TYPE;
+      out->type_ref = self->type_ref;
+      return out;
+
+    } else {
+      switch (self->type_hir->type) {
+      case HIR_TYPE_STRING:
+        u.v_str = strdup(self->value.v_str);
+        break;
+      case HIR_TYPE_CHAR:
+        u.v_char = strdup(self->value.v_char);
+        break;
+      default:
+        u = self->value;
+        break;
+      }
+      return hir_lit_new(span_copy(self->base.span),
+                         hir_type_copy(self->type_hir), u);
     }
-    return hir_lit_new(span_copy(self->base.span), hir_type_copy(self->type),
-                       u);
   }
   return NULL;
 }
 
 void hir_lit_free(hir_lit *self) {
   if (self) {
-    switch (self->type->type) {
-    case HIR_TYPE_STRING:
-    case HIR_TYPE_CHAR:
-      free(self->value.v_str);
-      break;
-    default:
-      break;
+
+    if (self->state & HIR_STATE_BIND_TYPE) {
+      switch (self->type_ref->type->kind) {
+      case TYPE_PRIMITIVE: {
+        type_primitive *type = (type_primitive *)self->type_ref->type;
+        switch (type->type) {
+        case TYPE_PRIMITIVE_CHAR:
+          free(self->value.v_char);
+          break;
+        case TYPE_PRIMITIVE_STRING:
+          free(self->value.v_str);
+          break;
+        default:
+          break;
+        }
+      } break;
+      default:
+        error("unexpected type kind %d when type is binded %p",
+              self->type_ref->type->kind, self);
+      }
     }
-    hir_type_free(self->type);
+
+    if (!(self->state & HIR_STATE_BIND_TYPE)) {
+      hir_type_free(self->type_hir);
+    }
+
     hir_base_deinit(&self->base);
     free(self);
   }

@@ -1,0 +1,21 @@
+class B<T>
+var
+begin
+end;
+
+class A<T, U> : B<T>
+var
+//  a: A<T, U>;
+//  b, c: array [] of U;
+begin
+  public method one(a: B<array [] of int>): B<int>;
+  public method two(): int;
+  method three(b, c): int
+  var
+    a: array [] of long;
+  begin
+    1 + make!<array [] of string>();
+    print!(this.e);
+    print!(this.d.f);
+  end
+end;

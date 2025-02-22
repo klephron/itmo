@@ -253,7 +253,7 @@ expr_1_indexer
   ;
 
 expr_1_member
-  : op='.' expr_0_identifier -> ^(MEMBER[$op, "MEMBER"] expr_0_identifier)
+  : op='.' identifier -> ^(MEMBER[$op, "MEMBER"] identifier)
   ;
 
 expr_0_brackets

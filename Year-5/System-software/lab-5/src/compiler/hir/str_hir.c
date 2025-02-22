@@ -162,7 +162,61 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
 }
 
 char *hir_lit_value_str(const hir_lit *lit) {
-  switch (lit->type->type) {
+  hir_type_enum type;
+
+  if (lit->state & HIR_STATE_BIND_TYPE) {
+    switch (lit->type_ref->type->kind) {
+    case TYPE_PRIMITIVE: {
+      const type_primitive *self = (type_primitive *)lit->type_ref->type;
+      switch (self->type) {
+      case TYPE_PRIMITIVE_BOOL:
+        type = HIR_TYPE_BOOL;
+        break;
+      case TYPE_PRIMITIVE_BYTE:
+        type = HIR_TYPE_BYTE;
+        break;
+      case TYPE_PRIMITIVE_INT:
+        type = HIR_TYPE_INT;
+        break;
+      case TYPE_PRIMITIVE_UINT:
+        type = HIR_TYPE_UINT;
+        break;
+      case TYPE_PRIMITIVE_LONG:
+        type = HIR_TYPE_LONG;
+        break;
+      case TYPE_PRIMITIVE_ULONG:
+        type = HIR_TYPE_ULONG;
+        break;
+      case TYPE_PRIMITIVE_CHAR:
+        type = HIR_TYPE_CHAR;
+        break;
+      case TYPE_PRIMITIVE_STRING:
+        type = HIR_TYPE_STRING;
+        break;
+      case TYPE_PRIMITIVE_VOID:
+        type = HIR_TYPE_VOID;
+        break;
+      case TYPE_PRIMITIVE_UNKNOWN:
+      default:
+        type = HIR_TYPE_UNKNOWN;
+        break;
+      }
+    } break;
+    case TYPE_UNKNOWN:
+    case TYPE_ARRAY:
+    case TYPE_CALLABLE:
+    case TYPE_CLASS:
+    case TYPE_TYPENAME:
+    case TYPE_MONO:
+    default:
+      type = HIR_TYPE_UNKNOWN;
+      break;
+    }
+  } else {
+    type = lit->type_hir->type;
+  }
+
+  switch (type) {
   case HIR_TYPE_STRING:
     return strdup(lit->value.v_str);
   case HIR_TYPE_CHAR:
@@ -194,7 +248,7 @@ char *hir_lit_value_str(const hir_lit *lit) {
   case HIR_TYPE_UNKNOWN:
     break;
   }
-  warn("unexpected lit type %d", lit->type->type);
+  warn("unexpected lit type %d", type);
   return strdup("(unknown)");
 }
 

@@ -73,6 +73,39 @@ static void hir_tree_str_type(strbuf *buffer, size_t pad,
   }
 }
 
+static void hir_tree_str_symbol_entry(strbuf *buffer, size_t pad,
+                                      const symbol_entry *entry_ref) {
+  UNUSED(pad);
+  char buf[64];
+  strbuf_append(buffer, "symbol_table(");
+  snprintf(buf, STRMAXLEN(buf), "%p", entry_ref);
+  strbuf_append(buffer, buf);
+  strbuf_append(buffer, ") // ");
+  strbuf_append(buffer, entry_ref->name);
+}
+
+static void hir_tree_str_type_entry(strbuf *buffer, size_t pad,
+                                    const type_entry *entry_ref) {
+  UNUSED(pad);
+
+  if (!entry_ref) {
+    strbuf_append(buffer, "(nil/any)");
+    return;
+  }
+
+  char buf[64];
+  strbuf_append(buffer, "type_table(");
+  snprintf(buf, STRMAXLEN(buf), "%p", entry_ref);
+  strbuf_append(buffer, buf);
+  strbuf_append(buffer, ")");
+  char *type_s = type_str(entry_ref->type);
+  if (type_s) {
+    strbuf_append(buffer, " // ");
+    strbuf_append(buffer, type_s);
+    free(type_s);
+  }
+}
+
 static void hir_tree_str_base(strbuf *buffer, size_t pad,
                               const hir_base *base) {
   strbuf_appendln(buffer, "{");
@@ -126,7 +159,11 @@ static void hir_tree_str_lit(strbuf *buffer, size_t pad, const hir_lit *lit) {
 
   strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "type: ");
-  hir_tree_str_type(buffer, pad, lit->type);
+  if (lit->state & HIR_STATE_BIND_TYPE) {
+    hir_tree_str_type_entry(buffer, pad, lit->type_ref);
+  } else {
+    hir_tree_str_type(buffer, pad, lit->type_hir);
+  }
   strbuf_appendln(buffer, "");
 
   strbuf_append_padding(buffer, pad);
@@ -139,40 +176,6 @@ static void hir_tree_str_lit(strbuf *buffer, size_t pad, const hir_lit *lit) {
   strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "}");
 }
-
-static void hir_tree_str_symbol_entry(strbuf *buffer, size_t pad,
-                                      const symbol_entry *entry_ref) {
-  UNUSED(pad);
-  char buf[64];
-  strbuf_append(buffer, "symbol_table(");
-  snprintf(buf, STRMAXLEN(buf), "%p", entry_ref);
-  strbuf_append(buffer, buf);
-  strbuf_append(buffer, ") // ");
-  strbuf_append(buffer, entry_ref->name);
-}
-
-static void hir_tree_str_type_entry(strbuf *buffer, size_t pad,
-                                    const type_entry *entry_ref) {
-  UNUSED(pad);
-
-  if (!entry_ref) {
-    strbuf_append(buffer, "(nil/any)");
-    return;
-  }
-
-  char buf[64];
-  strbuf_append(buffer, "type_table(");
-  snprintf(buf, STRMAXLEN(buf), "%p", entry_ref);
-  strbuf_append(buffer, buf);
-  strbuf_append(buffer, ")");
-  char *type_s = type_str(entry_ref->type);
-  if (type_s) {
-    strbuf_append(buffer, " // ");
-    strbuf_append(buffer, type_s);
-    free(type_s);
-  }
-}
-
 static void hir_tree_str_param(strbuf *buffer, size_t pad,
                                const hir_param *param) {
   strbuf_appendln(buffer, "{");

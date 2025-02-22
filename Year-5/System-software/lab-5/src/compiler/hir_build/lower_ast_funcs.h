@@ -73,6 +73,9 @@ hir_expr_binary  *hir_build_expr_binary(hir_ctx *ctx, hir_expr_base *first,
                                         hir_expr_base       *second,
                                         ANTLR3_BASE_TREE    *op_node,
                                         hir_expr_binary_enum op);
+hir_expr_binary  *hir_build_expr_member(hir_ctx *ctx, hir_expr_base *first,
+                                        hir_id           *second,
+                                        ANTLR3_BASE_TREE *op_node);
 hir_expr_builtin *hir_build_expr_builtin(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                          hir_expr_builtin_enum kind,
                                          hir_type_base        *type,
