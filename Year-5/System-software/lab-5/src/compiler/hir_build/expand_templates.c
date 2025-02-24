@@ -1,6 +1,5 @@
 #include "expand_templates.h"
 
-#include "compiler/hir_build/exception.h"
 #include "compiler/type_table/str.h"
 #include "util/hashset.h"
 #include "util/log.h"
@@ -21,43 +20,58 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_type_mono_ref, type_mono,
                               container_delete_false, container_hash_ptr);
 
 // CLASS_ENTRY
-typedef struct hir_class_entry_struct {
+typedef struct hir_type_tmpl_struct {
   const type_mono *type_ref; // which mono to instantiate (should be mono-full)
-  const hir_class *template_ref; // which hir class template to use
-} hir_class_entry;
+  const hir_base  *template_ref; // which hir class template to use
+} hir_type_tmpl;
 
-static void hir_class_entry_free(hir_class_entry *self) {
+static void hir_type_tmpl_free(hir_type_tmpl *self) {
   if (self) {
     free(self);
   }
 }
 
-static inline void container_delete_hir_class_entry(void *self) {
-  hir_class_entry_free(self);
+static inline void container_delete_hir_type_tmpl(void *self) {
+  hir_type_tmpl_free(self);
 }
-LIST_DECLARE_STATIC_INLINE(list_hir_class_entry, hir_class_entry,
+LIST_DECLARE_STATIC_INLINE(list_hir_type_tmpl, hir_type_tmpl,
                            container_cmp_false, container_new_move,
-                           container_delete_hir_class_entry);
+                           container_delete_hir_type_tmpl);
+
+static inline int container_cmp_hir_type_tmpl(const void *lsv,
+                                              const void *rsv) {
+  const hir_type_tmpl *l = lsv;
+  const hir_type_tmpl *r = rsv;
+  return container_cmp_ptr(l->type_ref, r->type_ref);
+}
+static inline uint64_t container_hash_hir_type_tmpl(const void *lsv) {
+  const hir_type_tmpl *l = lsv;
+  return container_hash_ptr(l->type_ref);
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_hir_type_tmpl, hir_type_tmpl,
+                              container_cmp_hir_type_tmpl, container_new_move,
+                              container_delete_hir_type_tmpl,
+                              container_hash_hir_type_tmpl);
 
 // CONTEXT
 typedef struct hir_ctx_struct {
-  hashset_hir_class_ref *class_templates;
-  list_hir_class_entry  *class_queue; // for expansion
+  list_hir_type_tmpl    *class_queue; // for expansion (like in BFS)
   hashset_type_mono_ref *inst_types;
+  hashset_hir_type_tmpl *type_templates; // references type template for inst
   list_exception        *exceptions;
 } hir_ctx;
 
 static void hir_ctx_init(hir_ctx *ctx, list_exception *exceptions) {
-  ctx->class_templates = hashset_hir_class_ref_new();
-  ctx->class_queue = list_hir_class_entry_new();
+  ctx->class_queue = list_hir_type_tmpl_new();
   ctx->inst_types = hashset_type_mono_ref_new();
+  ctx->type_templates = hashset_hir_type_tmpl_new();
   ctx->exceptions = exceptions;
 }
 
 static void hir_ctx_deinit(hir_ctx *ctx) {
-  hashset_hir_class_ref_free(ctx->class_templates);
-  list_hir_class_entry_free(ctx->class_queue);
+  list_hir_type_tmpl_free(ctx->class_queue);
   hashset_type_mono_ref_free(ctx->inst_types);
+  hashset_hir_type_tmpl_free(ctx->type_templates);
   ctx->exceptions = NULL;
 }
 
