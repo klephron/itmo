@@ -70,6 +70,13 @@ static hir_scope_entry *hir_ctx_scopes_insert_sel(hir_ctx         *ctx,
 static void             hir_ctx_scopes_push(hir_ctx *ctx);
 static void             hir_ctx_scopes_pop(hir_ctx *ctx);
 
+static void hir_ctx_init(hir_ctx *ctx, type_table *type_table,
+                         list_exception *exceptions) {
+  ctx->scopes = list_hir_scope_new();
+  ctx->type_table = type_table;
+  ctx->exceptions = exceptions;
+}
+
 static void hir_ctx_deinit(hir_ctx *ctx) { list_hir_scope_free(ctx->scopes); }
 
 static inline type_entry *
@@ -790,11 +797,8 @@ hir_bind_types_result hir_bind_types(hir *hir) {
       .exceptions = list_exception_new(),
   };
 
-  hir_ctx ctx = {
-      .scopes = list_hir_scope_new(),
-      .exceptions = result.exceptions,
-      .type_table = result.type_table,
-  };
+  hir_ctx ctx;
+  hir_ctx_init(&ctx, result.type_table, result.exceptions);
 
   // push global scope
   hir_ctx_scopes_push(&ctx);

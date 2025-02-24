@@ -1,21 +1,34 @@
-class B<T>
+class A
 var
 begin
 end;
 
-class A<T, U> : B<T>
+class B<T, U> : A
 var
-//  a: A<T, U>;
-//  b, c: array [] of U;
 begin
-  public method one(a: B<array [] of int>): B<int>;
-  public method two(): int;
-  method three(b, c): int
+end;
+
+class A<T, U> : B<T, int>, A
+var
+  a: A<T, U>;
+  b, c: array [] of U;
+begin
+  public method one(a: B<U, array [] of T>): B<array [] of T, U>;
+
+  method two(b, c): int
   var
-    a: array [] of long;
+    a: array [] of T;
   begin
-    1 + make!<array [] of string>();
-    print!(this.e);
-    print!(this.d.f);
+    a = cast!<T>(1) + make!<array [] of T>();
+    a;
   end
+
+end;
+
+method main(): int
+var
+  a: A<int, string>;
+  b, c: B<char, byte>;
+  d: A<array [] of int, void>;
+begin
 end;

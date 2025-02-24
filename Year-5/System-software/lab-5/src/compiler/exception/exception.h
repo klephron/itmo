@@ -51,6 +51,7 @@ typedef enum exception_subtype_hir_enum {
   EXCEPTION_HIR_TYPE_UNEXPECTED,
   EXCEPTION_HIR_TYPE_UNRESOLVED,
   EXCEPTION_HIR_SUBROUTINE_DECL_INVALID,
+  EXCEPTION_HIR_STATE_ILLEGAL,
 } exception_subtype_hir;
 
 typedef enum exception_subtype_eir_enum {

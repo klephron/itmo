@@ -28,28 +28,35 @@ LIST_DECLARE_STATIC_INLINE(list_hir_scope, hir_scope, container_cmp_false,
 
 typedef struct hir_ctx_struct {
   list_hir_scope *scopes;
-  list_exception *exceptions;
   symbol_table   *symbol_table;
+  list_exception *exceptions;
 } hir_ctx;
+
+static void hir_ctx_init(hir_ctx *ctx, symbol_table *symbol_table,
+                         list_exception *exceptions) {
+  ctx->scopes = list_hir_scope_new();
+  ctx->symbol_table = symbol_table;
+  ctx->exceptions = exceptions;
+}
 
 static void hir_ctx_deinit(hir_ctx *ctx) { list_hir_scope_free(ctx->scopes); }
 
 static symbol_entry *hir_ctx_scopes_insert(hir_ctx *ctx, symbol_entry *entry) {
   hir_scope   *scope = list_hir_scope_front(ctx->scopes);
   hir_scope_it it = hir_scope_insert(scope, entry);
-  debug("scope_size: %zu", scope->hashset.size);
+  // debug("scope_size: %zu", scope->hashset.size);
   return GET(it);
 }
 
 static void hir_ctx_scopes_push(hir_ctx *ctx) {
   list_hir_scope_push_front(ctx->scopes, hir_scope_new());
-  debug("scopes_height: %zu", list_hir_scope_size(ctx->scopes));
+  // debug("scopes_height: %zu", list_hir_scope_size(ctx->scopes));
 }
 
 static void hir_ctx_scopes_pop(hir_ctx *ctx) {
   hir_scope *scope = list_hir_scope_pop_front(ctx->scopes);
   ctx->scopes->list.f_delete(scope);
-  debug("scopes_height: %zu", list_hir_scope_size(ctx->scopes));
+  // debug("scopes_height: %zu", list_hir_scope_size(ctx->scopes));
 }
 
 static inline symbol_entry *
@@ -359,11 +366,8 @@ hir_bind_symbols_result hir_bind_symbols(hir *hir) {
       .exceptions = list_exception_new(),
   };
 
-  hir_ctx ctx = {
-      .scopes = list_hir_scope_new(),
-      .exceptions = result.exceptions,
-      .symbol_table = result.symbol_table,
-  };
+  hir_ctx ctx;
+  hir_ctx_init(&ctx, result.symbol_table, result.exceptions);
 
   // push global scope
   hir_ctx_scopes_push(&ctx);

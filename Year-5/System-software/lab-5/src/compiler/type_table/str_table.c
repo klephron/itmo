@@ -117,8 +117,9 @@ char *type_table_str(const type_table *table) {
 
   list_chars *header = list_chars_new();
   list_chars_push_back(header, "PTR");
-  list_chars_push_back(header, "TYPE");
+  list_chars_push_back(header, "TYPE_KIND");
   list_chars_push_back(header, "TYPE_MONO");
+  list_chars_push_back(header, "TYPE");
   list_chars_push_back(header, "SPAN");
   list_chars_push_back(header, "EXTRA");
 
@@ -132,6 +133,14 @@ char *type_table_str(const type_table *table) {
     // ID
     snprintf(buf, STRMAXLEN(buf), "%p", entry);
     list_chars_push_back(row, buf);
+    // TYPE_KIND
+    list_chars_push_back(row, (char *)type_enum_str(entry->type->kind));
+    // TYPE_MONO
+    type_mono_enum spec;
+    if ((spec = type_get_mono(entry->type)) == TYPE_MONO_UNSET) {
+      spec = type_calc_mono(entry->type);
+    }
+    list_chars_push_back(row, (char *)type_mono_enum_str(spec));
     // TYPE
     char *type_s = type_str(entry->type);
     if (type_s) {
@@ -140,12 +149,6 @@ char *type_table_str(const type_table *table) {
     } else {
       list_chars_push_back(row, "-");
     }
-    // TYPE_SPEC
-    type_mono_enum spec;
-    if ((spec = type_get_mono(entry->type)) == TYPE_MONO_UNSET) {
-      spec = type_calc_mono(entry->type);
-    }
-    list_chars_push_back(row, (char *)type_mono_enum_str(spec));
     // SPAN
     if (entry->span) {
       char *span_s = span_str(entry->span);

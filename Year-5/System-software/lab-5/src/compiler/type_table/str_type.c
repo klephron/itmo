@@ -99,9 +99,9 @@ static void strbuf_append_type_typename(strbuf              *buffer,
 
 static void strbuf_append_type_specialized(strbuf          *buffer,
                                            const type_mono *type) {
-  strbuf_append(buffer, "mono ");
+  strbuf_append(buffer, "mono(");
   strbuf_append_type(buffer, type->type_ref);
-  strbuf_append(buffer, " with (");
+  strbuf_append(buffer, " with ");
   list_type_ref_it itm = list_type_ref_begin(type->types);
   if (!END(itm)) {
     strbuf_append_type(buffer, GET(itm));

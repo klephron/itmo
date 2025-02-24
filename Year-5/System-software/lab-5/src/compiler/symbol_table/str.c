@@ -54,7 +54,7 @@ char *symbol_table_str(const symbol_table *table) {
       list_chars_push_back(row, type_s);
       free(type_s);
     } else {
-      list_chars_push_back(row, "-");
+      list_chars_push_back(row, "any");
     }
     // SPAN
     if (entry->span) {

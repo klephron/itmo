@@ -38,8 +38,6 @@ hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
         hir_expand_templates(result.hir, result.type_table);
 
     list_exception_extend(result.exceptions, r.exceptions);
-    hir_free(result.hir);
-    result.hir = r.hir;
   }
 
   if (result.exceptions &&

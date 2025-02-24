@@ -34,6 +34,8 @@ type_entry *type_get_type_entry(type_base *generic);
 
 type_mono_enum type_calc_mono(const type_base *generic);
 type_mono_enum type_get_mono(const type_base *generic);
+void           type_set_mono(type_base *generic, type_mono_enum mono);
+type_mono_enum type_fetch_mono(type_base *generic);
 
 int      type_cmp(const type_base *lsv, const type_base *rsv);
 uint64_t type_hash(const type_base *lsv);
@@ -109,6 +111,10 @@ typedef struct type_typename_struct {
 type_typename *type_typename_new(char *id, type_base *source_ref);
 
 // if type C<A<B>> it will be mono C with mono A with B, so no need to match
+// can't be mono of template as class, cuz only support templates as typenames
+//
+// so something like this in C++ is not allowed:
+// template<template <typename> typename T> class A{}; -> T<int> for Ex.
 typedef struct type_mono_struct {
   type_base base;
   // list sizes should be the same.
