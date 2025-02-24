@@ -81,7 +81,7 @@ exception *exception_new_f(exception_level level, exception_type type,
   return exc;
 }
 
-char *exception_str(const exception *exc) {
+char *exception_str(const exception *exc, int is_color) {
   char buf[256];
 
   char *exc_stream = "<empty>";
@@ -106,13 +106,25 @@ char *exception_str(const exception *exc) {
 
   switch (exc->level) {
   case EXCEPTION_LEVEL_INFO:
-    strbuf_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
+    if (is_color) {
+      strbuf_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
+    } else {
+      strbuf_append(buffer, "info");
+    }
     break;
   case EXCEPTION_LEVEL_WARNING:
-    strbuf_append(buffer, ANSI_COLOR_YELLOW "warn" ANSI_COLOR_RESET);
+    if (is_color) {
+      strbuf_append(buffer, ANSI_COLOR_YELLOW "warn" ANSI_COLOR_RESET);
+    } else {
+      strbuf_append(buffer, "info");
+    }
     break;
   case EXCEPTION_LEVEL_ERROR:
-    strbuf_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
+    if (is_color) {
+      strbuf_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
+    } else {
+      strbuf_append(buffer, "info");
+    }
     break;
   case EXCEPTION_LEVEL_UNKNOWN:
   default:
@@ -158,9 +170,15 @@ char *exception_str(const exception *exc) {
   strbuf_append(buffer, buf);
   strbuf_append(buffer, "\n");
 
-  snprintf(buf, STRMAXLEN(buf),
-           ANSI_COLOR_BLUE "  -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
-           exc->line, exc->offset);
+  if (is_color) {
+    snprintf(buf, STRMAXLEN(buf),
+             ANSI_COLOR_BLUE "  -->" ANSI_COLOR_RESET " %s:%d:%d", exc_stream,
+             exc->line, exc->offset);
+  } else {
+    snprintf(buf, STRMAXLEN(buf), "  --> %s:%d:%d", exc_stream, exc->line,
+             exc->offset);
+  }
+
   strbuf_append(buffer, buf);
 
   return strbuf_detach(buffer);

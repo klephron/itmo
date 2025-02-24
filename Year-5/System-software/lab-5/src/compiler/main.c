@@ -263,7 +263,7 @@ static void print_exceptions(args *args, list_exception *exceptions) {
   for (list_exception_it it = list_exception_begin(exceptions); !END(it);
        NEXT(it)) {
     exception *exc = GET(it);
-    char      *msg = exception_str(exc);
+    char      *msg = exception_str(exc, isatty(STDERR_FILENO));
     fprintf(stderr, "%s\n", msg);
     free(msg);
   }

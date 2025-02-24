@@ -107,7 +107,7 @@ exception *exception_new_f(exception_level level, exception_type type,
 exception *exception_new_from_helper(const exception_helper *helper,
                                      char                   *format, ...);
 void       exception_free(exception *exc);
-char      *exception_str(const exception *exc);
+char      *exception_str(const exception *exc, int is_color);
 
 const char *exception_subtype_hir_str(exception_subtype_hir ir);
 const char *exception_subtype_eir_str(exception_subtype_eir ir);
