@@ -223,6 +223,8 @@ const char *exception_subtype_hir_str(exception_subtype_hir type) {
     return "type unresolved";
   case EXCEPTION_HIR_STATE_ILLEGAL:
     return "state illegal";
+  case EXCEPTION_HIR_TEMPLATE_EXPANSION:
+    return "template expansion";
   case EXCEPTION_HIR_UNKNOWN:
     break;
   }
