@@ -29,6 +29,6 @@ method main(): int
 var
   a: A<int, string>;
   b, c: B<char, byte>;
-  d: A<array [] of int, void>;
+  d: A<array [] of int, string>;
 begin
 end;
