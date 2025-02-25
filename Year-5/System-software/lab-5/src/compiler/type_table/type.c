@@ -1,8 +1,10 @@
 #include "type.h"
+#include "compiler/type_table/str.h"
 #include "util/log.h"
 
 #include "util/macro.h"
 #include <stdlib.h>
+#include <string.h>
 
 static void type_base_deinit(type_base *base) { UNUSED(base); }
 
@@ -166,4 +168,52 @@ type_entry *type_get_type_entry(type_base *generic) {
     return NULL;
   }
   return generic->type_entry_ref;
+}
+
+list_type_ref *type_copy_list_ref(const list_type_ref *from) {
+  list_type_ref *self = list_type_ref_new();
+  for (list_type_ref_it it = list_type_ref_begin(from); !END(it); NEXT(it)) {
+    list_type_ref_push_back(self, GET(it));
+  }
+  return self;
+}
+
+type_base *type_copy(const type_base *generic) {
+  if (!generic) {
+    return NULL;
+  }
+  switch (generic->kind) {
+  case TYPE_PRIMITIVE: {
+    const type_primitive *self = (type_primitive *)generic;
+    return (type_base *)type_primitive_new(self->type);
+  }
+  case TYPE_ARRAY: {
+    const type_array *self = (type_array *)generic;
+    return (type_base *)type_array_new(self->element_ref);
+  }
+  case TYPE_CALLABLE: {
+    const type_callable *self = (type_callable *)generic;
+    return (type_base *)type_callable_new(self->ret_ref,
+                                          type_copy_list_ref(self->params));
+  }
+  case TYPE_CLASS: {
+    const type_class *self = (type_class *)generic;
+    return (type_base *)type_class_new(strdup(self->id),
+                                       type_copy_list_ref(self->typenames),
+                                       type_copy_list_ref(self->parents));
+  }
+  case TYPE_TYPENAME: {
+    const type_typename *self = (type_typename *)generic;
+    return (type_base *)type_typename_new(strdup(self->id), self->source_ref);
+  }
+  case TYPE_MONO: {
+    const type_mono *self = (type_mono *)generic;
+    return (type_base *)type_mono_new(self->type_ref,
+                                      type_copy_list_ref(self->types));
+  }
+  case TYPE_UNKNOWN:
+    break;
+  }
+  error("unknown type kind %d %p", generic->kind, generic);
+  return NULL;
 }

@@ -29,6 +29,13 @@ typedef struct type_base_struct {
 // GENERIC
 void type_free(type_base *generic);
 
+static inline void container_delete_type(void *data) { type_free(data); }
+LIST_DECLARE_STATIC_INLINE(list_type, type_base, container_cmp_false,
+                           container_new_move, container_delete_type);
+
+LIST_DECLARE_STATIC_INLINE(list_type_ref, type_base, container_cmp_false,
+                           container_new_move, container_delete_false);
+
 void        type_set_type_entry(type_base *generic, type_entry *type_entry_ref);
 type_entry *type_get_type_entry(type_base *generic);
 
@@ -37,15 +44,10 @@ type_mono_enum type_get_mono(const type_base *generic);
 void           type_set_mono(type_base *generic, type_mono_enum mono);
 type_mono_enum type_fetch_mono(type_base *generic);
 
-int      type_cmp(const type_base *lsv, const type_base *rsv);
-uint64_t type_hash(const type_base *lsv);
-
-static inline void container_delete_type(void *data) { type_free(data); }
-LIST_DECLARE_STATIC_INLINE(list_type, type_base, container_cmp_false,
-                           container_new_move, container_delete_type);
-
-LIST_DECLARE_STATIC_INLINE(list_type_ref, type_base, container_cmp_false,
-                           container_new_move, container_delete_false);
+int            type_cmp(const type_base *lsv, const type_base *rsv);
+uint64_t       type_hash(const type_base *lsv);
+type_base     *type_copy(const type_base *generic);
+list_type_ref *type_copy_list_ref(const list_type_ref *from);
 
 typedef enum type_primitive_enum {
   TYPE_PRIMITIVE_UNKNOWN,

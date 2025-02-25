@@ -3,7 +3,46 @@
 #include "util/macro.h"
 #include "util/strbuf.h"
 #include <string.h>
+// #include "util/hashset.h"
 
+// typedef struct hir_type_map_struct {
+//   const type_base *from;
+//   const type_base *to;
+// } hir_type_map;
+
+// static hir_type_map *hir_type_map_new(const type_base *from,
+//                                       const type_base *to) {
+//   hir_type_map *self = MALLOC(hir_type_map);
+//   self->from = from;
+//   self->to = to;
+//   return self;
+// }
+
+// static void hir_type_map_free(hir_type_map *self) {
+//   if (self) {
+//     free(self);
+//   }
+// }
+
+// static inline void container_delete_hir_type_map(void *self) {
+//   hir_type_map_free(self);
+// }
+// static inline int container_cmp_hir_type_map(const void *lsv, const void
+// *rsv) {
+//   const hir_type_map *l = lsv;
+//   const hir_type_map *r = rsv;
+//   return container_cmp_ptr(l->from, r->from);
+// }
+// static inline uint64_t container_hash_hir_type_map(const void *lsv) {
+//   const hir_type_map *l = lsv;
+//   return container_hash_ptr(l->from);
+// }
+// HASHSET_DECLARE_STATIC_INLINE(hashset_hir_type_map, hir_type_map,
+//                               container_cmp_hir_type_map, container_new_move,
+//                               container_delete_hir_type_map,
+//                               container_hash_hir_type_map);
+
+// actual str functions
 static void strbuf_append_type(strbuf *buffer, const type_base *generic);
 
 static void strbuf_append_type_primitive(strbuf               *buffer,
@@ -97,8 +136,7 @@ static void strbuf_append_type_typename(strbuf              *buffer,
   strbuf_append(buffer, type->id);
 }
 
-static void strbuf_append_type_specialized(strbuf          *buffer,
-                                           const type_mono *type) {
+static void strbuf_append_type_mono(strbuf *buffer, const type_mono *type) {
   strbuf_append(buffer, "mono(");
   strbuf_append_type(buffer, type->type_ref);
   strbuf_append(buffer, " with ");
@@ -136,7 +174,7 @@ static void strbuf_append_type(strbuf *buffer, const type_base *generic) {
     strbuf_append_type_typename(buffer, (const type_typename *)generic);
     break;
   case TYPE_MONO:
-    strbuf_append_type_specialized(buffer, (const type_mono *)generic);
+    strbuf_append_type_mono(buffer, (const type_mono *)generic);
     break;
   case TYPE_UNKNOWN:
   default:
@@ -158,7 +196,7 @@ const char *type_enum_str(type_enum kind) {
   case TYPE_TYPENAME:
     return "TYPENAME";
   case TYPE_MONO:
-    return "MONOMORPHIZED";
+    return "MONO";
   case TYPE_UNKNOWN:
   default:
     warn("unknown type kind %d", kind);

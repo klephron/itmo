@@ -6,15 +6,12 @@
 #include "util/log.h"
 #include "util/macro.h"
 #include <stdio.h>
+#include <string.h>
 
 // 1. erase classes with templates from hir list, add to the list for expansion
 // 2. add templates to list of to be expanded
 // 3. expand preorder, add types that aren't currently expanded
 // 4. infinite recursion -> stack overflow (maybe handle different way later)
-
-HASHSET_DECLARE_STATIC_INLINE(hashset_type_mono_ref, type_mono,
-                              container_cmp_ptr, container_new_move,
-                              container_delete_false, container_hash_ptr);
 
 LIST_DECLARE_STATIC_INLINE(list_type_mono_ref, type_mono, container_cmp_false,
                            container_new_move, container_delete_false);
@@ -57,14 +54,28 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_hir_type_tmpl, hir_type_tmpl,
                               container_delete_hir_type_tmpl,
                               container_hash_hir_type_tmpl);
 
+// RESOLVED TYPES (including builtin)
+static inline int container_cmp_type_ref(const void *lsv, const void *rsv) {
+  const type_base *l = lsv;
+  const type_base *r = rsv;
+  return type_cmp(l, r);
+}
+static inline uint64_t container_hash_type_ref(const void *lsv) {
+  const type_base *l = lsv;
+  return type_hash(l);
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_type_ref, type_base,
+                              container_cmp_type_ref, container_new_move,
+                              container_delete_false, container_hash_type_ref);
+
 // TYPE_MAPPINGS
 typedef struct hir_type_map_struct {
-  const type_entry *from;
-  const type_entry *to;
+  const type_base *from;
+  const type_base *to;
 } hir_type_map;
 
-static hir_type_map *hir_type_map_new(const type_entry *from,
-                                      const type_entry *to) {
+static hir_type_map *hir_type_map_new(const type_base *from,
+                                      const type_base *to) {
   hir_type_map *self = MALLOC(hir_type_map);
   self->from = from;
   self->to = to;
@@ -98,25 +109,31 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_hir_type_map, hir_type_map,
 typedef struct hir_ctx_struct {
   hashset_hir_type_tmpl *map_type_hir_tmpl; // matches types and their templates
   list_hir_class        *hir_tmpl_classes;  // stores actual class templates
-  hashset_type_mono_ref *insted_types;      // already instantiated types
+  hashset_type_ref      *insted_types; // already instantiated/resolved types
+  hashset_type_ref
+      *registered_types; // present in type table (monoed/not - doesn't care)
 
   // no scopes as there is not constructions for recursive expansion
   hashset_hir_type_map *map_type_tmpl;
   list_type_mono_ref   *instto_types;
 
+  type_table     *type_table;
   list_hir_class *hir_classes;
   list_exception *exceptions;
 } hir_ctx;
 
-static void hir_ctx_init(hir_ctx *ctx, list_exception *exceptions,
+static void hir_ctx_init(hir_ctx *ctx, type_table *type_table,
+                         list_exception *exceptions,
                          list_hir_class *hir_classes) {
   ctx->map_type_hir_tmpl = hashset_hir_type_tmpl_new();
   ctx->hir_tmpl_classes = list_hir_class_new();
-  ctx->insted_types = hashset_type_mono_ref_new();
+  ctx->insted_types = hashset_type_ref_new();
+  ctx->registered_types = hashset_type_ref_new();
 
   ctx->map_type_tmpl = NULL;
   ctx->instto_types = NULL;
 
+  ctx->type_table = type_table;
   ctx->hir_classes = hir_classes;
   ctx->exceptions = exceptions;
 }
@@ -124,12 +141,38 @@ static void hir_ctx_init(hir_ctx *ctx, list_exception *exceptions,
 static void hir_ctx_deinit(hir_ctx *ctx) {
   hashset_hir_type_tmpl_free(ctx->map_type_hir_tmpl);
   list_hir_class_free(ctx->hir_tmpl_classes);
-  hashset_type_mono_ref_free(ctx->insted_types);
+  hashset_type_ref_free(ctx->insted_types);
+  hashset_type_ref_free(ctx->registered_types);
 
   ctx->map_type_tmpl = NULL;
 
+  ctx->type_table = NULL;
   ctx->hir_classes = NULL;
   ctx->exceptions = NULL;
+}
+
+static const type_base *hir_ctx_type_tmpl_find(hir_ctx         *ctx,
+                                               const type_base *type) {
+  hashset_hir_type_map_it it = hashset_hir_type_map_find(
+      ctx->map_type_tmpl, &(hir_type_map){.from = type});
+  if (END(it)) {
+    return NULL;
+  }
+  return GET(it)->to;
+}
+
+// add to registered types and add to type_table
+static type_base *hir_ctx_type_register(hir_ctx *ctx, type_base *type,
+                                        const span *span_ref) {
+  hashset_type_ref_it it = hashset_type_ref_find(ctx->registered_types, type);
+  if (END(it)) {
+    hashset_type_ref_insert(ctx->registered_types, type);
+    type_entry *entry =
+        type_table_emplace(ctx->type_table, type, span_copy(span_ref));
+    return entry->type;
+  }
+  type_free(type);
+  return GET(it);
 }
 
 static void hir_ctx_debug(hir_ctx *ctx) {
@@ -286,10 +329,75 @@ hir_expand_subroutine(hir_ctx *ctx, const hir_subroutine *subroutine_t) {
   return NULL;
 }
 
-static void hir_expand_class(hir_ctx *ctx, const type_mono *class_type) {
+// expand parents
+// if any updates then instantiate new template with resolved types
+static void hir_expand_class_parents(hir_ctx *ctx, type_mono *class_type,
+                                     const type_class *class_t_type) {
+  int            parents_have_typenames = 0;
+  list_type_ref *modified_parents = list_type_ref_new();
 
-  hashset_type_mono_ref_it found =
-      hashset_type_mono_ref_find(ctx->insted_types, (type_mono *)class_type);
+  for (list_type_ref_it it = list_type_ref_begin(class_t_type->parents);
+       !END(it); NEXT(it)) {
+    union {
+      type_base *base;
+      type_mono *mono;
+    } parent;
+
+    parent.base = GET(it);
+
+    // if not full monoed, need to create new mono type and resolve typenames
+    if (type_fetch_mono(parent.base) == TYPE_MONO_FULL) {
+      list_type_ref_push_back(modified_parents, parent.base);
+      continue;
+    }
+
+    if (parent.base->kind != TYPE_MONO) {
+      error("expected monoed parent (or class), got %d", parent.base->kind);
+      continue;
+    }
+
+    type_mono *new_parent =
+        type_mono_new(parent.mono->type_ref, list_type_ref_new());
+
+    for (list_type_ref_it p_it = list_type_ref_begin(parent.mono->types);
+         !END(p_it); NEXT(p_it)) {
+      const type_base *p_from = GET(p_it);
+      const type_base *p_to;
+
+      if (!(p_to = hir_ctx_type_tmpl_find(ctx, p_from))) {
+        list_type_ref_push_back(new_parent->types, (type_base *)p_from);
+      } else {
+        list_type_ref_push_back(new_parent->types, (type_base *)p_to);
+      }
+    }
+
+    // register to type table + add to inst list + add to modified parents
+    new_parent = (type_mono *)hir_ctx_type_register(
+        ctx, (type_base *)new_parent, parent.base->type_entry_ref->span);
+
+    list_type_mono_ref_push_back(ctx->instto_types, new_parent);
+    list_type_ref_push_back(modified_parents, (type_base *)new_parent);
+    parents_have_typenames = 1;
+  }
+
+  // need to create new templated type, because parents are modified
+  if (parents_have_typenames) {
+    type_class *new_class = type_class_new(
+        strdup(class_t_type->id), type_copy_list_ref(class_t_type->typenames),
+        modified_parents);
+
+    new_class = (type_class *)hir_ctx_type_register(
+        ctx, (type_base *)new_class, class_t_type->base.type_entry_ref->span);
+    class_type->type_ref = (type_base *)new_class;
+  } else {
+    list_type_ref_free(modified_parents);
+  }
+}
+
+static void hir_expand_class(hir_ctx *ctx, type_mono *class_type) {
+
+  hashset_type_ref_it found =
+      hashset_type_ref_find(ctx->insted_types, (type_base *)class_type);
   if (!END(found)) {
     return;
   }
@@ -309,13 +417,14 @@ static void hir_expand_class(hir_ctx *ctx, const type_mono *class_type) {
        !END(tit); NEXT(fit), NEXT(tit)) {
     type_base *from_type = GET(fit);
     type_base *to_type = GET(tit);
-    hashset_hir_type_map_insert(
-        ctx->map_type_tmpl,
-        hir_type_map_new(from_type->type_entry_ref, to_type->type_entry_ref));
+    hashset_hir_type_map_insert(ctx->map_type_tmpl,
+                                hir_type_map_new(from_type, to_type));
   }
 
   // accumulate types for further expansion, expands in non-recursive manner
   ctx->instto_types = list_type_mono_ref_new();
+
+  hir_expand_class_parents(ctx, class_type, class_t_type);
 
   hir_class *class =
       hir_class_new_typed(class_type->base.type_entry_ref, list_hir_var_new(),
@@ -341,7 +450,7 @@ static void hir_expand_class(hir_ctx *ctx, const type_mono *class_type) {
   }
 
   // prepare for next expansions
-  hashset_type_mono_ref_insert(ctx->insted_types, (type_mono *)class_type);
+  hashset_type_ref_insert(ctx->insted_types, (type_base *)class_type);
   list_hir_class_push_back(ctx->hir_classes, class);
 
   hashset_hir_type_map_free(ctx->map_type_tmpl);
@@ -380,7 +489,7 @@ hir_expand_templates_result hir_expand_templates(hir        *hir,
   list_hir_class *templated_classes = hir_filter_templated_hir_classes(hir);
 
   // will append classes and exceptions
-  hir_ctx_init(&ctx, result.exceptions, hir->classes);
+  hir_ctx_init(&ctx, type_table, result.exceptions, hir->classes);
   hir_setup_ctx_classes(&ctx, templated_classes);
 
   hir_ctx_debug(&ctx);

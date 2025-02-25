@@ -3,6 +3,7 @@ var
 begin
 end;
 
+
 class B<T, U> : A
 var
 begin

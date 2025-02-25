@@ -103,7 +103,7 @@ static hir_scope_entry *hir_ctx_scopes_find(const hir_ctx       *ctx,
   return NULL;
 }
 
-// recursively tries to match type, while doint it it instantiates other types
+// recursively tries to match type
 static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
                                                const hir_type_base *base) {
   if (!base) {

@@ -1,0 +1,15 @@
+class A<U>
+var
+begin
+end;
+
+class B<T> : A<T>, A<T>, A<int>
+var
+begin
+end;
+
+method main(): int
+var
+  a: B<int>;
+begin
+end;

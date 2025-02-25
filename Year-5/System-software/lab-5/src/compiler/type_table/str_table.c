@@ -134,7 +134,29 @@ char *type_table_str(const type_table *table) {
     snprintf(buf, STRMAXLEN(buf), "%p", entry);
     list_chars_push_back(row, buf);
     // TYPE_KIND
-    list_chars_push_back(row, (char *)type_enum_str(entry->type->kind));
+    switch (entry->type->kind) {
+    case TYPE_UNKNOWN:
+    case TYPE_PRIMITIVE:
+    case TYPE_ARRAY:
+    case TYPE_CALLABLE:
+    case TYPE_CLASS:
+    case TYPE_TYPENAME:
+      list_chars_push_back(row, (char *)type_enum_str(entry->type->kind));
+      break;
+    case TYPE_MONO: {
+      strbuf *buffer = strbuf_new(32, 0);
+      strbuf_append(buffer, (char *)type_enum_str(entry->type->kind));
+      strbuf_append(buffer, "(");
+      strbuf_append(buffer, (char *)type_enum_str(
+                                ((type_mono *)entry->type)->type_ref->kind));
+      strbuf_append(buffer, ")");
+      char *kind_s = strbuf_detach(buffer);
+      list_chars_push_back(row, kind_s);
+      if (kind_s) {
+        free(kind_s);
+      }
+    } break;
+    }
     // TYPE_MONO
     type_mono_enum spec;
     if ((spec = type_get_mono(entry->type)) == TYPE_MONO_UNSET) {

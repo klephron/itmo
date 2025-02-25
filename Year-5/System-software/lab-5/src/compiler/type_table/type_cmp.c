@@ -10,7 +10,7 @@ static inline uint64_t hash_combine(uint64_t seed, uint64_t value) {
 }
 
 // check if null because call
-int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
+int type_cmp(const type_base *lsv, const type_base *rsv) {
   if (lsv == rsv) {
     return 0;
   }
@@ -35,7 +35,7 @@ int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
   case TYPE_ARRAY: {
     const type_array *l = (const type_array *)lsv;
     const type_array *r = (const type_array *)rsv;
-    return hir_bind_types_scope_cmp(l->element_ref, r->element_ref);
+    return type_cmp(l->element_ref, r->element_ref);
   } break;
   case TYPE_CALLABLE: {
     const type_callable *l = (const type_callable *)lsv;
@@ -51,13 +51,13 @@ int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
     for (list_type_ref_it lit = list_type_ref_begin(l->params),
                           rit = list_type_ref_begin(r->params);
          !END(lit); NEXT(lit), NEXT(rit)) {
-      int cmp = hir_bind_types_scope_cmp(GET(lit), GET(rit));
+      int cmp = type_cmp(GET(lit), GET(rit));
       if (!cmp) {
         return cmp;
       }
     }
 
-    return hir_bind_types_scope_cmp(l->ret_ref, r->ret_ref);
+    return type_cmp(l->ret_ref, r->ret_ref);
   }
   case TYPE_CLASS: {
     const type_class *l = (const type_class *)lsv;
@@ -79,7 +79,7 @@ int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
     for (list_type_ref_it lit = list_type_ref_begin(l->parents),
                           rit = list_type_ref_begin(r->parents);
          !END(lit); NEXT(lit), NEXT(rit)) {
-      int cmp = hir_bind_types_scope_cmp(GET(lit), GET(rit));
+      int cmp = type_cmp(GET(lit), GET(rit));
       if (!cmp) {
         return cmp;
       }
@@ -96,7 +96,7 @@ int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
     for (list_type_ref_it lit = list_type_ref_begin(l->typenames),
                           rit = list_type_ref_begin(r->typenames);
          !END(lit); NEXT(lit), NEXT(rit)) {
-      int cmp = hir_bind_types_scope_cmp(GET(lit), GET(rit));
+      int cmp = type_cmp(GET(lit), GET(rit));
       if (!cmp) {
         return cmp;
       }
@@ -112,13 +112,13 @@ int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
       return cmp;
     }
 
-    return hir_bind_types_scope_cmp(l->source_ref, r->source_ref);
+    return container_cmp_ptr(l->source_ref, r->source_ref);
   }
   case TYPE_MONO: {
     const type_mono *l = (const type_mono *)lsv;
     const type_mono *r = (const type_mono *)rsv;
 
-    int cmp = hir_bind_types_scope_cmp(l->type_ref, r->type_ref);
+    int cmp = type_cmp(l->type_ref, r->type_ref);
     if (!cmp) {
       return cmp;
     }
@@ -133,7 +133,7 @@ int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
     for (list_type_ref_it lit = list_type_ref_begin(l->types),
                           rit = list_type_ref_begin(r->types);
          !END(lit); NEXT(lit), NEXT(rit)) {
-      int cmp = hir_bind_types_scope_cmp(GET(lit), GET(rit));
+      int cmp = type_cmp(GET(lit), GET(rit));
       if (!cmp) {
         return cmp;
       }
@@ -147,7 +147,7 @@ int hir_bind_types_scope_cmp(const type_base *lsv, const type_base *rsv) {
   }
 }
 
-uint64_t hir_bind_types_scope_hash(const type_base *lsv) {
+uint64_t type_hash(const type_base *lsv) {
   if (lsv == NULL) {
     return 0;
   }
@@ -163,17 +163,17 @@ uint64_t hir_bind_types_scope_hash(const type_base *lsv) {
   } break;
   case TYPE_ARRAY: {
     const type_array *l = (const type_array *)lsv;
-    hash = hash_combine(hash, hir_bind_types_scope_hash(l->element_ref));
+    hash = hash_combine(hash, type_hash(l->element_ref));
   } break;
   case TYPE_CALLABLE: {
     const type_callable *l = (const type_callable *)lsv;
 
     for (list_type_ref_it it = list_type_ref_begin(l->params); !END(it);
          NEXT(it)) {
-      hash = hash_combine(hash, hir_bind_types_scope_hash(GET(it)));
+      hash = hash_combine(hash, type_hash(GET(it)));
     }
 
-    hash = hash_combine(hash, hir_bind_types_scope_hash(l->ret_ref));
+    hash = hash_combine(hash, type_hash(l->ret_ref));
   } break;
   case TYPE_CLASS: {
     const type_class *l = (const type_class *)lsv;
@@ -182,12 +182,12 @@ uint64_t hir_bind_types_scope_hash(const type_base *lsv) {
 
     for (list_type_ref_it it = list_type_ref_begin(l->parents); !END(it);
          NEXT(it)) {
-      hash = hash_combine(hash, hir_bind_types_scope_hash(GET(it)));
+      hash = hash_combine(hash, type_hash(GET(it)));
     }
 
     for (list_type_ref_it it = list_type_ref_begin(l->typenames); !END(it);
          NEXT(it)) {
-      hash = hash_combine(hash, hir_bind_types_scope_hash(GET(it)));
+      hash = hash_combine(hash, type_hash(GET(it)));
     }
   } break;
   case TYPE_TYPENAME: {
@@ -195,16 +195,16 @@ uint64_t hir_bind_types_scope_hash(const type_base *lsv) {
 
     hash = hash_combine(hash, container_hash_chars(l->id));
 
-    hash = hash_combine(hash, hir_bind_types_scope_hash(l->source_ref));
+    hash = hash_combine(hash, container_hash_ptr(l->source_ref));
   } break;
   case TYPE_MONO: {
     const type_mono *l = (const type_mono *)lsv;
 
-    hash = hash_combine(hash, hir_bind_types_scope_hash(l->type_ref));
+    hash = hash_combine(hash, type_hash(l->type_ref));
 
     for (list_type_ref_it it = list_type_ref_begin(l->types); !END(it);
          NEXT(it)) {
-      hash = hash_combine(hash, hir_bind_types_scope_hash(GET(it)));
+      hash = hash_combine(hash, type_hash(GET(it)));
     }
   } break;
   case TYPE_UNKNOWN:
