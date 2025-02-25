@@ -17,6 +17,8 @@ static inline void container_delete_type_entry(void *lsv) {
 LIST_DECLARE_STATIC_INLINE(list_type_entry, type_entry, container_cmp_false,
                            container_new_move, container_delete_type_entry);
 
+// TODO: use hashset instead of list
+// compare/hash is required in template expansion
 typedef struct type_table_struct {
   list_type_entry *entries;
 } type_table;

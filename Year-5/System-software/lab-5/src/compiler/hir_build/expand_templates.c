@@ -110,8 +110,7 @@ typedef struct hir_ctx_struct {
   hashset_hir_type_tmpl *map_type_hir_tmpl; // matches types and their templates
   list_hir_class        *hir_tmpl_classes;  // stores actual class templates
   hashset_type_ref      *insted_types; // already instantiated/resolved types
-  hashset_type_ref
-      *registered_types; // present in type table (monoed/not - doesn't care)
+  hashset_type_ref      *registered_types; // present in type table
 
   // no scopes as there is not constructions for recursive expansion
   hashset_hir_type_map *map_type_tmpl;
@@ -305,9 +304,9 @@ static const hir_base *hir_get_hir_template(hir_ctx         *ctx,
   return NULL;
 }
 
-static void hir_setup_ctx_classes(hir_ctx        *ctx,
-                                  list_hir_class *templated_classes) {
-  // add class templates that can be used for instantiation
+// add class templates that can be used for instantiation
+static void hir_setup_ctx_hir_classes(hir_ctx        *ctx,
+                                      list_hir_class *templated_classes) {
   while (!list_hir_class_empty(templated_classes)) {
     hir_class     *hir = list_hir_class_pop_front(templated_classes);
     hir_type_tmpl *type_tmpl =
@@ -320,6 +319,13 @@ static void hir_setup_ctx_classes(hir_ctx        *ctx,
   list_hir_class_free(templated_classes);
 }
 
+static void hir_setup_ctx_types(hir_ctx *ctx, type_table *type_table) {
+  for (list_type_entry_it it = list_type_entry_begin(type_table->entries);
+       !END(it); NEXT(it)) {
+    hashset_type_ref_insert(ctx->registered_types, GET(it)->type);
+  }
+}
+
 static hir_var *hir_expand_var(hir_ctx *ctx, const hir_var *var_t) {
   return NULL;
 }
@@ -329,12 +335,11 @@ hir_expand_subroutine(hir_ctx *ctx, const hir_subroutine *subroutine_t) {
   return NULL;
 }
 
-// expand parents
 // if any updates then instantiate new template with resolved types
 static void hir_expand_class_parents(hir_ctx *ctx, type_mono *class_type,
                                      const type_class *class_t_type) {
-  int            parents_have_typenames = 0;
-  list_type_ref *modified_parents = list_type_ref_new();
+  int            parents_modified = 0;
+  list_type_ref *parents = list_type_ref_new();
 
   for (list_type_ref_it it = list_type_ref_begin(class_t_type->parents);
        !END(it); NEXT(it)) {
@@ -347,7 +352,7 @@ static void hir_expand_class_parents(hir_ctx *ctx, type_mono *class_type,
 
     // if not full monoed, need to create new mono type and resolve typenames
     if (type_fetch_mono(parent.base) == TYPE_MONO_FULL) {
-      list_type_ref_push_back(modified_parents, parent.base);
+      list_type_ref_push_back(parents, parent.base);
       continue;
     }
 
@@ -374,23 +379,23 @@ static void hir_expand_class_parents(hir_ctx *ctx, type_mono *class_type,
     // register to type table + add to inst list + add to modified parents
     new_parent = (type_mono *)hir_ctx_type_register(
         ctx, (type_base *)new_parent, parent.base->type_entry_ref->span);
+    parents_modified = 1;
 
     list_type_mono_ref_push_back(ctx->instto_types, new_parent);
-    list_type_ref_push_back(modified_parents, (type_base *)new_parent);
-    parents_have_typenames = 1;
+    list_type_ref_push_back(parents, (type_base *)new_parent);
   }
 
   // need to create new templated type, because parents are modified
-  if (parents_have_typenames) {
-    type_class *new_class = type_class_new(
-        strdup(class_t_type->id), type_copy_list_ref(class_t_type->typenames),
-        modified_parents);
+  if (parents_modified) {
+    type_class *new_class =
+        type_class_new(strdup(class_t_type->id),
+                       type_copy_list_ref(class_t_type->typenames), parents);
 
     new_class = (type_class *)hir_ctx_type_register(
         ctx, (type_base *)new_class, class_t_type->base.type_entry_ref->span);
     class_type->type_ref = (type_base *)new_class;
   } else {
-    list_type_ref_free(modified_parents);
+    list_type_ref_free(parents);
   }
 }
 
@@ -490,7 +495,9 @@ hir_expand_templates_result hir_expand_templates(hir        *hir,
 
   // will append classes and exceptions
   hir_ctx_init(&ctx, type_table, result.exceptions, hir->classes);
-  hir_setup_ctx_classes(&ctx, templated_classes);
+  // hir_register_types(&)
+  hir_setup_ctx_hir_classes(&ctx, templated_classes);
+  hir_setup_ctx_types(&ctx, type_table);
 
   hir_ctx_debug(&ctx);
 
