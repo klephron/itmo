@@ -100,6 +100,7 @@ typedef struct hir_ctx_struct {
   list_hir_class        *hir_tmpl_classes;  // stores actual class templates
   hashset_type_mono_ref *insted_types;      // already instantiated types
 
+  // no scopes as there is not constructions for recursive expansion
   hashset_hir_type_map *map_type_tmpl;
   list_type_mono_ref   *instto_types;
 
@@ -276,43 +277,13 @@ static void hir_setup_ctx_classes(hir_ctx        *ctx,
   list_hir_class_free(templated_classes);
 }
 
-static hir_var *hir_expand_var_template(hir_ctx *ctx, const hir_var *var_t) {
+static hir_var *hir_expand_var(hir_ctx *ctx, const hir_var *var_t) {
   return NULL;
 }
 
 static hir_subroutine *
-hir_expand_subroutine_template(hir_ctx              *ctx,
-                               const hir_subroutine *subroutine_t) {
+hir_expand_subroutine(hir_ctx *ctx, const hir_subroutine *subroutine_t) {
   return NULL;
-}
-
-static hir_class *hir_expand_class_template(hir_ctx         *ctx,
-                                            const hir_class *class_t,
-                                            const type_mono *class_type) {
-  hir_class *class =
-      hir_class_new_typed(class_type->base.type_entry_ref, list_hir_var_new(),
-                          list_hir_method_new());
-
-  for (list_hir_var_it it = list_hir_var_begin(class_t->fields); !END(it);
-       NEXT(it)) {
-    hir_var *var = hir_expand_var_template(ctx, GET(it));
-    if (var) {
-      list_hir_var_push_back(class->fields, var);
-    }
-  }
-
-  for (list_hir_method_it it = list_hir_method_begin(class_t->methods);
-       !END(it); NEXT(it)) {
-    const hir_method *method_t = GET(it);
-    hir_subroutine   *sub =
-        hir_expand_subroutine_template(ctx, method_t->subroutine);
-    if (sub) {
-      list_hir_method_push_back(class->methods,
-                                hir_method_new(span_copy(method_t->base.span),
-                                               method_t->modifier, sub));
-    }
-  }
-  return class;
 }
 
 static void hir_expand_class(hir_ctx *ctx, const type_mono *class_type) {
@@ -343,20 +314,41 @@ static void hir_expand_class(hir_ctx *ctx, const type_mono *class_type) {
         hir_type_map_new(from_type->type_entry_ref, to_type->type_entry_ref));
   }
 
-  // prepare list for types that need to be insted on current DFS step expansion
+  // accumulate types for further expansion, expands in non-recursive manner
   ctx->instto_types = list_type_mono_ref_new();
 
-  hir_class *class = hir_expand_class_template(ctx, class_t, class_type);
-  if (class) {
-    hashset_type_mono_ref_insert(ctx->insted_types, (type_mono *)class_type);
-    list_hir_class_push_back(ctx->hir_classes, class);
+  hir_class *class =
+      hir_class_new_typed(class_type->base.type_entry_ref, list_hir_var_new(),
+                          list_hir_method_new());
+
+  for (list_hir_var_it it = list_hir_var_begin(class_t->fields); !END(it);
+       NEXT(it)) {
+    hir_var *var = hir_expand_var(ctx, GET(it));
+    if (var) {
+      list_hir_var_push_back(class->fields, var);
+    }
   }
 
-  // forward further expansion after current is done
+  for (list_hir_method_it it = list_hir_method_begin(class_t->methods);
+       !END(it); NEXT(it)) {
+    const hir_method *method_t = GET(it);
+    hir_subroutine   *sub = hir_expand_subroutine(ctx, method_t->subroutine);
+    if (sub) {
+      list_hir_method_push_back(class->methods,
+                                hir_method_new(span_copy(method_t->base.span),
+                                               method_t->modifier, sub));
+    }
+  }
+
+  // prepare for next expansions
+  hashset_type_mono_ref_insert(ctx->insted_types, (type_mono *)class_type);
+  list_hir_class_push_back(ctx->hir_classes, class);
+
   hashset_hir_type_map_free(ctx->map_type_tmpl);
   list_type_mono_ref *instto_types = ctx->instto_types;
   ctx->instto_types = NULL;
 
+  // expand further recursively to fall on stack overflow if infinite loop =)
   for (list_type_mono_ref_it it = list_type_mono_ref_begin(instto_types);
        !END(it); NEXT(it)) {
     type_mono *mono = GET(it);
