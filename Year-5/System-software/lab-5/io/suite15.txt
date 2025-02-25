@@ -3,7 +3,7 @@ var
 begin
 end;
 
-class B<T> : A<T>, A<T>, A<int>
+class B<T> : A<array [] of T>, A<int>
 var
 begin
 end;

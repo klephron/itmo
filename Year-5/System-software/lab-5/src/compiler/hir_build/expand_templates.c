@@ -335,9 +335,18 @@ hir_expand_subroutine(hir_ctx *ctx, const hir_subroutine *subroutine_t) {
   return NULL;
 }
 
+// FIX: unwrap recursively, because constructions like
+// class B<T> : A<array [] of T> doesn't work
+// how: expand type_mono passing map(template -> actual) then compare.
+// this function is also needed when handling vars and methods
+// hir_expand_type()
+static type_base *hir_expand_type_definition(hir_ctx *ctx, type_mono *type_mono,
+                                             int *changed) {}
+
 // if any updates then instantiate new template with resolved types
-static void hir_expand_class_parents(hir_ctx *ctx, type_mono *class_type,
-                                     const type_class *class_t_type) {
+static void hir_expand_class_parents(hir_ctx          *ctx,
+                                     const type_class *class_t_type,
+                                     type_mono        *class_type) {
   int            parents_modified = 0;
   list_type_ref *parents = list_type_ref_new();
 
@@ -346,26 +355,31 @@ static void hir_expand_class_parents(hir_ctx *ctx, type_mono *class_type,
     union {
       type_base *base;
       type_mono *mono;
-    } parent;
+    } old_parent;
 
-    parent.base = GET(it);
+    old_parent.base = GET(it);
 
     // if not full monoed, need to create new mono type and resolve typenames
-    if (type_fetch_mono(parent.base) == TYPE_MONO_FULL) {
-      list_type_ref_push_back(parents, parent.base);
+    if (type_fetch_mono(old_parent.base) == TYPE_MONO_FULL) {
+      list_type_ref_push_back(parents, old_parent.base);
       continue;
     }
 
-    if (parent.base->kind != TYPE_MONO) {
-      error("expected monoed parent (or class), got %d", parent.base->kind);
+    if (old_parent.base->kind != TYPE_MONO) {
+      error("expected monoed parent (or class), got %d", old_parent.base->kind);
       continue;
     }
 
     type_mono *new_parent =
-        type_mono_new(parent.mono->type_ref, list_type_ref_new());
+        type_mono_new(old_parent.mono->type_ref, list_type_ref_new());
 
-    for (list_type_ref_it p_it = list_type_ref_begin(parent.mono->types);
+    for (list_type_ref_it p_it = list_type_ref_begin(old_parent.mono->types);
          !END(p_it); NEXT(p_it)) {
+
+      // FIX: --------------- this function will be inside hir_expand_type
+      // because it should work recursively,
+      // maybe even resolve_parent function idk
+
       const type_base *p_from = GET(p_it);
       const type_base *p_to;
 
@@ -374,11 +388,13 @@ static void hir_expand_class_parents(hir_ctx *ctx, type_mono *class_type,
       } else {
         list_type_ref_push_back(new_parent->types, (type_base *)p_to);
       }
+
+      // FIX: --------------- whole this function will be inside hir_expand_type
     }
 
     // register to type table + add to inst list + add to modified parents
     new_parent = (type_mono *)hir_ctx_type_register(
-        ctx, (type_base *)new_parent, parent.base->type_entry_ref->span);
+        ctx, (type_base *)new_parent, old_parent.base->type_entry_ref->span);
     parents_modified = 1;
 
     list_type_mono_ref_push_back(ctx->instto_types, new_parent);
@@ -429,7 +445,7 @@ static void hir_expand_class(hir_ctx *ctx, type_mono *class_type) {
   // accumulate types for further expansion, expands in non-recursive manner
   ctx->instto_types = list_type_mono_ref_new();
 
-  hir_expand_class_parents(ctx, class_type, class_t_type);
+  hir_expand_class_parents(ctx, class_t_type, class_type);
 
   hir_class *class =
       hir_class_new_typed(class_type->base.type_entry_ref, list_hir_var_new(),
