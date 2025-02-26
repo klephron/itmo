@@ -9,9 +9,9 @@ var
 begin
 end;
 
-class A<T, U> : B<T, int>, A
+class C<T, U> : B<T, int>, A
 var
-  a: A<T, U>;
+  a: C<T, U>;
   b, c: array [] of U;
 begin
   public method one(a: B<U, array [] of T>): B<array [] of T, U>;
@@ -28,8 +28,8 @@ end;
 
 method main(): int
 var
-  a: A<int, string>;
+  a: C<int, string>;
   b, c: B<char, byte>;
-  d: A<array [] of int, string>;
+  d: C<array [] of int, string>;
 begin
 end;

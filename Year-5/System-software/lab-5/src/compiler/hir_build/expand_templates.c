@@ -111,10 +111,10 @@ typedef struct hir_ctx_struct {
   list_hir_class        *hir_tmpl_classes;  // stores actual class templates
   hashset_type_ref      *insted_types; // already instantiated/resolved types
   hashset_type_ref      *registered_types; // present in type table
+  list_type_mono_ref    *instto_types;
 
   // no scopes as there is not constructions for recursive expansion
   hashset_hir_type_map *map_type_tmpl;
-  list_type_mono_ref   *instto_types;
 
   type_table     *type_table;
   list_hir_class *hir_classes;
@@ -128,9 +128,9 @@ static void hir_ctx_init(hir_ctx *ctx, type_table *type_table,
   ctx->hir_tmpl_classes = list_hir_class_new();
   ctx->insted_types = hashset_type_ref_new();
   ctx->registered_types = hashset_type_ref_new();
+  ctx->instto_types = list_type_mono_ref_new();
 
   ctx->map_type_tmpl = NULL;
-  ctx->instto_types = NULL;
 
   ctx->type_table = type_table;
   ctx->hir_classes = hir_classes;
@@ -142,6 +142,7 @@ static void hir_ctx_deinit(hir_ctx *ctx) {
   list_hir_class_free(ctx->hir_tmpl_classes);
   hashset_type_ref_free(ctx->insted_types);
   hashset_type_ref_free(ctx->registered_types);
+  list_type_mono_ref_free(ctx->instto_types);
 
   ctx->map_type_tmpl = NULL;
 
@@ -150,14 +151,13 @@ static void hir_ctx_deinit(hir_ctx *ctx) {
   ctx->exceptions = NULL;
 }
 
-static const type_base *hir_ctx_type_tmpl_find(hir_ctx         *ctx,
-                                               const type_base *type) {
+static type_base *hir_ctx_type_tmpl_find(hir_ctx *ctx, const type_base *type) {
   hashset_hir_type_map_it it = hashset_hir_type_map_find(
       ctx->map_type_tmpl, &(hir_type_map){.from = type});
   if (END(it)) {
     return NULL;
   }
-  return GET(it)->to;
+  return (type_base *)GET(it)->to;
 }
 
 // add to registered types and add to type_table
@@ -174,8 +174,8 @@ static type_base *hir_ctx_type_register(hir_ctx *ctx, type_base *type,
   return GET(it);
 }
 
-static void hir_ctx_debug(hir_ctx *ctx) {
-  debug("hir_ctx:");
+static void hir_ctx_debug(const hir_ctx *ctx, const char *s) {
+  debug("hir_ctx: (%s)", s);
   debug("  map_type_templates -> size: %lu",
         ctx->map_type_hir_tmpl->hashset.size);
   debug("  insted_types -> size: %lu", ctx->insted_types->hashset.size);
@@ -187,12 +187,12 @@ static void hir_ctx_debug(hir_ctx *ctx) {
 // filters out templated classes from hir->classes
 // rest stay in hir->class, templates returned by this function
 static list_hir_class *hir_filter_templated_hir_classes(hir *hir) {
-  list_hir_class *classes = list_hir_class_new();
   list_hir_class *classes_t = list_hir_class_new(); // to be expanded
+                                                    //
+  size_t hir_class_size = list_hir_class_size(hir->classes);
 
-  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
-       NEXT(it)) {
-    hir_class *hir_class = GET(it);
+  for (size_t i = 0; i < hir_class_size; ++i) {
+    hir_class *hir_class = list_hir_class_pop_front(hir->classes);
 
     if (!(hir_class->state &= HIR_STATE_BIND_TYPE)) {
       error("illegal state, expected class type %s type to be binded");
@@ -208,7 +208,7 @@ static list_hir_class *hir_filter_templated_hir_classes(hir *hir) {
       break;
     }
     case TYPE_MONO_FULL: {
-      list_hir_class_push_back(classes, hir_class);
+      list_hir_class_push_back(hir->classes, hir_class);
       break;
     }
     case TYPE_MONO_UNSET:
@@ -222,13 +222,6 @@ static list_hir_class *hir_filter_templated_hir_classes(hir *hir) {
     }
     }
   }
-
-  // cuz iterator invalidates when elements are deleted
-  while (!list_hir_class_empty(hir->classes)) {
-    list_hir_class_pop_front(hir->classes);
-  }
-  list_hir_class_free(hir->classes);
-  hir->classes = classes;
 
   return classes_t;
 }
@@ -305,8 +298,8 @@ static const hir_base *hir_get_hir_template(hir_ctx         *ctx,
 }
 
 // add class templates that can be used for instantiation
-static void hir_setup_ctx_hir_classes(hir_ctx        *ctx,
-                                      list_hir_class *templated_classes) {
+static void hir_setup_ctx_hir_templates(hir_ctx        *ctx,
+                                        list_hir_class *templated_classes) {
   while (!list_hir_class_empty(templated_classes)) {
     hir_class     *hir = list_hir_class_pop_front(templated_classes);
     hir_type_tmpl *type_tmpl =
@@ -319,122 +312,195 @@ static void hir_setup_ctx_hir_classes(hir_ctx        *ctx,
   list_hir_class_free(templated_classes);
 }
 
-static void hir_setup_ctx_types(hir_ctx *ctx, type_table *type_table) {
-  for (list_type_entry_it it = list_type_entry_begin(type_table->entries);
+static void hir_setup_ctx_registed_types(hir_ctx    *ctx,
+                                         type_table *type_table_ref) {
+  for (list_type_entry_it it = list_type_entry_begin(type_table_ref->entries);
        !END(it); NEXT(it)) {
     hashset_type_ref_insert(ctx->registered_types, GET(it)->type);
   }
 }
 
-static hir_var *hir_expand_var(hir_ctx *ctx, const hir_var *var_t) {
+static void hir_setup_ctx_instto_types(hir_ctx            *ctx,
+                                       list_type_mono_ref *instto_types) {
+  while (!list_type_mono_ref_empty(instto_types)) {
+    type_mono *mono = list_type_mono_ref_pop_front(instto_types);
+    list_type_mono_ref_push_back(ctx->instto_types, mono);
+  }
+  list_type_mono_ref_free(instto_types);
+}
+
+// unwrap recursively, because without constructions like
+// class B<T> : A<array [] of T> doesn't work
+static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
+  if (!type) {
+    return NULL;
+  }
+
+  int type_changed = 0;
+
+  switch (type_fetch_mono(type)) {
+  default:
+  case TYPE_MONO_UNSET: {
+    char *type_s = type_str(type);
+    error("type %s mono is unset", type_s);
+    if (type_s) {
+      free(type_s);
+    }
+    return NULL;
+  }
+
+  case TYPE_MONO_FULL:
+    // already expanded
+    return type;
+
+  case TYPE_MONO_NOT_FULL:
+    // try expand lazily recursively
+    switch (type->kind) {
+    case TYPE_PRIMITIVE:
+      return type;
+    case TYPE_ARRAY: {
+      type_array *self = (type_array *)type;
+
+      type_base *new_element_ref = hir_expand_type(ctx, self->element_ref);
+      if (new_element_ref != self->element_ref) {
+        type_changed = 1;
+      }
+
+      if (type_changed) {
+        type_array *new_self = type_array_new(new_element_ref);
+        return hir_ctx_type_register(ctx, (type_base *)new_self,
+                                     type->type_entry_ref->span);
+      }
+      return type;
+    }
+    case TYPE_CALLABLE: {
+      type_callable *self = (type_callable *)type;
+
+      type_base *new_ret_ref = hir_expand_type(ctx, self->ret_ref);
+      if (new_ret_ref != self->ret_ref) {
+        type_changed = 1;
+      }
+
+      list_type_ref *new_params = list_type_ref_new();
+      for (list_type_ref_it it = list_type_ref_begin(self->params); !END(it);
+           NEXT(it)) {
+        type_base *param = GET(it);
+        type_base *new_param = hir_expand_type(ctx, param);
+        if (param != new_param) {
+          type_changed = 1;
+        }
+        list_type_ref_push_back(new_params, new_param);
+      }
+
+      if (type_changed) {
+        type_callable *new_self = type_callable_new(new_ret_ref, new_params);
+        return hir_ctx_type_register(ctx, (type_base *)new_self,
+                                     type->type_entry_ref->span);
+      }
+      list_type_ref_free(new_params);
+      return type;
+    }
+    case TYPE_CLASS: {
+      type_class *self = (type_class *)type;
+
+      list_type_ref *new_parents = list_type_ref_new();
+      for (list_type_ref_it it = list_type_ref_begin(self->parents); !END(it);
+           NEXT(it)) {
+        type_base *parent = GET(it);
+        type_base *new_parent = hir_expand_type(ctx, parent);
+        if (parent != new_parent) {
+          type_changed = 1;
+        }
+        list_type_ref_push_back(new_parents, new_parent);
+      }
+
+      if (type_changed) {
+        type_class *new_self = type_class_new(
+            strdup(self->id), type_copy_list_ref(self->typenames), new_parents);
+        return hir_ctx_type_register(ctx, (type_base *)new_self,
+                                     type->type_entry_ref->span);
+      }
+      list_type_ref_free(new_parents);
+      return type;
+    }
+    case TYPE_TYPENAME: {
+      type_base *new_self = hir_ctx_type_tmpl_find(ctx, type);
+      if (new_self) {
+        type_changed = 1;
+      }
+
+      if (type_changed) {
+        return new_self;
+      }
+      return type;
+    }
+      // doesn't expand recursively, because no nested classes allowed (to
+      // typename resolution will be performed
+      // adds new template for further instantiation
+    case TYPE_MONO: {
+      type_mono *mono = (type_mono *)type;
+
+      list_type_ref *new_types = list_type_ref_new();
+      for (list_type_ref_it it = list_type_ref_begin(mono->types); !END(it);
+           NEXT(it)) {
+        type_base *type = GET(it);
+        type_base *new_type = hir_expand_type(ctx, type);
+        if (new_type != type) {
+          type_changed = 1;
+        }
+        list_type_ref_push_back(new_types, new_type);
+      }
+
+      if (type_changed) {
+        type_mono *new_self = type_mono_new(mono->type_ref, new_types);
+        type = hir_ctx_type_register(ctx, (type_base *)new_self,
+                                     type->type_entry_ref->span);
+        // add template for further instantiation
+        list_type_mono_ref_push_back(ctx->instto_types, new_self);
+        return type;
+      }
+      list_type_ref_free(new_types);
+      return type;
+    }
+    case TYPE_UNKNOWN:
+    default:
+      error("unknown type %d %s", type->kind, type);
+      return NULL;
+    }
+  }
+}
+
+static hir_var *hir_expand_templates_var(hir_ctx *ctx, const hir_var *var_t) {
   return NULL;
 }
 
 static hir_subroutine *
-hir_expand_subroutine(hir_ctx *ctx, const hir_subroutine *subroutine_t) {
+hir_expand_templates_subroutine(hir_ctx              *ctx,
+                                const hir_subroutine *subroutine_t) {
   return NULL;
 }
 
-// FIX: unwrap recursively, because constructions like
-// class B<T> : A<array [] of T> doesn't work
-// how: expand type_mono passing map(template -> actual) then compare.
-// this function is also needed when handling vars and methods
-// hir_expand_type()
-static type_base *hir_expand_type_definition(hir_ctx *ctx, type_mono *type_mono,
-                                             int *changed) {}
-
-// if any updates then instantiate new template with resolved types
-static void hir_expand_class_parents(hir_ctx          *ctx,
-                                     const type_class *class_t_type,
-                                     type_mono        *class_type) {
-  int            parents_modified = 0;
-  list_type_ref *parents = list_type_ref_new();
-
-  for (list_type_ref_it it = list_type_ref_begin(class_t_type->parents);
-       !END(it); NEXT(it)) {
-    union {
-      type_base *base;
-      type_mono *mono;
-    } old_parent;
-
-    old_parent.base = GET(it);
-
-    // if not full monoed, need to create new mono type and resolve typenames
-    if (type_fetch_mono(old_parent.base) == TYPE_MONO_FULL) {
-      list_type_ref_push_back(parents, old_parent.base);
-      continue;
-    }
-
-    if (old_parent.base->kind != TYPE_MONO) {
-      error("expected monoed parent (or class), got %d", old_parent.base->kind);
-      continue;
-    }
-
-    type_mono *new_parent =
-        type_mono_new(old_parent.mono->type_ref, list_type_ref_new());
-
-    for (list_type_ref_it p_it = list_type_ref_begin(old_parent.mono->types);
-         !END(p_it); NEXT(p_it)) {
-
-      // FIX: --------------- this function will be inside hir_expand_type
-      // because it should work recursively,
-      // maybe even resolve_parent function idk
-
-      const type_base *p_from = GET(p_it);
-      const type_base *p_to;
-
-      if (!(p_to = hir_ctx_type_tmpl_find(ctx, p_from))) {
-        list_type_ref_push_back(new_parent->types, (type_base *)p_from);
-      } else {
-        list_type_ref_push_back(new_parent->types, (type_base *)p_to);
-      }
-
-      // FIX: --------------- whole this function will be inside hir_expand_type
-    }
-
-    // register to type table + add to inst list + add to modified parents
-    new_parent = (type_mono *)hir_ctx_type_register(
-        ctx, (type_base *)new_parent, old_parent.base->type_entry_ref->span);
-    parents_modified = 1;
-
-    list_type_mono_ref_push_back(ctx->instto_types, new_parent);
-    list_type_ref_push_back(parents, (type_base *)new_parent);
-  }
-
-  // need to create new templated type, because parents are modified
-  if (parents_modified) {
-    type_class *new_class =
-        type_class_new(strdup(class_t_type->id),
-                       type_copy_list_ref(class_t_type->typenames), parents);
-
-    new_class = (type_class *)hir_ctx_type_register(
-        ctx, (type_base *)new_class, class_t_type->base.type_entry_ref->span);
-    class_type->type_ref = (type_base *)new_class;
-  } else {
-    list_type_ref_free(parents);
-  }
-}
-
-static void hir_expand_class(hir_ctx *ctx, type_mono *class_type) {
+static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
+                                             type_mono *mono_type) {
 
   hashset_type_ref_it found =
-      hashset_type_ref_find(ctx->insted_types, (type_base *)class_type);
+      hashset_type_ref_find(ctx->insted_types, (type_base *)mono_type);
   if (!END(found)) {
-    return;
+    return NULL;
   }
 
-  const hir_class *class_t = (hir_class *)hir_get_hir_template(ctx, class_type);
+  const hir_class *class_t = (hir_class *)hir_get_hir_template(ctx, mono_type);
   if (!class_t) {
-    return;
+    return NULL;
   }
 
   // setup templates that need to be replaced
   ctx->map_type_tmpl = hashset_hir_type_map_new();
 
-  const type_class *class_t_type = (type_class *)class_t->type_ref->type;
+  type_class *class_t_type = (type_class *)class_t->type_ref->type;
 
   for (list_type_ref_it fit = list_type_ref_begin(class_t_type->typenames),
-                        tit = list_type_ref_begin(class_type->types);
+                        tit = list_type_ref_begin(mono_type->types);
        !END(tit); NEXT(fit), NEXT(tit)) {
     type_base *from_type = GET(fit);
     type_base *to_type = GET(tit);
@@ -442,61 +508,101 @@ static void hir_expand_class(hir_ctx *ctx, type_mono *class_type) {
                                 hir_type_map_new(from_type, to_type));
   }
 
-  // accumulate types for further expansion, expands in non-recursive manner
-  ctx->instto_types = list_type_mono_ref_new();
+  // expansion of parents may create new template (because typenames are
+  // expanded), that's why need to update mono
+  // doesn't create new, because other references should stay valid
+  {
+    int type_changed = 0;
 
-  hir_expand_class_parents(ctx, class_t_type, class_type);
+    type_base *new_class_t_type =
+        hir_expand_type(ctx, (type_base *)class_t_type);
+    if (new_class_t_type != (type_base *)class_t_type) {
+      type_changed = 1;
+    }
 
-  hir_class *class =
-      hir_class_new_typed(class_type->base.type_entry_ref, list_hir_var_new(),
+    if (type_changed) {
+      mono_type->type_ref = (type_base *)new_class_t_type;
+    }
+  }
+
+  hir_class *hir_class =
+      hir_class_new_typed(mono_type->base.type_entry_ref, list_hir_var_new(),
                           list_hir_method_new());
 
   for (list_hir_var_it it = list_hir_var_begin(class_t->fields); !END(it);
        NEXT(it)) {
-    hir_var *var = hir_expand_var(ctx, GET(it));
+    hir_var *var = hir_expand_templates_var(ctx, GET(it));
     if (var) {
-      list_hir_var_push_back(class->fields, var);
+      list_hir_var_push_back(hir_class->fields, var);
     }
   }
 
   for (list_hir_method_it it = list_hir_method_begin(class_t->methods);
        !END(it); NEXT(it)) {
     const hir_method *method_t = GET(it);
-    hir_subroutine   *sub = hir_expand_subroutine(ctx, method_t->subroutine);
+    hir_subroutine   *sub =
+        hir_expand_templates_subroutine(ctx, method_t->subroutine);
     if (sub) {
-      list_hir_method_push_back(class->methods,
+      list_hir_method_push_back(hir_class->methods,
                                 hir_method_new(span_copy(method_t->base.span),
                                                method_t->modifier, sub));
     }
   }
 
-  // prepare for next expansions
-  hashset_type_ref_insert(ctx->insted_types, (type_base *)class_type);
-  list_hir_class_push_back(ctx->hir_classes, class);
-
   hashset_hir_type_map_free(ctx->map_type_tmpl);
-  list_type_mono_ref *instto_types = ctx->instto_types;
-  ctx->instto_types = NULL;
 
-  // expand further recursively to fall on stack overflow if infinite loop =)
-  for (list_type_mono_ref_it it = list_type_mono_ref_begin(instto_types);
-       !END(it); NEXT(it)) {
-    type_mono *mono = GET(it);
+  return hir_class;
+}
+
+static void hir_expand_templates_all(hir_ctx *ctx) {
+  while (!list_type_mono_ref_empty(ctx->instto_types)) {
+    type_mono *mono = list_type_mono_ref_pop_front(ctx->instto_types);
+
+    union {
+      void *result;
+      hir_class *class;
+    } hir;
+
+#ifndef NDEBUG
+    char *type_from_s = type_str((type_base *)mono);
+#endif
+
     switch (mono->type_ref->kind) {
     case TYPE_CLASS:
-      hir_expand_class(ctx, mono);
+      hir.class = hir_expand_templates_class(ctx, mono);
       break;
+
     default: {
-      char *type_s = type_str((type_base *)mono);
-      error("expansion of type %s is unsupported", type_s);
-      if (type_s) {
-        free(type_s);
+#ifndef NDEBUG
+      error("expansion of type %s is unsupported", type_from_s);
+      if (type_from_s) {
+        free(type_from_s);
       }
-      break;
+#endif
+      continue;
     }
+    }
+
+#ifndef NDEBUG
+    char *type_to_s = type_str((type_base *)mono);
+    debug("expanded %s", type_from_s);
+    if (strcmp(type_from_s, type_to_s)) {
+      debug("changed  %s", type_to_s);
+    }
+
+    if (type_from_s) {
+      free(type_from_s);
+    }
+    if (type_to_s) {
+      free(type_to_s);
+    }
+#endif
+
+    if (hir.result) {
+      hashset_type_ref_insert(ctx->insted_types, (type_base *)mono);
+      list_hir_class_push_back(ctx->hir_classes, hir.result);
     }
   }
-  list_type_mono_ref_free(instto_types);
 }
 
 hir_expand_templates_result hir_expand_templates(hir        *hir,
@@ -507,41 +613,18 @@ hir_expand_templates_result hir_expand_templates(hir        *hir,
 
   hir_ctx ctx;
 
-  list_hir_class *templated_classes = hir_filter_templated_hir_classes(hir);
-
   // will append classes and exceptions
   hir_ctx_init(&ctx, type_table, result.exceptions, hir->classes);
-  // hir_register_types(&)
-  hir_setup_ctx_hir_classes(&ctx, templated_classes);
-  hir_setup_ctx_types(&ctx, type_table);
 
-  hir_ctx_debug(&ctx);
+  hir_setup_ctx_registed_types(&ctx, type_table);
+  hir_setup_ctx_hir_templates(&ctx, hir_filter_templated_hir_classes(hir));
+  hir_setup_ctx_instto_types(&ctx, hir_get_mono_full_class_types(type_table));
 
-  // expand classes
-  list_type_mono_ref *mono_class_types =
-      hir_get_mono_full_class_types(type_table);
+  hir_ctx_debug(&ctx, "before expansion");
 
-  for (list_type_mono_ref_it it = list_type_mono_ref_begin(mono_class_types);
-       !END(it); NEXT(it)) {
-    type_mono *mono = GET(it);
+  hir_expand_templates_all(&ctx);
 
-    switch (mono->type_ref->kind) {
-    case TYPE_CLASS:
-      hir_expand_class(&ctx, GET(it));
-      break;
-    default: {
-      char *type_s = type_str((type_base *)mono);
-      error("expansion of type %s is unsupported", type_s);
-      if (type_s) {
-        free(type_s);
-      }
-      break;
-    }
-    }
-  }
-  list_type_mono_ref_free(mono_class_types);
-
-  hir_ctx_debug(&ctx);
+  hir_ctx_debug(&ctx, "after expansion");
 
   hir_ctx_deinit(&ctx);
 

@@ -3,7 +3,12 @@ var
 begin
 end;
 
-class B<T> : A<array [] of T>, A<int>
+class C<V> : A<V>
+var
+begin
+end;
+
+class B<T> : C<A<T>>
 var
 begin
 end;
