@@ -179,7 +179,8 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
     }
 
     type_array *array = type_array_new(sub_entry->type_ref->type);
-    type_entry *type_ref = hir_ctx_table_emplace(ctx, (type_base *)array, NULL);
+    type_entry *type_ref = hir_ctx_table_emplace(ctx, (type_base *)array,
+                                                 span_copy(self->base.span));
 
     entry = hir_ctx_scopes_insert_global(
         ctx,
