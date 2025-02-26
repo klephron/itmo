@@ -50,6 +50,11 @@ hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
                                    hir_type_base       *ret_type,
                                    hir_subroutine_body *body);
 
+hir_subroutine *hir_subroutine_new_typed(span *span, hir_id *id,
+                                         list_hir_param      *params,
+                                         type_entry          *type_ref,
+                                         hir_subroutine_body *body);
+
 void hir_subroutine_free(hir_subroutine *self);
 
 static inline void container_delete_hir_subroutine(void *data) {

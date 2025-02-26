@@ -138,6 +138,15 @@ hir_param *hir_param_new(span *span, hir_id *id, hir_type_base *type) {
   return self;
 }
 
+hir_param *hir_param_new_typed(span *span, hir_id *id, type_entry *type_ref) {
+  hir_param *self = MALLOC(hir_param);
+  hir_base_init(&self->base, span, HIR_NODE_PARAM);
+  self->state = HIR_STATE_INITIAL | HIR_STATE_BIND_TYPE;
+  self->id_hir = id;
+  self->type_ref = type_ref;
+  return self;
+}
+
 void hir_param_free(hir_param *self) {
   if (self) {
     if (!(self->state & HIR_STATE_BIND_SYMBOL)) {
@@ -158,6 +167,15 @@ hir_var *hir_var_new(span *span, hir_id *id, hir_type_base *type) {
   self->state = HIR_STATE_INITIAL;
   self->id_hir = id;
   self->type_hir = type;
+  return self;
+}
+
+hir_var *hir_var_new_typed(span *span, hir_id *id, type_entry *type_ref) {
+  hir_var *self = MALLOC(hir_var);
+  hir_base_init(&self->base, span, HIR_NODE_VAR);
+  self->state = HIR_STATE_INITIAL | HIR_STATE_BIND_TYPE;
+  self->id_hir = id;
+  self->type_ref = type_ref;
   return self;
 }
 

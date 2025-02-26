@@ -56,6 +56,20 @@ hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
   return self;
 }
 
+hir_subroutine *hir_subroutine_new_typed(span *span, hir_id *id,
+                                         list_hir_param      *params,
+                                         type_entry          *type_ref,
+                                         hir_subroutine_body *body) {
+  hir_subroutine *self = MALLOC(hir_subroutine);
+  hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
+  self->state = HIR_STATE_INITIAL | HIR_STATE_BIND_TYPE;
+  self->id_hir = id;
+  self->params = params;
+  self->type_ref = type_ref;
+  self->body = body;
+  return self;
+}
+
 void hir_subroutine_free(hir_subroutine *self) {
   if (self) {
     if (!(self->state & HIR_STATE_BIND_SYMBOL)) {

@@ -46,8 +46,8 @@ typedef struct hir_class_struct {
 hir_class *hir_class_new(span *span, hir_id *id, list_hir_id *typenames,
                          list_hir_type *parents, list_hir_var *fields,
                          list_hir_method *methods);
-hir_class *hir_class_new_typed(type_entry *type_ref, list_hir_var *fields,
-                               list_hir_method *methods);
+hir_class *hir_class_new_typed(span *span, type_entry *type_ref,
+                               list_hir_var *fields, list_hir_method *methods);
 void       hir_class_free(hir_class *self);
 
 static inline void container_delete_hir_class(void *data) {
