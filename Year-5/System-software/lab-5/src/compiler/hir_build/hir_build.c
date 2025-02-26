@@ -1,9 +1,11 @@
 #include "hir_build.h"
 
+#include "compiler/hir/str.h"
 #include "compiler/hir_build/bind_symbols.h"
 #include "compiler/hir_build/bind_types.h"
 #include "compiler/hir_build/expand_templates.h"
 #include "compiler/hir_build/lower_ast.h"
+#include "compiler/type_table/str.h"
 
 hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
   hir_build_result result = {
@@ -29,6 +31,18 @@ hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
 
     list_exception_extend(result.exceptions, r.exceptions);
     result.type_table = r.type_table;
+  }
+
+  char *hir_s = hir_tree_str(result.hir);
+  printf("%s", hir_s);
+  if (hir_s) {
+    free(hir_s);
+  }
+
+  char *table_s = type_table_str(result.type_table);
+  printf("%s", table_s);
+  if (table_s) {
+    free(table_s);
   }
 
   if (result.exceptions &&

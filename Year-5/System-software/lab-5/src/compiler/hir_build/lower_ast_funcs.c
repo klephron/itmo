@@ -386,13 +386,23 @@ hir_subroutine_body *hir_build_func_body_import(hir_ctx *ctx, hir_lit *lib,
 // CLASS
 hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *mod_t,
                              hir_method_modifier_enum modifier,
-                             hir_subroutine          *func) {
+                             hir_subroutine *func, const hir_id *class_id_ref,
+                             const list_hir_id *typenames_ref) {
   UNUSED(ctx);
 
-  // add this as implicit first parameter
+  // add implicit this first param
+  list_hir_type *typenames = list_hir_type_new();
+  for (list_hir_id_it it = list_hir_id_begin(typenames_ref); !END(it);
+       NEXT(it)) {
+    list_hir_type_push_back(typenames, (hir_type_base *)hir_type_custom_new(
+                                           NULL, strdup(GET(it)->name), NULL));
+  }
+
   list_hir_param_push_front(
       func->params,
-      hir_param_new(NULL, hir_id_new(NULL, strdup("this")), NULL));
+      hir_param_new(NULL, hir_id_new(NULL, strdup("this")),
+                    (hir_type_base *)hir_type_custom_new(
+                        NULL, strdup(class_id_ref->name), typenames)));
 
   if (!mod_t || modifier == HIR_METHOD_MODIFIER_ENUM_ABSCENT) {
     span *span = span_copy(func->base.span);

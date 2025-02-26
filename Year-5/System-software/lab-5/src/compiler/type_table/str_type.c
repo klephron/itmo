@@ -1,52 +1,58 @@
 #include "str.h"
+#include "util/hashset.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include "util/strbuf.h"
 #include <string.h>
-// #include "util/hashset.h"
 
-// typedef struct hir_type_map_struct {
-//   const type_base *from;
-//   const type_base *to;
-// } hir_type_map;
+// PRETTY PRINT TYPE MONO
+typedef struct type_map_struct {
+  const type_base *from;
+  const type_base *to;
+} type_map;
 
-// static hir_type_map *hir_type_map_new(const type_base *from,
-//                                       const type_base *to) {
-//   hir_type_map *self = MALLOC(hir_type_map);
-//   self->from = from;
-//   self->to = to;
-//   return self;
-// }
+static type_map *type_map_new(const type_base *from, const type_base *to) {
+  type_map *self = MALLOC(type_map);
+  self->from = from;
+  self->to = to;
+  return self;
+}
 
-// static void hir_type_map_free(hir_type_map *self) {
-//   if (self) {
-//     free(self);
-//   }
-// }
+static void type_map_free(type_map *self) {
+  if (self) {
+    free(self);
+  }
+}
 
-// static inline void container_delete_hir_type_map(void *self) {
-//   hir_type_map_free(self);
-// }
-// static inline int container_cmp_hir_type_map(const void *lsv, const void
-// *rsv) {
-//   const hir_type_map *l = lsv;
-//   const hir_type_map *r = rsv;
-//   return container_cmp_ptr(l->from, r->from);
-// }
-// static inline uint64_t container_hash_hir_type_map(const void *lsv) {
-//   const hir_type_map *l = lsv;
-//   return container_hash_ptr(l->from);
-// }
-// HASHSET_DECLARE_STATIC_INLINE(hashset_hir_type_map, hir_type_map,
-//                               container_cmp_hir_type_map, container_new_move,
-//                               container_delete_hir_type_map,
-//                               container_hash_hir_type_map);
+static inline void container_delete_type_map(void *self) {
+  type_map_free(self);
+}
+static inline int container_cmp_type_map(const void *lsv, const void *rsv) {
+  const type_map *l = lsv;
+  const type_map *r = rsv;
+  return container_cmp_ptr(l->from, r->from);
+}
+static inline uint64_t container_hash_type_map(const void *lsv) {
+  const type_map *l = lsv;
+  return container_hash_ptr(l->from);
+}
 
-// actual str functions
-static void strbuf_append_type(strbuf *buffer, const type_base *generic);
+HASHSET_DECLARE_STATIC_INLINE(hashset_type_map, type_map,
+                              container_cmp_type_map, container_new_move,
+                              container_delete_type_map,
+                              container_hash_type_map);
 
-static void strbuf_append_type_primitive(strbuf               *buffer,
+typedef struct type_ctx_struct {
+  hashset_type_map *map;
+  int               unwrap;
+} type_ctx;
+
+static void strbuf_append_type(type_ctx *ctx, strbuf *buffer,
+                               const type_base *generic);
+
+static void strbuf_append_type_primitive(type_ctx *ctx, strbuf *buffer,
                                          const type_primitive *type) {
+  UNUSED(ctx);
   switch (type->type) {
   case TYPE_PRIMITIVE_BOOL:
     strbuf_append(buffer, "bool");
@@ -81,100 +87,144 @@ static void strbuf_append_type_primitive(strbuf               *buffer,
   }
 }
 
-static void strbuf_append_type_array(strbuf *buffer, const type_array *type) {
+static void strbuf_append_type_array(type_ctx *ctx, strbuf *buffer,
+                                     const type_array *type) {
+  ctx->unwrap = 0;
+
   strbuf_append(buffer, "array[");
-  strbuf_append_type(buffer, type->element_ref);
+  strbuf_append_type(ctx, buffer, type->element_ref);
   strbuf_append(buffer, "]");
 }
 
-static void strbuf_append_type_callable(strbuf              *buffer,
+static void strbuf_append_type_callable(type_ctx *ctx, strbuf *buffer,
                                         const type_callable *type) {
+  ctx->unwrap = 0;
+
   strbuf_append(buffer, "(");
   list_type_ref_it it = list_type_ref_begin(type->params);
   if (!END(it)) {
-    strbuf_append_type(buffer, GET(it));
+    strbuf_append_type(ctx, buffer, GET(it));
     for (NEXT(it); !END(it); NEXT(it)) {
       strbuf_append(buffer, ", ");
-      strbuf_append_type(buffer, GET(it));
+      strbuf_append_type(ctx, buffer, GET(it));
     }
   }
   strbuf_append(buffer, ") -> ");
-  strbuf_append_type(buffer, type->ret_ref);
+  strbuf_append_type(ctx, buffer, type->ret_ref);
 }
 
-static void strbuf_append_type_class(strbuf *buffer, const type_class *type) {
+static void strbuf_append_type_class(type_ctx *ctx, strbuf *buffer,
+                                     const type_class *type) {
+  int do_unwrap = ctx->unwrap;
+
+  ctx->unwrap = 0;
+
   strbuf_append(buffer, "class ");
   strbuf_append(buffer, type->id ? type->id : "(nil)");
-  {
-    list_type_ref_it it = list_type_ref_begin(type->typenames);
-    if (!END(it)) {
-      strbuf_append(buffer, " <");
-      strbuf_append_type(buffer, GET(it));
-      for (NEXT(it); !END(it); NEXT(it)) {
-        strbuf_append(buffer, ", ");
-        strbuf_append_type(buffer, GET(it));
-      }
-      strbuf_append(buffer, ">");
+
+  list_type_ref_it it = list_type_ref_begin(type->typenames);
+  if (!END(it)) {
+    strbuf_append(buffer, "<");
+    strbuf_append_type(ctx, buffer, GET(it));
+    for (NEXT(it); !END(it); NEXT(it)) {
+      strbuf_append(buffer, ", ");
+      strbuf_append_type(ctx, buffer, GET(it));
     }
+    strbuf_append(buffer, ">");
   }
-  {
+
+  if (do_unwrap) {
     list_type_ref_it it = list_type_ref_begin(type->parents);
     if (!END(it)) {
       strbuf_append(buffer, " : ");
-      strbuf_append_type(buffer, GET(it));
+      strbuf_append_type(ctx, buffer, GET(it));
       for (NEXT(it); !END(it); NEXT(it)) {
         strbuf_append(buffer, ", ");
-        strbuf_append_type(buffer, GET(it));
+        strbuf_append_type(ctx, buffer, GET(it));
       }
     }
   }
 }
 
-static void strbuf_append_type_typename(strbuf              *buffer,
+static void strbuf_append_type_typename(type_ctx *ctx, strbuf *buffer,
                                         const type_typename *type) {
+  UNUSED(ctx);
   strbuf_append(buffer, "typename ");
   strbuf_append(buffer, type->id);
 }
 
-static void strbuf_append_type_mono(strbuf *buffer, const type_mono *type) {
-  strbuf_append(buffer, "mono(");
-  strbuf_append_type(buffer, type->type_ref);
-  strbuf_append(buffer, " with ");
-  list_type_ref_it itm = list_type_ref_begin(type->types);
-  if (!END(itm)) {
-    strbuf_append_type(buffer, GET(itm));
-    for (NEXT(itm); !END(itm); NEXT(itm)) {
-      strbuf_append(buffer, ", ");
-      strbuf_append_type(buffer, GET(itm));
+static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,
+                                    const type_mono *type) {
+
+  if (type->type_ref) {
+    switch (type->type_ref->kind) {
+    case TYPE_UNKNOWN:
+    case TYPE_PRIMITIVE:
+    case TYPE_ARRAY:
+    case TYPE_CALLABLE:
+    case TYPE_TYPENAME:
+    case TYPE_MONO:
+      strbuf_append_type(ctx, buffer, type->type_ref);
+      break;
+    case TYPE_CLASS: {
+      // add mapping for replacement
+      const type_class *tmpl = (type_class *)type->type_ref;
+      for (list_type_ref_it it = list_type_ref_begin(type->types),
+                            t_it = list_type_ref_begin(tmpl->typenames);
+           !END(it) && !END(t_it); NEXT(it), NEXT(t_it)) {
+        hashset_type_map_insert(ctx->map, type_map_new(GET(t_it), GET(it)));
+      }
+
+      strbuf_append_type_class(ctx, buffer, tmpl);
+
+      // erase
+      for (list_type_ref_it it = list_type_ref_begin(tmpl->typenames); !END(it);
+           NEXT(it)) {
+        hashset_type_map_it found =
+            hashset_type_map_find(ctx->map, &(type_map){.from = GET(it)});
+
+        if (!END(found)) {
+          hashset_type_map_erase(ctx->map, found);
+        }
+      }
+      break;
+    }
     }
   }
-  strbuf_append(buffer, ")");
 }
 
-static void strbuf_append_type(strbuf *buffer, const type_base *generic) {
+static void strbuf_append_type(type_ctx *ctx, strbuf *buffer,
+                               const type_base *generic) {
   if (!generic) {
     strbuf_append(buffer, "any");
     return;
   }
 
+  hashset_type_map_it found =
+      hashset_type_map_find(ctx->map, &(type_map){.from = generic});
+
+  if (!END(found)) {
+    generic = GET(found)->to;
+  }
+
   switch (generic->kind) {
   case TYPE_PRIMITIVE:
-    strbuf_append_type_primitive(buffer, (const type_primitive *)generic);
+    strbuf_append_type_primitive(ctx, buffer, (const type_primitive *)generic);
     break;
   case TYPE_ARRAY:
-    strbuf_append_type_array(buffer, (const type_array *)generic);
+    strbuf_append_type_array(ctx, buffer, (const type_array *)generic);
     break;
   case TYPE_CALLABLE:
-    strbuf_append_type_callable(buffer, (const type_callable *)generic);
+    strbuf_append_type_callable(ctx, buffer, (const type_callable *)generic);
     break;
   case TYPE_CLASS:
-    strbuf_append_type_class(buffer, (const type_class *)generic);
+    strbuf_append_type_class(ctx, buffer, (const type_class *)generic);
     break;
   case TYPE_TYPENAME:
-    strbuf_append_type_typename(buffer, (const type_typename *)generic);
+    strbuf_append_type_typename(ctx, buffer, (const type_typename *)generic);
     break;
   case TYPE_MONO:
-    strbuf_append_type_mono(buffer, (const type_mono *)generic);
+    strbuf_append_type_mono(ctx, buffer, (const type_mono *)generic);
     break;
   case TYPE_UNKNOWN:
   default:
@@ -207,7 +257,16 @@ const char *type_enum_str(type_enum kind) {
 char *type_str(const type_base *generic) {
   if (generic) {
     strbuf *buffer = strbuf_new(16, 0);
-    strbuf_append_type(buffer, generic);
+
+    type_ctx ctx = {
+        .map = hashset_type_map_new(),
+        .unwrap = 1,
+    };
+
+    strbuf_append_type(&ctx, buffer, generic);
+
+    hashset_type_map_free(ctx.map);
+
     return strbuf_detach(buffer);
   }
   return NULL;

@@ -494,16 +494,77 @@ static hir_expr_base *hir_expand_templates_expr(hir_ctx             *ctx,
   if (!expr_t) {
     return NULL;
   }
+
+  const span *span = expr_t->base.span;
+  type_base  *type = expr_t->type_ref ? expr_t->type_ref->type : NULL;
+
+  type_base *new_type = hir_expand_type(ctx, type);
+
+  // char *type_s1 = type_str(type);
+  // char *type_s2 = type_str(type);
+  // debug("expr type %s -> %s", type_s1, type_s2);
+  // free(type_s1);
+  // free(type_s2);
+
+  type_entry *new_type_ref = new_type ? new_type->type_entry_ref : NULL;
+
   switch (expr_t->kind) {
+  case HIR_EXPR_UNARY: {
+    const hir_expr_unary *self = (hir_expr_unary *)expr_t;
+    return (hir_expr_base *)hir_expr_unary_new_typed(
+        span_copy(span), new_type_ref, self->op,
+        hir_expand_templates_expr(ctx, self->first));
+  }
+  case HIR_EXPR_BINARY: {
+    const hir_expr_binary *self = (hir_expr_binary *)expr_t;
+    return (hir_expr_base *)hir_expr_binary_new_typed(
+        span_copy(span), new_type_ref, self->op,
+        hir_expand_templates_expr(ctx, self->first),
+        hir_expand_templates_expr(ctx, self->second));
+  }
+  case HIR_EXPR_LITERAL: {
+    const hir_expr_lit *self = (hir_expr_lit *)expr_t;
+    return (hir_expr_base *)hir_expr_lit_new_typed(
+        span_copy(span), new_type_ref, hir_lit_copy(self->lit));
+  }
+  case HIR_EXPR_IDENTIFIER: {
+    const hir_expr_id *self = (hir_expr_id *)expr_t;
+    return (hir_expr_base *)hir_expr_id_new_typed(span_copy(span), new_type_ref,
+                                                  hir_id_copy(self->id_hir));
+  }
+  case HIR_EXPR_CALL: {
+    const hir_expr_call *self = (hir_expr_call *)expr_t;
+    list_hir_expr       *args = list_hir_expr_new();
+    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+         NEXT(it)) {
+      list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+    }
+    return (hir_expr_base *)hir_expr_call_new_typed(
+        span_copy(span), new_type_ref,
+        hir_expand_templates_expr(ctx, self->callee), args);
+  }
+  case HIR_EXPR_INDEX: {
+    const hir_expr_index *self = (hir_expr_index *)expr_t;
+    list_hir_expr        *args = list_hir_expr_new();
+    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+         NEXT(it)) {
+      list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+    }
+    return (hir_expr_base *)hir_expr_index_new_typed(
+        span_copy(span), new_type_ref,
+        hir_expand_templates_expr(ctx, self->indexed), args);
+  }
+  case HIR_EXPR_BUILTIN: {
+    const hir_expr_builtin *self = (hir_expr_builtin *)expr_t;
+    list_hir_expr          *args = list_hir_expr_new();
+    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+         NEXT(it)) {
+      list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+    }
+    return (hir_expr_base *)hir_expr_builtin_new_typed(
+        span_copy(span), new_type_ref, self->kind, args);
+  }
   case HIR_EXPR_UNKNOWN:
-  case HIR_EXPR_UNARY:
-  case HIR_EXPR_BINARY:
-  case HIR_EXPR_LITERAL:
-  case HIR_EXPR_IDENTIFIER:
-  case HIR_EXPR_CALL:
-  case HIR_EXPR_INDEX:
-    return NULL;
-  case HIR_EXPR_BUILTIN:
     break;
   }
   error("unexpected expr kind %d %p", expr_t->kind, expr_t);
@@ -515,14 +576,47 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
   if (!stmt_t) {
     return NULL;
   }
+
+  const span *span = stmt_t->base.span;
+
   switch (stmt_t->kind) {
-  case HIR_STMT_IF:
-  case HIR_STMT_BLOCK:
-  case HIR_STMT_WHILE:
-  case HIR_STMT_DO:
-  case HIR_STMT_BREAK:
-  case HIR_STMT_EXPR:
-    return NULL;
+  case HIR_STMT_IF: {
+    const hir_stmt_if *self = (hir_stmt_if *)stmt_t;
+    return (hir_stmt_base *)hir_stmt_if_new(
+        span_copy(span), hir_expand_templates_expr(ctx, self->cond),
+        hir_expand_templates_stmt(ctx, self->je),
+        hir_expand_templates_stmt(ctx, self->jz));
+  }
+  case HIR_STMT_BLOCK: {
+    const hir_stmt_block *self = (hir_stmt_block *)stmt_t;
+    list_hir_stmt        *stmts = list_hir_stmt_new();
+    for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
+         NEXT(it)) {
+      list_hir_stmt_push_back(stmts, hir_expand_templates_stmt(ctx, GET(it)));
+    }
+    return (hir_stmt_base *)hir_stmt_block_new(span_copy(span), stmts);
+  }
+  case HIR_STMT_WHILE: {
+    const hir_stmt_while *self = (hir_stmt_while *)stmt_t;
+    return (hir_stmt_base *)hir_stmt_while_new(
+        span_copy(span), hir_expand_templates_expr(ctx, self->cond),
+        hir_expand_templates_stmt(ctx, self->stmt));
+  }
+  case HIR_STMT_DO: {
+    const hir_stmt_do *self = (hir_stmt_do *)stmt_t;
+    return (hir_stmt_base *)hir_stmt_do_new(
+        span_copy(span), self->positive,
+        hir_expand_templates_expr(ctx, self->cond),
+        hir_expand_templates_stmt(ctx, self->stmt));
+  }
+  case HIR_STMT_BREAK: {
+    return (hir_stmt_base *)hir_stmt_break_new(span_copy(span));
+  }
+  case HIR_STMT_EXPR: {
+    const hir_stmt_expr *self = (hir_stmt_expr *)stmt_t;
+    return (hir_stmt_base *)hir_stmt_expr_new(
+        span_copy(span), hir_expand_templates_expr(ctx, self->expr));
+  }
   case HIR_STMT_UNKNOWN:
     break;
   }

@@ -221,7 +221,7 @@ int hir_type_cmp_list(const list_hir_type *lsv, const list_hir_type *rsv) {
                         rit = list_hir_type_begin(rsv);
        !END(lit) && !END(rit); NEXT(lit), NEXT(rit)) {
     int cmp = hir_type_cmp(GET(lit), GET(rit));
-    if (!cmp) {
+    if (cmp) {
       return cmp;
     }
   }

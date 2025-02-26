@@ -285,6 +285,7 @@ static void hir_tree_str_expr(strbuf *buffer, size_t pad,
                               const hir_expr_base *expr) {
   if (!expr) {
     strbuf_append(buffer, "(nil)");
+    return;
   }
   switch (expr->kind) {
   case HIR_EXPR_UNARY:

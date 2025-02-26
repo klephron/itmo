@@ -52,9 +52,10 @@ hir_subroutine_body *hir_build_func_body_import(hir_ctx *ctx, hir_lit *lib,
                                                 hir_lit *entry);
 
 // CLASS
-hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
+hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *mod_t,
                              hir_method_modifier_enum modifier,
-                             hir_subroutine          *func);
+                             hir_subroutine *func, const hir_id *class_id_ref,
+                             const list_hir_id *typenames_ref);
 hir_class  *hir_build_class(hir_ctx *ctx, ANTLR3_BASE_TREE *root, hir_id *id,
                             list_hir_id *typenames, list_hir_type *parents,
                             list_hir_var *fields, list_hir_method *methods);

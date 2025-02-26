@@ -1,6 +1,7 @@
 class A
 var
 begin
+  public method two(): int;
 end;
 
 

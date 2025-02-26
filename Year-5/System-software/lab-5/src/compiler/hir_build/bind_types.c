@@ -34,7 +34,20 @@ static inline int container_cmp_hir_scope_entry(const void *lsv,
                                                 const void *rsv) {
   const hir_scope_entry *l = lsv;
   const hir_scope_entry *r = rsv;
-  return hir_type_cmp(l->type_hir, r->type_hir);
+  int                    c = hir_type_cmp(l->type_hir, r->type_hir);
+
+  // char *t1 = hir_type_str(l->type_hir);
+  // char *t2 = hir_type_str(r->type_hir);
+
+  // debug("comparing %s %s = %d", t1, t2, c);
+  // if (t1) {
+  //   free(t1);
+  // }
+  // if (t2) {
+  //   free(t2);
+  // }
+
+  return c;
 }
 static inline uint64_t container_hash_hir_scope_entry(const void *lsv) {
   const hir_scope_entry *l = lsv;
@@ -87,6 +100,22 @@ hir_ctx_table_emplace(hir_ctx *ctx, type_base *type_base, span *span) {
 static hir_scope_entry *hir_ctx_scopes_find(const hir_ctx       *ctx,
                                             const hir_type_base *hir_type,
                                             hir_scope          **scope_out) {
+  // debug("current scopes: ");
+  // for (list_hir_scope_it it = list_hir_scope_begin(ctx->scopes); !END(it);
+  //      NEXT(it)) {
+  //   for (hir_scope_it sit = hir_scope_begin(GET(it)); !END(sit); NEXT(sit)) {
+  //     hir_scope_entry *entry = GET(sit);
+
+  //     char *hir_type_s = hir_type_str(entry->type_hir);
+  //     char *type_s = type_str(entry->type_ref->type);
+
+  //     debug("  %s -> %s", hir_type_s, type_s);
+  //     free(hir_type_s);
+  //     free(type_s);
+  //   }
+  // }
+  // debug("----------");
+
   for (list_hir_scope_it it = list_hir_scope_begin(ctx->scopes); !END(it);
        NEXT(it)) {
     hir_scope   *scope = GET(it);
@@ -111,6 +140,7 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
   }
 
   hir_scope_entry *entry = hir_ctx_scopes_find(ctx, base, NULL);
+
   if (entry) {
     return entry;
   }
@@ -729,14 +759,20 @@ static void hir_bind_class_fields(hir_ctx *ctx, hir_class *hir_class,
 
 static void hir_bind_class_methods(hir_ctx *ctx, hir_class *hir_class,
                                    type_class *class) {
+  UNUSED(class);
+
   for (list_hir_method_it it = list_hir_method_begin(hir_class->methods);
        !END(it); NEXT(it)) {
     hir_method *method = GET(it);
 
-    // this is first param during hir construction
+    // init first param as mono of current class
     hir_param *first = list_hir_param_front(method->subroutine->params);
+
+    type_entry *first_type =
+        hir_ctx_scopes_resolve(ctx, first->type_hir)->type_ref;
+
     hir_type_free(first->type_hir);
-    first->type_ref = class->base.type_entry_ref;
+    first->type_ref = first_type;
     first->state |= HIR_STATE_BIND_TYPE;
 
     hir_bind_subroutine(ctx, method->subroutine);

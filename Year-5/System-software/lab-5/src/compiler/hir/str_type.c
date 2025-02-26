@@ -7,7 +7,7 @@ static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic);
 
 static void strbuf_append_type_list(strbuf *buffer, const list_hir_type *list,
                                     const char *prefix, const char *suffix) {
-  if (list && list_hir_type_size(list)) {
+  if (list) {
     strbuf_append(buffer, prefix);
     list_hir_type_it it = list_hir_type_begin(list);
     if (!END(it)) {

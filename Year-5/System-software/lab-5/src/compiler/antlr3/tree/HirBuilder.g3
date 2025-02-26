@@ -146,7 +146,7 @@ class_def returns [hir_class *v]
       typenames=class_typename_list
       parents=class_parent_list
       ^(VARS (var_entry { hir_build_var_list_extend(ANTLR3_USERP(), vars, $var_entry.v); })*)
-      methods=class_method_list
+      methods=class_method_list[$id.v, $typenames.v]
     ) {
       $v = hir_build_class(ANTLR3_USERP(), $CLASS, $id.v, $typenames.v, $parents.v, vars, $methods.v);
     }
@@ -170,16 +170,16 @@ class_parent_list returns [list_hir_type *v]
     }
   ;
 
-class_method_list returns [list_hir_method *v]
+class_method_list [const hir_id *id_ref, const list_hir_id *typenames] returns [list_hir_method *v]
   @init {
     list_hir_method *methods = list_hir_method_new();
   }
-  : ^(METHODS (class_method { list_hir_method_push_back(methods, $class_method.v); })* ) {
+  : ^(METHODS (class_method[id_ref, typenames] { list_hir_method_push_back(methods, $class_method.v); })* ) {
       $v = methods;
     }
   ;
 
-class_method returns [hir_method *v]
+class_method [const hir_id *id_ref, const list_hir_id *typenames] returns [hir_method *v]
   @init {
     hir_method_modifier_enum mod = HIR_METHOD_MODIFIER_ENUM_ABSCENT;
     ANTLR3_BASE_TREE *mod_t = NULL;
@@ -191,7 +191,7 @@ class_method returns [hir_method *v]
         | (mt='private' { mod_t = $mt; mod = HIR_METHOD_MODIFIER_ENUM_PRIVATE; }))
       ))?
     ) {
-      $v = hir_build_method(ANTLR3_USERP(), mod_t, mod, $func_def.v);
+      $v = hir_build_method(ANTLR3_USERP(), mod_t, mod, $func_def.v, id_ref, typenames);
     }
   ;
 

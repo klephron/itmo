@@ -8,9 +8,9 @@ static type_mono_enum type_calc_mono_list(list_type_ref *list) {
     return TYPE_MONO_UNSET;
   }
   for (list_type_ref_it it = list_type_ref_begin(list); !END(it); NEXT(it)) {
-    type_mono_enum spec = type_calc_mono(GET(it));
-    if (spec == TYPE_MONO_UNSET || spec == TYPE_MONO_NOT_FULL) {
-      return spec;
+    type_mono_enum mono = type_calc_mono(GET(it));
+    if (mono == TYPE_MONO_UNSET || mono == TYPE_MONO_NOT_FULL) {
+      return mono;
     }
   }
   return TYPE_MONO_FULL;
@@ -33,9 +33,9 @@ type_mono_enum type_calc_mono(const type_base *generic) {
 
   case TYPE_CALLABLE: {
     const type_callable *self = (const type_callable *)generic;
-    type_mono_enum       spec = type_calc_mono(self->ret_ref);
-    if (spec == TYPE_MONO_UNSET || spec == TYPE_MONO_NOT_FULL) {
-      return spec;
+    type_mono_enum       mono = type_calc_mono(self->ret_ref);
+    if (mono == TYPE_MONO_UNSET || mono == TYPE_MONO_NOT_FULL) {
+      return mono;
     }
     return type_calc_mono_list(self->params);
   }
