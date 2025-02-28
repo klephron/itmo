@@ -3,17 +3,12 @@
 #include <stdlib.h>
 
 #include "compiler/ast/ast.h"
-#include "compiler/codegen/x86_64/ctx.h"
-#include "compiler/codegen/x86_64/x86_64.h"
 #include "compiler/dot/ast.h"
 #include "compiler/dot/eir.h"
-#include "compiler/eir/ctx.h"
 #include "compiler/exception/exception.h"
 #include "compiler/hir/hir.h"
 #include "compiler/hir/str.h"
 #include "compiler/hir_build/hir_build.h"
-#include "compiler/mir/ctx.h"
-#include "compiler/mir/str.h"
 #include "compiler/symbol_table/str.h"
 #include "compiler/type_table/str.h"
 #include "util/container_util.h"
