@@ -66,6 +66,7 @@ typedef enum exception_subtype_mir_enum {
   EXCEPTION_MIR_UNKNOWN,
   EXCEPTION_MIR_NO_RETURN,
   EXCEPTION_MIR_UNEXPECTED_TYPE,
+  EXCEPTION_MIR_BREAK_UNHANDLED,
 } exception_subtype_mir;
 
 typedef enum enception_subtype_cg_enum {

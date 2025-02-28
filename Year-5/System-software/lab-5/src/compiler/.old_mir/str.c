@@ -1,65 +1,53 @@
-// static void string_buffer_append_padding(string_buffer *buffer, size_t size)
-// {
-//   for (size_t i = 0; i < size; ++i) {
-//     string_buffer_append(buffer, MIR_STR_SPACE);
-//   }
-// }
-
-// static void string_buffer_appendln(string_buffer *buffer, const char *data) {
-//   string_buffer_append(buffer, data);
-//   string_buffer_append(buffer, "\n");
-// }
-
-// static void mir_tree_str_type(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_type(strbuf *buffer, size_t pad,
 //                               const hir_type_base *type) {
 //   UNUSED(pad);
 //   char *s = hir_type_str(type);
 //   if (s) {
-//     string_buffer_append(buffer, s);
+//     strbuf_append(buffer, s);
 //     free(s);
 //   } else {
-//     string_buffer_append(buffer, "(nil)");
+//     strbuf_append(buffer, "(nil)");
 //   }
 // }
 
-// static void mir_tree_str_debug_line(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_debug_line(strbuf *buffer, size_t pad,
 //                                     const mir_debug_line *debug_line) {
 //   UNUSED(pad);
 //   char buf[64];
 //   if (debug_line) {
-//     string_buffer_append(buffer, debug_line->source_ref);
-//     string_buffer_append(buffer, ":");
+//     strbuf_append(buffer, debug_line->source_ref);
+//     strbuf_append(buffer, ":");
 //     snprintf(buf, STRMAXLEN(buf), "%zu", debug_line->line);
-//     string_buffer_append(buffer, buf);
+//     strbuf_append(buffer, buf);
 //   } else {
-//     string_buffer_append(buffer, "(nil)");
+//     strbuf_append(buffer, "(nil)");
 //   }
 // }
 
-// static void mir_tree_str_debug_symbol(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_debug_symbol(strbuf *buffer, size_t pad,
 //                                       const mir_debug_symbol *debug_symbol) {
 //   UNUSED(pad);
 //   if (debug_symbol) {
 //     const hir_symbol *binding = debug_symbol->binding_ref;
-//     string_buffer_append(buffer, "(name: ");
-//     string_buffer_append(buffer, binding->name);
+//     strbuf_append(buffer, "(name: ");
+//     strbuf_append(buffer, binding->name);
 //     char *type = hir_type_str(binding->type);
 //     if (type) {
-//       string_buffer_append(buffer, ", type: ");
-//       string_buffer_append(buffer, type);
+//       strbuf_append(buffer, ", type: ");
+//       strbuf_append(buffer, type);
 //       free(type);
 //     }
-//     string_buffer_append(buffer, ")");
+//     strbuf_append(buffer, ")");
 //   } else {
-//     string_buffer_append(buffer, "(nil)");
+//     strbuf_append(buffer, "(nil)");
 //   }
 // }
 
-// static void mir_tree_str_subroutine_ext(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_subroutine_ext(strbuf *buffer, size_t pad,
 //                                         const mir_subroutine_ext *sub) {
-//   string_buffer_append(buffer, "method ");
-//   string_buffer_append(buffer, sub->name);
-//   string_buffer_append(buffer, "(");
+//   strbuf_append(buffer, "method ");
+//   strbuf_append(buffer, sub->name);
+//   strbuf_append(buffer, "(");
 //   {
 //     list_type_it it = list_type_begin(sub->args);
 //     if (!END(it)) {
@@ -67,27 +55,27 @@
 //       NEXT(it);
 //     }
 //     for (; !END(it); NEXT(it)) {
-//       string_buffer_append(buffer, ", ");
+//       strbuf_append(buffer, ", ");
 //       mir_tree_str_type(buffer, pad, GET(it));
 //     }
 //   }
-//   string_buffer_append(buffer, "): ");
+//   strbuf_append(buffer, "): ");
 //   mir_tree_str_type(buffer, pad, sub->ret);
 // }
 
-// static void mir_tree_str_value(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_value(strbuf *buffer, size_t pad,
 //                                const mir_value *value) {
 //   char buf[32];
-//   string_buffer_append(buffer, "VALUE(");
+//   strbuf_append(buffer, "VALUE(");
 //   snprintf(buf, STRMAXLEN(buf), "_%zu)", value->id);
-//   string_buffer_append(buffer, buf);
+//   strbuf_append(buffer, buf);
 //   if (value->debug_symbol) {
-//     string_buffer_append(buffer, "\t#debug");
+//     strbuf_append(buffer, "\t#debug");
 //     mir_tree_str_debug_symbol(buffer, pad, value->debug_symbol);
 //   }
 // }
 
-// static void mir_tree_str_stmt(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_stmt(strbuf *buffer, size_t pad,
 //                               const mir_node_base *stmt) {
 //   char buf[32];
 
@@ -99,7 +87,7 @@
 //   case MIR_NODE_VALUE: {
 //     const mir_value *value = (mir_value *)stmt;
 //     snprintf(buf, STRMAXLEN(buf), "_%zu", value->id);
-//     string_buffer_append(buffer, buf);
+//     strbuf_append(buffer, buf);
 //   } break;
 //   case MIR_NODE_LIT: {
 //     const mir_lit *lit = (mir_lit *)stmt;
@@ -107,52 +95,52 @@
 //     char          *ts = hir_type_str(lit->lit->type);
 
 //     if (ts) {
-//       string_buffer_append(buffer, "(");
-//       string_buffer_append(buffer, ts);
-//       string_buffer_append(buffer, ")");
+//       strbuf_append(buffer, "(");
+//       strbuf_append(buffer, ts);
+//       strbuf_append(buffer, ")");
 //       free(ts);
 //     }
 //     if (vs) {
-//       string_buffer_append(buffer, vs);
+//       strbuf_append(buffer, vs);
 //       free(vs);
 //     }
 //   } break;
 //   case MIR_NODE_BUILTIN: {
 //     const mir_builtin *builtin = (mir_builtin *)stmt;
-//     string_buffer_append(buffer, mir_builtin_enum_str(builtin->kind));
+//     strbuf_append(buffer, mir_builtin_enum_str(builtin->kind));
 //     if (builtin->spec) {
-//       string_buffer_append(buffer, "<");
+//       strbuf_append(buffer, "<");
 //       char *ts = hir_type_str(builtin->spec);
 //       if (ts) {
-//         string_buffer_append(buffer, ts);
+//         strbuf_append(buffer, ts);
 //         free(ts);
 //       }
-//       string_buffer_append(buffer, ">");
+//       strbuf_append(buffer, ">");
 //     }
 
-//     string_buffer_append(buffer, "(");
+//     strbuf_append(buffer, "(");
 //     list_mir_arg_it it = list_mir_arg_begin(builtin->args);
 //     if (!END(it)) {
 //       mir_tree_str_stmt(buffer, pad, GET(it));
 //       NEXT(it);
 //     }
 //     for (; !END(it); NEXT(it)) {
-//       string_buffer_append(buffer, ", ");
+//       strbuf_append(buffer, ", ");
 //       mir_tree_str_stmt(buffer, pad, GET(it));
 //     }
-//     string_buffer_append(buffer, ")");
+//     strbuf_append(buffer, ")");
 //     if (builtin->debug_line) {
-//       string_buffer_append(buffer, "\t#debug ");
+//       strbuf_append(buffer, "\t#debug ");
 //       mir_tree_str_debug_line(buffer, pad, builtin->debug_line);
 //     }
 //   } break;
 //   case MIR_NODE_SUBROUTINE: {
 //     const mir_subroutine *sub = (mir_subroutine *)stmt;
-//     string_buffer_append(buffer, sub->name);
+//     strbuf_append(buffer, sub->name);
 //   } break;
 //   case MIR_NODE_SUBROUTINE_EXTERNAL: {
 //     const mir_subroutine_ext *sub = (mir_subroutine_ext *)stmt;
-//     string_buffer_append(buffer, sub->name);
+//     strbuf_append(buffer, sub->name);
 //   } break;
 //   case MIR_NODE_UNKNOWN:
 //   default:
@@ -160,7 +148,7 @@
 //   }
 // }
 
-// static void mir_tree_str_jmp(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_jmp(strbuf *buffer, size_t pad,
 //                              const mir_jmp *jmp) {
 //   UNUSED(pad);
 
@@ -168,24 +156,24 @@
 
 //   if (jmp) {
 //     if (jmp->value_ref || jmp->je_ref) {
-//       string_buffer_append(buffer, "JE(");
+//       strbuf_append(buffer, "JE(");
 
 //       if (jmp->value_ref) {
 //         snprintf(buf, STRMAXLEN(buf), "_%zu, ", jmp->value_ref->id);
 //       } else {
 //         snprintf(buf, STRMAXLEN(buf), "(nil), ");
 //       }
-//       string_buffer_append(buffer, buf);
+//       strbuf_append(buffer, buf);
 
 //       if (jmp->je_ref) {
 //         snprintf(buf, STRMAXLEN(buf), "bb%zu, ", jmp->je_ref->id);
 //       } else {
 //         snprintf(buf, STRMAXLEN(buf), "(nil), ");
 //       }
-//       string_buffer_append(buffer, buf);
+//       strbuf_append(buffer, buf);
 
 //     } else {
-//       string_buffer_append(buffer, "JMP(");
+//       strbuf_append(buffer, "JMP(");
 //     }
 
 //     if (jmp->jz_ref) {
@@ -193,46 +181,46 @@
 //     } else {
 //       snprintf(buf, STRMAXLEN(buf), "(nil)");
 //     }
-//     string_buffer_append(buffer, buf);
-//     string_buffer_append(buffer, ")");
+//     strbuf_append(buffer, buf);
+//     strbuf_append(buffer, ")");
 
 //     if (jmp->debug_line) {
-//       string_buffer_append(buffer, "\t#debug ");
+//       strbuf_append(buffer, "\t#debug ");
 //       mir_tree_str_debug_line(buffer, pad, jmp->debug_line);
 //     }
 //   } else {
-//     string_buffer_append(buffer, "return");
+//     strbuf_append(buffer, "return");
 //   }
 // }
 
-// static void mir_tree_str_bb(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_bb(strbuf *buffer, size_t pad,
 //                             const mir_bb *bb) {
 //   char buf[32];
 //   snprintf(buf, STRMAXLEN(buf), "bb%zu {", bb->id);
-//   string_buffer_appendln(buffer, buf);
+//   strbuf_appendln(buffer, buf);
 //   pad += MIR_STR_TAB;
 
 //   for (list_mir_node_it it = list_mir_node_begin(bb->stmts); !END(it);
 //        NEXT(it)) {
-//     string_buffer_append_padding(buffer, pad);
+//     strbuf_append_padding(buffer, pad);
 //     mir_tree_str_stmt(buffer, pad, GET(it));
-//     string_buffer_appendln(buffer, "");
+//     strbuf_appendln(buffer, "");
 //   }
 
-//   string_buffer_append_padding(buffer, pad);
+//   strbuf_append_padding(buffer, pad);
 //   mir_tree_str_jmp(buffer, pad, bb->jmp);
-//   string_buffer_appendln(buffer, "");
+//   strbuf_appendln(buffer, "");
 
 //   pad -= MIR_STR_TAB;
-//   string_buffer_append_padding(buffer, pad);
-//   string_buffer_append(buffer, "}");
+//   strbuf_append_padding(buffer, pad);
+//   strbuf_append(buffer, "}");
 // }
 
-// static void mir_tree_str_subroutine(string_buffer *buffer, size_t pad,
+// static void mir_tree_str_subroutine(strbuf *buffer, size_t pad,
 //                                     const mir_subroutine *sub) {
-//   string_buffer_append(buffer, "method ");
-//   string_buffer_append(buffer, sub->name);
-//   string_buffer_append(buffer, "(");
+//   strbuf_append(buffer, "method ");
+//   strbuf_append(buffer, sub->name);
+//   strbuf_append(buffer, "(");
 //   {
 //     list_mir_value_it it = list_mir_value_begin(sub->args);
 //     if (!END(it)) {
@@ -241,86 +229,82 @@
 //       NEXT(it);
 //     }
 //     for (; !END(it); NEXT(it)) {
-//       string_buffer_append(buffer, ", ");
+//       strbuf_append(buffer, ", ");
 //       mir_tree_str_type(buffer, pad,
 //                         GET(it)->debug_symbol->binding_ref->type);
 //     }
 //   }
-//   string_buffer_append(buffer, "): ");
-//   string_buffer_appendln(buffer, " {");
+//   strbuf_append(buffer, "): ");
+//   strbuf_appendln(buffer, " {");
 //   pad += MIR_STR_TAB;
 
-//   string_buffer_append_padding(buffer, pad);
+//   strbuf_append_padding(buffer, pad);
 //   mir_tree_str_value(buffer, pad, sub->ret);
-//   string_buffer_appendln(buffer, "\t// ret");
+//   strbuf_appendln(buffer, "\t// ret");
 
 //   for (list_mir_value_it it = list_mir_value_begin(sub->args); !END(it);
 //        NEXT(it)) {
-//     string_buffer_append_padding(buffer, pad);
+//     strbuf_append_padding(buffer, pad);
 //     mir_tree_str_value(buffer, pad, GET(it));
-//     string_buffer_appendln(buffer, "\t// arg");
+//     strbuf_appendln(buffer, "\t// arg");
 //   }
 
 //   for (list_mir_value_it it = list_mir_value_begin(sub->vars); !END(it);
 //        NEXT(it)) {
-//     string_buffer_append_padding(buffer, pad);
+//     strbuf_append_padding(buffer, pad);
 //     mir_tree_str_value(buffer, pad, GET(it));
-//     string_buffer_appendln(buffer, "\t// var");
+//     strbuf_appendln(buffer, "\t// var");
 //   }
 
 //   for (list_mir_value_it it = list_mir_value_begin(sub->tmps); !END(it);
 //        NEXT(it)) {
-//     string_buffer_append_padding(buffer, pad);
+//     strbuf_append_padding(buffer, pad);
 //     mir_tree_str_value(buffer, pad, GET(it));
-//     string_buffer_appendln(buffer, "\t// tmp");
+//     strbuf_appendln(buffer, "\t// tmp");
 //   }
 
 //   for (list_mir_bb_it it = list_mir_bb_begin(sub->bbs); !END(it);
 //        NEXT(it)) {
-//     string_buffer_append_padding(buffer, pad);
+//     strbuf_append_padding(buffer, pad);
 //     mir_tree_str_bb(buffer, pad, GET(it));
-//     string_buffer_appendln(buffer, "");
+//     strbuf_appendln(buffer, "");
 //   }
 
 //   pad -= MIR_STR_TAB;
-//   string_buffer_append_padding(buffer, pad);
-//   string_buffer_append(buffer, "}");
+//   strbuf_append_padding(buffer, pad);
+//   strbuf_append(buffer, "}");
 // }
 
 // char *mir_tree_str(const mir *mir) {
-//   string_buffer *buffer = string_buffer_new(0, 0);
-//   string_buffer_appendln(buffer, "{");
+//   strbuf *buffer = strbuf_new(0, 0);
+//   strbuf_appendln(buffer, "{");
 //   size_t pad = MIR_STR_TAB;
 
-//   string_buffer_append_padding(buffer, pad);
-//   string_buffer_appendln(buffer, "EXTERNAL SUBROUTINES: [");
+//   strbuf_append_padding(buffer, pad);
+//   strbuf_appendln(buffer, "EXTERNAL SUBROUTINES: [");
 //   pad += MIR_STR_TAB;
 //   for (list_mir_subroutine_ext_it it =
 //            list_mir_subroutine_ext_begin(mir->sub_exts);
 //        !END(it); NEXT(it)) {
-//     string_buffer_append_padding(buffer, pad);
+//     strbuf_append_padding(buffer, pad);
 //     mir_tree_str_subroutine_ext(buffer, pad, GET(it));
-//     string_buffer_appendln(buffer, "");
+//     strbuf_appendln(buffer, "");
 //   }
 //   pad -= MIR_STR_TAB;
-//   string_buffer_append_padding(buffer, MIR_STR_TAB);
-//   string_buffer_appendln(buffer, "]");
+//   strbuf_append_padding(buffer, MIR_STR_TAB);
+//   strbuf_appendln(buffer, "]");
 
-//   string_buffer_append_padding(buffer, pad);
-//   string_buffer_appendln(buffer, "SUBROUTINES: [");
+//   strbuf_append_padding(buffer, pad);
+//   strbuf_appendln(buffer, "SUBROUTINES: [");
 //   pad += MIR_STR_TAB;
 //   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->subs);
 //        !END(it); NEXT(it)) {
-//     string_buffer_append_padding(buffer, pad);
+//     strbuf_append_padding(buffer, pad);
 //     mir_tree_str_subroutine(buffer, pad, GET(it));
-//     string_buffer_appendln(buffer, "");
+//     strbuf_appendln(buffer, "");
 //   }
 //   pad -= MIR_STR_TAB;
-//   string_buffer_append_padding(buffer, MIR_STR_TAB);
-//   string_buffer_appendln(buffer, "]");
-
-//   string_buffer_append(buffer, "}");
-//   return string_buffer_detach(buffer);
+//   return strbuf_detach(buffer);
 // }
 
 // const char *mir_node_enum_str(mir_node_enum kind) {

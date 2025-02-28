@@ -63,7 +63,7 @@ exception *exception_new_v(exception_level level, exception_type type,
                            const char *format, va_list args) {
   char message[256]; // message size
   message[0] = '\0';
-  vsnprintf(message, 255, format, args);
+  vsnprintf(message, STRMAXLEN(message), format, args);
   return exception_new(level, type, subtype, stream, line, offset, name,
                        message);
 }
@@ -253,6 +253,8 @@ const char *exception_subtype_mir_str(exception_subtype_mir type) {
     return "no return";
   case EXCEPTION_MIR_UNEXPECTED_TYPE:
     return "unexpected type";
+  case EXCEPTION_MIR_BREAK_UNHANDLED:
+    return "break unhandled";
   case EXCEPTION_MIR_UNKNOWN:
     break;
   }

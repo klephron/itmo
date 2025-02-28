@@ -1,8 +1,3 @@
-class A<U>
-var
-begin
-end;
-
 method ext_malloc(f: long): long;
 method ext_free(f: long): void;
 method ext_read_string(): string;
@@ -10,14 +5,16 @@ method ext_read_string(): string;
 method inc_one(): int from "read" in "example";
 method inc_two(): int from "example";
 
-method main(): int
+method main(a, b): int
 var
-  a: array [] of int;
+  c: array [] of int;
 begin
-  a.b();
+  main();
+  main2(a, b);
 end;
 
-method main2(): void
+method main2(a: int, b: array [,] of string): void
 var
 begin
+  main();
 end;

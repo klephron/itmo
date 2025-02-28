@@ -105,6 +105,14 @@ mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
   return self;
 }
 
+mir_stmt *mir_stmt_new_assign(mir_value *to, mir_value *from) {
+  mir_stmt *self = MALLOC(mir_stmt);
+  self->kind = MIR_STMT_ASSIGN;
+  self->assign.to = to;
+  self->assign.from = from;
+  return self;
+}
+
 void mir_stmt_free(mir_stmt *self) {
   if (self) {
     switch (self->kind) {
@@ -118,6 +126,8 @@ void mir_stmt_free(mir_stmt *self) {
       break;
     case MIR_STMT_BUILTIN:
       list_mir_value_ref_free(self->builtin.args);
+      break;
+    case MIR_STMT_ASSIGN:
       break;
     case MIR_STMT_UNKNOWN:
     default:
@@ -145,6 +155,7 @@ void mir_bb_free(mir_bb *self) {
   if (self) {
     list_mir_stmt_free(self->stmts);
     list_hir_expr_ref_free(self->hir_exprs);
+    free(self);
   }
 }
 
@@ -152,7 +163,7 @@ mir_bb_enum mir_bb_get_cond(const mir_bb *self) {
   if (!self) {
     return MIR_BB_UNKNOWN;
   }
-  if (self->jmp.cond_ref) {
+  if (self->jmp.je_ref) {
     return MIR_BB_COND;
   }
   if (self->jmp.next_ref) {

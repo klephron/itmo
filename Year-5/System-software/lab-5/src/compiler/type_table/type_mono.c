@@ -18,7 +18,7 @@ static type_mono_enum type_calc_mono_list(list_type_ref *list) {
 
 type_mono_enum type_calc_mono(const type_base *generic) {
   if (!generic) {
-    return TYPE_MONO_UNSET;
+    return TYPE_MONO_FULL;
   }
 
   switch (generic->kind) {
@@ -90,7 +90,7 @@ type_mono_enum type_calc_mono(const type_base *generic) {
 
 type_mono_enum type_get_mono(const type_base *generic) {
   if (!generic) {
-    return TYPE_MONO_UNSET;
+    return TYPE_MONO_FULL;
   }
   switch (generic->kind) {
   case TYPE_PRIMITIVE:
@@ -142,7 +142,7 @@ void type_set_mono(type_base *generic, type_mono_enum mono) {
 
 type_mono_enum type_fetch_mono(type_base *generic) {
   if (!generic) {
-    return TYPE_MONO_UNSET;
+    return TYPE_MONO_FULL;
   }
   type_mono_enum mono;
   if ((mono = type_get_mono(generic)) == TYPE_MONO_UNSET) {

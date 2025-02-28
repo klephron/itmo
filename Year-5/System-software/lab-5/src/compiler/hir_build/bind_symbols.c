@@ -275,27 +275,8 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
   error("unexpected stmt kind %d %p", base->kind, base);
 }
 
-static void hir_bind_subroutine_body(hir_ctx             *ctx,
-                                     hir_subroutine_body *hir_body) {
-  if (!hir_body) {
-    return;
-  }
-
-  switch (hir_body->kind) {
-  case HIR_SUBROUTINE_BODY_IMPORT:
-    return;
-  case HIR_SUBROUTINE_BODY_BLOCK:
-    hir_bind_subroutine_vars(ctx, hir_body->body.block.vars);
-    hir_bind_subroutine_body_stmt(ctx,
-                                  (hir_stmt_base *)hir_body->body.block.block);
-    return;
-  case HIR_SUBROUTINE_BODY_UNKNOWN:
-    break;
-  }
-  error("unexpected body kind %d %p", hir_body->kind, hir_body);
-}
-
-static void hir_bind_subroutine(hir_ctx *ctx, hir_subroutine *hir_subroutine) {
+static void hir_bind_subroutine_signature(hir_ctx        *ctx,
+                                          hir_subroutine *hir_subroutine) {
   symbol_entry *found;
   int           is_bind_symbol = hir_subroutine->state & HIR_STATE_BIND_SYMBOL;
   int           is_bind_type = hir_subroutine->state & HIR_STATE_BIND_TYPE;
@@ -331,9 +312,46 @@ static void hir_bind_subroutine(hir_ctx *ctx, hir_subroutine *hir_subroutine) {
     hir_bind_param(ctx, GET(it));
   }
 
-  hir_bind_subroutine_body(ctx, hir_subroutine->body);
-
   hir_ctx_scopes_pop(ctx);
+}
+
+static void hir_bind_subroutine_body(hir_ctx        *ctx,
+                                     hir_subroutine *hir_subroutine) {
+  hir_subroutine_body *hir_body = hir_subroutine->body;
+
+  if (!hir_body) {
+    return;
+  }
+
+  switch (hir_body->kind) {
+  case HIR_SUBROUTINE_BODY_IMPORT:
+    return;
+  case HIR_SUBROUTINE_BODY_BLOCK:
+    hir_ctx_scopes_push(ctx);
+
+    // add params again to scope
+    for (list_hir_param_it it = list_hir_param_begin(hir_subroutine->params);
+         !END(it); NEXT(it)) {
+      hir_param *param = GET(it);
+
+      if (!(param->state & HIR_STATE_BIND_SYMBOL)) {
+        error("when binding body params should already be binded");
+        continue;
+      }
+
+      hir_ctx_scopes_insert(ctx, param->id_ref);
+    }
+
+    hir_bind_subroutine_vars(ctx, hir_body->body.block.vars);
+    hir_bind_subroutine_body_stmt(ctx,
+                                  (hir_stmt_base *)hir_body->body.block.block);
+
+    hir_ctx_scopes_pop(ctx);
+    return;
+  case HIR_SUBROUTINE_BODY_UNKNOWN:
+    break;
+  }
+  error("unexpected body kind %d %p", hir_body->kind, hir_body);
 }
 
 static void hir_bind_class(hir_ctx *ctx, hir_class *hir_class) {
@@ -354,7 +372,13 @@ static void hir_bind_class(hir_ctx *ctx, hir_class *hir_class) {
     method->subroutine->base.span = method->base.span;
     method->base.span = NULL;
 
-    hir_bind_subroutine(ctx, method->subroutine);
+    hir_bind_subroutine_signature(ctx, method->subroutine);
+  }
+
+  for (list_hir_method_it it = list_hir_method_begin(hir_class->methods);
+       !END(it); NEXT(it)) {
+    hir_method *method = GET(it);
+    hir_bind_subroutine_body(ctx, method->subroutine);
   }
 
   hir_ctx_scopes_pop(ctx);
@@ -372,16 +396,22 @@ hir_bind_symbols_result hir_bind_symbols(hir *hir) {
   // push global scope
   hir_ctx_scopes_push(&ctx);
 
-  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
-       NEXT(it)) {
-    hir_class *class = GET(it);
-    hir_bind_class(&ctx, class);
+  for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
+       !END(it); NEXT(it)) {
+    hir_subroutine *sub = GET(it);
+    hir_bind_subroutine_signature(&ctx, sub);
   }
 
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
        !END(it); NEXT(it)) {
     hir_subroutine *sub = GET(it);
-    hir_bind_subroutine(&ctx, sub);
+    hir_bind_subroutine_body(&ctx, sub);
+  }
+
+  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
+       NEXT(it)) {
+    hir_class *class = GET(it);
+    hir_bind_class(&ctx, class);
   }
 
   hir_ctx_scopes_pop(&ctx);

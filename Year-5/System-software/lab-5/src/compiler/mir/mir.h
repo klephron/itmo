@@ -2,6 +2,7 @@
 
 #include "compiler/hir/node_expr.h"
 #include "compiler/symbol_table/symbol_table.h"
+#include "util/log.h"
 
 typedef struct mir_subroutine_struct     mir_subroutine;
 typedef struct mir_subroutine_ext_struct mir_subroutine_ext;
@@ -59,6 +60,7 @@ typedef enum mir_stmt_enum {
   MIR_STMT_CALL,
   MIR_STMT_MEMBER,
   MIR_STMT_BUILTIN,
+  MIR_STMT_ASSIGN,
 } mir_stmt_enum;
 
 typedef enum mir_stmt_op_enum {
@@ -123,6 +125,10 @@ typedef struct mir_stmt_struct {
       type_entry           *type; // template
       list_mir_value_ref   *args;
     } builtin;
+    struct {
+      mir_value *to;
+      mir_value *from;
+    } assign;
   };
 } mir_stmt;
 
@@ -133,6 +139,7 @@ mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
 mir_stmt *mir_stmt_new_member(mir_value *ret, mir_value *obj, mir_lit *member);
 mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
                                type_entry *type, list_mir_value_ref *args);
+mir_stmt *mir_stmt_new_assign(mir_value *to, mir_value *from);
 
 void mir_stmt_free(mir_stmt *self);
 
@@ -157,7 +164,7 @@ struct mir_bb_struct {
   struct { // terminator
     mir_value *cond_ref;
     mir_bb    *je_ref;
-    union {
+    union { // means the same
       mir_bb *jz_ref;
       mir_bb *next_ref;
     };

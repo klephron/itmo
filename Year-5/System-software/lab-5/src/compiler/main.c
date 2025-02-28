@@ -351,7 +351,7 @@ static int execute(args *args) {
   // stage: print hir tree
   if (execute_ok(args) && args->hir_tree) {
     char *tree = hir_tree_str(hir);
-    printf("HIR TREE:\n%s\n", tree);
+    fprintf(stdout, "HIR TREE:\n%s\n", tree);
     if (tree) {
       free(tree);
     }
@@ -360,7 +360,7 @@ static int execute(args *args) {
   // stage: print type table
   if (execute_ok(args) && args->type_table) {
     char *table = type_table_str(type_table);
-    printf("%s", table);
+    fprintf(stdout, "%s", table);
     if (table) {
       free(table);
     }
@@ -369,7 +369,7 @@ static int execute(args *args) {
   // stage: print symbol table
   if (execute_ok(args) && args->symbol_table) {
     char *table = symbol_table_str(symbol_table);
-    printf("%s", table);
+    fprintf(stdout, "%s", table);
     if (table) {
       free(table);
     }
@@ -393,7 +393,7 @@ static int execute(args *args) {
   // stage: print mir
   if (execute_ok(args) && args->mir) {
     char *mir_s = mir_str(mir);
-    printf("MIR:\n%s\n", mir_s);
+    fprintf(stderr, "MIR:\n%s\n", mir_s);
     if (mir_s) {
       free(mir_s);
     }

@@ -1,7 +1,9 @@
 #include "util/strbuf.h"
 #include "util/log.h"
 #include "util/macro.h"
+#include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,6 +55,14 @@ void strbuf_append(strbuf *self, const char *data) {
 
   memcpy(self->cur, data, data_size + 1); // copy with null terminator
   self->cur += (data_size / sizeof(char));
+}
+
+void strbuf_append_f(strbuf *self, char *buf, const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  vsprintf(buf, format, args);
+  va_end(args);
+  strbuf_append(self, buf);
 }
 
 char *strbuf_data(strbuf *self) { return self->data; }
