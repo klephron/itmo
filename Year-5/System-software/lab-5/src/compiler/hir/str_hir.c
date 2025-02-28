@@ -64,8 +64,8 @@ const char *hir_expr_binary_enum_str(hir_expr_binary_enum type) {
     return "MUL";
   case HIR_EXPR_BINARY_DIV:
     return "DIV";
-  case HIR_EXPR_BINARY_MOD:
-    return "MOD";
+  case HIR_EXPR_BINARY_REM:
+    return "REM";
   case HIR_EXPR_BINARY_MEMBER:
     return "MEMBER";
   case HIR_EXPR_BINARY_UNKNOWN:

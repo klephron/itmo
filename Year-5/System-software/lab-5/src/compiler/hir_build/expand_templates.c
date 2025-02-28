@@ -359,7 +359,7 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
     case TYPE_PRIMITIVE:
       return type;
     case TYPE_ARRAY: {
-      type_array *self = (type_array *)type;
+      type_array *self = (typeof(self))type;
 
       type_base *new_element_ref = hir_expand_type(ctx, self->element_ref);
       if (new_element_ref != self->element_ref) {
@@ -374,7 +374,7 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
       return type;
     }
     case TYPE_CALLABLE: {
-      type_callable *self = (type_callable *)type;
+      type_callable *self = (typeof(self))type;
 
       type_base *new_ret_ref = hir_expand_type(ctx, self->ret_ref);
       if (new_ret_ref != self->ret_ref) {
@@ -401,7 +401,7 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
       return type;
     }
     case TYPE_CLASS: {
-      type_class *self = (type_class *)type;
+      type_class *self = (typeof(self))type;
 
       list_type_ref *new_parents = list_type_ref_new();
       for (list_type_ref_it it = list_type_ref_begin(self->parents); !END(it);
@@ -438,10 +438,10 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
       // typename resolution will be performed
       // adds new template for further instantiation
     case TYPE_MONO: {
-      type_mono *mono = (type_mono *)type;
+      type_mono *self = (typeof(self))type;
 
       list_type_ref *new_types = list_type_ref_new();
-      for (list_type_ref_it it = list_type_ref_begin(mono->types); !END(it);
+      for (list_type_ref_it it = list_type_ref_begin(self->types); !END(it);
            NEXT(it)) {
         type_base *type = GET(it);
         type_base *new_type = hir_expand_type(ctx, type);
@@ -452,7 +452,7 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
       }
 
       if (type_changed) {
-        type_mono *new_self = type_mono_new(mono->type_ref, new_types);
+        type_mono *new_self = type_mono_new(self->type_ref, new_types);
         type = hir_ctx_type_register(ctx, (type_base *)new_self,
                                      type->type_entry_ref->span);
         // add template for further instantiation
@@ -510,30 +510,30 @@ static hir_expr_base *hir_expand_templates_expr(hir_ctx             *ctx,
 
   switch (expr_t->kind) {
   case HIR_EXPR_UNARY: {
-    const hir_expr_unary *self = (hir_expr_unary *)expr_t;
+    const hir_expr_unary *self = (typeof(self))expr_t;
     return (hir_expr_base *)hir_expr_unary_new_typed(
         span_copy(span), new_type_ref, self->op,
         hir_expand_templates_expr(ctx, self->first));
   }
   case HIR_EXPR_BINARY: {
-    const hir_expr_binary *self = (hir_expr_binary *)expr_t;
+    const hir_expr_binary *self = (typeof(self))expr_t;
     return (hir_expr_base *)hir_expr_binary_new_typed(
         span_copy(span), new_type_ref, self->op,
         hir_expand_templates_expr(ctx, self->first),
         hir_expand_templates_expr(ctx, self->second));
   }
   case HIR_EXPR_LITERAL: {
-    const hir_expr_lit *self = (hir_expr_lit *)expr_t;
+    const hir_expr_lit *self = (typeof(self))expr_t;
     return (hir_expr_base *)hir_expr_lit_new_typed(
         span_copy(span), new_type_ref, hir_lit_copy(self->lit));
   }
   case HIR_EXPR_IDENTIFIER: {
-    const hir_expr_id *self = (hir_expr_id *)expr_t;
+    const hir_expr_id *self = (typeof(self))expr_t;
     return (hir_expr_base *)hir_expr_id_new_typed(span_copy(span), new_type_ref,
                                                   hir_id_copy(self->id_hir));
   }
   case HIR_EXPR_CALL: {
-    const hir_expr_call *self = (hir_expr_call *)expr_t;
+    const hir_expr_call *self = (typeof(self))expr_t;
     list_hir_expr       *args = list_hir_expr_new();
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
@@ -544,7 +544,7 @@ static hir_expr_base *hir_expand_templates_expr(hir_ctx             *ctx,
         hir_expand_templates_expr(ctx, self->callee), args);
   }
   case HIR_EXPR_INDEX: {
-    const hir_expr_index *self = (hir_expr_index *)expr_t;
+    const hir_expr_index *self = (typeof(self))expr_t;
     list_hir_expr        *args = list_hir_expr_new();
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
@@ -555,7 +555,7 @@ static hir_expr_base *hir_expand_templates_expr(hir_ctx             *ctx,
         hir_expand_templates_expr(ctx, self->indexed), args);
   }
   case HIR_EXPR_BUILTIN: {
-    const hir_expr_builtin *self = (hir_expr_builtin *)expr_t;
+    const hir_expr_builtin *self = (typeof(self))expr_t;
     list_hir_expr          *args = list_hir_expr_new();
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
@@ -581,14 +581,14 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
 
   switch (stmt_t->kind) {
   case HIR_STMT_IF: {
-    const hir_stmt_if *self = (hir_stmt_if *)stmt_t;
+    const hir_stmt_if *self = (typeof(self))stmt_t;
     return (hir_stmt_base *)hir_stmt_if_new(
         span_copy(span), hir_expand_templates_expr(ctx, self->cond),
         hir_expand_templates_stmt(ctx, self->je),
         hir_expand_templates_stmt(ctx, self->jz));
   }
   case HIR_STMT_BLOCK: {
-    const hir_stmt_block *self = (hir_stmt_block *)stmt_t;
+    const hir_stmt_block *self = (typeof(self))stmt_t;
     list_hir_stmt        *stmts = list_hir_stmt_new();
     for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
          NEXT(it)) {
@@ -597,13 +597,13 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
     return (hir_stmt_base *)hir_stmt_block_new(span_copy(span), stmts);
   }
   case HIR_STMT_WHILE: {
-    const hir_stmt_while *self = (hir_stmt_while *)stmt_t;
+    const hir_stmt_while *self = (typeof(self))stmt_t;
     return (hir_stmt_base *)hir_stmt_while_new(
         span_copy(span), hir_expand_templates_expr(ctx, self->cond),
         hir_expand_templates_stmt(ctx, self->stmt));
   }
   case HIR_STMT_DO: {
-    const hir_stmt_do *self = (hir_stmt_do *)stmt_t;
+    const hir_stmt_do *self = (typeof(self))stmt_t;
     return (hir_stmt_base *)hir_stmt_do_new(
         span_copy(span), self->positive,
         hir_expand_templates_expr(ctx, self->cond),
@@ -613,7 +613,7 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
     return (hir_stmt_base *)hir_stmt_break_new(span_copy(span));
   }
   case HIR_STMT_EXPR: {
-    const hir_stmt_expr *self = (hir_stmt_expr *)stmt_t;
+    const hir_stmt_expr *self = (typeof(self))stmt_t;
     return (hir_stmt_base *)hir_stmt_expr_new(
         span_copy(span), hir_expand_templates_expr(ctx, self->expr));
   }
@@ -671,7 +671,8 @@ hir_expand_templates_subroutine(hir_ctx              *ctx,
 static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
                                              type_mono *mono_type) {
 
-  const hir_class *class_t = (hir_class *)hir_get_hir_template(ctx, mono_type);
+  const hir_class *class_t =
+      (typeof(class_t))hir_get_hir_template(ctx, mono_type);
   if (!class_t) {
     return NULL;
   }
@@ -679,7 +680,7 @@ static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
   // setup templates that need to be replaced
   ctx->map_type_tmpl = hashset_hir_type_map_new();
 
-  type_class *class_t_type = (type_class *)class_t->type_ref->type;
+  type_class *class_t_type = (typeof(class_t_type))class_t->type_ref->type;
 
   for (list_type_ref_it fit = list_type_ref_begin(class_t_type->typenames),
                         tit = list_type_ref_begin(mono_type->types);

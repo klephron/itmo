@@ -56,13 +56,13 @@ static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
     strbuf_append(buffer, "void");
     return;
   case HIR_TYPE_CUSTOM: {
-    hir_type_custom *custom = (hir_type_custom *)generic;
+    hir_type_custom *custom = (typeof(custom))generic;
     strbuf_append(buffer, custom->name);
     strbuf_append_type_list(buffer, custom->templates, "<", ">");
     return;
   }
   case HIR_TYPE_ARRAY: {
-    hir_type_array *array = (hir_type_array *)generic;
+    hir_type_array *array = (typeof(array))generic;
     strbuf_append(buffer, "array[");
     strbuf_append_type(buffer, array->elem_type);
     strbuf_append(buffer, "]");

@@ -7,6 +7,10 @@
 #include "compiler/hir_build/lower_ast.h"
 #include "compiler/type_table/str.h"
 
+static inline int hir_ok(list_exception *exceptions, int ignore_errors) {
+  return exceptions && (list_exception_empty(exceptions) || ignore_errors);
+}
+
 hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
   hir_build_result result = {
       .hir = NULL,
@@ -15,50 +19,26 @@ hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
       .exceptions = list_exception_new(),
   };
 
-  if (result.exceptions &&
-      (list_exception_empty(result.exceptions) || ignore_errors)) {
-
+  if (hir_ok(result.exceptions, ignore_errors)) {
     hir_build_initial_result r = hir_build_initial(asts);
-
     list_exception_extend(result.exceptions, r.exceptions);
     result.hir = r.hir;
   }
 
-  if (result.exceptions &&
-      (list_exception_empty(result.exceptions) || ignore_errors)) {
-
+  if (hir_ok(result.exceptions, ignore_errors)) {
     hir_bind_types_result r = hir_bind_types(result.hir);
-
     list_exception_extend(result.exceptions, r.exceptions);
     result.type_table = r.type_table;
   }
 
-  char *hir_s = hir_tree_str(result.hir);
-  printf("%s", hir_s);
-  if (hir_s) {
-    free(hir_s);
-  }
-
-  char *table_s = type_table_str(result.type_table);
-  printf("%s", table_s);
-  if (table_s) {
-    free(table_s);
-  }
-
-  if (result.exceptions &&
-      (list_exception_empty(result.exceptions) || ignore_errors)) {
-
+  if (hir_ok(result.exceptions, ignore_errors)) {
     hir_expand_templates_result r =
         hir_expand_templates(result.hir, result.type_table);
-
     list_exception_extend(result.exceptions, r.exceptions);
   }
 
-  if (result.exceptions &&
-      (list_exception_empty(result.exceptions) || ignore_errors)) {
-
+  if (hir_ok(result.exceptions, ignore_errors)) {
     hir_bind_symbols_result r = hir_bind_symbols(result.hir);
-
     list_exception_extend(result.exceptions, r.exceptions);
     result.symbol_table = r.symbol_table;
   }

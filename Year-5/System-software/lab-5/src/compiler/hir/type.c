@@ -91,13 +91,13 @@ hir_type_base *hir_type_copy(const hir_type_base *self) {
   case HIR_TYPE_VOID:
     return hir_type_base_new(span_copy(self->span), self->type);
   case HIR_TYPE_CUSTOM: {
-    const hir_type_custom *custom = (hir_type_custom *)self;
+    const hir_type_custom *custom = (typeof(custom))self;
     return (hir_type_base *)hir_type_custom_new(
         span_copy(self->span), strdup(custom->name),
         hir_type_copy_list(custom->templates));
   }
   case HIR_TYPE_ARRAY: {
-    const hir_type_array *array = (hir_type_array *)self;
+    const hir_type_array *array = (typeof(array))self;
     return (hir_type_base *)hir_type_array_new(span_copy(self->span),
                                                hir_type_copy(array->elem_type));
   }
@@ -132,8 +132,8 @@ int hir_type_cmp(const hir_type_base *lsv, const hir_type_base *rsv) {
   case HIR_TYPE_VOID:
     return 0;
   case HIR_TYPE_CUSTOM: {
-    const hir_type_custom *l = (hir_type_custom *)lsv;
-    const hir_type_custom *r = (hir_type_custom *)rsv;
+    const hir_type_custom *l = (typeof(l))lsv;
+    const hir_type_custom *r = (typeof(r))rsv;
 
     int cmp = strcmp(l->name, r->name);
     if (cmp) {
@@ -142,8 +142,8 @@ int hir_type_cmp(const hir_type_base *lsv, const hir_type_base *rsv) {
     return hir_type_cmp_list(l->templates, r->templates);
   }
   case HIR_TYPE_ARRAY: {
-    const hir_type_array *l = (hir_type_array *)lsv;
-    const hir_type_array *r = (hir_type_array *)rsv;
+    const hir_type_array *l = (typeof(l))lsv;
+    const hir_type_array *r = (typeof(r))rsv;
     return hir_type_cmp(l->elem_type, r->elem_type);
   }
   case HIR_TYPE_UNKNOWN:
@@ -174,12 +174,12 @@ uint64_t hir_type_hash(const hir_type_base *lsv) {
   case HIR_TYPE_VOID:
     return hash;
   case HIR_TYPE_CUSTOM: {
-    const hir_type_custom *l = (const hir_type_custom *)lsv;
+    const hir_type_custom *l = (typeof(l))lsv;
     hash = hash_combine(hash, container_hash_chars(l->name));
     return hash_combine(hash, hir_type_hash_list(l->templates));
   }
   case HIR_TYPE_ARRAY: {
-    const hir_type_array *l = (const hir_type_array *)lsv;
+    const hir_type_array *l = (typeof(l))lsv;
     return hash_combine(hash, hir_type_hash(l->elem_type));
   }
   case HIR_TYPE_UNKNOWN:
@@ -195,8 +195,7 @@ list_hir_type *hir_type_copy_list(const list_hir_type *in) {
     return NULL;
   }
   list_hir_type *nlist = list_hir_type_new();
-  for (list_hir_type_it it = list_hir_type_begin((list_hir_type *)in); !END(it);
-       NEXT(it)) {
+  for (list_hir_type_it it = list_hir_type_begin(in); !END(it); NEXT(it)) {
     list_hir_type_push_back(nlist, hir_type_copy(GET(it)));
   }
   return nlist;

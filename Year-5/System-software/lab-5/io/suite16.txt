@@ -17,4 +17,5 @@ method main(): int
 var
   a: array [] of B<int>;
 begin
+  a.b();
 end;

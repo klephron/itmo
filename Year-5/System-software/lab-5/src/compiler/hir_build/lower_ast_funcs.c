@@ -4,8 +4,8 @@
 #include "compiler/hir/str.h"
 #include "compiler/hir_build/exception.h"
 #include "compiler/span/span.h"
-#include "compiler/span/str.h"
-#include "util/log.h"
+// #include "compiler/span/str.h"
+// #include "util/log.h"
 #include "util/macro.h"
 #include <antlr3basetree.h>
 #include <antlr3commontoken.h>

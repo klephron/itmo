@@ -9,6 +9,9 @@
 #include "compiler/hir/hir.h"
 #include "compiler/hir/str.h"
 #include "compiler/hir_build/hir_build.h"
+#include "compiler/mir/mir.h"
+#include "compiler/mir/str.h"
+#include "compiler/mir_build/mir_build.h"
 #include "compiler/symbol_table/str.h"
 #include "compiler/type_table/str.h"
 #include "util/container_util.h"
@@ -288,6 +291,10 @@ static void write_asm(args *args, const char *data, const char *path) {
   }
 }
 
+static int execute_ok(args *args) {
+  return (!args->code || args->ignore_errors);
+}
+
 static int execute(args *args) {
   list_ast *asts = list_ast_new();
 
@@ -312,7 +319,7 @@ static int execute(args *args) {
   }
 
   // stage: dot ast
-  if (args->ast && (!args->code || args->ignore_errors)) {
+  if (execute_ok(args) && args->ast) {
     for (list_ast_it it = list_ast_begin(asts); !END(it); NEXT(it)) {
       ast        *ast = GET(it);
       dot_string *dot = dot_ast(ast);
@@ -328,8 +335,7 @@ static int execute(args *args) {
   symbol_table *symbol_table = NULL;
   type_table   *type_table = NULL;
 
-  if (!args->code || args->ignore_errors) {
-
+  if (execute_ok(args)) {
     hir_build_result result = hir_build(asts, args->ignore_errors);
     hir = result.hir;
     symbol_table = result.symbol_table;
@@ -339,13 +345,12 @@ static int execute(args *args) {
                                       EXCEPTION_LEVEL_ERROR)) {
       args->code = 1;
     }
-
     print_exceptions(args, result.exceptions);
     list_exception_free(result.exceptions);
   }
 
   // stage: print hir tree
-  if (args->hir_tree && (!args->code || args->ignore_errors)) {
+  if (execute_ok(args) && args->hir_tree) {
     char *tree = hir_tree_str(hir);
     printf("HIR TREE:\n%s\n", tree);
     if (tree) {
@@ -354,7 +359,7 @@ static int execute(args *args) {
   }
 
   // stage: print type table
-  if (args->type_table && (!args->code || args->ignore_errors)) {
+  if (execute_ok(args) && args->type_table) {
     char *table = type_table_str(type_table);
     printf("%s", table);
     if (table) {
@@ -363,7 +368,7 @@ static int execute(args *args) {
   }
 
   // stage: print symbol table
-  if (args->symbol_table && (!args->code || args->ignore_errors)) {
+  if (execute_ok(args) && args->symbol_table) {
     char *table = symbol_table_str(symbol_table);
     printf("%s", table);
     if (table) {
@@ -371,30 +376,29 @@ static int execute(args *args) {
     }
   }
 
-  // // stage: print hir symbols
-  // if (args->hir_symbols && (!args->code || args->ignore_errors)) {
-  //   char *globals = hir_list_symbol_str(hir->globals);
-  //   printf("HIR GLOBAL SYMBOLS:\n%s", globals);
-  //   free(globals);
+  mir *mir = NULL;
 
-  //   char *locals = hir_list_symbol_str(hir->locals);
-  //   printf("HIR LOCAL SYMBOLS:\n%s", locals);
-  //   free(locals);
-  // }
+  if (execute_ok(args)) {
+    mir_build_result result =
+        mir_build(hir, symbol_table, type_table, args->ignore_errors);
+    mir = result.mir;
 
-  // eir     *eir = eir_new();
-  // eir_ctx *eir_ctx = eir_ctx_new(eir);
+    if (list_exception_count_by_level(result.exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      args->code = 1;
+    }
+    print_exceptions(args, result.exceptions);
+    list_exception_free(result.exceptions);
+  }
 
-  // // stage: build eir
-  // if (!args->code || args->ignore_errors) {
-  //   eir_ctx_build(eir_ctx, hir);
-  //   if (list_exception_count_by_level(eir_ctx->exceptions,
-  //                                     EXCEPTION_LEVEL_ERROR)) {
-  //     args->code = 1;
-  //   }
-  //   print_exceptions(args, eir_ctx->exceptions);
-  //   eir_ctx_reset_exceptions(eir_ctx);
-  // }
+  // stage: print mir
+  if (execute_ok(args) && args->mir) {
+    char *mir_s = mir_str(mir);
+    printf("MIR:\n%s\n", mir_s);
+    if (mir_s) {
+      free(mir_s);
+    }
+  }
 
   // // stage: dot cfg
   // if (args->cfg && (!args->code || args->ignore_errors)) {
@@ -432,28 +436,6 @@ static int execute(args *args) {
   //   }
   // }
 
-  // mir     *mir = mir_new();
-  // mir_ctx *mir_ctx = mir_ctx_new(mir);
-
-  // // stage: build mir
-  // if (!args->code || args->ignore_errors) {
-  //   mir_ctx_build(mir_ctx, eir);
-  //   // optimizations
-  //   mir_ctx_bb_merge(mir_ctx);
-  //   if (list_exception_count_by_level(mir_ctx->exceptions,
-  //                                     EXCEPTION_LEVEL_ERROR)) {
-  //     args->code = 1;
-  //   }
-  //   print_exceptions(args, mir_ctx->exceptions);
-  // }
-
-  // // stage: print mir tree
-  // if (args->mir && (!args->code || args->ignore_errors)) {
-  //   char *tree = mir_tree_str(mir);
-  //   printf("MIR TREE:\n%s\n", tree);
-  //   free(tree);
-  // }
-
   // cg_x86_64     *cg = cg_x86_64_new();
   // cg_x86_64_ctx *cg_ctx = cg_x86_64_ctx_new(cg);
 
@@ -481,12 +463,7 @@ static int execute(args *args) {
   // cg_x86_64_ctx_free(cg_ctx);
   // cg_x86_64_free(cg);
 
-  // mir_ctx_free(mir_ctx);
-  // mir_free(mir);
-
-  // eir_ctx_free(eir_ctx);
-  // eir_free(eir);
-
+  mir_free(mir);
   hir_free(hir);
   symbol_table_free(symbol_table);
   type_table_free(type_table);

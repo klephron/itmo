@@ -43,7 +43,7 @@ typedef enum hir_expr_binary_enum {
   HIR_EXPR_BINARY_SUB,
   HIR_EXPR_BINARY_MUL,
   HIR_EXPR_BINARY_DIV,
-  HIR_EXPR_BINARY_MOD,
+  HIR_EXPR_BINARY_REM,
   HIR_EXPR_BINARY_MEMBER,
 } hir_expr_binary_enum;
 

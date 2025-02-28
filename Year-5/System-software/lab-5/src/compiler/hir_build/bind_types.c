@@ -148,7 +148,7 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
   switch (base->type) {
   case HIR_TYPE_CUSTOM: {
     // try to mono instantiate type type
-    const hir_type_custom *self = (hir_type_custom *)base;
+    const hir_type_custom *self = (typeof(self))base;
 
     if (!self->templates || !list_hir_type_size(self->templates)) {
       return NULL;
@@ -201,7 +201,7 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
   } break;
 
   case HIR_TYPE_ARRAY: {
-    const hir_type_array *self = (hir_type_array *)base;
+    const hir_type_array *self = (typeof(self))base;
 
     hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, self->elem_type);
     if (!sub_entry) {
@@ -437,18 +437,18 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
 
   switch (base->kind) {
   case HIR_EXPR_UNARY: {
-    hir_expr_unary *self = (hir_expr_unary *)base;
+    hir_expr_unary *self = (typeof(self))base;
     hir_bind_subroutine_body_expr(ctx, self->first);
     break;
   }
   case HIR_EXPR_BINARY: {
-    hir_expr_binary *self = (hir_expr_binary *)base;
+    hir_expr_binary *self = (typeof(self))base;
     hir_bind_subroutine_body_expr(ctx, self->first);
     hir_bind_subroutine_body_expr(ctx, self->second);
     break;
   }
   case HIR_EXPR_LITERAL: {
-    hir_expr_lit *self = (hir_expr_lit *)base;
+    hir_expr_lit *self = (typeof(self))base;
     hir_lit      *lit = self->lit;
     if (!(lit->state & HIR_STATE_BIND_TYPE)) {
       if (lit->type_hir) {
@@ -474,7 +474,7 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
     break;
   }
   case HIR_EXPR_CALL: {
-    hir_expr_call *self = (hir_expr_call *)base;
+    hir_expr_call *self = (typeof(self))base;
     hir_bind_subroutine_body_expr(ctx, self->callee);
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
@@ -483,7 +483,7 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
     break;
   }
   case HIR_EXPR_INDEX: {
-    hir_expr_index *self = (hir_expr_index *)base;
+    hir_expr_index *self = (typeof(self))base;
     hir_bind_subroutine_body_expr(ctx, self->indexed);
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
@@ -492,7 +492,7 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
     break;
   }
   case HIR_EXPR_BUILTIN: {
-    hir_expr_builtin *self = (hir_expr_builtin *)base;
+    hir_expr_builtin *self = (typeof(self))base;
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
       hir_bind_subroutine_body_expr(ctx, GET(it));
@@ -530,14 +530,14 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
   }
   switch (base->kind) {
   case HIR_STMT_IF: {
-    hir_stmt_if *self = (hir_stmt_if *)base;
+    hir_stmt_if *self = (typeof(self))base;
     hir_bind_subroutine_body_expr(ctx, self->cond);
     hir_bind_subroutine_body_stmt(ctx, self->je);
     hir_bind_subroutine_body_stmt(ctx, self->jz);
     return;
   };
   case HIR_STMT_BLOCK: {
-    hir_stmt_block *self = (hir_stmt_block *)base;
+    hir_stmt_block *self = (typeof(self))base;
     for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
          NEXT(it)) {
       hir_bind_subroutine_body_stmt(ctx, GET(it));
@@ -545,13 +545,13 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
     return;
   };
   case HIR_STMT_WHILE: {
-    hir_stmt_while *self = (hir_stmt_while *)base;
+    hir_stmt_while *self = (typeof(self))base;
     hir_bind_subroutine_body_expr(ctx, self->cond);
     hir_bind_subroutine_body_stmt(ctx, self->stmt);
     return;
   };
   case HIR_STMT_DO: {
-    hir_stmt_do *self = (hir_stmt_do *)base;
+    hir_stmt_do *self = (typeof(self))base;
     hir_bind_subroutine_body_stmt(ctx, self->stmt);
     hir_bind_subroutine_body_expr(ctx, self->cond);
     return;
@@ -560,7 +560,7 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
     return;
   };
   case HIR_STMT_EXPR: {
-    hir_stmt_expr *self = (hir_stmt_expr *)base;
+    hir_stmt_expr *self = (typeof(self))base;
     hir_bind_subroutine_body_expr(ctx, self->expr);
     return;
   };
@@ -800,7 +800,7 @@ static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
   for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
        NEXT(it), NEXT(classes_it)) {
     hir_class *hir_class = GET(it);
-    type_class *class = (type_class *)GET(classes_it);
+    type_class *class = (typeof(class))GET(classes_it);
 
     if (class) {
       hir_ctx_scopes_push(ctx);
@@ -808,7 +808,7 @@ static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
       // add typenames to scope
       for (list_type_ref_it it = list_type_ref_begin(class->typenames);
            !END(it); NEXT(it)) {
-        type_typename *typename = (type_typename *)GET(it);
+        type_typename *typename = (typeof(typename))GET(it);
         hir_ctx_scopes_insert(
             ctx, hir_scope_entry_new((hir_type_base *)hir_type_custom_new(
                                          NULL, strdup(typename->id), NULL),
