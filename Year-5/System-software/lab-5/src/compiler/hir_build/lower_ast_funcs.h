@@ -6,7 +6,7 @@
 #include "compiler/hir/node_subroutine.h"
 #include <antlr3basetree.h>
 
-typedef hir_build_initial_ctx hir_ctx;
+typedef hir_lower_ast_ctx hir_ctx;
 
 // TERMINALS
 hir_lit *hir_build_str(hir_ctx *ctx, ANTLR3_BASE_TREE *node);

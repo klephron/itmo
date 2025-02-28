@@ -20,7 +20,7 @@ hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
   };
 
   if (hir_ok(result.exceptions, ignore_errors)) {
-    hir_build_initial_result r = hir_build_initial(asts);
+    hir_lower_ast_result r = hir_lower_ast(asts);
     list_exception_extend(result.exceptions, r.exceptions);
     result.hir = r.hir;
   }

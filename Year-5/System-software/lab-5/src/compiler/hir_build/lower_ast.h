@@ -4,15 +4,15 @@
 #include "compiler/exception/list.h"
 #include "compiler/hir/hir.h"
 
-typedef struct hir_build_initial_ctx_struct {
+typedef struct hir_lower_ast_ctx_struct {
   hir            *hir_ref;
   list_exception *exceptions;
   const ast      *ast_cur_ref;
-} hir_build_initial_ctx;
+} hir_lower_ast_ctx;
 
-typedef struct hir_build_initial_result_struct {
+typedef struct hir_lower_ast_result_struct {
   hir            *hir;
   list_exception *exceptions;
-} hir_build_initial_result;
+} hir_lower_ast_result;
 
-hir_build_initial_result hir_build_initial(const list_ast *asts);
+hir_lower_ast_result hir_lower_ast(const list_ast *asts);

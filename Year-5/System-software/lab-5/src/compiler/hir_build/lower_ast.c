@@ -3,12 +3,12 @@
 #include "compiler/antlr3/tree/HirBuilder.h"
 #include "util/macro.h"
 
-static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
-                                        pANTLR3_UINT8          *token) {
+static void hir_dispay_error(pANTLR3_BASE_RECOGNIZER recognizer,
+                             pANTLR3_UINT8          *token) {
   UNUSED(token);
 
-  hir_build_initial_ctx *ctx = recognizer->state->userp;
-  exception             *exc = NULL;
+  hir_lower_ast_ctx *ctx = recognizer->state->userp;
+  exception         *exc = NULL;
 
   pANTLR3_STRING    ttext;
   pANTLR3_BASE_TREE theBaseTree;
@@ -42,13 +42,13 @@ static void hir_ctx_build_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   list_exception_push_back(ctx->exceptions, exc);
 }
 
-hir_build_initial_result hir_build_initial(const list_ast *asts) {
-  hir_build_initial_result result = {
+hir_lower_ast_result hir_lower_ast(const list_ast *asts) {
+  hir_lower_ast_result result = {
       .hir = hir_new(),
       .exceptions = list_exception_new(),
   };
 
-  hir_build_initial_ctx ctx = {
+  hir_lower_ast_ctx ctx = {
       .hir_ref = result.hir,
       .exceptions = result.exceptions,
   };
@@ -62,8 +62,7 @@ hir_build_initial_result hir_build_initial(const list_ast *asts) {
     HirBuilder *builder = HirBuilderNew(nodes);
 
     builder->pTreeParser->rec->state->userp = &ctx;
-    builder->pTreeParser->rec->displayRecognitionError =
-        hir_ctx_build_display_error;
+    builder->pTreeParser->rec->displayRecognitionError = hir_dispay_error;
 
     builder->source(builder);
 
