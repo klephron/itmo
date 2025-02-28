@@ -98,7 +98,6 @@ hir_lit *hir_lit_copy(const hir_lit *self) {
 
 void hir_lit_free(hir_lit *self) {
   if (self) {
-
     if (self->state & HIR_STATE_BIND_TYPE) {
       switch (self->type_ref->type->kind) {
       case TYPE_PRIMITIVE: {

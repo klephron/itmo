@@ -165,7 +165,8 @@ mir_subroutine *mir_subroutine_new_basic(const symbol_entry *symbol_ref,
                                          const type_entry   *type_ref,
                                          mir_value *ret, list_mir_value *params,
                                          list_mir_value *vars,
-                                         list_mir_value *tmps) {
+                                         list_mir_value *tmps,
+                                         list_mir_bb    *bbs) {
   mir_subroutine *self = MALLOC(mir_subroutine);
   self->kind = MIR_SUBROUTINE_BASIC;
   self->symbol_ref = symbol_ref;
@@ -174,17 +175,16 @@ mir_subroutine *mir_subroutine_new_basic(const symbol_entry *symbol_ref,
   self->basic.params = params;
   self->basic.vars = vars;
   self->basic.tmps = tmps;
+  self->basic.bbs = bbs;
   return self;
 }
 
 mir_subroutine *mir_subroutine_new_external(const symbol_entry *symbol_ref,
-                                            const type_entry   *type_ref,
-                                            char               *name) {
+                                            const type_entry   *type_ref) {
   mir_subroutine *self = MALLOC(mir_subroutine);
   self->kind = MIR_SUBROUTINE_EXTERNAL;
   self->symbol_ref = symbol_ref;
   self->type_ref = type_ref;
-  self->external.name = name;
   return self;
 }
 
@@ -208,11 +208,9 @@ void mir_subroutine_free(mir_subroutine *self) {
       list_mir_value_free(self->basic.params);
       list_mir_value_free(self->basic.vars);
       list_mir_value_free(self->basic.tmps);
+      list_mir_bb_free(self->basic.bbs);
       break;
     case MIR_SUBROUTINE_EXTERNAL:
-      if (self->external.name) {
-        free(self->external.name);
-      }
       break;
     case MIR_SUBROUTINE_IMPORTED:
       if (self->imported.lib) {

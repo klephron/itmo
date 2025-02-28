@@ -251,6 +251,8 @@ const char *exception_subtype_mir_str(exception_subtype_mir type) {
   switch (type) {
   case EXCEPTION_MIR_NO_RETURN:
     return "no return";
+  case EXCEPTION_MIR_UNEXPECTED_TYPE:
+    return "unexpected type";
   case EXCEPTION_MIR_UNKNOWN:
     break;
   }

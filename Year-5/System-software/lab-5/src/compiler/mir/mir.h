@@ -95,7 +95,6 @@ typedef enum mir_stmt_builtin_enum {
   MIR_STMT_BUILTIN_UNKNOWN,
   MIR_STMT_BUILTIN_CAST,
   MIR_STMT_BUILTIN_MAKE,
-  MIR_STMT_BUILTIN_DROP,
   MIR_STMT_BUILTIN_PRINT,
 } mir_stmt_builtin_enum;
 
@@ -195,9 +194,9 @@ struct mir_subroutine_struct {
       list_mir_value *params;
       list_mir_value *vars;
       list_mir_value *tmps;
+      list_mir_bb    *bbs;
     } basic;
     struct {
-      char *name;
     } external;
     struct {
       char *lib;
@@ -210,10 +209,10 @@ mir_subroutine *mir_subroutine_new_basic(const symbol_entry *symbol_ref,
                                          const type_entry   *type_ref,
                                          mir_value *ret, list_mir_value *params,
                                          list_mir_value *vars,
-                                         list_mir_value *tmps);
+                                         list_mir_value *tmps,
+                                         list_mir_bb    *bbs);
 mir_subroutine *mir_subroutine_new_external(const symbol_entry *symbol_ref,
-                                            const type_entry   *type_ref,
-                                            char               *name);
+                                            const type_entry   *type_ref);
 mir_subroutine *mir_subroutine_new_imported(const symbol_entry *symbol_ref,
                                             const type_entry   *type_ref,
                                             char *lib, char *entry);

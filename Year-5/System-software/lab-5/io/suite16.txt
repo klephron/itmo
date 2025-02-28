@@ -3,19 +3,21 @@ var
 begin
 end;
 
-class C<V> : A<V>
-var
-begin
-end;
+method ext_malloc(f: long): long;
+method ext_free(f: long): void;
+method ext_read_string(): string;
 
-class B<T> : C<A<T>>
-var
-begin
-end;
+method inc_one(): int from "read" in "example";
+method inc_two(): int from "example";
 
 method main(): int
 var
-  a: array [] of B<int>;
+  a: array [] of int;
 begin
   a.b();
+end;
+
+method main2(): void
+var
+begin
 end;

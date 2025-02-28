@@ -1,11 +1,9 @@
 #include "hir_build.h"
 
-#include "compiler/hir/str.h"
 #include "compiler/hir_build/bind_symbols.h"
 #include "compiler/hir_build/bind_types.h"
 #include "compiler/hir_build/expand_templates.h"
 #include "compiler/hir_build/lower_ast.h"
-#include "compiler/type_table/str.h"
 
 static inline int hir_ok(list_exception *exceptions, int ignore_errors) {
   return exceptions && (list_exception_empty(exceptions) || ignore_errors);

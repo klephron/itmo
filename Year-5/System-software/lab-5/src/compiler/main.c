@@ -4,7 +4,6 @@
 
 #include "compiler/ast/ast.h"
 #include "compiler/dot/ast.h"
-#include "compiler/dot/eir.h"
 #include "compiler/exception/exception.h"
 #include "compiler/hir/hir.h"
 #include "compiler/hir/str.h"

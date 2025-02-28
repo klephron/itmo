@@ -349,6 +349,28 @@ static void hir_bind_builtin(hir_ctx *ctx) {
                    NULL)));
 }
 
+static void hir_bind_lit(hir_ctx *ctx, hir_lit *lit) {
+  if (!lit || (lit->state & HIR_STATE_BIND_TYPE)) {
+    return;
+  }
+
+  if (lit->type_hir) {
+    hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, lit->type_hir);
+    if (!entry) {
+      char *type_s = hir_type_str(lit->type_hir);
+
+      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, lit->base.span,
+                    "lit with type %s can't be resolved", type_s);
+
+      free(type_s);
+      return;
+    }
+    hir_type_free(lit->type_hir);
+    lit->type_ref = entry->type_ref;
+  }
+  lit->state |= HIR_STATE_BIND_TYPE;
+}
+
 static void hir_bind_subroutine_signature(hir_ctx        *ctx,
                                           hir_subroutine *subroutine) {
   hir_scope_entry *ret_entry =
@@ -406,7 +428,7 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
   subroutine->state |= HIR_STATE_BIND_TYPE;
 }
 
-static void hir_bind_subroutine_body_vars(hir_ctx *ctx, list_hir_var *vars) {
+static void hir_bind_vars(hir_ctx *ctx, list_hir_var *vars) {
   for (list_hir_var_it it = list_hir_var_begin(vars); !END(it); NEXT(it)) {
     hir_var *var = GET(it);
 
@@ -430,7 +452,7 @@ static void hir_bind_subroutine_body_vars(hir_ctx *ctx, list_hir_var *vars) {
   }
 }
 
-static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
+static void hir_bind_expr(hir_ctx *ctx, hir_expr_base *base) {
   if (!base) {
     return;
   }
@@ -438,36 +460,18 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
   switch (base->kind) {
   case HIR_EXPR_UNARY: {
     hir_expr_unary *self = (typeof(self))base;
-    hir_bind_subroutine_body_expr(ctx, self->first);
+    hir_bind_expr(ctx, self->first);
     break;
   }
   case HIR_EXPR_BINARY: {
     hir_expr_binary *self = (typeof(self))base;
-    hir_bind_subroutine_body_expr(ctx, self->first);
-    hir_bind_subroutine_body_expr(ctx, self->second);
+    hir_bind_expr(ctx, self->first);
+    hir_bind_expr(ctx, self->second);
     break;
   }
   case HIR_EXPR_LITERAL: {
     hir_expr_lit *self = (typeof(self))base;
-    hir_lit      *lit = self->lit;
-    if (!(lit->state & HIR_STATE_BIND_TYPE)) {
-      if (lit->type_hir) {
-        hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, lit->type_hir);
-        if (!entry) {
-          char *type_s = hir_type_str(lit->type_hir);
-
-          hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, lit->base.span,
-                        "expr type %s can't be resolved", type_s);
-
-          free(type_s);
-          return;
-        }
-
-        hir_type_free(lit->type_hir);
-        lit->type_ref = entry->type_ref;
-      }
-      lit->state |= HIR_STATE_BIND_TYPE;
-    }
+    hir_bind_lit(ctx, self->lit);
     break;
   }
   case HIR_EXPR_IDENTIFIER: {
@@ -475,19 +479,19 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
   }
   case HIR_EXPR_CALL: {
     hir_expr_call *self = (typeof(self))base;
-    hir_bind_subroutine_body_expr(ctx, self->callee);
+    hir_bind_expr(ctx, self->callee);
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
-      hir_bind_subroutine_body_expr(ctx, GET(it));
+      hir_bind_expr(ctx, GET(it));
     }
     break;
   }
   case HIR_EXPR_INDEX: {
     hir_expr_index *self = (typeof(self))base;
-    hir_bind_subroutine_body_expr(ctx, self->indexed);
+    hir_bind_expr(ctx, self->indexed);
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
-      hir_bind_subroutine_body_expr(ctx, GET(it));
+      hir_bind_expr(ctx, GET(it));
     }
     break;
   }
@@ -495,7 +499,7 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
     hir_expr_builtin *self = (typeof(self))base;
     for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
          NEXT(it)) {
-      hir_bind_subroutine_body_expr(ctx, GET(it));
+      hir_bind_expr(ctx, GET(it));
     }
     break;
   }
@@ -524,36 +528,36 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
   }
 }
 
-static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
+static void hir_bind_stmt(hir_ctx *ctx, hir_stmt_base *base) {
   if (!base) {
     return;
   }
   switch (base->kind) {
   case HIR_STMT_IF: {
     hir_stmt_if *self = (typeof(self))base;
-    hir_bind_subroutine_body_expr(ctx, self->cond);
-    hir_bind_subroutine_body_stmt(ctx, self->je);
-    hir_bind_subroutine_body_stmt(ctx, self->jz);
+    hir_bind_expr(ctx, self->cond);
+    hir_bind_stmt(ctx, self->je);
+    hir_bind_stmt(ctx, self->jz);
     return;
   };
   case HIR_STMT_BLOCK: {
     hir_stmt_block *self = (typeof(self))base;
     for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
          NEXT(it)) {
-      hir_bind_subroutine_body_stmt(ctx, GET(it));
+      hir_bind_stmt(ctx, GET(it));
     }
     return;
   };
   case HIR_STMT_WHILE: {
     hir_stmt_while *self = (typeof(self))base;
-    hir_bind_subroutine_body_expr(ctx, self->cond);
-    hir_bind_subroutine_body_stmt(ctx, self->stmt);
+    hir_bind_expr(ctx, self->cond);
+    hir_bind_stmt(ctx, self->stmt);
     return;
   };
   case HIR_STMT_DO: {
     hir_stmt_do *self = (typeof(self))base;
-    hir_bind_subroutine_body_stmt(ctx, self->stmt);
-    hir_bind_subroutine_body_expr(ctx, self->cond);
+    hir_bind_stmt(ctx, self->stmt);
+    hir_bind_expr(ctx, self->cond);
     return;
   };
   case HIR_STMT_BREAK: {
@@ -561,7 +565,7 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
   };
   case HIR_STMT_EXPR: {
     hir_stmt_expr *self = (typeof(self))base;
-    hir_bind_subroutine_body_expr(ctx, self->expr);
+    hir_bind_expr(ctx, self->expr);
     return;
   };
   case HIR_STMT_UNKNOWN:
@@ -570,12 +574,11 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
   error("unexpected stmt kind %d %p", base->kind, base);
 }
 
-static void hir_bind_subroutine_body_block(hir_ctx        *ctx,
-                                           hir_stmt_block *block) {
+static void hir_bind_stmt_block(hir_ctx *ctx, hir_stmt_block *block) {
   if (!block) {
     return;
   }
-  hir_bind_subroutine_body_stmt(ctx, (hir_stmt_base *)block);
+  hir_bind_stmt(ctx, (hir_stmt_base *)block);
 }
 
 static void hir_bind_subroutine_body(hir_ctx *ctx, hir_subroutine_body *body) {
@@ -584,10 +587,12 @@ static void hir_bind_subroutine_body(hir_ctx *ctx, hir_subroutine_body *body) {
     case HIR_SUBROUTINE_BODY_UNKNOWN:
       break;
     case HIR_SUBROUTINE_BODY_IMPORT:
+      hir_bind_lit(ctx, body->body.import.lib);
+      hir_bind_lit(ctx, body->body.import.entry);
       break;
     case HIR_SUBROUTINE_BODY_BLOCK:
-      hir_bind_subroutine_body_vars(ctx, body->body.block.vars);
-      hir_bind_subroutine_body_block(ctx, body->body.block.block);
+      hir_bind_vars(ctx, body->body.block.vars);
+      hir_bind_stmt_block(ctx, body->body.block.block);
       break;
     default:
       error("unexpected block subroutine kind %d", body->kind);
