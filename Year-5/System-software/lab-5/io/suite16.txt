@@ -1,20 +1,23 @@
-method ext_malloc(f: long): long;
-method ext_free(f: long): void;
-method ext_read_string(): string;
+// method ext_malloc(f: long): long;
+// method ext_free(f: long): void;
+// method ext_read_string(): string;
 
-method inc_one(): int from "read" in "example";
-method inc_two(): int from "example";
+// method inc_one(): int from "read" in "example";
+// method inc_two(): int from "example";
 
 method main(a, b): int
 var
   c: array [] of int;
+  n;
 begin
-  main();
-  main2(a, b);
+  ++n;
+  while (--n) do begin
+    if a == 0 then break;
+  end
 end;
 
-method main2(a: int, b: array [,] of string): void
-var
-begin
-  main();
-end;
+// method main2(a: int, b: array [,] of string): void
+// var
+// begin
+//   main();
+// end;

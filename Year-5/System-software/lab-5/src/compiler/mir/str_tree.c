@@ -2,6 +2,7 @@
 #include "compiler/span/str.h"
 #include "compiler/type_table/str.h"
 #include "str.h"
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/strbuf.h"
 
@@ -168,7 +169,11 @@ static void mir_str_bb(strbuf *buffer, size_t pad, const mir_bb *bb) {
   mir_bb_enum bb_cond = mir_bb_get_cond(bb);
   switch (bb_cond) {
   case MIR_BB_COND:
-    strbuf_append_f(buffer, buf, "cond(_%lu)", bb->jmp.cond_ref->id);
+    if (bb->jmp.cond_ref) {
+      strbuf_append_f(buffer, buf, "cond(_%lu)", bb->jmp.cond_ref->id);
+    } else {
+      strbuf_append_f(buffer, buf, "cond(%p)", bb->jmp.cond_ref);
+    }
     strbuf_append(buffer, " -> [");
     strbuf_append_f(buffer, buf, "je: bb.%lu", bb->jmp.je_ref->id);
     strbuf_append(buffer, ", ");

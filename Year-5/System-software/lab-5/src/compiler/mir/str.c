@@ -1,5 +1,6 @@
 #include "str.h"
 #include "compiler/type_table/str.h"
+#include "util/log.h"
 #include "util/strbuf.h"
 #include <string.h>
 

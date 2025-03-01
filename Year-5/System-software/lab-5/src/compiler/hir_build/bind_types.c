@@ -432,22 +432,24 @@ static void hir_bind_vars(hir_ctx *ctx, list_hir_var *vars) {
   for (list_hir_var_it it = list_hir_var_begin(vars); !END(it); NEXT(it)) {
     hir_var *var = GET(it);
 
-    hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, var->type_hir);
-    if (!entry) {
-      const char *var_s = (var->state & HIR_STATE_BIND_SYMBOL)
-                              ? var->id_ref->name
-                              : var->id_hir->name;
-      char       *type_s = hir_type_str(var->type_hir);
+    if (var->type_hir) {
+      hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, var->type_hir);
+      if (!entry) {
+        const char *var_s = (var->state & HIR_STATE_BIND_SYMBOL)
+                                ? var->id_ref->name
+                                : var->id_hir->name;
+        char       *type_s = hir_type_str(var->type_hir);
 
-      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
-                    "var %s type %s can't be resolved", var_s, type_s);
+        hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
+                      "var %s type %s can't be resolved", var_s, type_s);
 
-      free(type_s);
-      continue;
+        free(type_s);
+        continue;
+      }
+
+      hir_type_free(var->type_hir);
+      var->type_ref = entry->type_ref;
     }
-
-    hir_type_free(var->type_hir);
-    var->type_ref = entry->type_ref;
     var->state |= HIR_STATE_BIND_TYPE;
   }
 }

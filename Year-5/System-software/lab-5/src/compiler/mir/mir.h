@@ -2,7 +2,6 @@
 
 #include "compiler/hir/node_expr.h"
 #include "compiler/symbol_table/symbol_table.h"
-#include "util/log.h"
 
 typedef struct mir_subroutine_struct     mir_subroutine;
 typedef struct mir_subroutine_ext_struct mir_subroutine_ext;

@@ -289,6 +289,8 @@ static mir_bb_seq mir_define_stmt_if(mir_ctx *ctx, const hir_stmt_if *stmt) {
   if (!mir_bb_seq_is_empty(jz)) {
     root.first->jmp.jz_ref = jz.first;
     jz.last->jmp.next_ref = root.last;
+  } else {
+    root.first->jmp.jz_ref = root.last;
   }
 
   return root;
