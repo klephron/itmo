@@ -501,8 +501,11 @@ static void mir_define_sub_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
     case MIR_STMT_BUILTIN:
       stmt_last_value = stmt_last->builtin.ret;
       break;
-    case MIR_STMT_ASSIGN:
-      stmt_last_value = stmt_last->assign.to;
+    case MIR_STMT_ASSIGN_VALUE:
+      stmt_last_value = stmt_last->value.to;
+      break;
+    case MIR_STMT_ASSIGN_LIT:
+      stmt_last_value = stmt_last->lit.to;
       break;
     case MIR_STMT_UNKNOWN:
       break;
@@ -511,7 +514,7 @@ static void mir_define_sub_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
     if (stmt_last_value) {
       list_mir_stmt_push_back(
           bb_last->stmts,
-          mir_stmt_new_assign(sub_mir->basic.ret, stmt_last_value));
+          mir_stmt_new_assign_value(sub_mir->basic.ret, stmt_last_value));
     } else {
       mir_exception_add_warning(
           ctx->exceptions, EXCEPTION_MIR_NO_RETURN, sub_mir->symbol_ref->span,

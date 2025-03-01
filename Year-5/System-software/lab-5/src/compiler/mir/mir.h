@@ -59,7 +59,8 @@ typedef enum mir_stmt_enum {
   MIR_STMT_CALL,
   MIR_STMT_MEMBER,
   MIR_STMT_BUILTIN,
-  MIR_STMT_ASSIGN,
+  MIR_STMT_ASSIGN_VALUE,
+  MIR_STMT_ASSIGN_LIT,
 } mir_stmt_enum;
 
 typedef enum mir_stmt_op_enum {
@@ -127,7 +128,11 @@ typedef struct mir_stmt_struct {
     struct {
       mir_value *to;
       mir_value *from;
-    } assign;
+    } value; // value assignment
+    struct {
+      mir_value *to;
+      mir_lit   *from;
+    } lit; // lit assignment
   };
 } mir_stmt;
 
@@ -138,7 +143,8 @@ mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
 mir_stmt *mir_stmt_new_member(mir_value *ret, mir_value *obj, mir_lit *member);
 mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
                                type_entry *type, list_mir_value_ref *args);
-mir_stmt *mir_stmt_new_assign(mir_value *to, mir_value *from);
+mir_stmt *mir_stmt_new_assign_value(mir_value *to, mir_value *from);
+mir_stmt *mir_stmt_new_assign_lit(mir_value *to, mir_lit *from);
 
 void mir_stmt_free(mir_stmt *self);
 

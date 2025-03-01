@@ -105,11 +105,19 @@ mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
   return self;
 }
 
-mir_stmt *mir_stmt_new_assign(mir_value *to, mir_value *from) {
+mir_stmt *mir_stmt_new_assign_value(mir_value *to, mir_value *from) {
   mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_ASSIGN;
-  self->assign.to = to;
-  self->assign.from = from;
+  self->kind = MIR_STMT_ASSIGN_VALUE;
+  self->value.to = to;
+  self->value.from = from;
+  return self;
+}
+
+mir_stmt *mir_stmt_new_assign_lit(mir_value *to, mir_lit *from) {
+  mir_stmt *self = MALLOC(mir_stmt);
+  self->kind = MIR_STMT_ASSIGN_LIT;
+  self->lit.to = to;
+  self->lit.from = from;
   return self;
 }
 
@@ -127,7 +135,9 @@ void mir_stmt_free(mir_stmt *self) {
     case MIR_STMT_BUILTIN:
       list_mir_value_ref_free(self->builtin.args);
       break;
-    case MIR_STMT_ASSIGN:
+    case MIR_STMT_ASSIGN_VALUE:
+      break;
+    case MIR_STMT_ASSIGN_LIT:
       break;
     case MIR_STMT_UNKNOWN:
     default:
