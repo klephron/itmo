@@ -2,6 +2,7 @@
 
 #include "compiler/hir/node_expr.h"
 #include "compiler/symbol_table/symbol_table.h"
+#include "util/list.h"
 
 typedef struct mir_subroutine_struct     mir_subroutine;
 typedef struct mir_subroutine_ext_struct mir_subroutine_ext;
@@ -51,6 +52,10 @@ typedef struct mir_lit_struct {
 mir_lit *mir_lit_new(size_t id, const type_entry *type_ref,
                      mir_lit_value value);
 void     mir_lit_free(mir_lit *self);
+
+static inline void container_delete_mir_lit(void *data) { mir_lit_free(data); }
+LIST_DECLARE_STATIC_INLINE(list_mir_lit, mir_lit, container_cmp_false,
+                           container_new_move, container_delete_mir_lit);
 
 // MIR_STMT
 typedef enum mir_stmt_enum {
@@ -265,6 +270,7 @@ typedef struct mir_struct {
   list_mir_subroutine *imported_subs;
   list_mir_subroutine *methods;
   list_mir_class      *classes;
+  list_mir_lit        *literals;
 } mir;
 
 mir *mir_new();

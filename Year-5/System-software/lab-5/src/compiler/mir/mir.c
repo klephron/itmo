@@ -273,6 +273,7 @@ mir *mir_new() {
   self->imported_subs = list_mir_subroutine_new();
   self->methods = list_mir_subroutine_new();
   self->classes = list_mir_class_new();
+  self->literals = list_mir_lit_new();
   return self;
 }
 
@@ -283,6 +284,7 @@ void mir_free(mir *self) {
     list_mir_subroutine_free(self->imported_subs);
     list_mir_subroutine_free(self->methods);
     list_mir_class_free(self->classes);
+    list_mir_lit_free(self->literals);
     free(self);
   }
 }

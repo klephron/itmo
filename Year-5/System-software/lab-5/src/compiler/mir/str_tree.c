@@ -111,7 +111,7 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
     }
     strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
     strbuf_append_f(buffer, buf, "(_%lu, ", stmt->member.obj->id);
-    char *member_s = mir_lit_str(stmt->member.member);
+    char *member_s = mir_lit_value_str(stmt->member.member);
     if (member_s) {
       strbuf_append(buffer, member_s);
       free(member_s);
@@ -146,7 +146,7 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
   case MIR_STMT_ASSIGN_LIT:
     strbuf_append_f(buffer, buf, "_%lu = lit.%zu", stmt->lit.to->id,
                     stmt->lit.from->id);
-    char *lit_s = mir_lit_str(stmt->lit.from);
+    char *lit_s = mir_lit_value_str(stmt->lit.from);
     if (lit_s) {
       strbuf_append(buffer, "  # ");
       strbuf_append(buffer, lit_s);
@@ -224,6 +224,8 @@ static void mir_str_bb(strbuf *buffer, size_t pad, const mir_bb *bb) {
 
 static void mir_str_subroutine(strbuf *buffer, size_t pad,
                                const mir_subroutine *sub) {
+  char buf[64];
+
   if (!sub) {
     strbuf_append_clx(buffer, "(nil)", 0);
     return;
@@ -232,9 +234,14 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
   strbuf_append(buffer, sub->symbol_ref->name);
   strbuf_append(buffer, " {");
 
+  // additional info
+  strbuf_append(buffer, "  # ");
+
+  strbuf_append_f(buffer, buf, "ptr(%p)", sub);
+
   char *span_s = span_str(sub->symbol_ref->span);
   if (span_s) {
-    strbuf_append(buffer, "  # ");
+    strbuf_append(buffer, ", ");
     strbuf_append(buffer, span_s);
     free(span_s);
   }
@@ -244,7 +251,7 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
   strbuf_append_clx(buffer, "symbol: ", pad);
   mir_str_symbol(buffer, pad, sub->symbol_ref);
 
-  strbuf_append_clx(buffer, "type_ref: ", pad);
+  strbuf_append_clx(buffer, "type: ", pad);
   mir_str_type(buffer, pad, sub->type_ref);
 
   switch (sub->kind) {
@@ -297,6 +304,8 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
 }
 
 static void mir_str_class(strbuf *buffer, size_t pad, const mir_class *class) {
+  char buf[64];
+
   if (!class) {
     strbuf_append_clx(buffer, "(nil)", 0);
     return;
@@ -305,8 +314,62 @@ static void mir_str_class(strbuf *buffer, size_t pad, const mir_class *class) {
   strbuf_append_clx(buffer, "{", 0);
   pad += MIR_STR_TAB;
 
+  strbuf_append_clx(buffer, "type: ", pad);
+  mir_str_type(buffer, pad, class->type_ref);
+
+  if (!list_mir_value_empty(class->fields)) {
+    strbuf_append_clx(buffer, "", pad);
+    for (list_mir_value_it it = list_mir_value_begin(class->fields); !END(it);
+         NEXT(it)) {
+      const mir_value *param = GET(it);
+      strbuf_append_clx(buffer, "", pad);
+      mir_str_value(buffer, pad, param, "var");
+    }
+  }
+
+  if (!list_mir_subroutine_ref_empty(class->methods)) {
+    strbuf_append_clx(buffer, "", pad);
+    for (list_mir_subroutine_ref_it it =
+             list_mir_subroutine_ref_begin(class->methods);
+         !END(it); NEXT(it)) {
+      mir_subroutine *sub = GET(it);
+      strbuf_append_clx(buffer, "method ", pad);
+      strbuf_append(buffer, sub->symbol_ref->name);
+      strbuf_append_f(buffer, buf, "ptr(%p)", sub);
+      strbuf_append(buffer, ", type: ");
+      mir_str_type(buffer, pad, sub->type_ref);
+    }
+  }
+
   pad -= MIR_STR_TAB;
   strbuf_append_clx(buffer, "}", pad);
+}
+
+static void mir_str_lit(strbuf *buffer, size_t pad, const mir_lit *lit) {
+  if (!lit) {
+    strbuf_append_clx(buffer, "(nil)", 0);
+    return;
+  }
+
+  char buf[64];
+
+  strbuf_append_clx(buffer, "{", 0);
+  pad += MIR_STR_TAB;
+
+  strbuf_append_f(buffer, buf, "id: %lu", lit->id);
+
+  char *value_s = mir_lit_value_str(lit);
+  if (value_s) {
+    strbuf_append(buffer, ", value: ");
+    strbuf_append(buffer, value_s);
+    free(value_s);
+  }
+
+  strbuf_append(buffer, ", type: ");
+  mir_str_type(buffer, pad, lit->type_ref);
+
+  pad -= MIR_STR_TAB;
+  strbuf_append_clx(buffer, "}", 0);
 }
 
 char *mir_str(const mir *mir) {
@@ -376,6 +439,19 @@ char *mir_str(const mir *mir) {
     const mir_class *class = GET(it);
     strbuf_append_clx(buffer, "", pad);
     mir_str_class(buffer, pad, class);
+  }
+  pad -= MIR_STR_TAB;
+  strbuf_append_clx(buffer, "]", pad);
+
+  // literals
+  strbuf_append_clx(buffer, "LITERALS: [", pad);
+  pad += MIR_STR_TAB;
+
+  for (list_mir_lit_it it = list_mir_lit_begin(mir->literals); !END(it);
+       NEXT(it)) {
+    const mir_lit *lit = GET(it);
+    strbuf_append_clx(buffer, "", pad);
+    mir_str_lit(buffer, pad, lit);
   }
   pad -= MIR_STR_TAB;
   strbuf_append_clx(buffer, "]", pad);

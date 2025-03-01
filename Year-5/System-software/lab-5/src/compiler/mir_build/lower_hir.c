@@ -241,24 +241,67 @@ static void mir_declare_subs(mir_ctx *ctx, const hir *hir) {
 }
 
 // EXPRS
+static mir_value *mir_define_expr_unary(mir_ctx *ctx, mir_bb *bb,
+                                        const hir_expr_unary *expr) {
+  return NULL;
+}
+
+static mir_value *mir_define_expr_binary(mir_ctx *ctx, mir_bb *bb,
+                                         const hir_expr_binary *expr) {
+  return NULL;
+}
+
+static mir_value *mir_define_expr_lit(mir_ctx *ctx, mir_bb *bb,
+                                      const hir_expr_lit *expr) {
+  return NULL;
+}
+
+static mir_value *mir_define_expr_id(mir_ctx *ctx, mir_bb *bb,
+                                     const hir_expr_id *expr) {
+  return NULL;
+}
+
+static mir_value *mir_define_expr_call(mir_ctx *ctx, mir_bb *bb,
+                                       const hir_expr_call *expr) {
+  return NULL;
+}
+
+static mir_value *mir_define_expr_index(mir_ctx *ctx, mir_bb *bb,
+                                        const hir_expr_index *expr) {
+  return NULL;
+}
+
+static mir_value *mir_define_expr_builtin(mir_ctx *ctx, mir_bb *bb,
+                                          const hir_expr_builtin *expr) {
+  return NULL;
+}
+
 static mir_value *mir_define_expr(mir_ctx *ctx, mir_bb *bb,
-                                  hir_expr_base *expr) {
+                                  const hir_expr_base *expr) {
   if (!expr) {
     return NULL;
   }
 
   switch (expr->kind) {
-  case HIR_EXPR_UNKNOWN:
   case HIR_EXPR_UNARY:
+    return mir_define_expr_unary(ctx, bb, (hir_expr_unary *)expr);
   case HIR_EXPR_BINARY:
+    return mir_define_expr_binary(ctx, bb, (hir_expr_binary *)expr);
   case HIR_EXPR_LITERAL:
+    return mir_define_expr_lit(ctx, bb, (hir_expr_lit *)expr);
   case HIR_EXPR_IDENTIFIER:
+    return mir_define_expr_id(ctx, bb, (hir_expr_id *)expr);
   case HIR_EXPR_CALL:
+    return mir_define_expr_call(ctx, bb, (hir_expr_call *)expr);
   case HIR_EXPR_INDEX:
+    return mir_define_expr_index(ctx, bb, (hir_expr_index *)expr);
   case HIR_EXPR_BUILTIN:
+    return mir_define_expr_builtin(ctx, bb, (hir_expr_builtin *)expr);
+  case HIR_EXPR_UNKNOWN:
     break;
   }
 
+  error("unexpected expr kind %d %p", expr->kind, expr);
   return NULL;
 }
 

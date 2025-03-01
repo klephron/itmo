@@ -4,7 +4,7 @@
 #include "util/strbuf.h"
 #include <string.h>
 
-char *mir_lit_str(const mir_lit *lit) {
+char *mir_lit_value_str(const mir_lit *lit) {
   if (!lit) {
     return NULL;
   }
