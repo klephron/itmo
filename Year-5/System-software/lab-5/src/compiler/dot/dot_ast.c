@@ -1,4 +1,4 @@
-#include "ast.h"
+#include "dot.h"
 
 #include "util/macro.h"
 

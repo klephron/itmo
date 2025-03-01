@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "compiler/ast/ast.h"
-#include "compiler/dot/ast.h"
+#include "compiler/dot/dot.h"
 #include "compiler/exception/exception.h"
 #include "compiler/hir/hir.h"
 #include "compiler/hir/str.h"
@@ -93,29 +93,31 @@ static void usage(args *args) {
     cg_subroutines[offset - 1] = '\0';
   }
 
-  printf(
-      "Usage: %s [options] <file>...\n"
-      "Options:\n"
-      "-d <directory>   - output directory (current: %s)\n"
-      "-o <file>        - main output file (current: %s)\n"
-      "--tee            - print to file and to stdout (current: %d)\n"
-      "--ignore-errors  - continue execution on errors (current: %d)\n"
-      "--ast            - add AST output (current: %d)\n"
-      "--cfg            - add control flow graph output (current: %d)\n"
-      "--cfg-add-expr   - add expressions to control flow graph (current: %d)\n"
-      "--cg             - add call graph output (current: %d)\n"
-      "-s <subroutine>  - set or add subroutine for call graph generation"
-      "(current: %s)\n"
-      "--hir-tree       - print hir tree (current: %d)\n"
-      "--symbol-table   - print symbol table (current: %d)\n"
-      "--type-table     - print type table (current: %d)\n"
-      "--mir            - print MIR tree (current: %d)\n"
-      "-h\n"
-      "--help           - show help\n",
-      args->prog_name, args->output_dir, args->output_file, args->tee,
-      args->ignore_errors, args->ast, args->cfg, args->cfg_add_expr, args->cg,
-      cg_subroutines, args->hir_tree, args->symbol_table, args->type_table,
-      args->mir);
+  printf("Usage: %s [options] <file>...\n"
+         "Options:\n"
+         "-d <directory>   - output directory (current: %s)\n"
+         "-o <file>        - main output file (current: %s)\n"
+         "--tee            - print to file and to stdout (current: %d)\n"
+         "--ignore-errors  - continue execution on errors (current: %d)\n"
+         "--ast            - add AST output (current: %d)\n"
+         "--cfg            - add global subroutines control flow graph output "
+         "(current: %d)\n"
+         "--cfg-add-expr   - include expressions in control flow graph "
+         "(current: %d)\n"
+         "--cg             - add global subroutines call graph output "
+         "(current: %d)\n"
+         "-s <subroutine>  - set or add global subroutine for call graph "
+         "generation (current: %s)\n"
+         "--hir-tree       - print hir tree (current: %d)\n"
+         "--symbol-table   - print symbol table (current: %d)\n"
+         "--type-table     - print type table (current: %d)\n"
+         "--mir            - print MIR tree (current: %d)\n"
+         "-h\n"
+         "--help           - show help\n",
+         args->prog_name, args->output_dir, args->output_file, args->tee,
+         args->ignore_errors, args->ast, args->cfg, args->cfg_add_expr,
+         args->cg, cg_subroutines, args->hir_tree, args->symbol_table,
+         args->type_table, args->mir);
 }
 
 static void parse(args *args, int argc, char *argv[]) {
@@ -399,41 +401,42 @@ static int execute(args *args) {
     }
   }
 
-  // // stage: dot cfg
-  // if (args->cfg && (!args->code || args->ignore_errors)) {
-  //   for (list_eir_subroutine_it it =
-  //            list_eir_subroutine_begin(eir->subroutines);
-  //        !END(it); NEXT(it)) {
-  //     const eir_subroutine *sub = GET(it);
-  //     const char           *sub_name = sub->binding_ref->name;
-  //     const char           *source = sub->binding_ref->decl_span->source_ref;
+  // stage: dot cfg
+  if (args->cfg && (!args->code || args->ignore_errors)) {
+    for (list_mir_subroutine_it it =
+             list_mir_subroutine_begin(mir->global_subs);
+         !END(it); NEXT(it)) {
+      const mir_subroutine *sub = GET(it);
+      const char           *sub_name = sub->symbol_ref->name;
+      const char           *source = sub->symbol_ref->span->source_ref;
 
-  //     dot_string *dot = dot_eir_cfg(eir, sub, args->cfg_add_expr);
-  //     char       *output = get_cfg_dot_path(args, source, sub_name);
-  //     write_dot(args, dot, output);
-  //     free(output);
-  //     dot_string_free(dot);
-  //   }
-  // }
+      dot_string *dot =
+          dot_cfg(mir, hir, type_table, symbol_table, sub, args->cfg_add_expr);
+      char *output = get_cfg_dot_path(args, source, sub_name);
+      write_dot(args, dot, output);
+      free(output);
+      dot_string_free(dot);
+    }
+  }
 
-  // // stage: dot cg
-  // if (args->cg && (!args->code || args->ignore_errors)) {
-  //   for (list_eir_subroutine_it it =
-  //            list_eir_subroutine_begin(eir->subroutines);
-  //        !END(it); NEXT(it)) {
-  //     const eir_subroutine *sub = GET(it);
-  //     const char           *sub_name = sub->binding_ref->name;
-  //     const char           *source = sub->binding_ref->decl_span->source_ref;
+  // stage: dot cg
+  if (args->cg && (!args->code || args->ignore_errors)) {
+    for (list_mir_subroutine_it it =
+             list_mir_subroutine_begin(mir->global_subs);
+         !END(it); NEXT(it)) {
+      const mir_subroutine *sub = GET(it);
+      const char           *sub_name = sub->symbol_ref->name;
+      const char           *source = sub->symbol_ref->span->source_ref;
 
-  //     if (has_subroutine(args, sub_name)) {
-  //       dot_string *dot = dot_eir_cg(eir, sub);
-  //       char       *output = get_cg_dot_path(args, source, sub_name);
-  //       write_dot(args, dot, output);
-  //       free(output);
-  //       dot_string_free(dot);
-  //     }
-  //   }
-  // }
+      if (has_subroutine(args, sub_name)) {
+        dot_string *dot = dot_cg(mir, hir, type_table, symbol_table, sub);
+        char       *output = get_cg_dot_path(args, source, sub_name);
+        write_dot(args, dot, output);
+        free(output);
+        dot_string_free(dot);
+      }
+    }
+  }
 
   // cg_x86_64     *cg = cg_x86_64_new();
   // cg_x86_64_ctx *cg_ctx = cg_x86_64_ctx_new(cg);

@@ -16,8 +16,8 @@ begin
   end
 end;
 
-// method main2(a: int, b: array [,] of string): void
-// var
-// begin
-//   main();
-// end;
+method main2(a: int, b: array [,] of string): void
+var
+begin
+  main();
+end;
