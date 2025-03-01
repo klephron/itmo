@@ -138,6 +138,32 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
     mir_str_stmt_args(buffer, pad, stmt->builtin.args);
     break;
 
+  case MIR_STMT_ASSIGN_VALUE:
+    strbuf_append_f(buffer, buf, "_%lu = _%zu", stmt->value.to->id,
+                    stmt->value.from->id);
+    break;
+
+  case MIR_STMT_ASSIGN_LIT:
+    strbuf_append_f(buffer, buf, "_%lu = lit.%zu", stmt->lit.to->id,
+                    stmt->lit.from->id);
+    char *lit_s = mir_lit_str(stmt->lit.from);
+    if (lit_s) {
+      strbuf_append(buffer, "  # ");
+      strbuf_append(buffer, lit_s);
+      free(lit_s);
+    }
+    if (stmt->lit.from->type_ref) {
+      char *type_s = type_str(stmt->lit.from->type_ref->type);
+      if (type_s) {
+        if (lit_s) {
+          strbuf_append(buffer, ", ");
+        }
+        strbuf_append(buffer, type_s);
+        free(type_s);
+      }
+    }
+    break;
+
   case MIR_STMT_UNKNOWN:
   default:
     warn("unexpected stmt kind %d %p", stmt->kind, stmt);
