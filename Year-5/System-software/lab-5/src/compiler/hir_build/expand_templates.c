@@ -175,13 +175,15 @@ static type_base *hir_ctx_type_register(hir_ctx *ctx, type_base *type,
 }
 
 static void hir_ctx_debug(const hir_ctx *ctx, const char *s) {
-  debug("hir_ctx: (%s)", s);
-  debug("  map_type_templates -> size: %lu",
-        ctx->map_type_hir_tmpl->hashset.size);
-  debug("  insted_types -> size: %lu", ctx->insted_types->hashset.size);
-  debug("  class_tmpls -> size: %lu",
-        list_hir_class_size(ctx->hir_tmpl_classes));
-  debug("  exceptions -> size: %lu", list_exception_size(ctx->exceptions));
+  UNUSED(ctx);
+  UNUSED(s);
+  // debug("hir_ctx: (%s)", s);
+  // debug("  map_type_templates -> size: %lu",
+  //       ctx->map_type_hir_tmpl->hashset.size);
+  // debug("  insted_types -> size: %lu", ctx->insted_types->hashset.size);
+  // debug("  class_tmpls -> size: %lu",
+  //       list_hir_class_size(ctx->hir_tmpl_classes));
+  // debug("  exceptions -> size: %lu", list_exception_size(ctx->exceptions));
 }
 
 // filters out templated classes from hir->classes
