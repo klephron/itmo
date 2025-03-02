@@ -34,78 +34,78 @@ static void type_table_str_extra_ref(strbuf *buffer, const type_base *self) {
 static char *type_table_str_extra(const type_entry *entry) {
   strbuf *buffer = strbuf_new(64, 0);
   switch (entry->type->kind) {
-  case TYPE_ARRAY: {
-    const type_array *self = (const type_array *)entry->type;
-    type_table_str_extra_ref(buffer, self->element_ref);
-  } break;
-  case TYPE_CALLABLE: {
-    size_t               comma = 0;
-    const type_callable *self = (const type_callable *)entry->type;
-    if (self->ret_ref) {
-      type_table_str_extra_ref(buffer, self->ret_ref);
-      ++comma;
-    }
-
-    // print as list
-    list_type_ref_it it = list_type_ref_begin(self->params);
-    if (!END(it)) {
-      if (GET(it)) {
-        if (comma) {
-          strbuf_append(buffer, ", ");
-        }
-        type_table_str_extra_ref(buffer, GET(it));
+    case TYPE_ARRAY: {
+      const type_array *self = (const type_array *)entry->type;
+      type_table_str_extra_ref(buffer, self->element_ref);
+    } break;
+    case TYPE_CALLABLE: {
+      size_t               comma = 0;
+      const type_callable *self = (const type_callable *)entry->type;
+      if (self->ret_ref) {
+        type_table_str_extra_ref(buffer, self->ret_ref);
         ++comma;
       }
-      for (NEXT(it); !END(it); NEXT(it)) {
+
+      // print as list
+      list_type_ref_it it = list_type_ref_begin(self->params);
+      if (!END(it)) {
         if (GET(it)) {
           if (comma) {
             strbuf_append(buffer, ", ");
           }
           type_table_str_extra_ref(buffer, GET(it));
+          ++comma;
+        }
+        for (NEXT(it); !END(it); NEXT(it)) {
+          if (GET(it)) {
+            if (comma) {
+              strbuf_append(buffer, ", ");
+            }
+            type_table_str_extra_ref(buffer, GET(it));
+          }
         }
       }
-    }
-  } break;
-  case TYPE_CLASS: {
-    const type_class *self = (const type_class *)entry->type;
-    size_t            comma = 0;
+    } break;
+    case TYPE_CLASS: {
+      const type_class *self = (const type_class *)entry->type;
+      size_t            comma = 0;
 
-    list_type_ref_it it = list_type_ref_begin(self->parents);
-    if (!END(it)) {
-      type_table_str_extra_ref(buffer, GET(it));
-      ++comma;
-      for (NEXT(it); !END(it); NEXT(it)) {
-        strbuf_append(buffer, ", ");
+      list_type_ref_it it = list_type_ref_begin(self->parents);
+      if (!END(it)) {
         type_table_str_extra_ref(buffer, GET(it));
+        ++comma;
+        for (NEXT(it); !END(it); NEXT(it)) {
+          strbuf_append(buffer, ", ");
+          type_table_str_extra_ref(buffer, GET(it));
+        }
       }
-    }
-    it = list_type_ref_begin(self->typenames);
-    if (!END(it)) {
-      if (comma) {
-        strbuf_append(buffer, ", ");
-      }
-      type_table_str_extra_ref(buffer, GET(it));
-      ++comma;
-      for (NEXT(it); !END(it); NEXT(it)) {
-        strbuf_append(buffer, ", ");
+      it = list_type_ref_begin(self->typenames);
+      if (!END(it)) {
+        if (comma) {
+          strbuf_append(buffer, ", ");
+        }
         type_table_str_extra_ref(buffer, GET(it));
+        ++comma;
+        for (NEXT(it); !END(it); NEXT(it)) {
+          strbuf_append(buffer, ", ");
+          type_table_str_extra_ref(buffer, GET(it));
+        }
       }
-    }
-  } break;
-  case TYPE_TYPENAME: {
-    const type_typename *self = (const type_typename *)entry->type;
-    const type_entry    *parent_entry = self->source_ref->type_entry_ref;
+    } break;
+    case TYPE_TYPENAME: {
+      const type_typename *self = (const type_typename *)entry->type;
+      const type_entry    *parent_entry = self->source_ref->type_entry_ref;
 
-    strbuf_append(buffer, "references ");
-    type_table_str_extra_ref(buffer, parent_entry->type);
-  } break;
-  case TYPE_MONO: {
-    const type_mono *self = (const type_mono *)entry->type;
-    strbuf_append(buffer, "instantiates ");
-    type_table_str_extra_ref(buffer, self->type_ref);
-  } break;
-  default:
-    break;
+      strbuf_append(buffer, "references ");
+      type_table_str_extra_ref(buffer, parent_entry->type);
+    } break;
+    case TYPE_MONO: {
+      const type_mono *self = (const type_mono *)entry->type;
+      strbuf_append(buffer, "instantiates ");
+      type_table_str_extra_ref(buffer, self->type_ref);
+    } break;
+    default:
+      break;
   }
   return strbuf_detach(buffer);
 }
@@ -135,27 +135,27 @@ char *type_table_str(const type_table *table) {
     list_chars_push_back(row, buf);
     // TYPE_KIND
     switch (entry->type->kind) {
-    case TYPE_UNKNOWN:
-    case TYPE_PRIMITIVE:
-    case TYPE_ARRAY:
-    case TYPE_CALLABLE:
-    case TYPE_CLASS:
-    case TYPE_TYPENAME:
-      list_chars_push_back(row, (char *)type_enum_str(entry->type->kind));
-      break;
-    case TYPE_MONO: {
-      strbuf *buffer = strbuf_new(32, 0);
-      strbuf_append(buffer, (char *)type_enum_str(entry->type->kind));
-      strbuf_append(buffer, "(");
-      strbuf_append(buffer, (char *)type_enum_str(
-                                ((type_mono *)entry->type)->type_ref->kind));
-      strbuf_append(buffer, ")");
-      char *kind_s = strbuf_detach(buffer);
-      list_chars_push_back(row, kind_s);
-      if (kind_s) {
-        free(kind_s);
-      }
-    } break;
+      case TYPE_UNKNOWN:
+      case TYPE_PRIMITIVE:
+      case TYPE_ARRAY:
+      case TYPE_CALLABLE:
+      case TYPE_CLASS:
+      case TYPE_TYPENAME:
+        list_chars_push_back(row, (char *)type_enum_str(entry->type->kind));
+        break;
+      case TYPE_MONO: {
+        strbuf *buffer = strbuf_new(32, 0);
+        strbuf_append(buffer, (char *)type_enum_str(entry->type->kind));
+        strbuf_append(buffer, "(");
+        strbuf_append(buffer, (char *)type_enum_str(
+                                  ((type_mono *)entry->type)->type_ref->kind));
+        strbuf_append(buffer, ")");
+        char *kind_s = strbuf_detach(buffer);
+        list_chars_push_back(row, kind_s);
+        if (kind_s) {
+          free(kind_s);
+        }
+      } break;
     }
     // TYPE_MONO
     type_mono_enum spec;

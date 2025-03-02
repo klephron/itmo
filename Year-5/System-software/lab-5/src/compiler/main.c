@@ -150,35 +150,35 @@ static void parse(args *args, int argc, char *argv[]) {
     c = getopt_long(argc, argv, "o:d:s:h", long_options, &option_index);
 
     switch (c) {
-    case EOF:
-      has_next = 0;
-      break;
-    case 0:
-      if (long_options[option_index].flag) {
-        if (args->help) {
-          has_next = 0;
+      case EOF:
+        has_next = 0;
+        break;
+      case 0:
+        if (long_options[option_index].flag) {
+          if (args->help) {
+            has_next = 0;
+          }
+          break;
         }
         break;
-      }
-      break;
-    case 'd':
-      args->output_dir = optarg;
-      break;
-    case 'o':
-      args->output_file = optarg;
-      break;
-    case 's':
-      list_chars_push_back(args->cg_subroutines, strdup(optarg));
-      break;
-    case 'h':
-      args->help = 1;
-      has_next = 0;
-      break;
-    default:
-      args->code = -1;
-      args->help = 1;
-      has_next = 0;
-      break;
+      case 'd':
+        args->output_dir = optarg;
+        break;
+      case 'o':
+        args->output_file = optarg;
+        break;
+      case 's':
+        list_chars_push_back(args->cg_subroutines, strdup(optarg));
+        break;
+      case 'h':
+        args->help = 1;
+        has_next = 0;
+        break;
+      default:
+        args->code = -1;
+        args->help = 1;
+        has_next = 0;
+        break;
     }
   }
 

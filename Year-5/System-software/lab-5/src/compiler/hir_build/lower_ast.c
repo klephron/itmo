@@ -23,16 +23,16 @@ static void hir_dispay_error(pANTLR3_BASE_RECOGNIZER recognizer,
   exh.name = recognizer->state->exception->message;
 
   switch (recognizer->type) {
-  case ANTLR3_TYPE_TREE_PARSER:
-    theBaseTree = (pANTLR3_BASE_TREE)(recognizer->state->exception->token);
-    ttext = theBaseTree->toStringTree(theBaseTree);
+    case ANTLR3_TYPE_TREE_PARSER:
+      theBaseTree = (pANTLR3_BASE_TREE)(recognizer->state->exception->token);
+      ttext = theBaseTree->toStringTree(theBaseTree);
 
-    if (theBaseTree != NULL) {
-      exc = exception_new_from_helper(
-          &exh, "at offset %d near %s",
-          theBaseTree->getCharPositionInLine(theBaseTree), ttext->chars);
-    }
-    break;
+      if (theBaseTree != NULL) {
+        exc = exception_new_from_helper(
+            &exh, "at offset %d near %s",
+            theBaseTree->getCharPositionInLine(theBaseTree), ttext->chars);
+      }
+      break;
   }
 
   if (!exc) {

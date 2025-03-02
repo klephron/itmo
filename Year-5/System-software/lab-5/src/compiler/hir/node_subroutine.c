@@ -25,18 +25,18 @@ hir_subroutine_body *hir_subroutine_body_new_import(hir_lit *entry,
 void hir_subroutine_body_free(hir_subroutine_body *self) {
   if (self) {
     switch (self->kind) {
-    case HIR_SUBROUTINE_BODY_IMPORT:
-      hir_lit_free(self->body.import.entry);
-      hir_lit_free(self->body.import.lib);
-      break;
-    case HIR_SUBROUTINE_BODY_BLOCK:
-      hir_stmt_block_free(self->body.block.block);
-      list_hir_var_free(self->body.block.vars);
-      break;
-    case HIR_SUBROUTINE_BODY_UNKNOWN:
-    default:
-      error("unexpected body kind %d %p", self->kind, self);
-      break;
+      case HIR_SUBROUTINE_BODY_IMPORT:
+        hir_lit_free(self->body.import.entry);
+        hir_lit_free(self->body.import.lib);
+        break;
+      case HIR_SUBROUTINE_BODY_BLOCK:
+        hir_stmt_block_free(self->body.block.block);
+        list_hir_var_free(self->body.block.vars);
+        break;
+      case HIR_SUBROUTINE_BODY_UNKNOWN:
+      default:
+        error("unexpected body kind %d %p", self->kind, self);
+        break;
     }
     free(self);
   }

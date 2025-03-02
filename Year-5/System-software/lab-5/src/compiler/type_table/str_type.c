@@ -54,36 +54,36 @@ static void strbuf_append_type_primitive(type_ctx *ctx, strbuf *buffer,
                                          const type_primitive *type) {
   UNUSED(ctx);
   switch (type->type) {
-  case TYPE_PRIMITIVE_BOOL:
-    strbuf_append(buffer, "bool");
-    break;
-  case TYPE_PRIMITIVE_BYTE:
-    strbuf_append(buffer, "byte");
-    break;
-  case TYPE_PRIMITIVE_INT:
-    strbuf_append(buffer, "int");
-    break;
-  case TYPE_PRIMITIVE_UINT:
-    strbuf_append(buffer, "uint");
-    break;
-  case TYPE_PRIMITIVE_LONG:
-    strbuf_append(buffer, "long");
-    break;
-  case TYPE_PRIMITIVE_ULONG:
-    strbuf_append(buffer, "ulong");
-    break;
-  case TYPE_PRIMITIVE_CHAR:
-    strbuf_append(buffer, "char");
-    break;
-  case TYPE_PRIMITIVE_STRING:
-    strbuf_append(buffer, "string");
-    break;
-  case TYPE_PRIMITIVE_VOID:
-    strbuf_append(buffer, "void");
-    break;
-  case TYPE_PRIMITIVE_UNKNOWN:
-  default:
-    warn("unexpected primitive type %d %p", type->type, type);
+    case TYPE_PRIMITIVE_BOOL:
+      strbuf_append(buffer, "bool");
+      break;
+    case TYPE_PRIMITIVE_BYTE:
+      strbuf_append(buffer, "byte");
+      break;
+    case TYPE_PRIMITIVE_INT:
+      strbuf_append(buffer, "int");
+      break;
+    case TYPE_PRIMITIVE_UINT:
+      strbuf_append(buffer, "uint");
+      break;
+    case TYPE_PRIMITIVE_LONG:
+      strbuf_append(buffer, "long");
+      break;
+    case TYPE_PRIMITIVE_ULONG:
+      strbuf_append(buffer, "ulong");
+      break;
+    case TYPE_PRIMITIVE_CHAR:
+      strbuf_append(buffer, "char");
+      break;
+    case TYPE_PRIMITIVE_STRING:
+      strbuf_append(buffer, "string");
+      break;
+    case TYPE_PRIMITIVE_VOID:
+      strbuf_append(buffer, "void");
+      break;
+    case TYPE_PRIMITIVE_UNKNOWN:
+    default:
+      warn("unexpected primitive type %d %p", type->type, type);
   }
 }
 
@@ -158,37 +158,37 @@ static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,
 
   if (type->type_ref) {
     switch (type->type_ref->kind) {
-    case TYPE_UNKNOWN:
-    case TYPE_PRIMITIVE:
-    case TYPE_ARRAY:
-    case TYPE_CALLABLE:
-    case TYPE_TYPENAME:
-    case TYPE_MONO:
-      strbuf_append_type(ctx, buffer, type->type_ref);
-      break;
-    case TYPE_CLASS: {
-      // add mapping for replacement
-      const type_class *tmpl = (type_class *)type->type_ref;
-      for (list_type_ref_it it = list_type_ref_begin(type->types),
-                            t_it = list_type_ref_begin(tmpl->typenames);
-           !END(it) && !END(t_it); NEXT(it), NEXT(t_it)) {
-        hashset_type_map_insert(ctx->map, type_map_new(GET(t_it), GET(it)));
-      }
-
-      strbuf_append_type_class(ctx, buffer, tmpl);
-
-      // erase
-      for (list_type_ref_it it = list_type_ref_begin(tmpl->typenames); !END(it);
-           NEXT(it)) {
-        hashset_type_map_it found =
-            hashset_type_map_find(ctx->map, &(type_map){.from = GET(it)});
-
-        if (!END(found)) {
-          hashset_type_map_erase(ctx->map, found);
+      case TYPE_UNKNOWN:
+      case TYPE_PRIMITIVE:
+      case TYPE_ARRAY:
+      case TYPE_CALLABLE:
+      case TYPE_TYPENAME:
+      case TYPE_MONO:
+        strbuf_append_type(ctx, buffer, type->type_ref);
+        break;
+      case TYPE_CLASS: {
+        // add mapping for replacement
+        const type_class *tmpl = (type_class *)type->type_ref;
+        for (list_type_ref_it it = list_type_ref_begin(type->types),
+                              t_it = list_type_ref_begin(tmpl->typenames);
+             !END(it) && !END(t_it); NEXT(it), NEXT(t_it)) {
+          hashset_type_map_insert(ctx->map, type_map_new(GET(t_it), GET(it)));
         }
+
+        strbuf_append_type_class(ctx, buffer, tmpl);
+
+        // erase
+        for (list_type_ref_it it = list_type_ref_begin(tmpl->typenames);
+             !END(it); NEXT(it)) {
+          hashset_type_map_it found =
+              hashset_type_map_find(ctx->map, &(type_map){.from = GET(it)});
+
+          if (!END(found)) {
+            hashset_type_map_erase(ctx->map, found);
+          }
+        }
+        break;
       }
-      break;
-    }
     }
   }
 }
@@ -208,49 +208,50 @@ static void strbuf_append_type(type_ctx *ctx, strbuf *buffer,
   }
 
   switch (generic->kind) {
-  case TYPE_PRIMITIVE:
-    strbuf_append_type_primitive(ctx, buffer, (const type_primitive *)generic);
-    break;
-  case TYPE_ARRAY:
-    strbuf_append_type_array(ctx, buffer, (const type_array *)generic);
-    break;
-  case TYPE_CALLABLE:
-    strbuf_append_type_callable(ctx, buffer, (const type_callable *)generic);
-    break;
-  case TYPE_CLASS:
-    strbuf_append_type_class(ctx, buffer, (const type_class *)generic);
-    break;
-  case TYPE_TYPENAME:
-    strbuf_append_type_typename(ctx, buffer, (const type_typename *)generic);
-    break;
-  case TYPE_MONO:
-    strbuf_append_type_mono(ctx, buffer, (const type_mono *)generic);
-    break;
-  case TYPE_UNKNOWN:
-  default:
-    warn("unexpected type kind %d %p", generic->kind, generic);
-    break;
+    case TYPE_PRIMITIVE:
+      strbuf_append_type_primitive(ctx, buffer,
+                                   (const type_primitive *)generic);
+      break;
+    case TYPE_ARRAY:
+      strbuf_append_type_array(ctx, buffer, (const type_array *)generic);
+      break;
+    case TYPE_CALLABLE:
+      strbuf_append_type_callable(ctx, buffer, (const type_callable *)generic);
+      break;
+    case TYPE_CLASS:
+      strbuf_append_type_class(ctx, buffer, (const type_class *)generic);
+      break;
+    case TYPE_TYPENAME:
+      strbuf_append_type_typename(ctx, buffer, (const type_typename *)generic);
+      break;
+    case TYPE_MONO:
+      strbuf_append_type_mono(ctx, buffer, (const type_mono *)generic);
+      break;
+    case TYPE_UNKNOWN:
+    default:
+      warn("unexpected type kind %d %p", generic->kind, generic);
+      break;
   }
 }
 
 const char *type_enum_str(type_enum kind) {
   switch (kind) {
-  case TYPE_PRIMITIVE:
-    return "PRIMITIVE";
-  case TYPE_ARRAY:
-    return "ARRAY";
-  case TYPE_CALLABLE:
-    return "CALLABLE";
-  case TYPE_CLASS:
-    return "CLASS";
-  case TYPE_TYPENAME:
-    return "TYPENAME";
-  case TYPE_MONO:
-    return "MONO";
-  case TYPE_UNKNOWN:
-  default:
-    warn("unknown type kind %d", kind);
-    return "UNKNOWN";
+    case TYPE_PRIMITIVE:
+      return "PRIMITIVE";
+    case TYPE_ARRAY:
+      return "ARRAY";
+    case TYPE_CALLABLE:
+      return "CALLABLE";
+    case TYPE_CLASS:
+      return "CLASS";
+    case TYPE_TYPENAME:
+      return "TYPENAME";
+    case TYPE_MONO:
+      return "MONO";
+    case TYPE_UNKNOWN:
+    default:
+      warn("unknown type kind %d", kind);
+      return "UNKNOWN";
   }
 }
 
@@ -274,14 +275,14 @@ char *type_str(const type_base *generic) {
 
 const char *type_mono_enum_str(type_mono_enum spec) {
   switch (spec) {
-  case TYPE_MONO_UNSET:
-    return "UNSET";
-  case TYPE_MONO_FULL:
-    return "FULL";
-  case TYPE_MONO_NOT_FULL:
-    return "NOT_FULL";
-  default:
-    warn("unknown type_spec %d", spec);
-    return "UNKNOWN";
+    case TYPE_MONO_UNSET:
+      return "UNSET";
+    case TYPE_MONO_FULL:
+      return "FULL";
+    case TYPE_MONO_NOT_FULL:
+      return "NOT_FULL";
+    default:
+      warn("unknown type_spec %d", spec);
+      return "UNKNOWN";
   }
 }

@@ -9,7 +9,6 @@ typedef enum exception_type_enum {
   EXCEPTION_PARSER,
   EXCEPTION_TREE,
   EXCEPTION_HIR,
-  EXCEPTION_EIR,
   EXCEPTION_MIR,
   EXCEPTION_CG,
 } exception_type;
@@ -55,18 +54,14 @@ typedef enum exception_subtype_hir_enum {
   EXCEPTION_HIR_TEMPLATE_EXPANSION,
 } exception_subtype_hir;
 
-typedef enum exception_subtype_eir_enum {
-  EXCEPTION_EIR_UNKNOWN,
-  EXCEPTION_EIR_NULL,
-  EXCEPTION_EIR_RVALUE_ASSIGNMENT,
-  EXCEPTION_EIR_BAD_BREAK,
-} exception_subtype_eir;
-
 typedef enum exception_subtype_mir_enum {
   EXCEPTION_MIR_UNKNOWN,
   EXCEPTION_MIR_NO_RETURN,
   EXCEPTION_MIR_UNEXPECTED_TYPE,
-  EXCEPTION_MIR_BREAK_UNHANDLED,
+  EXCEPTION_MIR_UNEXPECTED_BREAK,
+  EXCEPTION_MIR_UNEXPECTED_RVALUE,
+  EXCEPTION_MIR_UNEXPECTED_IDENTIFIER,
+  EXCEPTION_MIR_UNEXPECTED_MEMBER,
 } exception_subtype_mir;
 
 typedef enum enception_subtype_cg_enum {
@@ -114,6 +109,5 @@ void       exception_free(exception *exc);
 char      *exception_str(const exception *exc, int is_color);
 
 const char *exception_subtype_hir_str(exception_subtype_hir ir);
-const char *exception_subtype_eir_str(exception_subtype_eir ir);
 const char *exception_subtype_mir_str(exception_subtype_mir ir);
 const char *exception_subtype_cg_str(exception_subtype_cg ir);

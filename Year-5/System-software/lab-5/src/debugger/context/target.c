@@ -27,11 +27,11 @@ static target_state_enum context_tg_brkpt_fix(context *self) {
 int context_tg_is_running(context *self) {
   assert(self->s_target != TARGET_ERROR);
   switch (self->s_target) {
-  case TARGET_BRKPT:
-  case TARGET_TRAPPED:
-    return 1;
-  default:
-    return 0;
+    case TARGET_BRKPT:
+    case TARGET_TRAPPED:
+      return 1;
+    default:
+      return 0;
   }
 }
 

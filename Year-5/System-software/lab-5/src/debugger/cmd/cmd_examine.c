@@ -23,92 +23,92 @@ static void fn_out_le_8bytes(context *ctx, uint64_t data, char format,
 
   while (offset != 8) {
     switch (size) {
-    case 8: {
-      uint64_t value = data;
-      switch (format) {
-      case 'x':
-        snprintf(buf, STRMAXLEN(buf), "0x%lx", value);
+      case 8: {
+        uint64_t value = data;
+        switch (format) {
+          case 'x':
+            snprintf(buf, STRMAXLEN(buf), "0x%lx", value);
+            break;
+          case 'z':
+            snprintf(buf, STRMAXLEN(buf), "0x%016lx", value);
+            break;
+          case 'd':
+            snprintf(buf, STRMAXLEN(buf), "%ld", value);
+            break;
+          case 'u':
+            snprintf(buf, STRMAXLEN(buf), "%lu", value);
+            break;
+          default:
+            warn("unexpected format %c", format);
+        }
         break;
-      case 'z':
-        snprintf(buf, STRMAXLEN(buf), "0x%016lx", value);
-        break;
-      case 'd':
-        snprintf(buf, STRMAXLEN(buf), "%ld", value);
-        break;
-      case 'u':
-        snprintf(buf, STRMAXLEN(buf), "%lu", value);
-        break;
-      default:
-        warn("unexpected format %c", format);
       }
-      break;
-    }
-    case 4: {
-      uint32_t value = data & 0xFFFFFFFF;
-      data >>= 32;
-      switch (format) {
-      case 'x':
-        snprintf(buf, STRMAXLEN(buf), "0x%x", value);
+      case 4: {
+        uint32_t value = data & 0xFFFFFFFF;
+        data >>= 32;
+        switch (format) {
+          case 'x':
+            snprintf(buf, STRMAXLEN(buf), "0x%x", value);
+            break;
+          case 'z':
+            snprintf(buf, STRMAXLEN(buf), "0x%08x", value);
+            break;
+          case 'd':
+            snprintf(buf, STRMAXLEN(buf), "%d", value);
+            break;
+          case 'u':
+            snprintf(buf, STRMAXLEN(buf), "%u", value);
+            break;
+          default:
+            warn("unexpected format %c", format);
+        }
         break;
-      case 'z':
-        snprintf(buf, STRMAXLEN(buf), "0x%08x", value);
-        break;
-      case 'd':
-        snprintf(buf, STRMAXLEN(buf), "%d", value);
-        break;
-      case 'u':
-        snprintf(buf, STRMAXLEN(buf), "%u", value);
-        break;
-      default:
-        warn("unexpected format %c", format);
       }
-      break;
-    }
-    case 2: {
-      uint16_t value = data & 0xFFFF;
-      data >>= 16;
-      switch (format) {
-      case 'x':
-        snprintf(buf, STRMAXLEN(buf), "0x%hx", value);
+      case 2: {
+        uint16_t value = data & 0xFFFF;
+        data >>= 16;
+        switch (format) {
+          case 'x':
+            snprintf(buf, STRMAXLEN(buf), "0x%hx", value);
+            break;
+          case 'z':
+            snprintf(buf, STRMAXLEN(buf), "0x%04hx", value);
+            break;
+          case 'd':
+            snprintf(buf, STRMAXLEN(buf), "%hd", value);
+            break;
+          case 'u':
+            snprintf(buf, STRMAXLEN(buf), "%hu", value);
+            break;
+          default:
+            warn("unexpected format %c", format);
+        }
         break;
-      case 'z':
-        snprintf(buf, STRMAXLEN(buf), "0x%04hx", value);
-        break;
-      case 'd':
-        snprintf(buf, STRMAXLEN(buf), "%hd", value);
-        break;
-      case 'u':
-        snprintf(buf, STRMAXLEN(buf), "%hu", value);
-        break;
-      default:
-        warn("unexpected format %c", format);
       }
-      break;
-    }
-    case 1: {
-      uint8_t value = data & 0xFF;
-      data >>= 8;
-      switch (format) {
-      case 'x':
-        snprintf(buf, STRMAXLEN(buf), "0x%hhx", value);
+      case 1: {
+        uint8_t value = data & 0xFF;
+        data >>= 8;
+        switch (format) {
+          case 'x':
+            snprintf(buf, STRMAXLEN(buf), "0x%hhx", value);
+            break;
+          case 'z':
+            snprintf(buf, STRMAXLEN(buf), "0x%02hhx", value);
+            break;
+          case 'd':
+            snprintf(buf, STRMAXLEN(buf), "%hhd", value);
+            break;
+          case 'u':
+            snprintf(buf, STRMAXLEN(buf), "%hhu", value);
+            break;
+          default:
+            warn("unexpected format %c", format);
+        }
         break;
-      case 'z':
-        snprintf(buf, STRMAXLEN(buf), "0x%02hhx", value);
-        break;
-      case 'd':
-        snprintf(buf, STRMAXLEN(buf), "%hhd", value);
-        break;
-      case 'u':
-        snprintf(buf, STRMAXLEN(buf), "%hhu", value);
-        break;
-      default:
-        warn("unexpected format %c", format);
       }
-      break;
-    }
-    default:
-      warn("unsupported size");
-      return;
+      default:
+        warn("unsupported size");
+        return;
     }
     offset += size;
     context_out_append(ctx, buf);
@@ -165,13 +165,13 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   } else {
     format = arg_format[0];
     switch (format) {
-    case 'x':
-    case 'z':
-    case 'd':
-    case 'u':
-      break;
-    default:
-      goto error_format;
+      case 'x':
+      case 'z':
+      case 'd':
+      case 'u':
+        break;
+      default:
+        goto error_format;
     }
   }
 
@@ -180,20 +180,20 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto error_format;
   } else {
     switch (arg_size[0]) {
-    case 'b':
-      size = 1;
-      break;
-    case 'h':
-      size = 2;
-      break;
-    case 'w':
-      size = 4;
-      break;
-    case 'g':
-      size = 8;
-      break;
-    default:
-      goto error_format;
+      case 'b':
+        size = 1;
+        break;
+      case 'h':
+        size = 2;
+        break;
+      case 'w':
+        size = 4;
+        break;
+      case 'g':
+        size = 8;
+        break;
+      default:
+        goto error_format;
     }
   }
 

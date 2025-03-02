@@ -32,15 +32,15 @@ static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
   va_start(args, fmt);
 
   switch (style) {
-  case dis_style_mnemonic:
-  case dis_style_sub_mnemonic:
-    vsnprintf(buf, STRMAXLEN(buf), fmt, args);
-    if (!strncmp(buf, "call", 4) && (isspace(buf[4]) || buf[4] == '\0')) {
-      *((int *)stream) = 1;
-    }
-    break;
-  default:
-    break;
+    case dis_style_mnemonic:
+    case dis_style_sub_mnemonic:
+      vsnprintf(buf, STRMAXLEN(buf), fmt, args);
+      if (!strncmp(buf, "call", 4) && (isspace(buf[4]) || buf[4] == '\0')) {
+        *((int *)stream) = 1;
+      }
+      break;
+    default:
+      break;
   }
 
   va_end(args);

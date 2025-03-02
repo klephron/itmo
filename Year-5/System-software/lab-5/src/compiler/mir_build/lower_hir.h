@@ -9,4 +9,5 @@ typedef struct mir_lower_hir_result_struct {
   list_exception *exceptions;
 } mir_lower_hir_result;
 
-mir_lower_hir_result mir_lower_hir(const hir *hir);
+mir_lower_hir_result mir_lower_hir(const hir        *hir,
+                                   const type_table *type_table);

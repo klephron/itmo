@@ -28,38 +28,39 @@ mir_lit *mir_lit_new(size_t id, const type_entry *type_ref,
 
 void mir_lit_free(mir_lit *self) {
   if (self) {
-    type_enum kind = self->type_ref->type->kind;
+    const type_base *type = self->type_ref ? self->type_ref->type : NULL;
+    type_enum        kind = type ? type->kind : TYPE_UNKNOWN;
 
     switch (kind) {
-    case TYPE_PRIMITIVE: {
-      type_primitive *primitive = (typeof(primitive))self;
-      switch (primitive->type) {
-      case TYPE_PRIMITIVE_STRING:
-        if (self->value.v_str) {
-          free(self->value.v_str);
+      case TYPE_PRIMITIVE: {
+        type_primitive *primitive = (typeof(primitive))type;
+        switch (primitive->type) {
+          case TYPE_PRIMITIVE_STRING:
+            if (self->value.v_str) {
+              free(self->value.v_str);
+            }
+            break;
+          case TYPE_PRIMITIVE_UNKNOWN:
+          case TYPE_PRIMITIVE_BOOL:
+          case TYPE_PRIMITIVE_BYTE:
+          case TYPE_PRIMITIVE_INT:
+          case TYPE_PRIMITIVE_UINT:
+          case TYPE_PRIMITIVE_LONG:
+          case TYPE_PRIMITIVE_ULONG:
+          case TYPE_PRIMITIVE_CHAR:
+          case TYPE_PRIMITIVE_VOID:
+            break;
         }
         break;
-      case TYPE_PRIMITIVE_UNKNOWN:
-      case TYPE_PRIMITIVE_BOOL:
-      case TYPE_PRIMITIVE_BYTE:
-      case TYPE_PRIMITIVE_INT:
-      case TYPE_PRIMITIVE_UINT:
-      case TYPE_PRIMITIVE_LONG:
-      case TYPE_PRIMITIVE_ULONG:
-      case TYPE_PRIMITIVE_CHAR:
-      case TYPE_PRIMITIVE_VOID:
-        break;
       }
-      break;
-    }
-    case TYPE_ARRAY:
-    case TYPE_CALLABLE:
-    case TYPE_CLASS:
-    case TYPE_TYPENAME:
-    case TYPE_MONO:
-    case TYPE_UNKNOWN:
-      error("unsupported literal kind %d %p", kind, self);
-      break;
+      case TYPE_ARRAY:
+      case TYPE_CALLABLE:
+      case TYPE_CLASS:
+      case TYPE_TYPENAME:
+      case TYPE_MONO:
+      case TYPE_UNKNOWN:
+        error("unsupported literal kind %d %p", kind, self);
+        break;
     }
     free(self);
   }
@@ -124,25 +125,25 @@ mir_stmt *mir_stmt_new_assign_lit(mir_value *to, mir_lit *from) {
 void mir_stmt_free(mir_stmt *self) {
   if (self) {
     switch (self->kind) {
-    case MIR_STMT_OP:
-      list_mir_value_ref_free(self->op.args);
-      break;
-    case MIR_STMT_CALL:
-      list_mir_value_ref_free(self->call.args);
-      break;
-    case MIR_STMT_MEMBER:
-      break;
-    case MIR_STMT_BUILTIN:
-      list_mir_value_ref_free(self->builtin.args);
-      break;
-    case MIR_STMT_ASSIGN_VALUE:
-      break;
-    case MIR_STMT_ASSIGN_LIT:
-      break;
-    case MIR_STMT_UNKNOWN:
-    default:
-      error("unknown stmt kind %d %p", self->kind, self);
-      break;
+      case MIR_STMT_OP:
+        list_mir_value_ref_free(self->op.args);
+        break;
+      case MIR_STMT_CALL:
+        list_mir_value_ref_free(self->call.args);
+        break;
+      case MIR_STMT_MEMBER:
+        break;
+      case MIR_STMT_BUILTIN:
+        list_mir_value_ref_free(self->builtin.args);
+        break;
+      case MIR_STMT_ASSIGN_VALUE:
+        break;
+      case MIR_STMT_ASSIGN_LIT:
+        break;
+      case MIR_STMT_UNKNOWN:
+      default:
+        error("unknown stmt kind %d %p", self->kind, self);
+        break;
     }
     free(self);
   }
@@ -224,26 +225,26 @@ mir_subroutine *mir_subroutine_new_imported(const symbol_entry *symbol_ref,
 void mir_subroutine_free(mir_subroutine *self) {
   if (self) {
     switch (self->kind) {
-    case MIR_SUBROUTINE_BASIC:
-      mir_value_free(self->basic.ret);
-      list_mir_value_free(self->basic.params);
-      list_mir_value_free(self->basic.vars);
-      list_mir_value_free(self->basic.tmps);
-      list_mir_bb_free(self->basic.bbs);
-      break;
-    case MIR_SUBROUTINE_EXTERNAL:
-      break;
-    case MIR_SUBROUTINE_IMPORTED:
-      if (self->imported.lib) {
-        free(self->imported.lib);
-      }
-      if (self->imported.entry) {
-        free(self->imported.entry);
-      }
-      break;
-    case MIR_SUBROUTINE_UNKNOWN:
-      error("unknown subroutine kind %d %p", self->kind, self);
-      break;
+      case MIR_SUBROUTINE_BASIC:
+        mir_value_free(self->basic.ret);
+        list_mir_value_free(self->basic.params);
+        list_mir_value_free(self->basic.vars);
+        list_mir_value_free(self->basic.tmps);
+        list_mir_bb_free(self->basic.bbs);
+        break;
+      case MIR_SUBROUTINE_EXTERNAL:
+        break;
+      case MIR_SUBROUTINE_IMPORTED:
+        if (self->imported.lib) {
+          free(self->imported.lib);
+        }
+        if (self->imported.entry) {
+          free(self->imported.entry);
+        }
+        break;
+      case MIR_SUBROUTINE_UNKNOWN:
+        error("unknown subroutine kind %d %p", self->kind, self);
+        break;
     }
     free(self);
   }

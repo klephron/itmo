@@ -22,26 +22,26 @@ static size_t c_type_direct_size(x86_64_type_enum type);
 
 static size_t c_type_direct_size(x86_64_type_enum type) {
   switch (type) {
-  case X86_64_TYPE_BOOL:
-    return sizeof(uint8_t);
-  case X86_64_TYPE_BYTE:
-    return sizeof(uint8_t);
-  case X86_64_TYPE_INT:
-    return sizeof(int32_t);
-  case X86_64_TYPE_UINT:
-    return sizeof(uint32_t);
-  case X86_64_TYPE_LONG:
-    return sizeof(int64_t);
-  case X86_64_TYPE_ULONG:
-    return sizeof(uint64_t);
-  case X86_64_TYPE_CHAR:
-    return sizeof(char);
-  case X86_64_TYPE_VOID:
-    return 0;
-    break;
-  default:
-    fprintf(stderr, "error: type is only for direct types\n");
-    return 0;
+    case X86_64_TYPE_BOOL:
+      return sizeof(uint8_t);
+    case X86_64_TYPE_BYTE:
+      return sizeof(uint8_t);
+    case X86_64_TYPE_INT:
+      return sizeof(int32_t);
+    case X86_64_TYPE_UINT:
+      return sizeof(uint32_t);
+    case X86_64_TYPE_LONG:
+      return sizeof(int64_t);
+    case X86_64_TYPE_ULONG:
+      return sizeof(uint64_t);
+    case X86_64_TYPE_CHAR:
+      return sizeof(char);
+    case X86_64_TYPE_VOID:
+      return 0;
+      break;
+    default:
+      fprintf(stderr, "error: type is only for direct types\n");
+      return 0;
   }
 }
 
@@ -113,26 +113,26 @@ x86_64_value __x86_64_value_array(const x86_64_type *elem_type, ...) {
   x86_64_type_enum elem_kind = x86_64_type_kind(elem_type);
 
   switch (elem_kind) {
-  case X86_64_TYPE_VOID:
-  case X86_64_TYPE_BOOL:
-  case X86_64_TYPE_BYTE:
-  case X86_64_TYPE_INT:
-  case X86_64_TYPE_UINT:
-  case X86_64_TYPE_LONG:
-  case X86_64_TYPE_ULONG:
-  case X86_64_TYPE_CHAR:
-  case X86_64_TYPE_STRING:
-    break;
-  case X86_64_TYPE_ARRAY:
-  case X86_64_TYPE_OBJECT:
-    fprintf(stderr, "error: element type should be primitive, got %s\n",
-            x86_64_type_enum_str(elem_kind));
-    return __x86_64_value_void();
-  default:
-    fprintf(stderr, "error: unknown type, got %s\n",
-            x86_64_type_enum_str(elem_kind));
-    return __x86_64_value_void();
-    break;
+    case X86_64_TYPE_VOID:
+    case X86_64_TYPE_BOOL:
+    case X86_64_TYPE_BYTE:
+    case X86_64_TYPE_INT:
+    case X86_64_TYPE_UINT:
+    case X86_64_TYPE_LONG:
+    case X86_64_TYPE_ULONG:
+    case X86_64_TYPE_CHAR:
+    case X86_64_TYPE_STRING:
+      break;
+    case X86_64_TYPE_ARRAY:
+    case X86_64_TYPE_OBJECT:
+      fprintf(stderr, "error: element type should be primitive, got %s\n",
+              x86_64_type_enum_str(elem_kind));
+      return __x86_64_value_void();
+    default:
+      fprintf(stderr, "error: unknown type, got %s\n",
+              x86_64_type_enum_str(elem_kind));
+      return __x86_64_value_void();
+      break;
   }
 
   va_list args;

@@ -120,22 +120,22 @@ type_mono *type_mono_new(type_base *type_ref, list_type_ref *types) {
 void type_free(type_base *generic) {
   if (generic) {
     switch (generic->kind) {
-    case TYPE_PRIMITIVE:
-      return type_primitive_free((type_primitive *)generic);
-    case TYPE_ARRAY:
-      return type_array_free((type_array *)generic);
-    case TYPE_CALLABLE:
-      return type_callable_free((type_callable *)generic);
-    case TYPE_CLASS:
-      return type_class_free((type_class *)generic);
-    case TYPE_TYPENAME:
-      return type_typename_free((type_typename *)generic);
-    case TYPE_MONO:
-      return type_mono_free((type_mono *)generic);
-    case TYPE_UNKNOWN:
-    default:
-      error("unexpected type_entry kind %d %p", generic->kind, generic);
-      break;
+      case TYPE_PRIMITIVE:
+        return type_primitive_free((type_primitive *)generic);
+      case TYPE_ARRAY:
+        return type_array_free((type_array *)generic);
+      case TYPE_CALLABLE:
+        return type_callable_free((type_callable *)generic);
+      case TYPE_CLASS:
+        return type_class_free((type_class *)generic);
+      case TYPE_TYPENAME:
+        return type_typename_free((type_typename *)generic);
+      case TYPE_MONO:
+        return type_mono_free((type_mono *)generic);
+      case TYPE_UNKNOWN:
+      default:
+        error("unexpected type_entry kind %d %p", generic->kind, generic);
+        break;
     }
   }
 }
@@ -147,18 +147,18 @@ void type_set_type_entry(type_base *generic, type_entry *type_entry_ref) {
   }
 
   switch (generic->kind) {
-  case TYPE_PRIMITIVE:
-  case TYPE_ARRAY:
-  case TYPE_CALLABLE:
-  case TYPE_CLASS:
-  case TYPE_TYPENAME:
-  case TYPE_MONO:
-    generic->type_entry_ref = type_entry_ref;
-    break;
-  case TYPE_UNKNOWN:
-  default:
-    error("unexpected type_entry kind %d %p", generic->kind, generic);
-    break;
+    case TYPE_PRIMITIVE:
+    case TYPE_ARRAY:
+    case TYPE_CALLABLE:
+    case TYPE_CLASS:
+    case TYPE_TYPENAME:
+    case TYPE_MONO:
+      generic->type_entry_ref = type_entry_ref;
+      break;
+    case TYPE_UNKNOWN:
+    default:
+      error("unexpected type_entry kind %d %p", generic->kind, generic);
+      break;
   }
 }
 
@@ -183,36 +183,36 @@ type_base *type_copy(const type_base *generic) {
     return NULL;
   }
   switch (generic->kind) {
-  case TYPE_PRIMITIVE: {
-    const type_primitive *self = (type_primitive *)generic;
-    return (type_base *)type_primitive_new(self->type);
-  }
-  case TYPE_ARRAY: {
-    const type_array *self = (type_array *)generic;
-    return (type_base *)type_array_new(self->element_ref);
-  }
-  case TYPE_CALLABLE: {
-    const type_callable *self = (type_callable *)generic;
-    return (type_base *)type_callable_new(self->ret_ref,
-                                          type_copy_list_ref(self->params));
-  }
-  case TYPE_CLASS: {
-    const type_class *self = (type_class *)generic;
-    return (type_base *)type_class_new(strdup(self->id),
-                                       type_copy_list_ref(self->typenames),
-                                       type_copy_list_ref(self->parents));
-  }
-  case TYPE_TYPENAME: {
-    const type_typename *self = (type_typename *)generic;
-    return (type_base *)type_typename_new(strdup(self->id), self->source_ref);
-  }
-  case TYPE_MONO: {
-    const type_mono *self = (type_mono *)generic;
-    return (type_base *)type_mono_new(self->type_ref,
-                                      type_copy_list_ref(self->types));
-  }
-  case TYPE_UNKNOWN:
-    break;
+    case TYPE_PRIMITIVE: {
+      const type_primitive *self = (type_primitive *)generic;
+      return (type_base *)type_primitive_new(self->type);
+    }
+    case TYPE_ARRAY: {
+      const type_array *self = (type_array *)generic;
+      return (type_base *)type_array_new(self->element_ref);
+    }
+    case TYPE_CALLABLE: {
+      const type_callable *self = (type_callable *)generic;
+      return (type_base *)type_callable_new(self->ret_ref,
+                                            type_copy_list_ref(self->params));
+    }
+    case TYPE_CLASS: {
+      const type_class *self = (type_class *)generic;
+      return (type_base *)type_class_new(strdup(self->id),
+                                         type_copy_list_ref(self->typenames),
+                                         type_copy_list_ref(self->parents));
+    }
+    case TYPE_TYPENAME: {
+      const type_typename *self = (type_typename *)generic;
+      return (type_base *)type_typename_new(strdup(self->id), self->source_ref);
+    }
+    case TYPE_MONO: {
+      const type_mono *self = (type_mono *)generic;
+      return (type_base *)type_mono_new(self->type_ref,
+                                        type_copy_list_ref(self->types));
+    }
+    case TYPE_UNKNOWN:
+      break;
   }
   error("unknown type kind %d %p", generic->kind, generic);
   return NULL;

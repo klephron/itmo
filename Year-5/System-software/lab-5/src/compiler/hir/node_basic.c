@@ -52,24 +52,24 @@ hir_lit *hir_lit_copy(const hir_lit *self) {
 
     if (self->state & HIR_STATE_BIND_TYPE) {
       switch (self->type_ref->type->kind) {
-      case TYPE_PRIMITIVE: {
-        type_primitive *type = (type_primitive *)self->type_ref->type;
-        switch (type->type) {
-        case TYPE_PRIMITIVE_CHAR:
-          u.v_str = strdup(self->value.v_str);
-          break;
-        case TYPE_PRIMITIVE_STRING:
-          u.v_char = strdup(self->value.v_char);
-          break;
+        case TYPE_PRIMITIVE: {
+          type_primitive *type = (type_primitive *)self->type_ref->type;
+          switch (type->type) {
+            case TYPE_PRIMITIVE_CHAR:
+              u.v_str = strdup(self->value.v_str);
+              break;
+            case TYPE_PRIMITIVE_STRING:
+              u.v_char = strdup(self->value.v_char);
+              break;
+            default:
+              u = self->value;
+              break;
+          }
+        } break;
         default:
-          u = self->value;
-          break;
-        }
-      } break;
-      default:
-        error("unexpected type kind %d when type is binded %p",
-              self->type_ref->type->kind, self);
-        return NULL;
+          error("unexpected type kind %d when type is binded %p",
+                self->type_ref->type->kind, self);
+          return NULL;
       }
 
       hir_lit *out = hir_lit_new(span_copy(self->base.span), NULL, u);
@@ -79,15 +79,15 @@ hir_lit *hir_lit_copy(const hir_lit *self) {
 
     } else {
       switch (self->type_hir->type) {
-      case HIR_TYPE_STRING:
-        u.v_str = strdup(self->value.v_str);
-        break;
-      case HIR_TYPE_CHAR:
-        u.v_char = strdup(self->value.v_char);
-        break;
-      default:
-        u = self->value;
-        break;
+        case HIR_TYPE_STRING:
+          u.v_str = strdup(self->value.v_str);
+          break;
+        case HIR_TYPE_CHAR:
+          u.v_char = strdup(self->value.v_char);
+          break;
+        default:
+          u = self->value;
+          break;
       }
       return hir_lit_new(span_copy(self->base.span),
                          hir_type_copy(self->type_hir), u);
@@ -100,22 +100,22 @@ void hir_lit_free(hir_lit *self) {
   if (self) {
     if (self->state & HIR_STATE_BIND_TYPE) {
       switch (self->type_ref->type->kind) {
-      case TYPE_PRIMITIVE: {
-        type_primitive *type = (type_primitive *)self->type_ref->type;
-        switch (type->type) {
-        case TYPE_PRIMITIVE_CHAR:
-          free(self->value.v_char);
-          break;
-        case TYPE_PRIMITIVE_STRING:
-          free(self->value.v_str);
-          break;
+        case TYPE_PRIMITIVE: {
+          type_primitive *type = (type_primitive *)self->type_ref->type;
+          switch (type->type) {
+            case TYPE_PRIMITIVE_CHAR:
+              free(self->value.v_char);
+              break;
+            case TYPE_PRIMITIVE_STRING:
+              free(self->value.v_str);
+              break;
+            default:
+              break;
+          }
+        } break;
         default:
-          break;
-        }
-      } break;
-      default:
-        error("unexpected type kind %d when type is binded %p",
-              self->type_ref->type->kind, self);
+          error("unexpected type kind %d when type is binded %p",
+                self->type_ref->type->kind, self);
       }
     }
 

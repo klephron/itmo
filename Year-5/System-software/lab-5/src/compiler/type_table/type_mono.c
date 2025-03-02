@@ -23,66 +23,66 @@ type_mono_enum type_calc_mono(const type_base *generic) {
 
   switch (generic->kind) {
 
-  case TYPE_PRIMITIVE:
-    return TYPE_MONO_FULL;
+    case TYPE_PRIMITIVE:
+      return TYPE_MONO_FULL;
 
-  case TYPE_ARRAY: {
-    const type_array *self = (const type_array *)generic;
-    return type_calc_mono(self->element_ref);
-  }
-
-  case TYPE_CALLABLE: {
-    const type_callable *self = (const type_callable *)generic;
-    type_mono_enum       mono = type_calc_mono(self->ret_ref);
-    if (mono == TYPE_MONO_UNSET || mono == TYPE_MONO_NOT_FULL) {
-      return mono;
-    }
-    return type_calc_mono_list(self->params);
-  }
-
-  case TYPE_CLASS: {
-    const type_class *self = (const type_class *)generic;
-    if (!self->typenames) {
-      return TYPE_MONO_UNSET;
-    }
-    if (list_type_ref_size(self->typenames)) {
-      return TYPE_MONO_NOT_FULL;
-    }
-    return type_calc_mono_list(self->parents);
-  }
-
-  case TYPE_TYPENAME:
-    return TYPE_MONO_NOT_FULL;
-
-  case TYPE_MONO: {
-    const type_mono *self = (const type_mono *)generic;
-
-    if (!self->type_ref) {
-      error("type_mono isn't attached to any type (null)");
-      return TYPE_MONO_UNSET;
+    case TYPE_ARRAY: {
+      const type_array *self = (const type_array *)generic;
+      return type_calc_mono(self->element_ref);
     }
 
-    switch (self->type_ref->kind) {
+    case TYPE_CALLABLE: {
+      const type_callable *self = (const type_callable *)generic;
+      type_mono_enum       mono = type_calc_mono(self->ret_ref);
+      if (mono == TYPE_MONO_UNSET || mono == TYPE_MONO_NOT_FULL) {
+        return mono;
+      }
+      return type_calc_mono_list(self->params);
+    }
+
     case TYPE_CLASS: {
-      const type_class *attached = (const type_class *)self->type_ref;
+      const type_class *self = (const type_class *)generic;
+      if (!self->typenames) {
+        return TYPE_MONO_UNSET;
+      }
+      if (list_type_ref_size(self->typenames)) {
+        return TYPE_MONO_NOT_FULL;
+      }
+      return type_calc_mono_list(self->parents);
+    }
 
-      size_t typenames_sz = list_type_ref_size(attached->typenames);
-      size_t types_sz = list_type_ref_size(self->types);
-      if (typenames_sz != types_sz) {
-        error("typenames size is not equal to types size");
+    case TYPE_TYPENAME:
+      return TYPE_MONO_NOT_FULL;
+
+    case TYPE_MONO: {
+      const type_mono *self = (const type_mono *)generic;
+
+      if (!self->type_ref) {
+        error("type_mono isn't attached to any type (null)");
         return TYPE_MONO_UNSET;
       }
 
-      return type_calc_mono_list(self->types);
-    }
-    default:
-      error("type_mono currently can be attached ONLY to classes");
-      return TYPE_MONO_UNSET;
-    }
-  }
+      switch (self->type_ref->kind) {
+        case TYPE_CLASS: {
+          const type_class *attached = (const type_class *)self->type_ref;
 
-  case TYPE_UNKNOWN:
-    break;
+          size_t typenames_sz = list_type_ref_size(attached->typenames);
+          size_t types_sz = list_type_ref_size(self->types);
+          if (typenames_sz != types_sz) {
+            error("typenames size is not equal to types size");
+            return TYPE_MONO_UNSET;
+          }
+
+          return type_calc_mono_list(self->types);
+        }
+        default:
+          error("type_mono currently can be attached ONLY to classes");
+          return TYPE_MONO_UNSET;
+      }
+    }
+
+    case TYPE_UNKNOWN:
+      break;
   }
   error("unexpected type kind %d %p", generic->kind, generic);
   return TYPE_MONO_UNSET;
@@ -93,20 +93,20 @@ type_mono_enum type_get_mono(const type_base *generic) {
     return TYPE_MONO_FULL;
   }
   switch (generic->kind) {
-  case TYPE_PRIMITIVE:
-    return TYPE_MONO_FULL;
-  case TYPE_TYPENAME:
-    return TYPE_MONO_NOT_FULL;
-  case TYPE_ARRAY:
-    return ((const type_array *)generic)->mono_kind;
-  case TYPE_CALLABLE:
-    return ((const type_callable *)generic)->mono_kind;
-  case TYPE_CLASS:
-    return ((const type_class *)generic)->mono_kind;
-  case TYPE_MONO:
-    return ((const type_mono *)generic)->mono_kind;
-  case TYPE_UNKNOWN:
-    break;
+    case TYPE_PRIMITIVE:
+      return TYPE_MONO_FULL;
+    case TYPE_TYPENAME:
+      return TYPE_MONO_NOT_FULL;
+    case TYPE_ARRAY:
+      return ((const type_array *)generic)->mono_kind;
+    case TYPE_CALLABLE:
+      return ((const type_callable *)generic)->mono_kind;
+    case TYPE_CLASS:
+      return ((const type_class *)generic)->mono_kind;
+    case TYPE_MONO:
+      return ((const type_mono *)generic)->mono_kind;
+    case TYPE_UNKNOWN:
+      break;
   }
   error("unexpected type kind %d %p", generic->kind, generic);
   return TYPE_MONO_UNSET;
@@ -117,26 +117,26 @@ void type_set_mono(type_base *generic, type_mono_enum mono) {
     return;
   }
   switch (generic->kind) {
-  case TYPE_PRIMITIVE:
-    break;
-  case TYPE_ARRAY:
-    ((type_array *)generic)->mono_kind = mono;
-    break;
-  case TYPE_CALLABLE:
-    ((type_callable *)generic)->mono_kind = mono;
-    break;
-  case TYPE_CLASS:
-    ((type_class *)generic)->mono_kind = mono;
-    break;
-  case TYPE_TYPENAME:
-    break;
-  case TYPE_MONO:
-    ((type_mono *)generic)->mono_kind = mono;
-    break;
-  case TYPE_UNKNOWN:
-  default:
-    error("unexpected type kind %d %p", generic->kind, generic);
-    break;
+    case TYPE_PRIMITIVE:
+      break;
+    case TYPE_ARRAY:
+      ((type_array *)generic)->mono_kind = mono;
+      break;
+    case TYPE_CALLABLE:
+      ((type_callable *)generic)->mono_kind = mono;
+      break;
+    case TYPE_CLASS:
+      ((type_class *)generic)->mono_kind = mono;
+      break;
+    case TYPE_TYPENAME:
+      break;
+    case TYPE_MONO:
+      ((type_mono *)generic)->mono_kind = mono;
+      break;
+    case TYPE_UNKNOWN:
+    default:
+      error("unexpected type kind %d %p", generic->kind, generic);
+      break;
   }
 }
 

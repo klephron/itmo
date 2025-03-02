@@ -19,20 +19,20 @@ void hir_stmt_base_deinit(hir_stmt_base *self) { hir_base_deinit(&self->base); }
 void hir_stmt_free(hir_stmt_base *generic) {
   if (generic) {
     switch (generic->kind) {
-    case HIR_STMT_IF:
-      return hir_stmt_if_free((hir_stmt_if *)generic);
-    case HIR_STMT_BLOCK:
-      return hir_stmt_block_free((hir_stmt_block *)generic);
-    case HIR_STMT_WHILE:
-      return hir_stmt_while_free((hir_stmt_while *)generic);
-    case HIR_STMT_DO:
-      return hir_stmt_do_free((hir_stmt_do *)generic);
-    case HIR_STMT_BREAK:
-      return hir_stmt_break_free((hir_stmt_break *)generic);
-    case HIR_STMT_EXPR:
-      return hir_stmt_expr_free((hir_stmt_expr *)generic);
-    case HIR_STMT_UNKNOWN:
-      break;
+      case HIR_STMT_IF:
+        return hir_stmt_if_free((hir_stmt_if *)generic);
+      case HIR_STMT_BLOCK:
+        return hir_stmt_block_free((hir_stmt_block *)generic);
+      case HIR_STMT_WHILE:
+        return hir_stmt_while_free((hir_stmt_while *)generic);
+      case HIR_STMT_DO:
+        return hir_stmt_do_free((hir_stmt_do *)generic);
+      case HIR_STMT_BREAK:
+        return hir_stmt_break_free((hir_stmt_break *)generic);
+      case HIR_STMT_EXPR:
+        return hir_stmt_expr_free((hir_stmt_expr *)generic);
+      case HIR_STMT_UNKNOWN:
+        break;
     }
     error("unknown stmt kind to free %d %p", generic->kind, generic);
   }

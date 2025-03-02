@@ -10,10 +10,14 @@ var
   c: array [] of int;
   n;
 begin
+  a[b] = make!<array [,,] of int>(print!(cast!<int>(c[n][b])), 10, 11);
   ++n;
   while (--n) do begin
+    a = main2();
+    main(a);
     if a == 0 then break;
   end
+  a;
 end;
 
 method main2(a: int, b: array [,] of string): void

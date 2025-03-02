@@ -288,22 +288,22 @@ static void hir_tree_str_expr(strbuf *buffer, size_t pad,
     return;
   }
   switch (expr->kind) {
-  case HIR_EXPR_UNARY:
-    return hir_tree_str_expr_unary(buffer, pad, (hir_expr_unary *)expr);
-  case HIR_EXPR_BINARY:
-    return hir_tree_str_expr_binary(buffer, pad, (hir_expr_binary *)expr);
-  case HIR_EXPR_LITERAL:
-    return hir_tree_str_expr_lit(buffer, pad, (hir_expr_lit *)expr);
-  case HIR_EXPR_IDENTIFIER:
-    return hir_tree_str_expr_id(buffer, pad, (hir_expr_id *)expr);
-  case HIR_EXPR_CALL:
-    return hir_tree_str_expr_call(buffer, pad, (hir_expr_call *)expr);
-  case HIR_EXPR_INDEX:
-    return hir_tree_str_expr_index(buffer, pad, (hir_expr_index *)expr);
-  case HIR_EXPR_BUILTIN:
-    return hir_tree_str_expr_builtin(buffer, pad, (hir_expr_builtin *)expr);
-  case HIR_EXPR_UNKNOWN:
-    break;
+    case HIR_EXPR_UNARY:
+      return hir_tree_str_expr_unary(buffer, pad, (hir_expr_unary *)expr);
+    case HIR_EXPR_BINARY:
+      return hir_tree_str_expr_binary(buffer, pad, (hir_expr_binary *)expr);
+    case HIR_EXPR_LITERAL:
+      return hir_tree_str_expr_lit(buffer, pad, (hir_expr_lit *)expr);
+    case HIR_EXPR_IDENTIFIER:
+      return hir_tree_str_expr_id(buffer, pad, (hir_expr_id *)expr);
+    case HIR_EXPR_CALL:
+      return hir_tree_str_expr_call(buffer, pad, (hir_expr_call *)expr);
+    case HIR_EXPR_INDEX:
+      return hir_tree_str_expr_index(buffer, pad, (hir_expr_index *)expr);
+    case HIR_EXPR_BUILTIN:
+      return hir_tree_str_expr_builtin(buffer, pad, (hir_expr_builtin *)expr);
+    case HIR_EXPR_UNKNOWN:
+      break;
   }
   warn("unknown expr kind %d", expr->kind);
 }
@@ -520,20 +520,20 @@ static void hir_tree_str_stmt(strbuf *buffer, size_t pad,
     return;
   }
   switch (stmt->kind) {
-  case HIR_STMT_IF:
-    return hir_tree_str_stmt_if(buffer, pad, (hir_stmt_if *)stmt);
-  case HIR_STMT_BLOCK:
-    return hir_tree_str_stmt_block(buffer, pad, (hir_stmt_block *)stmt);
-  case HIR_STMT_WHILE:
-    return hir_tree_str_stmt_while(buffer, pad, (hir_stmt_while *)stmt);
-  case HIR_STMT_DO:
-    return hir_tree_str_stmt_do(buffer, pad, (hir_stmt_do *)stmt);
-  case HIR_STMT_BREAK:
-    return hir_tree_str_stmt_break(buffer, pad, (hir_stmt_break *)stmt);
-  case HIR_STMT_EXPR:
-    return hir_tree_str_stmt_expr(buffer, pad, (hir_stmt_expr *)stmt);
-  case HIR_STMT_UNKNOWN:
-    break;
+    case HIR_STMT_IF:
+      return hir_tree_str_stmt_if(buffer, pad, (hir_stmt_if *)stmt);
+    case HIR_STMT_BLOCK:
+      return hir_tree_str_stmt_block(buffer, pad, (hir_stmt_block *)stmt);
+    case HIR_STMT_WHILE:
+      return hir_tree_str_stmt_while(buffer, pad, (hir_stmt_while *)stmt);
+    case HIR_STMT_DO:
+      return hir_tree_str_stmt_do(buffer, pad, (hir_stmt_do *)stmt);
+    case HIR_STMT_BREAK:
+      return hir_tree_str_stmt_break(buffer, pad, (hir_stmt_break *)stmt);
+    case HIR_STMT_EXPR:
+      return hir_tree_str_stmt_expr(buffer, pad, (hir_stmt_expr *)stmt);
+    case HIR_STMT_UNKNOWN:
+      break;
   }
   warn("unknown stmt kind %d", stmt->kind);
 }
@@ -708,40 +708,40 @@ static void hir_tree_str_subroutine_body(strbuf *buffer, size_t pad,
   pad += HIR_STR_TAB;
 
   switch (body->kind) {
-  case HIR_SUBROUTINE_BODY_IMPORT:
-    strbuf_append_padding(buffer, pad);
-    strbuf_append(buffer, "lib: ");
-    hir_tree_str_lit(buffer, pad, body->body.import.lib);
-    strbuf_appendln(buffer, "");
-
-    strbuf_append_padding(buffer, pad);
-    strbuf_append(buffer, "entry: ");
-    hir_tree_str_lit(buffer, pad, body->body.import.entry);
-    strbuf_appendln(buffer, "");
-    break;
-  case HIR_SUBROUTINE_BODY_BLOCK:
-    strbuf_append_padding(buffer, pad);
-    strbuf_appendln(buffer, "vars: [");
-    pad += HIR_STR_TAB;
-    for (list_hir_var_it it = list_hir_var_begin(body->body.block.vars);
-         !END(it); NEXT(it)) {
+    case HIR_SUBROUTINE_BODY_IMPORT:
       strbuf_append_padding(buffer, pad);
-      hir_tree_str_var(buffer, pad, GET(it));
+      strbuf_append(buffer, "lib: ");
+      hir_tree_str_lit(buffer, pad, body->body.import.lib);
       strbuf_appendln(buffer, "");
-    }
-    pad -= HIR_STR_TAB;
-    strbuf_append_padding(buffer, pad);
-    strbuf_appendln(buffer, "]");
 
-    strbuf_append_padding(buffer, pad);
-    strbuf_append(buffer, "block: ");
-    hir_tree_str_stmt_block(buffer, pad, body->body.block.block);
-    strbuf_appendln(buffer, "");
-    break;
-  case HIR_SUBROUTINE_BODY_UNKNOWN:
-  default:
-    warn("unknown subroutine body kind %d %p", body->kind, body);
-    break;
+      strbuf_append_padding(buffer, pad);
+      strbuf_append(buffer, "entry: ");
+      hir_tree_str_lit(buffer, pad, body->body.import.entry);
+      strbuf_appendln(buffer, "");
+      break;
+    case HIR_SUBROUTINE_BODY_BLOCK:
+      strbuf_append_padding(buffer, pad);
+      strbuf_appendln(buffer, "vars: [");
+      pad += HIR_STR_TAB;
+      for (list_hir_var_it it = list_hir_var_begin(body->body.block.vars);
+           !END(it); NEXT(it)) {
+        strbuf_append_padding(buffer, pad);
+        hir_tree_str_var(buffer, pad, GET(it));
+        strbuf_appendln(buffer, "");
+      }
+      pad -= HIR_STR_TAB;
+      strbuf_append_padding(buffer, pad);
+      strbuf_appendln(buffer, "]");
+
+      strbuf_append_padding(buffer, pad);
+      strbuf_append(buffer, "block: ");
+      hir_tree_str_stmt_block(buffer, pad, body->body.block.block);
+      strbuf_appendln(buffer, "");
+      break;
+    case HIR_SUBROUTINE_BODY_UNKNOWN:
+    default:
+      warn("unknown subroutine body kind %d %p", body->kind, body);
+      break;
   }
 
   pad -= HIR_STR_TAB;

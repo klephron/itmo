@@ -105,67 +105,63 @@ char *exception_str(const exception *exc, int is_color) {
   strbuf *buffer = strbuf_new(sizeof(buf), 0);
 
   switch (exc->level) {
-  case EXCEPTION_LEVEL_INFO:
-    if (is_color) {
-      strbuf_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
-    } else {
-      strbuf_append(buffer, "info");
-    }
-    break;
-  case EXCEPTION_LEVEL_WARNING:
-    if (is_color) {
-      strbuf_append(buffer, ANSI_COLOR_YELLOW "warn" ANSI_COLOR_RESET);
-    } else {
-      strbuf_append(buffer, "info");
-    }
-    break;
-  case EXCEPTION_LEVEL_ERROR:
-    if (is_color) {
-      strbuf_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
-    } else {
-      strbuf_append(buffer, "info");
-    }
-    break;
-  case EXCEPTION_LEVEL_UNKNOWN:
-  default:
-    strbuf_append(buffer, "unknown");
-    break;
+    case EXCEPTION_LEVEL_INFO:
+      if (is_color) {
+        strbuf_append(buffer, ANSI_COLOR_CYAN "info" ANSI_COLOR_RESET);
+      } else {
+        strbuf_append(buffer, "info");
+      }
+      break;
+    case EXCEPTION_LEVEL_WARNING:
+      if (is_color) {
+        strbuf_append(buffer, ANSI_COLOR_YELLOW "warn" ANSI_COLOR_RESET);
+      } else {
+        strbuf_append(buffer, "info");
+      }
+      break;
+    case EXCEPTION_LEVEL_ERROR:
+      if (is_color) {
+        strbuf_append(buffer, ANSI_COLOR_RED "error" ANSI_COLOR_RESET);
+      } else {
+        strbuf_append(buffer, "info");
+      }
+      break;
+    case EXCEPTION_LEVEL_UNKNOWN:
+    default:
+      strbuf_append(buffer, "unknown");
+      break;
   }
 
   switch (exc->type) {
-  case EXCEPTION_LEXER:
-    snprintf(buf, STRMAXLEN(buf), "(L%d): %s\n", exc->subtype, exc_message);
-    break;
-  case EXCEPTION_PARSER:
-    snprintf(buf, STRMAXLEN(buf), "(P%d): %s -> %s", exc->subtype, exc_name,
-             exc_message);
-    break;
-  case EXCEPTION_TREE:
-    snprintf(buf, STRMAXLEN(buf), "(T%d): %s -> %s", exc->subtype, exc_name,
-             exc_message);
-    break;
-  case EXCEPTION_HIR:
-    snprintf(buf, STRMAXLEN(buf), "(H%d): %s -> %s", exc->subtype, exc_name,
-             exc_message);
-    break;
-  case EXCEPTION_EIR:
-    snprintf(buf, STRMAXLEN(buf), "(E%d): %s -> %s", exc->subtype, exc_name,
-             exc_message);
-    break;
-  case EXCEPTION_MIR:
-    snprintf(buf, STRMAXLEN(buf), "(M%d): %s -> %s", exc->subtype, exc_name,
-             exc_message);
-    break;
-  case EXCEPTION_CG:
-    snprintf(buf, STRMAXLEN(buf), "(C%d): %s -> %s", exc->subtype, exc_name,
-             exc_message);
-    break;
-  case EXCEPTION_UNKNOWN:
-  default:
-    warn("unknown exception type %d", exc->type);
-    snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
-             exc_message);
-    break;
+    case EXCEPTION_LEXER:
+      snprintf(buf, STRMAXLEN(buf), "(L%d): %s\n", exc->subtype, exc_message);
+      break;
+    case EXCEPTION_PARSER:
+      snprintf(buf, STRMAXLEN(buf), "(P%d): %s -> %s", exc->subtype, exc_name,
+               exc_message);
+      break;
+    case EXCEPTION_TREE:
+      snprintf(buf, STRMAXLEN(buf), "(T%d): %s -> %s", exc->subtype, exc_name,
+               exc_message);
+      break;
+    case EXCEPTION_HIR:
+      snprintf(buf, STRMAXLEN(buf), "(H%d): %s -> %s", exc->subtype, exc_name,
+               exc_message);
+      break;
+    case EXCEPTION_MIR:
+      snprintf(buf, STRMAXLEN(buf), "(M%d): %s -> %s", exc->subtype, exc_name,
+               exc_message);
+      break;
+    case EXCEPTION_CG:
+      snprintf(buf, STRMAXLEN(buf), "(C%d): %s -> %s", exc->subtype, exc_name,
+               exc_message);
+      break;
+    case EXCEPTION_UNKNOWN:
+    default:
+      warn("unknown exception type %d", exc->type);
+      snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
+               exc_message);
+      break;
   }
   strbuf_append(buffer, buf);
   strbuf_append(buffer, "\n");
@@ -197,51 +193,36 @@ exception *exception_new_from_helper(const exception_helper *helper,
 
 const char *exception_subtype_hir_str(exception_subtype_hir type) {
   switch (type) {
-  case EXCEPTION_HIR_HEX_VALIDATION:
-    return "hex validation";
-  case EXCEPTION_HIR_BITS_VALIDATION:
-    return "bits validation";
-  case EXCEPTION_HIR_DEC_VALIDATION:
-    return "dec validation";
-  case EXCEPTION_HIR_BOOL_VALIDATION:
-    return "bool validation";
-  case EXCEPTION_HIR_SYMBOL_REDEFINITION:
-    return "symbol redefinition";
-  case EXCEPTION_HIR_SYMBOL_UNDEFINED:
-    return "symbol undefined";
-  case EXCEPTION_HIR_TYPE_REDEFINITION:
-    return "symbol redefinition";
-  case EXCEPTION_HIR_TYPE_UNDEFINED:
-    return "symbol undefined";
-  case EXCEPTION_HIR_TYPE_UNSUPPORTED:
-    return "type unsupported";
-  case EXCEPTION_HIR_SUBROUTINE_DECL_INVALID:
-    return "invalid subroutine declaration";
-  case EXCEPTION_HIR_TYPE_UNEXPECTED:
-    return "type unexpected";
-  case EXCEPTION_HIR_TYPE_UNRESOLVED:
-    return "type unresolved";
-  case EXCEPTION_HIR_STATE_ILLEGAL:
-    return "state illegal";
-  case EXCEPTION_HIR_TEMPLATE_EXPANSION:
-    return "template expansion";
-  case EXCEPTION_HIR_UNKNOWN:
-    break;
-  }
-  warn("unknown exception subtype %d", type);
-  return "unknown";
-}
-
-const char *exception_subtype_eir_str(exception_subtype_eir type) {
-  switch (type) {
-  case EXCEPTION_EIR_NULL:
-    return "null";
-  case EXCEPTION_EIR_RVALUE_ASSIGNMENT:
-    return "rvalue assignment";
-  case EXCEPTION_EIR_BAD_BREAK:
-    return "bad break";
-  case EXCEPTION_EIR_UNKNOWN:
-    break;
+    case EXCEPTION_HIR_HEX_VALIDATION:
+      return "hex validation";
+    case EXCEPTION_HIR_BITS_VALIDATION:
+      return "bits validation";
+    case EXCEPTION_HIR_DEC_VALIDATION:
+      return "dec validation";
+    case EXCEPTION_HIR_BOOL_VALIDATION:
+      return "bool validation";
+    case EXCEPTION_HIR_SYMBOL_REDEFINITION:
+      return "symbol redefinition";
+    case EXCEPTION_HIR_SYMBOL_UNDEFINED:
+      return "symbol undefined";
+    case EXCEPTION_HIR_TYPE_REDEFINITION:
+      return "symbol redefinition";
+    case EXCEPTION_HIR_TYPE_UNDEFINED:
+      return "symbol undefined";
+    case EXCEPTION_HIR_TYPE_UNSUPPORTED:
+      return "type unsupported";
+    case EXCEPTION_HIR_SUBROUTINE_DECL_INVALID:
+      return "invalid subroutine declaration";
+    case EXCEPTION_HIR_TYPE_UNEXPECTED:
+      return "type unexpected";
+    case EXCEPTION_HIR_TYPE_UNRESOLVED:
+      return "type unresolved";
+    case EXCEPTION_HIR_STATE_ILLEGAL:
+      return "state illegal";
+    case EXCEPTION_HIR_TEMPLATE_EXPANSION:
+      return "template expansion";
+    case EXCEPTION_HIR_UNKNOWN:
+      break;
   }
   warn("unknown exception subtype %d", type);
   return "unknown";
@@ -249,14 +230,20 @@ const char *exception_subtype_eir_str(exception_subtype_eir type) {
 
 const char *exception_subtype_mir_str(exception_subtype_mir type) {
   switch (type) {
-  case EXCEPTION_MIR_NO_RETURN:
-    return "no return";
-  case EXCEPTION_MIR_UNEXPECTED_TYPE:
-    return "unexpected type";
-  case EXCEPTION_MIR_BREAK_UNHANDLED:
-    return "break unhandled";
-  case EXCEPTION_MIR_UNKNOWN:
-    break;
+    case EXCEPTION_MIR_NO_RETURN:
+      return "no return";
+    case EXCEPTION_MIR_UNEXPECTED_TYPE:
+      return "unexpected type";
+    case EXCEPTION_MIR_UNEXPECTED_BREAK:
+      return "unexpected break";
+    case EXCEPTION_MIR_UNEXPECTED_RVALUE:
+      return "unexpected rvalue";
+    case EXCEPTION_MIR_UNEXPECTED_IDENTIFIER:
+      return "unexpected identifeir";
+    case EXCEPTION_MIR_UNEXPECTED_MEMBER:
+      return "unexpected member";
+    case EXCEPTION_MIR_UNKNOWN:
+      break;
   }
   warn("unknown exception subtype %d", type);
   return "unknown";
@@ -264,12 +251,12 @@ const char *exception_subtype_mir_str(exception_subtype_mir type) {
 
 const char *exception_subtype_cg_str(exception_subtype_cg type) {
   switch (type) {
-  case EXCEPTION_CG_IMPLICIT_CALLABLE:
-    return "implicit callable";
-  case EXCEPTION_CG_EXTERNAL_SUBROUTINE_ARGC:
-    return "external subroutine argc mismatch";
-  case EXCEPTION_CG_UNKNOWN:
-    break;
+    case EXCEPTION_CG_IMPLICIT_CALLABLE:
+      return "implicit callable";
+    case EXCEPTION_CG_EXTERNAL_SUBROUTINE_ARGC:
+      return "external subroutine argc mismatch";
+    case EXCEPTION_CG_UNKNOWN:
+      break;
   }
   warn("unknown exception subtype %d", type);
   return "unknown";

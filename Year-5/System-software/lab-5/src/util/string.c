@@ -19,27 +19,27 @@ char *escape_html(const char *str) {
     const char *after = NULL;
 
     switch (str[i]) {
-    case '&':
-      after = "&amp;";
-      break;
-    case '<':
-      after = "&lt;";
-      break;
-    case '>':
-      after = "&gt;";
-      break;
-    case '"':
-      after = "&quot;";
-      break;
-    case '\'':
-      after = "&#39;";
-      break;
-    case '[':
-      after = "&#91;";
-      break;
-    case ']':
-      after = "&#93;";
-      break;
+      case '&':
+        after = "&amp;";
+        break;
+      case '<':
+        after = "&lt;";
+        break;
+      case '>':
+        after = "&gt;";
+        break;
+      case '"':
+        after = "&quot;";
+        break;
+      case '\'':
+        after = "&#39;";
+        break;
+      case '[':
+        after = "&#91;";
+        break;
+      case ']':
+        after = "&#93;";
+        break;
     }
 
     if (after) {

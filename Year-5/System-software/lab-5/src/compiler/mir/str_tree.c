@@ -87,91 +87,94 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
 
   switch (stmt->kind) {
 
-  case MIR_STMT_OP:
-    if (stmt->op.ret) {
-      strbuf_append_f(buffer, buf, "_%lu = ", stmt->op.ret->id);
-    }
-    strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
-    strbuf_append(buffer, "_");
-    strbuf_append(buffer, mir_stmt_op_enum_str(stmt->op.kind));
-    mir_str_stmt_args(buffer, pad, stmt->op.args);
-    break;
-
-  case MIR_STMT_CALL:
-    if (stmt->call.ret) {
-      strbuf_append_f(buffer, buf, "_%lu = ", stmt->call.ret->id);
-    }
-    strbuf_append(buffer, stmt->call.sub->symbol_ref->name);
-    mir_str_stmt_args(buffer, pad, stmt->op.args);
-    break;
-
-  case MIR_STMT_MEMBER:
-    if (stmt->member.ret) {
-      strbuf_append_f(buffer, buf, "_%lu = ", stmt->member.ret->id);
-    }
-    strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
-    strbuf_append_f(buffer, buf, "(_%lu, ", stmt->member.obj->id);
-    char *member_s = mir_lit_value_str(stmt->member.member);
-    if (member_s) {
-      strbuf_append(buffer, member_s);
-      free(member_s);
-    }
-    strbuf_append(buffer, ")");
-    break;
-
-  case MIR_STMT_BUILTIN:
-    if (stmt->builtin.ret) {
-      strbuf_append_f(buffer, buf, "_%lu = ", stmt->builtin.ret->id);
-    }
-    strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
-    strbuf_append(buffer, "_");
-    strbuf_append(buffer, mir_stmt_builtin_enum_str(stmt->builtin.kind));
-    if (stmt->builtin.type) {
-      strbuf_append(buffer, "<");
-      char *type_s = type_str(stmt->builtin.type->type);
-      if (type_s) {
-        strbuf_append(buffer, type_s);
-        free(type_s);
+    case MIR_STMT_OP:
+      if (stmt->op.ret) {
+        strbuf_append_f(buffer, buf, "_%lu = ", stmt->op.ret->id);
       }
-      strbuf_append(buffer, ">");
-    }
-    mir_str_stmt_args(buffer, pad, stmt->builtin.args);
-    break;
+      strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
+      strbuf_append(buffer, "_");
+      strbuf_append(buffer, mir_stmt_op_enum_str(stmt->op.kind));
+      mir_str_stmt_args(buffer, pad, stmt->op.args);
+      break;
 
-  case MIR_STMT_ASSIGN_VALUE:
-    strbuf_append_f(buffer, buf, "_%lu = _%zu", stmt->value.to->id,
-                    stmt->value.from->id);
-    break;
+    case MIR_STMT_CALL:
+      if (stmt->call.ret) {
+        strbuf_append_f(buffer, buf, "_%lu = ", stmt->call.ret->id);
+      }
+      strbuf_append(buffer, stmt->call.sub->symbol_ref->name);
+      mir_str_stmt_args(buffer, pad, stmt->op.args);
+      break;
 
-  case MIR_STMT_ASSIGN_LIT:
-    strbuf_append_f(buffer, buf, "_%lu = lit.%zu", stmt->lit.to->id,
-                    stmt->lit.from->id);
-    char *lit_s = mir_lit_value_str(stmt->lit.from);
-    if (lit_s) {
-      strbuf_append(buffer, "  # ");
-      strbuf_append(buffer, lit_s);
-      free(lit_s);
-    }
-    if (stmt->lit.from->type_ref) {
-      char *type_s = type_str(stmt->lit.from->type_ref->type);
-      if (type_s) {
-        if (lit_s) {
-          strbuf_append(buffer, ", ");
+    case MIR_STMT_MEMBER:
+      if (stmt->member.ret) {
+        strbuf_append_f(buffer, buf, "_%lu = ", stmt->member.ret->id);
+      }
+      strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
+      strbuf_append_f(buffer, buf, "(_%lu, ", stmt->member.obj->id);
+      char *member_s = mir_lit_value_str(stmt->member.member);
+      if (member_s) {
+        strbuf_append(buffer, member_s);
+        free(member_s);
+      }
+      strbuf_append(buffer, ")");
+      break;
+
+    case MIR_STMT_BUILTIN:
+      if (stmt->builtin.ret) {
+        strbuf_append_f(buffer, buf, "_%lu = ", stmt->builtin.ret->id);
+      }
+      strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
+      strbuf_append(buffer, "_");
+      strbuf_append(buffer, mir_stmt_builtin_enum_str(stmt->builtin.kind));
+      if (stmt->builtin.type) {
+        strbuf_append(buffer, "<");
+        char *type_s = type_str(stmt->builtin.type->type);
+        if (type_s) {
+          strbuf_append(buffer, type_s);
+          free(type_s);
         }
-        strbuf_append(buffer, type_s);
-        free(type_s);
+        strbuf_append(buffer, ">");
       }
-    }
-    break;
+      mir_str_stmt_args(buffer, pad, stmt->builtin.args);
+      break;
 
-  case MIR_STMT_UNKNOWN:
-  default:
-    warn("unexpected stmt kind %d %p", stmt->kind, stmt);
-    break;
+    case MIR_STMT_ASSIGN_VALUE:
+      strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
+      strbuf_append_f(buffer, buf, "(_%lu, _%zu)", stmt->value.to->id,
+                      stmt->value.from->id);
+      break;
+
+    case MIR_STMT_ASSIGN_LIT:
+      strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
+      strbuf_append_f(buffer, buf, "(_%lu, lit.%zu)", stmt->lit.to->id,
+                      stmt->lit.from->id);
+      char *lit_s = mir_lit_value_str(stmt->lit.from);
+      if (lit_s) {
+        strbuf_append(buffer, "  # ");
+        strbuf_append(buffer, lit_s);
+        free(lit_s);
+      }
+      if (stmt->lit.from->type_ref) {
+        char *type_s = type_str(stmt->lit.from->type_ref->type);
+        if (type_s) {
+          if (lit_s) {
+            strbuf_append(buffer, ", ");
+          }
+          strbuf_append(buffer, type_s);
+          free(type_s);
+        }
+      }
+      break;
+
+    case MIR_STMT_UNKNOWN:
+    default:
+      warn("unexpected stmt kind %d %p", stmt->kind, stmt);
+      break;
   }
 }
 
-static void mir_str_bb(strbuf *buffer, size_t pad, const mir_bb *bb) {
+static void mir_str_bb(strbuf *buffer, size_t pad, const mir_subroutine *sub,
+                       const mir_bb *bb) {
   char buf[64];
   strbuf_append_f(buffer, buf, "bb.%lu {", bb->id);
   pad += MIR_STR_TAB;
@@ -194,28 +197,28 @@ static void mir_str_bb(strbuf *buffer, size_t pad, const mir_bb *bb) {
   strbuf_append_clx(buffer, "", pad);
   mir_bb_enum bb_cond = mir_bb_get_cond(bb);
   switch (bb_cond) {
-  case MIR_BB_COND:
-    if (bb->jmp.cond_ref) {
-      strbuf_append_f(buffer, buf, "cond(_%lu)", bb->jmp.cond_ref->id);
-    } else {
-      strbuf_append_f(buffer, buf, "cond(%p)", bb->jmp.cond_ref);
-    }
-    strbuf_append(buffer, " -> [");
-    strbuf_append_f(buffer, buf, "je: bb.%lu", bb->jmp.je_ref->id);
-    strbuf_append(buffer, ", ");
-    strbuf_append_f(buffer, buf, "jz: bb.%lu", bb->jmp.jz_ref->id);
-    strbuf_append(buffer, "]");
-    break;
-  case MIR_BB_NEXT:
-    strbuf_append_f(buffer, buf, "jmp() -> bb.%lu", bb->jmp.next_ref->id);
-    break;
-  case MIR_BB_TERM:
-    strbuf_append(buffer, "return");
-    break;
-  case MIR_BB_UNKNOWN:
-  default:
-    warn("unexpected bb kind %d %p", bb_cond, bb);
-    break;
+    case MIR_BB_COND:
+      if (bb->jmp.cond_ref) {
+        strbuf_append_f(buffer, buf, "cond(_%lu)", bb->jmp.cond_ref->id);
+      } else {
+        strbuf_append_f(buffer, buf, "cond(%p)", bb->jmp.cond_ref);
+      }
+      strbuf_append(buffer, " -> [");
+      strbuf_append_f(buffer, buf, "je: bb.%lu", bb->jmp.je_ref->id);
+      strbuf_append(buffer, ", ");
+      strbuf_append_f(buffer, buf, "jz: bb.%lu", bb->jmp.jz_ref->id);
+      strbuf_append(buffer, "]");
+      break;
+    case MIR_BB_NEXT:
+      strbuf_append_f(buffer, buf, "jmp() -> bb.%lu", bb->jmp.next_ref->id);
+      break;
+    case MIR_BB_TERM:
+      strbuf_append_f(buffer, buf, "return _%lu", sub->basic.ret->id);
+      break;
+    case MIR_BB_UNKNOWN:
+    default:
+      warn("unexpected bb kind %d %p", bb_cond, bb);
+      break;
   }
 
   pad -= MIR_STR_TAB;
@@ -255,48 +258,48 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
   mir_str_type(buffer, pad, sub->type_ref);
 
   switch (sub->kind) {
-  case MIR_SUBROUTINE_BASIC:
-    strbuf_append_clx(buffer, "", pad);
-    // ret
-    strbuf_append_clx(buffer, "", pad);
-    mir_str_value(buffer, pad, sub->basic.ret, "ret");
-    // params
-    for (list_mir_value_it it = list_mir_value_begin(sub->basic.params);
-         !END(it); NEXT(it)) {
-      const mir_value *param = GET(it);
+    case MIR_SUBROUTINE_BASIC:
       strbuf_append_clx(buffer, "", pad);
-      mir_str_value(buffer, pad, param, "param");
-    }
-    // vars
-    for (list_mir_value_it it = list_mir_value_begin(sub->basic.vars); !END(it);
-         NEXT(it)) {
-      const mir_value *param = GET(it);
+      // ret
       strbuf_append_clx(buffer, "", pad);
-      mir_str_value(buffer, pad, param, "var");
-    }
-    // tmps
-    for (list_mir_value_it it = list_mir_value_begin(sub->basic.tmps); !END(it);
-         NEXT(it)) {
-      const mir_value *param = GET(it);
+      mir_str_value(buffer, pad, sub->basic.ret, "ret");
+      // params
+      for (list_mir_value_it it = list_mir_value_begin(sub->basic.params);
+           !END(it); NEXT(it)) {
+        const mir_value *param = GET(it);
+        strbuf_append_clx(buffer, "", pad);
+        mir_str_value(buffer, pad, param, "param");
+      }
+      // vars
+      for (list_mir_value_it it = list_mir_value_begin(sub->basic.vars);
+           !END(it); NEXT(it)) {
+        const mir_value *param = GET(it);
+        strbuf_append_clx(buffer, "", pad);
+        mir_str_value(buffer, pad, param, "var");
+      }
+      // tmps
+      for (list_mir_value_it it = list_mir_value_begin(sub->basic.tmps);
+           !END(it); NEXT(it)) {
+        const mir_value *param = GET(it);
+        strbuf_append_clx(buffer, "", pad);
+        mir_str_value(buffer, pad, param, "tmp");
+      }
+      // bbs
       strbuf_append_clx(buffer, "", pad);
-      mir_str_value(buffer, pad, param, "tmp");
-    }
-    // bbs
-    strbuf_append_clx(buffer, "", pad);
-    for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
-         NEXT(it)) {
-      const mir_bb *bb = GET(it);
-      strbuf_append_clx(buffer, "", pad);
-      mir_str_bb(buffer, pad, bb);
-    }
-    break;
-  case MIR_SUBROUTINE_EXTERNAL:
-    break;
-  case MIR_SUBROUTINE_IMPORTED:
-    break;
-  default:
-    warn("unexpected subroutine kind %d %p", sub->kind, sub);
-    break;
+      for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
+           NEXT(it)) {
+        const mir_bb *bb = GET(it);
+        strbuf_append_clx(buffer, "", pad);
+        mir_str_bb(buffer, pad, sub, bb);
+      }
+      break;
+    case MIR_SUBROUTINE_EXTERNAL:
+      break;
+    case MIR_SUBROUTINE_IMPORTED:
+      break;
+    default:
+      warn("unexpected subroutine kind %d %p", sub->kind, sub);
+      break;
   }
 
   pad -= MIR_STR_TAB;
@@ -353,7 +356,7 @@ static void mir_str_lit(strbuf *buffer, size_t pad, const mir_lit *lit) {
 
   char buf[64];
 
-  strbuf_append_clx(buffer, "{", 0);
+  strbuf_append_clx(buffer, "{ ", 0);
   pad += MIR_STR_TAB;
 
   strbuf_append_f(buffer, buf, "id: %lu", lit->id);
@@ -369,7 +372,7 @@ static void mir_str_lit(strbuf *buffer, size_t pad, const mir_lit *lit) {
   mir_str_type(buffer, pad, lit->type_ref);
 
   pad -= MIR_STR_TAB;
-  strbuf_append_clx(buffer, "}", 0);
+  strbuf_append_clx(buffer, " }", 0);
 }
 
 char *mir_str(const mir *mir) {

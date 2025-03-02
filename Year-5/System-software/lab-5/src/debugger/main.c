@@ -63,26 +63,26 @@ static void parse(args *args, int argc, char *argv[]) {
     c = getopt_long(argc, argv, "i:h", long_options, &option_index);
 
     switch (c) {
-    case EOF:
-      has_next = 0;
-      break;
-    case 0:
-      if (long_options[option_index].flag) {
+      case EOF:
+        has_next = 0;
         break;
-      }
-      break;
-    case 'i':
-      args->init_file = optarg;
-      break;
-    case 'h':
-      args->help = 1;
-      has_next = 0;
-      break;
-    default:
-      args->code = -1;
-      args->help = 1;
-      has_next = 0;
-      break;
+      case 0:
+        if (long_options[option_index].flag) {
+          break;
+        }
+        break;
+      case 'i':
+        args->init_file = optarg;
+        break;
+      case 'h':
+        args->help = 1;
+        has_next = 0;
+        break;
+      default:
+        args->code = -1;
+        args->help = 1;
+        has_next = 0;
+        break;
     }
   }
 

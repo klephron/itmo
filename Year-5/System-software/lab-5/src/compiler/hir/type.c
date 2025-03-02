@@ -54,22 +54,22 @@ hir_type_base *hir_type_base_new(span *span, hir_type_enum type) {
 void hir_type_free(hir_type_base *generic) {
   if (generic) {
     switch (generic->type) {
-    case HIR_TYPE_BOOL:
-    case HIR_TYPE_BYTE:
-    case HIR_TYPE_INT:
-    case HIR_TYPE_UINT:
-    case HIR_TYPE_LONG:
-    case HIR_TYPE_ULONG:
-    case HIR_TYPE_CHAR:
-    case HIR_TYPE_STRING:
-    case HIR_TYPE_VOID:
-      return hir_type_base_free(generic);
-    case HIR_TYPE_CUSTOM:
-      return hir_type_custom_free((hir_type_custom *)generic);
-    case HIR_TYPE_ARRAY:
-      return hir_type_array_free((hir_type_array *)generic);
-    case HIR_TYPE_UNKNOWN:
-      break;
+      case HIR_TYPE_BOOL:
+      case HIR_TYPE_BYTE:
+      case HIR_TYPE_INT:
+      case HIR_TYPE_UINT:
+      case HIR_TYPE_LONG:
+      case HIR_TYPE_ULONG:
+      case HIR_TYPE_CHAR:
+      case HIR_TYPE_STRING:
+      case HIR_TYPE_VOID:
+        return hir_type_base_free(generic);
+      case HIR_TYPE_CUSTOM:
+        return hir_type_custom_free((hir_type_custom *)generic);
+      case HIR_TYPE_ARRAY:
+        return hir_type_array_free((hir_type_array *)generic);
+      case HIR_TYPE_UNKNOWN:
+        break;
     }
     error("unknown hir type %d", generic->type);
   }
@@ -80,29 +80,29 @@ hir_type_base *hir_type_copy(const hir_type_base *self) {
     return NULL;
   }
   switch (self->type) {
-  case HIR_TYPE_BOOL:
-  case HIR_TYPE_BYTE:
-  case HIR_TYPE_INT:
-  case HIR_TYPE_UINT:
-  case HIR_TYPE_LONG:
-  case HIR_TYPE_ULONG:
-  case HIR_TYPE_CHAR:
-  case HIR_TYPE_STRING:
-  case HIR_TYPE_VOID:
-    return hir_type_base_new(span_copy(self->span), self->type);
-  case HIR_TYPE_CUSTOM: {
-    const hir_type_custom *custom = (typeof(custom))self;
-    return (hir_type_base *)hir_type_custom_new(
-        span_copy(self->span), strdup(custom->name),
-        hir_type_copy_list(custom->templates));
-  }
-  case HIR_TYPE_ARRAY: {
-    const hir_type_array *array = (typeof(array))self;
-    return (hir_type_base *)hir_type_array_new(span_copy(self->span),
-                                               hir_type_copy(array->elem_type));
-  }
-  case HIR_TYPE_UNKNOWN:
-    break;
+    case HIR_TYPE_BOOL:
+    case HIR_TYPE_BYTE:
+    case HIR_TYPE_INT:
+    case HIR_TYPE_UINT:
+    case HIR_TYPE_LONG:
+    case HIR_TYPE_ULONG:
+    case HIR_TYPE_CHAR:
+    case HIR_TYPE_STRING:
+    case HIR_TYPE_VOID:
+      return hir_type_base_new(span_copy(self->span), self->type);
+    case HIR_TYPE_CUSTOM: {
+      const hir_type_custom *custom = (typeof(custom))self;
+      return (hir_type_base *)hir_type_custom_new(
+          span_copy(self->span), strdup(custom->name),
+          hir_type_copy_list(custom->templates));
+    }
+    case HIR_TYPE_ARRAY: {
+      const hir_type_array *array = (typeof(array))self;
+      return (hir_type_base *)hir_type_array_new(
+          span_copy(self->span), hir_type_copy(array->elem_type));
+    }
+    case HIR_TYPE_UNKNOWN:
+      break;
   }
 
   error("unknown hir type %d", self->type);
@@ -121,33 +121,33 @@ int hir_type_cmp(const hir_type_base *lsv, const hir_type_base *rsv) {
   }
 
   switch (lsv->type) {
-  case HIR_TYPE_BOOL:
-  case HIR_TYPE_BYTE:
-  case HIR_TYPE_INT:
-  case HIR_TYPE_UINT:
-  case HIR_TYPE_LONG:
-  case HIR_TYPE_ULONG:
-  case HIR_TYPE_CHAR:
-  case HIR_TYPE_STRING:
-  case HIR_TYPE_VOID:
-    return 0;
-  case HIR_TYPE_CUSTOM: {
-    const hir_type_custom *l = (typeof(l))lsv;
-    const hir_type_custom *r = (typeof(r))rsv;
+    case HIR_TYPE_BOOL:
+    case HIR_TYPE_BYTE:
+    case HIR_TYPE_INT:
+    case HIR_TYPE_UINT:
+    case HIR_TYPE_LONG:
+    case HIR_TYPE_ULONG:
+    case HIR_TYPE_CHAR:
+    case HIR_TYPE_STRING:
+    case HIR_TYPE_VOID:
+      return 0;
+    case HIR_TYPE_CUSTOM: {
+      const hir_type_custom *l = (typeof(l))lsv;
+      const hir_type_custom *r = (typeof(r))rsv;
 
-    int cmp = strcmp(l->name, r->name);
-    if (cmp) {
-      return cmp;
+      int cmp = strcmp(l->name, r->name);
+      if (cmp) {
+        return cmp;
+      }
+      return hir_type_cmp_list(l->templates, r->templates);
     }
-    return hir_type_cmp_list(l->templates, r->templates);
-  }
-  case HIR_TYPE_ARRAY: {
-    const hir_type_array *l = (typeof(l))lsv;
-    const hir_type_array *r = (typeof(r))rsv;
-    return hir_type_cmp(l->elem_type, r->elem_type);
-  }
-  case HIR_TYPE_UNKNOWN:
-    break;
+    case HIR_TYPE_ARRAY: {
+      const hir_type_array *l = (typeof(l))lsv;
+      const hir_type_array *r = (typeof(r))rsv;
+      return hir_type_cmp(l->elem_type, r->elem_type);
+    }
+    case HIR_TYPE_UNKNOWN:
+      break;
   }
   error("unexpected hir type kind %d %p", lsv->type, lsv);
   return 0;
@@ -163,27 +163,27 @@ uint64_t hir_type_hash(const hir_type_base *lsv) {
   hash = hash_combine(hash, (uint64_t)lsv->type);
 
   switch (lsv->type) {
-  case HIR_TYPE_BOOL:
-  case HIR_TYPE_BYTE:
-  case HIR_TYPE_INT:
-  case HIR_TYPE_UINT:
-  case HIR_TYPE_LONG:
-  case HIR_TYPE_ULONG:
-  case HIR_TYPE_CHAR:
-  case HIR_TYPE_STRING:
-  case HIR_TYPE_VOID:
-    return hash;
-  case HIR_TYPE_CUSTOM: {
-    const hir_type_custom *l = (typeof(l))lsv;
-    hash = hash_combine(hash, container_hash_chars(l->name));
-    return hash_combine(hash, hir_type_hash_list(l->templates));
-  }
-  case HIR_TYPE_ARRAY: {
-    const hir_type_array *l = (typeof(l))lsv;
-    return hash_combine(hash, hir_type_hash(l->elem_type));
-  }
-  case HIR_TYPE_UNKNOWN:
-    break;
+    case HIR_TYPE_BOOL:
+    case HIR_TYPE_BYTE:
+    case HIR_TYPE_INT:
+    case HIR_TYPE_UINT:
+    case HIR_TYPE_LONG:
+    case HIR_TYPE_ULONG:
+    case HIR_TYPE_CHAR:
+    case HIR_TYPE_STRING:
+    case HIR_TYPE_VOID:
+      return hash;
+    case HIR_TYPE_CUSTOM: {
+      const hir_type_custom *l = (typeof(l))lsv;
+      hash = hash_combine(hash, container_hash_chars(l->name));
+      return hash_combine(hash, hir_type_hash_list(l->templates));
+    }
+    case HIR_TYPE_ARRAY: {
+      const hir_type_array *l = (typeof(l))lsv;
+      return hash_combine(hash, hir_type_hash(l->elem_type));
+    }
+    case HIR_TYPE_UNKNOWN:
+      break;
   }
 
   error("unexpected hir type kind %d %p", lsv->type, lsv);

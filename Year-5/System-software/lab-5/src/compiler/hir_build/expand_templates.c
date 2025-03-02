@@ -54,7 +54,7 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_hir_type_tmpl, hir_type_tmpl,
                               container_delete_hir_type_tmpl,
                               container_hash_hir_type_tmpl);
 
-// RESOLVED TYPES (including builtin)
+// TYPE INDEX
 static inline int container_cmp_type_ref(const void *lsv, const void *rsv) {
   const type_base *l = lsv;
   const type_base *r = rsv;
@@ -203,23 +203,24 @@ static list_hir_class *hir_filter_templated_hir_classes(hir *hir) {
 
     type_mono_enum type_mono = type_fetch_mono(class_type);
     switch (type_mono) {
-    case TYPE_MONO_NOT_FULL: {
-      list_hir_class_push_back(classes_t, hir_class);
-      break;
-    }
-    case TYPE_MONO_FULL: {
-      list_hir_class_push_back(hir->classes, hir_class);
-      break;
-    }
-    case TYPE_MONO_UNSET:
-    default: {
-      char *type_s = type_str(class_type);
-      error("mono should be set for class with type %s %p", type_s, hir_class);
-      if (type_s) {
-        free(type_s);
+      case TYPE_MONO_NOT_FULL: {
+        list_hir_class_push_back(classes_t, hir_class);
+        break;
       }
-      break;
-    }
+      case TYPE_MONO_FULL: {
+        list_hir_class_push_back(hir->classes, hir_class);
+        break;
+      }
+      case TYPE_MONO_UNSET:
+      default: {
+        char *type_s = type_str(class_type);
+        error("mono should be set for class with type %s %p", type_s,
+              hir_class);
+        if (type_s) {
+          free(type_s);
+        }
+        break;
+      }
     }
   }
 
@@ -238,31 +239,31 @@ hir_get_mono_full_class_types(type_table *type_table) {
 
     type_mono_enum mono = type_fetch_mono(type);
     switch (mono) {
-    case TYPE_MONO_FULL: {
-      if (type->kind == TYPE_MONO) {
-        type_mono *mono = (type_mono *)type;
-        type_enum  kind = mono->type_ref->kind;
-        if (kind == TYPE_CLASS) {
-          list_type_mono_ref_push_back(classes_t, mono);
-        } else if (mono->type_ref->kind == TYPE_MONO) {
-          error("unexpected mono as base for mono (%p -> %p)", mono,
-                mono->type_ref);
+      case TYPE_MONO_FULL: {
+        if (type->kind == TYPE_MONO) {
+          type_mono *mono = (type_mono *)type;
+          type_enum  kind = mono->type_ref->kind;
+          if (kind == TYPE_CLASS) {
+            list_type_mono_ref_push_back(classes_t, mono);
+          } else if (mono->type_ref->kind == TYPE_MONO) {
+            error("unexpected mono as base for mono (%p -> %p)", mono,
+                  mono->type_ref);
+          }
         }
+        break;
       }
-      break;
-    }
-    case TYPE_MONO_NOT_FULL: {
-      break;
-    }
-    case TYPE_MONO_UNSET:
-    default: {
-      char *type_s = type_str(type);
-      error("mono should be set for class with type %s %p", type_s, type);
-      if (type_s) {
-        free(type_s);
+      case TYPE_MONO_NOT_FULL: {
+        break;
       }
-      break;
-    }
+      case TYPE_MONO_UNSET:
+      default: {
+        char *type_s = type_str(type);
+        error("mono should be set for class with type %s %p", type_s, type);
+        if (type_s) {
+          free(type_s);
+        }
+        break;
+      }
     }
   }
   return classes_t;
@@ -312,9 +313,9 @@ static void hir_setup_ctx_hir_templates(hir_ctx        *ctx,
   list_hir_class_free(templated_classes);
 }
 
-static void hir_setup_ctx_registed_types(hir_ctx    *ctx,
-                                         type_table *type_table_ref) {
-  for (list_type_entry_it it = list_type_entry_begin(type_table_ref->entries);
+// register types
+static void hir_setup_ctx(hir_ctx *ctx) {
+  for (list_type_entry_it it = list_type_entry_begin(ctx->type_table->entries);
        !END(it); NEXT(it)) {
     hashset_type_ref_insert(ctx->registered_types, GET(it)->type);
   }
@@ -339,134 +340,136 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
   int type_changed = 0;
 
   switch (type_fetch_mono(type)) {
-  default:
-  case TYPE_MONO_UNSET: {
-    char *type_s = type_str(type);
-    error("type %s mono is unset", type_s);
-    if (type_s) {
-      free(type_s);
-    }
-    return NULL;
-  }
-
-  case TYPE_MONO_FULL:
-    // already expanded
-    return type;
-
-  case TYPE_MONO_NOT_FULL:
-    // try expand lazily recursively
-    switch (type->kind) {
-    case TYPE_PRIMITIVE:
-      return type;
-    case TYPE_ARRAY: {
-      type_array *self = (typeof(self))type;
-
-      type_base *new_element_ref = hir_expand_type(ctx, self->element_ref);
-      if (new_element_ref != self->element_ref) {
-        type_changed = 1;
-      }
-
-      if (type_changed) {
-        type_array *new_self = type_array_new(new_element_ref);
-        return hir_ctx_type_register(ctx, (type_base *)new_self,
-                                     type->type_entry_ref->span);
-      }
-      return type;
-    }
-    case TYPE_CALLABLE: {
-      type_callable *self = (typeof(self))type;
-
-      type_base *new_ret_ref = hir_expand_type(ctx, self->ret_ref);
-      if (new_ret_ref != self->ret_ref) {
-        type_changed = 1;
-      }
-
-      list_type_ref *new_params = list_type_ref_new();
-      for (list_type_ref_it it = list_type_ref_begin(self->params); !END(it);
-           NEXT(it)) {
-        type_base *param = GET(it);
-        type_base *new_param = hir_expand_type(ctx, param);
-        if (param != new_param) {
-          type_changed = 1;
-        }
-        list_type_ref_push_back(new_params, new_param);
-      }
-
-      if (type_changed) {
-        type_callable *new_self = type_callable_new(new_ret_ref, new_params);
-        return hir_ctx_type_register(ctx, (type_base *)new_self,
-                                     type->type_entry_ref->span);
-      }
-      list_type_ref_free(new_params);
-      return type;
-    }
-    case TYPE_CLASS: {
-      type_class *self = (typeof(self))type;
-
-      list_type_ref *new_parents = list_type_ref_new();
-      for (list_type_ref_it it = list_type_ref_begin(self->parents); !END(it);
-           NEXT(it)) {
-        type_base *parent = GET(it);
-        type_base *new_parent = hir_expand_type(ctx, parent);
-        if (parent != new_parent) {
-          type_changed = 1;
-        }
-        list_type_ref_push_back(new_parents, new_parent);
-      }
-
-      if (type_changed) {
-        type_class *new_self = type_class_new(
-            strdup(self->id), type_copy_list_ref(self->typenames), new_parents);
-        return hir_ctx_type_register(ctx, (type_base *)new_self,
-                                     type->type_entry_ref->span);
-      }
-      list_type_ref_free(new_parents);
-      return type;
-    }
-    case TYPE_TYPENAME: {
-      type_base *new_self = hir_ctx_type_tmpl_find(ctx, type);
-      if (new_self) {
-        type_changed = 1;
-      }
-
-      if (type_changed) {
-        return new_self;
-      }
-      return type;
-    }
-      // doesn't expand recursively, because no nested classes allowed (to
-      // typename resolution will be performed
-      // adds new template for further instantiation
-    case TYPE_MONO: {
-      type_mono *self = (typeof(self))type;
-
-      list_type_ref *new_types = list_type_ref_new();
-      for (list_type_ref_it it = list_type_ref_begin(self->types); !END(it);
-           NEXT(it)) {
-        type_base *type = GET(it);
-        type_base *new_type = hir_expand_type(ctx, type);
-        if (new_type != type) {
-          type_changed = 1;
-        }
-        list_type_ref_push_back(new_types, new_type);
-      }
-
-      if (type_changed) {
-        type_mono *new_self = type_mono_new(self->type_ref, new_types);
-        type = hir_ctx_type_register(ctx, (type_base *)new_self,
-                                     type->type_entry_ref->span);
-        // add template for further instantiation
-        list_type_mono_ref_push_back(ctx->instto_types, (type_mono *)type);
-        return type;
-      }
-      list_type_ref_free(new_types);
-      return type;
-    }
-    case TYPE_UNKNOWN:
     default:
-      error("unknown type %d %s", type->kind, type);
+    case TYPE_MONO_UNSET: {
+      char *type_s = type_str(type);
+      error("type %s mono is unset", type_s);
+      if (type_s) {
+        free(type_s);
+      }
       return NULL;
     }
+
+    case TYPE_MONO_FULL:
+      // already expanded
+      return type;
+
+    case TYPE_MONO_NOT_FULL:
+      // try expand lazily recursively
+      switch (type->kind) {
+        case TYPE_PRIMITIVE:
+          return type;
+        case TYPE_ARRAY: {
+          type_array *self = (typeof(self))type;
+
+          type_base *new_element_ref = hir_expand_type(ctx, self->element_ref);
+          if (new_element_ref != self->element_ref) {
+            type_changed = 1;
+          }
+
+          if (type_changed) {
+            type_array *new_self = type_array_new(new_element_ref);
+            return hir_ctx_type_register(ctx, (type_base *)new_self,
+                                         type->type_entry_ref->span);
+          }
+          return type;
+        }
+        case TYPE_CALLABLE: {
+          type_callable *self = (typeof(self))type;
+
+          type_base *new_ret_ref = hir_expand_type(ctx, self->ret_ref);
+          if (new_ret_ref != self->ret_ref) {
+            type_changed = 1;
+          }
+
+          list_type_ref *new_params = list_type_ref_new();
+          for (list_type_ref_it it = list_type_ref_begin(self->params);
+               !END(it); NEXT(it)) {
+            type_base *param = GET(it);
+            type_base *new_param = hir_expand_type(ctx, param);
+            if (param != new_param) {
+              type_changed = 1;
+            }
+            list_type_ref_push_back(new_params, new_param);
+          }
+
+          if (type_changed) {
+            type_callable *new_self =
+                type_callable_new(new_ret_ref, new_params);
+            return hir_ctx_type_register(ctx, (type_base *)new_self,
+                                         type->type_entry_ref->span);
+          }
+          list_type_ref_free(new_params);
+          return type;
+        }
+        case TYPE_CLASS: {
+          type_class *self = (typeof(self))type;
+
+          list_type_ref *new_parents = list_type_ref_new();
+          for (list_type_ref_it it = list_type_ref_begin(self->parents);
+               !END(it); NEXT(it)) {
+            type_base *parent = GET(it);
+            type_base *new_parent = hir_expand_type(ctx, parent);
+            if (parent != new_parent) {
+              type_changed = 1;
+            }
+            list_type_ref_push_back(new_parents, new_parent);
+          }
+
+          if (type_changed) {
+            type_class *new_self = type_class_new(
+                strdup(self->id), type_copy_list_ref(self->typenames),
+                new_parents);
+            return hir_ctx_type_register(ctx, (type_base *)new_self,
+                                         type->type_entry_ref->span);
+          }
+          list_type_ref_free(new_parents);
+          return type;
+        }
+        case TYPE_TYPENAME: {
+          type_base *new_self = hir_ctx_type_tmpl_find(ctx, type);
+          if (new_self) {
+            type_changed = 1;
+          }
+
+          if (type_changed) {
+            return new_self;
+          }
+          return type;
+        }
+          // doesn't expand recursively, because no nested classes allowed (to
+          // typename resolution will be performed
+          // adds new template for further instantiation
+        case TYPE_MONO: {
+          type_mono *self = (typeof(self))type;
+
+          list_type_ref *new_types = list_type_ref_new();
+          for (list_type_ref_it it = list_type_ref_begin(self->types); !END(it);
+               NEXT(it)) {
+            type_base *type = GET(it);
+            type_base *new_type = hir_expand_type(ctx, type);
+            if (new_type != type) {
+              type_changed = 1;
+            }
+            list_type_ref_push_back(new_types, new_type);
+          }
+
+          if (type_changed) {
+            type_mono *new_self = type_mono_new(self->type_ref, new_types);
+            type = hir_ctx_type_register(ctx, (type_base *)new_self,
+                                         type->type_entry_ref->span);
+            // add template for further instantiation
+            list_type_mono_ref_push_back(ctx->instto_types, (type_mono *)type);
+            return type;
+          }
+          list_type_ref_free(new_types);
+          return type;
+        }
+        case TYPE_UNKNOWN:
+        default:
+          error("unknown type %d %s", type->kind, type);
+          return NULL;
+      }
   }
 }
 
@@ -509,63 +512,63 @@ static hir_expr_base *hir_expand_templates_expr(hir_ctx             *ctx,
   type_entry *new_type_ref = new_type ? new_type->type_entry_ref : NULL;
 
   switch (expr_t->kind) {
-  case HIR_EXPR_UNARY: {
-    const hir_expr_unary *self = (typeof(self))expr_t;
-    return (hir_expr_base *)hir_expr_unary_new_typed(
-        span_copy(span), new_type_ref, self->op,
-        hir_expand_templates_expr(ctx, self->first));
-  }
-  case HIR_EXPR_BINARY: {
-    const hir_expr_binary *self = (typeof(self))expr_t;
-    return (hir_expr_base *)hir_expr_binary_new_typed(
-        span_copy(span), new_type_ref, self->op,
-        hir_expand_templates_expr(ctx, self->first),
-        hir_expand_templates_expr(ctx, self->second));
-  }
-  case HIR_EXPR_LITERAL: {
-    const hir_expr_lit *self = (typeof(self))expr_t;
-    return (hir_expr_base *)hir_expr_lit_new_typed(
-        span_copy(span), new_type_ref, hir_lit_copy(self->lit));
-  }
-  case HIR_EXPR_IDENTIFIER: {
-    const hir_expr_id *self = (typeof(self))expr_t;
-    return (hir_expr_base *)hir_expr_id_new_typed(span_copy(span), new_type_ref,
-                                                  hir_id_copy(self->id_hir));
-  }
-  case HIR_EXPR_CALL: {
-    const hir_expr_call *self = (typeof(self))expr_t;
-    list_hir_expr       *args = list_hir_expr_new();
-    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
-         NEXT(it)) {
-      list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+    case HIR_EXPR_UNARY: {
+      const hir_expr_unary *self = (typeof(self))expr_t;
+      return (hir_expr_base *)hir_expr_unary_new_typed(
+          span_copy(span), new_type_ref, self->op,
+          hir_expand_templates_expr(ctx, self->first));
     }
-    return (hir_expr_base *)hir_expr_call_new_typed(
-        span_copy(span), new_type_ref,
-        hir_expand_templates_expr(ctx, self->callee), args);
-  }
-  case HIR_EXPR_INDEX: {
-    const hir_expr_index *self = (typeof(self))expr_t;
-    list_hir_expr        *args = list_hir_expr_new();
-    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
-         NEXT(it)) {
-      list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+    case HIR_EXPR_BINARY: {
+      const hir_expr_binary *self = (typeof(self))expr_t;
+      return (hir_expr_base *)hir_expr_binary_new_typed(
+          span_copy(span), new_type_ref, self->op,
+          hir_expand_templates_expr(ctx, self->first),
+          hir_expand_templates_expr(ctx, self->second));
     }
-    return (hir_expr_base *)hir_expr_index_new_typed(
-        span_copy(span), new_type_ref,
-        hir_expand_templates_expr(ctx, self->indexed), args);
-  }
-  case HIR_EXPR_BUILTIN: {
-    const hir_expr_builtin *self = (typeof(self))expr_t;
-    list_hir_expr          *args = list_hir_expr_new();
-    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
-         NEXT(it)) {
-      list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+    case HIR_EXPR_LITERAL: {
+      const hir_expr_lit *self = (typeof(self))expr_t;
+      return (hir_expr_base *)hir_expr_lit_new_typed(
+          span_copy(span), new_type_ref, hir_lit_copy(self->lit));
     }
-    return (hir_expr_base *)hir_expr_builtin_new_typed(
-        span_copy(span), new_type_ref, self->kind, args);
-  }
-  case HIR_EXPR_UNKNOWN:
-    break;
+    case HIR_EXPR_IDENTIFIER: {
+      const hir_expr_id *self = (typeof(self))expr_t;
+      return (hir_expr_base *)hir_expr_id_new_typed(
+          span_copy(span), new_type_ref, hir_id_copy(self->id_hir));
+    }
+    case HIR_EXPR_CALL: {
+      const hir_expr_call *self = (typeof(self))expr_t;
+      list_hir_expr       *args = list_hir_expr_new();
+      for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+           NEXT(it)) {
+        list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+      }
+      return (hir_expr_base *)hir_expr_call_new_typed(
+          span_copy(span), new_type_ref,
+          hir_expand_templates_expr(ctx, self->callee), args);
+    }
+    case HIR_EXPR_INDEX: {
+      const hir_expr_index *self = (typeof(self))expr_t;
+      list_hir_expr        *args = list_hir_expr_new();
+      for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+           NEXT(it)) {
+        list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+      }
+      return (hir_expr_base *)hir_expr_index_new_typed(
+          span_copy(span), new_type_ref,
+          hir_expand_templates_expr(ctx, self->indexed), args);
+    }
+    case HIR_EXPR_BUILTIN: {
+      const hir_expr_builtin *self = (typeof(self))expr_t;
+      list_hir_expr          *args = list_hir_expr_new();
+      for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+           NEXT(it)) {
+        list_hir_expr_push_back(args, hir_expand_templates_expr(ctx, GET(it)));
+      }
+      return (hir_expr_base *)hir_expr_builtin_new_typed(
+          span_copy(span), new_type_ref, self->kind, args);
+    }
+    case HIR_EXPR_UNKNOWN:
+      break;
   }
   error("unexpected expr kind %d %p", expr_t->kind, expr_t);
   return NULL;
@@ -580,45 +583,45 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
   const span *span = stmt_t->base.span;
 
   switch (stmt_t->kind) {
-  case HIR_STMT_IF: {
-    const hir_stmt_if *self = (typeof(self))stmt_t;
-    return (hir_stmt_base *)hir_stmt_if_new(
-        span_copy(span), hir_expand_templates_expr(ctx, self->cond),
-        hir_expand_templates_stmt(ctx, self->je),
-        hir_expand_templates_stmt(ctx, self->jz));
-  }
-  case HIR_STMT_BLOCK: {
-    const hir_stmt_block *self = (typeof(self))stmt_t;
-    list_hir_stmt        *stmts = list_hir_stmt_new();
-    for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
-         NEXT(it)) {
-      list_hir_stmt_push_back(stmts, hir_expand_templates_stmt(ctx, GET(it)));
+    case HIR_STMT_IF: {
+      const hir_stmt_if *self = (typeof(self))stmt_t;
+      return (hir_stmt_base *)hir_stmt_if_new(
+          span_copy(span), hir_expand_templates_expr(ctx, self->cond),
+          hir_expand_templates_stmt(ctx, self->je),
+          hir_expand_templates_stmt(ctx, self->jz));
     }
-    return (hir_stmt_base *)hir_stmt_block_new(span_copy(span), stmts);
-  }
-  case HIR_STMT_WHILE: {
-    const hir_stmt_while *self = (typeof(self))stmt_t;
-    return (hir_stmt_base *)hir_stmt_while_new(
-        span_copy(span), hir_expand_templates_expr(ctx, self->cond),
-        hir_expand_templates_stmt(ctx, self->stmt));
-  }
-  case HIR_STMT_DO: {
-    const hir_stmt_do *self = (typeof(self))stmt_t;
-    return (hir_stmt_base *)hir_stmt_do_new(
-        span_copy(span), self->positive,
-        hir_expand_templates_expr(ctx, self->cond),
-        hir_expand_templates_stmt(ctx, self->stmt));
-  }
-  case HIR_STMT_BREAK: {
-    return (hir_stmt_base *)hir_stmt_break_new(span_copy(span));
-  }
-  case HIR_STMT_EXPR: {
-    const hir_stmt_expr *self = (typeof(self))stmt_t;
-    return (hir_stmt_base *)hir_stmt_expr_new(
-        span_copy(span), hir_expand_templates_expr(ctx, self->expr));
-  }
-  case HIR_STMT_UNKNOWN:
-    break;
+    case HIR_STMT_BLOCK: {
+      const hir_stmt_block *self = (typeof(self))stmt_t;
+      list_hir_stmt        *stmts = list_hir_stmt_new();
+      for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
+           NEXT(it)) {
+        list_hir_stmt_push_back(stmts, hir_expand_templates_stmt(ctx, GET(it)));
+      }
+      return (hir_stmt_base *)hir_stmt_block_new(span_copy(span), stmts);
+    }
+    case HIR_STMT_WHILE: {
+      const hir_stmt_while *self = (typeof(self))stmt_t;
+      return (hir_stmt_base *)hir_stmt_while_new(
+          span_copy(span), hir_expand_templates_expr(ctx, self->cond),
+          hir_expand_templates_stmt(ctx, self->stmt));
+    }
+    case HIR_STMT_DO: {
+      const hir_stmt_do *self = (typeof(self))stmt_t;
+      return (hir_stmt_base *)hir_stmt_do_new(
+          span_copy(span), self->positive,
+          hir_expand_templates_expr(ctx, self->cond),
+          hir_expand_templates_stmt(ctx, self->stmt));
+    }
+    case HIR_STMT_BREAK: {
+      return (hir_stmt_base *)hir_stmt_break_new(span_copy(span));
+    }
+    case HIR_STMT_EXPR: {
+      const hir_stmt_expr *self = (typeof(self))stmt_t;
+      return (hir_stmt_base *)hir_stmt_expr_new(
+          span_copy(span), hir_expand_templates_expr(ctx, self->expr));
+    }
+    case HIR_STMT_UNKNOWN:
+      break;
   }
   error("unexpected stmt kind %d %p", stmt_t->kind, stmt_t);
   return NULL;
@@ -637,28 +640,28 @@ hir_expand_templates_subroutine(hir_ctx              *ctx,
 
   if (subroutine_t->body) {
     switch (subroutine_t->body->kind) {
-    case HIR_SUBROUTINE_BODY_IMPORT:
-      body = hir_subroutine_body_new_import(
-          hir_lit_copy(subroutine_t->body->body.import.entry),
-          hir_lit_copy(subroutine_t->body->body.import.lib));
-      break;
-    case HIR_SUBROUTINE_BODY_BLOCK: {
-      list_hir_var *vars = list_hir_var_new();
-      for (list_hir_var_it it =
-               list_hir_var_begin(subroutine_t->body->body.block.vars);
-           !END(it); NEXT(it)) {
-        list_hir_var_push_back(vars, hir_expand_templates_var(ctx, GET(it)));
+      case HIR_SUBROUTINE_BODY_IMPORT:
+        body = hir_subroutine_body_new_import(
+            hir_lit_copy(subroutine_t->body->body.import.entry),
+            hir_lit_copy(subroutine_t->body->body.import.lib));
+        break;
+      case HIR_SUBROUTINE_BODY_BLOCK: {
+        list_hir_var *vars = list_hir_var_new();
+        for (list_hir_var_it it =
+                 list_hir_var_begin(subroutine_t->body->body.block.vars);
+             !END(it); NEXT(it)) {
+          list_hir_var_push_back(vars, hir_expand_templates_var(ctx, GET(it)));
+        }
+        body = hir_subroutine_body_new_block(
+            vars,
+            (hir_stmt_block *)hir_expand_templates_stmt(
+                ctx, (hir_stmt_base *)subroutine_t->body->body.block.block));
+        break;
       }
-      body = hir_subroutine_body_new_block(
-          vars,
-          (hir_stmt_block *)hir_expand_templates_stmt(
-              ctx, (hir_stmt_base *)subroutine_t->body->body.block.block));
-      break;
-    }
-    case HIR_SUBROUTINE_BODY_UNKNOWN:
-      error("unexpected body kind %d %p", subroutine_t->body->kind,
-            subroutine_t->body);
-      break;
+      case HIR_SUBROUTINE_BODY_UNKNOWN:
+        error("unexpected body kind %d %p", subroutine_t->body->kind,
+              subroutine_t->body);
+        break;
     }
   }
 
@@ -757,19 +760,19 @@ static void hir_expand_templates_all(hir_ctx *ctx) {
 #endif
 
     switch (mono->type_ref->kind) {
-    case TYPE_CLASS:
-      hir.class = hir_expand_templates_class(ctx, mono);
-      break;
+      case TYPE_CLASS:
+        hir.class = hir_expand_templates_class(ctx, mono);
+        break;
 
-    default: {
+      default: {
 #ifndef NDEBUG
-      error("expansion of type %s is unsupported", type_from_s);
-      if (type_from_s) {
-        free(type_from_s);
-      }
+        error("expansion of type %s is unsupported", type_from_s);
+        if (type_from_s) {
+          free(type_from_s);
+        }
 #endif
-      continue;
-    }
+        continue;
+      }
     }
 
 #ifndef NDEBUG
@@ -805,7 +808,7 @@ hir_expand_templates_result hir_expand_templates(hir        *hir,
   // will append classes and exceptions
   hir_ctx_init(&ctx, type_table, result.exceptions, hir->classes);
 
-  hir_setup_ctx_registed_types(&ctx, type_table);
+  hir_setup_ctx(&ctx);
   hir_setup_ctx_hir_templates(&ctx, hir_filter_templated_hir_classes(hir));
   hir_setup_ctx_instto_types(&ctx, hir_get_mono_full_class_types(type_table));
 

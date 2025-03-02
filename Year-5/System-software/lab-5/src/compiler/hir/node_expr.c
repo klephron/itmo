@@ -29,22 +29,22 @@ void hir_expr_base_deinit(hir_expr_base *self) {
 void hir_expr_free(hir_expr_base *generic) {
   if (generic) {
     switch (generic->kind) {
-    case HIR_EXPR_UNARY:
-      return hir_expr_unary_free((hir_expr_unary *)generic);
-    case HIR_EXPR_BINARY:
-      return hir_expr_binary_free((hir_expr_binary *)generic);
-    case HIR_EXPR_LITERAL:
-      return hir_expr_lit_free((hir_expr_lit *)generic);
-    case HIR_EXPR_IDENTIFIER:
-      return hir_expr_id_free((hir_expr_id *)generic);
-    case HIR_EXPR_CALL:
-      return hir_expr_call_free((hir_expr_call *)generic);
-    case HIR_EXPR_INDEX:
-      return hir_expr_index_free((hir_expr_index *)generic);
-    case HIR_EXPR_BUILTIN:
-      return hir_expr_builtin_free((hir_expr_builtin *)generic);
-    case HIR_EXPR_UNKNOWN:
-      break;
+      case HIR_EXPR_UNARY:
+        return hir_expr_unary_free((hir_expr_unary *)generic);
+      case HIR_EXPR_BINARY:
+        return hir_expr_binary_free((hir_expr_binary *)generic);
+      case HIR_EXPR_LITERAL:
+        return hir_expr_lit_free((hir_expr_lit *)generic);
+      case HIR_EXPR_IDENTIFIER:
+        return hir_expr_id_free((hir_expr_id *)generic);
+      case HIR_EXPR_CALL:
+        return hir_expr_call_free((hir_expr_call *)generic);
+      case HIR_EXPR_INDEX:
+        return hir_expr_index_free((hir_expr_index *)generic);
+      case HIR_EXPR_BUILTIN:
+        return hir_expr_builtin_free((hir_expr_builtin *)generic);
+      case HIR_EXPR_UNKNOWN:
+        break;
     }
     error("unknown expr type %d, %p", generic->kind, generic);
   }

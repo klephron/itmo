@@ -28,48 +28,48 @@ static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
   }
 
   switch (generic->type) {
-  case HIR_TYPE_BOOL:
-    strbuf_append(buffer, "bool");
-    return;
-  case HIR_TYPE_BYTE:
-    strbuf_append(buffer, "byte");
-    return;
-  case HIR_TYPE_INT:
-    strbuf_append(buffer, "int");
-    return;
-  case HIR_TYPE_UINT:
-    strbuf_append(buffer, "uint");
-    return;
-  case HIR_TYPE_LONG:
-    strbuf_append(buffer, "long");
-    return;
-  case HIR_TYPE_ULONG:
-    strbuf_append(buffer, "ulong");
-    return;
-  case HIR_TYPE_CHAR:
-    strbuf_append(buffer, "char");
-    return;
-  case HIR_TYPE_STRING:
-    strbuf_append(buffer, "string");
-    return;
-  case HIR_TYPE_VOID:
-    strbuf_append(buffer, "void");
-    return;
-  case HIR_TYPE_CUSTOM: {
-    hir_type_custom *custom = (typeof(custom))generic;
-    strbuf_append(buffer, custom->name);
-    strbuf_append_type_list(buffer, custom->templates, "<", ">");
-    return;
-  }
-  case HIR_TYPE_ARRAY: {
-    hir_type_array *array = (typeof(array))generic;
-    strbuf_append(buffer, "array[");
-    strbuf_append_type(buffer, array->elem_type);
-    strbuf_append(buffer, "]");
-    return;
-  }
-  case HIR_TYPE_UNKNOWN:
-    break;
+    case HIR_TYPE_BOOL:
+      strbuf_append(buffer, "bool");
+      return;
+    case HIR_TYPE_BYTE:
+      strbuf_append(buffer, "byte");
+      return;
+    case HIR_TYPE_INT:
+      strbuf_append(buffer, "int");
+      return;
+    case HIR_TYPE_UINT:
+      strbuf_append(buffer, "uint");
+      return;
+    case HIR_TYPE_LONG:
+      strbuf_append(buffer, "long");
+      return;
+    case HIR_TYPE_ULONG:
+      strbuf_append(buffer, "ulong");
+      return;
+    case HIR_TYPE_CHAR:
+      strbuf_append(buffer, "char");
+      return;
+    case HIR_TYPE_STRING:
+      strbuf_append(buffer, "string");
+      return;
+    case HIR_TYPE_VOID:
+      strbuf_append(buffer, "void");
+      return;
+    case HIR_TYPE_CUSTOM: {
+      hir_type_custom *custom = (typeof(custom))generic;
+      strbuf_append(buffer, custom->name);
+      strbuf_append_type_list(buffer, custom->templates, "<", ">");
+      return;
+    }
+    case HIR_TYPE_ARRAY: {
+      hir_type_array *array = (typeof(array))generic;
+      strbuf_append(buffer, "array[");
+      strbuf_append_type(buffer, array->elem_type);
+      strbuf_append(buffer, "]");
+      return;
+    }
+    case HIR_TYPE_UNKNOWN:
+      break;
   }
   warn("unknown type %d %p", generic->type, generic);
   strbuf_append(buffer, "unknown");
@@ -77,30 +77,30 @@ static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
 
 const char *hir_type_enum_str(hir_type_enum type) {
   switch (type) {
-  case HIR_TYPE_BOOL:
-    return "BOOL";
-  case HIR_TYPE_BYTE:
-    return "BYTE";
-  case HIR_TYPE_INT:
-    return "INT";
-  case HIR_TYPE_UINT:
-    return "UINT";
-  case HIR_TYPE_LONG:
-    return "LONG";
-  case HIR_TYPE_ULONG:
-    return "ULONG";
-  case HIR_TYPE_CHAR:
-    return "CHAR";
-  case HIR_TYPE_STRING:
-    return "STRING";
-  case HIR_TYPE_VOID:
-    return "VOID";
-  case HIR_TYPE_CUSTOM:
-    return "CUSTOM";
-  case HIR_TYPE_ARRAY:
-    return "ARRAY";
-  case HIR_TYPE_UNKNOWN:
-    break;
+    case HIR_TYPE_BOOL:
+      return "BOOL";
+    case HIR_TYPE_BYTE:
+      return "BYTE";
+    case HIR_TYPE_INT:
+      return "INT";
+    case HIR_TYPE_UINT:
+      return "UINT";
+    case HIR_TYPE_LONG:
+      return "LONG";
+    case HIR_TYPE_ULONG:
+      return "ULONG";
+    case HIR_TYPE_CHAR:
+      return "CHAR";
+    case HIR_TYPE_STRING:
+      return "STRING";
+    case HIR_TYPE_VOID:
+      return "VOID";
+    case HIR_TYPE_CUSTOM:
+      return "CUSTOM";
+    case HIR_TYPE_ARRAY:
+      return "ARRAY";
+    case HIR_TYPE_UNKNOWN:
+      break;
   }
   return "UNKNOWN";
 }

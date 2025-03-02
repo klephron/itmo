@@ -146,92 +146,93 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
   }
 
   switch (base->type) {
-  case HIR_TYPE_CUSTOM: {
-    // try to mono instantiate type type
-    const hir_type_custom *self = (typeof(self))base;
+    case HIR_TYPE_CUSTOM: {
+      // try to mono instantiate type type
+      const hir_type_custom *self = (typeof(self))base;
 
-    if (!self->templates || !list_hir_type_size(self->templates)) {
-      return NULL;
-    }
-
-    hir_type_custom *basic =
-        hir_type_custom_new(NULL, strdup(self->name), list_hir_type_new());
-
-    for (size_t i = 0, sz = list_hir_type_size(self->templates); i < sz; ++i) {
-      list_hir_type_push_back(basic->templates, NULL);
-    }
-
-    // can't be resolved
-    hir_scope *scope;
-    hir_scope_entry *template =
-        hir_ctx_scopes_find(ctx, (hir_type_base *)basic, &scope);
-
-    hir_type_free((hir_type_base *)basic);
-
-    if (!template) {
-      return NULL;
-    }
-
-    // create new entry in scope of found entry
-    type_mono *mono =
-        type_mono_new(template->type_ref->type, list_type_ref_new());
-
-    // resolve mono-ed types
-    for (list_hir_type_it it = list_hir_type_begin(self->templates); !END(it);
-         NEXT(it)) {
-      hir_type_base   *type = GET(it);
-      hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, type);
-
-      if (!sub_entry) {
-        type_free((type_base *)mono);
+      if (!self->templates || !list_hir_type_size(self->templates)) {
         return NULL;
       }
 
-      list_type_ref_push_back(mono->types, sub_entry->type_ref->type);
-    }
+      hir_type_custom *basic =
+          hir_type_custom_new(NULL, strdup(self->name), list_hir_type_new());
 
-    type_entry *type_ref = hir_ctx_table_emplace(
-        ctx, (type_base *)mono, span_copy(template->type_ref->span));
+      for (size_t i = 0, sz = list_hir_type_size(self->templates); i < sz;
+           ++i) {
+        list_hir_type_push_back(basic->templates, NULL);
+      }
 
-    entry = hir_ctx_scopes_insert_sel(
-        ctx,
-        hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref),
-        scope);
+      // can't be resolved
+      hir_scope *scope;
+      hir_scope_entry *template =
+          hir_ctx_scopes_find(ctx, (hir_type_base *)basic, &scope);
 
-  } break;
+      hir_type_free((hir_type_base *)basic);
 
-  case HIR_TYPE_ARRAY: {
-    const hir_type_array *self = (typeof(self))base;
+      if (!template) {
+        return NULL;
+      }
 
-    hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, self->elem_type);
-    if (!sub_entry) {
-      return NULL;
-    }
+      // create new entry in scope of found entry
+      type_mono *mono =
+          type_mono_new(template->type_ref->type, list_type_ref_new());
 
-    type_array *array = type_array_new(sub_entry->type_ref->type);
-    type_entry *type_ref = hir_ctx_table_emplace(ctx, (type_base *)array,
-                                                 span_copy(self->base.span));
+      // resolve mono-ed types
+      for (list_hir_type_it it = list_hir_type_begin(self->templates); !END(it);
+           NEXT(it)) {
+        hir_type_base   *type = GET(it);
+        hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, type);
 
-    entry = hir_ctx_scopes_insert_global(
-        ctx,
-        hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref));
+        if (!sub_entry) {
+          type_free((type_base *)mono);
+          return NULL;
+        }
 
-  } break;
-  case HIR_TYPE_BOOL:
-  case HIR_TYPE_BYTE:
-  case HIR_TYPE_INT:
-  case HIR_TYPE_UINT:
-  case HIR_TYPE_LONG:
-  case HIR_TYPE_ULONG:
-  case HIR_TYPE_CHAR:
-  case HIR_TYPE_STRING:
-  case HIR_TYPE_VOID:
-    error("type %s should be already be in scope, but not found",
-          hir_type_enum_str(base->type));
-    break;
-  default:
-    error("unexpected type kind %d", base->type);
-    break;
+        list_type_ref_push_back(mono->types, sub_entry->type_ref->type);
+      }
+
+      type_entry *type_ref = hir_ctx_table_emplace(
+          ctx, (type_base *)mono, span_copy(template->type_ref->span));
+
+      entry = hir_ctx_scopes_insert_sel(
+          ctx,
+          hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref),
+          scope);
+
+    } break;
+
+    case HIR_TYPE_ARRAY: {
+      const hir_type_array *self = (typeof(self))base;
+
+      hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, self->elem_type);
+      if (!sub_entry) {
+        return NULL;
+      }
+
+      type_array *array = type_array_new(sub_entry->type_ref->type);
+      type_entry *type_ref = hir_ctx_table_emplace(ctx, (type_base *)array,
+                                                   span_copy(self->base.span));
+
+      entry = hir_ctx_scopes_insert_global(
+          ctx,
+          hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref));
+
+    } break;
+    case HIR_TYPE_BOOL:
+    case HIR_TYPE_BYTE:
+    case HIR_TYPE_INT:
+    case HIR_TYPE_UINT:
+    case HIR_TYPE_LONG:
+    case HIR_TYPE_ULONG:
+    case HIR_TYPE_CHAR:
+    case HIR_TYPE_STRING:
+    case HIR_TYPE_VOID:
+      error("type %s should be already be in scope, but not found",
+            hir_type_enum_str(base->type));
+      break;
+    default:
+      error("unexpected type kind %d", base->type);
+      break;
   }
   return entry;
 }
@@ -460,54 +461,54 @@ static void hir_bind_expr(hir_ctx *ctx, hir_expr_base *base) {
   }
 
   switch (base->kind) {
-  case HIR_EXPR_UNARY: {
-    hir_expr_unary *self = (typeof(self))base;
-    hir_bind_expr(ctx, self->first);
-    break;
-  }
-  case HIR_EXPR_BINARY: {
-    hir_expr_binary *self = (typeof(self))base;
-    hir_bind_expr(ctx, self->first);
-    hir_bind_expr(ctx, self->second);
-    break;
-  }
-  case HIR_EXPR_LITERAL: {
-    hir_expr_lit *self = (typeof(self))base;
-    hir_bind_lit(ctx, self->lit);
-    break;
-  }
-  case HIR_EXPR_IDENTIFIER: {
-    break;
-  }
-  case HIR_EXPR_CALL: {
-    hir_expr_call *self = (typeof(self))base;
-    hir_bind_expr(ctx, self->callee);
-    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
-         NEXT(it)) {
-      hir_bind_expr(ctx, GET(it));
+    case HIR_EXPR_UNARY: {
+      hir_expr_unary *self = (typeof(self))base;
+      hir_bind_expr(ctx, self->first);
+      break;
     }
-    break;
-  }
-  case HIR_EXPR_INDEX: {
-    hir_expr_index *self = (typeof(self))base;
-    hir_bind_expr(ctx, self->indexed);
-    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
-         NEXT(it)) {
-      hir_bind_expr(ctx, GET(it));
+    case HIR_EXPR_BINARY: {
+      hir_expr_binary *self = (typeof(self))base;
+      hir_bind_expr(ctx, self->first);
+      hir_bind_expr(ctx, self->second);
+      break;
     }
-    break;
-  }
-  case HIR_EXPR_BUILTIN: {
-    hir_expr_builtin *self = (typeof(self))base;
-    for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
-         NEXT(it)) {
-      hir_bind_expr(ctx, GET(it));
+    case HIR_EXPR_LITERAL: {
+      hir_expr_lit *self = (typeof(self))base;
+      hir_bind_lit(ctx, self->lit);
+      break;
     }
-    break;
-  }
-  case HIR_EXPR_UNKNOWN:
-    error("unexpected expr kind %d %p", base->kind, base);
-    break;
+    case HIR_EXPR_IDENTIFIER: {
+      break;
+    }
+    case HIR_EXPR_CALL: {
+      hir_expr_call *self = (typeof(self))base;
+      hir_bind_expr(ctx, self->callee);
+      for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+           NEXT(it)) {
+        hir_bind_expr(ctx, GET(it));
+      }
+      break;
+    }
+    case HIR_EXPR_INDEX: {
+      hir_expr_index *self = (typeof(self))base;
+      hir_bind_expr(ctx, self->indexed);
+      for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+           NEXT(it)) {
+        hir_bind_expr(ctx, GET(it));
+      }
+      break;
+    }
+    case HIR_EXPR_BUILTIN: {
+      hir_expr_builtin *self = (typeof(self))base;
+      for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
+           NEXT(it)) {
+        hir_bind_expr(ctx, GET(it));
+      }
+      break;
+    }
+    case HIR_EXPR_UNKNOWN:
+      error("unexpected expr kind %d %p", base->kind, base);
+      break;
   }
 
   if (!(base->state & HIR_STATE_BIND_TYPE)) {
@@ -535,43 +536,43 @@ static void hir_bind_stmt(hir_ctx *ctx, hir_stmt_base *base) {
     return;
   }
   switch (base->kind) {
-  case HIR_STMT_IF: {
-    hir_stmt_if *self = (typeof(self))base;
-    hir_bind_expr(ctx, self->cond);
-    hir_bind_stmt(ctx, self->je);
-    hir_bind_stmt(ctx, self->jz);
-    return;
-  };
-  case HIR_STMT_BLOCK: {
-    hir_stmt_block *self = (typeof(self))base;
-    for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
-         NEXT(it)) {
-      hir_bind_stmt(ctx, GET(it));
-    }
-    return;
-  };
-  case HIR_STMT_WHILE: {
-    hir_stmt_while *self = (typeof(self))base;
-    hir_bind_expr(ctx, self->cond);
-    hir_bind_stmt(ctx, self->stmt);
-    return;
-  };
-  case HIR_STMT_DO: {
-    hir_stmt_do *self = (typeof(self))base;
-    hir_bind_stmt(ctx, self->stmt);
-    hir_bind_expr(ctx, self->cond);
-    return;
-  };
-  case HIR_STMT_BREAK: {
-    return;
-  };
-  case HIR_STMT_EXPR: {
-    hir_stmt_expr *self = (typeof(self))base;
-    hir_bind_expr(ctx, self->expr);
-    return;
-  };
-  case HIR_STMT_UNKNOWN:
-    break;
+    case HIR_STMT_IF: {
+      hir_stmt_if *self = (typeof(self))base;
+      hir_bind_expr(ctx, self->cond);
+      hir_bind_stmt(ctx, self->je);
+      hir_bind_stmt(ctx, self->jz);
+      return;
+    };
+    case HIR_STMT_BLOCK: {
+      hir_stmt_block *self = (typeof(self))base;
+      for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
+           NEXT(it)) {
+        hir_bind_stmt(ctx, GET(it));
+      }
+      return;
+    };
+    case HIR_STMT_WHILE: {
+      hir_stmt_while *self = (typeof(self))base;
+      hir_bind_expr(ctx, self->cond);
+      hir_bind_stmt(ctx, self->stmt);
+      return;
+    };
+    case HIR_STMT_DO: {
+      hir_stmt_do *self = (typeof(self))base;
+      hir_bind_stmt(ctx, self->stmt);
+      hir_bind_expr(ctx, self->cond);
+      return;
+    };
+    case HIR_STMT_BREAK: {
+      return;
+    };
+    case HIR_STMT_EXPR: {
+      hir_stmt_expr *self = (typeof(self))base;
+      hir_bind_expr(ctx, self->expr);
+      return;
+    };
+    case HIR_STMT_UNKNOWN:
+      break;
   }
   error("unexpected stmt kind %d %p", base->kind, base);
 }
@@ -586,18 +587,18 @@ static void hir_bind_stmt_block(hir_ctx *ctx, hir_stmt_block *block) {
 static void hir_bind_subroutine_body(hir_ctx *ctx, hir_subroutine_body *body) {
   if (body) {
     switch (body->kind) {
-    case HIR_SUBROUTINE_BODY_UNKNOWN:
-      break;
-    case HIR_SUBROUTINE_BODY_IMPORT:
-      hir_bind_lit(ctx, body->body.import.lib);
-      hir_bind_lit(ctx, body->body.import.entry);
-      break;
-    case HIR_SUBROUTINE_BODY_BLOCK:
-      hir_bind_vars(ctx, body->body.block.vars);
-      hir_bind_stmt_block(ctx, body->body.block.block);
-      break;
-    default:
-      error("unexpected block subroutine kind %d", body->kind);
+      case HIR_SUBROUTINE_BODY_UNKNOWN:
+        break;
+      case HIR_SUBROUTINE_BODY_IMPORT:
+        hir_bind_lit(ctx, body->body.import.lib);
+        hir_bind_lit(ctx, body->body.import.entry);
+        break;
+      case HIR_SUBROUTINE_BODY_BLOCK:
+        hir_bind_vars(ctx, body->body.block.vars);
+        hir_bind_stmt_block(ctx, body->body.block.block);
+        break;
+      default:
+        error("unexpected block subroutine kind %d", body->kind);
     }
   }
 }

@@ -40,40 +40,40 @@ static int cmd_peek_unaligned(context *ctx, uint64_t address, uint64_t bytes,
 static int cmd_peek_data_metadata(context *ctx, x86_64_type *type, uint64_t i) {
   x86_64_type_entry *entry = type->entries + i;
   switch (entry->kind) {
-  case X86_64_TYPE_VOID:
-    break;
-  case X86_64_TYPE_BOOL:
-    break;
-  case X86_64_TYPE_BYTE:
-    break;
-  case X86_64_TYPE_INT:
-    break;
-  case X86_64_TYPE_UINT:
-    break;
-  case X86_64_TYPE_LONG:
-    break;
-  case X86_64_TYPE_ULONG:
-    break;
-  case X86_64_TYPE_CHAR:
-    break;
-  case X86_64_TYPE_STRING:
-    break;
-  case X86_64_TYPE_ARRAY: {
-    x86_64_array_meta *meta = MALLOC(x86_64_array_meta);
-    if (cmd_peek_unaligned(ctx, (uint64_t)entry->meta_array, sizeof(*meta),
-                           meta) == -1) {
-      warn("unable to peek array metadata");
-      free(meta);
-      meta = NULL;
-    }
-    entry->meta_array = meta;
-    if (entry->i_child) {
-      cmd_peek_data_metadata(ctx, type, entry->i_child);
-    }
-  } break;
-  default:
-    warn("unknown entry kind %d", entry->kind);
-    break;
+    case X86_64_TYPE_VOID:
+      break;
+    case X86_64_TYPE_BOOL:
+      break;
+    case X86_64_TYPE_BYTE:
+      break;
+    case X86_64_TYPE_INT:
+      break;
+    case X86_64_TYPE_UINT:
+      break;
+    case X86_64_TYPE_LONG:
+      break;
+    case X86_64_TYPE_ULONG:
+      break;
+    case X86_64_TYPE_CHAR:
+      break;
+    case X86_64_TYPE_STRING:
+      break;
+    case X86_64_TYPE_ARRAY: {
+      x86_64_array_meta *meta = MALLOC(x86_64_array_meta);
+      if (cmd_peek_unaligned(ctx, (uint64_t)entry->meta_array, sizeof(*meta),
+                             meta) == -1) {
+        warn("unable to peek array metadata");
+        free(meta);
+        meta = NULL;
+      }
+      entry->meta_array = meta;
+      if (entry->i_child) {
+        cmd_peek_data_metadata(ctx, type, entry->i_child);
+      }
+    } break;
+    default:
+      warn("unknown entry kind %d", entry->kind);
+      break;
   }
   return 0;
 }
@@ -157,44 +157,44 @@ cleanup:
 static void cmd_data_str_type(strbuf *buf, x86_64_type *type, uint64_t ei) {
   x86_64_type_entry *entry = type->entries + ei;
   switch (entry->kind) {
-  case X86_64_TYPE_VOID:
-    strbuf_append(buf, "void");
-    break;
-  case X86_64_TYPE_BOOL:
-    strbuf_append(buf, "bool");
-    break;
-  case X86_64_TYPE_BYTE:
-    strbuf_append(buf, "byte");
-    break;
-  case X86_64_TYPE_INT:
-    strbuf_append(buf, "int");
-    break;
-  case X86_64_TYPE_UINT:
-    strbuf_append(buf, "uint");
-    break;
-  case X86_64_TYPE_LONG:
-    strbuf_append(buf, "long");
-    break;
-  case X86_64_TYPE_ULONG:
-    strbuf_append(buf, "ulong");
-    break;
-  case X86_64_TYPE_CHAR:
-    strbuf_append(buf, "char");
-    break;
-  case X86_64_TYPE_STRING:
-    strbuf_append(buf, "string");
-    break;
-  case X86_64_TYPE_ARRAY:
-    strbuf_append(buf, "array[");
-    cmd_data_str_type(buf, type, entry->i_child);
-    strbuf_append(buf, "]");
-    break;
-  case X86_64_TYPE_OBJECT:
-    strbuf_append(buf, "<object>");
-    break;
-  default:
-    strbuf_append(buf, "<unknown>");
-    break;
+    case X86_64_TYPE_VOID:
+      strbuf_append(buf, "void");
+      break;
+    case X86_64_TYPE_BOOL:
+      strbuf_append(buf, "bool");
+      break;
+    case X86_64_TYPE_BYTE:
+      strbuf_append(buf, "byte");
+      break;
+    case X86_64_TYPE_INT:
+      strbuf_append(buf, "int");
+      break;
+    case X86_64_TYPE_UINT:
+      strbuf_append(buf, "uint");
+      break;
+    case X86_64_TYPE_LONG:
+      strbuf_append(buf, "long");
+      break;
+    case X86_64_TYPE_ULONG:
+      strbuf_append(buf, "ulong");
+      break;
+    case X86_64_TYPE_CHAR:
+      strbuf_append(buf, "char");
+      break;
+    case X86_64_TYPE_STRING:
+      strbuf_append(buf, "string");
+      break;
+    case X86_64_TYPE_ARRAY:
+      strbuf_append(buf, "array[");
+      cmd_data_str_type(buf, type, entry->i_child);
+      strbuf_append(buf, "]");
+      break;
+    case X86_64_TYPE_OBJECT:
+      strbuf_append(buf, "<object>");
+      break;
+    default:
+      strbuf_append(buf, "<unknown>");
+      break;
   }
 }
 
@@ -203,73 +203,73 @@ static void cmd_data_str_raw(strbuf *buf, x86_64_type *type, uint64_t ei,
   x86_64_type_entry *entry = type->entries + ei;
   char               tmp[64];
   switch (entry->kind) {
-  case X86_64_TYPE_VOID:
-    strbuf_append(buf, "()");
-    break;
-  case X86_64_TYPE_BOOL: {
-    uint8_t res = *raw;
-    if (res) {
-      snprintf(tmp, STRMAXLEN(tmp), "true");
-    } else {
-      snprintf(tmp, STRMAXLEN(tmp), "false");
-    }
-    strbuf_append(buf, tmp);
-  } break;
-  case X86_64_TYPE_BYTE: {
-    uint8_t res = *raw;
-    snprintf(tmp, STRMAXLEN(tmp), "%d", res);
-    strbuf_append(buf, tmp);
-  } break;
-  case X86_64_TYPE_INT: {
-    int32_t res = *(int32_t *)raw;
-    snprintf(tmp, STRMAXLEN(tmp), "%d", res);
-    strbuf_append(buf, tmp);
-  } break;
-  case X86_64_TYPE_UINT: {
-    uint32_t res = *(uint32_t *)raw;
-    snprintf(tmp, STRMAXLEN(tmp), "%u", res);
-    strbuf_append(buf, tmp);
-  } break;
-  case X86_64_TYPE_LONG: {
-    int64_t res = *(int64_t *)raw;
-    snprintf(tmp, STRMAXLEN(tmp), "%ld", res);
-    strbuf_append(buf, tmp);
-  } break;
-  case X86_64_TYPE_ULONG: {
-    uint64_t res = *(uint64_t *)raw;
-    snprintf(tmp, STRMAXLEN(tmp), "%lu", res);
-    strbuf_append(buf, tmp);
-  } break;
-  case X86_64_TYPE_CHAR: {
-    uint8_t res = *(uint8_t *)raw;
-    snprintf(tmp, STRMAXLEN(tmp), "%c", res);
-    strbuf_append(buf, tmp);
-  } break;
-  case X86_64_TYPE_STRING: {
-    uint8_t *res = (uint8_t *)raw;
-    strbuf_append(buf, "\"");
-    strbuf_append(buf, (char *)res);
-    strbuf_append(buf, "\"");
-  } break;
-  case X86_64_TYPE_ARRAY: {
-    strbuf_append(buf, "[");
-    uint64_t i = 0;
-    if (i < entry->meta_array->count) {
-      uint8_t *raw_cur = raw + entry->meta_array->size * i;
-      cmd_data_str_raw(buf, type, entry->i_child, raw_cur);
-      ++i;
-    }
-    for (; i < entry->meta_array->count; ++i) {
-      strbuf_append(buf, ", ");
-      uint8_t *raw_cur = raw + entry->meta_array->size * i;
-      cmd_data_str_raw(buf, type, entry->i_child, raw_cur);
-    }
-    strbuf_append(buf, "]");
-  } break;
-  case X86_64_TYPE_OBJECT: {
-  default:
-    strbuf_append(buf, "<unknown>");
-  } break;
+    case X86_64_TYPE_VOID:
+      strbuf_append(buf, "()");
+      break;
+    case X86_64_TYPE_BOOL: {
+      uint8_t res = *raw;
+      if (res) {
+        snprintf(tmp, STRMAXLEN(tmp), "true");
+      } else {
+        snprintf(tmp, STRMAXLEN(tmp), "false");
+      }
+      strbuf_append(buf, tmp);
+    } break;
+    case X86_64_TYPE_BYTE: {
+      uint8_t res = *raw;
+      snprintf(tmp, STRMAXLEN(tmp), "%d", res);
+      strbuf_append(buf, tmp);
+    } break;
+    case X86_64_TYPE_INT: {
+      int32_t res = *(int32_t *)raw;
+      snprintf(tmp, STRMAXLEN(tmp), "%d", res);
+      strbuf_append(buf, tmp);
+    } break;
+    case X86_64_TYPE_UINT: {
+      uint32_t res = *(uint32_t *)raw;
+      snprintf(tmp, STRMAXLEN(tmp), "%u", res);
+      strbuf_append(buf, tmp);
+    } break;
+    case X86_64_TYPE_LONG: {
+      int64_t res = *(int64_t *)raw;
+      snprintf(tmp, STRMAXLEN(tmp), "%ld", res);
+      strbuf_append(buf, tmp);
+    } break;
+    case X86_64_TYPE_ULONG: {
+      uint64_t res = *(uint64_t *)raw;
+      snprintf(tmp, STRMAXLEN(tmp), "%lu", res);
+      strbuf_append(buf, tmp);
+    } break;
+    case X86_64_TYPE_CHAR: {
+      uint8_t res = *(uint8_t *)raw;
+      snprintf(tmp, STRMAXLEN(tmp), "%c", res);
+      strbuf_append(buf, tmp);
+    } break;
+    case X86_64_TYPE_STRING: {
+      uint8_t *res = (uint8_t *)raw;
+      strbuf_append(buf, "\"");
+      strbuf_append(buf, (char *)res);
+      strbuf_append(buf, "\"");
+    } break;
+    case X86_64_TYPE_ARRAY: {
+      strbuf_append(buf, "[");
+      uint64_t i = 0;
+      if (i < entry->meta_array->count) {
+        uint8_t *raw_cur = raw + entry->meta_array->size * i;
+        cmd_data_str_raw(buf, type, entry->i_child, raw_cur);
+        ++i;
+      }
+      for (; i < entry->meta_array->count; ++i) {
+        strbuf_append(buf, ", ");
+        uint8_t *raw_cur = raw + entry->meta_array->size * i;
+        cmd_data_str_raw(buf, type, entry->i_child, raw_cur);
+      }
+      strbuf_append(buf, "]");
+    } break;
+    case X86_64_TYPE_OBJECT: {
+      default:
+        strbuf_append(buf, "<unknown>");
+    } break;
   }
 }
 

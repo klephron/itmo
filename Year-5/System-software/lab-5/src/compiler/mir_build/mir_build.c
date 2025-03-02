@@ -10,7 +10,6 @@ static inline int mir_ok(list_exception *exceptions, int ignore_errors) {
 mir_build_result mir_build(const hir *hir, const symbol_table *symbol_table,
                            const type_table *type_table, int ignore_errors) {
   UNUSED(symbol_table);
-  UNUSED(type_table);
 
   mir_build_result result = {
       .mir = NULL,
@@ -18,7 +17,7 @@ mir_build_result mir_build(const hir *hir, const symbol_table *symbol_table,
   };
 
   if (mir_ok(result.exceptions, ignore_errors)) {
-    mir_lower_hir_result r = mir_lower_hir(hir);
+    mir_lower_hir_result r = mir_lower_hir(hir, type_table);
     list_exception_extend(result.exceptions, r.exceptions);
     result.mir = r.mir;
   }
