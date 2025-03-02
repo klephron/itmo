@@ -19,7 +19,7 @@ GEN_DIR        ?= $(BUILD_DIR)/_gen
 TARGET_DIR     ?= $(BUILD_DIR)
 TARGET_TST_DIR ?= $(BUILD_DIR)/test
 
-PDF.COMPILER_FLAGS ?= --ast --cfg --cg --symbol-table --type-table --hir-tree --mir
+PDF.COMPILER_FLAGS ?= --ast --cfg --cfg-add-expr --cg --symbol-table --type-table --hir-tree --mir
 
 ASM.AS_FLAGS       ?= --64 -g
 ASM.LD_FLAGS       ?= -g -z noexecstack
@@ -167,7 +167,7 @@ run/pdf/%: compiler/build/main
 		$(PDF.COMPILER_FLAGS) \
 		$(PDF.INPUT_FILE) || true
 	@echo "--------------------DOT2PDF($(PDF.INPUT_FILE))--------------------"
-	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" || true; done
+	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" && echo "converted $$file" || true; done
 
 ### Compile file
 run/asm: run/asm/io/suite8.txt

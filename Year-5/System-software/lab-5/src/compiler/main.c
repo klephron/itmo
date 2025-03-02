@@ -395,7 +395,7 @@ static int execute(args *args) {
   // stage: print mir
   if (execute_ok(args) && args->mir) {
     char *mir_s = mir_str(mir);
-    fprintf(stderr, "MIR:\n%s\n", mir_s);
+    fprintf(stdout, "MIR:\n%s\n", mir_s);
     if (mir_s) {
       free(mir_s);
     }

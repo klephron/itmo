@@ -946,17 +946,22 @@ static mir_bb_seq mir_define_stmt_do(mir_ctx *ctx, const hir_stmt_do *stmt) {
   mir_bb_seq child_stmt = mir_define_stmt(ctx, stmt->stmt);
   root.first = child_stmt.first;
 
-  mir_define_expr_tree(ctx, child_stmt.last, stmt->cond);
-  list_hir_expr_ref_push_front(root.last->hir_exprs, stmt->cond);
+  // handle condition in new block
+  mir_bb *child_cond = mir_ctx_sub_emplace_back_bb(ctx);
+  child_cond->jmp.cond_ref = mir_define_expr_tree(ctx, child_cond, stmt->cond);
+  list_hir_expr_ref_push_back(child_cond->hir_exprs, stmt->cond);
 
+  if (stmt->positive) {
+    child_cond->jmp.je_ref = root.first;
+    child_cond->jmp.jz_ref = root.last;
+  } else {
+    child_cond->jmp.je_ref = root.last;
+    child_cond->jmp.jz_ref = root.first;
+  }
+
+  // link statement with condition if need to
   if (mir_bb_get_cond(child_stmt.last) == MIR_BB_TERM) {
-    if (stmt->positive) {
-      child_stmt.last->jmp.je_ref = root.first;
-      child_stmt.last->jmp.jz_ref = root.last;
-    } else {
-      child_stmt.last->jmp.je_ref = root.last;
-      child_stmt.last->jmp.jz_ref = root.first;
-    }
+    child_stmt.last->jmp.next_ref = child_cond;
   }
 
   list_mir_scope_ref_pop_front(ctx->scope_stack);

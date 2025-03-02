@@ -138,6 +138,7 @@ static mir_bb *mir_ctx_bb_merge_block(mir_ctx *ctx, mir_bb *cur) {
 
   hashset_mir_bb_preds_it cur_preds_it =
       hashset_mir_bb_preds_find(ctx->preds, &(mir_bb_preds){.bb = cur});
+
   mir_bb_preds *cur_preds = GET(cur_preds_it);
 
   // update all predecessors
@@ -203,17 +204,19 @@ static void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
   ctx->visited = hashset_mir_bb_ref_new();
   ctx->deleted = hashset_mir_bb_ref_new();
 
-  mir_bb *first = list_mir_bb_front(sub->basic.bbs);
-  mir_ctx_get_preds(ctx, first);
+  // calculate predicates for all bbs
+  for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
+       NEXT(it)) {
+    mir_ctx_get_preds(ctx, GET(it));
+  }
 
   // check
-  // for (hashset_mir_bb_preds_it it = hashset_mir_bb_preds_begin(hs_preds);
+  // for (hashset_mir_bb_preds_it it = hashset_mir_bb_preds_begin(ctx->preds);
   //      !END(it); NEXT(it)) {
   //   mir_bb_preds *bb_preds = GET(it);
 
   //   debug("bb%zu", bb_preds->bb->id);
-  //   for (list_mir_bb_ref_it pred_it =
-  // list_mir_bb_ref_begin(bb_preds->preds);
+  //   for (list_mir_bb_ref_it pred_it = list_mir_bb_ref_begin(bb_preds->preds);
   //        !END(pred_it); NEXT(pred_it)) {
   //     debug("  bb%zu", GET(pred_it)->id);
   //   }

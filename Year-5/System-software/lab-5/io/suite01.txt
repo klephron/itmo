@@ -36,15 +36,19 @@ var
   f, g: array [,] of array [,] of int;
   n;
 begin
+  inc_one();
+  inc_two();
 
   fun1();
 
   repeat
     begin
       a = 4;
-      break;
+      return 0;
     end
-  until true;
+  until a != b;
+
+  main();
 
   while (make!<int>(a) == cast!<int>(1)) do begin
     a = 2;
@@ -75,6 +79,4 @@ begin
     write(a);
     if a == 0 then break;
   end
-
-  main();
 end;
