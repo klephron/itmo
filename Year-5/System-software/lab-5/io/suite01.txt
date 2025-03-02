@@ -9,6 +9,8 @@ end;
 method fun3():
 begin
   main();
+  inc_one();
+  inc_two();
 end;
 
 method fun2():
@@ -24,6 +26,9 @@ begin
   fun3();
 end;
 
+method inc_one(): int from "read" in "example";
+method inc_two(): int from "example";
+
 method main(a, b):
 var
   c, d : int;
@@ -31,6 +36,9 @@ var
   f, g: array [,] of array [,] of int;
   n;
 begin
+
+  fun1();
+
   repeat
     begin
       a = 4;

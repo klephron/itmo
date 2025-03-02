@@ -21,5 +21,5 @@ dot_string *dot_cfg(const mir *mir, const hir *hir,
                     const type_table   *type_table,
                     const symbol_table *symbol_table, const mir_subroutine *sub,
                     int option_add_expr);
-dot_string *dot_cg(const mir *mir, const hir *hir, const type_table *type_table,
+dot_string *dot_cg(const mir *mir, const type_table *type_table,
                    const symbol_table *symbol_table, const mir_subroutine *sub);

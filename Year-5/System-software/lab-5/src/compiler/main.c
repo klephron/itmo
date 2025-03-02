@@ -429,7 +429,7 @@ static int execute(args *args) {
       const char           *source = sub->symbol_ref->span->source_ref;
 
       if (has_subroutine(args, sub_name)) {
-        dot_string *dot = dot_cg(mir, hir, type_table, symbol_table, sub);
+        dot_string *dot = dot_cg(mir, type_table, symbol_table, sub);
         char       *output = get_cg_dot_path(args, source, sub_name);
         write_dot(args, dot, output);
         free(output);

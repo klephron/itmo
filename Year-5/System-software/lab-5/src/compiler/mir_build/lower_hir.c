@@ -225,8 +225,11 @@ static mir_subroutine *mir_declare_sub(mir_ctx              *ctx,
 
       ctx->value_cnt = 0;
 
+      const type_base *type_ret =
+          type.callable->ret_ref ? type.callable->ret_ref : NULL;
+
       mir_value *ret_value = mir_value_new(
-          ctx->value_cnt++, NULL, type.callable->ret_ref->type_entry_ref);
+          ctx->value_cnt++, NULL, type_ret ? type_ret->type_entry_ref : NULL);
 
       list_mir_value *params = list_mir_value_new();
       for (list_hir_param_it it = list_hir_param_begin(sub_hir->params);

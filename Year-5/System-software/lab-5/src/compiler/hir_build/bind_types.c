@@ -374,15 +374,17 @@ static void hir_bind_lit(hir_ctx *ctx, hir_lit *lit) {
 
 static void hir_bind_subroutine_signature(hir_ctx        *ctx,
                                           hir_subroutine *subroutine) {
-  hir_scope_entry *ret_entry =
-      hir_ctx_scopes_resolve(ctx, subroutine->type_ret);
+  hir_scope_entry *ret_entry = NULL;
+  if (subroutine->type_ret) {
+    ret_entry = hir_ctx_scopes_resolve(ctx, subroutine->type_ret);
 
-  if (!ret_entry) {
-    char *type_s = hir_type_str(subroutine->type_ret);
-    hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, subroutine->base.span,
-                  "return type %s can't be resolved", type_s);
-    free(type_s);
-    return;
+    if (!ret_entry) {
+      char *type_s = hir_type_str(subroutine->type_ret);
+      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, subroutine->base.span,
+                    "return type %s can't be resolved", type_s);
+      free(type_s);
+      return;
+    }
   }
 
   list_type_ref *params = list_type_ref_new();
