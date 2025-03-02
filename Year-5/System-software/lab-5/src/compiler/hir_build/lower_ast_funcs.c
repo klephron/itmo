@@ -590,6 +590,14 @@ hir_stmt_expr *hir_build_stmt_expr(hir_ctx *ctx, hir_expr_base *expr) {
   return hir_stmt_expr_new(span_copy(expr->base.span), expr);
 }
 
+hir_stmt_return *hir_build_stmt_return(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                       hir_expr_base *expr) {
+  span *node_span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span *span = hir_span_new_range(node_span, expr->base.span);
+  span_free(node_span);
+  return hir_stmt_return_new(span, expr);
+}
+
 // HIR
 void hir_build_hir_func(hir_ctx *ctx, hir_subroutine *func) {
   list_hir_subroutine_push_back(ctx->hir_ref->subroutines, func);

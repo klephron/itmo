@@ -620,6 +620,11 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
       return (hir_stmt_base *)hir_stmt_expr_new(
           span_copy(span), hir_expand_templates_expr(ctx, self->expr));
     }
+    case HIR_STMT_RETURN: {
+      const hir_stmt_return *self = (typeof(self))stmt_t;
+      return (hir_stmt_base *)hir_stmt_return_new(
+          span_copy(span), hir_expand_templates_expr(ctx, self->expr));
+    }
     case HIR_STMT_UNKNOWN:
       break;
   }

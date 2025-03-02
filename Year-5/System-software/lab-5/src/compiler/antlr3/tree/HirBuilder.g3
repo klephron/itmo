@@ -198,11 +198,12 @@ class_method [const hir_id *id_ref, const list_hir_id *typenames] returns [hir_m
 
 //STATEMENTS
 statement returns [ hir_stmt_base *v ]
-  : statement_if { $v = (hir_stmt_base *) $statement_if.v; }
-  | statement_block { $v = (hir_stmt_base *) $statement_block.v; }
-  | statement_while { $v = (hir_stmt_base *) $statement_while.v; }
-  | statement_do { $v = (hir_stmt_base *) $statement_do.v; }
-  | statement_break { $v = (hir_stmt_base *) $statement_break.v; }
+  : statement_if         { $v = (hir_stmt_base *) $statement_if.v; }
+  | statement_block      { $v = (hir_stmt_base *) $statement_block.v; }
+  | statement_while      { $v = (hir_stmt_base *) $statement_while.v; }
+  | statement_do         { $v = (hir_stmt_base *) $statement_do.v; }
+  | statement_break      { $v = (hir_stmt_base *) $statement_break.v; }
+  | statement_return     { $v = (hir_stmt_base *) $statement_return.v; }
   | statement_expression { $v = (hir_stmt_base *) $statement_expression.v; }
   ;
 
@@ -243,6 +244,10 @@ statement_do_condition returns [ hir_expr_base *e, ANTLR3_BASE_TREE *n, int p ]
 
 statement_break returns [ hir_stmt_break *v ]
   : br='break' { $v = hir_build_stmt_break(ANTLR3_USERP(), $br); }
+  ;
+
+statement_return returns [ hir_stmt_return *v ]
+  : ^(rt='return' expr) { $v = hir_build_stmt_return(ANTLR3_USERP(), $rt, $expr.v); }
   ;
 
 statement_expression returns [ hir_stmt_expr *v ]
@@ -380,7 +385,7 @@ expr_3 returns [ hir_expr_binary *v ]
       $v = hir_build_expr_binary(ANTLR3_USERP(), $e1.v, $e2.v, $op, HIR_EXPR_BINARY_DIV);
     }
   | ^(op='%' e1=expr e2=expr) {
-      $v = hir_build_expr_binary(ANTLR3_USERP(), $e1.v, $e2.v, $op, HIR_EXPR_BINARY_MOD);
+      $v = hir_build_expr_binary(ANTLR3_USERP(), $e1.v, $e2.v, $op, HIR_EXPR_BINARY_REM);
     }
   ;
 

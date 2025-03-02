@@ -116,6 +116,8 @@ const char *hir_stmt_enum_str(hir_stmt_enum kind) {
       return "BREAK";
     case HIR_STMT_EXPR:
       return "EXPR";
+    case HIR_STMT_RETURN:
+      return "RETURN";
     case HIR_STMT_UNKNOWN:
       break;
   }

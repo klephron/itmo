@@ -83,18 +83,20 @@ hir_expr_builtin *hir_build_expr_builtin(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                          list_hir_expr        *expr);
 
 // STATEMENTS
-hir_stmt_if    *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
-                                  hir_expr_base *cond, hir_stmt_base *je,
-                                  hir_stmt_base *jz);
-hir_stmt_block *hir_build_stmt_block(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
-                                     list_hir_stmt *stmts);
-hir_stmt_while *hir_build_stmt_while(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
-                                     hir_expr_base *cond, hir_stmt_base *stmt);
-hir_stmt_do    *hir_build_stmt_do(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
-                                  int positive, hir_expr_base *cond,
-                                  hir_stmt_base *stmt);
-hir_stmt_break *hir_build_stmt_break(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
-hir_stmt_expr  *hir_build_stmt_expr(hir_ctx *ctx, hir_expr_base *expr);
+hir_stmt_if     *hir_build_stmt_if(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                   hir_expr_base *cond, hir_stmt_base *je,
+                                   hir_stmt_base *jz);
+hir_stmt_block  *hir_build_stmt_block(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                      list_hir_stmt *stmts);
+hir_stmt_while  *hir_build_stmt_while(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                      hir_expr_base *cond, hir_stmt_base *stmt);
+hir_stmt_do     *hir_build_stmt_do(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                   int positive, hir_expr_base *cond,
+                                   hir_stmt_base *stmt);
+hir_stmt_break  *hir_build_stmt_break(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_stmt_expr   *hir_build_stmt_expr(hir_ctx *ctx, hir_expr_base *expr);
+hir_stmt_return *hir_build_stmt_return(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
+                                       hir_expr_base *expr);
 
 // HIR
 void hir_build_hir_func(hir_ctx *ctx, hir_subroutine *func);

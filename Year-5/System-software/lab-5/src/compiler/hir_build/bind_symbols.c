@@ -269,6 +269,11 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
       hir_bind_subroutine_body_expr(ctx, self->expr);
       return;
     }
+    case HIR_STMT_RETURN: {
+      hir_stmt_return *self = (typeof(self))base;
+      hir_bind_subroutine_body_expr(ctx, self->expr);
+      return;
+    }
     case HIR_STMT_UNKNOWN:
       break;
   }

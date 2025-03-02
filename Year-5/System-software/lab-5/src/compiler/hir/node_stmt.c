@@ -31,6 +31,8 @@ void hir_stmt_free(hir_stmt_base *generic) {
         return hir_stmt_break_free((hir_stmt_break *)generic);
       case HIR_STMT_EXPR:
         return hir_stmt_expr_free((hir_stmt_expr *)generic);
+      case HIR_STMT_RETURN:
+        return hir_stmt_return_free((hir_stmt_return *)generic);
       case HIR_STMT_UNKNOWN:
         break;
     }
@@ -131,6 +133,21 @@ hir_stmt_expr *hir_stmt_expr_new(span *span, hir_expr_base *expr) {
 }
 
 void hir_stmt_expr_free(hir_stmt_expr *self) {
+  if (self) {
+    hir_expr_free(self->expr);
+    hir_stmt_base_deinit(&self->base);
+    free(self);
+  }
+}
+
+hir_stmt_return *hir_stmt_return_new(span *span, hir_expr_base *expr) {
+  hir_stmt_return *self = MALLOC(hir_stmt_return);
+  hir_stmt_base_init(&self->base, span, HIR_STMT_RETURN);
+  self->expr = expr;
+  return self;
+}
+
+void hir_stmt_return_free(hir_stmt_return *self) {
   if (self) {
     hir_expr_free(self->expr);
     hir_stmt_base_deinit(&self->base);

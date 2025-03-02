@@ -59,10 +59,6 @@ typedef struct mir_bb_seq_struct {
   mir_bb *last;
 } mir_bb_seq;
 
-static inline int mir_bb_seq_is_empty(mir_bb_seq seq) {
-  return seq.first == NULL && seq.last == NULL;
-}
-
 LIST_DECLARE_STATIC_INLINE(list_mir_scope_ref, mir_bb_seq, container_cmp_false,
                            container_new_move, container_delete_false);
 
@@ -92,6 +88,7 @@ typedef struct mir_ctx_struct {
   size_t                 bb_cnt;
   hashset_mir_sym_entry *map_sym_value;
   list_mir_scope_ref    *scope_stack;
+  mir_bb                *bb_last_ref;
   mir_bb                *bb_ref;
 
   mir              *mir;
@@ -110,6 +107,7 @@ static void mir_ctx_init(mir_ctx *ctx, mir *mir, const type_table *type_table,
   ctx->bb_cnt = 0;
   ctx->map_sym_value = NULL;
   ctx->scope_stack = NULL;
+  ctx->bb_last_ref = NULL;
   ctx->bb_ref = NULL;
 
   ctx->mir = mir;
@@ -127,6 +125,7 @@ static void mir_ctx_deinit(mir_ctx *ctx) {
   ctx->bb_cnt = 0;
   ctx->map_sym_value = NULL;
   ctx->scope_stack = NULL;
+  ctx->bb_last_ref = NULL;
   ctx->bb_ref = NULL;
 
   ctx->mir = NULL;
@@ -855,15 +854,20 @@ static mir_bb_seq mir_define_stmt_if(mir_ctx *ctx, const hir_stmt_if *stmt) {
   };
 
   root.first->jmp.cond_ref = mir_define_expr_tree(ctx, root.first, stmt->cond);
+  list_hir_expr_ref_push_front(root.first->hir_exprs, stmt->cond);
 
   mir_bb_seq je = mir_define_stmt(ctx, stmt->je);
+  if (mir_bb_get_cond(je.last) == MIR_BB_TERM) {
+    je.last->jmp.next_ref = root.last;
+  }
   root.first->jmp.je_ref = je.first;
-  je.last->jmp.next_ref = root.last;
 
-  mir_bb_seq jz = mir_define_stmt(ctx, stmt->jz);
-  if (!mir_bb_seq_is_empty(jz)) {
+  if (stmt->jz) {
+    mir_bb_seq jz = mir_define_stmt(ctx, stmt->jz);
+    if (mir_bb_get_cond(jz.last) == MIR_BB_TERM) {
+      jz.last->jmp.next_ref = root.last;
+    }
     root.first->jmp.jz_ref = jz.first;
-    jz.last->jmp.next_ref = root.last;
   } else {
     root.first->jmp.jz_ref = root.last;
   }
@@ -893,11 +897,9 @@ static mir_bb_seq mir_define_stmt_block(mir_ctx              *ctx,
       continue;
     }
 
-    // if previous was break or return then no need to connect it with cur
-    if (!prev.last->jmp.next_ref) {
+    if (mir_bb_get_cond(prev.last) == MIR_BB_TERM) {
       prev.last->jmp.next_ref = cur.first;
     }
-
     prev = cur;
   }
 
@@ -915,10 +917,13 @@ static mir_bb_seq mir_define_stmt_while(mir_ctx              *ctx,
   list_mir_scope_ref_push_front(ctx->scope_stack, &root);
 
   root.first->jmp.cond_ref = mir_define_expr_tree(ctx, root.first, stmt->cond);
+  list_hir_expr_ref_push_front(root.first->hir_exprs, stmt->cond);
 
   mir_bb_seq je = mir_define_stmt(ctx, stmt->stmt);
+  if (mir_bb_get_cond(je.last) == MIR_BB_TERM) {
+    je.last->jmp.next_ref = root.first;
+  }
   root.first->jmp.je_ref = je.first;
-  je.last->jmp.next_ref = root.first;
 
   root.first->jmp.jz_ref = root.last;
 
@@ -936,15 +941,19 @@ static mir_bb_seq mir_define_stmt_do(mir_ctx *ctx, const hir_stmt_do *stmt) {
   list_mir_scope_ref_push_front(ctx->scope_stack, &root);
 
   mir_bb_seq child_stmt = mir_define_stmt(ctx, stmt->stmt);
-  mir_define_expr_tree(ctx, child_stmt.last, stmt->cond);
   root.first = child_stmt.first;
 
-  if (stmt->positive) {
-    child_stmt.last->jmp.je_ref = root.first;
-    child_stmt.last->jmp.jz_ref = root.last;
-  } else {
-    child_stmt.last->jmp.je_ref = root.last;
-    child_stmt.last->jmp.jz_ref = root.first;
+  mir_define_expr_tree(ctx, child_stmt.last, stmt->cond);
+  list_hir_expr_ref_push_front(root.last->hir_exprs, stmt->cond);
+
+  if (mir_bb_get_cond(child_stmt.last) == MIR_BB_TERM) {
+    if (stmt->positive) {
+      child_stmt.last->jmp.je_ref = root.first;
+      child_stmt.last->jmp.jz_ref = root.last;
+    } else {
+      child_stmt.last->jmp.je_ref = root.last;
+      child_stmt.last->jmp.jz_ref = root.first;
+    }
   }
 
   list_mir_scope_ref_pop_front(ctx->scope_stack);
@@ -969,12 +978,30 @@ static mir_bb_seq mir_define_stmt_break(mir_ctx              *ctx,
   return root;
 }
 
-static mir_bb_seq mir_define_bb_expr(mir_ctx *ctx, const hir_stmt_expr *stmt) {
+static mir_bb_seq mir_define_stmt_expr(mir_ctx             *ctx,
+                                       const hir_stmt_expr *stmt) {
   mir_bb_seq root = {.first = mir_ctx_sub_emplace_back_bb(ctx)};
   root.last = root.first;
 
   mir_define_expr_tree(ctx, root.first, stmt->expr);
   list_hir_expr_ref_push_back(root.first->hir_exprs, stmt->expr);
+
+  return root;
+}
+
+static mir_bb_seq mir_define_stmt_return(mir_ctx               *ctx,
+                                         const hir_stmt_return *stmt) {
+  mir_bb_seq root = {.first = mir_ctx_sub_emplace_back_bb(ctx)};
+  root.last = root.first;
+
+  mir_value *value = mir_define_expr_tree(ctx, root.first, stmt->expr);
+  list_hir_expr_ref_push_back(root.first->hir_exprs, stmt->expr);
+
+  list_mir_stmt_push_back(
+      root.first->stmts,
+      mir_stmt_new_assign_value(ctx->sub_ref->basic.ret, value));
+
+  root.last->jmp.next_ref = ctx->bb_last_ref;
 
   return root;
 }
@@ -996,7 +1023,9 @@ static mir_bb_seq mir_define_stmt(mir_ctx *ctx, const hir_stmt_base *stmt) {
     case HIR_STMT_BREAK:
       return mir_define_stmt_break(ctx, (hir_stmt_break *)stmt);
     case HIR_STMT_EXPR:
-      return mir_define_bb_expr(ctx, (hir_stmt_expr *)stmt);
+      return mir_define_stmt_expr(ctx, (hir_stmt_expr *)stmt);
+    case HIR_STMT_RETURN:
+      return mir_define_stmt_return(ctx, (hir_stmt_return *)stmt);
     case HIR_STMT_UNKNOWN:
       break;
   }
@@ -1044,55 +1073,21 @@ static void mir_define_sub_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
   sub_mir->basic.bbs = list_mir_bb_new();
   ctx->scope_stack = list_mir_scope_ref_new();
 
-  mir_bb_seq bb_seq = mir_define_stmt_block(ctx, hir_root);
+  // add last block to handle returns
+  mir_bb *bb_last = mir_bb_new(ctx->bb_cnt++, list_mir_stmt_new(), NULL, NULL,
+                               NULL, list_hir_expr_ref_new());
+  ctx->bb_last_ref = bb_last;
+
+  mir_bb_seq seq = mir_define_stmt_block(ctx, hir_root);
+
+  // link what is done with last block and push back last block
+  if (mir_bb_get_cond(seq.last) == MIR_BB_TERM) {
+    seq.last->jmp.next_ref = ctx->bb_last_ref;
+  }
+  list_mir_bb_push_back(ctx->sub_ref->basic.bbs, bb_last);
 
   list_mir_scope_ref_free(ctx->scope_stack);
   mir_ctx_sym_value_destroy(ctx);
-
-  // try to add implicit return expression
-  mir_bb *bb_last = bb_seq.last;
-  if (!bb_last || list_mir_stmt_empty(bb_last->stmts)) {
-    mir_exception_add_warning(
-        ctx->exceptions, EXCEPTION_MIR_NO_RETURN, sub_mir->symbol_ref->span,
-        "last block of subroutine %s is empty", sub_mir->symbol_ref->name);
-  } else {
-    mir_stmt  *stmt_last = list_mir_stmt_back(bb_last->stmts);
-    mir_value *stmt_last_value = NULL;
-
-    switch (stmt_last->kind) {
-      case MIR_STMT_OP:
-        stmt_last_value = stmt_last->op.ret;
-        break;
-      case MIR_STMT_CALL:
-        stmt_last_value = stmt_last->call.ret;
-        break;
-      case MIR_STMT_MEMBER:
-        stmt_last_value = stmt_last->member.ret;
-        break;
-      case MIR_STMT_BUILTIN:
-        stmt_last_value = stmt_last->builtin.ret;
-        break;
-      case MIR_STMT_ASSIGN_VALUE:
-        stmt_last_value = stmt_last->value.to;
-        break;
-      case MIR_STMT_ASSIGN_LIT:
-        stmt_last_value = stmt_last->lit.to;
-        break;
-      case MIR_STMT_UNKNOWN:
-        break;
-    }
-
-    if (stmt_last_value) {
-      list_mir_stmt_push_back(
-          bb_last->stmts,
-          mir_stmt_new_assign_value(sub_mir->basic.ret, stmt_last_value));
-    } else {
-      mir_exception_add_warning(
-          ctx->exceptions, EXCEPTION_MIR_NO_RETURN, sub_mir->symbol_ref->span,
-          "last expression of subroutine %s has no return",
-          sub_mir->symbol_ref->name);
-    }
-  }
 }
 
 static void mir_define_subs(mir_ctx *ctx, const hir *hir) {

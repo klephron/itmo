@@ -11,6 +11,7 @@ typedef enum hir_stmt_enum {
   HIR_STMT_DO,
   HIR_STMT_BREAK,
   HIR_STMT_EXPR,
+  HIR_STMT_RETURN,
 } hir_stmt_enum;
 
 typedef struct hir_stmt_base_struct {
@@ -83,3 +84,11 @@ typedef struct hir_stmt_expr_struct {
 
 hir_stmt_expr *hir_stmt_expr_new(span *span, hir_expr_base *expr);
 void           hir_stmt_expr_free(hir_stmt_expr *self);
+
+typedef struct hir_stmt_return_struct {
+  hir_stmt_base  base;
+  hir_expr_base *expr;
+} hir_stmt_return;
+
+hir_stmt_return *hir_stmt_return_new(span *span, hir_expr_base *expr);
+void             hir_stmt_return_free(hir_stmt_return *self);
