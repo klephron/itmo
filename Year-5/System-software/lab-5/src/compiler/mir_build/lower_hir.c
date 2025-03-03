@@ -469,12 +469,17 @@ static mir_expr_r mir_define_expr_unary(mir_ctx              *ctx,
         ok = 0;
         break;
       }
-      if (expr->first->kind != HIR_EXPR_IDENTIFIER) {
+      if (expr->first->kind == HIR_EXPR_IDENTIFIER) {
+      } else if (expr->first->kind == HIR_EXPR_INDEX) {
+      } else if (expr->first->kind == HIR_EXPR_BINARY &&
+                 ((hir_expr_binary *)expr->first)->op ==
+                     HIR_EXPR_BINARY_MEMBER) {
+      } else {
         ok = 0;
         mir_exception_add_error(ctx->exceptions,
                                 EXCEPTION_MIR_UNEXPECTED_RVALUE,
-                                expr->base.base.span, "expected identifier");
-        break;
+                                expr->base.base.span,
+                                "expected identifier, index or member access");
       }
       break;
     }
@@ -486,7 +491,7 @@ static mir_expr_r mir_define_expr_unary(mir_ctx              *ctx,
   }
 
   if (!ok) {
-    debug("hir expr %p is invalid", expr);
+    // debug("hir expr %p is invalid", expr);
     return mir_expr_r_empty();
   }
 

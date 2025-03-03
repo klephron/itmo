@@ -1,8 +1,8 @@
-method main(a, b): int
+method main(self, a, b): int
 var
   c: array [] of int;
   n;
 begin
-  n = c.d;
-  n.f = a[4] = c.d;
+  self.a = 4;
+  ++self[4][2];
 end;
