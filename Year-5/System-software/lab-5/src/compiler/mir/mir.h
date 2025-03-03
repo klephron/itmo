@@ -64,8 +64,7 @@ typedef enum mir_stmt_enum {
   MIR_STMT_CALL,
   MIR_STMT_MEMBER,
   MIR_STMT_BUILTIN,
-  MIR_STMT_ASSIGN_VALUE,
-  MIR_STMT_ASSIGN_LIT,
+  MIR_STMT_ASSIGN,
 } mir_stmt_enum;
 
 typedef enum mir_stmt_op_enum {
@@ -74,8 +73,8 @@ typedef enum mir_stmt_op_enum {
   MIR_STMT_OP_UNARY_MINUS,
   MIR_STMT_OP_UNARY_LOGICAL_NOT,
   MIR_STMT_OP_UNARY_BITWISE_NOT,
-  MIR_STMT_OP_UNARY_INC,
-  MIR_STMT_OP_UNARY_DEC,
+  MIR_STMT_OP_UNARY_INC, // just increments by one, no self assignment
+  MIR_STMT_OP_UNARY_DEC, // same
   MIR_STMT_OP_BINARY_LOGICAL_OR,
   MIR_STMT_OP_BINARY_LOGICAL_AND,
   MIR_STMT_OP_BINARY_BITWISE_OR,
@@ -105,6 +104,12 @@ typedef enum mir_stmt_builtin_enum {
   MIR_STMT_BUILTIN_PRINT,
 } mir_stmt_builtin_enum;
 
+typedef enum mir_stmt_assign_enum {
+  MIR_STMT_ASSIGN_UNKNOWN,
+  MIR_STMT_ASSIGN_LIT,
+  MIR_STMT_ASSIGN_VALUE,
+} mir_stmt_assign_enum;
+
 // NOTE: references elements that are stored elsewhere
 typedef struct mir_stmt_struct {
   mir_stmt_enum kind;
@@ -131,13 +136,14 @@ typedef struct mir_stmt_struct {
       list_mir_value_ref   *args;
     } builtin;
     struct {
-      mir_value *to;
-      mir_value *from;
-    } value; // value assignment
-    struct {
-      mir_value *to;
-      mir_lit   *from;
-    } lit; // lit assignment
+      mir_stmt_assign_enum kind;
+      mir_value           *to;
+      union {
+        mir_value *from_value;
+        mir_lit   *from_lit;
+      };
+      int deref;
+    } assign; // value assignment
   };
 } mir_stmt;
 
@@ -148,8 +154,8 @@ mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
 mir_stmt *mir_stmt_new_member(mir_value *ret, mir_value *obj, mir_lit *member);
 mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
                                type_entry *type, list_mir_value_ref *args);
-mir_stmt *mir_stmt_new_assign_value(mir_value *to, mir_value *from);
-mir_stmt *mir_stmt_new_assign_lit(mir_value *to, mir_lit *from);
+mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
+                              void *from, int deref);
 
 void mir_stmt_free(mir_stmt *self);
 

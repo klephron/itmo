@@ -138,31 +138,37 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
       mir_str_stmt_args(buffer, pad, stmt->builtin.args);
       break;
 
-    case MIR_STMT_ASSIGN_VALUE:
-      strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
-      strbuf_append_f(buffer, buf, "(_%lu, _%zu)", stmt->value.to->id,
-                      stmt->value.from->id);
-      break;
-
-    case MIR_STMT_ASSIGN_LIT:
-      strbuf_append(buffer, mir_stmt_enum_str(stmt->kind));
-      strbuf_append_f(buffer, buf, "(_%lu, lit.%zu)", stmt->lit.to->id,
-                      stmt->lit.from->id);
-      char *lit_s = mir_lit_value_str(stmt->lit.from);
-      if (lit_s) {
-        strbuf_append(buffer, "  # ");
-        strbuf_append(buffer, lit_s);
-        free(lit_s);
+    case MIR_STMT_ASSIGN:
+      if (stmt->assign.deref) {
+        strbuf_append(buffer, "*");
       }
-      if (stmt->lit.from->type_ref) {
-        char *type_s = type_str(stmt->lit.from->type_ref->type);
-        if (type_s) {
+      strbuf_append_f(buffer, buf, "_%lu = ", stmt->assign.to->id);
+      switch (stmt->assign.kind) {
+        case MIR_STMT_ASSIGN_VALUE:
+          strbuf_append_f(buffer, buf, "_%lu", stmt->assign.from_value->id);
+          break;
+        case MIR_STMT_ASSIGN_LIT:
+          strbuf_append_f(buffer, buf, "lit.%lu", stmt->assign.from_lit->id);
+          char *lit_s = mir_lit_value_str(stmt->assign.from_lit);
           if (lit_s) {
-            strbuf_append(buffer, ", ");
+            strbuf_append(buffer, "  # ");
+            strbuf_append(buffer, lit_s);
+            free(lit_s);
           }
-          strbuf_append(buffer, type_s);
-          free(type_s);
-        }
+          if (stmt->assign.from_lit->type_ref) {
+            char *type_s = type_str(stmt->assign.from_lit->type_ref->type);
+            if (type_s) {
+              if (lit_s) {
+                strbuf_append(buffer, ", ");
+              }
+              strbuf_append(buffer, type_s);
+              free(type_s);
+            }
+          }
+          break;
+        default:
+          warn("unhandled mir stmt assign kind %d %p", stmt->assign.kind, stmt);
+          break;
       }
       break;
 

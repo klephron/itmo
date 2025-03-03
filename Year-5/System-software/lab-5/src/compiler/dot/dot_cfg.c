@@ -333,12 +333,11 @@ dot_string *dot_cfg(const mir *mir, const hir *hir,
   dot_ctx ctx;
   dot_ctx_init(&ctx, buffer, option_add_expr);
 
-  strbuf_append(
-      buffer, "strict digraph G {\n"
-              "compound=true;\n"
-              "graph [nodesep=\"1\",ranksep=\"0.75\",splines=true];\n"
-              "node [shape=rect, style=filled];\n"
-              "\n");
+  strbuf_append(buffer, "strict digraph G {\n"
+                        "compound=true;\n"
+                        "graph [nodesep=\"1\",ranksep=\"0.75\",splines=true];\n"
+                        "node [shape=rect, style=filled];\n"
+                        "\n");
 
   dot_cfg_traverse(&ctx, sub);
 

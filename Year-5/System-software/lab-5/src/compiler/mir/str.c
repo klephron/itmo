@@ -96,10 +96,8 @@ const char *mir_stmt_enum_str(mir_stmt_enum kind) {
       return "member";
     case MIR_STMT_BUILTIN:
       return "builtin";
-    case MIR_STMT_ASSIGN_VALUE:
-      return "assign_value";
-    case MIR_STMT_ASSIGN_LIT:
-      return "assign_lit";
+    case MIR_STMT_ASSIGN:
+      return "assign";
     case MIR_STMT_UNKNOWN:
       break;
   }

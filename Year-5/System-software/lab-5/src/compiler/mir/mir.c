@@ -106,19 +106,25 @@ mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
   return self;
 }
 
-mir_stmt *mir_stmt_new_assign_value(mir_value *to, mir_value *from) {
+mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
+                              void *from, int deref) {
   mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_ASSIGN_VALUE;
-  self->value.to = to;
-  self->value.from = from;
-  return self;
-}
-
-mir_stmt *mir_stmt_new_assign_lit(mir_value *to, mir_lit *from) {
-  mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_ASSIGN_LIT;
-  self->lit.to = to;
-  self->lit.from = from;
+  self->kind = MIR_STMT_ASSIGN;
+  self->assign.kind = kind;
+  switch (kind) {
+    case MIR_STMT_ASSIGN_LIT:
+      self->assign.from_lit = from;
+      break;
+    case MIR_STMT_ASSIGN_VALUE:
+      self->assign.from_value = from;
+      break;
+    case MIR_STMT_ASSIGN_UNKNOWN:
+    default:
+      error("unhandled assign kind %d", kind);
+      break;
+  }
+  self->assign.to = to;
+  self->assign.deref = deref;
   return self;
 }
 
@@ -136,9 +142,7 @@ void mir_stmt_free(mir_stmt *self) {
       case MIR_STMT_BUILTIN:
         list_mir_value_ref_free(self->builtin.args);
         break;
-      case MIR_STMT_ASSIGN_VALUE:
-        break;
-      case MIR_STMT_ASSIGN_LIT:
+      case MIR_STMT_ASSIGN:
         break;
       case MIR_STMT_UNKNOWN:
       default:
