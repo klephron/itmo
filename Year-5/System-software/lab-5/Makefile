@@ -163,7 +163,7 @@ run/pdf: run/pdf/io/suite8.txt
 run/pdf/%: PDF.INPUT_FILE=$(patsubst run/pdf/%,%,$@)
 run/pdf/%: PDF.ASM_FILE=$(patsubst run/pdf/%,%.asm,$@)
 run/pdf/%: compiler/build/main
-	./build/compiler/main -d . -o $(PDF.ASM_FILE) --ignore-errors \
+	./build/compiler/main -d . -o $(PDF.ASM_FILE) \
 		$(PDF.COMPILER_FLAGS) \
 		$(PDF.INPUT_FILE) || true
 	@echo "--------------------DOT2PDF($(PDF.INPUT_FILE))--------------------"

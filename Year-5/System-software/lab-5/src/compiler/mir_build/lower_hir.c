@@ -439,8 +439,11 @@ static mir_expr_r mir_define_expr_unary_generic(mir_ctx              *ctx,
                                                 mir_stmt_op_enum      op) {
   mir_value *first = mir_define_expr(ctx, expr->first).value;
   mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-  mir_define_mir_stmt(
-      ctx, mir_stmt_new_op(op, ret, mir_define_mir_value_args(first, NULL)));
+  mir_stmt  *stmt = mir_define_mir_stmt(
+       ctx, mir_stmt_new_op(op, ret, mir_define_mir_value_args(first, NULL)));
+
+  mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
   return mir_expr_r_make(ret, 0);
 }
 
@@ -514,30 +517,36 @@ static mir_expr_r mir_define_expr_unary(mir_ctx              *ctx,
     case HIR_EXPR_UNARY_INC: {
       mir_expr_r first_r = mir_define_expr(ctx, expr->first);
       mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-      mir_define_mir_stmt(
-          ctx, mir_stmt_new_op(MIR_STMT_OP_UNARY_INC, ret,
-                               mir_define_mir_value_args(first_r.value, NULL)));
+      mir_stmt  *stmt_inc = mir_define_mir_stmt(
+           ctx, mir_stmt_new_op(MIR_STMT_OP_UNARY_INC, ret,
+                                mir_define_mir_value_args(first_r.value, NULL)));
 
       // save tmp result to actual value (preserve dereference)
-      mir_define_mir_stmt(ctx, mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE,
-                                                   first_r.value, ret,
-                                                   first_r.deref));
+      mir_stmt *stmt_ass = mir_define_mir_stmt(
+          ctx, mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE, first_r.value, ret,
+                                   first_r.deref));
 
-      return mir_expr_r_make(ret, 0);
+      mir_stmt_debug_init_span(stmt_inc, expr->base.base.span);
+      mir_stmt_debug_init_span(stmt_ass, expr->base.base.span);
+
+      return mir_expr_r_make(first_r.value, 0);
     }
     case HIR_EXPR_UNARY_DEC: {
       mir_expr_r first_r = mir_define_expr(ctx, expr->first);
       mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-      mir_define_mir_stmt(
-          ctx, mir_stmt_new_op(MIR_STMT_OP_UNARY_DEC, ret,
-                               mir_define_mir_value_args(first_r.value, NULL)));
+      mir_stmt  *stmt_inc = mir_define_mir_stmt(
+           ctx, mir_stmt_new_op(MIR_STMT_OP_UNARY_DEC, ret,
+                                mir_define_mir_value_args(first_r.value, NULL)));
 
       // save tmp result to actual value (preserve dereference)
-      mir_define_mir_stmt(ctx, mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE,
-                                                   first_r.value, ret,
-                                                   first_r.deref));
+      mir_stmt *stmt_ass = mir_define_mir_stmt(
+          ctx, mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE, first_r.value, ret,
+                                   first_r.deref));
 
-      return mir_expr_r_make(ret, 0);
+      mir_stmt_debug_init_span(stmt_inc, expr->base.base.span);
+      mir_stmt_debug_init_span(stmt_ass, expr->base.base.span);
+
+      return mir_expr_r_make(first_r.value, 0);
     }
     case HIR_EXPR_UNARY_UNKNOWN:
       break;
@@ -554,9 +563,12 @@ static mir_expr_r mir_define_expr_binary_generic(mir_ctx               *ctx,
   mir_value *first = mir_define_expr(ctx, expr->first).value;
   mir_value *second = mir_define_expr(ctx, expr->second).value;
   mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-  mir_define_mir_stmt(
-      ctx,
-      mir_stmt_new_op(op, ret, mir_define_mir_value_args(first, second, NULL)));
+  mir_stmt  *stmt = mir_define_mir_stmt(
+       ctx,
+       mir_stmt_new_op(op, ret, mir_define_mir_value_args(first, second, NULL)));
+
+  mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
   return mir_expr_r_make(ret, 0);
 }
 
@@ -572,11 +584,11 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
     case HIR_EXPR_BINARY_MEMBER: {
       const type_entry *type_ref;
 
-      if (expr->second->kind != HIR_EXPR_LITERAL ||
-          !(type_ref = ((hir_expr_lit *)expr->second)->lit->type_ref) ||
-          type_ref->type->kind != TYPE_PRIMITIVE ||
-          ((type_primitive *)type_ref->type)->type != TYPE_PRIMITIVE_STRING) {
-
+      if (expr->second->kind == HIR_EXPR_LITERAL &&
+          (type_ref = ((hir_expr_lit *)expr->second)->lit->type_ref) &&
+          type_ref->type->kind == TYPE_PRIMITIVE &&
+          ((type_primitive *)type_ref->type)->type == TYPE_PRIMITIVE_STRING) {
+      } else {
         mir_exception_add_error(
             ctx->exceptions, EXCEPTION_MIR_UNEXPECTED_MEMBER,
             expr->base.base.span,
@@ -588,6 +600,19 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
     }
 
     case HIR_EXPR_BINARY_ASSIGN:
+      if (expr->first->kind == HIR_EXPR_BINARY &&
+          ((hir_expr_binary *)expr->first)->op == HIR_EXPR_BINARY_MEMBER) {
+      } else if (expr->first->kind == HIR_EXPR_IDENTIFIER) {
+      } else if (expr->first->kind == HIR_EXPR_INDEX) {
+      } else {
+        mir_exception_add_error(
+            ctx->exceptions, EXCEPTION_MIR_UNEXPECTED_MEMBER,
+            expr->base.base.span,
+            "assignment allowed only with members, index and vars");
+        ok = 0;
+      }
+      break;
+
     case HIR_EXPR_BINARY_LOGICAL_OR:
     case HIR_EXPR_BINARY_LOGICAL_AND:
     case HIR_EXPR_BINARY_BITWISE_OR:
@@ -619,9 +644,12 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
     case HIR_EXPR_BINARY_ASSIGN: {
       mir_value *from = mir_define_expr(ctx, expr->second).value;
       mir_expr_r to_r = mir_define_expr(ctx, expr->first);
-      mir_define_mir_stmt(ctx,
-                          mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE, to_r.value,
-                                              from, to_r.deref));
+      mir_stmt  *stmt = mir_define_mir_stmt(
+           ctx, mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE, to_r.value, from,
+                                    to_r.deref));
+
+      mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
       return mir_expr_r_make(to_r.value, 0);
     }
     case HIR_EXPR_BINARY_LOGICAL_OR: {
@@ -694,7 +722,11 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
       mir_value *obj = mir_define_expr(ctx, expr->first).value;
       mir_lit   *member = mir_define_mir_lit(ctx, (hir_expr_lit *)expr->second);
       mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-      mir_define_mir_stmt(ctx, mir_stmt_new_member(ret, obj, member));
+      mir_stmt  *stmt =
+          mir_define_mir_stmt(ctx, mir_stmt_new_member(ret, obj, member));
+
+      mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
       return mir_expr_r_make(ret, 1);
     }
     case HIR_EXPR_BINARY_UNKNOWN:
@@ -709,8 +741,11 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
 static mir_expr_r mir_define_expr_lit(mir_ctx *ctx, const hir_expr_lit *expr) {
   mir_value *ret = mir_define_mir_value_tmp(ctx, expr->lit->type_ref);
   mir_lit   *lit = mir_define_mir_lit(ctx, expr);
-  mir_define_mir_stmt(ctx,
-                      mir_stmt_new_assign(MIR_STMT_ASSIGN_LIT, ret, lit, 0));
+  mir_stmt  *stmt = mir_define_mir_stmt(
+       ctx, mir_stmt_new_assign(MIR_STMT_ASSIGN_LIT, ret, lit, 0));
+
+  mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
   return mir_expr_r_make(ret, 0);
 }
 
@@ -749,7 +784,11 @@ static mir_expr_r mir_define_expr_call(mir_ctx             *ctx,
       mir_subroutine *subroutine = mir_ctx_sym_sub_find(ctx, callee->id_ref);
       if (subroutine) {
         mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-        mir_define_mir_stmt(ctx, mir_stmt_new_call(ret, subroutine, args));
+        mir_stmt  *stmt =
+            mir_define_mir_stmt(ctx, mir_stmt_new_call(ret, subroutine, args));
+
+        mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
         return mir_expr_r_make(ret, 0);
       }
 
@@ -757,8 +796,11 @@ static mir_expr_r mir_define_expr_call(mir_ctx             *ctx,
       if (indirect) {
         list_mir_value_ref_push_front(args, indirect);
         mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-        mir_define_mir_stmt(
-            ctx, mir_stmt_new_op(MIR_STMT_OP_CALL_INDIRECT, ret, args));
+        mir_stmt  *stmt = mir_define_mir_stmt(
+             ctx, mir_stmt_new_op(MIR_STMT_OP_CALL_INDIRECT, ret, args));
+
+        mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
         return mir_expr_r_make(ret, 0);
       }
 
@@ -776,8 +818,11 @@ static mir_expr_r mir_define_expr_call(mir_ctx             *ctx,
       if (indirect) {
         list_mir_value_ref_push_front(args, indirect);
         mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-        mir_define_mir_stmt(
-            ctx, mir_stmt_new_op(MIR_STMT_OP_CALL_INDIRECT, ret, args));
+        mir_stmt  *stmt = mir_define_mir_stmt(
+             ctx, mir_stmt_new_op(MIR_STMT_OP_CALL_INDIRECT, ret, args));
+
+        mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
         return mir_expr_r_make(ret, 0);
       }
     }
@@ -805,13 +850,35 @@ static mir_expr_r mir_define_expr_index(mir_ctx              *ctx,
   if (indirect) {
     list_mir_value_ref_push_front(args, indirect);
     mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-    mir_define_mir_stmt(ctx,
-                        mir_stmt_new_op(MIR_STMT_OP_INDEX_INDIRECT, ret, args));
+    mir_stmt  *stmt = mir_define_mir_stmt(
+         ctx, mir_stmt_new_op(MIR_STMT_OP_INDEX_INDIRECT, ret, args));
+
+    mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
     return mir_expr_r_make(ret, 1);
   }
 
   list_mir_value_ref_free(args);
   return mir_expr_r_empty();
+}
+
+static mir_expr_r mir_define_expr_builtin_generic(mir_ctx                *ctx,
+                                                  const hir_expr_builtin *expr,
+                                                  mir_stmt_builtin_enum kind) {
+  list_mir_value_ref *args = list_mir_value_ref_new();
+  for (list_hir_expr_it it = list_hir_expr_begin(expr->args); !END(it);
+       NEXT(it)) {
+    const hir_expr_base *arg = GET(it);
+    list_mir_value_ref_push_back(args, mir_define_expr(ctx, arg).value);
+  }
+
+  mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
+  mir_stmt  *stmt = mir_define_mir_stmt(
+       ctx, mir_stmt_new_builtin(kind, ret, expr->base.type_ref, args));
+
+  mir_stmt_debug_init_span(stmt, expr->base.base.span);
+
+  return mir_expr_r_make(ret, 0);
 }
 
 static mir_expr_r mir_define_expr_builtin(mir_ctx                *ctx,
@@ -820,31 +887,15 @@ static mir_expr_r mir_define_expr_builtin(mir_ctx                *ctx,
     return mir_expr_r_empty();
   }
 
-  list_mir_value_ref *args = list_mir_value_ref_new();
-  for (list_hir_expr_it it = list_hir_expr_begin(expr->args); !END(it);
-       NEXT(it)) {
-    const hir_expr_base *arg = GET(it);
-    list_mir_value_ref_push_back(args, mir_define_expr(ctx, arg).value);
-  }
-
   switch (expr->kind) {
     case HIR_EXPR_BUILTIN_CAST: {
-      mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-      mir_define_mir_stmt(ctx, mir_stmt_new_builtin(MIR_STMT_BUILTIN_CAST, ret,
-                                                    expr->base.type_ref, args));
-      return mir_expr_r_make(ret, 0);
+      return mir_define_expr_builtin_generic(ctx, expr, MIR_STMT_BUILTIN_CAST);
     }
     case HIR_EXPR_BUILTIN_MAKE: {
-      mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-      mir_define_mir_stmt(ctx, mir_stmt_new_builtin(MIR_STMT_BUILTIN_MAKE, ret,
-                                                    expr->base.type_ref, args));
-      return mir_expr_r_make(ret, 0);
+      return mir_define_expr_builtin_generic(ctx, expr, MIR_STMT_BUILTIN_MAKE);
     }
     case HIR_EXPR_BUILTIN_PRINT: {
-      mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
-      mir_define_mir_stmt(ctx, mir_stmt_new_builtin(MIR_STMT_BUILTIN_PRINT, ret,
-                                                    expr->base.type_ref, args));
-      return mir_expr_r_make(ret, 0);
+      return mir_define_expr_builtin_generic(ctx, expr, MIR_STMT_BUILTIN_PRINT);
     }
     case HIR_EXPR_BUILTIN_UNKNOWN:
       break;
@@ -921,6 +972,7 @@ static mir_bb_seq mir_define_stmt_if(mir_ctx *ctx, const hir_stmt_if *stmt) {
   } else {
     root.first->jmp.jz_ref = root.last;
   }
+  mir_bb_jmp_debug_init_span(root.first, stmt->cond->base.span);
 
   return root;
 }
@@ -973,9 +1025,10 @@ static mir_bb_seq mir_define_stmt_while(mir_ctx              *ctx,
   if (mir_bb_get_cond(je.last) == MIR_BB_TERM) {
     je.last->jmp.next_ref = root.first;
   }
-  root.first->jmp.je_ref = je.first;
 
+  root.first->jmp.je_ref = je.first;
   root.first->jmp.jz_ref = root.last;
+  mir_bb_jmp_debug_init_span(root.first, stmt->cond->base.span);
 
   list_mir_scope_ref_pop_front(ctx->scope_stack);
 
@@ -994,21 +1047,22 @@ static mir_bb_seq mir_define_stmt_do(mir_ctx *ctx, const hir_stmt_do *stmt) {
   root.first = child_stmt.first;
 
   // handle condition in new block
-  mir_bb *child_cond = mir_ctx_sub_emplace_back_bb(ctx);
-  child_cond->jmp.cond_ref = mir_define_expr_tree(ctx, child_cond, stmt->cond);
-  list_hir_expr_ref_push_back(child_cond->hir_exprs, stmt->cond);
+  mir_bb *cond = mir_ctx_sub_emplace_back_bb(ctx);
+  cond->jmp.cond_ref = mir_define_expr_tree(ctx, cond, stmt->cond);
+  list_hir_expr_ref_push_back(cond->hir_exprs, stmt->cond);
 
   if (stmt->positive) {
-    child_cond->jmp.je_ref = root.first;
-    child_cond->jmp.jz_ref = root.last;
+    cond->jmp.je_ref = root.first;
+    cond->jmp.jz_ref = root.last;
   } else {
-    child_cond->jmp.je_ref = root.last;
-    child_cond->jmp.jz_ref = root.first;
+    cond->jmp.je_ref = root.last;
+    cond->jmp.jz_ref = root.first;
   }
+  mir_bb_jmp_debug_init_span(cond, stmt->cond->base.span);
 
   // link statement with condition if need to
   if (mir_bb_get_cond(child_stmt.last) == MIR_BB_TERM) {
-    child_stmt.last->jmp.next_ref = child_cond;
+    child_stmt.last->jmp.next_ref = cond;
   }
 
   list_mir_scope_ref_pop_front(ctx->scope_stack);
@@ -1028,7 +1082,9 @@ static mir_bb_seq mir_define_stmt_break(mir_ctx              *ctx,
   }
 
   mir_bb_seq *scope = list_mir_scope_ref_front(ctx->scope_stack);
+
   root.first->jmp.next_ref = scope->last;
+  mir_bb_jmp_debug_init_span(root.first, stmt->base.base.span);
 
   return root;
 }
@@ -1052,12 +1108,14 @@ static mir_bb_seq mir_define_stmt_return(mir_ctx               *ctx,
   mir_value *value = mir_define_expr_tree(ctx, root.first, stmt->expr);
   list_hir_expr_ref_push_back(root.first->hir_exprs, stmt->expr);
 
-  list_mir_stmt_push_back(root.first->stmts,
-                          mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE,
-                                              ctx->sub_ref->basic.ret, value,
-                                              0));
+  mir_stmt *stmt_ass = mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE,
+                                           ctx->sub_ref->basic.ret, value, 0);
+  list_mir_stmt_push_back(root.first->stmts, stmt_ass);
+
+  mir_stmt_debug_init_span(stmt_ass, stmt->base.base.span);
 
   root.last->jmp.next_ref = ctx->bb_last_ref;
+  mir_bb_jmp_debug_init_span(root.last, stmt->base.base.span);
 
   return root;
 }

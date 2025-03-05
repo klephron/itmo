@@ -11,6 +11,13 @@ LIST_DECLARE_STATIC_INLINE(list_hir_expr_ref, hir_expr_base,
                            container_cmp_false, container_new_move,
                            container_delete_false);
 
+// DEBUG
+typedef struct mir_debug_struct {
+  const char *source_ref;
+  uint64_t    line;
+  int64_t     pos;
+} mir_debug;
+
 // VALUE
 typedef struct mir_value_struct {
   size_t              id;
@@ -113,6 +120,7 @@ typedef enum mir_stmt_assign_enum {
 // NOTE: references elements that are stored elsewhere
 typedef struct mir_stmt_struct {
   mir_stmt_enum kind;
+  mir_debug     debug;
   union {
     struct {
       mir_stmt_op_enum    kind;
@@ -157,6 +165,8 @@ mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
 mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
                               void *from, int deref);
 
+void mir_stmt_debug_init_span(mir_stmt *stmt, const span *span);
+
 void mir_stmt_free(mir_stmt *self);
 
 static inline void container_delete_mir_stmt(void *data) {
@@ -184,6 +194,9 @@ struct mir_bb_struct {
       mir_bb *jz_ref;
       mir_bb *next_ref;
     };
+    // exists when info is obvious from source code
+    // like by looking at if/while/do/break/return
+    mir_debug debug;
   } jmp;
   list_hir_expr_ref *hir_exprs;
 };
@@ -191,6 +204,7 @@ struct mir_bb_struct {
 mir_bb *mir_bb_new(size_t id, list_mir_stmt *stmts, mir_value *jmp_cond,
                    mir_bb *jmp_je_ref, mir_bb *jmp_jz_ref,
                    list_hir_expr_ref *hir_exprs);
+void    mir_bb_jmp_debug_init_span(mir_bb *bb, const span *span);
 void    mir_bb_free(mir_bb *self);
 
 mir_bb_enum mir_bb_get_cond(const mir_bb *self);

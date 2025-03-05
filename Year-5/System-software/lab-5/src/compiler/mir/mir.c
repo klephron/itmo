@@ -2,6 +2,15 @@
 #include "util/log.h"
 #include "util/macro.h"
 
+static void mir_debug_init(mir_debug *debug, const char *source_ref,
+                           uint64_t line, uint64_t pos) {
+  debug->source_ref = source_ref;
+  debug->line = line;
+  debug->pos = pos;
+}
+
+static void mir_debug_deinit(mir_debug *debug) { debug->source_ref = NULL; }
+
 mir_value *mir_value_new(size_t id, const symbol_entry *symbol_ref,
                          const type_entry *type_ref) {
   mir_value *self = MALLOC(mir_value);
@@ -66,10 +75,21 @@ void mir_lit_free(mir_lit *self) {
   }
 }
 
+// stmt
+static void mir_stmt_init(mir_stmt *stmt, mir_stmt_enum kind) {
+  stmt->kind = kind;
+  mir_debug_init(&stmt->debug, NULL, 0, 0);
+}
+
+static void mir_stmt_deinit(mir_stmt *stmt) {
+  stmt->kind = MIR_STMT_UNKNOWN;
+  mir_debug_deinit(&stmt->debug);
+}
+
 mir_stmt *mir_stmt_new_op(mir_stmt_op_enum kind, mir_value *ret,
                           list_mir_value_ref *args) {
   mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_OP;
+  mir_stmt_init(self, MIR_STMT_OP);
   self->op.kind = kind;
   self->op.ret = ret;
   self->op.args = args;
@@ -79,7 +99,7 @@ mir_stmt *mir_stmt_new_op(mir_stmt_op_enum kind, mir_value *ret,
 mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
                             list_mir_value_ref *args) {
   mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_CALL;
+  mir_stmt_init(self, MIR_STMT_CALL);
   self->call.ret = ret;
   self->call.sub = sub;
   self->call.args = args;
@@ -88,7 +108,7 @@ mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
 
 mir_stmt *mir_stmt_new_member(mir_value *ret, mir_value *obj, mir_lit *member) {
   mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_MEMBER;
+  mir_stmt_init(self, MIR_STMT_MEMBER);
   self->member.ret = ret;
   self->member.obj = obj;
   self->member.member = member;
@@ -109,7 +129,7 @@ mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
 mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
                               void *from, int deref) {
   mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_ASSIGN;
+  mir_stmt_init(self, MIR_STMT_ASSIGN);
   self->assign.kind = kind;
   switch (kind) {
     case MIR_STMT_ASSIGN_LIT:
@@ -126,6 +146,13 @@ mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
   self->assign.to = to;
   self->assign.deref = deref;
   return self;
+}
+
+void mir_stmt_debug_init_span(mir_stmt *stmt, const span *span) {
+  if (span) {
+    mir_debug_init(&stmt->debug, span->source_ref, span->line_start,
+                   span->pos_start);
+  }
 }
 
 void mir_stmt_free(mir_stmt *self) {
@@ -149,6 +176,7 @@ void mir_stmt_free(mir_stmt *self) {
         error("unknown stmt kind %d %p", self->kind, self);
         break;
     }
+    mir_stmt_deinit(self);
     free(self);
   }
 }
@@ -162,14 +190,23 @@ mir_bb *mir_bb_new(size_t id, list_mir_stmt *stmts, mir_value *jmp_cond_ref,
   self->jmp.cond_ref = jmp_cond_ref;
   self->jmp.je_ref = jmp_je_ref;
   self->jmp.jz_ref = jmp_jz_ref;
+  mir_debug_init(&self->jmp.debug, NULL, 0, 0);
   self->hir_exprs = hir_exprs;
   return self;
+}
+
+void mir_bb_jmp_debug_init_span(mir_bb *bb, const span *span) {
+  if (span) {
+    mir_debug_init(&bb->jmp.debug, span->source_ref, span->line_start,
+                   span->pos_start);
+  }
 }
 
 void mir_bb_free(mir_bb *self) {
   if (self) {
     list_mir_stmt_free(self->stmts);
     list_hir_expr_ref_free(self->hir_exprs);
+    mir_debug_deinit(&self->jmp.debug);
     free(self);
   }
 }

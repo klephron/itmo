@@ -79,6 +79,17 @@ static void mir_str_stmt_args(strbuf *buffer, size_t pad,
   strbuf_append(buffer, ")");
 }
 
+static void mir_str_debug(strbuf *buffer, size_t pad, const mir_debug *debug) {
+  UNUSED(pad);
+  char buf[64];
+
+  if (debug->source_ref) {
+    strbuf_append(buffer, "  # ");
+    strbuf_append(buffer, debug->source_ref);
+    strbuf_append_f(buffer, buf, ":%lu:%lu", debug->line, debug->pos);
+  }
+}
+
 static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
   UNUSED(pad);
   UNUSED(stmt);
@@ -177,6 +188,8 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
       warn("unexpected stmt kind %d %p", stmt->kind, stmt);
       break;
   }
+
+  mir_str_debug(buffer, pad, &stmt->debug);
 }
 
 static void mir_str_bb(strbuf *buffer, size_t pad, const mir_subroutine *sub,
@@ -226,6 +239,8 @@ static void mir_str_bb(strbuf *buffer, size_t pad, const mir_subroutine *sub,
       warn("unexpected bb kind %d %p", bb_cond, bb);
       break;
   }
+
+  mir_str_debug(buffer, pad, &bb->jmp.debug);
 
   pad -= MIR_STR_TAB;
   strbuf_append_clx(buffer, "}", pad);
