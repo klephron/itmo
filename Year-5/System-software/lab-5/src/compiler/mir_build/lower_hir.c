@@ -15,6 +15,20 @@
 // - map[hir_subroutine] -> mir_subroutine
 // - instantiate mir_subroutines that are actually used
 
+// TYPE INDEX
+static inline int container_cmp_type_ref(const void *lsv, const void *rsv) {
+  const type_base *l = lsv;
+  const type_base *r = rsv;
+  return type_cmp(l, r);
+}
+static inline uint64_t container_hash_type_ref(const void *lsv) {
+  const type_base *l = lsv;
+  return type_hash(l);
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_type_ref, type_base,
+                              container_cmp_type_ref, container_new_move,
+                              container_delete_false, container_hash_type_ref);
+
 // SYM_ENTRY
 typedef struct mir_sym_entry_struct {
   const symbol_entry *symbol_ref;
@@ -62,25 +76,51 @@ typedef struct mir_bb_seq_struct {
 LIST_DECLARE_STATIC_INLINE(list_mir_scope_ref, mir_bb_seq, container_cmp_false,
                            container_new_move, container_delete_false);
 
-// TYPE INDEX
-static inline int container_cmp_type_ref(const void *lsv, const void *rsv) {
-  const type_base *l = lsv;
-  const type_base *r = rsv;
-  return type_cmp(l, r);
+// TYPE_ENTRY
+typedef struct mir_type_entry_struct {
+  const type_entry *type_ref;
+  void             *entry_ref;
+} mir_type_entry;
+
+static mir_type_entry *mir_type_entry_new(const type_entry *type_ref,
+                                          void             *entry_ref) {
+  mir_type_entry *self = MALLOC(mir_type_entry);
+  self->type_ref = type_ref;
+  self->entry_ref = entry_ref;
+  return self;
 }
-static inline uint64_t container_hash_type_ref(const void *lsv) {
-  const type_base *l = lsv;
-  return type_hash(l);
+
+static void mir_type_entry_free(mir_type_entry *self) {
+  if (self) {
+    free(self);
+  }
 }
-HASHSET_DECLARE_STATIC_INLINE(hashset_type_ref, type_base,
-                              container_cmp_type_ref, container_new_move,
-                              container_delete_false, container_hash_type_ref);
+
+static inline int container_cmp_mir_type_entry(const void *lsv,
+                                               const void *rsv) {
+  const mir_type_entry *l = lsv;
+  const mir_type_entry *r = rsv;
+  return container_cmp_ptr(l->type_ref, r->type_ref);
+}
+static inline uint64_t container_hash_mir_type_entry(const void *lsv) {
+  const mir_type_entry *l = lsv;
+  return container_hash_ptr(l->type_ref);
+}
+static inline void container_delete_mir_type_entry(void *self) {
+  mir_type_entry_free(self);
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_mir_type_entry, mir_type_entry,
+                              container_cmp_mir_type_entry, container_new_move,
+                              container_delete_mir_type_entry,
+                              container_hash_mir_type_entry);
 
 // CTX
 typedef struct mir_ctx_struct {
-  hashset_mir_sym_entry *map_sym_sub;
-  size_t                 lit_cnt;
-  hashset_type_ref      *registered_types;
+  hashset_mir_sym_entry  *map_sym_sub;
+  size_t                  lit_cnt;
+  hashset_type_ref       *registered_types;
+  hashset_mir_type_entry *map_type_hir_class;
+  hashset_mir_type_entry *map_type_mir_class;
 
   // handled by subroutine
   mir_subroutine        *sub_ref;
@@ -101,6 +141,8 @@ static void mir_ctx_init(mir_ctx *ctx, mir *mir, const type_table *type_table,
   ctx->map_sym_sub = hashset_mir_sym_entry_new();
   ctx->lit_cnt = 0;
   ctx->registered_types = hashset_type_ref_new();
+  ctx->map_type_hir_class = hashset_mir_type_entry_new();
+  ctx->map_type_mir_class = hashset_mir_type_entry_new();
 
   ctx->sub_ref = NULL;
   ctx->value_cnt = 0;
@@ -119,6 +161,8 @@ static void mir_ctx_deinit(mir_ctx *ctx) {
   hashset_mir_sym_entry_free(ctx->map_sym_sub);
   ctx->lit_cnt = 0;
   hashset_type_ref_free(ctx->registered_types);
+  hashset_mir_type_entry_free(ctx->map_type_hir_class);
+  hashset_mir_type_entry_free(ctx->map_type_mir_class);
 
   ctx->sub_ref = NULL;
   ctx->value_cnt = 0;
@@ -130,13 +174,6 @@ static void mir_ctx_deinit(mir_ctx *ctx) {
 
   ctx->mir = NULL;
   ctx->exceptions = NULL;
-}
-
-static void mir_ctx_setup(mir_ctx *ctx) {
-  for (list_type_entry_it it = list_type_entry_begin(ctx->type_table->entries);
-       !END(it); NEXT(it)) {
-    hashset_type_ref_insert(ctx->registered_types, GET(it)->type);
-  }
 }
 
 static void mir_ctx_sym_sub_emplace(mir_ctx            *ctx,
@@ -154,6 +191,67 @@ static mir_subroutine *mir_ctx_sym_sub_find(mir_ctx            *ctx,
     return GET(it)->entry_ref;
   }
   return NULL;
+}
+
+static hir_class *hir_ctx_type_hir_class_find(mir_ctx          *ctx,
+                                              const type_entry *type_ref) {
+  hashset_mir_type_entry_it it = hashset_mir_type_entry_find(
+      ctx->map_type_hir_class, &(mir_type_entry){.type_ref = type_ref});
+  if (!END(it)) {
+    return GET(it)->entry_ref;
+  }
+  return NULL;
+}
+
+static void hir_ctx_type_hir_class_emplace(mir_ctx          *ctx,
+                                           const type_entry *type_ref,
+                                           const hir_class *class) {
+  hashset_mir_type_entry_insert(
+      ctx->map_type_hir_class,
+      mir_type_entry_new(type_ref, (hir_class *)class));
+}
+
+static mir_class *mir_ctx_type_mir_class_find(mir_ctx          *ctx,
+                                              const type_entry *type_ref) {
+  hashset_mir_type_entry_it it = hashset_mir_type_entry_find(
+      ctx->map_type_mir_class, &(mir_type_entry){.type_ref = type_ref});
+  if (!END(it)) {
+    return GET(it)->entry_ref;
+  }
+  return NULL;
+}
+
+static mir_class *mir_ctx_type_mir_class_erase(mir_ctx *ctx,
+                                               const mir_class *class) {
+  hashset_mir_type_entry_it it = hashset_mir_type_entry_find(
+      ctx->map_type_mir_class, &(mir_type_entry){.type_ref = class->type_ref});
+  if (!END(it)) {
+    mir_class *class = GET(it)->entry_ref;
+    hashset_mir_type_entry_erase(ctx->map_type_mir_class, it);
+    return class;
+  }
+  return NULL;
+}
+
+static void mir_ctx_type_mir_class_emplace(mir_ctx          *ctx,
+                                           const type_entry *type_ref,
+                                           const mir_class *class) {
+  hashset_mir_type_entry_insert(
+      ctx->map_type_mir_class,
+      mir_type_entry_new(type_ref, (mir_class *)class));
+}
+
+static void mir_ctx_setup(mir_ctx *ctx, const hir *hir) {
+  for (list_type_entry_it it = list_type_entry_begin(ctx->type_table->entries);
+       !END(it); NEXT(it)) {
+    hashset_type_ref_insert(ctx->registered_types, GET(it)->type);
+  }
+  // used for lazy instantiation of classes
+  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
+       NEXT(it)) {
+    hir_class *class = GET(it);
+    hir_ctx_type_hir_class_emplace(ctx, class->type_ref, class);
+  }
 }
 
 static inline void mir_ctx_sym_value_create(mir_ctx *ctx) {
@@ -188,9 +286,30 @@ static mir_bb *mir_ctx_sub_emplace_back_bb(mir_ctx *ctx) {
   return bb;
 }
 
-// VISITOR FUNCS
-static mir_subroutine *mir_declare_sub(mir_ctx              *ctx,
-                                       const hir_subroutine *sub_hir) {
+// EXPR_R
+typedef struct mir_expr_r_struct {
+  mir_value *value;
+  // needed for assignment (method, index), otherwise can't know
+  // what type was received (ex. from other subroutine)
+  int deref;
+} mir_expr_r;
+
+static inline mir_expr_r mir_expr_r_make(mir_value *value, int deref) {
+  return (mir_expr_r){.value = value, .deref = deref};
+}
+
+static inline mir_expr_r mir_expr_r_empty() {
+  return (mir_expr_r){.value = NULL, .deref = 0};
+}
+
+// static inline int mir_expr_r_is_empty(mir_expr_r res) {
+//   return res.value == NULL;
+// }
+
+// constructs without subroutine body
+// (to properly resolve references if used before declaration)
+static mir_subroutine *mir_declare_subroutine(mir_ctx              *ctx,
+                                              const hir_subroutine *sub_hir) {
   if (!sub_hir->body) {
     return mir_subroutine_new_external(sub_hir->id_ref, sub_hir->type_ref);
   }
@@ -250,56 +369,6 @@ static mir_subroutine *mir_declare_sub(mir_ctx              *ctx,
   error("unexpected subroutine body kind %d %p", sub_hir->body->kind, sub_hir);
   return NULL;
 }
-
-static void mir_declare_subs(mir_ctx *ctx, const hir *hir) {
-  for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
-       !END(it); NEXT(it)) {
-    const hir_subroutine *sub_hir = GET(it);
-
-    mir_subroutine *sub = mir_declare_sub(ctx, sub_hir);
-    if (!sub) {
-      continue;
-    }
-
-    // add to index (to then parse bodies and resolve references)
-    mir_ctx_sym_sub_emplace(ctx, sub->symbol_ref, sub);
-
-    switch (sub->kind) {
-      case MIR_SUBROUTINE_BASIC:
-        list_mir_subroutine_push_back(ctx->mir->global_subs, sub);
-        break;
-      case MIR_SUBROUTINE_EXTERNAL:
-        list_mir_subroutine_push_back(ctx->mir->external_subs, sub);
-        break;
-      case MIR_SUBROUTINE_IMPORTED:
-        list_mir_subroutine_push_back(ctx->mir->imported_subs, sub);
-        break;
-      case MIR_SUBROUTINE_UNKNOWN:
-      default:
-        break;
-    }
-  }
-}
-
-// EXPR_R
-typedef struct mir_expr_r_struct {
-  mir_value *value;
-  // needed for assignment (method, index), otherwise can't know
-  // what type was received (ex. from other subroutine)
-  int deref;
-} mir_expr_r;
-
-static inline mir_expr_r mir_expr_r_make(mir_value *value, int deref) {
-  return (mir_expr_r){.value = value, .deref = deref};
-}
-
-static inline mir_expr_r mir_expr_r_empty() {
-  return (mir_expr_r){.value = NULL, .deref = 0};
-}
-
-// static inline int mir_expr_r_is_empty(mir_expr_r res) {
-//   return res.value == NULL;
-// }
 
 // EXPR
 static mir_expr_r mir_define_expr(mir_ctx *ctx, const hir_expr_base *expr);
@@ -1148,8 +1217,8 @@ static mir_bb_seq mir_define_stmt(mir_ctx *ctx, const hir_stmt_base *stmt) {
   return mir_define_bb_seq_empty();
 }
 
-static void mir_define_sub_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
-                                 const hir_subroutine *sub_hir) {
+static void mir_define_subroutine_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
+                                        const hir_subroutine *sub_hir) {
   const list_hir_var   *hir_vars = sub_hir->body->body.block.vars;
   const hir_stmt_block *hir_root = sub_hir->body->body.block.block;
 
@@ -1204,7 +1273,104 @@ static void mir_define_sub_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
   mir_ctx_sym_value_destroy(ctx);
 }
 
-static void mir_define_subs(mir_ctx *ctx, const hir *hir) {
+// if already instantiated (return it)
+static mir_class *mir_define_class(mir_ctx          *ctx,
+                                   const type_entry *class_entry) {
+  if (!class_entry) {
+    return NULL;
+  }
+
+  // already instantiated
+  mir_class *class = mir_ctx_type_mir_class_find(ctx, class_entry);
+  if (class) {
+    return class;
+  }
+
+  class = mir_class_new(class_entry, list_mir_value_new(),
+                        list_mir_subroutine_ref_new());
+
+  // get parents
+  type_base     *type = class->type_ref->type;
+  list_type_ref *parents_ref = NULL;
+  switch (type->kind) {
+    case TYPE_CLASS: {
+      type_class *self = (typeof(self))type;
+      parents_ref = self->parents;
+      break;
+    }
+    case TYPE_MONO: {
+      type_mono *self = (typeof(self))type;
+
+      if (self->type_ref->kind != TYPE_CLASS) {
+        char *type_s = type_str(self->type_ref);
+        error("unexpected mono ref %s(%d) %p", type_s, self->type_ref->kind,
+              self);
+        if (type_s) {
+          free(type_s);
+        }
+        break;
+      }
+
+      parents_ref = ((type_class *)self->type_ref)->parents;
+      break;
+    }
+    default: {
+      char *type_s = type_str(type);
+      error("unexpected type kind %s(%d) %p", type_s, type->kind, type);
+      if (type_s) {
+        free(type_s);
+      }
+    }
+  }
+
+  if (!parents_ref) {
+    warn("parent list is null, exiting");
+    mir_class_free(class);
+    return NULL;
+  }
+
+  // add to list
+  for (list_type_ref_it it = list_type_ref_begin(parents_ref); !END(it);
+       NEXT(it)) {
+    type_base *parent_type = GET(it);
+    mir_class *parent = mir_define_class(ctx, parent_type->type_entry_ref);
+  }
+
+  // add to index
+  mir_ctx_type_mir_class_emplace(ctx, class_entry, class);
+
+  return class;
+}
+
+static void mir_lower_subs(mir_ctx *ctx, const hir *hir) {
+  for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
+       !END(it); NEXT(it)) {
+    const hir_subroutine *sub_hir = GET(it);
+
+    mir_subroutine *sub = mir_declare_subroutine(ctx, sub_hir);
+    if (!sub) {
+      continue;
+    }
+
+    // add to index (to then parse bodies and resolve references)
+    mir_ctx_sym_sub_emplace(ctx, sub->symbol_ref, sub);
+
+    switch (sub->kind) {
+      case MIR_SUBROUTINE_BASIC:
+        list_mir_subroutine_push_back(ctx->mir->global_subs, sub);
+        break;
+      case MIR_SUBROUTINE_EXTERNAL:
+        list_mir_subroutine_push_back(ctx->mir->external_subs, sub);
+        break;
+      case MIR_SUBROUTINE_IMPORTED:
+        list_mir_subroutine_push_back(ctx->mir->imported_subs, sub);
+        break;
+      case MIR_SUBROUTINE_UNKNOWN:
+      default:
+        break;
+    }
+  }
+
   for (list_hir_subroutine_it it = list_hir_subroutine_begin(hir->subroutines);
        !END(it); NEXT(it)) {
     const hir_subroutine *sub_hir = GET(it);
@@ -1216,8 +1382,47 @@ static void mir_define_subs(mir_ctx *ctx, const hir *hir) {
     }
 
     if (sub_mir->kind == MIR_SUBROUTINE_BASIC) {
-      mir_define_sub_basic(ctx, sub_mir, sub_hir);
+      mir_define_subroutine_basic(ctx, sub_mir, sub_hir);
     }
+  }
+}
+
+static void mir_lower_classes(mir_ctx *ctx, const hir *hir) {
+  for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
+       NEXT(it)) {
+    const hir_class *class_hir = GET(it);
+
+    mir_class *class_mir = mir_define_class(ctx, class_hir->type_ref);
+    if (!class_mir) {
+      continue;
+    }
+
+    list_mir_class_push_back(ctx->mir->classes, class_mir);
+  }
+
+  // remove classes that don't need to be instantiated from index
+  // (because they are stored as references and won't be removed automatically)
+  for (list_mir_class_it it = list_mir_class_begin(ctx->mir->classes); !END(it);
+       NEXT(it)) {
+    mir_ctx_type_mir_class_erase(ctx, GET(it));
+  }
+
+  for (hashset_mir_type_entry_it it =
+           hashset_mir_type_entry_begin(ctx->map_type_mir_class);
+       !END(it); NEXT(it)) {
+    mir_type_entry *entry = GET(it);
+    mir_class *class = entry->entry_ref;
+    mir_class_free(class);
+  }
+
+  // WARN: map is freed, because iterator invalidates while erasing
+  hashset_mir_type_entry_free(ctx->map_type_mir_class);
+  ctx->map_type_mir_class = hashset_mir_type_entry_new();
+
+  for (list_mir_class_it it = list_mir_class_begin(ctx->mir->classes); !END(it);
+       NEXT(it)) {
+    mir_class *class = GET(it);
+    mir_ctx_type_mir_class_emplace(ctx, class->type_ref, class);
   }
 }
 
@@ -1230,10 +1435,10 @@ mir_lower_hir_result mir_lower_hir(const hir        *hir,
 
   mir_ctx ctx;
   mir_ctx_init(&ctx, result.mir, type_table, result.exceptions);
-  mir_ctx_setup(&ctx);
+  mir_ctx_setup(&ctx, hir);
 
-  mir_declare_subs(&ctx, hir);
-  mir_define_subs(&ctx, hir);
+  mir_lower_subs(&ctx, hir);
+  mir_lower_classes(&ctx, hir);
 
   mir_ctx_deinit(&ctx);
 
