@@ -52,7 +52,7 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
                             rit = list_type_ref_begin(r->params);
            !END(lit); NEXT(lit), NEXT(rit)) {
         int cmp = type_cmp(GET(lit), GET(rit));
-        if (!cmp) {
+        if (cmp) {
           return cmp;
         }
       }
@@ -64,7 +64,7 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
       const type_class *r = (const type_class *)rsv;
 
       int cmp = strcmp(l->id, r->id);
-      if (!cmp) {
+      if (cmp) {
         return cmp;
       }
 
@@ -80,7 +80,7 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
                             rit = list_type_ref_begin(r->parents);
            !END(lit); NEXT(lit), NEXT(rit)) {
         int cmp = type_cmp(GET(lit), GET(rit));
-        if (!cmp) {
+        if (cmp) {
           return cmp;
         }
       }
@@ -97,7 +97,7 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
                             rit = list_type_ref_begin(r->typenames);
            !END(lit); NEXT(lit), NEXT(rit)) {
         int cmp = type_cmp(GET(lit), GET(rit));
-        if (!cmp) {
+        if (cmp) {
           return cmp;
         }
       }
@@ -108,7 +108,7 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
       const type_typename *r = (const type_typename *)rsv;
 
       int cmp = strcmp(l->id, r->id);
-      if (!cmp) {
+      if (cmp) {
         return cmp;
       }
 
@@ -119,7 +119,7 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
       const type_mono *r = (const type_mono *)rsv;
 
       int cmp = type_cmp(l->type_ref, r->type_ref);
-      if (!cmp) {
+      if (cmp) {
         return cmp;
       }
 
@@ -134,7 +134,7 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
                             rit = list_type_ref_begin(r->types);
            !END(lit); NEXT(lit), NEXT(rit)) {
         int cmp = type_cmp(GET(lit), GET(rit));
-        if (!cmp) {
+        if (cmp) {
           return cmp;
         }
       }
