@@ -345,9 +345,14 @@ static void mir_str_class(strbuf *buffer, size_t pad, const mir_class *class) {
     strbuf_append_clx(buffer, "", pad);
     for (list_mir_value_it it = list_mir_value_begin(class->fields); !END(it);
          NEXT(it)) {
-      const mir_value *param = GET(it);
-      strbuf_append_clx(buffer, "", pad);
-      mir_str_value(buffer, pad, param, "var");
+      const mir_value *var = GET(it);
+
+      strbuf_append_clx(buffer, "var ", pad);
+      strbuf_append(buffer, var->symbol_ref->name);
+      strbuf_append(buffer, ": ");
+      mir_str_type(buffer, pad, var->type_ref);
+      strbuf_append(buffer, "  # ");
+      mir_str_symbol(buffer, pad, var->symbol_ref);
     }
   }
 

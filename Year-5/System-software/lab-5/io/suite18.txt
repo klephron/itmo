@@ -7,6 +7,18 @@ class A<T>
 var
   f: int;
 begin
+  method two(a, b, c): int
+  var
+    d: array [] of T;
+  begin
+  end
+
+  method ctor(a, b, c): A<T>
+  var
+  begin
+    // initialize something
+    return this;
+  end
 end;
 
 class A<T, U>
