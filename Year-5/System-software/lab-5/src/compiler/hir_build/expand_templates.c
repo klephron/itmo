@@ -144,7 +144,7 @@ static void hir_ctx_deinit(hir_ctx *ctx) {
   hashset_type_ref_free(ctx->registered_types);
   list_type_mono_ref_free(ctx->instto_types);
 
-  ctx->map_type_tmpl = NULL;
+  ctx->map_type_tmpl = NULL; // typenames in this context
 
   ctx->type_table = NULL;
   ctx->hir_classes = NULL;
@@ -163,13 +163,22 @@ static type_base *hir_ctx_type_tmpl_find(hir_ctx *ctx, const type_base *type) {
 // add to registered types and add to type_table
 static type_base *hir_ctx_type_register(hir_ctx *ctx, type_base *type,
                                         const span *span_ref) {
+
   hashset_type_ref_it it = hashset_type_ref_find(ctx->registered_types, type);
+
   if (END(it)) {
     hashset_type_ref_insert(ctx->registered_types, type);
     type_entry *entry =
         type_table_emplace(ctx->type_table, type, span_copy(span_ref));
+
+    char *type_s = type_str(type);
+    debug("registered new type %s", type_s);
+    if (type_s)
+      free(type_s);
+
     return entry->type;
   }
+
   type_free(type);
   return GET(it);
 }
@@ -177,13 +186,13 @@ static type_base *hir_ctx_type_register(hir_ctx *ctx, type_base *type,
 static void hir_ctx_debug(const hir_ctx *ctx, const char *s) {
   UNUSED(ctx);
   UNUSED(s);
-  // debug("hir_ctx: (%s)", s);
-  // debug("  map_type_templates -> size: %lu",
-  //       ctx->map_type_hir_tmpl->hashset.size);
-  // debug("  insted_types -> size: %lu", ctx->insted_types->hashset.size);
-  // debug("  class_tmpls -> size: %lu",
-  //       list_hir_class_size(ctx->hir_tmpl_classes));
-  // debug("  exceptions -> size: %lu", list_exception_size(ctx->exceptions));
+  debug("hir_ctx: (%s)", s);
+  debug("  map_type_templates -> size: %lu",
+        ctx->map_type_hir_tmpl->hashset.size);
+  debug("  insted_types -> size: %lu", ctx->insted_types->hashset.size);
+  debug("  class_tmpls -> size: %lu",
+        list_hir_class_size(ctx->hir_tmpl_classes));
+  debug("  exceptions -> size: %lu", list_exception_size(ctx->exceptions));
 }
 
 // filters out templated classes from hir->classes
@@ -261,9 +270,8 @@ hir_get_mono_full_class_types(type_table *type_table) {
       default: {
         char *type_s = type_str(type);
         error("mono should be set for class with type %s %p", type_s, type);
-        if (type_s) {
+        if (type_s)
           free(type_s);
-        }
         break;
       }
     }
@@ -293,9 +301,8 @@ static const hir_base *hir_get_hir_template(hir_ctx         *ctx,
   hir_exception_add_error(ctx->exceptions, EXCEPTION_HIR_TEMPLATE_EXPANSION,
                           mono->base.type_entry_ref->span,
                           "can't find template to instantiate %s", type_s);
-  if (type_s) {
+  if (type_s)
     free(type_s);
-  }
 
   return NULL;
 }
@@ -352,9 +359,9 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
       return NULL;
     }
 
-    case TYPE_MONO_FULL:
-      // already expanded
+    case TYPE_MONO_FULL: {
       return type;
+    }
 
     case TYPE_MONO_NOT_FULL:
       // try expand lazily recursively
@@ -430,6 +437,7 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
         }
         case TYPE_TYPENAME: {
           type_base *new_self = hir_ctx_type_tmpl_find(ctx, type);
+
           if (new_self) {
             type_changed = 1;
           }
@@ -439,30 +447,47 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
           }
           return type;
         }
-          // doesn't expand recursively, because no nested classes allowed (to
-          // typename resolution will be performed
-          // adds new template for further instantiation
+
         case TYPE_MONO: {
           type_mono *self = (typeof(self))type;
+
+          type_base *new_s_type = hir_expand_type(ctx, self->type_ref);
+          if (new_s_type != type) {
+            type_changed = 1;
+          }
 
           list_type_ref *new_types = list_type_ref_new();
           for (list_type_ref_it it = list_type_ref_begin(self->types); !END(it);
                NEXT(it)) {
             type_base *type = GET(it);
+
             type_base *new_type = hir_expand_type(ctx, type);
+
             if (new_type != type) {
               type_changed = 1;
             }
+
             list_type_ref_push_back(new_types, new_type);
           }
 
           if (type_changed) {
-            type_mono *new_self = type_mono_new(self->type_ref, new_types);
-            type = hir_ctx_type_register(ctx, (type_base *)new_self,
-                                         type->type_entry_ref->span);
+            type_mono *new_self = type_mono_new(new_s_type, new_types);
+
+            // char *new_type_s = type_str((type_base *)new_self);
+            // info("type changed to %s", new_type_s);
+            // free(new_type_s);
+
+            new_self = (type_mono *)hir_ctx_type_register(
+                ctx, (type_base *)new_self, type->type_entry_ref->span);
+
             // add template for further instantiation
-            list_type_mono_ref_push_back(ctx->instto_types, (type_mono *)type);
-            return type;
+            list_type_mono_ref_push_back(ctx->instto_types, new_self);
+
+            // new_type_s = type_str((type_base *)new_self);
+            // info("registered %s", new_type_s);
+            // free(new_type_s);
+
+            return (type_base *)new_self;
           }
           list_type_ref_free(new_types);
           return type;
@@ -687,6 +712,10 @@ static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
     return NULL;
   }
 
+  // char *type_s = type_str((type_base *)mono_type);
+  // info("expanding for mono type %s", type_s);
+  // free(type_s);
+
   // setup templates that need to be replaced
   ctx->map_type_tmpl = hashset_hir_type_map_new();
 
@@ -709,6 +738,7 @@ static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
 
     type_base *new_class_t_type =
         hir_expand_type(ctx, (type_base *)class_t_type);
+
     if (new_class_t_type != (type_base *)class_t_type) {
       type_changed = 1;
     }
@@ -748,8 +778,13 @@ static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
 }
 
 static void hir_expand_templates_all(hir_ctx *ctx) {
+  size_t i = 0;
   while (!list_type_mono_ref_empty(ctx->instto_types)) {
     type_mono *mono = list_type_mono_ref_pop_front(ctx->instto_types);
+
+    if (++i == 100) {
+      break;
+    }
 
     union {
       void *result;
@@ -758,6 +793,7 @@ static void hir_expand_templates_all(hir_ctx *ctx) {
 
     hashset_type_ref_it found =
         hashset_type_ref_find(ctx->insted_types, (type_base *)mono);
+
     if (!END(found)) {
       continue;
     }
@@ -772,12 +808,14 @@ static void hir_expand_templates_all(hir_ctx *ctx) {
         break;
 
       default: {
+
 #ifndef NDEBUG
         error("expansion of type %s is unsupported", type_from_s);
         if (type_from_s) {
           free(type_from_s);
         }
 #endif
+
         continue;
       }
     }
@@ -786,7 +824,7 @@ static void hir_expand_templates_all(hir_ctx *ctx) {
     char *type_to_s = type_str((type_base *)mono);
     debug("expanded %s", type_from_s);
     if (strcmp(type_from_s, type_to_s)) {
-      debug("changed  %s", type_to_s);
+      debug("     --> %s", type_to_s);
     }
 
     if (type_from_s) {

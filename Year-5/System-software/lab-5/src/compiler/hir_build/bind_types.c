@@ -5,18 +5,28 @@
 #include "util/hashset.h"
 #include "util/log.h"
 #include "util/macro.h"
+#include "util/strbuf.h"
 #include <string.h>
+
+typedef enum ctx_scope_kind_enum {
+  CTX_SCOPE_UNKNOWN,
+  CTX_SCOPE_DECLARATION,
+  CTX_SCOPE_USAGE,
+} ctx_scope_kind;
 
 // scope_entry
 typedef struct hir_scope_entry_struct {
   hir_type_base *type_hir;
+  ctx_scope_kind kind;
   type_entry    *type_ref;
 } hir_scope_entry;
 
 static hir_scope_entry *hir_scope_entry_new(hir_type_base *type_hir,
+                                            ctx_scope_kind kind,
                                             type_entry    *type_ref) {
   hir_scope_entry *self = MALLOC(hir_scope_entry);
   self->type_hir = type_hir;
+  self->kind = kind;
   self->type_ref = type_ref;
   return self;
 }
@@ -34,24 +44,17 @@ static inline int container_cmp_hir_scope_entry(const void *lsv,
                                                 const void *rsv) {
   const hir_scope_entry *l = lsv;
   const hir_scope_entry *r = rsv;
-  int                    c = hir_type_cmp(l->type_hir, r->type_hir);
 
-  // char *t1 = hir_type_str(l->type_hir);
-  // char *t2 = hir_type_str(r->type_hir);
+  int c = l->kind - r->kind;
+  if (c) {
+    return c;
+  }
 
-  // debug("comparing %s %s = %d", t1, t2, c);
-  // if (t1) {
-  //   free(t1);
-  // }
-  // if (t2) {
-  //   free(t2);
-  // }
-
-  return c;
+  return hir_type_cmp(l->type_hir, r->type_hir);
 }
 static inline uint64_t container_hash_hir_scope_entry(const void *lsv) {
   const hir_scope_entry *l = lsv;
-  return hir_type_hash(l->type_hir);
+  return (77 << l->kind) + hir_type_hash(l->type_hir);
 }
 static inline void container_delete_hir_scope_entry(void *lsv) {
   return hir_scope_entry_free((hir_scope_entry *)lsv);
@@ -99,20 +102,31 @@ hir_ctx_table_emplace(hir_ctx *ctx, type_base *type_base, span *span) {
 
 static hir_scope_entry *hir_ctx_scopes_find(const hir_ctx       *ctx,
                                             const hir_type_base *hir_type,
+                                            ctx_scope_kind       kind,
                                             hir_scope          **scope_out) {
   // debug("current scopes: ");
+  // size_t d = 0;
   // for (list_hir_scope_it it = list_hir_scope_begin(ctx->scopes); !END(it);
   //      NEXT(it)) {
+
+  //   strbuf *pad = strbuf_new(32, 0);
+  //   for (size_t i = 0; i < d; ++i) {
+  //     strbuf_append(pad, "  ");
+  //   }
+
   //   for (hir_scope_it sit = hir_scope_begin(GET(it)); !END(sit); NEXT(sit)) {
   //     hir_scope_entry *entry = GET(sit);
 
   //     char *hir_type_s = hir_type_str(entry->type_hir);
   //     char *type_s = type_str(entry->type_ref->type);
 
-  //     debug("  %s -> %s", hir_type_s, type_s);
+  //     debug("%s %s(%d) -> %s", pad->data, hir_type_s, entry->kind, type_s);
   //     free(hir_type_s);
   //     free(type_s);
   //   }
+
+  //   ++d;
+  //   strbuf_free(pad);
   // }
   // debug("----------");
 
@@ -120,7 +134,8 @@ static hir_scope_entry *hir_ctx_scopes_find(const hir_ctx       *ctx,
        NEXT(it)) {
     hir_scope   *scope = GET(it);
     hir_scope_it scope_it = hir_scope_find(
-        scope, &(hir_scope_entry){.type_hir = (hir_type_base *)hir_type});
+        scope, &(hir_scope_entry){.type_hir = (hir_type_base *)hir_type,
+                                  .kind = kind});
 
     if (!END(scope_it)) {
       if (scope_out) {
@@ -134,14 +149,27 @@ static hir_scope_entry *hir_ctx_scopes_find(const hir_ctx       *ctx,
 
 // recursively tries to match type
 static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
-                                               const hir_type_base *base) {
+                                               const hir_type_base *base,
+                                               ctx_scope_kind       kind) {
   if (!base) {
     return NULL;
   }
 
-  hir_scope_entry *entry = hir_ctx_scopes_find(ctx, base, NULL);
+  // char *type_s = hir_type_str(base);
+  // debug("finding %s (%d)", type_s, kind);
+  // free(type_s);
+
+  hir_scope_entry *entry = hir_ctx_scopes_find(ctx, base, kind, NULL);
 
   if (entry) {
+    // char *type_s = hir_type_str(entry->type_hir);
+    // char *type_ss = type_str(entry->type_ref->type);
+    // debug("found %s -> %s", type_s, type_ss);
+    // if (type_s)
+    //   free(type_s);
+    // if (type_ss)
+    //   free(type_ss);
+
     return entry;
   }
 
@@ -150,7 +178,13 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
       // try to mono instantiate type type
       const hir_type_custom *self = (typeof(self))base;
 
-      if (!self->templates || !list_hir_type_size(self->templates)) {
+      // if no templates try to find it in declaration
+      if (kind != CTX_SCOPE_DECLARATION &&
+          (!self->templates || !list_hir_type_size(self->templates))) {
+        entry = hir_ctx_scopes_find(ctx, base, CTX_SCOPE_DECLARATION, NULL);
+        if (entry) {
+          return entry;
+        }
         return NULL;
       }
 
@@ -164,8 +198,8 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
 
       // can't be resolved
       hir_scope *scope;
-      hir_scope_entry *template =
-          hir_ctx_scopes_find(ctx, (hir_type_base *)basic, &scope);
+      hir_scope_entry *template = hir_ctx_scopes_find(
+          ctx, (hir_type_base *)basic, CTX_SCOPE_DECLARATION, &scope);
 
       hir_type_free((hir_type_base *)basic);
 
@@ -181,7 +215,8 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
       for (list_hir_type_it it = list_hir_type_begin(self->templates); !END(it);
            NEXT(it)) {
         hir_type_base   *type = GET(it);
-        hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, type);
+        hir_scope_entry *sub_entry =
+            hir_ctx_scopes_resolve(ctx, type, CTX_SCOPE_USAGE);
 
         if (!sub_entry) {
           type_free((type_base *)mono);
@@ -196,7 +231,8 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
 
       entry = hir_ctx_scopes_insert_sel(
           ctx,
-          hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref),
+          hir_scope_entry_new(hir_type_copy((hir_type_base *)self), kind,
+                              type_ref),
           scope);
 
     } break;
@@ -204,7 +240,13 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
     case HIR_TYPE_ARRAY: {
       const hir_type_array *self = (typeof(self))base;
 
-      hir_scope_entry *sub_entry = hir_ctx_scopes_resolve(ctx, self->elem_type);
+      if (kind != CTX_SCOPE_USAGE) {
+        error("array resolution only works for usage");
+        return NULL;
+      }
+
+      hir_scope_entry *sub_entry =
+          hir_ctx_scopes_resolve(ctx, self->elem_type, kind);
       if (!sub_entry) {
         return NULL;
       }
@@ -214,8 +256,8 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
                                                    span_copy(self->base.span));
 
       entry = hir_ctx_scopes_insert_global(
-          ctx,
-          hir_scope_entry_new(hir_type_copy((hir_type_base *)self), type_ref));
+          ctx, hir_scope_entry_new(hir_type_copy((hir_type_base *)self), kind,
+                                   type_ref));
 
     } break;
     case HIR_TYPE_BOOL:
@@ -288,14 +330,14 @@ static void hir_ctx_error(hir_ctx *ctx, exception_subtype_hir subtype,
 static void hir_bind_builtin(hir_ctx *ctx) {
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_BOOL),
+               hir_type_base_new(NULL, HIR_TYPE_BOOL), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_BOOL),
                    NULL)));
 
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_BYTE),
+               hir_type_base_new(NULL, HIR_TYPE_BYTE), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_BYTE),
                    NULL)));
@@ -303,48 +345,48 @@ static void hir_bind_builtin(hir_ctx *ctx) {
   hir_ctx_scopes_insert_global(
       ctx,
       hir_scope_entry_new(
-          hir_type_base_new(NULL, HIR_TYPE_INT),
+          hir_type_base_new(NULL, HIR_TYPE_INT), CTX_SCOPE_USAGE,
           hir_ctx_table_emplace(
               ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_INT), NULL)));
 
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_UINT),
+               hir_type_base_new(NULL, HIR_TYPE_UINT), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_UINT),
                    NULL)));
 
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_LONG),
+               hir_type_base_new(NULL, HIR_TYPE_LONG), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_LONG),
                    NULL)));
 
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_ULONG),
+               hir_type_base_new(NULL, HIR_TYPE_ULONG), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_ULONG),
                    NULL)));
 
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_CHAR),
+               hir_type_base_new(NULL, HIR_TYPE_CHAR), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_CHAR),
                    NULL)));
 
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_STRING),
+               hir_type_base_new(NULL, HIR_TYPE_STRING), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_STRING),
                    NULL)));
 
   hir_ctx_scopes_insert_global(
       ctx, hir_scope_entry_new(
-               hir_type_base_new(NULL, HIR_TYPE_VOID),
+               hir_type_base_new(NULL, HIR_TYPE_VOID), CTX_SCOPE_USAGE,
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_VOID),
                    NULL)));
@@ -356,7 +398,8 @@ static void hir_bind_lit(hir_ctx *ctx, hir_lit *lit) {
   }
 
   if (lit->type_hir) {
-    hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, lit->type_hir);
+    hir_scope_entry *entry =
+        hir_ctx_scopes_resolve(ctx, lit->type_hir, CTX_SCOPE_USAGE);
     if (!entry) {
       char *type_s = hir_type_str(lit->type_hir);
 
@@ -376,7 +419,8 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
                                           hir_subroutine *subroutine) {
   hir_scope_entry *ret_entry = NULL;
   if (subroutine->type_ret) {
-    ret_entry = hir_ctx_scopes_resolve(ctx, subroutine->type_ret);
+    ret_entry =
+        hir_ctx_scopes_resolve(ctx, subroutine->type_ret, CTX_SCOPE_USAGE);
 
     if (!ret_entry) {
       char *type_s = hir_type_str(subroutine->type_ret);
@@ -395,7 +439,7 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
     if (!(param->state & HIR_STATE_BIND_TYPE)) {
       if (param->type_hir) {
         hir_scope_entry *param_entry =
-            hir_ctx_scopes_resolve(ctx, param->type_hir);
+            hir_ctx_scopes_resolve(ctx, param->type_hir, CTX_SCOPE_USAGE);
 
         if (!param_entry) {
           char *type_s = hir_type_str(param->type_hir);
@@ -436,7 +480,8 @@ static void hir_bind_vars(hir_ctx *ctx, list_hir_var *vars) {
     hir_var *var = GET(it);
 
     if (var->type_hir) {
-      hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, var->type_hir);
+      hir_scope_entry *entry =
+          hir_ctx_scopes_resolve(ctx, var->type_hir, CTX_SCOPE_USAGE);
       if (!entry) {
         const char *var_s = (var->state & HIR_STATE_BIND_SYMBOL)
                                 ? var->id_ref->name
@@ -515,7 +560,8 @@ static void hir_bind_expr(hir_ctx *ctx, hir_expr_base *base) {
 
   if (!(base->state & HIR_STATE_BIND_TYPE)) {
     if (base->type_hir) {
-      hir_scope_entry *entry = hir_ctx_scopes_resolve(ctx, base->type_hir);
+      hir_scope_entry *entry =
+          hir_ctx_scopes_resolve(ctx, base->type_hir, CTX_SCOPE_USAGE);
       if (!entry) {
         char *type_s = hir_type_str(base->type_hir);
 
@@ -626,8 +672,8 @@ static type_class *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
     list_hir_type_push_back(hir_class_type->templates, NULL);
   }
 
-  if ((found =
-           hir_ctx_scopes_find(ctx, (hir_type_base *)hir_class_type, NULL))) {
+  if ((found = hir_ctx_scopes_find(ctx, (hir_type_base *)hir_class_type,
+                                   CTX_SCOPE_DECLARATION, NULL))) {
     char *type_s = hir_type_str((hir_type_base *)hir_class_type);
     char *found_s = type_str(found->type_ref->type);
     hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_REDEFINITION, hir_class->base.span,
@@ -644,7 +690,8 @@ static type_class *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
       hir_ctx_table_emplace(ctx, (type_base *)class, hir_class->base.span);
 
   hir_ctx_scopes_insert(
-      ctx, hir_scope_entry_new((hir_type_base *)hir_class_type, class_entry));
+      ctx, hir_scope_entry_new((hir_type_base *)hir_class_type,
+                               CTX_SCOPE_DECLARATION, class_entry));
   hir_class_type = NULL;
 
   // cleanup hir class id and span, now bound to type table
@@ -669,7 +716,7 @@ static void hir_bind_class_typenames(hir_ctx *ctx, hir_class *hir_class,
         hir_type_custom_new(NULL, strdup(hir_typename->name), NULL);
 
     if ((found = hir_ctx_scopes_find(ctx, (hir_type_base *)hir_typename_type,
-                                     NULL))) {
+                                     CTX_SCOPE_USAGE, NULL))) {
       char *type_s = hir_type_str((hir_type_base *)hir_typename_type);
       char *found_s = type_str(found->type_ref->type);
       hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_REDEFINITION,
@@ -687,7 +734,7 @@ static void hir_bind_class_typenames(hir_ctx *ctx, hir_class *hir_class,
         ctx, (type_base *)typename, hir_typename->base.span);
     hir_ctx_scopes_insert(
         ctx, hir_scope_entry_new((hir_type_base *)hir_typename_type,
-                                 typename_entry));
+                                 CTX_SCOPE_USAGE, typename_entry));
 
     list_type_ref_push_back(class->typenames, (type_base *)typename);
 
@@ -719,13 +766,18 @@ static void hir_bind_class_parents(hir_ctx *ctx, hir_class *hir_class,
 
     hir_type_custom *hir_parent = (hir_type_custom *)hir_base;
 
-    if (!(found = hir_ctx_scopes_resolve(ctx, (hir_type_base *)hir_parent))) {
+    if (!(found = hir_ctx_scopes_resolve(ctx, (hir_type_base *)hir_parent,
+                                         CTX_SCOPE_USAGE))) {
       char *type_s = hir_type_str((hir_type_base *)hir_parent);
       hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, hir_base->span,
                     "parent with type %s can't be resolved", type_s);
       free(type_s);
       break;
     }
+
+    char *resolved_s = type_str(found->type_ref->type);
+    debug("resolved %s", resolved_s);
+    free(resolved_s);
 
     if (!(found->type_ref->type->kind == TYPE_CLASS ||
           found->type_ref->type->kind == TYPE_MONO)) {
@@ -753,7 +805,8 @@ static void hir_bind_class_fields(hir_ctx *ctx, hir_class *hir_class,
 
     if (!(var->state & HIR_STATE_BIND_TYPE)) {
       if (var->type_hir) {
-        hir_scope_entry *var_entry = hir_ctx_scopes_resolve(ctx, var->type_hir);
+        hir_scope_entry *var_entry =
+            hir_ctx_scopes_resolve(ctx, var->type_hir, CTX_SCOPE_USAGE);
 
         if (!var_entry) {
           char *type_s = hir_type_str(var->type_hir);
@@ -784,7 +837,7 @@ static void hir_bind_class_methods(hir_ctx *ctx, hir_class *hir_class,
     hir_param *first = list_hir_param_front(method->subroutine->params);
 
     type_entry *first_type =
-        hir_ctx_scopes_resolve(ctx, first->type_hir)->type_ref;
+        hir_ctx_scopes_resolve(ctx, first->type_hir, CTX_SCOPE_USAGE)->type_ref;
 
     hir_type_free(first->type_hir);
     first->type_ref = first_type;
@@ -827,6 +880,7 @@ static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
         hir_ctx_scopes_insert(
             ctx, hir_scope_entry_new((hir_type_base *)hir_type_custom_new(
                                          NULL, strdup(typename->id), NULL),
+                                     CTX_SCOPE_USAGE,
                                      typename->base.type_entry_ref));
       }
 

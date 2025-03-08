@@ -242,6 +242,8 @@ const char *exception_subtype_mir_str(exception_subtype_mir type) {
       return "unexpected identifeir";
     case EXCEPTION_MIR_UNEXPECTED_MEMBER:
       return "unexpected member";
+    case EXCEPTION_MIR_SYMBOL_NAME_COLLISION:
+      return "symbol name collision";
     case EXCEPTION_MIR_UNKNOWN:
       break;
   }

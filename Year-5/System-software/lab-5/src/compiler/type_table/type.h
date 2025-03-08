@@ -112,6 +112,7 @@ typedef struct type_typename_struct {
 
 type_typename *type_typename_new(char *id, type_base *source_ref);
 
+// defines usage of type (not declaration)
 // if type C<A<B>> it will be mono C with mono A with B, so no need to match
 // can't be mono of template as class, cuz only support templates as typenames
 //

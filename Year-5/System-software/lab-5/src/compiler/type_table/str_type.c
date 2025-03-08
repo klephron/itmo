@@ -148,9 +148,12 @@ static void strbuf_append_type_class(type_ctx *ctx, strbuf *buffer,
 
 static void strbuf_append_type_typename(type_ctx *ctx, strbuf *buffer,
                                         const type_typename *type) {
+  char buf[64];
   UNUSED(ctx);
   strbuf_append(buffer, "typename ");
   strbuf_append(buffer, type->id);
+  // strbuf_append(buffer, " binded ");
+  // strbuf_append_f(buffer, buf, "%p", type->source_ref->type_entry_ref);
 }
 
 static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,

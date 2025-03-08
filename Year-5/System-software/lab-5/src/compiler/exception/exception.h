@@ -62,6 +62,7 @@ typedef enum exception_subtype_mir_enum {
   EXCEPTION_MIR_UNEXPECTED_RVALUE,
   EXCEPTION_MIR_UNEXPECTED_IDENTIFIER,
   EXCEPTION_MIR_UNEXPECTED_MEMBER,
+  EXCEPTION_MIR_SYMBOL_NAME_COLLISION,
 } exception_subtype_mir;
 
 typedef enum enception_subtype_cg_enum {

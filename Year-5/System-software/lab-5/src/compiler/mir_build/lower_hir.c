@@ -193,7 +193,7 @@ static mir_subroutine *mir_ctx_sym_sub_find(mir_ctx            *ctx,
   return NULL;
 }
 
-static hir_class *hir_ctx_type_hir_class_find(mir_ctx          *ctx,
+static hir_class *mir_ctx_type_hir_class_find(mir_ctx          *ctx,
                                               const type_entry *type_ref) {
   hashset_mir_type_entry_it it = hashset_mir_type_entry_find(
       ctx->map_type_hir_class, &(mir_type_entry){.type_ref = type_ref});
@@ -203,7 +203,7 @@ static hir_class *hir_ctx_type_hir_class_find(mir_ctx          *ctx,
   return NULL;
 }
 
-static void hir_ctx_type_hir_class_emplace(mir_ctx          *ctx,
+static void mir_ctx_type_hir_class_emplace(mir_ctx          *ctx,
                                            const type_entry *type_ref,
                                            const hir_class *class) {
   hashset_mir_type_entry_insert(
@@ -250,7 +250,13 @@ static void mir_ctx_setup(mir_ctx *ctx, const hir *hir) {
   for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
        NEXT(it)) {
     hir_class *class = GET(it);
-    hir_ctx_type_hir_class_emplace(ctx, class->type_ref, class);
+    mir_ctx_type_hir_class_emplace(ctx, class->type_ref, class);
+
+    char *type_s = type_str(class->type_ref->type);
+    debug("type_hir_class map inserted %s", type_s);
+    if (type_s) {
+      free(type_s);
+    }
   }
 }
 
@@ -1286,6 +1292,17 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
     return class;
   }
 
+  const hir_class *class_hir = mir_ctx_type_hir_class_find(ctx, class_entry);
+
+  if (!class_hir) {
+    char *type_s = type_str(class_entry->type);
+    error("hir class %s not found", type_s);
+    if (type_s) {
+      free(type_s);
+    }
+    return NULL;
+  }
+
   class = mir_class_new(class_entry, list_mir_value_new(),
                         list_mir_subroutine_ref_new());
 
@@ -1329,12 +1346,49 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
     return NULL;
   }
 
-  // add to list
+  hashset_mir_sym_entry *class_entries = hashset_mir_sym_entry_new();
+  size_t                 fields_cnt = 0;
+
+  // merge into class
   for (list_type_ref_it it = list_type_ref_begin(parents_ref); !END(it);
        NEXT(it)) {
     type_base *parent_type = GET(it);
     mir_class *parent = mir_define_class(ctx, parent_type->type_entry_ref);
+
+    if (!parent) {
+      continue;
+    }
+
+    for (list_mir_value_it v_it = list_mir_value_begin(parent->fields);
+         !END(v_it); NEXT(v_it)) {
+      mir_value *field = GET(v_it);
+
+      hashset_mir_sym_entry_it found = hashset_mir_sym_entry_find(
+          class_entries, &(mir_sym_entry){.symbol_ref = field->symbol_ref});
+
+      if (!END(found)) {
+        const symbol_entry *symbol = GET(found)->symbol_ref;
+        mir_exception_add_error(
+            ctx->exceptions, EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
+            "parent redefines symbol %s defined in another parent",
+            symbol->name);
+        continue;
+      }
+
+      mir_value *field_new =
+          mir_value_new(fields_cnt++, field->symbol_ref, field->type_ref);
+
+      list_mir_value_push_back(class->fields, field_new);
+
+      hashset_mir_sym_entry_insert(
+          class_entries, mir_sym_entry_new(field_new->symbol_ref, field_new));
+    }
   }
+
+  // instantiate its fields and methods
+  // for (list_hir_var_it it = list_hir_var)
+
+  hashset_mir_sym_entry_free(class_entries);
 
   // add to index
   mir_ctx_type_mir_class_emplace(ctx, class_entry, class);

@@ -1,37 +1,41 @@
+class A
+var
+begin
+end;
+
 class A<T>
 var
-  a: int;
+//  a: int;
 begin
 end;
 
 class A<T, U>
 var
-  a: string;
-  e: U;
-  n;
+//  a: string;
+//  e: U;
+//  n;
 begin
-  method import_entry(): int from "u" in "a";
-  method three(a, b, c): int
-  var
-    d: array [] of long;
-  begin
-    cast!<A<A<int>>>();
-  end
+  // method import_entry(): int from "u" in "a";
+  // method three(a, b, c): int
+  // var
+  //   d: array [] of long;
+  // begin
+  //  cast!<A<A<int>>>();
+  // end
 end;
 
-class B<T, U> : A<A<T>>, A<T, U>, A<int>
+class B<T, U> : A<T, U>, A<T>, A
 var
   a: array [] of T;
   b, c: byte;
 begin
   method import_entry(): int from "read" in "example";
-  method import_lib(): int from "example";
-  method three(a, b, c): int // NOTE: should have same signatures
-  var
-    d: array [] of long;
-  begin
-    cast!<A<A<int>>>();
-  end
+  // method import_lib(): int from "example";
+  // method three(a, b, c): int // NOTE: should have same signatures
+  // var
+  //   d: array [] of long;
+  // begin
+  // end
 end;
 
 method main(): void
