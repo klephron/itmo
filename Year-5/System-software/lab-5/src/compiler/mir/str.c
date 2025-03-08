@@ -180,3 +180,18 @@ const char *mir_stmt_op_enum_str(mir_stmt_op_enum kind) {
   warn("unexpected stmt_op kind %d", kind);
   return "unknown";
 }
+
+const char *mir_subroutine_enum_str(mir_subroutine_enum kind) {
+  switch(kind) {
+    case MIR_SUBROUTINE_BASIC:
+      return "BASIC";
+    case MIR_SUBROUTINE_EXTERNAL:
+      return "EXTERNAL";
+    case MIR_SUBROUTINE_IMPORTED:
+      return "IMPORTED";
+    case MIR_SUBROUTINE_UNKNOWN:
+      break;
+  }
+  warn("unexpected subroutine kind %d", kind);
+  return "UNKNOWN";
+}

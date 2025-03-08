@@ -32,6 +32,7 @@ begin
     d: array [] of U;
   begin
    cast!<A<A<int>>>();
+   return 1 + 2 * 3 * a;
   end
 end;
 
@@ -52,4 +53,13 @@ end;
 method main(): void
 begin
   make!<B<char, A<int, array [] of A<string>>>>();
+  external_func();
+  imported_func2();
 end;
+
+method external_main(): void;
+method external_main2(): void;
+method external_func(): void;
+
+method imported_func(): void from "lib_name" in "entry_name";
+method imported_func2(): void from "lib2_name";

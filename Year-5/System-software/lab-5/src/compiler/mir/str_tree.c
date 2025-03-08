@@ -278,6 +278,9 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
   strbuf_append_clx(buffer, "type: ", pad);
   mir_str_type(buffer, pad, sub->type_ref);
 
+  strbuf_append_clx(buffer, "kind: ", pad);
+  strbuf_append(buffer, mir_subroutine_enum_str(sub->kind));
+
   switch (sub->kind) {
     case MIR_SUBROUTINE_BASIC:
       strbuf_append_clx(buffer, "", pad);
@@ -317,6 +320,13 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
     case MIR_SUBROUTINE_EXTERNAL:
       break;
     case MIR_SUBROUTINE_IMPORTED:
+      strbuf_append_clx(buffer, "lib: ", pad);
+      strbuf_append(buffer, sub->imported.lib);
+
+      if (sub->imported.entry) {
+        strbuf_append_clx(buffer, "entry: ", pad);
+        strbuf_append(buffer, sub->imported.entry);
+      }
       break;
     default:
       warn("unexpected subroutine kind %d %p", sub->kind, sub);
