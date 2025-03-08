@@ -103,6 +103,11 @@ static char *type_table_str_extra(const type_entry *entry) {
       const type_mono *self = (const type_mono *)entry->type;
       strbuf_append(buffer, "instantiates ");
       type_table_str_extra_ref(buffer, self->type_ref);
+      for (list_type_ref_it it = list_type_ref_begin(self->types); !END(it);
+           NEXT(it)) {
+        strbuf_append(buffer, ", ");
+        type_table_str_extra_ref(buffer, GET(it));
+      }
     } break;
     default:
       break;

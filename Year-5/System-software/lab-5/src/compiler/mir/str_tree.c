@@ -359,7 +359,7 @@ static void mir_str_class(strbuf *buffer, size_t pad, const mir_class *class) {
       mir_subroutine *sub = GET(it);
       strbuf_append_clx(buffer, "method ", pad);
       strbuf_append(buffer, sub->symbol_ref->name);
-      strbuf_append_f(buffer, buf, "ptr(%p)", sub);
+      strbuf_append_f(buffer, buf, "  # ptr(%p)", sub);
       strbuf_append(buffer, ", type: ");
       mir_str_type(buffer, pad, sub->type_ref);
     }

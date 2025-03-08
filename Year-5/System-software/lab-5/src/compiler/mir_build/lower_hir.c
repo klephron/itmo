@@ -15,7 +15,7 @@
 // - map[hir_subroutine] -> mir_subroutine
 // - instantiate mir_subroutines that are actually used
 
-// TYPE INDEX
+// TYPE_REF
 static inline int container_cmp_type_ref(const void *lsv, const void *rsv) {
   const type_base *l = lsv;
   const type_base *r = rsv;
@@ -28,6 +28,21 @@ static inline uint64_t container_hash_type_ref(const void *lsv) {
 HASHSET_DECLARE_STATIC_INLINE(hashset_type_ref, type_base,
                               container_cmp_type_ref, container_new_move,
                               container_delete_false, container_hash_type_ref);
+
+// SYMBOL_ENTRY (compares by symbol name)
+static inline int container_cmp_symbol_entry(const void *lsv, const void *rsv) {
+  const symbol_entry *l = lsv;
+  const symbol_entry *r = rsv;
+  return container_cmp_chars(l->name, r->name);
+}
+static inline uint64_t container_hash_symbol_entry(const void *lsv) {
+  const symbol_entry *l = lsv;
+  return container_hash_chars(l->name);
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_symbol_entry, symbol_entry,
+                              container_cmp_symbol_entry, container_new_move,
+                              container_delete_false,
+                              container_hash_symbol_entry);
 
 // SYM_ENTRY
 typedef struct mir_sym_entry_struct {
@@ -113,6 +128,44 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_mir_type_entry, mir_type_entry,
                               container_cmp_mir_type_entry, container_new_move,
                               container_delete_mir_type_entry,
                               container_hash_mir_type_entry);
+
+// NAME_ENTRY
+typedef struct mir_name_entry_struct {
+  const symbol_entry *symbol_ref;
+  void               *entry_ref;
+} mir_name_entry;
+
+static mir_name_entry *mir_name_entry_new(const symbol_entry *symbol_ref,
+                                          void               *entry_ref) {
+  mir_name_entry *self = MALLOC(mir_name_entry);
+  self->symbol_ref = symbol_ref;
+  self->entry_ref = entry_ref;
+  return self;
+}
+
+static void mir_name_entry_free(mir_name_entry *self) {
+  if (self) {
+    free(self);
+  }
+}
+
+static inline int container_cmp_mir_name_entry(const void *lsv,
+                                               const void *rsv) {
+  const mir_name_entry *l = lsv;
+  const mir_name_entry *r = rsv;
+  return container_cmp_chars(l->symbol_ref->name, r->symbol_ref->name);
+}
+static inline uint64_t container_hash_mir_name_entry(const void *lsv) {
+  const mir_name_entry *l = lsv;
+  return container_hash_chars(l->symbol_ref->name);
+}
+static inline void container_delete_mir_name_entry(void *self) {
+  mir_name_entry_free(self);
+}
+HASHSET_DECLARE_STATIC_INLINE(hashset_mir_name_entry, mir_name_entry,
+                              container_cmp_mir_name_entry, container_new_move,
+                              container_delete_mir_name_entry,
+                              container_hash_mir_name_entry);
 
 // CTX
 typedef struct mir_ctx_struct {
@@ -251,12 +304,6 @@ static void mir_ctx_setup(mir_ctx *ctx, const hir *hir) {
        NEXT(it)) {
     hir_class *class = GET(it);
     mir_ctx_type_hir_class_emplace(ctx, class->type_ref, class);
-
-    char *type_s = type_str(class->type_ref->type);
-    debug("type_hir_class map inserted %s", type_s);
-    if (type_s) {
-      free(type_s);
-    }
   }
 }
 
@@ -1307,16 +1354,11 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
                         list_mir_subroutine_ref_new());
 
   // get parents
-  type_base     *type = class->type_ref->type;
+  type_base     *class_type = class->type_ref->type;
   list_type_ref *parents_ref = NULL;
-  switch (type->kind) {
-    case TYPE_CLASS_T: {
-      type_class_t *self = (typeof(self))type;
-      parents_ref = self->parents;
-      break;
-    }
+  switch (class_type->kind) {
     case TYPE_MONO: {
-      type_mono *self = (typeof(self))type;
+      type_mono *self = (typeof(self))class_type;
 
       if (self->type_ref->kind != TYPE_CLASS_T) {
         char *type_s = type_str(self->type_ref);
@@ -1332,24 +1374,26 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
       break;
     }
     default: {
-      char *type_s = type_str(type);
-      error("unexpected type kind %s(%d) %p", type_s, type->kind, type);
+      char *type_s = type_str(class_type);
+      error("unexpected type kind %s(%d) %p", type_s, class_type->kind,
+            class_type);
       if (type_s) {
         free(type_s);
       }
     }
   }
-
   if (!parents_ref) {
-    warn("parent list is null, exiting");
+    error("parent list is null, exiting");
     mir_class_free(class);
     return NULL;
   }
 
-  hashset_mir_sym_entry *class_entries = hashset_mir_sym_entry_new();
-  size_t                 fields_cnt = 0;
+  hashset_symbol_entry *class_symbols = hashset_symbol_entry_new();
+  // point to pointer of list of methods
+  hashset_mir_name_entry *class_methods = hashset_mir_name_entry_new();
+  size_t                  fields_cnt = 0;
 
-  // merge into class
+  // merge fields
   for (list_type_ref_it it = list_type_ref_begin(parents_ref); !END(it);
        NEXT(it)) {
     type_base *parent_type = GET(it);
@@ -1363,15 +1407,21 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
          !END(v_it); NEXT(v_it)) {
       mir_value *field = GET(v_it);
 
-      hashset_mir_sym_entry_it found = hashset_mir_sym_entry_find(
-          class_entries, &(mir_sym_entry){.symbol_ref = field->symbol_ref});
+      hashset_symbol_entry_it sym_it = hashset_symbol_entry_find(
+          class_symbols, (symbol_entry *)field->symbol_ref);
 
-      if (!END(found)) {
-        const symbol_entry *symbol = GET(found)->symbol_ref;
+      if (!END(sym_it)) {
+        char               *class_s = type_str(class_type);
+        char               *parent_s = type_str(parent_type);
+        const symbol_entry *symbol = GET(sym_it);
         mir_exception_add_error(
             ctx->exceptions, EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
-            "parent redefines symbol %s defined in another parent",
-            symbol->name);
+            "%s parent %s var redefines symbol '%s' defined in another parent",
+            class_s, parent_s, symbol->name);
+        if (class_s)
+          free(class_s);
+        if (parent_s)
+          free(parent_s);
         continue;
       }
 
@@ -1380,15 +1430,142 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
 
       list_mir_value_push_back(class->fields, field_new);
 
-      hashset_mir_sym_entry_insert(
-          class_entries, mir_sym_entry_new(field_new->symbol_ref, field_new));
+      hashset_symbol_entry_insert(class_symbols,
+                                  (symbol_entry *)field_new->symbol_ref);
     }
   }
 
-  // instantiate its fields and methods
-  // for (list_hir_var_it it = list_hir_var)
+  // instantiate its fields
+  for (list_hir_var_it it = list_hir_var_begin(class_hir->fields); !END(it);
+       NEXT(it)) {
+    const hir_var *var_hir = GET(it);
 
-  hashset_mir_sym_entry_free(class_entries);
+    hashset_symbol_entry_it sym_it =
+        hashset_symbol_entry_find(class_symbols, var_hir->id_ref);
+
+    if (!END(sym_it)) {
+      char               *class_s = type_str(class_type);
+      const symbol_entry *symbol = GET(sym_it);
+      mir_exception_add_error(
+          ctx->exceptions, EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
+          "%s var redefines symbol '%s' defined in another parent", class_s,
+          symbol->name);
+      if (class_s)
+        free(class_s);
+      continue;
+    }
+
+    mir_value *var =
+        mir_value_new(fields_cnt++, var_hir->id_ref, var_hir->type_ref);
+
+    list_mir_value_push_back(class->fields, var);
+    hashset_symbol_entry_insert(class_symbols, (symbol_entry *)var->symbol_ref);
+  }
+
+  // merge methods
+  for (list_type_ref_it it = list_type_ref_begin(parents_ref); !END(it);
+       NEXT(it)) {
+    type_base *parent_type = GET(it);
+    mir_class *parent = mir_define_class(ctx, parent_type->type_entry_ref);
+
+    if (!parent) {
+      continue;
+    }
+
+    for (list_mir_subroutine_ref_it s_it =
+             list_mir_subroutine_ref_begin(parent->methods);
+         !END(s_it); NEXT(s_it)) {
+      mir_subroutine *method = GET(s_it);
+
+      hashset_symbol_entry_it sym_it = hashset_symbol_entry_find(
+          class_symbols, (symbol_entry *)method->symbol_ref);
+
+      // add exception if this symbol is already defined by another parent
+      if (!END(sym_it)) {
+        char               *class_s = type_str(class_type);
+        char               *parent_s = type_str(parent_type);
+        const symbol_entry *symbol = GET(sym_it);
+        mir_exception_add_error(
+            ctx->exceptions, EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
+            "%s parent %s method redefines symbol '%s' defined in another "
+            "parent",
+            class_s, parent_s, symbol->name);
+        if (class_s)
+          free(class_s);
+        if (parent_s)
+          free(parent_s);
+        continue;
+      }
+
+      hashset_symbol_entry_insert(class_symbols,
+                                  (symbol_entry *)method->symbol_ref);
+      hashset_mir_name_entry_insert(
+          class_methods, mir_name_entry_new(method->symbol_ref, method));
+    }
+  }
+
+  // instantiate its methods (override)
+  for (list_hir_method_it it = list_hir_method_begin(class_hir->methods);
+       !END(it); NEXT(it)) {
+    const hir_method *method_hir = GET(it);
+    symbol_entry     *method_symbol = method_hir->subroutine->id_ref;
+
+    hashset_symbol_entry_it sym_it =
+        hashset_symbol_entry_find(class_symbols, method_symbol);
+
+    hashset_mir_name_entry_it method_it = hashset_mir_name_entry_find(
+        class_methods, &(mir_name_entry){.symbol_ref = method_symbol});
+
+    // found as var from another parent
+    if (!END(sym_it) && END(method_it)) {
+      char               *class_s = type_str(class_type);
+      const symbol_entry *symbol = GET(sym_it);
+      mir_exception_add_error(ctx->exceptions,
+                              EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
+                              "%s method redefines symbol method '%s' defined "
+                              "in another parent as var",
+                              class_s, symbol->name);
+      if (class_s)
+        free(class_s);
+      continue;
+    }
+
+    mir_subroutine *method;
+
+    // declare+define need subroutine if not already defined
+    if (!(method = mir_ctx_sym_sub_find(ctx, method_symbol))) {
+      method = mir_declare_subroutine(ctx, method_hir->subroutine);
+      if (!method) {
+        error("method %s hasn't been declared", method_symbol->name);
+        continue;
+      }
+      if (method->kind == MIR_SUBROUTINE_BASIC) {
+        mir_define_subroutine_basic(ctx, method, method_hir->subroutine);
+      }
+      list_mir_subroutine_push_back(ctx->mir->methods, method);
+      mir_ctx_sym_sub_emplace(ctx, method_symbol, method);
+    }
+
+    mir_name_entry *method_entry =
+        mir_name_entry_new(method->symbol_ref, method);
+
+    if (!END(method_it)) {
+      // override
+      hashset_mir_name_entry_replace(class_methods, method_it, method_entry);
+    } else {
+      hashset_mir_name_entry_insert(class_methods, method_entry);
+    }
+  }
+
+  // add resolved methods to class method list
+  for (hashset_mir_name_entry_it it =
+           hashset_mir_name_entry_begin(class_methods);
+       !END(it); NEXT(it)) {
+    list_mir_subroutine_ref_push_back(class->methods, GET(it)->entry_ref);
+  }
+
+  hashset_symbol_entry_free(class_symbols);
+  hashset_mir_name_entry_free(class_methods);
 
   // add to index
   mir_ctx_type_mir_class_emplace(ctx, class_entry, class);

@@ -172,7 +172,7 @@ static type_base *hir_ctx_type_register(hir_ctx *ctx, type_base *type,
         type_table_emplace(ctx->type_table, type, span_copy(span_ref));
 
     char *type_s = type_str(type);
-    debug("registered new type %s", type_s);
+    debug("registered %s", type_s);
     if (type_s)
       free(type_s);
 
@@ -196,7 +196,6 @@ static void hir_ctx_debug(const hir_ctx *ctx, const char *s) {
   debug("  instto_types -> size: %lu",
         list_type_mono_ref_size(ctx->instto_types));
 
-  debug("  hir_classes -> size: %lu", list_hir_class_size(ctx->hir_classes));
   debug("  exceptions -> size: %lu", list_exception_size(ctx->exceptions));
 }
 
@@ -350,6 +349,11 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
   if (!type) {
     return NULL;
   }
+
+  // char *type_s = type_str(type);
+  // info("expanding %s", type_s);
+  // if (type_s)
+  //   free(type_s);
 
   int type_changed = 0;
 
@@ -718,7 +722,7 @@ static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
   }
 
   // char *type_s = type_str((type_base *)mono_type);
-  // info("expanding for mono type %s", type_s);
+  // info("expanding type %s", type_s);
   // free(type_s);
 
   // setup templates that need to be replaced
@@ -733,6 +737,14 @@ static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
     type_base *to_type = GET(tit);
     hashset_hir_type_map_insert(ctx->map_type_tmpl,
                                 hir_type_map_new(from_type, to_type));
+
+    // char *type_f = type_str(GET(fit));
+    // char *type_t = type_str(GET(tit));
+    // info("%s -> %s", type_f, type_t);
+    // if (type_f)
+    //   free(type_f);
+    // if (type_t)
+    //   free(type_t);
   }
 
   // expansion of parents may create new template (because typenames are
