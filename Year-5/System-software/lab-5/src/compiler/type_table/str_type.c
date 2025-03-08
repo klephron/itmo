@@ -44,7 +44,7 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_type_map, type_map,
 
 typedef struct type_ctx_struct {
   hashset_type_map *map;
-  int               unwrap;
+  int               type_root;
 } type_ctx;
 
 static void strbuf_append_type(type_ctx *ctx, strbuf *buffer,
@@ -89,7 +89,7 @@ static void strbuf_append_type_primitive(type_ctx *ctx, strbuf *buffer,
 
 static void strbuf_append_type_array(type_ctx *ctx, strbuf *buffer,
                                      const type_array *type) {
-  ctx->unwrap = 0;
+  ctx->type_root = 0;
 
   strbuf_append(buffer, "array[");
   strbuf_append_type(ctx, buffer, type->element_ref);
@@ -98,7 +98,7 @@ static void strbuf_append_type_array(type_ctx *ctx, strbuf *buffer,
 
 static void strbuf_append_type_callable(type_ctx *ctx, strbuf *buffer,
                                         const type_callable *type) {
-  ctx->unwrap = 0;
+  ctx->type_root = 0;
 
   strbuf_append(buffer, "(");
   list_type_ref_it it = list_type_ref_begin(type->params);
@@ -114,11 +114,14 @@ static void strbuf_append_type_callable(type_ctx *ctx, strbuf *buffer,
 }
 
 static void strbuf_append_type_class(type_ctx *ctx, strbuf *buffer,
-                                     const type_class *type) {
-  int do_unwrap = ctx->unwrap;
+                                     const type_class_t *type) {
+  int type_root = ctx->type_root;
 
-  ctx->unwrap = 0;
+  ctx->type_root = 0;
 
+  if (type_root) {
+    strbuf_append(buffer, "template ");
+  }
   strbuf_append(buffer, "class ");
   strbuf_append(buffer, type->id ? type->id : "(nil)");
 
@@ -133,7 +136,7 @@ static void strbuf_append_type_class(type_ctx *ctx, strbuf *buffer,
     strbuf_append(buffer, ">");
   }
 
-  if (do_unwrap) {
+  if (type_root) {
     list_type_ref_it it = list_type_ref_begin(type->parents);
     if (!END(it)) {
       strbuf_append(buffer, " : ");
@@ -148,16 +151,14 @@ static void strbuf_append_type_class(type_ctx *ctx, strbuf *buffer,
 
 static void strbuf_append_type_typename(type_ctx *ctx, strbuf *buffer,
                                         const type_typename *type) {
-  char buf[64];
   UNUSED(ctx);
   strbuf_append(buffer, "typename ");
   strbuf_append(buffer, type->id);
-  // strbuf_append(buffer, " binded ");
-  // strbuf_append_f(buffer, buf, "%p", type->source_ref->type_entry_ref);
 }
 
 static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,
                                     const type_mono *type) {
+  ctx->type_root = 0;
 
   if (type->type_ref) {
     switch (type->type_ref->kind) {
@@ -169,9 +170,9 @@ static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,
       case TYPE_MONO:
         strbuf_append_type(ctx, buffer, type->type_ref);
         break;
-      case TYPE_CLASS: {
+      case TYPE_CLASS_T: {
         // add mapping for replacement
-        const type_class *tmpl = (type_class *)type->type_ref;
+        const type_class_t *tmpl = (type_class_t *)type->type_ref;
         for (list_type_ref_it it = list_type_ref_begin(type->types),
                               t_it = list_type_ref_begin(tmpl->typenames);
              !END(it) && !END(t_it); NEXT(it), NEXT(t_it)) {
@@ -221,8 +222,8 @@ static void strbuf_append_type(type_ctx *ctx, strbuf *buffer,
     case TYPE_CALLABLE:
       strbuf_append_type_callable(ctx, buffer, (const type_callable *)generic);
       break;
-    case TYPE_CLASS:
-      strbuf_append_type_class(ctx, buffer, (const type_class *)generic);
+    case TYPE_CLASS_T:
+      strbuf_append_type_class(ctx, buffer, (const type_class_t *)generic);
       break;
     case TYPE_TYPENAME:
       strbuf_append_type_typename(ctx, buffer, (const type_typename *)generic);
@@ -245,8 +246,8 @@ const char *type_enum_str(type_enum kind) {
       return "ARRAY";
     case TYPE_CALLABLE:
       return "CALLABLE";
-    case TYPE_CLASS:
-      return "CLASS";
+    case TYPE_CLASS_T:
+      return "CLASS_T";
     case TYPE_TYPENAME:
       return "TYPENAME";
     case TYPE_MONO:
@@ -264,7 +265,7 @@ char *type_str(const type_base *generic) {
 
     type_ctx ctx = {
         .map = hashset_type_map_new(),
-        .unwrap = 1,
+        .type_root = 1,
     };
 
     strbuf_append_type(&ctx, buffer, generic);

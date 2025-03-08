@@ -207,7 +207,7 @@ char *hir_lit_value_str(const hir_lit *lit) {
       case TYPE_UNKNOWN:
       case TYPE_ARRAY:
       case TYPE_CALLABLE:
-      case TYPE_CLASS:
+      case TYPE_CLASS_T:
       case TYPE_TYPENAME:
       case TYPE_MONO:
       default:

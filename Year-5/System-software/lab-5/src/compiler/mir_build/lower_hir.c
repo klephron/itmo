@@ -436,7 +436,7 @@ static mir_lit *mir_define_mir_lit(mir_ctx *ctx, const hir_expr_lit *expr) {
         break;
       case TYPE_ARRAY:
       case TYPE_CALLABLE:
-      case TYPE_CLASS:
+      case TYPE_CLASS_T:
       case TYPE_TYPENAME:
       case TYPE_MONO:
       case TYPE_UNKNOWN: {
@@ -1310,15 +1310,15 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
   type_base     *type = class->type_ref->type;
   list_type_ref *parents_ref = NULL;
   switch (type->kind) {
-    case TYPE_CLASS: {
-      type_class *self = (typeof(self))type;
+    case TYPE_CLASS_T: {
+      type_class_t *self = (typeof(self))type;
       parents_ref = self->parents;
       break;
     }
     case TYPE_MONO: {
       type_mono *self = (typeof(self))type;
 
-      if (self->type_ref->kind != TYPE_CLASS) {
+      if (self->type_ref->kind != TYPE_CLASS_T) {
         char *type_s = type_str(self->type_ref);
         error("unexpected mono ref %s(%d) %p", type_s, self->type_ref->kind,
               self);
@@ -1328,7 +1328,7 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
         break;
       }
 
-      parents_ref = ((type_class *)self->type_ref)->parents;
+      parents_ref = ((type_class_t *)self->type_ref)->parents;
       break;
     }
     default: {

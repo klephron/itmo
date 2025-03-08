@@ -40,5 +40,5 @@ end;
 
 method main(): void
 begin
-  make!<B<char, long>>();
+  make!<B<char, A<array [] of A<long>, A>>>();
 end;

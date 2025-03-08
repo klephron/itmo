@@ -10,7 +10,7 @@ typedef enum type_enum {
   TYPE_PRIMITIVE,
   TYPE_ARRAY,
   TYPE_CALLABLE,
-  TYPE_CLASS,
+  TYPE_CLASS_T,
   TYPE_TYPENAME,
   TYPE_MONO,
 } type_enum;
@@ -92,16 +92,15 @@ typedef struct type_callable_struct {
 type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params);
 
 // primary template
-typedef struct type_class_struct {
+typedef struct type_class_t_struct {
   type_base      base;
   char          *id;
   list_type_ref *typenames;
   list_type_ref *parents;
-  type_mono_enum mono_kind;
-} type_class;
+} type_class_t;
 
-type_class *type_class_new(char *id, list_type_ref *typenames,
-                           list_type_ref *parents);
+type_class_t *type_class_t_new(char *id, list_type_ref *typenames,
+                               list_type_ref *parents);
 
 typedef struct type_typename_struct {
   type_base base;
@@ -112,7 +111,9 @@ typedef struct type_typename_struct {
 
 type_typename *type_typename_new(char *id, type_base *source_ref);
 
-// defines usage of type (not declaration)
+// defines monomorphization of type (not declaration)
+// WARN: it should ALWAYS wrap classes
+
 // if type C<A<B>> it will be mono C with mono A with B, so no need to match
 // can't be mono of template as class, cuz only support templates as typenames
 //

@@ -64,7 +64,7 @@ void mir_lit_free(mir_lit *self) {
       }
       case TYPE_ARRAY:
       case TYPE_CALLABLE:
-      case TYPE_CLASS:
+      case TYPE_CLASS_T:
       case TYPE_TYPENAME:
       case TYPE_MONO:
       case TYPE_UNKNOWN:

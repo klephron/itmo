@@ -40,8 +40,8 @@ type_mono_enum type_calc_mono(const type_base *generic) {
       return type_calc_mono_list(self->params);
     }
 
-    case TYPE_CLASS: {
-      const type_class *self = (const type_class *)generic;
+    case TYPE_CLASS_T: {
+      const type_class_t *self = (const type_class_t *)generic;
       if (!self->typenames) {
         return TYPE_MONO_UNSET;
       }
@@ -63,8 +63,8 @@ type_mono_enum type_calc_mono(const type_base *generic) {
       }
 
       switch (self->type_ref->kind) {
-        case TYPE_CLASS: {
-          const type_class *attached = (const type_class *)self->type_ref;
+        case TYPE_CLASS_T: {
+          const type_class_t *attached = (const type_class_t *)self->type_ref;
 
           size_t typenames_sz = list_type_ref_size(attached->typenames);
           size_t types_sz = list_type_ref_size(self->types);
@@ -101,8 +101,8 @@ type_mono_enum type_get_mono(const type_base *generic) {
       return ((const type_array *)generic)->mono_kind;
     case TYPE_CALLABLE:
       return ((const type_callable *)generic)->mono_kind;
-    case TYPE_CLASS:
-      return ((const type_class *)generic)->mono_kind;
+    case TYPE_CLASS_T:
+      return TYPE_MONO_NOT_FULL;
     case TYPE_MONO:
       return ((const type_mono *)generic)->mono_kind;
     case TYPE_UNKNOWN:
@@ -125,8 +125,7 @@ void type_set_mono(type_base *generic, type_mono_enum mono) {
     case TYPE_CALLABLE:
       ((type_callable *)generic)->mono_kind = mono;
       break;
-    case TYPE_CLASS:
-      ((type_class *)generic)->mono_kind = mono;
+    case TYPE_CLASS_T:
       break;
     case TYPE_TYPENAME:
       break;

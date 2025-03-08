@@ -1,5 +1,4 @@
 #include "type.h"
-#include "compiler/type_table/str.h"
 #include "util/log.h"
 
 #include "util/macro.h"
@@ -35,7 +34,7 @@ static void type_callable_free(type_callable *self) {
   }
 }
 
-static void type_class_free(type_class *self) {
+static void type_class_t_free(type_class_t *self) {
   if (self) {
     if (self->id) {
       free(self->id);
@@ -88,14 +87,13 @@ type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params) {
   return self;
 }
 
-type_class *type_class_new(char *id, list_type_ref *typenames,
-                           list_type_ref *parents) {
-  type_class *self = MALLOC(type_class);
-  type_base_init(&self->base, TYPE_CLASS);
+type_class_t *type_class_t_new(char *id, list_type_ref *typenames,
+                               list_type_ref *parents) {
+  type_class_t *self = MALLOC(type_class_t);
+  type_base_init(&self->base, TYPE_CLASS_T);
   self->id = id;
   self->typenames = typenames;
   self->parents = parents;
-  self->mono_kind = TYPE_MONO_UNSET;
   return self;
 }
 
@@ -126,8 +124,8 @@ void type_free(type_base *generic) {
         return type_array_free((type_array *)generic);
       case TYPE_CALLABLE:
         return type_callable_free((type_callable *)generic);
-      case TYPE_CLASS:
-        return type_class_free((type_class *)generic);
+      case TYPE_CLASS_T:
+        return type_class_t_free((type_class_t *)generic);
       case TYPE_TYPENAME:
         return type_typename_free((type_typename *)generic);
       case TYPE_MONO:
@@ -150,7 +148,7 @@ void type_set_type_entry(type_base *generic, type_entry *type_entry_ref) {
     case TYPE_PRIMITIVE:
     case TYPE_ARRAY:
     case TYPE_CALLABLE:
-    case TYPE_CLASS:
+    case TYPE_CLASS_T:
     case TYPE_TYPENAME:
     case TYPE_MONO:
       generic->type_entry_ref = type_entry_ref;
@@ -196,11 +194,11 @@ type_base *type_copy(const type_base *generic) {
       return (type_base *)type_callable_new(self->ret_ref,
                                             type_copy_list_ref(self->params));
     }
-    case TYPE_CLASS: {
-      const type_class *self = (type_class *)generic;
-      return (type_base *)type_class_new(strdup(self->id),
-                                         type_copy_list_ref(self->typenames),
-                                         type_copy_list_ref(self->parents));
+    case TYPE_CLASS_T: {
+      const type_class_t *self = (type_class_t *)generic;
+      return (type_base *)type_class_t_new(strdup(self->id),
+                                           type_copy_list_ref(self->typenames),
+                                           type_copy_list_ref(self->parents));
     }
     case TYPE_TYPENAME: {
       const type_typename *self = (type_typename *)generic;

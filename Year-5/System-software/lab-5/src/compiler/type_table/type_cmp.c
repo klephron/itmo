@@ -59,9 +59,9 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
 
       return type_cmp(l->ret_ref, r->ret_ref);
     }
-    case TYPE_CLASS: {
-      const type_class *l = (const type_class *)lsv;
-      const type_class *r = (const type_class *)rsv;
+    case TYPE_CLASS_T: {
+      const type_class_t *l = (const type_class_t *)lsv;
+      const type_class_t *r = (const type_class_t *)rsv;
 
       int cmp = strcmp(l->id, r->id);
       if (cmp) {
@@ -175,8 +175,8 @@ uint64_t type_hash(const type_base *lsv) {
 
       hash = hash_combine(hash, type_hash(l->ret_ref));
     } break;
-    case TYPE_CLASS: {
-      const type_class *l = (const type_class *)lsv;
+    case TYPE_CLASS_T: {
+      const type_class_t *l = (const type_class_t *)lsv;
 
       hash = hash_combine(hash, container_hash_chars(l->id));
 

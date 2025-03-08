@@ -5,7 +5,6 @@
 #include "util/hashset.h"
 #include "util/log.h"
 #include "util/macro.h"
-#include "util/strbuf.h"
 #include <string.h>
 
 typedef enum ctx_scope_kind_enum {
@@ -175,25 +174,17 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
 
   switch (base->type) {
     case HIR_TYPE_CUSTOM: {
-      // try to mono instantiate type type
+      // try to mono instantiate type
       const hir_type_custom *self = (typeof(self))base;
-
-      // if no templates try to find it in declaration
-      if (kind != CTX_SCOPE_DECLARATION &&
-          (!self->templates || !list_hir_type_size(self->templates))) {
-        entry = hir_ctx_scopes_find(ctx, base, CTX_SCOPE_DECLARATION, NULL);
-        if (entry) {
-          return entry;
-        }
-        return NULL;
-      }
 
       hir_type_custom *basic =
           hir_type_custom_new(NULL, strdup(self->name), list_hir_type_new());
 
-      for (size_t i = 0, sz = list_hir_type_size(self->templates); i < sz;
-           ++i) {
-        list_hir_type_push_back(basic->templates, NULL);
+      if (self->templates) {
+        for (size_t i = 0, sz = list_hir_type_size(self->templates); i < sz;
+             ++i) {
+          list_hir_type_push_back(basic->templates, NULL);
+        }
       }
 
       // can't be resolved
@@ -212,18 +203,20 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
           type_mono_new(template->type_ref->type, list_type_ref_new());
 
       // resolve mono-ed types
-      for (list_hir_type_it it = list_hir_type_begin(self->templates); !END(it);
-           NEXT(it)) {
-        hir_type_base   *type = GET(it);
-        hir_scope_entry *sub_entry =
-            hir_ctx_scopes_resolve(ctx, type, CTX_SCOPE_USAGE);
+      if (self->templates) {
+        for (list_hir_type_it it = list_hir_type_begin(self->templates);
+             !END(it); NEXT(it)) {
+          hir_type_base   *type = GET(it);
+          hir_scope_entry *sub_entry =
+              hir_ctx_scopes_resolve(ctx, type, CTX_SCOPE_USAGE);
 
-        if (!sub_entry) {
-          type_free((type_base *)mono);
-          return NULL;
+          if (!sub_entry) {
+            type_free((type_base *)mono);
+            return NULL;
+          }
+
+          list_type_ref_push_back(mono->types, sub_entry->type_ref->type);
         }
-
-        list_type_ref_push_back(mono->types, sub_entry->type_ref->type);
       }
 
       type_entry *type_ref = hir_ctx_table_emplace(
@@ -662,7 +655,7 @@ static void hir_bind_subroutine(hir_ctx *ctx, hir_subroutine *subroutine) {
 }
 
 // adds class to type table
-static type_class *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
+static type_class_t *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
   hir_scope_entry *found;
 
   hir_type_custom *hir_class_type = hir_type_custom_new(
@@ -684,8 +677,8 @@ static type_class *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
     return NULL;
   }
 
-  type_class *class = type_class_new(hir_class->id->name, list_type_ref_new(),
-                                     list_type_ref_new());
+  type_class_t *class = type_class_t_new(
+      hir_class->id->name, list_type_ref_new(), list_type_ref_new());
   type_entry *class_entry =
       hir_ctx_table_emplace(ctx, (type_base *)class, hir_class->base.span);
 
@@ -705,7 +698,7 @@ static type_class *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
 
 // adds typenames to type table
 static void hir_bind_class_typenames(hir_ctx *ctx, hir_class *hir_class,
-                                     type_class *class) {
+                                     type_class_t *class) {
   hir_scope_entry *found;
 
   for (list_hir_id_it it = list_hir_id_begin(hir_class->typenames); !END(it);
@@ -749,7 +742,7 @@ static void hir_bind_class_typenames(hir_ctx *ctx, hir_class *hir_class,
 // 1. bind parents (check if relevant classes exist)
 // 2. resolve mono types in make! expressions.
 static void hir_bind_class_parents(hir_ctx *ctx, hir_class *hir_class,
-                                   type_class *class) {
+                                   type_class_t *class) {
   hir_scope_entry *found;
 
   for (list_hir_type_it it = list_hir_type_begin(hir_class->parents); !END(it);
@@ -775,15 +768,11 @@ static void hir_bind_class_parents(hir_ctx *ctx, hir_class *hir_class,
       break;
     }
 
-    char *resolved_s = type_str(found->type_ref->type);
-    debug("resolved %s", resolved_s);
-    free(resolved_s);
-
-    if (!(found->type_ref->type->kind == TYPE_CLASS ||
+    if (!(found->type_ref->type->kind == TYPE_CLASS_T ||
           found->type_ref->type->kind == TYPE_MONO)) {
       hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNEXPECTED, hir_base->span,
                     "in type table expected parent type %s or %s, got %s",
-                    type_enum_str(TYPE_CLASS), type_enum_str(TYPE_MONO),
+                    type_enum_str(TYPE_CLASS_T), type_enum_str(TYPE_MONO),
                     type_enum_str(found->type_ref->type->kind));
       break;
     }
@@ -796,7 +785,7 @@ static void hir_bind_class_parents(hir_ctx *ctx, hir_class *hir_class,
 }
 
 static void hir_bind_class_fields(hir_ctx *ctx, hir_class *hir_class,
-                                  type_class *class) {
+                                  type_class_t *class) {
   UNUSED(class);
 
   for (list_hir_var_it it = list_hir_var_begin(hir_class->fields); !END(it);
@@ -826,7 +815,7 @@ static void hir_bind_class_fields(hir_ctx *ctx, hir_class *hir_class,
 }
 
 static void hir_bind_class_methods(hir_ctx *ctx, hir_class *hir_class,
-                                   type_class *class) {
+                                   type_class_t *class) {
   UNUSED(class);
 
   for (list_hir_method_it it = list_hir_method_begin(hir_class->methods);
@@ -852,7 +841,7 @@ static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
 
   for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
        NEXT(it)) {
-    type_class *class = hir_bind_class_id(ctx, GET(it));
+    type_class_t *class = hir_bind_class_id(ctx, GET(it));
 
     if (class) {
       hir_ctx_scopes_push(ctx);
@@ -868,7 +857,7 @@ static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
   for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
        NEXT(it), NEXT(classes_it)) {
     hir_class *hir_class = GET(it);
-    type_class *class = (typeof(class))GET(classes_it);
+    type_class_t *class = (typeof(class))GET(classes_it);
 
     if (class) {
       hir_ctx_scopes_push(ctx);

@@ -66,9 +66,9 @@ static char *type_table_str_extra(const type_entry *entry) {
         }
       }
     } break;
-    case TYPE_CLASS: {
-      const type_class *self = (const type_class *)entry->type;
-      size_t            comma = 0;
+    case TYPE_CLASS_T: {
+      const type_class_t *self = (const type_class_t *)entry->type;
+      size_t              comma = 0;
 
       list_type_ref_it it = list_type_ref_begin(self->parents);
       if (!END(it)) {
@@ -139,7 +139,7 @@ char *type_table_str(const type_table *table) {
       case TYPE_PRIMITIVE:
       case TYPE_ARRAY:
       case TYPE_CALLABLE:
-      case TYPE_CLASS:
+      case TYPE_CLASS_T:
       case TYPE_TYPENAME:
         list_chars_push_back(row, (char *)type_enum_str(entry->type->kind));
         break;
