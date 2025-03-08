@@ -182,7 +182,7 @@ char *type_table_str(const type_table *table) {
       list_chars_push_back(row, span_s);
       free(span_s);
     } else {
-      list_chars_push_back(row, "built-in");
+      list_chars_push_back(row, "-");
     }
     // EXTRA
     char *extra_s = type_table_str_extra(entry);

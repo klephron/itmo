@@ -62,7 +62,7 @@ char *symbol_table_str(const symbol_table *table) {
       list_chars_push_back(row, span_s);
       free(span_s);
     } else {
-      list_chars_push_back(row, "implicit");
+      list_chars_push_back(row, "-");
     }
     list_list_chars_push_back(body, row);
   }
