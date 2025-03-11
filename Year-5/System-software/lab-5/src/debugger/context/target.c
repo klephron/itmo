@@ -63,8 +63,9 @@ target_state_enum context_tg_set(context *self, uint64_t abfd_asymbols_count,
   self->fname = fname;
   self->s_target = TARGET_NOT_RUNNING;
 
-  context_dbg_deinit(self);
-  context_dbg_init(self);
+  // WARN: disabled debug context (enable when fixed)
+  // context_dbg_deinit(self);
+  // context_dbg_init(self);
 
   return context_tg_get_state(self);
 }

@@ -34,9 +34,9 @@ void cmd_ctx_out_file_header(context *ctx, uint64_t file_id);
 // commands
 typedef cmd *cmd_new(const char *cmd_ref);
 
-cmd_new cmd_break;
+// cmd_new cmd_break;
 cmd_new cmd_config;
-cmd_new cmd_continue;
+// cmd_new cmd_continue;
 cmd_new cmd_delete;
 cmd_new cmd_disassemble;
 cmd_new cmd_echo;
@@ -46,13 +46,13 @@ cmd_new cmd_file;
 cmd_new cmd_help;
 cmd_new cmd_info;
 cmd_new cmd_kill;
-cmd_new cmd_next;
+// cmd_new cmd_next;
 cmd_new cmd_nexti;
 cmd_new cmd_print;
-cmd_new cmd_run;
-cmd_new cmd_step;
+// cmd_new cmd_run;
+// cmd_new cmd_step;
 cmd_new cmd_stepi;
-cmd_new cmd_where;
+// cmd_new cmd_where;
 
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size);
 void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
