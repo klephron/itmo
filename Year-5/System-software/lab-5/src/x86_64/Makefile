@@ -7,9 +7,9 @@ INCS      := $(INCS)
 BUILD_DIR := $(BUILD_DIR)
 AR        := $(AR)
 
-CORE.SRCS := number.c operation.c type.c value.c
-CORE.HDRS := number.h operation.h type.h value.h
-CORE.OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(CORE.SRCS))
+CORE.SRCS := $(call rwildcard,$(CURDIR),*.c)
+CORE.HDRS := $(call rwildcard,$(CURDIR), *.h)
+CORE.OBJS := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%.o, $(CORE.SRCS))
 
 ALL.SRCS := $(call rwildcard,$(CURDIR),*.c)
 ALL.HDRS := $(call rwildcard,$(CURDIR), *.h)
