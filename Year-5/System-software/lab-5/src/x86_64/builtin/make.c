@@ -1,12 +1,11 @@
 #include "builtin.h"
 
-#include "x86_64/registry.h"
+#include "x86_64/proxy/data.h"
 #include "x86_64/value.h"
 
-// overrides default creation of data void
 x86_64_value __x86_64_make_void() {
   return (x86_64_value){
-      .data_void = (x86_64_data_void *)&X86_64_REGISTRY.data_void,
+      .data = (x86_64_data *)__x86_64_proxy_void_new(),
   };
 }
 

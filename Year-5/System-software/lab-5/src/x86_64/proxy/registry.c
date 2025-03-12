@@ -1,32 +1,33 @@
 #include "registry.h"
 
-#include "base.h"
+#include "x86_64/base.h"
+#include "x86_64/proxy/data.h"
 
 static const x86_64_op_tbl X86_64_OP_TBL_VOID = {
-    .op_plus = __x86_64_base_op_plus,
-    .op_minus = __x86_64_base_op_minus,
-    .op_not = __x86_64_base_op_not,
-    .op_bit_not = __x86_64_base_op_bit_not,
-    .op_inc = __x86_64_base_op_inc,
-    .op_dec = __x86_64_base_op_dec,
-    .op_or = __x86_64_base_op_or,
-    .op_and = __x86_64_base_op_and,
-    .op_bit_or = __x86_64_base_op_bit_or,
-    .op_bit_xor = __x86_64_base_op_bit_xor,
-    .op_bit_and = __x86_64_base_op_bit_and,
-    .op_eq = __x86_64_base_op_eq,
-    .op_neq = __x86_64_base_op_neq,
-    .op_less = __x86_64_base_op_less,
-    .op_less_eq = __x86_64_base_op_less_eq,
-    .op_bit_shl = __x86_64_base_op_bit_shl,
-    .op_bit_shr = __x86_64_base_op_bit_shr,
-    .op_add = __x86_64_base_op_add,
-    .op_mul = __x86_64_base_op_mul,
-    .op_rem = __x86_64_base_op_rem,
-    .op_call = __x86_64_base_op_call,
-    .op_index = __x86_64_base_op_index,
-    .op_repr = __x86_64_base_op_repr,
-    .op_drop = __x86_64_base_op_drop,
+    .op_plus = __x86_64_void_op_plus,
+    .op_minus = __x86_64_void_op_minus,
+    .op_not = __x86_64_void_op_not,
+    .op_bit_not = __x86_64_void_op_bit_not,
+    .op_inc = __x86_64_void_op_inc,
+    .op_dec = __x86_64_void_op_dec,
+    .op_or = __x86_64_void_op_or,
+    .op_and = __x86_64_void_op_and,
+    .op_bit_or = __x86_64_void_op_bit_or,
+    .op_bit_xor = __x86_64_void_op_bit_xor,
+    .op_bit_and = __x86_64_void_op_bit_and,
+    .op_eq = __x86_64_void_op_eq,
+    .op_neq = __x86_64_void_op_neq,
+    .op_less = __x86_64_void_op_less,
+    .op_less_eq = __x86_64_void_op_less_eq,
+    .op_bit_shl = __x86_64_void_op_bit_shl,
+    .op_bit_shr = __x86_64_void_op_bit_shr,
+    .op_add = __x86_64_void_op_add,
+    .op_mul = __x86_64_void_op_mul,
+    .op_rem = __x86_64_void_op_rem,
+    .op_call = __x86_64_void_op_call,
+    .op_index = __x86_64_void_op_index,
+    .op_repr = __x86_64_void_op_repr,
+    .op_drop = __x86_64_proxy_void_op_drop,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_BOOL = {
@@ -299,7 +300,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_OBJECT = {
     .op_drop = __x86_64_base_op_drop,
 };
 
-static const x86_64_op_tbl X86_64_OP_TBL_REFERENCE = {
+static const x86_64_op_tbl X86_64_OP_TBL_REF = {
     .op_plus = __x86_64_base_op_plus,
     .op_minus = __x86_64_base_op_minus,
     .op_not = __x86_64_base_op_not,
@@ -365,7 +366,7 @@ static const x86_64_op_tbl *X86_64_OP_TBL_ARR[X86_64_TYPE__COUNT] = {
     [X86_64_TYPE_STRING] = &X86_64_OP_TBL_STRING,
     [X86_64_TYPE_ARRAY] = &X86_64_OP_TBL_ARRAY,
     [X86_64_TYPE_OBJECT] = &X86_64_OP_TBL_OBJECT,
-    [X86_64_TYPE_REFERENCE] = &X86_64_OP_TBL_REFERENCE,
+    [X86_64_TYPE_REF] = &X86_64_OP_TBL_REF,
     [X86_64_TYPE_ERROR] = &X86_64_OP_TBL_ERROR,
 };
 
