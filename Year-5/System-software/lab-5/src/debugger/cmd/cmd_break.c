@@ -21,7 +21,8 @@
 //   context_out_append(ctx, buf);
 //   context_out_append(ctx, "file ");
 //   if (breakpoint->file_id != UINT64_MAX) {
-//     context_out_append(ctx, context_dbg_file_by_id(ctx, breakpoint->file_id));
+//     context_out_append(ctx, context_dbg_file_by_id(ctx,
+//     breakpoint->file_id));
 //   } else {
 //     context_out_append(ctx, "-");
 //   }
@@ -96,7 +97,8 @@
 //   }
 
 //   hashset_breakpoint_it it =
-//       hashset_breakpoint_find(ctx->breaks, &(breakpoint){.address = address});
+//       hashset_breakpoint_find(ctx->breaks, &(breakpoint){.address =
+//       address});
 //   if (!END(it)) {
 //     char buf[64];
 //     context_err_append(ctx, "breakpoint on address ");

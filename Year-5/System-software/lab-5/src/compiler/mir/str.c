@@ -182,7 +182,7 @@ const char *mir_stmt_op_enum_str(mir_stmt_op_enum kind) {
 }
 
 const char *mir_subroutine_enum_str(mir_subroutine_enum kind) {
-  switch(kind) {
+  switch (kind) {
     case MIR_SUBROUTINE_BASIC:
       return "BASIC";
     case MIR_SUBROUTINE_EXTERNAL:

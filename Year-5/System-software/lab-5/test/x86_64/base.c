@@ -10,7 +10,6 @@ Test(x86_64_core, base_op_tbl) {
   x86_64_value value;
   UNUSED(value);
 
-  value = __x86_64_make_void();
-  value.data->op_tbl->op_repr(value);
-  value.data->op_tbl->op_drop(&value);
+  __x86_64_make_void(&value);
+  value.op_tbl->op_drop(&value);
 }

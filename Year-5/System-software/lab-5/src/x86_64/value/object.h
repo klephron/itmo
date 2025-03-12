@@ -1,0 +1,21 @@
+#pragma once
+
+#include "x86_64/value.h"
+#include <stdint.h>
+
+typedef struct __attribute__((packed)) x86_64_data_object_symbol_struct {
+  const uint8_t *name;
+} x86_64_data_object_symbol;
+
+typedef struct __attribute__((packed)) x86_64_data_object_symbols_struct {
+  uint64_t                  count;
+  x86_64_data_object_symbol entries[0];
+} x86_64_data_object_symbols;
+
+typedef struct __attribute__((packed)) x86_64_data_object_struct {
+  const x86_64_data_object_symbols *symbols_ref;
+  x86_64_value                      members[0];
+} x86_64_data_object;
+
+void __x86_64_object_init(x86_64_value *out, x86_64_op_tbl *op_tbl,
+                          const x86_64_data_object_symbols *symbols);

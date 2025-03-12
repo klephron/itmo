@@ -46,13 +46,15 @@
 //   context_out_appendln(ctx, ")");
 
 //   uint64_t p_rip;
-//   if (context_tg_peekdata(ctx, cmd_parent_rip_p(rbp), &p_rip) == TARGET_ERROR) {
+//   if (context_tg_peekdata(ctx, cmd_parent_rip_p(rbp), &p_rip) ==
+//   TARGET_ERROR) {
 //     context_error(ctx, "unable to peek data");
 //     return;
 //   }
 
 //   uint64_t p_rbp;
-//   if (context_tg_peekdata(ctx, cmd_parent_rbp_p(rbp), &p_rbp) == TARGET_ERROR) {
+//   if (context_tg_peekdata(ctx, cmd_parent_rbp_p(rbp), &p_rbp) ==
+//   TARGET_ERROR) {
 //     context_error(ctx, "unable to peek data");
 //     return;
 //   }
