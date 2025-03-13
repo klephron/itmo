@@ -2,6 +2,7 @@
 
 #include "x86_64/value.h"
 
+// value is moved, not copied inside error
 void __x86_64_proxy_error_init(x86_64_value *out, x86_64_value *value);
 
 x86_64_op_plus         __x86_64_proxy_error_op_plus;

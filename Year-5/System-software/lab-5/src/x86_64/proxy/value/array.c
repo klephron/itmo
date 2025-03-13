@@ -1,11 +1,24 @@
 #include "array.h"
 
 #include "x86_64/proxy/registry.h"
+#include "x86_64/proxy/value/void.h"
 #include "x86_64/value/array.h"
+#include <stdlib.h>
 
 void __x86_64_proxy_array_init(x86_64_value *out, uint64_t length) {
+  x86_64_data_array *data =
+      malloc(sizeof(x86_64_data_array) + length * sizeof(x86_64_value));
+
+  data->ref_cnt = 1;
+  data->length = length;
+  for (uint64_t i = 0; i < length; ++i) {
+    __x86_64_proxy_void_init(data->elements + i);
+  }
+
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_ARRAY];
-  __x86_64_array_init(out, (x86_64_op_tbl *)op_tbl, length);
+
+  __x86_64_value_init_ptr(out, X86_64_TYPE_ARRAY, (x86_64_op_tbl *)op_tbl,
+                          data);
 }
 
 x86_64_op_plus         __x86_64_proxy_array_op_plus;

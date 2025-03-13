@@ -4,8 +4,12 @@
 #include "x86_64/value/long.h"
 
 void __x86_64_proxy_long_init(x86_64_value *out, int64_t value) {
+  x86_64_data_long data = {.value = value};
+
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_LONG];
-  __x86_64_long_init(out, (x86_64_op_tbl *)op_tbl, value);
+
+  __x86_64_value_init_raw(out, X86_64_TYPE_LONG, (x86_64_op_tbl *)op_tbl,
+                          *(uint64_t *)&data);
 }
 
 x86_64_op_plus         __x86_64_proxy_long_op_plus;

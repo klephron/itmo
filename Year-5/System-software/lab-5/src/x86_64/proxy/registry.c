@@ -1,46 +1,46 @@
 #include "registry.h"
 
-#include "x86_64/proxy/data/array.h"
-#include "x86_64/proxy/data/bool.h"
-#include "x86_64/proxy/data/byte.h"
-#include "x86_64/proxy/data/char.h"
-#include "x86_64/proxy/data/error.h"
-#include "x86_64/proxy/data/int.h"
-#include "x86_64/proxy/data/long.h"
-#include "x86_64/proxy/data/object.h"
-#include "x86_64/proxy/data/ref.h"
-#include "x86_64/proxy/data/string.h"
-#include "x86_64/proxy/data/uint.h"
-#include "x86_64/proxy/data/ulong.h"
-#include "x86_64/proxy/data/void.h"
+#include "x86_64/proxy/value/array.h"
+#include "x86_64/proxy/value/bool.h"
+#include "x86_64/proxy/value/byte.h"
+#include "x86_64/proxy/value/char.h"
+#include "x86_64/proxy/value/error.h"
+#include "x86_64/proxy/value/int.h"
+#include "x86_64/proxy/value/long.h"
+#include "x86_64/proxy/value/object.h"
+#include "x86_64/proxy/value/ref.h"
+#include "x86_64/proxy/value/string.h"
+#include "x86_64/proxy/value/uint.h"
+#include "x86_64/proxy/value/ulong.h"
+#include "x86_64/proxy/value/void.h"
 
 static const x86_64_op_tbl X86_64_OP_TBL_VOID = {
-    // .op_plus = __x86_64_proxy_void_op_plus,
-    // .op_minus = __x86_64_proxy_void_op_minus,
-    // .op_not = __x86_64_proxy_void_op_not,
-    // .op_bit_not = __x86_64_proxy_void_op_bit_not,
-    // .op_inc = __x86_64_proxy_void_op_inc,
-    // .op_dec = __x86_64_proxy_void_op_dec,
-    // .op_or = __x86_64_proxy_void_op_or,
-    // .op_and = __x86_64_proxy_void_op_and,
-    // .op_bit_or = __x86_64_proxy_void_op_bit_or,
-    // .op_bit_xor = __x86_64_proxy_void_op_bit_xor,
-    // .op_bit_and = __x86_64_proxy_void_op_bit_and,
-    // .op_eq = __x86_64_proxy_void_op_eq,
-    // .op_neq = __x86_64_proxy_void_op_neq,
-    // .op_less = __x86_64_proxy_void_op_less,
-    // .op_less_eq = __x86_64_proxy_void_op_less_eq,
-    // .op_bit_shl = __x86_64_proxy_void_op_bit_shl,
-    // .op_bit_shr = __x86_64_proxy_void_op_bit_shr,
-    // .op_add = __x86_64_proxy_void_op_add,
-    // .op_mul = __x86_64_proxy_void_op_mul,
-    // .op_rem = __x86_64_proxy_void_op_rem,
-    // .op_call = __x86_64_proxy_void_op_call,
-    // .op_index = __x86_64_proxy_void_op_index,
+    .op_plus = __x86_64_proxy_void_op_plus,
+    .op_minus = __x86_64_proxy_void_op_minus,
+    .op_not = __x86_64_proxy_void_op_not,
+    .op_bit_not = __x86_64_proxy_void_op_bit_not,
+    .op_inc = __x86_64_proxy_void_op_inc,
+    .op_dec = __x86_64_proxy_void_op_dec,
+    .op_or = __x86_64_proxy_void_op_or,
+    .op_and = __x86_64_proxy_void_op_and,
+    .op_bit_or = __x86_64_proxy_void_op_bit_or,
+    .op_bit_xor = __x86_64_proxy_void_op_bit_xor,
+    .op_bit_and = __x86_64_proxy_void_op_bit_and,
+    .op_eq = __x86_64_proxy_void_op_eq,
+    .op_neq = __x86_64_proxy_void_op_neq,
+    .op_less = __x86_64_proxy_void_op_less,
+    .op_less_eq = __x86_64_proxy_void_op_less_eq,
+    .op_bit_shl = __x86_64_proxy_void_op_bit_shl,
+    .op_bit_shr = __x86_64_proxy_void_op_bit_shr,
+    .op_add = __x86_64_proxy_void_op_add,
+    .op_mul = __x86_64_proxy_void_op_mul,
+    .op_rem = __x86_64_proxy_void_op_rem,
+    .op_call = __x86_64_proxy_void_op_call,
+    .op_index = __x86_64_proxy_void_op_index,
     // .op_repr = __x86_64_proxy_void_op_repr,
     .op_drop = __x86_64_proxy_void_op_drop,
-    // .op_copy = __x86_64_proxy_void_op_copy,
-    // .op_assign = __x86_64_proxy_void_op_assign,
+    .op_copy = __x86_64_proxy_void_op_copy,
+    .op_assign = __x86_64_proxy_void_op_assign,
     // .op_assign_deref = __x86_64_proxy_void_op_assign_deref,
 };
 
@@ -277,10 +277,10 @@ static const x86_64_op_tbl X86_64_OP_TBL_STRING = {
     // .op_rem = __x86_64_proxy_string_op_rem,
     // .op_call = __x86_64_proxy_string_op_call,
     // .op_index = __x86_64_proxy_string_op_index,
-    // .op_repr = __x86_64_proxy_string_op_repr,
-    // .op_drop = __x86_64_proxy_string_op_drop,
-    // .op_copy = __x86_64_proxy_string_op_copy,
-    // .op_assign = __x86_64_proxy_string_op_assign,
+    .op_repr = __x86_64_proxy_string_op_repr,
+    .op_drop = __x86_64_proxy_string_op_drop,
+    .op_copy = __x86_64_proxy_string_op_copy,
+    .op_assign = __x86_64_proxy_string_op_assign,
     // .op_assign_deref = __x86_64_proxy_string_op_assign_deref,
 };
 
@@ -375,32 +375,32 @@ static const x86_64_op_tbl X86_64_OP_TBL_STRING = {
 // };
 
 static const x86_64_op_tbl X86_64_OP_TBL_ERROR = {
-    // .op_plus = __x86_64_proxy_error_op_plus,
-    // .op_minus = __x86_64_proxy_error_op_minus,
-    // .op_not = __x86_64_proxy_error_op_not,
-    // .op_bit_not = __x86_64_proxy_error_op_bit_not,
-    // .op_inc = __x86_64_proxy_error_op_inc,
-    // .op_dec = __x86_64_proxy_error_op_dec,
-    // .op_or = __x86_64_proxy_error_op_or,
-    // .op_and = __x86_64_proxy_error_op_and,
-    // .op_bit_or = __x86_64_proxy_error_op_bit_or,
-    // .op_bit_xor = __x86_64_proxy_error_op_bit_xor,
-    // .op_bit_and = __x86_64_proxy_error_op_bit_and,
-    // .op_eq = __x86_64_proxy_error_op_eq,
-    // .op_neq = __x86_64_proxy_error_op_neq,
-    // .op_less = __x86_64_proxy_error_op_less,
-    // .op_less_eq = __x86_64_proxy_error_op_less_eq,
-    // .op_bit_shl = __x86_64_proxy_error_op_bit_shl,
-    // .op_bit_shr = __x86_64_proxy_error_op_bit_shr,
-    // .op_add = __x86_64_proxy_error_op_add,
-    // .op_mul = __x86_64_proxy_error_op_mul,
-    // .op_rem = __x86_64_proxy_error_op_rem,
-    // .op_call = __x86_64_proxy_error_op_call,
-    // .op_index = __x86_64_proxy_error_op_index,
-    // .op_repr = __x86_64_proxy_error_op_repr,
+    .op_plus = __x86_64_proxy_error_op_plus,
+    .op_minus = __x86_64_proxy_error_op_minus,
+    .op_not = __x86_64_proxy_error_op_not,
+    .op_bit_not = __x86_64_proxy_error_op_bit_not,
+    .op_inc = __x86_64_proxy_error_op_inc,
+    .op_dec = __x86_64_proxy_error_op_dec,
+    .op_or = __x86_64_proxy_error_op_or,
+    .op_and = __x86_64_proxy_error_op_and,
+    .op_bit_or = __x86_64_proxy_error_op_bit_or,
+    .op_bit_xor = __x86_64_proxy_error_op_bit_xor,
+    .op_bit_and = __x86_64_proxy_error_op_bit_and,
+    .op_eq = __x86_64_proxy_error_op_eq,
+    .op_neq = __x86_64_proxy_error_op_neq,
+    .op_less = __x86_64_proxy_error_op_less,
+    .op_less_eq = __x86_64_proxy_error_op_less_eq,
+    .op_bit_shl = __x86_64_proxy_error_op_bit_shl,
+    .op_bit_shr = __x86_64_proxy_error_op_bit_shr,
+    .op_add = __x86_64_proxy_error_op_add,
+    .op_mul = __x86_64_proxy_error_op_mul,
+    .op_rem = __x86_64_proxy_error_op_rem,
+    .op_call = __x86_64_proxy_error_op_call,
+    .op_index = __x86_64_proxy_error_op_index,
+    .op_repr = __x86_64_proxy_error_op_repr,
     .op_drop = __x86_64_proxy_error_op_drop,
-    // .op_copy = __x86_64_proxy_error_op_copy,
-    // .op_assign = __x86_64_proxy_error_op_assign,
+    .op_copy = __x86_64_proxy_error_op_copy,
+    .op_assign = __x86_64_proxy_error_op_assign,
     // .op_assign_deref = __x86_64_proxy_error_op_assign_deref,
 };
 

@@ -4,8 +4,12 @@
 #include "x86_64/value/uint.h"
 
 void __x86_64_proxy_uint_init(x86_64_value *out, uint32_t value) {
+  x86_64_data_uint data = {.value = value};
+
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_UINT];
-  __x86_64_uint_init(out, (x86_64_op_tbl *)op_tbl, value);
+
+  __x86_64_value_init_raw(out, X86_64_TYPE_UINT, (x86_64_op_tbl *)op_tbl,
+                          *(uint64_t *)&data);
 }
 
 x86_64_op_plus         __x86_64_proxy_uint_op_plus;

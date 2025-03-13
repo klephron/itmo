@@ -1,5 +1,7 @@
 #pragma once
 
-#include "x86_64/value.h"
+#include <stdint.h>
 
-void __x86_64_void_init(x86_64_value *out, x86_64_op_tbl *op_tbl);
+typedef struct __attribute__((packed)) x86_64_data_void_struct {
+  uint8_t pad[8];
+} x86_64_data_void;

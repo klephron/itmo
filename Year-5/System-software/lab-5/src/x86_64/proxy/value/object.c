@@ -1,11 +1,23 @@
 #include "object.h"
 
 #include "x86_64/proxy/registry.h"
+#include "x86_64/proxy/value/void.h"
+#include <stdlib.h>
 
 void __x86_64_proxy_object_init(x86_64_value                     *out,
-                                const x86_64_data_object_symbols *entries) {
+                                const x86_64_data_object_symbols *symbols) {
+
+  x86_64_data_object *data = malloc(sizeof(x86_64_data_object) +
+                                    symbols->count * sizeof(x86_64_value));
+  data->symbols_ref = symbols;
+  for (uint64_t i = 0; i < symbols->count; ++i) {
+    __x86_64_proxy_void_init(data->members + i);
+  }
+
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_OBJECT];
-  __x86_64_object_init(out, (x86_64_op_tbl *)op_tbl, entries);
+
+  __x86_64_value_init_ptr(out, X86_64_TYPE_OBJECT, (x86_64_op_tbl *)op_tbl,
+                          data);
 }
 
 x86_64_op_plus         __x86_64_proxy_object_op_plus;

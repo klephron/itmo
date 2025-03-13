@@ -16,6 +16,3 @@ typedef struct __attribute__((packed)) x86_64_data_object_struct {
   const x86_64_data_object_symbols *symbols_ref;
   x86_64_value                      members[0];
 } x86_64_data_object;
-
-void __x86_64_object_init(x86_64_value *out, x86_64_op_tbl *op_tbl,
-                          const x86_64_data_object_symbols *symbols);

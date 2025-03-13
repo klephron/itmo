@@ -3,8 +3,12 @@
 #include "x86_64/value/byte.h"
 
 void __x86_64_proxy_byte_init(x86_64_value *out, uint8_t value) {
+  x86_64_data_byte data = {.value = value};
+
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_BYTE];
-  __x86_64_byte_init(out, (x86_64_op_tbl *)op_tbl, value);
+
+  __x86_64_value_init_raw(out, X86_64_TYPE_BYTE, (x86_64_op_tbl *)op_tbl,
+                          *(uint64_t *)&data);
 }
 
 x86_64_op_plus         __x86_64_proxy_byte_op_plus;

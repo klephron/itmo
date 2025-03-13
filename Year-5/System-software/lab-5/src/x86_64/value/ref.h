@@ -2,5 +2,6 @@
 
 #include "x86_64/value.h"
 
-void __x86_64_ref_init(x86_64_value *out, x86_64_op_tbl *op_tbl,
-                       x86_64_value *value);
+typedef struct __attribute__((packed)) x86_64_data_ref_struct {
+  x86_64_value *value;
+} x86_64_data_ref;

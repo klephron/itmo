@@ -1,7 +1,7 @@
 #pragma once
 
-#include "x86_64/value.h"
 #include <stdint.h>
 
-void __x86_64_string_init(x86_64_value *out, x86_64_op_tbl *op_tbl,
-                          const uint8_t *value);
+typedef struct __attribute__((packed)) x86_64_data_string_struct {
+  uint8_t *value;
+} x86_64_data_string;

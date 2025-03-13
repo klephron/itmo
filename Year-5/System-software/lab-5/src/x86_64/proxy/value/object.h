@@ -4,7 +4,7 @@
 #include "x86_64/value/object.h"
 
 void __x86_64_proxy_object_init(x86_64_value                     *out,
-                                const x86_64_data_object_symbols *entries);
+                                const x86_64_data_object_symbols *symbols);
 
 x86_64_op_plus         __x86_64_proxy_object_op_plus;
 x86_64_op_minus        __x86_64_proxy_object_op_minus;

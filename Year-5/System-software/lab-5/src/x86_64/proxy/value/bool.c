@@ -4,8 +4,12 @@
 #include "x86_64/value/bool.h"
 
 void __x86_64_proxy_bool_init(x86_64_value *out, uint8_t value) {
+  x86_64_data_bool data = {.value = value ? 1 : 0};
+
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_BOOL];
-  __x86_64_bool_init(out, (x86_64_op_tbl *)op_tbl, value);
+
+  __x86_64_value_init_raw(out, X86_64_TYPE_BOOL, (x86_64_op_tbl *)op_tbl,
+                          *(uint64_t *)&data);
 }
 
 x86_64_op_plus         __x86_64_proxy_bool_op_plus;

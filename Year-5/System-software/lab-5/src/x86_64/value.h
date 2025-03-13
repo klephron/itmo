@@ -20,36 +20,53 @@ typedef enum x86_64_type_enum {
   X86_64_TYPE__COUNT,
 } x86_64_type_enum;
 
-typedef void x86_64_op_plus(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_minus(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_not(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_bit_not(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_inc(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_dec(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_or(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_and(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_bit_or(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_bit_xor(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_bit_and(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_eq(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_neq(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_less(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_less_eq(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_bit_shl(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_bit_shr(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_add(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_sub(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_mul(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_div(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_rem(x86_64_value *, x86_64_value *, x86_64_value *);
-typedef void x86_64_op_call(x86_64_value *, x86_64_value *, ...);
-typedef void x86_64_op_index(x86_64_value *, x86_64_value *, ...);
-typedef void x86_64_op_repr(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_drop(x86_64_value *);
-typedef void x86_64_op_copy(x86_64_value *, x86_64_value *);
-// logic is defined by value to which is assignment done
-typedef void x86_64_op_assign(x86_64_value *, x86_64_value *);
-typedef void x86_64_op_assign_deref(x86_64_value *, x86_64_value *);
+typedef void x86_64_op_plus(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_minus(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_not(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_bit_not(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_inc(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_dec(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_or(x86_64_value *out, x86_64_value *self,
+                          x86_64_value *rsv);
+typedef void x86_64_op_and(x86_64_value *out, x86_64_value *self,
+                           x86_64_value *rsv);
+typedef void x86_64_op_bit_or(x86_64_value *out, x86_64_value *self,
+                              x86_64_value *rsv);
+typedef void x86_64_op_bit_xor(x86_64_value *out, x86_64_value *self,
+                               x86_64_value *rsv);
+typedef void x86_64_op_bit_and(x86_64_value *out, x86_64_value *self,
+                               x86_64_value *rsv);
+typedef void x86_64_op_eq(x86_64_value *out, x86_64_value *self,
+                          x86_64_value *rsv);
+typedef void x86_64_op_neq(x86_64_value *out, x86_64_value *self,
+                           x86_64_value *rsv);
+typedef void x86_64_op_less(x86_64_value *out, x86_64_value *self,
+                            x86_64_value *rsv);
+typedef void x86_64_op_less_eq(x86_64_value *out, x86_64_value *self,
+                               x86_64_value *rsv);
+typedef void x86_64_op_bit_shl(x86_64_value *out, x86_64_value *self,
+                               x86_64_value *rsv);
+typedef void x86_64_op_bit_shr(x86_64_value *out, x86_64_value *self,
+                               x86_64_value *rsv);
+typedef void x86_64_op_add(x86_64_value *out, x86_64_value *self,
+                           x86_64_value *rsv);
+typedef void x86_64_op_sub(x86_64_value *out, x86_64_value *self,
+                           x86_64_value *rsv);
+typedef void x86_64_op_mul(x86_64_value *out, x86_64_value *self,
+                           x86_64_value *rsv);
+typedef void x86_64_op_div(x86_64_value *out, x86_64_value *self,
+                           x86_64_value *rsv);
+typedef void x86_64_op_rem(x86_64_value *out, x86_64_value *self,
+                           x86_64_value *rsv);
+typedef void x86_64_op_call(x86_64_value *out, x86_64_value *self, ...);
+typedef void x86_64_op_index(x86_64_value *out, x86_64_value *self, ...);
+// should return value of type string, accessed by out->data_raw
+typedef void x86_64_op_repr(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_drop(x86_64_value *out);
+typedef void x86_64_op_copy(x86_64_value *out, x86_64_value *self);
+// logic is defined by value to which is assignment done (other is copied)
+typedef void x86_64_op_assign(x86_64_value *self, x86_64_value *other);
+typedef void x86_64_op_assign_deref(x86_64_value *self, x86_64_value *other);
 
 typedef struct __attribute__((packed)) x86_64_op_tbl_struct {
   x86_64_op_plus         *op_plus;
