@@ -188,12 +188,12 @@ void __x86_64_proxy_string_op_assign(x86_64_value *self, x86_64_value *other) {
   other->op_tbl->op_copy(self, other);
 }
 
-void __x86_64_proxy_string_op_assign_deref(x86_64_value *self,
-                                           x86_64_value *other) {
-  UNUSED(other);
+// void __x86_64_proxy_string_op_assign_deref(x86_64_value *self,
+//                                            x86_64_value *other) {
+//   UNUSED(other);
 
-  x86_64_value out;
-  __x86_64_proxy_op_undefined(&out, self, "assign_deref");
-  self->op_tbl->op_drop(self);
-  *self = out;
-}
+//   x86_64_value out;
+//   __x86_64_proxy_op_undefined(&out, self, "assign_deref");
+//   self->op_tbl->op_drop(self);
+//   *self = out;
+// }

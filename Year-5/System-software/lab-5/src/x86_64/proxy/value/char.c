@@ -240,8 +240,8 @@ void __x86_64_proxy_char_op_assign(x86_64_value *self, x86_64_value *other) {
   other->op_tbl->op_copy(self, other);
 }
 
-void __x86_64_proxy_char_op_assign_deref(x86_64_value *self,
-                                         x86_64_value *other) {
-  UNUSED(other);
-  __x86_64_proxy_op_undefined(self, self, "assign_deref");
-}
+// void __x86_64_proxy_char_op_assign_deref(x86_64_value *self,
+//                                          x86_64_value *other) {
+//   UNUSED(other);
+//   __x86_64_proxy_op_undefined(self, self, "assign_deref");
+// }
