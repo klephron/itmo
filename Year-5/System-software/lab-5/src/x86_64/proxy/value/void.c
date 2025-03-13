@@ -2,6 +2,8 @@
 
 #include "util/macro.h"
 #include "x86_64/proxy/registry.h"
+#include "x86_64/proxy/util.h"
+#include "x86_64/proxy/value/string.h"
 #include "x86_64/value.h"
 
 void __x86_64_proxy_void_init(x86_64_value *out) {
@@ -163,7 +165,10 @@ void __x86_64_proxy_void_op_index(x86_64_value *out, x86_64_value *self, ...) {
   __x86_64_proxy_void_init(out);
 }
 
-x86_64_op_repr __x86_64_proxy_void_op_repr;
+void __x86_64_proxy_void_op_repr(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"()");
+}
 
 void __x86_64_proxy_void_op_drop(x86_64_value *self) { UNUSED(self); }
 
@@ -180,4 +185,8 @@ void __x86_64_proxy_void_op_assign(x86_64_value *self, x86_64_value *other) {
   other->op_tbl->op_copy(self, other);
 }
 
-x86_64_op_assign_deref __x86_64_proxy_void_op_assign_deref;
+void __x86_64_proxy_void_op_assign_deref(x86_64_value *self,
+                                         x86_64_value *other) {
+  UNUSED(other);
+  __x86_64_proxy_op_undefined(self, self, "assign_deref");
+}
