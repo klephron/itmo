@@ -15,7 +15,7 @@ typedef enum x86_64_type_enum {
   X86_64_TYPE_STRING,
   X86_64_TYPE_ARRAY,
   X86_64_TYPE_OBJECT,
-  X86_64_TYPE_REF,
+  X86_64_TYPE_REF_VALUE,
   X86_64_TYPE_ERROR,
   X86_64_TYPE__COUNT,
 } x86_64_type_enum;

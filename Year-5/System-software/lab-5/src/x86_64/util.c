@@ -24,8 +24,8 @@ const char *__x86_64_type_enum_str(x86_64_type_enum type) {
       return "array";
     case X86_64_TYPE_OBJECT:
       return "object";
-    case X86_64_TYPE_REF:
-      return "ref";
+    case X86_64_TYPE_REF_VALUE:
+      return "ref_value";
     case X86_64_TYPE_ERROR:
       return "error";
     case X86_64_TYPE__COUNT:

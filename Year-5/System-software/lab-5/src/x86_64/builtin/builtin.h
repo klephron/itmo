@@ -16,5 +16,4 @@ extern void (*__x86_64_make_string)(x86_64_value *out, const uint8_t *value);
 extern void (*__x86_64_make_array)(x86_64_value *out, uint64_t size);
 extern void (*__x86_64_make_object)(x86_64_value                     *out,
                                     const x86_64_data_object_symbols *symbols);
-extern void (*__x86_64_make_ref)(x86_64_value *out, x86_64_value *value);
 extern void (*__x86_64_make_error)(x86_64_value *out, x86_64_value *value);

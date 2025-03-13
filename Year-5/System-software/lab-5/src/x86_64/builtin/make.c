@@ -7,7 +7,6 @@
 #include "x86_64/proxy/value/int.h"
 #include "x86_64/proxy/value/long.h"
 #include "x86_64/proxy/value/object.h"
-#include "x86_64/proxy/value/ref.h"
 #include "x86_64/proxy/value/string.h"
 #include "x86_64/proxy/value/uint.h"
 #include "x86_64/proxy/value/ulong.h"
@@ -45,9 +44,6 @@ void (*__x86_64_make_array)(x86_64_value *out,
 void (*__x86_64_make_object)(x86_64_value                     *out,
                              const x86_64_data_object_symbols *symbols) =
     __x86_64_proxy_object_init;
-
-void (*__x86_64_make_ref)(x86_64_value *out,
-                          x86_64_value *value) = __x86_64_proxy_ref_init;
 
 void (*__x86_64_make_error)(x86_64_value *out,
                             x86_64_value *value) = __x86_64_proxy_error_init;
