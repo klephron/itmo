@@ -4,7 +4,6 @@
 #include "util/macro.h"
 #include "util/strbuf.h"
 #include "x86_64/proxy/registry.h"
-#include "x86_64/proxy/util.h"
 #include "x86_64/proxy/value/string.h"
 #include "x86_64/proxy/value/void.h"
 #include "x86_64/value/error.h"
@@ -157,6 +156,13 @@ void __x86_64_proxy_error_op_mul(x86_64_value *out, x86_64_value *self,
                                  x86_64_value *rsv) {
   UNUSED(rsv);
   x86_64_proxy_error_unhandled(self, "mul");
+  self->op_tbl->op_copy(out, self);
+}
+
+void __x86_64_proxy_error_op_div(x86_64_value *out, x86_64_value *self,
+                                 x86_64_value *rsv) {
+  UNUSED(rsv);
+  x86_64_proxy_error_unhandled(self, "div");
   self->op_tbl->op_copy(out, self);
 }
 
