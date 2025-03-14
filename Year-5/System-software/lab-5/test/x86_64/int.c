@@ -54,7 +54,7 @@ Test(x86_64_core_int, test1) {
   value4.op_tbl->op_drop(&value4);
 
   // sub
-  __x86_64_proxy_int_init(&value4, 200);
+  __x86_64_proxy_int_init(&value4, 50);
 
   value4.op_tbl->op_sub(&value2, &value4, &value1);
 
