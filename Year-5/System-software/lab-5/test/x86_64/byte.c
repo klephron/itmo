@@ -55,3 +55,71 @@ Test(x86_64_core_byte, test1) {
   value1.op_tbl->op_drop(&value1);
   value4.op_tbl->op_drop(&value4);
 }
+
+Test(x86_64_core_byte, test2_cast) {
+  x86_64_value value1;
+  x86_64_value value2;
+  x86_64_value value3;
+
+  __x86_64_proxy_byte_init(&value1, 'a');
+
+  value1.op_tbl->op_cast(&value2, &value1, X86_64_TYPE_ARRAY);
+
+  value2.op_tbl->op_repr(&value3, &value2);
+  debug("byte_cast_array: %s", value3.data_ptr);
+  value3.op_tbl->op_drop(&value3);
+
+  value1.op_tbl->op_drop(&value1);
+  value2.op_tbl->op_drop(&value2);
+}
+
+Test(x86_64_core_byte, test3_cast) {
+  x86_64_value value1;
+  x86_64_value value2;
+  x86_64_value value3;
+
+  __x86_64_proxy_byte_init(&value1, 'a');
+
+  value1.op_tbl->op_cast(&value2, &value1, X86_64_TYPE_LONG);
+
+  value2.op_tbl->op_repr(&value3, &value2);
+  debug("byte_cast_long: %s", value3.data_ptr);
+  value3.op_tbl->op_drop(&value3);
+
+  value1.op_tbl->op_drop(&value1);
+  value2.op_tbl->op_drop(&value2);
+}
+
+Test(x86_64_core_byte, test4_cast) {
+  x86_64_value value1;
+  x86_64_value value2;
+  x86_64_value value3;
+
+  __x86_64_proxy_byte_init(&value1, 'a');
+
+  value1.op_tbl->op_cast(&value2, &value1, X86_64_TYPE_CHAR);
+
+  value2.op_tbl->op_repr(&value3, &value2);
+  debug("byte_cast_char: %s", value3.data_ptr);
+  value3.op_tbl->op_drop(&value3);
+
+  value1.op_tbl->op_drop(&value1);
+  value2.op_tbl->op_drop(&value2);
+}
+
+Test(x86_64_core_byte, test5_cast) {
+  x86_64_value value1;
+  x86_64_value value2;
+  x86_64_value value3;
+
+  __x86_64_proxy_byte_init(&value1, 'a');
+
+  value1.op_tbl->op_cast(&value2, &value1, X86_64_TYPE_BYTE);
+
+  value2.op_tbl->op_repr(&value3, &value2);
+  debug("byte_cast_char: %s", value3.data_ptr);
+  value3.op_tbl->op_drop(&value3);
+
+  value1.op_tbl->op_drop(&value1);
+  value2.op_tbl->op_drop(&value2);
+}

@@ -84,8 +84,8 @@ static const x86_64_op_tbl X86_64_OP_TBL_BOOL = {
     .op_assign     = __x86_64_proxy_bool_op_assign,
     .op_drop       = __x86_64_proxy_bool_op_drop,
     .op_copy       = __x86_64_proxy_bool_op_copy,
-    // .op_cast       = __x86_64_proxy_default_op_cast,
-    .op_repr = __x86_64_proxy_bool_op_repr,
+    .op_cast       = __x86_64_proxy_bool_op_cast,
+    .op_repr       = __x86_64_proxy_bool_op_repr,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_BYTE = {
@@ -120,8 +120,8 @@ static const x86_64_op_tbl X86_64_OP_TBL_BYTE = {
     .op_assign     = __x86_64_proxy_byte_op_assign,
     .op_drop       = __x86_64_proxy_byte_op_drop,
     .op_copy       = __x86_64_proxy_byte_op_copy,
-    // .op_cast       = __x86_64_proxy_default_op_cast,
-    .op_repr = __x86_64_proxy_byte_op_repr,
+    .op_cast       = __x86_64_proxy_byte_op_cast,
+    .op_repr       = __x86_64_proxy_byte_op_repr,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_CHAR = {
@@ -156,8 +156,8 @@ static const x86_64_op_tbl X86_64_OP_TBL_CHAR = {
     .op_assign     = __x86_64_proxy_char_op_assign,
     .op_drop       = __x86_64_proxy_char_op_drop,
     .op_copy       = __x86_64_proxy_char_op_copy,
-    // .op_cast = __x86_64_proxy_char_op_cast,
-    .op_repr = __x86_64_proxy_char_op_repr,
+    .op_cast       = __x86_64_proxy_char_op_cast,
+    .op_repr       = __x86_64_proxy_char_op_repr,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_ERROR = {
@@ -228,8 +228,8 @@ static const x86_64_op_tbl X86_64_OP_TBL_INT = {
     .op_assign     = __x86_64_proxy_int_op_assign,
     .op_drop       = __x86_64_proxy_int_op_drop,
     .op_copy       = __x86_64_proxy_int_op_copy,
-    // .op_cast = __x86_64_proxy_int_op_cast,
-    .op_repr = __x86_64_proxy_int_op_repr,
+    .op_cast       = __x86_64_proxy_int_op_cast,
+    .op_repr       = __x86_64_proxy_int_op_repr,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_LONG = {
@@ -264,8 +264,8 @@ static const x86_64_op_tbl X86_64_OP_TBL_LONG = {
     .op_assign     = __x86_64_proxy_long_op_assign,
     .op_drop       = __x86_64_proxy_long_op_drop,
     .op_copy       = __x86_64_proxy_long_op_copy,
-    // .op_cast = __x86_64_proxy_long_op_cast,
-    .op_repr = __x86_64_proxy_long_op_repr,
+    .op_cast       = __x86_64_proxy_long_op_cast,
+    .op_repr       = __x86_64_proxy_long_op_repr,
 };
 
 // static const x86_64_op_tbl X86_64_OP_TBL_OBJECT = {
@@ -408,8 +408,8 @@ static const x86_64_op_tbl X86_64_OP_TBL_UINT = {
     .op_assign     = __x86_64_proxy_uint_op_assign,
     .op_drop       = __x86_64_proxy_uint_op_drop,
     .op_copy       = __x86_64_proxy_uint_op_copy,
-    // .op_cast = __x86_64_proxy_uint_op_cast,
-    .op_repr = __x86_64_proxy_uint_op_repr,
+    .op_cast       = __x86_64_proxy_uint_op_cast,
+    .op_repr       = __x86_64_proxy_uint_op_repr,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_ULONG = {
@@ -444,8 +444,8 @@ static const x86_64_op_tbl X86_64_OP_TBL_ULONG = {
     .op_assign     = __x86_64_proxy_ulong_op_assign,
     .op_drop       = __x86_64_proxy_ulong_op_drop,
     .op_copy       = __x86_64_proxy_ulong_op_copy,
-    // .op_cast = __x86_64_proxy_ulong_op_cast,
-    .op_repr = __x86_64_proxy_ulong_op_repr,
+    .op_cast       = __x86_64_proxy_ulong_op_cast,
+    .op_repr       = __x86_64_proxy_ulong_op_repr,
 };
 
 // static const x86_64_op_tbl X86_64_OP_TBL_VALUE_REF = {

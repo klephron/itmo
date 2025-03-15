@@ -3,7 +3,12 @@
 #include "x86_64/proxy/registry.h"
 #include "x86_64/proxy/util.h"
 #include "x86_64/proxy/value/bool.h"
+#include "x86_64/proxy/value/byte.h"
+#include "x86_64/proxy/value/int.h"
+#include "x86_64/proxy/value/long.h"
 #include "x86_64/proxy/value/string.h"
+#include "x86_64/proxy/value/uint.h"
+#include "x86_64/proxy/value/ulong.h"
 #include "x86_64/proxy/value/void.h"
 #include "x86_64/value/char.h"
 
@@ -261,7 +266,60 @@ void __x86_64_proxy_char_op_copy(x86_64_value *out, x86_64_value *self) {
   __x86_64_proxy_char_init(out, data.value);
 }
 
-x86_64_op_cast __x86_64_proxy_char_op_cast;
+void __x86_64_proxy_char_op_cast(x86_64_value *out, x86_64_value *self,
+                                 x86_64_type_enum type, ...) {
+  switch (type) {
+    case X86_64_TYPE_BOOL: {
+      x86_64_data_char data = *(x86_64_data_char *)&self->data_raw;
+      __x86_64_proxy_bool_init(out, data.value);
+      break;
+    }
+    case X86_64_TYPE_BYTE: {
+      x86_64_data_char data = *(x86_64_data_char *)&self->data_raw;
+      __x86_64_proxy_byte_init(out, data.value);
+      break;
+    }
+    case X86_64_TYPE_CHAR: {
+      self->op_tbl->op_copy(out, self);
+      break;
+    }
+    case X86_64_TYPE_INT: {
+      x86_64_data_char data = *(x86_64_data_char *)&self->data_raw;
+      __x86_64_proxy_int_init(out, data.value);
+      break;
+    }
+    case X86_64_TYPE_LONG: {
+      x86_64_data_char data = *(x86_64_data_char *)&self->data_raw;
+      __x86_64_proxy_long_init(out, data.value);
+      break;
+    }
+    case X86_64_TYPE_UINT: {
+      x86_64_data_char data = *(x86_64_data_char *)&self->data_raw;
+      __x86_64_proxy_uint_init(out, data.value);
+      break;
+    }
+    case X86_64_TYPE_ULONG: {
+      x86_64_data_char data = *(x86_64_data_char *)&self->data_raw;
+      __x86_64_proxy_ulong_init(out, data.value);
+      break;
+    }
+    case X86_64_TYPE_VOID: {
+      __x86_64_proxy_void_init(out);
+      break;
+    }
+    case X86_64_TYPE_ARRAY:
+    case X86_64_TYPE_ERROR:
+    case X86_64_TYPE_OBJECT:
+    case X86_64_TYPE_STRING:
+    case X86_64_TYPE_STRING_ELEM_REF:
+    case X86_64_TYPE_VALUE_REF:
+    case X86_64_TYPE__COUNT:
+    default: {
+      __x86_64_proxy_op_error_cast_unable(out, self, type);
+      break;
+    }
+  }
+}
 
 void __x86_64_proxy_char_op_repr(x86_64_value *out, x86_64_value *self) {
   uint8_t buf[2];
