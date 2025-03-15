@@ -247,7 +247,6 @@ void __x86_64_proxy_byte_op_rem(x86_64_value *out, x86_64_value *self,
   __x86_64_proxy_byte_init(out, self_data.value % rsv_data.value);
 }
 
-x86_64_op_call       __x86_64_proxy_byte_op_call;
 x86_64_op_index      __x86_64_proxy_byte_op_index;
 x86_64_op_index_ref  __x86_64_proxy_byte_op_index_ref;
 x86_64_op_member     __x86_64_proxy_byte_op_member;

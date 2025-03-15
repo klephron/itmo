@@ -26,7 +26,6 @@ x86_64_op_sub        __x86_64_proxy_void_op_sub;
 x86_64_op_mul        __x86_64_proxy_void_op_mul;
 x86_64_op_div        __x86_64_proxy_void_op_div;
 x86_64_op_rem        __x86_64_proxy_void_op_rem;
-x86_64_op_call       __x86_64_proxy_void_op_call;
 x86_64_op_index      __x86_64_proxy_void_op_index;
 x86_64_op_index_ref  __x86_64_proxy_void_op_index_ref;
 x86_64_op_member     __x86_64_proxy_void_op_member;

@@ -172,11 +172,6 @@ void __x86_64_proxy_error_op_rem(x86_64_value *out, x86_64_value *self,
   self->op_tbl->op_copy(out, self);
 }
 
-void __x86_64_proxy_error_op_call(x86_64_value *out, x86_64_value *self, ...) {
-  x86_64_proxy_error_unhandled(self, "call");
-  self->op_tbl->op_copy(out, self);
-}
-
 void __x86_64_proxy_error_op_index(x86_64_value *out, x86_64_value *self, ...) {
   x86_64_proxy_error_unhandled(self, "index");
   self->op_tbl->op_copy(out, self);

@@ -113,7 +113,6 @@ typedef struct __attribute__((packed)) x86_64_op_tbl_struct {
   x86_64_op_mul        *op_mul;
   x86_64_op_div        *op_div;
   x86_64_op_rem        *op_rem;
-  x86_64_op_call       *op_call;
   x86_64_op_index      *op_index;
   x86_64_op_index_ref  *op_index_ref;
   x86_64_op_member     *op_member;

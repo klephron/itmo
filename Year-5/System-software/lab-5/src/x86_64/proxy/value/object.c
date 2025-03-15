@@ -42,7 +42,6 @@ x86_64_op_sub     __x86_64_proxy_object_op_sub;
 x86_64_op_mul     __x86_64_proxy_object_op_mul;
 x86_64_op_div     __x86_64_proxy_object_op_div;
 x86_64_op_rem     __x86_64_proxy_object_op_rem;
-x86_64_op_call    __x86_64_proxy_object_op_call;
 x86_64_op_index   __x86_64_proxy_object_op_index;
 x86_64_op_repr    __x86_64_proxy_object_op_repr;
 x86_64_op_drop    __x86_64_proxy_object_op_drop;

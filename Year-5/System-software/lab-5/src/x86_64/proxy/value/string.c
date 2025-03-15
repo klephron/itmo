@@ -123,11 +123,10 @@ void __x86_64_proxy_string_op_add(x86_64_value *out, x86_64_value *self,
                           *(uint64_t *)&data);
 }
 
-x86_64_op_sub  __x86_64_proxy_string_op_sub;
-x86_64_op_mul  __x86_64_proxy_string_op_mul;
-x86_64_op_div  __x86_64_proxy_string_op_div;
-x86_64_op_rem  __x86_64_proxy_string_op_rem;
-x86_64_op_call __x86_64_proxy_string_op_call;
+x86_64_op_sub __x86_64_proxy_string_op_sub;
+x86_64_op_mul __x86_64_proxy_string_op_mul;
+x86_64_op_div __x86_64_proxy_string_op_div;
+x86_64_op_rem __x86_64_proxy_string_op_rem;
 
 void __x86_64_proxy_string_op_index(x86_64_value *out, x86_64_value *self,
                                     ...) {

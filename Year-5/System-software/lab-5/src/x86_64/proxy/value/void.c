@@ -154,11 +154,6 @@ void __x86_64_proxy_void_op_rem(x86_64_value *out, x86_64_value *self,
   __x86_64_proxy_void_init(out);
 }
 
-void __x86_64_proxy_void_op_call(x86_64_value *out, x86_64_value *self, ...) {
-  UNUSED(self);
-  __x86_64_proxy_void_init(out);
-}
-
 void __x86_64_proxy_void_op_index(x86_64_value *out, x86_64_value *self, ...) {
   UNUSED(self);
   __x86_64_proxy_void_init(out);
