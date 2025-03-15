@@ -243,10 +243,11 @@ void __x86_64_proxy_error_op_repr(x86_64_value *out, x86_64_value *self) {
   x86_64_value value_string;
   data->value.op_tbl->op_repr(&value_string, &data->value);
 
-  strbuf_append(buffer, "error: ");
+  strbuf_append(buffer, "{ error: ");
   strbuf_append(buffer, value_string.data_ptr);
 
   value_string.op_tbl->op_drop(&value_string);
+  strbuf_append(buffer, " }");
 
   __x86_64_proxy_string_init(out, (uint8_t *)strbuf_data(buffer));
   strbuf_free(buffer);

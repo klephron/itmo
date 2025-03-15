@@ -6,7 +6,7 @@
 #include "x86_64/proxy/value/ulong.h"
 #include "x86_64/value.h"
 
-Test(x86_64_core_ulong, test1) {
+Test(x86_64_ulong, test1) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -91,7 +91,7 @@ Test(x86_64_core_ulong, test1) {
   value4.op_tbl->op_drop(&value4);
 }
 
-Test(x86_64_core_ulong, test2_cast) {
+Test(x86_64_ulong, test2_cast) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -108,7 +108,7 @@ Test(x86_64_core_ulong, test2_cast) {
   value2.op_tbl->op_drop(&value2);
 }
 
-Test(x86_64_core_ulong, test3_cast) {
+Test(x86_64_ulong, test3_cast) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -125,7 +125,7 @@ Test(x86_64_core_ulong, test3_cast) {
   value2.op_tbl->op_drop(&value2);
 }
 
-Test(x86_64_core_ulong, test4_cast) {
+Test(x86_64_ulong, test4_cast) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -142,7 +142,7 @@ Test(x86_64_core_ulong, test4_cast) {
   value2.op_tbl->op_drop(&value2);
 }
 
-Test(x86_64_core_ulong, test5_cast) {
+Test(x86_64_ulong, test5_cast) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -159,7 +159,7 @@ Test(x86_64_core_ulong, test5_cast) {
   value2.op_tbl->op_drop(&value2);
 }
 
-Test(x86_64_core_ulong, test6_cast) {
+Test(x86_64_ulong, test6_cast) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;

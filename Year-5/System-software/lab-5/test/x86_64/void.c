@@ -4,14 +4,14 @@
 #include "x86_64/builtin/builtin.h"
 #include "x86_64/value.h"
 
-Test(x86_64_core_void, test1) {
+Test(x86_64_void, test1) {
   x86_64_value value;
 
   __x86_64_make_void(&value);
   value.op_tbl->op_drop(&value);
 }
 
-Test(x86_64_core_void, test2) {
+Test(x86_64_void, test2) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;

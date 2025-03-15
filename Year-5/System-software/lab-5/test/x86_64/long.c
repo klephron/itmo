@@ -5,7 +5,7 @@
 #include "x86_64/proxy/value/long.h"
 #include "x86_64/value.h"
 
-Test(x86_64_core_long, test1) {
+Test(x86_64_long, test1) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;

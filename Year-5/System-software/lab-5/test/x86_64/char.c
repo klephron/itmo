@@ -5,7 +5,7 @@
 #include "x86_64/proxy/value/char.h"
 #include "x86_64/value.h"
 
-Test(x86_64_core_char, test1) {
+Test(x86_64_char, test1) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;

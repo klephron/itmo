@@ -5,7 +5,7 @@
 #include "x86_64/builtin/builtin.h"
 #include "x86_64/value.h"
 
-Test(x86_64_core_error, test1) {
+Test(x86_64_error, test1) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -29,7 +29,7 @@ Test(x86_64_core_error, test1) {
   value2.op_tbl->op_drop(&value2);
 }
 
-Test(x86_64_core_error, test3) {
+Test(x86_64_error, test3) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;

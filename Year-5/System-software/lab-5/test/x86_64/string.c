@@ -5,14 +5,14 @@
 #include "x86_64/builtin/builtin.h"
 #include "x86_64/value.h"
 
-Test(x86_64_core_string, test1) {
+Test(x86_64_string, test1) {
   x86_64_value value;
 
   __x86_64_make_string(&value, (const uint8_t *)"string1");
   value.op_tbl->op_drop(&value);
 }
 
-Test(x86_64_core_string, test2) {
+Test(x86_64_string, test2) {
   x86_64_value value1;
   x86_64_value value2;
 
@@ -25,7 +25,7 @@ Test(x86_64_core_string, test2) {
   value2.op_tbl->op_drop(&value2);
 }
 
-Test(x86_64_core_string, test3) {
+Test(x86_64_string, test3) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -43,7 +43,7 @@ Test(x86_64_core_string, test3) {
   value3.op_tbl->op_drop(&value3);
 }
 
-Test(x86_64_core_string, test4) {
+Test(x86_64_string, test4) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -63,7 +63,7 @@ Test(x86_64_core_string, test4) {
   value4.op_tbl->op_drop(&value4);
 }
 
-Test(x86_64_core_string, test5_assign) {
+Test(x86_64_string, test5_assign) {
   x86_64_value value1;
   x86_64_value value2;
 
@@ -77,7 +77,7 @@ Test(x86_64_core_string, test5_assign) {
   value2.op_tbl->op_drop(&value2);
 }
 
-// Test(x86_64_core_string, test5_assign_deref) {
+// Test(x86_64_string, test5_assign_deref) {
 //   x86_64_value value1;
 //   x86_64_value value2;
 //   x86_64_value value3;
