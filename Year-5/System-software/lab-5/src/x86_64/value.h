@@ -9,6 +9,7 @@ typedef enum x86_64_type_enum {
   X86_64_TYPE_ARRAY,
   X86_64_TYPE_BOOL,
   X86_64_TYPE_BYTE,
+  X86_64_TYPE_CALLABLE,
   X86_64_TYPE_CHAR,
   X86_64_TYPE_ERROR,
   X86_64_TYPE_INT,
@@ -20,7 +21,6 @@ typedef enum x86_64_type_enum {
   X86_64_TYPE_ULONG,
   X86_64_TYPE_VALUE_REF,
   X86_64_TYPE_VOID,
-  X86_64_TYPE__COUNT,
 } x86_64_type_enum;
 
 // unary

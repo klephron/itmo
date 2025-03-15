@@ -8,6 +8,8 @@ const char *__x86_64_type_enum_str(x86_64_type_enum type) {
       return "bool";
     case X86_64_TYPE_BYTE:
       return "byte";
+    case X86_64_TYPE_CALLABLE:
+      return "callable";
     case X86_64_TYPE_CHAR:
       return "char";
     case X86_64_TYPE_ERROR:
@@ -30,8 +32,6 @@ const char *__x86_64_type_enum_str(x86_64_type_enum type) {
       return "value_ref";
     case X86_64_TYPE_VOID:
       return "void";
-    case X86_64_TYPE__COUNT:
-      break;
   }
   return "<unknown>";
 }

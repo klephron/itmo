@@ -125,7 +125,6 @@ uint64_t __x86_64_proxy_value_as_index(const x86_64_value *self) {
     case X86_64_TYPE_STRING_ELEM_REF:
     case X86_64_TYPE_VALUE_REF:
     case X86_64_TYPE_VOID:
-    case X86_64_TYPE__COUNT:
     default:
       return UINT64_MAX;
   }
