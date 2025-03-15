@@ -115,6 +115,16 @@ mir_stmt *mir_stmt_new_member(mir_value *ret, mir_value *obj, mir_lit *member) {
   return self;
 }
 
+mir_stmt *mir_stmt_new_member_ref(mir_value *ret, mir_value *obj,
+                                  mir_lit *member) {
+  mir_stmt *self = MALLOC(mir_stmt);
+  mir_stmt_init(self, MIR_STMT_MEMBER_REF);
+  self->member.ret = ret;
+  self->member.obj = obj;
+  self->member.member = member;
+  return self;
+}
+
 mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
                                type_entry *type, list_mir_value_ref *args) {
   mir_stmt *self = MALLOC(mir_stmt);
@@ -127,7 +137,7 @@ mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
 }
 
 mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
-                              void *from, int deref) {
+                              void *from) {
   mir_stmt *self = MALLOC(mir_stmt);
   mir_stmt_init(self, MIR_STMT_ASSIGN);
   self->assign.kind = kind;
@@ -144,7 +154,6 @@ mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
       break;
   }
   self->assign.to = to;
-  self->assign.deref = deref;
   return self;
 }
 
@@ -165,6 +174,7 @@ void mir_stmt_free(mir_stmt *self) {
         list_mir_value_ref_free(self->call.args);
         break;
       case MIR_STMT_MEMBER:
+      case MIR_STMT_MEMBER_REF:
         break;
       case MIR_STMT_BUILTIN:
         list_mir_value_ref_free(self->builtin.args);

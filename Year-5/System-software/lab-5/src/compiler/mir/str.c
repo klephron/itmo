@@ -94,6 +94,8 @@ const char *mir_stmt_enum_str(mir_stmt_enum kind) {
       return "call";
     case MIR_STMT_MEMBER:
       return "member";
+    case MIR_STMT_MEMBER_REF:
+      return "member_ref";
     case MIR_STMT_BUILTIN:
       return "builtin";
     case MIR_STMT_ASSIGN:
@@ -170,10 +172,14 @@ const char *mir_stmt_op_enum_str(mir_stmt_op_enum kind) {
       return "binary_div";
     case MIR_STMT_OP_BINARY_REM:
       return "binary_rem";
-    case MIR_STMT_OP_CALL_INDIRECT:
-      return "call_indirect";
-    case MIR_STMT_OP_INDEX_INDIRECT:
-      return "index_indirect";
+    case MIR_STMT_OP_CALL:
+      return "call";
+    case MIR_STMT_OP_INDEX:
+      return "index";
+    case MIR_STMT_OP_INDEX_REF:
+      return "index_ref";
+    case MIR_STMT_OP_DEREF:
+      return "deref";
     case MIR_STMT_OP_UNKNOWN:
       break;
   }

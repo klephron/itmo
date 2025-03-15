@@ -1,0 +1,4 @@
+method main(a): void
+begin
+  return a[1].b = ++a[0, 10][20].a;
+end;

@@ -117,6 +117,7 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
       break;
 
     case MIR_STMT_MEMBER:
+    case MIR_STMT_MEMBER_REF:
       if (stmt->member.ret) {
         strbuf_append_f(buffer, buf, "_%lu = ", stmt->member.ret->id);
       }
@@ -150,16 +151,13 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
       break;
 
     case MIR_STMT_ASSIGN:
-      if (stmt->assign.deref) {
-        strbuf_append(buffer, "*");
-      }
-      strbuf_append_f(buffer, buf, "_%lu = ", stmt->assign.to->id);
+      strbuf_append_f(buffer, buf, "assign(_%lu, ", stmt->assign.to->id);
       switch (stmt->assign.kind) {
         case MIR_STMT_ASSIGN_VALUE:
-          strbuf_append_f(buffer, buf, "_%lu", stmt->assign.from_value->id);
+          strbuf_append_f(buffer, buf, "_%lu)", stmt->assign.from_value->id);
           break;
         case MIR_STMT_ASSIGN_LIT:
-          strbuf_append_f(buffer, buf, "lit.%lu", stmt->assign.from_lit->id);
+          strbuf_append_f(buffer, buf, "lit.%lu)", stmt->assign.from_lit->id);
           char *lit_s = mir_lit_value_str(stmt->assign.from_lit);
           if (lit_s) {
             strbuf_append(buffer, "  # ");

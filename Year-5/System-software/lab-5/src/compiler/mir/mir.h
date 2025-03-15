@@ -70,6 +70,7 @@ typedef enum mir_stmt_enum {
   MIR_STMT_OP,
   MIR_STMT_CALL,
   MIR_STMT_MEMBER,
+  MIR_STMT_MEMBER_REF,
   MIR_STMT_BUILTIN,
   MIR_STMT_ASSIGN,
 } mir_stmt_enum;
@@ -100,8 +101,10 @@ typedef enum mir_stmt_op_enum {
   MIR_STMT_OP_BINARY_MUL,
   MIR_STMT_OP_BINARY_DIV,
   MIR_STMT_OP_BINARY_REM,
-  MIR_STMT_OP_CALL_INDIRECT,
-  MIR_STMT_OP_INDEX_INDIRECT,
+  MIR_STMT_OP_CALL,
+  MIR_STMT_OP_INDEX,
+  MIR_STMT_OP_INDEX_REF,
+  MIR_STMT_OP_DEREF,
 } mir_stmt_op_enum;
 
 typedef enum mir_stmt_builtin_enum {
@@ -136,7 +139,7 @@ typedef struct mir_stmt_struct {
       mir_value *ret;
       mir_value *obj;
       mir_lit   *member;
-    } member;
+    } member; // MEMBER | MEMBER_REF
     struct {
       mir_stmt_builtin_enum kind;
       mir_value            *ret;
@@ -150,7 +153,6 @@ typedef struct mir_stmt_struct {
         mir_value *from_value;
         mir_lit   *from_lit;
       };
-      int deref;
     } assign; // value assignment
   };
 } mir_stmt;
@@ -160,10 +162,12 @@ mir_stmt *mir_stmt_new_op(mir_stmt_op_enum kind, mir_value *ret,
 mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
                             list_mir_value_ref *args);
 mir_stmt *mir_stmt_new_member(mir_value *ret, mir_value *obj, mir_lit *member);
+mir_stmt *mir_stmt_new_member_ref(mir_value *ret, mir_value *obj,
+                                  mir_lit *member);
 mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
                                type_entry *type, list_mir_value_ref *args);
 mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
-                              void *from, int deref);
+                              void *from);
 
 void mir_stmt_debug_init_span(mir_stmt *stmt, const span *span);
 
