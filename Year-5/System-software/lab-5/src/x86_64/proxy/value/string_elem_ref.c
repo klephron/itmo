@@ -1,7 +1,22 @@
 #include "string_elem_ref.h"
+#include "util/strbuf.h"
+#include "x86_64/proxy/registry.h"
+#include "x86_64/proxy/util.h"
+#include "x86_64/proxy/value/char.h"
+#include "x86_64/proxy/value/string.h"
+#include "x86_64/proxy/value/void.h"
+#include "x86_64/value/char.h"
+#include "x86_64/value/string_elem_ref.h"
 
-void __x86_64_proxy_string_elem_ref_init(x86_64_value  *out,
-                                         const uint8_t *value);
+void __x86_64_proxy_string_elem_ref_init(x86_64_value *out, uint8_t *value) {
+  x86_64_data_string_elem_ref data = {.value = value};
+
+  const x86_64_op_tbl *op_tbl =
+      X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_STRING_ELEM_REF];
+
+  __x86_64_value_init_raw(out, X86_64_TYPE_STRING_ELEM_REF,
+                          (x86_64_op_tbl *)op_tbl, *(uint64_t *)&data);
+}
 
 x86_64_op_plus       __x86_64_proxy_string_elem_ref_op_plus;
 x86_64_op_minus      __x86_64_proxy_string_elem_ref_op_minus;
@@ -30,9 +45,63 @@ x86_64_op_index      __x86_64_proxy_string_elem_ref_op_index;
 x86_64_op_index_ref  __x86_64_proxy_string_elem_ref_op_index_ref;
 x86_64_op_member     __x86_64_proxy_string_elem_ref_op_member;
 x86_64_op_member_ref __x86_64_proxy_string_elem_ref_op_member_ref;
-x86_64_op_deref      __x86_64_proxy_string_elem_ref_op_deref;
-x86_64_op_assign     __x86_64_proxy_string_elem_ref_op_assign;
-x86_64_op_drop       __x86_64_proxy_string_elem_ref_op_drop;
-x86_64_op_copy       __x86_64_proxy_string_elem_ref_op_copy;
-x86_64_op_cast       __x86_64_proxy_string_elem_ref_op_cast;
-x86_64_op_repr       __x86_64_proxy_string_elem_ref_op_repr;
+
+void __x86_64_proxy_string_elem_ref_op_deref(x86_64_value *out,
+                                             x86_64_value *self) {
+  x86_64_data_string_elem_ref data =
+      *(x86_64_data_string_elem_ref *)&self->data_raw;
+
+  __x86_64_proxy_char_init(out, *data.value);
+}
+
+void __x86_64_proxy_string_elem_ref_op_assign(x86_64_value *self,
+                                              x86_64_value *rsv) {
+  if (rsv->type != X86_64_TYPE_CHAR) {
+    __x86_64_proxy_op_error_type_mismatch(self, rsv, "assign",
+                                          X86_64_TYPE_CHAR);
+    return;
+  }
+
+  x86_64_data_string_elem_ref self_data =
+      *(x86_64_data_string_elem_ref *)&self->data_raw;
+
+  x86_64_data_char rsv_data = *(x86_64_data_char *)&rsv->data_raw;
+
+  *self_data.value = rsv_data.value;
+}
+
+void __x86_64_proxy_string_elem_ref_op_drop(x86_64_value *self) {
+  __x86_64_proxy_void_init(self);
+}
+
+void __x86_64_proxy_string_elem_ref_op_copy(x86_64_value *out,
+                                            x86_64_value *self) {
+  x86_64_data_string_elem_ref data =
+      *(x86_64_data_string_elem_ref *)&self->data_raw;
+
+  __x86_64_proxy_string_elem_ref_init(out, data.value);
+}
+
+x86_64_op_cast __x86_64_proxy_string_elem_ref_op_cast;
+
+void __x86_64_proxy_string_elem_ref_op_repr(x86_64_value *out,
+                                            x86_64_value *self) {
+  strbuf      *buffer = strbuf_new(0, 0);
+  x86_64_value self_deref;
+  self->op_tbl->op_deref(&self_deref, self);
+
+  strbuf_append(buffer, "{ ref: ");
+
+  x86_64_value value_repr;
+  self_deref.op_tbl->op_repr(&value_repr, &self_deref);
+  strbuf_append(buffer, value_repr.data_ptr);
+  value_repr.op_tbl->op_drop(&value_repr);
+
+  strbuf_append(buffer, " }");
+
+  self_deref.op_tbl->op_drop(&self_deref);
+
+  __x86_64_proxy_string_init(out, (const uint8_t *)strbuf_data(buffer));
+
+  strbuf_free(buffer);
+}

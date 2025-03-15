@@ -2,8 +2,7 @@
 
 #include "x86_64/value.h"
 
-void __x86_64_proxy_string_elem_ref_init(x86_64_value  *out,
-                                         const uint8_t *value);
+void __x86_64_proxy_string_elem_ref_init(x86_64_value *out, uint8_t *value);
 
 x86_64_op_plus       __x86_64_proxy_string_elem_ref_op_plus;
 x86_64_op_minus      __x86_64_proxy_string_elem_ref_op_minus;
