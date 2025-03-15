@@ -23,6 +23,8 @@ typedef enum x86_64_type_enum {
   X86_64_TYPE_VOID,
 } x86_64_type_enum;
 
+typedef void x86_64_func(x86_64_value *ret, ...);
+
 // unary
 typedef void x86_64_op_plus(x86_64_value *out, x86_64_value *self);
 typedef void x86_64_op_minus(x86_64_value *out, x86_64_value *self);
@@ -64,9 +66,6 @@ typedef void x86_64_op_div(x86_64_value *out, x86_64_value *self,
 typedef void x86_64_op_rem(x86_64_value *out, x86_64_value *self,
                            x86_64_value *rsv);
 // access
-typedef void x86_64_op_call(x86_64_value *out, x86_64_value *self, ...);
-typedef void x86_64_op_call_v(x86_64_value *out, x86_64_value *self,
-                              va_list args);
 typedef void x86_64_op_index(x86_64_value *out, x86_64_value *self, ...);
 typedef void x86_64_op_index_v(x86_64_value *out, x86_64_value *self,
                                va_list args);
@@ -78,6 +77,8 @@ typedef void x86_64_op_member(x86_64_value *out, x86_64_value *self,
 typedef void x86_64_op_member_ref(x86_64_value *out, x86_64_value *self,
                                   const uint8_t *member);
 typedef void x86_64_op_deref(x86_64_value *out, x86_64_value *self);
+// call (returns function that needs to be called)
+typedef x86_64_func *x86_64_op_call(x86_64_value *self);
 // assignment
 typedef void x86_64_op_assign(x86_64_value *self, x86_64_value *other);
 // lifetime
@@ -118,6 +119,7 @@ typedef struct __attribute__((packed)) x86_64_op_tbl_struct {
   x86_64_op_member     *op_member;
   x86_64_op_member_ref *op_member_ref;
   x86_64_op_deref      *op_deref;
+  x86_64_op_call       *op_call;
   x86_64_op_assign     *op_assign;
   x86_64_op_drop       *op_drop;
   x86_64_op_copy       *op_copy;

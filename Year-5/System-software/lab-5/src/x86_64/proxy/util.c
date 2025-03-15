@@ -1,5 +1,6 @@
 #include "util.h"
 
+#include "util/log.h"
 #include "util/strbuf.h"
 #include "x86_64/proxy/value/error.h"
 #include "x86_64/proxy/value/string.h"
@@ -156,4 +157,14 @@ void __x86_64_proxy_op_error_not_number(x86_64_value *out, x86_64_value *self,
   __x86_64_proxy_error_init(&error, &error_value);
 
   *out = error;
+}
+
+void __x86_64_proxy_op_call_func_error(x86_64_value *ret, ...) {
+  const char *err_msg = "op call is not implemented: error noop func is called";
+
+  error(err_msg);
+
+  x86_64_value error_value;
+  __x86_64_proxy_string_init(&error_value, (const uint8_t *)err_msg);
+  __x86_64_proxy_error_init(ret, &error_value);
 }

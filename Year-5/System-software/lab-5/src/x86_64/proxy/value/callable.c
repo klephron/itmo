@@ -6,8 +6,7 @@
 #include "x86_64/value/callable.h"
 #include <stdio.h>
 
-void __x86_64_proxy_callable_init(x86_64_value              *out,
-                                  x86_64_data_callable_func *func) {
+void __x86_64_proxy_callable_init(x86_64_value *out, x86_64_func *func) {
   x86_64_data_callable data = {.func = func};
 
   const x86_64_op_tbl *op_tbl =
@@ -44,6 +43,11 @@ x86_64_op_index_ref  __x86_64_proxy_callable_op_index_ref;
 x86_64_op_member     __x86_64_proxy_callable_op_member;
 x86_64_op_member_ref __x86_64_proxy_callable_op_member_ref;
 x86_64_op_deref      __x86_64_proxy_callable_op_deref;
+
+x86_64_func *__x86_64_proxy_callable_op_call(x86_64_value *self) {
+  x86_64_data_callable data = *(x86_64_data_callable *)&self->data_raw;
+  return data.func;
+}
 
 void __x86_64_proxy_callable_op_assign(x86_64_value *self,
                                        x86_64_value *other) {

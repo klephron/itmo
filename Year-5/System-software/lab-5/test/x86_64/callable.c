@@ -32,8 +32,8 @@ Test(x86_64_callable, test1) {
 
   __x86_64_proxy_bool_init(&value2, 12);
 
-  x86_64_data_callable data = *(x86_64_data_callable *)&value1.data_raw;
-  data.func(&value3, &value2);
+  x86_64_func *func = value1.op_tbl->op_call(&value1);
+  func(&value3, &value2);
 
   x86_64_value value4;
   value3.op_tbl->op_repr(&value4, &value3);

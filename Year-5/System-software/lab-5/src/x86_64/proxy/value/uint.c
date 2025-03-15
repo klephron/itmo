@@ -32,7 +32,7 @@ void __x86_64_proxy_uint_op_minus(x86_64_value *out, x86_64_value *self) {
   __x86_64_proxy_uint_init(out, -data.value);
 }
 
-x86_64_op_not __x86_64_proxy_int_op_not;
+x86_64_op_not __x86_64_proxy_uint_op_not;
 
 void __x86_64_proxy_uint_op_bit_not(x86_64_value *out, x86_64_value *self) {
   x86_64_data_uint data = *(x86_64_data_uint *)&self->data_raw;
@@ -49,8 +49,8 @@ void __x86_64_proxy_uint_op_dec(x86_64_value *out, x86_64_value *self) {
   __x86_64_proxy_uint_init(out, data.value - 1);
 }
 
-x86_64_op_or  __x86_64_proxy_int_op_or;
-x86_64_op_and __x86_64_proxy_int_op_and;
+x86_64_op_or  __x86_64_proxy_uint_op_or;
+x86_64_op_and __x86_64_proxy_uint_op_and;
 
 void __x86_64_proxy_uint_op_bit_or(x86_64_value *out, x86_64_value *self,
                                    x86_64_value *rsv) {
@@ -248,11 +248,12 @@ void __x86_64_proxy_uint_op_rem(x86_64_value *out, x86_64_value *self,
   __x86_64_proxy_uint_init(out, self_data.value % rsv_data.value);
 }
 
-x86_64_op_index      __x86_64_proxy_int_op_index;
-x86_64_op_index_ref  __x86_64_proxy_int_op_index_ref;
-x86_64_op_member     __x86_64_proxy_int_op_member;
-x86_64_op_member_ref __x86_64_proxy_int_op_member_ref;
-x86_64_op_deref      __x86_64_proxy_int_op_deref;
+x86_64_op_index      __x86_64_proxy_uint_op_index;
+x86_64_op_index_ref  __x86_64_proxy_uint_op_index_ref;
+x86_64_op_member     __x86_64_proxy_uint_op_member;
+x86_64_op_member_ref __x86_64_proxy_uint_op_member_ref;
+x86_64_op_deref      __x86_64_proxy_uint_op_deref;
+x86_64_op_call       __x86_64_proxy_uint_op_call;
 
 void __x86_64_proxy_uint_op_assign(x86_64_value *self, x86_64_value *other) {
   other->op_tbl->op_copy(self, other);

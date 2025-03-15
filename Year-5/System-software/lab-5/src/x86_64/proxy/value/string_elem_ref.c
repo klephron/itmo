@@ -53,6 +53,8 @@ void __x86_64_proxy_string_elem_ref_op_deref(x86_64_value *out,
   __x86_64_proxy_char_init(out, *data.value);
 }
 
+x86_64_op_call __x86_64_proxy_string_elem_ref_op_call;
+
 void __x86_64_proxy_string_elem_ref_op_assign(x86_64_value *self,
                                               x86_64_value *rsv) {
   if (rsv->type != X86_64_TYPE_CHAR) {

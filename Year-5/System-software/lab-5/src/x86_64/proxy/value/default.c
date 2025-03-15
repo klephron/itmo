@@ -123,17 +123,6 @@ void __x86_64_proxy_default_op_rem(x86_64_value *out, x86_64_value *self,
   __x86_64_proxy_op_error_undefined(out, self, "rem");
 }
 
-void __x86_64_proxy_default_op_call(x86_64_value *out, x86_64_value *self,
-                                    ...) {
-  __x86_64_proxy_op_error_undefined(out, self, "call");
-}
-
-void __x86_64_proxy_default_op_call_v(x86_64_value *out, x86_64_value *self,
-                                      va_list args) {
-  UNUSED(args);
-  __x86_64_proxy_op_error_undefined(out, self, "call");
-}
-
 void __x86_64_proxy_default_op_index(x86_64_value *out, x86_64_value *self,
                                      ...) {
   __x86_64_proxy_op_error_undefined(out, self, "index");
@@ -170,6 +159,11 @@ void __x86_64_proxy_default_op_member_ref(x86_64_value *out, x86_64_value *self,
 
 void __x86_64_proxy_default_op_deref(x86_64_value *out, x86_64_value *self) {
   __x86_64_proxy_op_error_undefined(out, self, "deref");
+}
+
+x86_64_func *__x86_64_proxy_default_op_call(x86_64_value *out) {
+  UNUSED(out);
+  return __x86_64_proxy_op_call_func_error;
 }
 
 void __x86_64_proxy_default_op_assign(x86_64_value *out, x86_64_value *self) {

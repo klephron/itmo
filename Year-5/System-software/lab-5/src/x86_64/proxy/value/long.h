@@ -31,6 +31,7 @@ x86_64_op_index_ref  __x86_64_proxy_long_op_index_ref;
 x86_64_op_member     __x86_64_proxy_long_op_member;
 x86_64_op_member_ref __x86_64_proxy_long_op_member_ref;
 x86_64_op_deref      __x86_64_proxy_long_op_deref;
+x86_64_op_call       __x86_64_proxy_long_op_call;
 x86_64_op_assign     __x86_64_proxy_long_op_assign;
 x86_64_op_drop       __x86_64_proxy_long_op_drop;
 x86_64_op_copy       __x86_64_proxy_long_op_copy;

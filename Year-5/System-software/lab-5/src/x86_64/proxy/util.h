@@ -16,3 +16,5 @@ uint64_t __x86_64_proxy_value_as_index(const x86_64_value *self);
 
 void __x86_64_proxy_op_error_not_number(x86_64_value *out, x86_64_value *self,
                                         const char *op);
+
+x86_64_func __x86_64_proxy_op_call_func_error;

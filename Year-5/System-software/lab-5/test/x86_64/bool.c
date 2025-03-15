@@ -123,3 +123,17 @@ Test(x86_64_bool, test5_cast) {
   value1.op_tbl->op_drop(&value1);
   value2.op_tbl->op_drop(&value2);
 }
+
+Test(x86_64_bool, test6_call) {
+  x86_64_value value1;
+  x86_64_value value2;
+
+  __x86_64_proxy_bool_init(&value1, 'a');
+
+  x86_64_func *func = value1.op_tbl->op_call(&value1);
+
+  func(&value2);
+
+  value2.op_tbl->op_drop(&value2);
+  value2.op_tbl->op_drop(&value1);
+}

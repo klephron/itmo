@@ -5,6 +5,10 @@
 #include "x86_64/proxy/value/string.h"
 #include "x86_64/value.h"
 
+static void __x86_64_proxy_void_op_call_func(x86_64_value *ret, ...) {
+  UNUSED(ret);
+}
+
 void __x86_64_proxy_void_init(x86_64_value *out) {
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_VOID];
 
@@ -182,6 +186,11 @@ void __x86_64_proxy_void_op_member_ref(x86_64_value *out, x86_64_value *self,
 void __x86_64_proxy_void_op_deref(x86_64_value *out, x86_64_value *self) {
   UNUSED(self);
   __x86_64_proxy_void_init(out);
+}
+
+x86_64_func *__x86_64_proxy_void_op_call(x86_64_value *out) {
+  UNUSED(out);
+  return __x86_64_proxy_void_op_call_func;
 }
 
 void __x86_64_proxy_void_op_assign(x86_64_value *self, x86_64_value *other) {

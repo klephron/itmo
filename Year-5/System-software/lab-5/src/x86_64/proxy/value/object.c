@@ -46,5 +46,6 @@ x86_64_op_index   __x86_64_proxy_object_op_index;
 x86_64_op_repr    __x86_64_proxy_object_op_repr;
 x86_64_op_drop    __x86_64_proxy_object_op_drop;
 x86_64_op_copy    __x86_64_proxy_object_op_copy;
+x86_64_op_call    __x86_64_proxy_object_op_call;
 x86_64_op_assign  __x86_64_proxy_object_op_assign;
 // x86_64_op_assign_deref __x86_64_proxy_object_op_assign_deref;

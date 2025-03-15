@@ -4,6 +4,7 @@
 #include "util/macro.h"
 #include "util/strbuf.h"
 #include "x86_64/proxy/registry.h"
+#include "x86_64/proxy/util.h"
 #include "x86_64/proxy/value/string.h"
 #include "x86_64/proxy/value/void.h"
 #include "x86_64/value/error.h"
@@ -200,6 +201,11 @@ void __x86_64_proxy_error_op_member_ref(x86_64_value *out, x86_64_value *self,
 void __x86_64_proxy_error_op_deref(x86_64_value *out, x86_64_value *self) {
   x86_64_proxy_error_unhandled(self, "deref");
   self->op_tbl->op_copy(out, self);
+}
+
+x86_64_func *__x86_64_proxy_error_op_call(x86_64_value *self) {
+  x86_64_proxy_error_unhandled(self, "call");
+  return __x86_64_proxy_op_call_func_error;
 }
 
 void __x86_64_proxy_error_op_assign(x86_64_value *self, x86_64_value *other) {

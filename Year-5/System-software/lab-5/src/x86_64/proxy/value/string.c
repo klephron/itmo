@@ -182,6 +182,7 @@ cleanup:
 x86_64_op_member     __x86_64_proxy_string_op_member;
 x86_64_op_member_ref __x86_64_proxy_string_op_member_ref;
 x86_64_op_deref      __x86_64_proxy_string_op_deref;
+x86_64_op_call       __x86_64_proxy_string_op_call;
 
 void __x86_64_proxy_string_op_assign(x86_64_value *self, x86_64_value *other) {
   if (self == other) {
