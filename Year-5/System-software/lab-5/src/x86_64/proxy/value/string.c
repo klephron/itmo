@@ -1,6 +1,5 @@
 #include "string.h"
 
-#include "util/macro.h"
 #include "x86_64/proxy/registry.h"
 #include "x86_64/proxy/util.h"
 #include "x86_64/proxy/value/bool.h"
