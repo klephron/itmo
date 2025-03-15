@@ -14,14 +14,13 @@ static void x86_64_proxy_error_unhandled(x86_64_value *self, const char *op) {
   x86_64_value repr;
   self->op_tbl->op_repr(&repr, self);
 
-  error("unhandled during %s: %s", op, repr.data_ptr);
+  error("unhandled error in op %s: %s", op, repr.data_ptr);
 
   repr.op_tbl->op_drop(&repr);
 }
 
 void __x86_64_proxy_error_init(x86_64_value *out, x86_64_value *value) {
   x86_64_data_error *data = malloc(sizeof(x86_64_data_error));
-  data->ref_cnt           = 1;
   data->value             = *value;
 
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_ERROR];
@@ -71,7 +70,7 @@ void __x86_64_proxy_error_op_or(x86_64_value *out, x86_64_value *self,
 void __x86_64_proxy_error_op_and(x86_64_value *out, x86_64_value *self,
                                  x86_64_value *rsv) {
   UNUSED(rsv);
-  x86_64_proxy_error_unhandled(self, "rsv");
+  x86_64_proxy_error_unhandled(self, "and");
   self->op_tbl->op_copy(out, self);
 }
 
@@ -183,6 +182,60 @@ void __x86_64_proxy_error_op_index(x86_64_value *out, x86_64_value *self, ...) {
   self->op_tbl->op_copy(out, self);
 }
 
+void __x86_64_proxy_error_op_index_ref(x86_64_value *out, x86_64_value *self,
+                                       ...) {
+  x86_64_proxy_error_unhandled(self, "index_ref");
+  self->op_tbl->op_copy(out, self);
+}
+
+void __x86_64_proxy_error_op_member(x86_64_value *out, x86_64_value *self,
+                                    const uint8_t *member) {
+  UNUSED(member);
+  x86_64_proxy_error_unhandled(self, "member");
+  self->op_tbl->op_copy(out, self);
+}
+
+void __x86_64_proxy_error_op_member_ref(x86_64_value *out, x86_64_value *self,
+                                        const uint8_t *member) {
+  UNUSED(member);
+  x86_64_proxy_error_unhandled(self, "member_ref");
+  self->op_tbl->op_copy(out, self);
+}
+
+void __x86_64_proxy_error_op_deref(x86_64_value *out, x86_64_value *self) {
+  x86_64_proxy_error_unhandled(self, "deref");
+  self->op_tbl->op_copy(out, self);
+}
+
+void __x86_64_proxy_error_op_assign(x86_64_value *self, x86_64_value *other) {
+  if (self == other) {
+    return;
+  }
+  self->op_tbl->op_drop(self);
+  other->op_tbl->op_copy(self, other);
+}
+
+void __x86_64_proxy_error_op_drop(x86_64_value *self) {
+  x86_64_data_error *data = (x86_64_data_error *)self->data_ptr;
+  data->value.op_tbl->op_drop(&data->value);
+  free(data);
+  __x86_64_proxy_void_init(self);
+}
+
+void __x86_64_proxy_error_op_copy(x86_64_value *out, x86_64_value *self) {
+  x86_64_data_error *data = (x86_64_data_error *)self->data_ptr;
+  x86_64_value       data_value;
+  data->value.op_tbl->op_copy(&data_value, &data->value);
+  __x86_64_proxy_error_init(out, &data_value);
+}
+
+void __x86_64_proxy_error_op_cast(x86_64_value *out, x86_64_value *self,
+                                  x86_64_type_enum type, ...) {
+  UNUSED(type);
+  x86_64_proxy_error_unhandled(self, "cast");
+  self->op_tbl->op_copy(out, self);
+}
+
 void __x86_64_proxy_error_op_repr(x86_64_value *out, x86_64_value *self) {
   strbuf            *buffer = strbuf_new(64, 0);
   x86_64_data_error *data   = (x86_64_data_error *)self->data_ptr;
@@ -198,37 +251,3 @@ void __x86_64_proxy_error_op_repr(x86_64_value *out, x86_64_value *self) {
   __x86_64_proxy_string_init(out, (uint8_t *)strbuf_data(buffer));
   strbuf_free(buffer);
 }
-
-void __x86_64_proxy_error_op_drop(x86_64_value *self) {
-  x86_64_data_error *data = (x86_64_data_error *)self->data_ptr;
-  data->value.op_tbl->op_drop(&data->value);
-  if (!--data->ref_cnt) {
-    free(data);
-  }
-  __x86_64_proxy_void_init(self);
-}
-
-// copy reference to data
-void __x86_64_proxy_error_op_copy(x86_64_value *out, x86_64_value *self) {
-  x86_64_data_error *data = (x86_64_data_error *)self->data_ptr;
-  data->ref_cnt += 1;
-  __x86_64_proxy_error_init(out, self);
-}
-
-void __x86_64_proxy_error_op_assign(x86_64_value *self, x86_64_value *other) {
-  if (self == other) {
-    return;
-  }
-  self->op_tbl->op_drop(self);
-  other->op_tbl->op_copy(self, other);
-}
-
-// void __x86_64_proxy_error_op_assign_deref(x86_64_value *self,
-//                                           x86_64_value *other) {
-//   UNUSED(other);
-
-//   x86_64_value out;
-//   __x86_64_proxy_op_undefined(&out, self, "assign_deref");
-//   self->op_tbl->op_drop(self);
-//   *self = out;
-// }

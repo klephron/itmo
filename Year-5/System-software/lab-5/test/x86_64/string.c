@@ -32,6 +32,7 @@ Test(x86_64_core_string, test3) {
 
   __x86_64_make_string(&value1, (const uint8_t *)"string1");
 
+  // error
   value1.op_tbl->op_plus(&value2, &value1);
 
   value2.op_tbl->op_repr(&value3, &value2);

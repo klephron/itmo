@@ -51,6 +51,7 @@ void __x86_64_proxy_byte_op_bit_or(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "bit_or", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
 
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
@@ -64,6 +65,7 @@ void __x86_64_proxy_byte_op_bit_xor(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "bit_xor", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
 
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
@@ -77,6 +79,7 @@ void __x86_64_proxy_byte_op_bit_and(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "bit_and", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
 
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
@@ -90,6 +93,7 @@ void __x86_64_proxy_byte_op_eq(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "eq", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
 
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
@@ -103,6 +107,7 @@ void __x86_64_proxy_byte_op_neq(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "neq", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
 
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
@@ -116,6 +121,7 @@ void __x86_64_proxy_byte_op_less(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "less", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
 
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
@@ -129,6 +135,7 @@ void __x86_64_proxy_byte_op_less_eq(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "less_eq", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
 
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
@@ -142,7 +149,9 @@ void __x86_64_proxy_byte_op_bit_shl(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "bit_shl", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
+
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
   x86_64_data_byte rsv_data  = *(x86_64_data_byte *)&rsv->data_raw;
 
@@ -154,7 +163,9 @@ void __x86_64_proxy_byte_op_bit_shr(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "bit_shr", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
+
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
   x86_64_data_byte rsv_data  = *(x86_64_data_byte *)&rsv->data_raw;
 
@@ -166,7 +177,9 @@ void __x86_64_proxy_byte_op_add(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "add", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
+
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
   x86_64_data_byte rsv_data  = *(x86_64_data_byte *)&rsv->data_raw;
 
@@ -178,7 +191,9 @@ void __x86_64_proxy_byte_op_sub(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "sub", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
+
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
   x86_64_data_byte rsv_data  = *(x86_64_data_byte *)&rsv->data_raw;
 
@@ -190,7 +205,9 @@ void __x86_64_proxy_byte_op_mul(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "mul", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
+
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
   x86_64_data_byte rsv_data  = *(x86_64_data_byte *)&rsv->data_raw;
 
@@ -202,7 +219,9 @@ void __x86_64_proxy_byte_op_div(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "div", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
+
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
   x86_64_data_byte rsv_data  = *(x86_64_data_byte *)&rsv->data_raw;
 
@@ -214,7 +233,9 @@ void __x86_64_proxy_byte_op_rem(x86_64_value *out, x86_64_value *self,
   if (self->type != rsv->type) {
     __x86_64_proxy_op_error_type_mismatch(out, rsv, "rem", self->type);
     __x86_64_proxy_void_init(out);
+    return;
   }
+
   x86_64_data_byte self_data = *(x86_64_data_byte *)&self->data_raw;
   x86_64_data_byte rsv_data  = *(x86_64_data_byte *)&rsv->data_raw;
 
@@ -250,10 +271,3 @@ void __x86_64_proxy_byte_op_repr(x86_64_value *out, x86_64_value *self) {
   snprintf((char *)buf, STRMAXLEN(buf), "%hhu", data.value);
   __x86_64_proxy_string_init(out, buf);
 }
-
-// void __x86_64_proxy_byte_op_assign_deref(x86_64_value *self,
-//                                          x86_64_value *other) {
-//   UNUSED(other);
-//   __x86_64_proxy_op_undefined(self, self, "assign_deref");
-// }
-// x86_64_op_assign_deref __x86_64_proxy_byte_op_assign_deref;
