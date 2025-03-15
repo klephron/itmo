@@ -36,14 +36,14 @@ exception *exception_new(exception_level level, exception_type type,
 
   exception *exc = calloc(1, sizeof(exception));
 
-  exc->level = level;
-  exc->type = type;
+  exc->level   = level;
+  exc->type    = type;
   exc->subtype = subtype;
 
   if (stream) {
     exc->stream = strdup(stream);
   }
-  exc->line = line;
+  exc->line   = line;
   exc->offset = offset;
 
   if (name) {
@@ -84,8 +84,8 @@ exception *exception_new_f(exception_level level, exception_type type,
 char *exception_str(const exception *exc, int is_color) {
   char buf[256];
 
-  char *exc_stream = "<empty>";
-  char *exc_name = "<empty>";
+  char *exc_stream  = "<empty>";
+  char *exc_name    = "<empty>";
   char *exc_message = "<empty>";
 
   {

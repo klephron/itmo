@@ -45,8 +45,8 @@ hir_stmt_if *hir_stmt_if_new(span *span, hir_expr_base *cond, hir_stmt_base *je,
   hir_stmt_if *self = MALLOC(hir_stmt_if);
   hir_stmt_base_init(&self->base, span, HIR_STMT_IF);
   self->cond = cond;
-  self->je = je;
-  self->jz = jz;
+  self->je   = je;
+  self->jz   = jz;
   return self;
 }
 
@@ -98,8 +98,8 @@ hir_stmt_do *hir_stmt_do_new(span *span, int positive, hir_expr_base *cond,
   hir_stmt_do *self = MALLOC(hir_stmt_do);
   hir_stmt_base_init(&self->base, span, HIR_STMT_DO);
   self->positive = positive;
-  self->cond = cond;
-  self->stmt = stmt;
+  self->cond     = cond;
+  self->stmt     = stmt;
   return self;
 }
 

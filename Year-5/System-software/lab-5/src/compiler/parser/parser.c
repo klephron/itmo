@@ -19,42 +19,42 @@ static void parser_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
     return;
   }
 
-  ex = recognizer->state->exception;
-  exh.level = EXCEPTION_LEVEL_ERROR;
-  exh.type = EXCEPTION_PARSER;
-  exh.line = ex->line;
-  exh.name = ex->message;
+  ex         = recognizer->state->exception;
+  exh.level  = EXCEPTION_LEVEL_ERROR;
+  exh.type   = EXCEPTION_PARSER;
+  exh.line   = ex->line;
+  exh.name   = ex->message;
   exh.offset = recognizer->state->exception->charPositionInLine;
 
   theToken = (pANTLR3_COMMON_TOKEN)(recognizer->state->exception->token);
 
-  userp = recognizer->state->userp;
+  userp      = recognizer->state->userp;
   exh.stream = (char *)userp->name_ref;
 
   ttext = theToken->toString(theToken);
 
   if (theToken->type == ANTLR3_TOKEN_EOF) {
     exh.subtype = EXCEPTION_PARSER_EOF;
-    exc = exception_new_from_helper(&exh, "at <EOF>");
+    exc         = exception_new_from_helper(&exh, "at <EOF>");
   } else {
     exh.subtype = EXCEPTION_PARSER_GENERIC;
-    exc = exception_new_from_helper(&exh, "near %s",
+    exc         = exception_new_from_helper(&exh, "near %s",
                                     ttext == NULL ? (pANTLR3_UINT8) "<empty>"
-                                                  : ttext->chars);
+                                                          : ttext->chars);
   }
 
   list_exception_push_back(userp->exceptions, exc);
 }
 
 parser *parser_new(const lexer_token_stream *token_stream_ref) {
-  parser *self = MALLOC(parser);
+  parser *self           = MALLOC(parser);
   self->token_stream_ref = token_stream_ref;
-  self->parser = MainParserNew(token_stream_ref->tokens);
-  self->exceptions = list_exception_new();
-  self->userp = (parser_userp){.exceptions = self->exceptions,
-                               .name_ref = token_stream_ref->name_ref};
+  self->parser           = MainParserNew(token_stream_ref->tokens);
+  self->exceptions       = list_exception_new();
+  self->userp            = (parser_userp){.exceptions = self->exceptions,
+                                          .name_ref   = token_stream_ref->name_ref};
 
-  self->parser->pParser->rec->state->userp = &self->userp;
+  self->parser->pParser->rec->state->userp            = &self->userp;
   self->parser->pParser->rec->displayRecognitionError = parser_display_error;
   return self;
 }

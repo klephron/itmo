@@ -60,7 +60,7 @@ uint64_t read_ulong() {
 
 uint8_t *read_string() {
   char  *line = NULL;
-  size_t len = 0;
+  size_t len  = 0;
   getline(&line, &len, stdin);
   if (line == NULL) {
     return NULL;

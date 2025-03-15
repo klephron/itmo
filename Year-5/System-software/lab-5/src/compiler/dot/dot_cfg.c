@@ -15,14 +15,14 @@ typedef struct dot_ctx_struct {
 } dot_ctx;
 
 static void dot_ctx_init(dot_ctx *ctx, strbuf *buffer, int option_add_expr) {
-  ctx->expr_cnt = 0;
-  ctx->buffer = buffer;
+  ctx->expr_cnt        = 0;
+  ctx->buffer          = buffer;
   ctx->option_add_expr = option_add_expr;
-  ctx->bb_ref = NULL;
+  ctx->bb_ref          = NULL;
 }
 
 static void dot_ctx_deinit(dot_ctx *ctx) {
-  ctx->buffer = NULL;
+  ctx->buffer          = NULL;
   ctx->option_add_expr = 0;
 }
 
@@ -53,7 +53,7 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
       break;
     }
     case HIR_EXPR_LITERAL: {
-      hir_expr_lit *self = (typeof(self))expr;
+      hir_expr_lit *self  = (typeof(self))expr;
       char         *lit_s = hir_lit_value_str(self->lit);
       if (lit_s) {
         char *escaped_s = escape_html(lit_s);
@@ -107,7 +107,7 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
   // traverse
   switch (expr->kind) {
     case HIR_EXPR_UNARY: {
-      hir_expr_unary *self = (typeof(self))expr;
+      hir_expr_unary *self     = (typeof(self))expr;
       size_t          first_id = dot_cfg_traverse_expr_node(ctx, self->first);
 
       strbuf_append_f(ctx->buffer, buf, "expr_%zu_%zu -> expr_%zu_%zu;\n",
@@ -115,9 +115,9 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
       break;
     }
     case HIR_EXPR_BINARY: {
-      hir_expr_binary *self = (typeof(self))expr;
+      hir_expr_binary *self     = (typeof(self))expr;
       size_t           first_id = dot_cfg_traverse_expr_node(ctx, self->first);
-      size_t second_id = dot_cfg_traverse_expr_node(ctx, self->second);
+      size_t second_id          = dot_cfg_traverse_expr_node(ctx, self->second);
 
       strbuf_append_f(ctx->buffer, buf, "expr_%zu_%zu -> expr_%zu_%zu;\n",
                       ctx->bb_ref->id, expr_id, ctx->bb_ref->id, first_id);
@@ -140,7 +140,7 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
 
       for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
            NEXT(it)) {
-        hir_expr_base *arg = GET(it);
+        hir_expr_base *arg    = GET(it);
         size_t         arg_id = dot_cfg_traverse_expr_node(ctx, arg);
         strbuf_append_f(ctx->buffer, buf, "expr_%zu_%zu -> expr_%zu_%zu;\n",
                         ctx->bb_ref->id, expr_id, ctx->bb_ref->id, arg_id);
@@ -156,7 +156,7 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
 
       for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
            NEXT(it)) {
-        hir_expr_base *arg = GET(it);
+        hir_expr_base *arg    = GET(it);
         size_t         arg_id = dot_cfg_traverse_expr_node(ctx, arg);
         strbuf_append_f(ctx->buffer, buf, "expr_%zu_%zu -> expr_%zu_%zu;\n",
                         ctx->bb_ref->id, expr_id, ctx->bb_ref->id, arg_id);
@@ -168,7 +168,7 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
 
       for (list_hir_expr_it it = list_hir_expr_begin(self->args); !END(it);
            NEXT(it)) {
-        hir_expr_base *arg = GET(it);
+        hir_expr_base *arg    = GET(it);
         size_t         arg_id = dot_cfg_traverse_expr_node(ctx, arg);
         strbuf_append_f(ctx->buffer, buf, "expr_%zu_%zu -> expr_%zu_%zu;\n",
                         ctx->bb_ref->id, expr_id, ctx->bb_ref->id, arg_id);
@@ -266,7 +266,7 @@ static void dot_cfg_traverse(dot_ctx *ctx, const mir_subroutine *sub) {
 
   for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
        NEXT(it)) {
-    mir_bb *bb = GET(it);
+    mir_bb *bb  = GET(it);
     ctx->bb_ref = bb;
 
     char label[64];
@@ -296,7 +296,7 @@ static void dot_cfg_traverse(dot_ctx *ctx, const mir_subroutine *sub) {
       size_t prev_id = 0;
       for (list_hir_expr_ref_it it = list_hir_expr_ref_begin(bb->hir_exprs);
            !END(it); NEXT(it)) {
-        const hir_expr_base *expr = GET(it);
+        const hir_expr_base *expr    = GET(it);
         size_t               next_id = dot_cfg_traverse_expr(ctx, expr);
 
         if (prev_id) {

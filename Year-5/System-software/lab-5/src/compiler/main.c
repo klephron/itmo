@@ -46,24 +46,24 @@ typedef struct args_struct {
 static args *args_new() {
   args *args = MALLOC(struct args_struct);
 
-  args->prog_name = NULL;
+  args->prog_name   = NULL;
   args->input_files = list_chars_new();
 
-  args->output_dir = ".";
-  args->output_file = "a.asm";
+  args->output_dir    = ".";
+  args->output_file   = "a.asm";
   args->ignore_errors = 0;
-  args->tee = 0;
+  args->tee           = 0;
 
   args->ast = 0;
 
-  args->cfg = 0;
-  args->cfg_add_expr = 0;
-  args->cg = 0;
+  args->cfg            = 0;
+  args->cfg_add_expr   = 0;
+  args->cg             = 0;
   args->cg_subroutines = list_chars_new();
 
-  args->hir_tree = 0;
+  args->hir_tree     = 0;
   args->symbol_table = 0;
-  args->type_table = 0;
+  args->type_table   = 0;
 
   args->mir = 0;
 
@@ -142,7 +142,7 @@ static void parse(args *args, int argc, char *argv[]) {
   }
 
   option_index = 0;
-  has_next = 1;
+  has_next     = 1;
 
   while (has_next) {
     unsigned c;
@@ -172,12 +172,12 @@ static void parse(args *args, int argc, char *argv[]) {
         break;
       case 'h':
         args->help = 1;
-        has_next = 0;
+        has_next   = 0;
         break;
       default:
         args->code = -1;
         args->help = 1;
-        has_next = 0;
+        has_next   = 0;
         break;
     }
   }
@@ -204,10 +204,10 @@ static void ensure_dir_exist(const char *filename) {
 
 // ast - ext, dot - file extension
 static char *get_ast_dot_path(const args *args, const ast *ast) {
-  char *cwd = getcwd(NULL, 0);
+  char *cwd    = getcwd(NULL, 0);
   char *suffix = ".ast.dot";
 
-  const char *fpath = ast->name_ref + strlen(cwd) + 1;
+  const char *fpath  = ast->name_ref + strlen(cwd) + 1;
   char       *prefix = join_paths(args->output_dir, fpath);
 
   char *path = malloc(strlen(prefix) + strlen(suffix) + 1);
@@ -220,10 +220,10 @@ static char *get_ast_dot_path(const args *args, const ast *ast) {
 
 static char *get_c_dot_path(args *args, const char *source, const char *func,
                             const char *ext) {
-  char *cwd = getcwd(NULL, 0);
+  char *cwd    = getcwd(NULL, 0);
   char *suffix = ".dot";
 
-  const char *fpath = source + strlen(cwd) + 1;
+  const char *fpath  = source + strlen(cwd) + 1;
   char       *prefix = join_paths(args->output_dir, fpath);
 
   char *path =
@@ -302,7 +302,7 @@ static int execute(args *args) {
   // stage: tokenize and parse to AST
   for (list_chars_it it = list_chars_begin(args->input_files); !END(it);
        NEXT(it)) {
-    const char *path = GET(it);
+    const char *path   = GET(it);
     char       *source = read_file(path);
 
     ast *ast = ast_build(path, source);
@@ -322,8 +322,8 @@ static int execute(args *args) {
   // stage: dot ast
   if (execute_ok(args) && args->ast) {
     for (list_ast_it it = list_ast_begin(asts); !END(it); NEXT(it)) {
-      ast        *ast = GET(it);
-      dot_string *dot = dot_ast(ast);
+      ast        *ast  = GET(it);
+      dot_string *dot  = dot_ast(ast);
       char       *path = get_ast_dot_path(args, ast);
       write_dot(args, dot, path);
       free(path);
@@ -332,15 +332,15 @@ static int execute(args *args) {
   }
 
   // stage: build hir + handle exceptions
-  hir          *hir = NULL;
+  hir          *hir          = NULL;
   symbol_table *symbol_table = NULL;
-  type_table   *type_table = NULL;
+  type_table   *type_table   = NULL;
 
   if (execute_ok(args)) {
     hir_build_result result = hir_build(asts, args->ignore_errors);
-    hir = result.hir;
-    symbol_table = result.symbol_table;
-    type_table = result.type_table;
+    hir                     = result.hir;
+    symbol_table            = result.symbol_table;
+    type_table              = result.type_table;
 
     if (list_exception_count_by_level(result.exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
@@ -406,9 +406,9 @@ static int execute(args *args) {
     for (list_mir_subroutine_it it =
              list_mir_subroutine_begin(mir->global_subs);
          !END(it); NEXT(it)) {
-      const mir_subroutine *sub = GET(it);
+      const mir_subroutine *sub      = GET(it);
       const char           *sub_name = sub->symbol_ref->name;
-      const char           *source = sub->symbol_ref->span->source_ref;
+      const char           *source   = sub->symbol_ref->span->source_ref;
 
       dot_string *dot =
           dot_cfg(mir, hir, type_table, symbol_table, sub, args->cfg_add_expr);
@@ -424,12 +424,12 @@ static int execute(args *args) {
     for (list_mir_subroutine_it it =
              list_mir_subroutine_begin(mir->global_subs);
          !END(it); NEXT(it)) {
-      const mir_subroutine *sub = GET(it);
+      const mir_subroutine *sub      = GET(it);
       const char           *sub_name = sub->symbol_ref->name;
-      const char           *source = sub->symbol_ref->span->source_ref;
+      const char           *source   = sub->symbol_ref->span->source_ref;
 
       if (has_subroutine(args, sub_name)) {
-        dot_string *dot = dot_cg(mir, type_table, symbol_table, sub);
+        dot_string *dot    = dot_cg(mir, type_table, symbol_table, sub);
         char       *output = get_cg_dot_path(args, source, sub_name);
         write_dot(args, dot, output);
         free(output);

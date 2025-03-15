@@ -9,8 +9,8 @@ void list_init(list *self, container_f_cmp cmp, container_f_new new,
   self->head = NULL;
   self->tail = NULL;
 
-  self->f_cmp = cmp;
-  self->f_new = new;
+  self->f_cmp    = cmp;
+  self->f_new    = new;
   self->f_delete = delete;
 }
 
@@ -48,8 +48,8 @@ list_it list_find(const list *self, const void *data) {
 
 void list_push_back(list *self, void *data) {
   list_node *node = MALLOC(list_node);
-  node->data = self->f_new(data);
-  node->next = NULL;
+  node->data      = self->f_new(data);
+  node->next      = NULL;
 
   if (self->tail) {
     self->tail->next = node;
@@ -61,9 +61,9 @@ void list_push_back(list *self, void *data) {
 
 void list_push_front(list *self, void *data) {
   list_node *node = MALLOC(list_node);
-  node->data = self->f_new(data);
-  node->next = self->head;
-  self->head = node;
+  node->data      = self->f_new(data);
+  node->next      = self->head;
+  self->head      = node;
   if (!self->tail) {
     self->tail = node;
   }
@@ -82,7 +82,7 @@ int list_empty(const list *self) { return !self->head; }
 // won't free data
 void *list_pop_front(list *self) {
   list_node *node = self->head;
-  self->head = node->next;
+  self->head      = node->next;
   if (!self->head) {
     self->tail = NULL;
   }

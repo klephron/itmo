@@ -6,16 +6,16 @@
 void hir_expr_base_init(hir_expr_base *self, span *span, hir_expr_enum kind,
                         hir_type_base *type) {
   hir_base_init(&self->base, span, HIR_NODE_EXPR);
-  self->state = HIR_STATE_INITIAL;
-  self->kind = kind;
+  self->state    = HIR_STATE_INITIAL;
+  self->kind     = kind;
   self->type_hir = type;
 }
 
 void hir_expr_base_init_typed(hir_expr_base *self, span *span,
                               hir_expr_enum kind, type_entry *type_ref) {
   hir_base_init(&self->base, span, HIR_NODE_EXPR);
-  self->state = HIR_STATE_INITIAL | HIR_STATE_BIND_TYPE;
-  self->kind = kind;
+  self->state    = HIR_STATE_INITIAL | HIR_STATE_BIND_TYPE;
+  self->kind     = kind;
   self->type_ref = type_ref;
 }
 
@@ -55,7 +55,7 @@ hir_expr_unary *hir_expr_unary_new(span *span, hir_type_base *type,
                                    hir_expr_base      *first) {
   hir_expr_unary *self = MALLOC(hir_expr_unary);
   hir_expr_base_init(&self->base, span, HIR_EXPR_UNARY, type);
-  self->op = op;
+  self->op    = op;
   self->first = first;
   return self;
 }
@@ -65,7 +65,7 @@ hir_expr_unary *hir_expr_unary_new_typed(span *span, type_entry *type_ref,
                                          hir_expr_base      *first) {
   hir_expr_unary *self = MALLOC(hir_expr_unary);
   hir_expr_base_init_typed(&self->base, span, HIR_EXPR_UNARY, type_ref);
-  self->op = op;
+  self->op    = op;
   self->first = first;
   return self;
 }
@@ -84,8 +84,8 @@ hir_expr_binary *hir_expr_binary_new(span *span, hir_type_base *type,
                                      hir_expr_base       *second) {
   hir_expr_binary *self = MALLOC(hir_expr_binary);
   hir_expr_base_init(&self->base, span, HIR_EXPR_BINARY, type);
-  self->op = op;
-  self->first = first;
+  self->op     = op;
+  self->first  = first;
   self->second = second;
   return self;
 }
@@ -96,8 +96,8 @@ hir_expr_binary *hir_expr_binary_new_typed(span *span, type_entry *type_ref,
                                            hir_expr_base       *second) {
   hir_expr_binary *self = MALLOC(hir_expr_binary);
   hir_expr_base_init_typed(&self->base, span, HIR_EXPR_BINARY, type_ref);
-  self->op = op;
-  self->first = first;
+  self->op     = op;
+  self->first  = first;
   self->second = second;
   return self;
 }
@@ -167,7 +167,7 @@ hir_expr_call *hir_expr_call_new(span *span, hir_type_base *type,
   hir_expr_call *self = MALLOC(hir_expr_call);
   hir_expr_base_init(&self->base, span, HIR_EXPR_CALL, type);
   self->callee = callee;
-  self->args = args;
+  self->args   = args;
   return self;
 }
 
@@ -177,7 +177,7 @@ hir_expr_call *hir_expr_call_new_typed(span *span, type_entry *type_ref,
   hir_expr_call *self = MALLOC(hir_expr_call);
   hir_expr_base_init_typed(&self->base, span, HIR_EXPR_CALL, type_ref);
   self->callee = callee;
-  self->args = args;
+  self->args   = args;
   return self;
 }
 
@@ -196,7 +196,7 @@ hir_expr_index *hir_expr_index_new(span *span, hir_type_base *type,
   hir_expr_index *self = MALLOC(hir_expr_index);
   hir_expr_base_init(&self->base, span, HIR_EXPR_INDEX, type);
   self->indexed = indexed;
-  self->args = args;
+  self->args    = args;
   return self;
 }
 
@@ -206,7 +206,7 @@ hir_expr_index *hir_expr_index_new_typed(span *span, type_entry *type_ref,
   hir_expr_index *self = MALLOC(hir_expr_index);
   hir_expr_base_init_typed(&self->base, span, HIR_EXPR_INDEX, type_ref);
   self->indexed = indexed;
-  self->args = args;
+  self->args    = args;
   return self;
 }
 

@@ -6,7 +6,7 @@
 #include <string.h>
 
 char *escape_html(const char *str) {
-  size_t len = strlen(str);
+  size_t len     = strlen(str);
   size_t new_len = len * 6; // worst case
 
   char *out = (char *)malloc(new_len + 1);
@@ -94,7 +94,7 @@ char *trim_start(char *str_m) {
 }
 
 char *trim(char *str_m) {
-  char *cur = trim_start(str_m);
+  char *cur   = trim_start(str_m);
   char *n_str = strdup(cur);
   free(str_m);
   return trim_end(n_str);

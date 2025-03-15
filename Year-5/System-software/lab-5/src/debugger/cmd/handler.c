@@ -9,9 +9,9 @@
 #include <string.h>
 
 cmd_handler *cmd_handler_new() {
-  cmd_handler *self = MALLOC(cmd_handler);
-  self->cmds = hashset_cmd_new();
-  self->cmd_prev = NULL;
+  cmd_handler *self   = MALLOC(cmd_handler);
+  self->cmds          = hashset_cmd_new();
+  self->cmd_prev      = NULL;
   self->cmd_prev_rest = NULL;
   return self;
 }
@@ -34,15 +34,15 @@ void cmd_handler_register(cmd_handler *self, cmd *entry) {
 
 void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
   char  c_tmp;
-  char *args = strdup(cmd_ref);
+  char *args       = strdup(cmd_ref);
   char *args_start = trim_start(args);
-  char *args_rest = args_start;
+  char *args_rest  = args_start;
 
   while (*args_rest && !isspace((unsigned char)*args_rest)) {
     ++args_rest;
   }
   // break string to hash it
-  c_tmp = *args_rest;
+  c_tmp      = *args_rest;
   *args_rest = '\0';
 
   // repeat command if exists

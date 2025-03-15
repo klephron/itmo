@@ -5,8 +5,8 @@
 #include "x86_64/proxy/value/string.h"
 #include "x86_64/util.h"
 
-void __x86_64_proxy_op_undefined(x86_64_value *out, x86_64_value *self,
-                                 const char *op) {
+void __x86_64_proxy_op_error_undefined(x86_64_value *out, x86_64_value *self,
+                                       const char *op) {
   strbuf *buffer = strbuf_new(64, 0);
 
   x86_64_value self_string;
@@ -32,8 +32,9 @@ void __x86_64_proxy_op_undefined(x86_64_value *out, x86_64_value *self,
   *out = error;
 }
 
-void __x86_64_proxy_op_type_mismatch(x86_64_value *out, x86_64_value *self,
-                                     const char *op, x86_64_type_enum type) {
+void __x86_64_proxy_op_error_type_mismatch(x86_64_value *out,
+                                           x86_64_value *self, const char *op,
+                                           x86_64_type_enum type) {
   strbuf *buffer = strbuf_new(64, 0);
 
   x86_64_value self_string;

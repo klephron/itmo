@@ -5,8 +5,8 @@
 
 type_entry *type_entry_new(type_base *type, span *span) {
   type_entry *self = MALLOC(type_entry);
-  self->type = type;
-  self->span = span;
+  self->type       = type;
+  self->span       = span;
   return self;
 }
 
@@ -20,7 +20,7 @@ void type_entry_free(type_entry *self) {
 
 type_table *type_table_new() {
   type_table *self = MALLOC(type_table);
-  self->entries = list_type_entry_new();
+  self->entries    = list_type_entry_new();
   return self;
 }
 
@@ -32,7 +32,7 @@ void type_table_free(type_table *self) {
 }
 
 type_entry *type_table_emplace(type_table *self, type_base *type, span *span) {
-  type_entry *entry = type_entry_new(type, span);
+  type_entry *entry    = type_entry_new(type, span);
   type->type_entry_ref = entry;
   list_type_entry_push_back(self->entries, entry);
   return entry;

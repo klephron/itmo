@@ -19,108 +19,108 @@ void __x86_64_proxy_string_init(x86_64_value *out, const uint8_t *value) {
 }
 
 void __x86_64_proxy_string_op_plus(x86_64_value *out, x86_64_value *self) {
-  __x86_64_proxy_op_undefined(out, self, "plus");
+  __x86_64_proxy_op_error_undefined(out, self, "plus");
 }
 
 void __x86_64_proxy_string_op_minus(x86_64_value *out, x86_64_value *self) {
-  __x86_64_proxy_op_undefined(out, self, "minus");
+  __x86_64_proxy_op_error_undefined(out, self, "minus");
 }
 
 void __x86_64_proxy_string_op_not(x86_64_value *out, x86_64_value *self) {
-  __x86_64_proxy_op_undefined(out, self, "not");
+  __x86_64_proxy_op_error_undefined(out, self, "not");
 }
 
 void __x86_64_proxy_string_op_bit_not(x86_64_value *out, x86_64_value *self) {
-  __x86_64_proxy_op_undefined(out, self, "bit_not");
+  __x86_64_proxy_op_error_undefined(out, self, "bit_not");
 }
 
 void __x86_64_proxy_string_op_inc(x86_64_value *out, x86_64_value *self) {
-  __x86_64_proxy_op_undefined(out, self, "inc");
+  __x86_64_proxy_op_error_undefined(out, self, "inc");
 }
 
 void __x86_64_proxy_string_op_dec(x86_64_value *out, x86_64_value *self) {
-  __x86_64_proxy_op_undefined(out, self, "dec");
+  __x86_64_proxy_op_error_undefined(out, self, "dec");
 }
 
 void __x86_64_proxy_string_op_or(x86_64_value *out, x86_64_value *self,
                                  x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "or");
+  __x86_64_proxy_op_error_undefined(out, self, "or");
 }
 
 void __x86_64_proxy_string_op_and(x86_64_value *out, x86_64_value *self,
                                   x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "and");
+  __x86_64_proxy_op_error_undefined(out, self, "and");
 }
 
 void __x86_64_proxy_string_op_bit_or(x86_64_value *out, x86_64_value *self,
                                      x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "bit_or");
+  __x86_64_proxy_op_error_undefined(out, self, "bit_or");
 }
 
 void __x86_64_proxy_string_op_bit_xor(x86_64_value *out, x86_64_value *self,
                                       x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "bit_xor");
+  __x86_64_proxy_op_error_undefined(out, self, "bit_xor");
 }
 
 void __x86_64_proxy_string_op_bit_and(x86_64_value *out, x86_64_value *self,
                                       x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "bit_and");
+  __x86_64_proxy_op_error_undefined(out, self, "bit_and");
 }
 
 void __x86_64_proxy_string_op_eq(x86_64_value *out, x86_64_value *self,
                                  x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "eq");
+  __x86_64_proxy_op_error_undefined(out, self, "eq");
 }
 
 void __x86_64_proxy_string_op_neq(x86_64_value *out, x86_64_value *self,
                                   x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "neq");
+  __x86_64_proxy_op_error_undefined(out, self, "neq");
 }
 
 void __x86_64_proxy_string_op_less(x86_64_value *out, x86_64_value *self,
                                    x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "less");
+  __x86_64_proxy_op_error_undefined(out, self, "less");
 }
 
 void __x86_64_proxy_string_op_less_eq(x86_64_value *out, x86_64_value *self,
                                       x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "less_eq");
+  __x86_64_proxy_op_error_undefined(out, self, "less_eq");
 }
 
 void __x86_64_proxy_string_op_bit_shl(x86_64_value *out, x86_64_value *self,
                                       x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "bit_shl");
+  __x86_64_proxy_op_error_undefined(out, self, "bit_shl");
 }
 
 void __x86_64_proxy_string_op_bit_shr(x86_64_value *out, x86_64_value *self,
                                       x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "bit_shr");
+  __x86_64_proxy_op_error_undefined(out, self, "bit_shr");
 }
 
 void __x86_64_proxy_string_op_add(x86_64_value *out, x86_64_value *self,
                                   x86_64_value *rsv) {
 
   if (self->type != rsv->type) {
-    __x86_64_proxy_op_type_mismatch(out, rsv, "add", self->type);
+    __x86_64_proxy_op_error_type_mismatch(out, rsv, "add", self->type);
     return;
   }
 
   x86_64_data_string self_data = *(x86_64_data_string *)&self->data_raw;
-  x86_64_data_string rsv_data = *(x86_64_data_string *)&rsv->data_raw;
+  x86_64_data_string rsv_data  = *(x86_64_data_string *)&rsv->data_raw;
 
   size_t self_size = strlen((char *)self_data.value);
-  size_t rsv_size = strlen((char *)rsv_data.value);
+  size_t rsv_size  = strlen((char *)rsv_data.value);
 
   x86_64_data_string data = {.value =
                                  (uint8_t *)malloc(self_size + rsv_size + 1)};
@@ -138,29 +138,29 @@ void __x86_64_proxy_string_op_add(x86_64_value *out, x86_64_value *self,
 void __x86_64_proxy_string_op_sub(x86_64_value *out, x86_64_value *self,
                                   x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "sub");
+  __x86_64_proxy_op_error_undefined(out, self, "sub");
 }
 
 void __x86_64_proxy_string_op_mul(x86_64_value *out, x86_64_value *self,
                                   x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "mul");
+  __x86_64_proxy_op_error_undefined(out, self, "mul");
 }
 
 void __x86_64_proxy_string_op_div(x86_64_value *out, x86_64_value *self,
                                   x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "div");
+  __x86_64_proxy_op_error_undefined(out, self, "div");
 }
 
 void __x86_64_proxy_string_op_rem(x86_64_value *out, x86_64_value *self,
                                   x86_64_value *rsv) {
   UNUSED(rsv);
-  __x86_64_proxy_op_undefined(out, self, "rem");
+  __x86_64_proxy_op_error_undefined(out, self, "rem");
 }
 
 void __x86_64_proxy_string_op_call(x86_64_value *out, x86_64_value *self, ...) {
-  __x86_64_proxy_op_undefined(out, self, "call");
+  __x86_64_proxy_op_error_undefined(out, self, "call");
 }
 
 x86_64_op_index __x86_64_proxy_string_op_index;

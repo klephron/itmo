@@ -118,10 +118,10 @@ static void fn_out_le_8bytes(context *ctx, uint64_t data, char format,
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  char *args = trim(strdup(rest));
-  char *arg_n = NULL;
-  char *arg_format = NULL;
-  char *arg_size = NULL;
+  char *args        = trim(strdup(rest));
+  char *arg_n       = NULL;
+  char *arg_format  = NULL;
+  char *arg_size    = NULL;
   char *arg_address = NULL;
 
   if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
@@ -130,22 +130,22 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   {
     char *token_args = strdup(args);
-    char *token = strtok(token_args, " ");
+    char *token      = strtok(token_args, " ");
     if (token) {
       arg_n = strdup(token);
       token = strtok(NULL, " ");
     }
     if (token) {
       arg_format = strdup(token);
-      token = strtok(NULL, " ");
+      token      = strtok(NULL, " ");
     }
     if (token) {
       arg_size = strdup(token);
-      token = strtok(NULL, " ");
+      token    = strtok(NULL, " ");
     }
     if (token) {
       arg_address = strdup(token);
-      token = strtok(NULL, " ");
+      token       = strtok(NULL, " ");
     }
     if (token_args) {
       free(token_args);

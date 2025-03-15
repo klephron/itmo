@@ -7,18 +7,18 @@
 hir_subroutine_body *hir_subroutine_body_new_block(list_hir_var   *vars,
                                                    hir_stmt_block *block) {
   hir_subroutine_body *self = MALLOC(hir_subroutine_body);
-  self->kind = HIR_SUBROUTINE_BODY_BLOCK;
-  self->body.block.vars = vars;
-  self->body.block.block = block;
+  self->kind                = HIR_SUBROUTINE_BODY_BLOCK;
+  self->body.block.vars     = vars;
+  self->body.block.block    = block;
   return self;
 }
 
 hir_subroutine_body *hir_subroutine_body_new_import(hir_lit *entry,
                                                     hir_lit *lib) {
   hir_subroutine_body *self = MALLOC(hir_subroutine_body);
-  self->kind = HIR_SUBROUTINE_BODY_IMPORT;
-  self->body.import.entry = entry;
-  self->body.import.lib = lib;
+  self->kind                = HIR_SUBROUTINE_BODY_IMPORT;
+  self->body.import.entry   = entry;
+  self->body.import.lib     = lib;
   return self;
 }
 
@@ -48,11 +48,11 @@ hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
                                    hir_subroutine_body *body) {
   hir_subroutine *self = MALLOC(hir_subroutine);
   hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
-  self->state = HIR_STATE_INITIAL;
-  self->id_hir = id;
-  self->params = params;
+  self->state    = HIR_STATE_INITIAL;
+  self->id_hir   = id;
+  self->params   = params;
   self->type_ret = ret_type;
-  self->body = body;
+  self->body     = body;
   return self;
 }
 
@@ -62,11 +62,11 @@ hir_subroutine *hir_subroutine_new_typed(span *span, hir_id *id,
                                          hir_subroutine_body *body) {
   hir_subroutine *self = MALLOC(hir_subroutine);
   hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
-  self->state = HIR_STATE_INITIAL | HIR_STATE_BIND_TYPE;
-  self->id_hir = id;
-  self->params = params;
+  self->state    = HIR_STATE_INITIAL | HIR_STATE_BIND_TYPE;
+  self->id_hir   = id;
+  self->params   = params;
   self->type_ref = type_ref;
-  self->body = body;
+  self->body     = body;
   return self;
 }
 

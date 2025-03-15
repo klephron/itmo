@@ -25,8 +25,8 @@ typedef struct hir_type_tmpl_struct {
 static hir_type_tmpl *hir_type_tmpl_new(const type_base *type_ref,
                                         const hir_base  *template_ref) {
   hir_type_tmpl *self = MALLOC(hir_type_tmpl);
-  self->type_ref = type_ref;
-  self->template_ref = template_ref;
+  self->type_ref      = type_ref;
+  self->template_ref  = template_ref;
   return self;
 }
 
@@ -77,8 +77,8 @@ typedef struct hir_type_map_struct {
 static hir_type_map *hir_type_map_new(const type_base *from,
                                       const type_base *to) {
   hir_type_map *self = MALLOC(hir_type_map);
-  self->from = from;
-  self->to = to;
+  self->from         = from;
+  self->to           = to;
   return self;
 }
 
@@ -124,17 +124,17 @@ typedef struct hir_ctx_struct {
 static void hir_ctx_init(hir_ctx *ctx, type_table *type_table,
                          list_exception *exceptions,
                          list_hir_class *hir_classes) {
-  ctx->hir_tmpl_classes = list_hir_class_new();
+  ctx->hir_tmpl_classes  = list_hir_class_new();
   ctx->map_type_hir_tmpl = hashset_hir_type_tmpl_new();
-  ctx->insted_types = hashset_type_ref_new();
-  ctx->registered_types = hashset_type_ref_new();
-  ctx->instto_types = list_type_mono_ref_new();
+  ctx->insted_types      = hashset_type_ref_new();
+  ctx->registered_types  = hashset_type_ref_new();
+  ctx->instto_types      = list_type_mono_ref_new();
 
   ctx->map_type_tmpl = NULL;
 
-  ctx->type_table = type_table;
+  ctx->type_table  = type_table;
   ctx->hir_classes = hir_classes;
-  ctx->exceptions = exceptions;
+  ctx->exceptions  = exceptions;
 }
 
 static void hir_ctx_deinit(hir_ctx *ctx) {
@@ -146,9 +146,9 @@ static void hir_ctx_deinit(hir_ctx *ctx) {
 
   ctx->map_type_tmpl = NULL; // typenames in this context
 
-  ctx->type_table = NULL;
+  ctx->type_table  = NULL;
   ctx->hir_classes = NULL;
-  ctx->exceptions = NULL;
+  ctx->exceptions  = NULL;
 }
 
 static type_base *hir_ctx_type_tmpl_find(hir_ctx *ctx, const type_base *type) {
@@ -250,7 +250,7 @@ hir_get_mono_full_class_types(type_table *type_table) {
   for (list_type_entry_it it = list_type_entry_begin(type_table->entries);
        !END(it); NEXT(it)) {
     const type_entry *entry = GET(it);
-    type_base        *type = entry->type;
+    type_base        *type  = entry->type;
 
     type_mono_enum mono = type_fetch_mono(type);
     switch (mono) {
@@ -403,7 +403,7 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
           list_type_ref *new_params = list_type_ref_new();
           for (list_type_ref_it it = list_type_ref_begin(self->params);
                !END(it); NEXT(it)) {
-            type_base *param = GET(it);
+            type_base *param     = GET(it);
             type_base *new_param = hir_expand_type(ctx, param);
             if (param != new_param) {
               type_changed = 1;
@@ -426,7 +426,7 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
           list_type_ref *new_parents = list_type_ref_new();
           for (list_type_ref_it it = list_type_ref_begin(self->parents);
                !END(it); NEXT(it)) {
-            type_base *parent = GET(it);
+            type_base *parent     = GET(it);
             type_base *new_parent = hir_expand_type(ctx, parent);
             if (parent != new_parent) {
               type_changed = 1;
@@ -627,7 +627,7 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
           hir_expand_templates_stmt(ctx, self->jz));
     }
     case HIR_STMT_BLOCK: {
-      const hir_stmt_block *self = (typeof(self))stmt_t;
+      const hir_stmt_block *self  = (typeof(self))stmt_t;
       list_hir_stmt        *stmts = list_hir_stmt_new();
       for (list_hir_stmt_it it = list_hir_stmt_begin(self->stmts); !END(it);
            NEXT(it)) {
@@ -734,7 +734,7 @@ static hir_class *hir_expand_templates_class(hir_ctx   *ctx,
                         tit = list_type_ref_begin(mono_type->types);
        !END(tit); NEXT(fit), NEXT(tit)) {
     type_base *from_type = GET(fit);
-    type_base *to_type = GET(tit);
+    type_base *to_type   = GET(tit);
     hashset_hir_type_map_insert(ctx->map_type_tmpl,
                                 hir_type_map_new(from_type, to_type));
 

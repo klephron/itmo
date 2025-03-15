@@ -9,7 +9,7 @@
 void __x86_64_proxy_void_init(x86_64_value *out) {
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_VOID];
 
-  out->type = X86_64_TYPE_VOID;
+  out->type   = X86_64_TYPE_VOID;
   out->op_tbl = (x86_64_op_tbl *)op_tbl;
 }
 
@@ -165,9 +165,34 @@ void __x86_64_proxy_void_op_index(x86_64_value *out, x86_64_value *self, ...) {
   __x86_64_proxy_void_init(out);
 }
 
-void __x86_64_proxy_void_op_repr(x86_64_value *out, x86_64_value *self) {
+void __x86_64_proxy_void_op_index_ref(x86_64_value *out, x86_64_value *self,
+                                      ...) {
   UNUSED(self);
-  __x86_64_proxy_string_init(out, (const uint8_t *)"()");
+  __x86_64_proxy_void_init(out);
+}
+
+void __x86_64_proxy_void_op_member(x86_64_value *out, x86_64_value *self,
+                                   const uint8_t *member) {
+  UNUSED(self);
+  UNUSED(member);
+  __x86_64_proxy_void_init(out);
+}
+
+void __x86_64_proxy_void_op_member_ref(x86_64_value *out, x86_64_value *self,
+                                       const uint8_t *member) {
+  UNUSED(self);
+  UNUSED(member);
+  __x86_64_proxy_void_init(out);
+}
+
+void __x86_64_proxy_void_op_deref(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_void_init(out);
+}
+
+void __x86_64_proxy_void_op_assign(x86_64_value *self, x86_64_value *other) {
+  UNUSED(self);
+  other->op_tbl->op_copy(self, other);
 }
 
 void __x86_64_proxy_void_op_drop(x86_64_value *self) { UNUSED(self); }
@@ -177,16 +202,14 @@ void __x86_64_proxy_void_op_copy(x86_64_value *out, x86_64_value *self) {
   __x86_64_proxy_void_init(out);
 }
 
-void __x86_64_proxy_void_op_assign(x86_64_value *self, x86_64_value *other) {
+void __x86_64_proxy_void_op_cast(x86_64_value *out, x86_64_value *self,
+                                 x86_64_type_enum type, ...) {
   UNUSED(self);
-  if (self == other) {
-    return;
-  }
-  other->op_tbl->op_copy(self, other);
+  UNUSED(type);
+  __x86_64_proxy_void_init(out);
 }
 
-// void __x86_64_proxy_void_op_assign_deref(x86_64_value *self,
-//                                          x86_64_value *other) {
-//   UNUSED(other);
-//   __x86_64_proxy_op_undefined(self, self, "assign_deref");
-// }
+void __x86_64_proxy_void_op_repr(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"()");
+}

@@ -2,8 +2,8 @@
 #include "util/macro.h"
 
 hir *hir_new() {
-  hir *self = MALLOC(hir);
-  self->classes = list_hir_class_new();
+  hir *self         = MALLOC(hir);
+  self->classes     = list_hir_class_new();
   self->subroutines = list_hir_subroutine_new();
   return self;
 }

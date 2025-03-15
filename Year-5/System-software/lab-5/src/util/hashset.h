@@ -101,30 +101,30 @@ int   hashset_it_next(hashset_it *it);
   __attribute__((__unused__)) static inline hashset_type##_it                  \
       hashset_type##_find(hashset_type *self, type *data) {                    \
     return (hashset_type##_it){                                                \
-        .it = hashset_find(&self->hashset, (void *)data),                      \
-        .get = hashset_type##_it_get,                                          \
+        .it   = hashset_find(&self->hashset, (void *)data),                    \
+        .get  = hashset_type##_it_get,                                         \
         .next = hashset_type##_it_next,                                        \
-        .end = hashset_type##_it_end,                                          \
+        .end  = hashset_type##_it_end,                                         \
     };                                                                         \
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline hashset_type##_it                  \
       hashset_type##_insert(hashset_type *self, type *data) {                  \
     return (hashset_type##_it){                                                \
-        .it = hashset_insert(&self->hashset, (void *)data),                    \
-        .get = hashset_type##_it_get,                                          \
+        .it   = hashset_insert(&self->hashset, (void *)data),                  \
+        .get  = hashset_type##_it_get,                                         \
         .next = hashset_type##_it_next,                                        \
-        .end = hashset_type##_it_end,                                          \
+        .end  = hashset_type##_it_end,                                         \
     };                                                                         \
   }                                                                            \
                                                                                \
   __attribute__((__unused__)) static inline hashset_type##_it                  \
       hashset_type##_begin(const hashset_type *self) {                         \
     return (hashset_type##_it){                                                \
-        .it = hashset_begin((hashset *)&self->hashset),                        \
-        .get = hashset_type##_it_get,                                          \
+        .it   = hashset_begin((hashset *)&self->hashset),                      \
+        .get  = hashset_type##_it_get,                                         \
         .next = hashset_type##_it_next,                                        \
-        .end = hashset_type##_it_end,                                          \
+        .end  = hashset_type##_it_end,                                         \
     };                                                                         \
   }                                                                            \
                                                                                \

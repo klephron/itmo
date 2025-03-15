@@ -3,9 +3,9 @@
 #include "compiler/span/span.h"
 
 typedef enum hir_state_enum {
-  HIR_STATE_INITIAL = 0,
-  HIR_STATE_BIND_TYPE = 1 << 0,
-  HIR_STATE_BIND_SYMBOL = 1 << 1,
+  HIR_STATE_INITIAL              = 0,
+  HIR_STATE_BIND_TYPE            = 1 << 0,
+  HIR_STATE_BIND_SYMBOL          = 1 << 1,
   HIR_STATE_BIND_SYMBOL_AND_TYPE = HIR_STATE_BIND_SYMBOL | HIR_STATE_BIND_TYPE,
 } hir_state_enum;
 

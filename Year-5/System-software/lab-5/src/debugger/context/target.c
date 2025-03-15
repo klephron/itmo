@@ -60,7 +60,7 @@ target_state_enum context_tg_set(context *self, uint64_t abfd_asymbols_count,
   if (self->fname) {
     free(self->fname);
   }
-  self->fname = fname;
+  self->fname    = fname;
   self->s_target = TARGET_NOT_RUNNING;
 
   // WARN: disabled debug context (enable when fixed)
@@ -76,7 +76,7 @@ target_state_enum context_tg_wait(context *self) {
   if (wres == -1) {
     return TARGET_ERROR;
   } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
-    self->pid = 0;
+    self->pid      = 0;
     self->s_target = TARGET_NOT_RUNNING;
   } else if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP) {
     siginfo_t siginfo;
@@ -146,7 +146,7 @@ target_state_enum context_tg_peekdata(context *self, uint64_t address,
                                       uint64_t *data_p) {
   uint64_t data;
 
-  data = ptrace(PTRACE_PEEKDATA, self->pid, address, NULL);
+  data  = ptrace(PTRACE_PEEKDATA, self->pid, address, NULL);
   errno = 0;
   if (errno) {
     return TARGET_ERROR;
@@ -176,7 +176,7 @@ target_state_enum context_tg_pokedata(context *self, uint64_t address,
     breakpoint *b = GET(b_it);
     if (b->is_placed) {
       b->data = peekdata_brkpt_to_store(data);
-      data = peekdata_brkpt_with_int3(data);
+      data    = peekdata_brkpt_with_int3(data);
     }
   }
 

@@ -159,11 +159,11 @@ uint64_t type_hash(const type_base *lsv) {
   switch (lsv->kind) {
     case TYPE_PRIMITIVE: {
       const type_primitive *l = (const type_primitive *)lsv;
-      hash = hash_combine(hash, (uint64_t)l->type);
+      hash                    = hash_combine(hash, (uint64_t)l->type);
     } break;
     case TYPE_ARRAY: {
       const type_array *l = (const type_array *)lsv;
-      hash = hash_combine(hash, type_hash(l->element_ref));
+      hash                = hash_combine(hash, type_hash(l->element_ref));
     } break;
     case TYPE_CALLABLE: {
       const type_callable *l = (const type_callable *)lsv;

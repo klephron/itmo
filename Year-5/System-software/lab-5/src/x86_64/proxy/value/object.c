@@ -9,7 +9,7 @@ void __x86_64_proxy_object_init(x86_64_value                     *out,
 
   x86_64_data_object *data = malloc(sizeof(x86_64_data_object) +
                                     symbols->count * sizeof(x86_64_value));
-  data->symbols_ref = symbols;
+  data->symbols_ref        = symbols;
   for (uint64_t i = 0; i < symbols->count; ++i) {
     __x86_64_proxy_void_init(data->members + i);
   }

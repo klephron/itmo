@@ -13,8 +13,8 @@ typedef struct type_map_struct {
 
 static type_map *type_map_new(const type_base *from, const type_base *to) {
   type_map *self = MALLOC(type_map);
-  self->from = from;
-  self->to = to;
+  self->from     = from;
+  self->to       = to;
   return self;
 }
 
@@ -176,7 +176,7 @@ static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,
       case TYPE_CLASS_T: {
         // add mapping for replacement
         const type_class_t *tmpl = (type_class_t *)type->type_ref;
-        for (list_type_ref_it it = list_type_ref_begin(type->types),
+        for (list_type_ref_it it   = list_type_ref_begin(type->types),
                               t_it = list_type_ref_begin(tmpl->typenames);
              !END(it) && !END(t_it); NEXT(it), NEXT(t_it)) {
           hashset_type_map_insert(ctx->map, type_map_new(GET(t_it), GET(it)));
@@ -267,7 +267,7 @@ char *type_str(const type_base *generic) {
     strbuf *buffer = strbuf_new(16, 0);
 
     type_ctx ctx = {
-        .map = hashset_type_map_new(),
+        .map       = hashset_type_map_new(),
         .type_root = 1,
     };
 

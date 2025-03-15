@@ -11,8 +11,8 @@ static const char *help = "Usage: <command> <file>";
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  bfd      *abfd = NULL;
-  char     *args = NULL;
+  bfd      *abfd          = NULL;
+  char     *args          = NULL;
   asymbol **abfd_asymbols = NULL;
 
   args = trim(strdup(rest));

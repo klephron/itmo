@@ -14,18 +14,18 @@ static void hir_dispay_error(pANTLR3_BASE_RECOGNIZER recognizer,
   pANTLR3_BASE_TREE theBaseTree;
 
   exception_helper exh;
-  exh.level = EXCEPTION_LEVEL_ERROR;
-  exh.stream = (char *)ctx->ast_cur_ref->name_ref;
-  exh.type = EXCEPTION_TREE;
+  exh.level   = EXCEPTION_LEVEL_ERROR;
+  exh.stream  = (char *)ctx->ast_cur_ref->name_ref;
+  exh.type    = EXCEPTION_TREE;
   exh.subtype = EXCEPTION_TREE_UNEXPECTED_NODE;
-  exh.line = 0;
-  exh.offset = 0;
-  exh.name = recognizer->state->exception->message;
+  exh.line    = 0;
+  exh.offset  = 0;
+  exh.name    = recognizer->state->exception->message;
 
   switch (recognizer->type) {
     case ANTLR3_TYPE_TREE_PARSER:
       theBaseTree = (pANTLR3_BASE_TREE)(recognizer->state->exception->token);
-      ttext = theBaseTree->toStringTree(theBaseTree);
+      ttext       = theBaseTree->toStringTree(theBaseTree);
 
       if (theBaseTree != NULL) {
         exc = exception_new_from_helper(
@@ -44,24 +44,24 @@ static void hir_dispay_error(pANTLR3_BASE_RECOGNIZER recognizer,
 
 hir_lower_ast_result hir_lower_ast(const list_ast *asts) {
   hir_lower_ast_result result = {
-      .hir = hir_new(),
+      .hir        = hir_new(),
       .exceptions = list_exception_new(),
   };
 
   hir_lower_ast_ctx ctx = {
-      .hir_ref = result.hir,
+      .hir_ref    = result.hir,
       .exceptions = result.exceptions,
   };
 
   for (list_ast_it it = list_ast_begin(asts); !END(it); NEXT(it)) {
-    const ast *ast = GET(it);
+    const ast *ast  = GET(it);
     ctx.ast_cur_ref = ast;
 
     ANTLR3_COMMON_TREE_NODE_STREAM *nodes =
         antlr3CommonTreeNodeStreamNewTree(ast->tree, ANTLR3_SIZE_HINT);
     HirBuilder *builder = HirBuilderNew(nodes);
 
-    builder->pTreeParser->rec->state->userp = &ctx;
+    builder->pTreeParser->rec->state->userp            = &ctx;
     builder->pTreeParser->rec->displayRecognitionError = hir_dispay_error;
 
     builder->source(builder);

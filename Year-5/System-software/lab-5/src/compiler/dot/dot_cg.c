@@ -14,8 +14,8 @@ typedef struct dot_sym_sub_struct {
 static dot_sym_sub *dot_sym_sub_new(const symbol_entry   *sym,
                                     const mir_subroutine *sub) {
   dot_sym_sub *self = MALLOC(dot_sym_sub);
-  self->sym = sym;
-  self->sub = sub;
+  self->sym         = sym;
+  self->sub         = sub;
   return self;
 }
 
@@ -45,8 +45,8 @@ typedef struct dot_sub_struct {
 
 static dot_sub *dot_sub_new(const mir_subroutine *sub, size_t id) {
   dot_sub *self = MALLOC(dot_sub);
-  self->sub = sub;
-  self->id = id;
+  self->sub     = sub;
+  self->id      = id;
   return self;
 }
 
@@ -76,10 +76,10 @@ typedef struct dot_ctx_struct {
 } dot_ctx;
 
 static void dot_ctx_init(dot_ctx *ctx, strbuf *buffer) {
-  ctx->sub_cnt = 0;
-  ctx->map_sym_sub = hashset_dot_sym_sub_new();
+  ctx->sub_cnt      = 0;
+  ctx->map_sym_sub  = hashset_dot_sym_sub_new();
   ctx->visited_subs = hashset_dot_sub_new();
-  ctx->buffer = buffer;
+  ctx->buffer       = buffer;
 }
 
 static void dot_ctx_deinit(dot_ctx *ctx) {

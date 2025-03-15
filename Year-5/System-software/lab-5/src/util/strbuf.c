@@ -21,9 +21,9 @@ strbuf *strbuf_new(int capacity, double growth_factor) {
   } else {
     self->capacity = STRBUF_INITIAL_CAPACITY;
   }
-  self->data = malloc(self->capacity);
+  self->data    = malloc(self->capacity);
   self->data[0] = '\0';
-  self->cur = self->data;
+  self->cur     = self->data;
   if (growth_factor > 1) {
     self->growth_factor = growth_factor;
   } else {
@@ -34,20 +34,20 @@ strbuf *strbuf_new(int capacity, double growth_factor) {
 
 static void strbuf_resize(strbuf *self) {
   size_t new_capacity = self->capacity * self->growth_factor;
-  size_t size = strbuf_size(self);
+  size_t size         = strbuf_size(self);
 
   if (new_capacity < self->capacity) {
     error("strbuf new_capacity is less than previous");
   }
 
-  self->data = realloc(self->data, new_capacity);
-  self->cur = self->data + (size / sizeof(char));
+  self->data     = realloc(self->data, new_capacity);
+  self->cur      = self->data + (size / sizeof(char));
   self->capacity = new_capacity;
 }
 
 void strbuf_append(strbuf *self, const char *data) {
   size_t data_size = strlen(data) * sizeof(char);
-  size_t size = strbuf_size(self);
+  size_t size      = strbuf_size(self);
 
   while (size + data_size >= self->capacity) {
     strbuf_resize(self);
@@ -81,6 +81,6 @@ size_t strbuf_size(strbuf *self) {
 }
 
 void strbuf_reset(strbuf *self) {
-  self->cur = self->data;
+  self->cur  = self->data;
   *self->cur = '\0';
 }

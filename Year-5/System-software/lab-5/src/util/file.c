@@ -15,7 +15,7 @@
 #endif
 
 char *join_paths(const char *dir, const char *file) {
-  size_t len_dir = strlen(dir);
+  size_t len_dir  = strlen(dir);
   size_t len_file = strlen(file);
 
   char *result = malloc(len_dir + len_file + 2);

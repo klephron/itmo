@@ -15,7 +15,7 @@ char *mir_lit_value_str(const mir_lit *lit) {
     case TYPE_PRIMITIVE: {
       char            buf[64];
       strbuf         *buffer = strbuf_new(64, 0);
-      type_primitive *self = (typeof(self))type;
+      type_primitive *self   = (typeof(self))type;
       switch (self->type) {
         case TYPE_PRIMITIVE_BOOL:
           if (lit->value.v_bool) {

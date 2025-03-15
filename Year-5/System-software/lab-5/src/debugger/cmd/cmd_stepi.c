@@ -18,7 +18,7 @@ static const char *help = "Usage: <command> [<n>]\n"
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
-  size_t                  n = 1;
+  size_t                  n    = 1;
   struct user_regs_struct regs;
 
   args = trim(strdup(rest));

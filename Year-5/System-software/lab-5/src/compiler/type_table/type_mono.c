@@ -67,7 +67,7 @@ type_mono_enum type_calc_mono(const type_base *generic) {
           const type_class_t *attached = (const type_class_t *)self->type_ref;
 
           size_t typenames_sz = list_type_ref_size(attached->typenames);
-          size_t types_sz = list_type_ref_size(self->types);
+          size_t types_sz     = list_type_ref_size(self->types);
           if (typenames_sz != types_sz) {
             error("typenames size is not equal to types size");
             return TYPE_MONO_UNSET;

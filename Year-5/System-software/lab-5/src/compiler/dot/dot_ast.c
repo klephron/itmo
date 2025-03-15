@@ -35,7 +35,7 @@ static void dot_ctx_free(struct dot_ctx *self) {
 static struct dot_ctx *dot_ctx_new(const char *graph, const char *node_style) {
   struct dot_ctx *ctx = MALLOC(struct dot_ctx);
 
-  ctx->graph = strdup(graph);
+  ctx->graph      = strdup(graph);
   ctx->node_style = strdup(node_style);
 
   ctx->id = 0;
@@ -83,25 +83,25 @@ static void dot_generate(struct dot_ctx *ctx, char *str) {
   str[0] = '\0';
 
   char *end = stpcpy(str, ctx->graph);
-  end = stpcpy(end, "{\n");
-  end = stpcpy(end, "node [");
-  end = stpcpy(end, ctx->node_style);
-  end = stpcpy(end, "]\n");
+  end       = stpcpy(end, "{\n");
+  end       = stpcpy(end, "node [");
+  end       = stpcpy(end, ctx->node_style);
+  end       = stpcpy(end, "]\n");
 
   for (list_node *cur = ctx->list_nodes->head; cur; cur = cur->next) {
     chars_chars *data = cur->data;
-    end = stpcpy(end, data->key);
-    end = stpcpy(end, "[label=");
-    end = stpcpy(end, data->value);
-    end = stpcpy(end, "]\n");
+    end               = stpcpy(end, data->key);
+    end               = stpcpy(end, "[label=");
+    end               = stpcpy(end, data->value);
+    end               = stpcpy(end, "]\n");
   }
 
   for (list_node *cur = ctx->list_edges->head; cur; cur = cur->next) {
     chars_chars *data = cur->data;
-    end = stpcpy(end, data->key);
-    end = stpcpy(end, " -> ");
-    end = stpcpy(end, data->value);
-    end = stpcpy(end, "\n");
+    end               = stpcpy(end, data->key);
+    end               = stpcpy(end, " -> ");
+    end               = stpcpy(end, data->value);
+    end               = stpcpy(end, "\n");
   }
 
   end = stpcpy(end, "}");
@@ -142,7 +142,7 @@ static size_t dot_dfs(struct dot_ctx *ctx, pANTLR3_BASE_TREE root) {
   list_insert(ctx->list_nodes, it, &data);
 
   for (size_t i = 0; i < root->getChildCount(root); ++i) {
-    pANTLR3_BASE_TREE child = root->getChild(root, i);
+    pANTLR3_BASE_TREE child    = root->getChild(root, i);
     size_t            child_id = dot_dfs(ctx, child);
 
     if (child_id != 0) {
@@ -169,9 +169,9 @@ static struct dot_ctx *dot_new(ANTLR3_BASE_TREE *tree) {
 
 dot_string *dot_ast(const ast *ast) {
   pANTLR3_BASE_TREE tree = ast->tree;
-  struct dot_ctx   *ctx = dot_new(tree);
+  struct dot_ctx   *ctx  = dot_new(tree);
 
-  size_t len = dot_len(ctx);
+  size_t len   = dot_len(ctx);
   char  *chars = malloc(len + 1);
 
   dot_generate(ctx, chars);

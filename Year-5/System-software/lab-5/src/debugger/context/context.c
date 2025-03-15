@@ -6,28 +6,28 @@
 #include <sys/wait.h>
 
 context *context_new() {
-  context *self = MALLOC(context);
+  context *self    = MALLOC(context);
   self->s_debugger = DEBUGGER_IDLE;
-  self->s_target = TARGET_NO_TARGET;
-  self->buf_out = strbuf_new(0, 0);
-  self->buf_err = strbuf_new(0, 0);
+  self->s_target   = TARGET_NO_TARGET;
+  self->buf_out    = strbuf_new(0, 0);
+  self->buf_err    = strbuf_new(0, 0);
 
-  self->fname = NULL;
-  self->abfd = NULL;
-  self->abfd_asymbols = NULL;
+  self->fname               = NULL;
+  self->abfd                = NULL;
+  self->abfd_asymbols       = NULL;
   self->abfd_asymbols_count = 0;
-  self->pid = 0;
-  self->breaks = hashset_breakpoint_new();
-  self->breaks_cnt = 0;
+  self->pid                 = 0;
+  self->breaks              = hashset_breakpoint_new();
+  self->breaks_cnt          = 0;
 
   self->debug.subroutines_cnt = 0;
-  self->debug.subroutines = NULL;
-  self->debug.files_cnt = 0;
-  self->debug.files = NULL;
-  self->debug.lines_cnt = 0;
-  self->debug.lines = NULL;
-  self->debug.strs_cnt = 0;
-  self->debug.strs = NULL;
+  self->debug.subroutines     = NULL;
+  self->debug.files_cnt       = 0;
+  self->debug.files           = NULL;
+  self->debug.lines_cnt       = 0;
+  self->debug.lines           = NULL;
+  self->debug.strs_cnt        = 0;
+  self->debug.strs            = NULL;
 
   self->options.source_lang = false;
   return self;

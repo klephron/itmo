@@ -7,13 +7,13 @@
 breakpoint *breakpoint_new(size_t id, uint8_t data, uint64_t address,
                            uint64_t file_id, size_t line) {
   breakpoint *self = MALLOC(breakpoint);
-  self->id = id;
-  self->data = data;
-  self->address = address;
-  self->file_id = file_id;
-  self->line = line;
+  self->id         = id;
+  self->data       = data;
+  self->address    = address;
+  self->file_id    = file_id;
+  self->line       = line;
   self->is_enabled = 0;
-  self->is_placed = 0;
+  self->is_placed  = 0;
   return self;
 }
 
@@ -25,14 +25,14 @@ void breakpoint_free(breakpoint *self) {
 
 int context_bp_place(context *self, breakpoint *bp) {
   if (bp->is_enabled && !bp->is_placed) {
-    errno = 0;
+    errno         = 0;
     uint64_t data = ptrace(PTRACE_PEEKDATA, self->pid, bp->address, NULL);
     if (errno) {
       error("errno!");
       return -1;
     }
     bp->data = peekdata_brkpt_to_store(data);
-    data = peekdata_brkpt_with_int3(data);
+    data     = peekdata_brkpt_with_int3(data);
     if (ptrace(PTRACE_POKEDATA, self->pid, bp->address, data) == -1) {
       error("ptrace!");
       return -1;
@@ -44,7 +44,7 @@ int context_bp_place(context *self, breakpoint *bp) {
 
 int context_bp_remove(context *self, breakpoint *bp) {
   if (bp->is_enabled && bp->is_placed) {
-    errno = 0;
+    errno         = 0;
     uint64_t data = ptrace(PTRACE_PEEKDATA, self->pid, bp->address, NULL);
     if (errno) {
       error("errno!");

@@ -11,10 +11,10 @@ static inline int hir_ok(list_exception *exceptions, int ignore_errors) {
 
 hir_build_result hir_build(const list_ast *asts, int ignore_errors) {
   hir_build_result result = {
-      .hir = NULL,
+      .hir          = NULL,
       .symbol_table = NULL,
-      .type_table = NULL,
-      .exceptions = list_exception_new(),
+      .type_table   = NULL,
+      .exceptions   = list_exception_new(),
   };
 
   if (hir_ok(result.exceptions, ignore_errors)) {

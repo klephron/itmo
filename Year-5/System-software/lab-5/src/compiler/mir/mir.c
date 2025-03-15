@@ -5,18 +5,18 @@
 static void mir_debug_init(mir_debug *debug, const char *source_ref,
                            uint64_t line, uint64_t pos) {
   debug->source_ref = source_ref;
-  debug->line = line;
-  debug->pos = pos;
+  debug->line       = line;
+  debug->pos        = pos;
 }
 
 static void mir_debug_deinit(mir_debug *debug) { debug->source_ref = NULL; }
 
 mir_value *mir_value_new(size_t id, const symbol_entry *symbol_ref,
                          const type_entry *type_ref) {
-  mir_value *self = MALLOC(mir_value);
-  self->id = id;
+  mir_value *self  = MALLOC(mir_value);
+  self->id         = id;
   self->symbol_ref = symbol_ref;
-  self->type_ref = type_ref;
+  self->type_ref   = type_ref;
   return self;
 }
 
@@ -28,10 +28,10 @@ void mir_value_free(mir_value *self) {
 
 mir_lit *mir_lit_new(size_t id, const type_entry *type_ref,
                      mir_lit_value value) {
-  mir_lit *self = MALLOC(mir_lit);
-  self->id = id;
+  mir_lit *self  = MALLOC(mir_lit);
+  self->id       = id;
   self->type_ref = type_ref;
-  self->value = value;
+  self->value    = value;
   return self;
 }
 
@@ -91,7 +91,7 @@ mir_stmt *mir_stmt_new_op(mir_stmt_op_enum kind, mir_value *ret,
   mir_stmt *self = MALLOC(mir_stmt);
   mir_stmt_init(self, MIR_STMT_OP);
   self->op.kind = kind;
-  self->op.ret = ret;
+  self->op.ret  = ret;
   self->op.args = args;
   return self;
 }
@@ -100,8 +100,8 @@ mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
                             list_mir_value_ref *args) {
   mir_stmt *self = MALLOC(mir_stmt);
   mir_stmt_init(self, MIR_STMT_CALL);
-  self->call.ret = ret;
-  self->call.sub = sub;
+  self->call.ret  = ret;
+  self->call.sub  = sub;
   self->call.args = args;
   return self;
 }
@@ -109,8 +109,8 @@ mir_stmt *mir_stmt_new_call(mir_value *ret, mir_subroutine *sub,
 mir_stmt *mir_stmt_new_member(mir_value *ret, mir_value *obj, mir_lit *member) {
   mir_stmt *self = MALLOC(mir_stmt);
   mir_stmt_init(self, MIR_STMT_MEMBER);
-  self->member.ret = ret;
-  self->member.obj = obj;
+  self->member.ret    = ret;
+  self->member.obj    = obj;
   self->member.member = member;
   return self;
 }
@@ -119,18 +119,18 @@ mir_stmt *mir_stmt_new_member_ref(mir_value *ret, mir_value *obj,
                                   mir_lit *member) {
   mir_stmt *self = MALLOC(mir_stmt);
   mir_stmt_init(self, MIR_STMT_MEMBER_REF);
-  self->member.ret = ret;
-  self->member.obj = obj;
+  self->member.ret    = ret;
+  self->member.obj    = obj;
   self->member.member = member;
   return self;
 }
 
 mir_stmt *mir_stmt_new_builtin(mir_stmt_builtin_enum kind, mir_value *ret,
                                type_entry *type, list_mir_value_ref *args) {
-  mir_stmt *self = MALLOC(mir_stmt);
-  self->kind = MIR_STMT_BUILTIN;
+  mir_stmt *self     = MALLOC(mir_stmt);
+  self->kind         = MIR_STMT_BUILTIN;
   self->builtin.kind = kind;
-  self->builtin.ret = ret;
+  self->builtin.ret  = ret;
   self->builtin.type = type;
   self->builtin.args = args;
   return self;
@@ -194,12 +194,12 @@ void mir_stmt_free(mir_stmt *self) {
 mir_bb *mir_bb_new(size_t id, list_mir_stmt *stmts, mir_value *jmp_cond_ref,
                    mir_bb *jmp_je_ref, mir_bb *jmp_jz_ref,
                    list_hir_expr_ref *hir_exprs) {
-  mir_bb *self = MALLOC(mir_bb);
-  self->id = id;
-  self->stmts = stmts;
+  mir_bb *self       = MALLOC(mir_bb);
+  self->id           = id;
+  self->stmts        = stmts;
   self->jmp.cond_ref = jmp_cond_ref;
-  self->jmp.je_ref = jmp_je_ref;
-  self->jmp.jz_ref = jmp_jz_ref;
+  self->jmp.je_ref   = jmp_je_ref;
+  self->jmp.jz_ref   = jmp_jz_ref;
   mir_debug_init(&self->jmp.debug, NULL, 0, 0);
   self->hir_exprs = hir_exprs;
   return self;
@@ -241,23 +241,23 @@ mir_subroutine *mir_subroutine_new_basic(const symbol_entry *symbol_ref,
                                          list_mir_value *tmps,
                                          list_mir_bb    *bbs) {
   mir_subroutine *self = MALLOC(mir_subroutine);
-  self->kind = MIR_SUBROUTINE_BASIC;
-  self->symbol_ref = symbol_ref;
-  self->type_ref = type_ref;
-  self->basic.ret = ret;
-  self->basic.params = params;
-  self->basic.vars = vars;
-  self->basic.tmps = tmps;
-  self->basic.bbs = bbs;
+  self->kind           = MIR_SUBROUTINE_BASIC;
+  self->symbol_ref     = symbol_ref;
+  self->type_ref       = type_ref;
+  self->basic.ret      = ret;
+  self->basic.params   = params;
+  self->basic.vars     = vars;
+  self->basic.tmps     = tmps;
+  self->basic.bbs      = bbs;
   return self;
 }
 
 mir_subroutine *mir_subroutine_new_external(const symbol_entry *symbol_ref,
                                             const type_entry   *type_ref) {
   mir_subroutine *self = MALLOC(mir_subroutine);
-  self->kind = MIR_SUBROUTINE_EXTERNAL;
-  self->symbol_ref = symbol_ref;
-  self->type_ref = type_ref;
+  self->kind           = MIR_SUBROUTINE_EXTERNAL;
+  self->symbol_ref     = symbol_ref;
+  self->type_ref       = type_ref;
   return self;
 }
 
@@ -265,10 +265,10 @@ mir_subroutine *mir_subroutine_new_imported(const symbol_entry *symbol_ref,
                                             const type_entry   *type_ref,
                                             char *lib, char *entry) {
   mir_subroutine *self = MALLOC(mir_subroutine);
-  self->kind = MIR_SUBROUTINE_IMPORTED;
-  self->symbol_ref = symbol_ref;
-  self->type_ref = type_ref;
-  self->imported.lib = lib;
+  self->kind           = MIR_SUBROUTINE_IMPORTED;
+  self->symbol_ref     = symbol_ref;
+  self->type_ref       = type_ref;
+  self->imported.lib   = lib;
   self->imported.entry = entry;
   return self;
 }
@@ -304,9 +304,9 @@ void mir_subroutine_free(mir_subroutine *self) {
 mir_class *mir_class_new(const type_entry *type_ref, list_mir_value *fields,
                          list_mir_subroutine_ref *methods) {
   mir_class *self = MALLOC(mir_class);
-  self->type_ref = type_ref;
-  self->fields = fields;
-  self->methods = methods;
+  self->type_ref  = type_ref;
+  self->fields    = fields;
+  self->methods   = methods;
   return self;
 }
 
@@ -319,13 +319,13 @@ void mir_class_free(mir_class *self) {
 }
 
 mir *mir_new() {
-  mir *self = MALLOC(mir);
-  self->global_subs = list_mir_subroutine_new();
+  mir *self           = MALLOC(mir);
+  self->global_subs   = list_mir_subroutine_new();
   self->external_subs = list_mir_subroutine_new();
   self->imported_subs = list_mir_subroutine_new();
-  self->methods = list_mir_subroutine_new();
-  self->classes = list_mir_class_new();
-  self->literals = list_mir_lit_new();
+  self->methods       = list_mir_subroutine_new();
+  self->classes       = list_mir_class_new();
+  self->literals      = list_mir_lit_new();
   return self;
 }
 

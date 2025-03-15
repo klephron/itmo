@@ -35,7 +35,7 @@ static long hir_build_str2long(const char *str, int base, char **err_str_out) {
   char errbuf[256];
   errbuf[0] = '\0';
 
-  errno = 0;
+  errno        = 0;
   char *endptr = NULL;
   long  number = strtol(str, &endptr, base);
 
@@ -72,7 +72,7 @@ static ulong hir_build_str2ulong(const char *str, int base,
   char errbuf[256];
   errbuf[0] = '\0';
 
-  errno = 0;
+  errno        = 0;
   char *endptr = NULL;
   ulong number = strtoul(str, &endptr, base);
 
@@ -123,10 +123,10 @@ hir_id *hir_build_id(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 
 // LITERALS
 hir_lit *hir_build_str(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
-  span       *span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span       *span  = hir_span_new(node, ctx->ast_cur_ref->name_ref);
   const char *chars = ANTLR3_CHARS(node);
-  size_t      len = strlen(chars);
-  char       *data = malloc(len - 1);
+  size_t      len   = strlen(chars);
+  char       *data  = malloc(len - 1);
   strncpy(data, chars + 1, len - 2);
   data[len - 2] = '\0';
   return hir_lit_new(span, hir_type_base_new(span_copy(span), HIR_TYPE_STRING),
@@ -134,10 +134,10 @@ hir_lit *hir_build_str(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 }
 
 hir_lit *hir_build_rune(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
-  span       *span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span       *span  = hir_span_new(node, ctx->ast_cur_ref->name_ref);
   const char *chars = ANTLR3_CHARS(node);
-  size_t      len = strlen(chars);
-  char       *data = malloc(len - 1);
+  size_t      len   = strlen(chars);
+  char       *data  = malloc(len - 1);
   strncpy(data, chars + 1, len - 2);
   data[len - 2] = '\0';
   return hir_lit_new(span, hir_type_base_new(span_copy(span), HIR_TYPE_CHAR),
@@ -145,14 +145,14 @@ hir_lit *hir_build_rune(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 }
 
 hir_lit *hir_build_hex(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
-  span       *span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span       *span  = hir_span_new(node, ctx->ast_cur_ref->name_ref);
   const char *chars = ANTLR3_CHARS(node) + 2;
 
   char *err_msg = NULL;
-  long  value = hir_build_str2long(chars, 16, &err_msg);
+  long  value   = hir_build_str2long(chars, 16, &err_msg);
   if (err_msg) {
     free(err_msg);
-    err_msg = NULL;
+    err_msg      = NULL;
     ulong uvalue = hir_build_str2ulong(chars, 16, &err_msg);
     if (err_msg) {
       hir_error_add(ctx, EXCEPTION_HIR_HEX_VALIDATION, span, err_msg);
@@ -167,14 +167,14 @@ hir_lit *hir_build_hex(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 }
 
 hir_lit *hir_build_bits(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
-  span       *span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span       *span  = hir_span_new(node, ctx->ast_cur_ref->name_ref);
   const char *chars = ANTLR3_CHARS(node) + 2;
 
   char *err_msg = NULL;
-  long  value = hir_build_str2long(chars, 2, &err_msg);
+  long  value   = hir_build_str2long(chars, 2, &err_msg);
   if (err_msg) {
     free(err_msg);
-    err_msg = NULL;
+    err_msg      = NULL;
     ulong uvalue = hir_build_str2ulong(chars, 2, &err_msg);
     if (err_msg) {
       hir_error_add(ctx, EXCEPTION_HIR_BITS_VALIDATION, span, err_msg);
@@ -189,14 +189,14 @@ hir_lit *hir_build_bits(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 }
 
 hir_lit *hir_build_dec(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
-  span       *span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span       *span  = hir_span_new(node, ctx->ast_cur_ref->name_ref);
   const char *chars = ANTLR3_CHARS(node);
 
   char *err_msg = NULL;
-  long  value = hir_build_str2long(chars, 10, &err_msg);
+  long  value   = hir_build_str2long(chars, 10, &err_msg);
   if (err_msg) {
     free(err_msg);
-    err_msg = NULL;
+    err_msg      = NULL;
     ulong uvalue = hir_build_str2ulong(chars, 10, &err_msg);
     if (err_msg) {
       hir_error_add(ctx, EXCEPTION_HIR_DEC_VALIDATION, span, err_msg);
@@ -211,7 +211,7 @@ hir_lit *hir_build_dec(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
 }
 
 hir_lit *hir_build_bool(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
-  span       *span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span       *span  = hir_span_new(node, ctx->ast_cur_ref->name_ref);
   const char *chars = ANTLR3_CHARS(node);
 
   hir_lit_u u;
@@ -289,9 +289,9 @@ hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id,
 hir_type_array *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                      ANTLR3_BASE_TREE *dimensions_node,
                                      hir_type_base    *elem_type) {
-  span  *root = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  span  *root       = hir_span_new(node, ctx->ast_cur_ref->name_ref);
   size_t dimensions = ANTLR3_SIZE(dimensions_node);
-  span  *span_m = hir_span_new_range(root, elem_type->span);
+  span  *span_m     = hir_span_new_range(root, elem_type->span);
   span_free(root);
 
   hir_type_base *type_root = elem_type;
@@ -409,7 +409,7 @@ hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *mod_t,
     return hir_method_new(span, modifier, func);
   } else {
     span *mod_span = hir_span_new(mod_t, ctx->ast_cur_ref->name_ref);
-    span *span = hir_span_new_range(mod_span, func->base.span);
+    span *span     = hir_span_new_range(mod_span, func->base.span);
     span_free(mod_span);
     return hir_method_new(span, modifier, func);
   }
@@ -502,7 +502,7 @@ hir_expr_binary *hir_build_expr_member(hir_ctx *ctx, hir_expr_base *first,
   UNUSED(ctx);
   UNUSED(op_node);
 
-  hir_id_data data = hir_id_pop(second);
+  hir_id_data data      = hir_id_pop(second);
   span       *expr_span = hir_span_new_range(first->base.span, data.span);
 
   return hir_expr_binary_new(
@@ -566,7 +566,7 @@ hir_stmt_block *hir_build_stmt_block(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
 hir_stmt_while *hir_build_stmt_while(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                      hir_expr_base *cond, hir_stmt_base *stmt) {
   span *node_span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
-  span *span = hir_span_new_range(node_span, stmt->base.span);
+  span *span      = hir_span_new_range(node_span, stmt->base.span);
   span_free(node_span);
   return hir_stmt_while_new(span, cond, stmt);
 }
@@ -575,7 +575,7 @@ hir_stmt_do *hir_build_stmt_do(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                int positive, hir_expr_base *cond,
                                hir_stmt_base *stmt) {
   span *node_span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
-  span *span = hir_span_new_range(node_span, cond->base.span);
+  span *span      = hir_span_new_range(node_span, cond->base.span);
   span_free(node_span);
   return hir_stmt_do_new(span, positive, cond, stmt);
 }
@@ -593,7 +593,7 @@ hir_stmt_expr *hir_build_stmt_expr(hir_ctx *ctx, hir_expr_base *expr) {
 hir_stmt_return *hir_build_stmt_return(hir_ctx *ctx, ANTLR3_BASE_TREE *node,
                                        hir_expr_base *expr) {
   span *node_span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
-  span *span = hir_span_new_range(node_span, expr->base.span);
+  span *span      = hir_span_new_range(node_span, expr->base.span);
   span_free(node_span);
   return hir_stmt_return_new(span, expr);
 }

@@ -15,7 +15,7 @@ static const char *help = "Usage: <command>";
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args = NULL;
-  int   sig = SIGKILL;
+  int   sig  = SIGKILL;
   char  buf[64];
 
   args = trim(strdup(rest));

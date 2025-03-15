@@ -8,7 +8,7 @@
 static void type_base_deinit(type_base *base) { UNUSED(base); }
 
 static void type_base_init(type_base *base, type_enum kind) {
-  base->kind = kind;
+  base->kind           = kind;
   base->type_entry_ref = NULL;
 }
 
@@ -74,15 +74,15 @@ type_array *type_array_new(type_base *element_ref) {
   type_array *self = MALLOC(type_array);
   type_base_init(&self->base, TYPE_ARRAY);
   self->element_ref = element_ref;
-  self->mono_kind = TYPE_MONO_UNSET;
+  self->mono_kind   = TYPE_MONO_UNSET;
   return self;
 }
 
 type_callable *type_callable_new(type_base *ret_ref, list_type_ref *params) {
   type_callable *self = MALLOC(type_callable);
   type_base_init(&self->base, TYPE_CALLABLE);
-  self->ret_ref = ret_ref;
-  self->params = params;
+  self->ret_ref   = ret_ref;
+  self->params    = params;
   self->mono_kind = TYPE_MONO_UNSET;
   return self;
 }
@@ -91,16 +91,16 @@ type_class_t *type_class_t_new(char *id, list_type_ref *typenames,
                                list_type_ref *parents) {
   type_class_t *self = MALLOC(type_class_t);
   type_base_init(&self->base, TYPE_CLASS_T);
-  self->id = id;
+  self->id        = id;
   self->typenames = typenames;
-  self->parents = parents;
+  self->parents   = parents;
   return self;
 }
 
 type_typename *type_typename_new(char *id, type_base *source_ref) {
   type_typename *self = MALLOC(type_typename);
   type_base_init(&self->base, TYPE_TYPENAME);
-  self->id = id;
+  self->id         = id;
   self->source_ref = source_ref;
   return self;
 }
@@ -109,8 +109,8 @@ type_typename *type_typename_new(char *id, type_base *source_ref) {
 type_mono *type_mono_new(type_base *type_ref, list_type_ref *types) {
   type_mono *self = MALLOC(type_mono);
   type_base_init(&self->base, TYPE_MONO);
-  self->type_ref = type_ref;
-  self->types = types;
+  self->type_ref  = type_ref;
+  self->types     = types;
   self->mono_kind = TYPE_MONO_UNSET;
   return self;
 }

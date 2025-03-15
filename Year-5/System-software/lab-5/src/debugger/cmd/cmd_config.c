@@ -11,7 +11,7 @@ static const char *help = "Usage: <command> <arg>...\n"
 
 static int fn_source(context *ctx, char *rest) {
   int   status = 0;
-  char *arg = NULL;
+  char *arg    = NULL;
 
   if (!rest || !*rest) {
     status = -1;
@@ -43,17 +43,17 @@ cleanup:
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  char *args = trim(strdup(rest));
+  char *args       = trim(strdup(rest));
   char *arg_option = NULL;
-  char *arg_rest = NULL;
-  int   status = 0;
+  char *arg_rest   = NULL;
+  int   status     = 0;
 
   {
     char *token_args = strdup(args);
-    char *token = strtok(token_args, " ");
+    char *token      = strtok(token_args, " ");
     if (token) {
       arg_option = strdup(token);
-      token = strtok(NULL, "");
+      token      = strtok(NULL, "");
     }
     if (token) {
       arg_rest = strdup(token);

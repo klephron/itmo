@@ -22,7 +22,7 @@ static void type_table_str_extra_ref(strbuf *buffer, const type_base *self) {
   char buf[64];
 
   const type_entry *child_entry = self->type_entry_ref;
-  char             *type_s = type_str(self);
+  char             *type_s      = type_str(self);
   if (type_s) {
     strbuf_append(buffer, type_s);
     snprintf(buf, STRMAXLEN(buf), " -> ID(%p)", child_entry);
@@ -40,7 +40,7 @@ static char *type_table_str_extra(const type_entry *entry) {
     } break;
     case TYPE_CALLABLE: {
       size_t               comma = 0;
-      const type_callable *self = (const type_callable *)entry->type;
+      const type_callable *self  = (const type_callable *)entry->type;
       if (self->ret_ref) {
         type_table_str_extra_ref(buffer, self->ret_ref);
         ++comma;
@@ -67,7 +67,7 @@ static char *type_table_str_extra(const type_entry *entry) {
       }
     } break;
     case TYPE_CLASS_T: {
-      const type_class_t *self = (const type_class_t *)entry->type;
+      const type_class_t *self  = (const type_class_t *)entry->type;
       size_t              comma = 0;
 
       list_type_ref_it it = list_type_ref_begin(self->parents);
@@ -93,7 +93,7 @@ static char *type_table_str_extra(const type_entry *entry) {
       }
     } break;
     case TYPE_TYPENAME: {
-      const type_typename *self = (const type_typename *)entry->type;
+      const type_typename *self         = (const type_typename *)entry->type;
       const type_entry    *parent_entry = self->source_ref->type_entry_ref;
 
       strbuf_append(buffer, "references ");

@@ -53,8 +53,8 @@ typedef struct mir_sym_entry_struct {
 static mir_sym_entry *mir_sym_entry_new(const symbol_entry *symbol_ref,
                                         void               *entry_ref) {
   mir_sym_entry *self = MALLOC(mir_sym_entry);
-  self->symbol_ref = symbol_ref;
-  self->entry_ref = entry_ref;
+  self->symbol_ref    = symbol_ref;
+  self->entry_ref     = entry_ref;
   return self;
 }
 
@@ -100,8 +100,8 @@ typedef struct mir_type_entry_struct {
 static mir_type_entry *mir_type_entry_new(const type_entry *type_ref,
                                           void             *entry_ref) {
   mir_type_entry *self = MALLOC(mir_type_entry);
-  self->type_ref = type_ref;
-  self->entry_ref = entry_ref;
+  self->type_ref       = type_ref;
+  self->entry_ref      = entry_ref;
   return self;
 }
 
@@ -138,8 +138,8 @@ typedef struct mir_name_entry_struct {
 static mir_name_entry *mir_name_entry_new(const symbol_entry *symbol_ref,
                                           void               *entry_ref) {
   mir_name_entry *self = MALLOC(mir_name_entry);
-  self->symbol_ref = symbol_ref;
-  self->entry_ref = entry_ref;
+  self->symbol_ref     = symbol_ref;
+  self->entry_ref      = entry_ref;
   return self;
 }
 
@@ -191,21 +191,21 @@ typedef struct mir_ctx_struct {
 
 static void mir_ctx_init(mir_ctx *ctx, mir *mir, const type_table *type_table,
                          list_exception *exceptions) {
-  ctx->map_sym_sub = hashset_mir_sym_entry_new();
-  ctx->lit_cnt = 0;
-  ctx->registered_types = hashset_type_ref_new();
+  ctx->map_sym_sub        = hashset_mir_sym_entry_new();
+  ctx->lit_cnt            = 0;
+  ctx->registered_types   = hashset_type_ref_new();
   ctx->map_type_hir_class = hashset_mir_type_entry_new();
   ctx->map_type_mir_class = hashset_mir_type_entry_new();
 
-  ctx->sub_ref = NULL;
-  ctx->value_cnt = 0;
-  ctx->bb_cnt = 0;
+  ctx->sub_ref       = NULL;
+  ctx->value_cnt     = 0;
+  ctx->bb_cnt        = 0;
   ctx->map_sym_value = NULL;
-  ctx->scope_stack = NULL;
-  ctx->bb_last_ref = NULL;
-  ctx->bb_ref = NULL;
+  ctx->scope_stack   = NULL;
+  ctx->bb_last_ref   = NULL;
+  ctx->bb_ref        = NULL;
 
-  ctx->mir = mir;
+  ctx->mir        = mir;
   ctx->type_table = type_table;
   ctx->exceptions = exceptions;
 }
@@ -217,15 +217,15 @@ static void mir_ctx_deinit(mir_ctx *ctx) {
   hashset_mir_type_entry_free(ctx->map_type_hir_class);
   hashset_mir_type_entry_free(ctx->map_type_mir_class);
 
-  ctx->sub_ref = NULL;
-  ctx->value_cnt = 0;
-  ctx->bb_cnt = 0;
+  ctx->sub_ref       = NULL;
+  ctx->value_cnt     = 0;
+  ctx->bb_cnt        = 0;
   ctx->map_sym_value = NULL;
-  ctx->scope_stack = NULL;
-  ctx->bb_last_ref = NULL;
-  ctx->bb_ref = NULL;
+  ctx->scope_stack   = NULL;
+  ctx->bb_last_ref   = NULL;
+  ctx->bb_ref        = NULL;
 
-  ctx->mir = NULL;
+  ctx->mir        = NULL;
   ctx->exceptions = NULL;
 }
 
@@ -375,10 +375,10 @@ static mir_subroutine *mir_declare_subroutine(mir_ctx              *ctx,
 
   switch (sub_hir->body->kind) {
     case HIR_SUBROUTINE_BODY_IMPORT: {
-      const hir_lit *lib_lit = sub_hir->body->body.import.lib;
+      const hir_lit *lib_lit   = sub_hir->body->body.import.lib;
       const hir_lit *entry_lit = sub_hir->body->body.import.entry;
 
-      char *lib = lib_lit ? strdup(lib_lit->value.v_str) : NULL;
+      char *lib   = lib_lit ? strdup(lib_lit->value.v_str) : NULL;
       char *entry = entry_lit ? strdup(entry_lit->value.v_str) : NULL;
 
       return mir_subroutine_new_imported(sub_hir->id_ref, sub_hir->type_ref,
@@ -569,7 +569,7 @@ static mir_value *mir_define_expr_deref(mir_ctx *ctx, const mir_expr_r *mir_r,
                                         const span *span) {
   mir_value *value;
 
-  mir_value *rvalue = mir_define_mir_value_tmp(ctx, NULL);
+  mir_value *rvalue     = mir_define_mir_value_tmp(ctx, NULL);
   mir_stmt  *stmt_deref = mir_define_mir_stmt(
        ctx, mir_stmt_new_op(MIR_STMT_OP_DEREF, rvalue,
                             mir_define_mir_value_args(mir_r->value, NULL)));
@@ -586,7 +586,7 @@ static mir_expr_r mir_define_expr_unary_generic(mir_ctx              *ctx,
                                                 mir_stmt_op_enum      op) {
   mir_value *first =
       mir_define_expr(ctx, expr->first, mir_expr_o_make(0)).value;
-  mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
+  mir_value *ret  = mir_define_mir_value_tmp(ctx, NULL);
   mir_stmt  *stmt = mir_define_mir_stmt(
        ctx, mir_stmt_new_op(op, ret, mir_define_mir_value_args(first, NULL)));
 
@@ -732,7 +732,7 @@ static mir_expr_r mir_define_expr_binary_generic(mir_ctx               *ctx,
       mir_define_expr(ctx, expr->first, mir_expr_o_make(0)).value;
   mir_value *second =
       mir_define_expr(ctx, expr->second, mir_expr_o_make(0)).value;
-  mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
+  mir_value *ret  = mir_define_mir_value_tmp(ctx, NULL);
   mir_stmt  *stmt = mir_define_mir_stmt(
        ctx,
        mir_stmt_new_op(op, ret, mir_define_mir_value_args(first, second, NULL)));
@@ -927,8 +927,8 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
 }
 
 static mir_expr_r mir_define_expr_lit(mir_ctx *ctx, const hir_expr_lit *expr) {
-  mir_value *ret = mir_define_mir_value_tmp(ctx, expr->lit->type_ref);
-  mir_lit   *lit = mir_define_mir_lit(ctx, expr);
+  mir_value *ret  = mir_define_mir_value_tmp(ctx, expr->lit->type_ref);
+  mir_lit   *lit  = mir_define_mir_lit(ctx, expr);
   mir_stmt  *stmt = mir_define_mir_stmt(
        ctx, mir_stmt_new_assign(MIR_STMT_ASSIGN_LIT, ret, lit));
 
@@ -984,7 +984,7 @@ static mir_expr_r mir_define_expr_call(mir_ctx             *ctx,
       mir_value *indirect = mir_define_expr_id(ctx, callee).value;
       if (indirect) {
         list_mir_value_ref_push_front(args, indirect);
-        mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
+        mir_value *ret  = mir_define_mir_value_tmp(ctx, NULL);
         mir_stmt  *stmt = mir_define_mir_stmt(
              ctx, mir_stmt_new_op(MIR_STMT_OP_CALL, ret, args));
 
@@ -1007,7 +1007,7 @@ static mir_expr_r mir_define_expr_call(mir_ctx             *ctx,
           mir_define_expr(ctx, expr->callee, mir_expr_o_make(0)).value;
       if (indirect) {
         list_mir_value_ref_push_front(args, indirect);
-        mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
+        mir_value *ret  = mir_define_mir_value_tmp(ctx, NULL);
         mir_stmt  *stmt = mir_define_mir_stmt(
              ctx, mir_stmt_new_op(MIR_STMT_OP_CALL, ret, args));
 
@@ -1072,7 +1072,7 @@ static mir_expr_r mir_define_expr_builtin_generic(mir_ctx                *ctx,
         args, mir_define_expr(ctx, arg, mir_expr_o_make(0)).value);
   }
 
-  mir_value *ret = mir_define_mir_value_tmp(ctx, NULL);
+  mir_value *ret  = mir_define_mir_value_tmp(ctx, NULL);
   mir_stmt  *stmt = mir_define_mir_stmt(
        ctx, mir_stmt_new_builtin(kind, ret, expr->base.type_ref, args));
 
@@ -1136,9 +1136,9 @@ static mir_expr_r mir_define_expr(mir_ctx *ctx, const hir_expr_base *expr,
 
 static mir_value *mir_define_expr_tree(mir_ctx *ctx, mir_bb *bb,
                                        const hir_expr_base *expr) {
-  ctx->bb_ref = bb;
+  ctx->bb_ref          = bb;
   mir_value *value_ref = mir_define_expr(ctx, expr, mir_expr_o_make(0)).value;
-  ctx->bb_ref = NULL;
+  ctx->bb_ref          = NULL;
   return value_ref;
 }
 
@@ -1152,7 +1152,7 @@ static inline mir_bb_seq mir_define_bb_seq_empty() {
 static mir_bb_seq mir_define_stmt_if(mir_ctx *ctx, const hir_stmt_if *stmt) {
   mir_bb_seq root = {
       .first = mir_ctx_sub_emplace_back_bb(ctx),
-      .last = mir_ctx_sub_emplace_back_bb(ctx),
+      .last  = mir_ctx_sub_emplace_back_bb(ctx),
   };
 
   root.first->jmp.cond_ref = mir_define_expr_tree(ctx, root.first, stmt->cond);
@@ -1182,18 +1182,18 @@ static mir_bb_seq mir_define_stmt_block(mir_ctx              *ctx,
                                         const hir_stmt_block *stmt) {
   mir_bb_seq root = {
       .first = mir_ctx_sub_emplace_back_bb(ctx),
-      .last = NULL,
+      .last  = NULL,
   };
 
   mir_bb_seq prev = {
       .first = root.first,
-      .last = root.first,
+      .last  = root.first,
   };
 
   for (list_hir_stmt_it it = list_hir_stmt_begin(stmt->stmts); !END(it);
        NEXT(it)) {
     const hir_stmt_base *hir_stmt = GET(it);
-    mir_bb_seq           cur = mir_define_stmt(ctx, hir_stmt);
+    mir_bb_seq           cur      = mir_define_stmt(ctx, hir_stmt);
 
     if (!cur.last) {
       warn("scope returned null");
@@ -1214,7 +1214,7 @@ static mir_bb_seq mir_define_stmt_while(mir_ctx              *ctx,
                                         const hir_stmt_while *stmt) {
   mir_bb_seq root = {
       .first = mir_ctx_sub_emplace_back_bb(ctx),
-      .last = mir_ctx_sub_emplace_back_bb(ctx),
+      .last  = mir_ctx_sub_emplace_back_bb(ctx),
   };
 
   list_mir_scope_ref_push_front(ctx->scope_stack, &root);
@@ -1239,16 +1239,16 @@ static mir_bb_seq mir_define_stmt_while(mir_ctx              *ctx,
 static mir_bb_seq mir_define_stmt_do(mir_ctx *ctx, const hir_stmt_do *stmt) {
   mir_bb_seq root = {
       .first = NULL,
-      .last = mir_ctx_sub_emplace_back_bb(ctx),
+      .last  = mir_ctx_sub_emplace_back_bb(ctx),
   };
 
   list_mir_scope_ref_push_front(ctx->scope_stack, &root);
 
   mir_bb_seq child_stmt = mir_define_stmt(ctx, stmt->stmt);
-  root.first = child_stmt.first;
+  root.first            = child_stmt.first;
 
   // handle condition in new block
-  mir_bb *cond = mir_ctx_sub_emplace_back_bb(ctx);
+  mir_bb *cond       = mir_ctx_sub_emplace_back_bb(ctx);
   cond->jmp.cond_ref = mir_define_expr_tree(ctx, cond, stmt->cond);
   list_hir_expr_ref_push_back(cond->hir_exprs, stmt->cond);
 
@@ -1274,7 +1274,7 @@ static mir_bb_seq mir_define_stmt_do(mir_ctx *ctx, const hir_stmt_do *stmt) {
 static mir_bb_seq mir_define_stmt_break(mir_ctx              *ctx,
                                         const hir_stmt_break *stmt) {
   mir_bb_seq root = {.first = mir_ctx_sub_emplace_back_bb(ctx)};
-  root.last = root.first;
+  root.last       = root.first;
 
   if (list_mir_scope_ref_empty(ctx->scope_stack)) {
     mir_exception_add_error(ctx->exceptions, EXCEPTION_MIR_UNEXPECTED_BREAK,
@@ -1293,7 +1293,7 @@ static mir_bb_seq mir_define_stmt_break(mir_ctx              *ctx,
 static mir_bb_seq mir_define_stmt_expr(mir_ctx             *ctx,
                                        const hir_stmt_expr *stmt) {
   mir_bb_seq root = {.first = mir_ctx_sub_emplace_back_bb(ctx)};
-  root.last = root.first;
+  root.last       = root.first;
 
   mir_define_expr_tree(ctx, root.first, stmt->expr);
   list_hir_expr_ref_push_back(root.first->hir_exprs, stmt->expr);
@@ -1304,7 +1304,7 @@ static mir_bb_seq mir_define_stmt_expr(mir_ctx             *ctx,
 static mir_bb_seq mir_define_stmt_return(mir_ctx               *ctx,
                                          const hir_stmt_return *stmt) {
   mir_bb_seq root = {.first = mir_ctx_sub_emplace_back_bb(ctx)};
-  root.last = root.first;
+  root.last       = root.first;
 
   mir_value *value = mir_define_expr_tree(ctx, root.first, stmt->expr);
   list_hir_expr_ref_push_back(root.first->hir_exprs, stmt->expr);
@@ -1354,9 +1354,9 @@ static void mir_define_subroutine_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
   const list_hir_var   *hir_vars = sub_hir->body->body.block.vars;
   const hir_stmt_block *hir_root = sub_hir->body->body.block.block;
 
-  ctx->sub_ref = sub_mir;
+  ctx->sub_ref   = sub_mir;
   ctx->value_cnt = 1 + list_mir_value_size(sub_mir->basic.params);
-  ctx->bb_cnt = 0;
+  ctx->bb_cnt    = 0;
 
   // add vars
   sub_mir->basic.vars = list_mir_value_new();
@@ -1385,12 +1385,12 @@ static void mir_define_subroutine_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
 
   // handle body
   sub_mir->basic.tmps = list_mir_value_new();
-  sub_mir->basic.bbs = list_mir_bb_new();
-  ctx->scope_stack = list_mir_scope_ref_new();
+  sub_mir->basic.bbs  = list_mir_bb_new();
+  ctx->scope_stack    = list_mir_scope_ref_new();
 
   // add last block to handle returns
-  mir_bb *bb_last = mir_bb_new(ctx->bb_cnt++, list_mir_stmt_new(), NULL, NULL,
-                               NULL, list_hir_expr_ref_new());
+  mir_bb *bb_last  = mir_bb_new(ctx->bb_cnt++, list_mir_stmt_new(), NULL, NULL,
+                                NULL, list_hir_expr_ref_new());
   ctx->bb_last_ref = bb_last;
 
   mir_bb_seq seq = mir_define_stmt_block(ctx, hir_root);
@@ -1433,7 +1433,7 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
                         list_mir_subroutine_ref_new());
 
   // get parents
-  type_base     *class_type = class->type_ref->type;
+  type_base     *class_type  = class->type_ref->type;
   list_type_ref *parents_ref = NULL;
   switch (class_type->kind) {
     case TYPE_MONO: {
@@ -1470,13 +1470,13 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
   hashset_symbol_entry *class_symbols = hashset_symbol_entry_new();
   // point to pointer of list of methods
   hashset_mir_name_entry *class_methods = hashset_mir_name_entry_new();
-  size_t                  fields_cnt = 0;
+  size_t                  fields_cnt    = 0;
 
   // merge fields
   for (list_type_ref_it it = list_type_ref_begin(parents_ref); !END(it);
        NEXT(it)) {
     type_base *parent_type = GET(it);
-    mir_class *parent = mir_define_class(ctx, parent_type->type_entry_ref);
+    mir_class *parent      = mir_define_class(ctx, parent_type->type_entry_ref);
 
     if (!parent) {
       continue;
@@ -1490,9 +1490,9 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
           class_symbols, (symbol_entry *)field->symbol_ref);
 
       if (!END(sym_it)) {
-        char               *class_s = type_str(class_type);
+        char               *class_s  = type_str(class_type);
         char               *parent_s = type_str(parent_type);
-        const symbol_entry *symbol = GET(sym_it);
+        const symbol_entry *symbol   = GET(sym_it);
         mir_exception_add_error(
             ctx->exceptions, EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
             "%s parent %s var redefines symbol '%s' defined in another parent",
@@ -1524,7 +1524,7 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
 
     if (!END(sym_it)) {
       char               *class_s = type_str(class_type);
-      const symbol_entry *symbol = GET(sym_it);
+      const symbol_entry *symbol  = GET(sym_it);
       mir_exception_add_error(
           ctx->exceptions, EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
           "%s var redefines symbol '%s' defined in another parent", class_s,
@@ -1545,7 +1545,7 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
   for (list_type_ref_it it = list_type_ref_begin(parents_ref); !END(it);
        NEXT(it)) {
     type_base *parent_type = GET(it);
-    mir_class *parent = mir_define_class(ctx, parent_type->type_entry_ref);
+    mir_class *parent      = mir_define_class(ctx, parent_type->type_entry_ref);
 
     if (!parent) {
       continue;
@@ -1561,9 +1561,9 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
 
       // add exception if this symbol is already defined by another parent
       if (!END(sym_it)) {
-        char               *class_s = type_str(class_type);
+        char               *class_s  = type_str(class_type);
         char               *parent_s = type_str(parent_type);
-        const symbol_entry *symbol = GET(sym_it);
+        const symbol_entry *symbol   = GET(sym_it);
         mir_exception_add_error(
             ctx->exceptions, EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
             "%s parent %s method redefines symbol '%s' defined in another "
@@ -1586,7 +1586,7 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
   // instantiate its methods (override)
   for (list_hir_method_it it = list_hir_method_begin(class_hir->methods);
        !END(it); NEXT(it)) {
-    const hir_method *method_hir = GET(it);
+    const hir_method *method_hir    = GET(it);
     symbol_entry     *method_symbol = method_hir->subroutine->id_ref;
 
     hashset_symbol_entry_it sym_it =
@@ -1598,7 +1598,7 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
     // found as var from another parent
     if (!END(sym_it) && END(method_it)) {
       char               *class_s = type_str(class_type);
-      const symbol_entry *symbol = GET(sym_it);
+      const symbol_entry *symbol  = GET(sym_it);
       mir_exception_add_error(ctx->exceptions,
                               EXCEPTION_MIR_SYMBOL_NAME_COLLISION, symbol->span,
                               "%s method redefines symbol method '%s' defined "
@@ -1721,7 +1721,7 @@ static void mir_lower_classes(mir_ctx *ctx, const hir *hir) {
            hashset_mir_type_entry_begin(ctx->map_type_mir_class);
        !END(it); NEXT(it)) {
     mir_type_entry *entry = GET(it);
-    mir_class *class = entry->entry_ref;
+    mir_class *class      = entry->entry_ref;
     mir_class_free(class);
   }
 
@@ -1739,7 +1739,7 @@ static void mir_lower_classes(mir_ctx *ctx, const hir *hir) {
 mir_lower_hir_result mir_lower_hir(const hir        *hir,
                                    const type_table *type_table) {
   mir_lower_hir_result result = {
-      .mir = mir_new(),
+      .mir        = mir_new(),
       .exceptions = list_exception_new(),
   };
 

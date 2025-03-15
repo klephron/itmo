@@ -12,7 +12,7 @@ mir_build_result mir_build(const hir *hir, const symbol_table *symbol_table,
   UNUSED(symbol_table);
 
   mir_build_result result = {
-      .mir = NULL,
+      .mir        = NULL,
       .exceptions = list_exception_new(),
   };
 

@@ -243,7 +243,7 @@ hir_type_custom *hir_type_custom_new(span *span, char *name,
                                      list_hir_type *templates) {
   hir_type_custom *self = MALLOC(hir_type_custom);
   hir_type_base_init(&self->base, HIR_TYPE_CUSTOM, span);
-  self->name = name;
+  self->name      = name;
   self->templates = templates;
   return self;
 }

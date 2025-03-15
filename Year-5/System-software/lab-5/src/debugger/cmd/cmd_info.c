@@ -43,11 +43,11 @@ static void fn_sections(context *ctx) {
     return;
   }
   for (asection *section = ctx->abfd->sections; section;
-       section = section->next) {
+       section           = section->next) {
     char          buf[64];
-    const char   *name = bfd_section_name(section);
+    const char   *name    = bfd_section_name(section);
     bfd_vma       address = bfd_section_vma(section);
-    bfd_size_type size = bfd_section_size(section);
+    bfd_size_type size    = bfd_section_size(section);
     context_out_append(ctx, "name: ");
     context_out_append(ctx, name);
     context_out_append(ctx, ",\t");
@@ -69,10 +69,10 @@ static void fn_symbols(context *ctx) {
 
   for (int64_t i = 0; i < ctx->abfd_asymbols_count; ++i) {
     char        buf[64];
-    const char *name = bfd_asymbol_name(ctx->abfd_asymbols[i]);
-    asection   *section = bfd_asymbol_section(ctx->abfd_asymbols[i]);
+    const char *name         = bfd_asymbol_name(ctx->abfd_asymbols[i]);
+    asection   *section      = bfd_asymbol_section(ctx->abfd_asymbols[i]);
     const char *section_name = bfd_section_name(section);
-    bfd_vma     address = bfd_asymbol_value(ctx->abfd_asymbols[i]);
+    bfd_vma     address      = bfd_asymbol_value(ctx->abfd_asymbols[i]);
     context_out_append(ctx, "section: ");
     context_out_append(ctx, section_name);
     context_out_append(ctx, ",\t");
@@ -149,7 +149,7 @@ static void fn_breakpoints(context *ctx) {
   }
 
   breakpoint **breakpoints = MALLOCN(breakpoint *, cnt);
-  size_t       i = 0;
+  size_t       i           = 0;
   for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
        !END(it); NEXT(it)) {
     breakpoints[i++] = GET(it);
@@ -159,8 +159,8 @@ static void fn_breakpoints(context *ctx) {
     for (size_t i = 0; i < cnt - 1; ++i) {
       for (size_t j = 0; j < cnt - i - 1; ++j) {
         if (breakpoints[j]->id > breakpoints[j + 1]->id) {
-          breakpoint *tmp = breakpoints[j];
-          breakpoints[j] = breakpoints[j + 1];
+          breakpoint *tmp    = breakpoints[j];
+          breakpoints[j]     = breakpoints[j + 1];
           breakpoints[j + 1] = tmp;
         }
       }

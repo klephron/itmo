@@ -18,7 +18,7 @@ static inline void container_delete_cmd(void *lsv) {
   cmd_entry_free(lsv);
 }
 static inline uint64_t container_hash_cmd(const void *_lsv) {
-  const cmd *lsv = _lsv;
+  const cmd *lsv  = _lsv;
   uint64_t   hash = container_hash_chars(lsv->cmd_ref);
   return hash;
 }

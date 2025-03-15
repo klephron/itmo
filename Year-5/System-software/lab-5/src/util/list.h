@@ -116,10 +116,10 @@ int   list_it_end(list_it *it);
   __attribute__((__unused__)) static inline list_type##_it list_type##_find(   \
       const list_type *self, const type *data) {                               \
     return (list_type##_it){                                                   \
-        .it = list_find(&self->list, (const void *)data),                      \
-        .get = list_type##_it_get,                                             \
+        .it   = list_find(&self->list, (const void *)data),                    \
+        .get  = list_type##_it_get,                                            \
         .next = list_type##_it_next,                                           \
-        .end = list_type##_it_end,                                             \
+        .end  = list_type##_it_end,                                            \
     };                                                                         \
   }                                                                            \
                                                                                \
@@ -135,9 +135,9 @@ int   list_it_end(list_it *it);
   __attribute__((__unused__)) static inline list_type##_it list_type##_begin(  \
       const list_type *self) {                                                 \
     return (list_type##_it){                                                   \
-        .it = list_begin((list *)&self->list),                                 \
-        .get = list_type##_it_get,                                             \
+        .it   = list_begin((list *)&self->list),                               \
+        .get  = list_type##_it_get,                                            \
         .next = list_type##_it_next,                                           \
-        .end = list_type##_it_end,                                             \
+        .end  = list_type##_it_end,                                            \
     };                                                                         \
   }

@@ -51,7 +51,7 @@ static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
-  size_t                  n = 1;
+  size_t                  n    = 1;
   struct user_regs_struct regs;
 
   args = trim(strdup(rest));
@@ -94,10 +94,10 @@ cleanup:
 void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
                            disassembler_ftype *dftype_p, int *is_call_p) {
   init_disassemble_info(info_p, is_call_p, fn_fprintf, fn_fprintf_styled_ftype);
-  info_p->arch = bfd_arch_i386;
-  info_p->mach = bfd_mach_x86_64;
-  info_p->application_data = ctx;
-  info_p->read_memory_func = cmd_ctx_read_memory;
+  info_p->arch              = bfd_arch_i386;
+  info_p->mach              = bfd_mach_x86_64;
+  info_p->application_data  = ctx;
+  info_p->read_memory_func  = cmd_ctx_read_memory;
   info_p->memory_error_func = cmd_ctx_memory_error;
   *dftype_p = disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);
 }

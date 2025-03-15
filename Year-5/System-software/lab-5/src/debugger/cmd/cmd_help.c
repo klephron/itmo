@@ -11,12 +11,12 @@ static const char *help = "Usage: <command> [<cmd>]";
 
 static void fn_all(cmd_handler *handler, context *ctx) {
   context_out_appendln(ctx, "Commands:");
-  size_t first_w = 0;
+  size_t first_w     = 0;
   size_t entries_cnt = 0;
   for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !END(it);
        NEXT(it)) {
     cmd *entry = GET(it);
-    first_w = max_size_t(first_w, strlen(entry->cmd_ref));
+    first_w    = max_size_t(first_w, strlen(entry->cmd_ref));
     ++entries_cnt;
   }
 
@@ -26,15 +26,15 @@ static void fn_all(cmd_handler *handler, context *ctx) {
   size_t i = 0;
   for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !END(it);
        NEXT(it)) {
-    cmd *entry = GET(it);
+    cmd *entry   = GET(it);
     entries[i++] = entry;
   }
 
   for (size_t i = 0; i < entries_cnt - 1; ++i) {
     for (size_t j = 0; j < entries_cnt - i - 1; ++j) {
       if (strcmp(entries[j]->cmd_ref, entries[j + 1]->cmd_ref) > 0) {
-        cmd *tmp = entries[j];
-        entries[j] = entries[j + 1];
+        cmd *tmp       = entries[j];
+        entries[j]     = entries[j + 1];
         entries[j + 1] = tmp;
       }
     }

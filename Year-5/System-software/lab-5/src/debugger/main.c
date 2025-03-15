@@ -56,7 +56,7 @@ static void parse(args *args, int argc, char *argv[]) {
   }
 
   option_index = 0;
-  has_next = 1;
+  has_next     = 1;
 
   while (has_next) {
     unsigned c;
@@ -76,12 +76,12 @@ static void parse(args *args, int argc, char *argv[]) {
         break;
       case 'h':
         args->help = 1;
-        has_next = 0;
+        has_next   = 0;
         break;
       default:
         args->code = -1;
         args->help = 1;
-        has_next = 0;
+        has_next   = 0;
         break;
     }
   }
@@ -92,7 +92,7 @@ static void parse(args *args, int argc, char *argv[]) {
 
 static char *next_cmd(FILE *init_fp, FILE **fp_out) {
   char  *line = NULL;
-  size_t len = 0;
+  size_t len  = 0;
 
   if (init_fp && getline(&line, &len, init_fp) != -1) {
     *fp_out = init_fp;

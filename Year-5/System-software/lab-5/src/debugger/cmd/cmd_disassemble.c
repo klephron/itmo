@@ -13,9 +13,9 @@ static const char *help = "Usage: <command> <start> <size>\n"
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  char *args = trim(strdup(rest));
+  char *args        = trim(strdup(rest));
   char *arg_address = NULL;
-  char *arg_size = NULL;
+  char *arg_size    = NULL;
 
   if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
     goto cleanup;
@@ -23,14 +23,14 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   {
     char *token_args = strdup(args);
-    char *token = strtok(token_args, " ");
+    char *token      = strtok(token_args, " ");
     if (token) {
       arg_address = strdup(token);
-      token = strtok(NULL, " ");
+      token       = strtok(NULL, " ");
     }
     if (token) {
       arg_size = strdup(token);
-      token = strtok(NULL, " ");
+      token    = strtok(NULL, " ");
     }
     free(token_args);
   }
@@ -108,7 +108,7 @@ static void fn_memory_error(int status, bfd_vma memaddr,
 
   char     buf[64];
   dis_ctx *dis = info->application_data;
-  dis->error = 1;
+  dis->error   = 1;
 
   snprintf(buf, STRMAXLEN(buf), "[unable to peek data]");
   strbuf_append(dis->buffer, buf);
@@ -149,9 +149,9 @@ void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
   info.arch = bfd_arch_i386;
   info.mach = bfd_mach_x86_64;
 
-  dis_ctx dis = (dis_ctx){.ctx = ctx, .buffer = buffer, .error = 0};
-  info.application_data = &dis;
-  info.read_memory_func = fn_read_memory;
+  dis_ctx dis            = (dis_ctx){.ctx = ctx, .buffer = buffer, .error = 0};
+  info.application_data  = &dis;
+  info.read_memory_func  = fn_read_memory;
   info.memory_error_func = fn_memory_error;
 
   disassembler_ftype disasm =

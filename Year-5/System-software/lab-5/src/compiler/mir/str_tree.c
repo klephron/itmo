@@ -411,7 +411,7 @@ static void mir_str_lit(strbuf *buffer, size_t pad, const mir_lit *lit) {
 
 char *mir_str(const mir *mir) {
   strbuf *buffer = strbuf_new(0, 0);
-  size_t  pad = 0;
+  size_t  pad    = 0;
 
   strbuf_append_clx(buffer, "{", pad);
   pad += MIR_STR_TAB;

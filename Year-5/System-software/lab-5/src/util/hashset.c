@@ -16,10 +16,10 @@ static hashset_it hashset_it_make(hashset *hashset, size_t bucket_i,
                                   hashset_list_node *node,
                                   hashset_list_node *prev) {
   hashset_it it = {
-      .hashset = hashset,
+      .hashset  = hashset,
       .bucket_i = bucket_i,
-      .node = node,
-      .prev = prev,
+      .node     = node,
+      .prev     = prev,
   };
   return it;
 }
@@ -36,30 +36,30 @@ static void hashset_grow(hashset *self) {
     hashset_bucket    *bucket = self->buckets + i;
     hashset_list_node *next;
     for (hashset_list_node *node = bucket->head; node; node = next) {
-      next = node->next;
-      size_t          new_i = self->f_hash(node->data) % new_capacity;
+      next                       = node->next;
+      size_t          new_i      = self->f_hash(node->data) % new_capacity;
       hashset_bucket *new_bucket = new_buckets + new_i;
-      node->next = new_bucket->head;
-      new_bucket->head = node;
+      node->next                 = new_bucket->head;
+      new_bucket->head           = node;
     }
   }
 
   free(self->buckets);
-  self->buckets = new_buckets;
+  self->buckets  = new_buckets;
   self->capacity = new_capacity;
 }
 
 void hashset_init(hashset *self, container_f_cmp f_cmp, container_f_new f_new,
                   container_f_delete f_delete, container_f_hash f_hash) {
-  self->load_factor = HASHTABLE_LOAD_FACTOR;
+  self->load_factor   = HASHTABLE_LOAD_FACTOR;
   self->growth_factor = HASHTABLE_GROWTH_FACTOR;
-  self->capacity = HASHTABLE_INITIAL_CAPACITY;
-  self->size = 0;
+  self->capacity      = HASHTABLE_INITIAL_CAPACITY;
+  self->size          = 0;
 
-  self->f_cmp = f_cmp;
-  self->f_new = f_new;
+  self->f_cmp    = f_cmp;
+  self->f_new    = f_new;
   self->f_delete = f_delete;
-  self->f_hash = f_hash;
+  self->f_hash   = f_hash;
 
   self->buckets = MALLOCN(hashset_bucket, self->capacity);
   for (size_t i = 0; i < self->capacity; ++i) {
@@ -112,7 +112,7 @@ int hashset_it_next(hashset_it *it) {
 }
 
 hashset_it hashset_find(hashset *self, void *data) {
-  size_t          index = self->f_hash(data) % self->capacity;
+  size_t          index  = self->f_hash(data) % self->capacity;
   hashset_bucket *bucket = self->buckets + index;
 
   hashset_list_node *prev = NULL;
@@ -130,7 +130,7 @@ hashset_it hashset_insert(hashset *self, void *data) {
     hashset_grow(self);
   }
 
-  size_t          index = self->f_hash(data) % self->capacity;
+  size_t          index  = self->f_hash(data) % self->capacity;
   hashset_bucket *bucket = self->buckets + index;
 
   hashset_list_node *prev = NULL;
@@ -145,9 +145,9 @@ hashset_it hashset_insert(hashset *self, void *data) {
   }
 
   hashset_list_node *node = MALLOC(hashset_list_node);
-  node->data = self->f_new(data);
-  node->next = bucket->head;
-  bucket->head = node;
+  node->data              = self->f_new(data);
+  node->next              = bucket->head;
+  bucket->head            = node;
   self->size += 1;
   return hashset_it_make(self, index, node, NULL);
 }

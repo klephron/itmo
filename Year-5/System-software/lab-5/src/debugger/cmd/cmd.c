@@ -8,11 +8,11 @@
 
 cmd *cmd_entry_new(cmd_fn fn, const char *desc_ref, const char *help_ref,
                    const char *cmd_ref) {
-  cmd *self = MALLOC(cmd);
-  self->fn = fn;
+  cmd *self      = MALLOC(cmd);
+  self->fn       = fn;
   self->desc_ref = desc_ref;
   self->help_ref = help_ref;
-  self->cmd_ref = cmd_ref;
+  self->cmd_ref  = cmd_ref;
   return self;
 }
 

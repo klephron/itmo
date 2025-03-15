@@ -20,8 +20,8 @@ typedef struct mir_bb_preds_struct {
 
 mir_bb_preds *mir_bb_preds_new(const mir_bb *bb) {
   mir_bb_preds *self = MALLOC(mir_bb_preds);
-  self->bb = bb;
-  self->preds = list_mir_bb_ref_new();
+  self->bb           = bb;
+  self->preds        = list_mir_bb_ref_new();
   return self;
 }
 
@@ -200,7 +200,7 @@ static void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
     return;
   }
 
-  ctx->preds = hashset_mir_bb_preds_new();
+  ctx->preds   = hashset_mir_bb_preds_new();
   ctx->visited = hashset_mir_bb_ref_new();
   ctx->deleted = hashset_mir_bb_ref_new();
 
@@ -226,7 +226,7 @@ static void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
 
   // bb_first may be redundant (need to check)
   while (!list_mir_bb_empty(sub->basic.bbs)) {
-    mir_bb *cur = list_mir_bb_pop_front(sub->basic.bbs);
+    mir_bb *cur      = list_mir_bb_pop_front(sub->basic.bbs);
     mir_bb *cur_next = mir_ctx_bb_merge_block(ctx, cur);
     if (cur_next) {
       hashset_mir_bb_ref_insert(ctx->deleted, cur);
@@ -250,9 +250,9 @@ mir_merge_bb_result mir_merge_bb(mir *mir) {
   };
 
   mir_ctx ctx = {
-      .preds = NULL,
-      .visited = NULL,
-      .deleted = NULL,
+      .preds      = NULL,
+      .visited    = NULL,
+      .deleted    = NULL,
       .exceptions = result.exceptions,
   };
 

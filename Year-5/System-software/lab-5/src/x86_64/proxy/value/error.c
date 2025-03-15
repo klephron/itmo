@@ -21,8 +21,8 @@ static void x86_64_proxy_error_unhandled(x86_64_value *self, const char *op) {
 
 void __x86_64_proxy_error_init(x86_64_value *out, x86_64_value *value) {
   x86_64_data_error *data = malloc(sizeof(x86_64_data_error));
-  data->ref_cnt = 1;
-  data->value = *value;
+  data->ref_cnt           = 1;
+  data->value             = *value;
 
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_ERROR];
 
@@ -185,7 +185,7 @@ void __x86_64_proxy_error_op_index(x86_64_value *out, x86_64_value *self, ...) {
 
 void __x86_64_proxy_error_op_repr(x86_64_value *out, x86_64_value *self) {
   strbuf            *buffer = strbuf_new(64, 0);
-  x86_64_data_error *data = (x86_64_data_error *)self->data_ptr;
+  x86_64_data_error *data   = (x86_64_data_error *)self->data_ptr;
 
   x86_64_value value_string;
   data->value.op_tbl->op_repr(&value_string, &data->value);

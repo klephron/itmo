@@ -11,7 +11,7 @@ static const char *help = "Usage: <command> [<id>]\n"
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
-  char *args = NULL;
+  char *args   = NULL;
   char *arg_id = NULL;
 
   args = trim(strdup(rest));
@@ -22,10 +22,10 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   {
     char *token_args = strdup(args);
-    char *token = strtok(token_args, " ");
+    char *token      = strtok(token_args, " ");
     if (token) {
       arg_id = strdup(token);
-      token = strtok(NULL, " ");
+      token  = strtok(NULL, " ");
     }
     if (token_args) {
       free(token_args);

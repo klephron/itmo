@@ -105,7 +105,7 @@ static void strbuf_append_row(strbuf *buffer, size_t columns, size_t *widths,
                               list *row) {
   strbuf_append(buffer, STRTABLE_VERT);
   list_it it = list_begin(row);
-  size_t  i = 0;
+  size_t  i  = 0;
 
   if (!list_it_end(&it)) {
     strbuf_append_cell(buffer, widths[0], list_it_get(&it), STRTABLE_SPACE);
@@ -158,7 +158,7 @@ static void strtable_calc_bounds(size_t *columns_out, size_t **widths_out,
   }
 
   *columns_out = columns;
-  *widths_out = widths;
+  *widths_out  = widths;
 }
 
 char *strtable_build(const char *title, const list *header, const list *rows) {

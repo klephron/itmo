@@ -5,9 +5,9 @@
 
 symbol_entry *symbol_entry_new(char *id, type_entry *type_ref, span *span) {
   symbol_entry *self = MALLOC(symbol_entry);
-  self->name = id;
-  self->type_ref = type_ref;
-  self->span = span;
+  self->name         = id;
+  self->type_ref     = type_ref;
+  self->span         = span;
   return self;
 }
 
@@ -22,7 +22,7 @@ void symbol_entry_free(symbol_entry *self) {
 
 symbol_table *symbol_table_new() {
   symbol_table *self = MALLOC(symbol_table);
-  self->entries = list_symbol_entry_new();
+  self->entries      = list_symbol_entry_new();
   return self;
 }
 

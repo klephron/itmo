@@ -26,9 +26,9 @@ static hir_scope_entry *hir_scope_entry_new(hir_type_base *type_hir,
                                             ctx_scope_kind kind,
                                             type_entry    *type_ref) {
   hir_scope_entry *self = MALLOC(hir_scope_entry);
-  self->type_hir = type_hir;
-  self->kind = kind;
-  self->type_ref = type_ref;
+  self->type_hir        = type_hir;
+  self->kind            = kind;
+  self->type_ref        = type_ref;
   return self;
 }
 
@@ -73,8 +73,8 @@ typedef struct hir_scope_struct {
 
 hir_scope *hir_scope_new(size_t depth) {
   hir_scope *scope = MALLOC(hir_scope);
-  scope->entries = hashset_hir_scope_entry_new();
-  scope->depth = depth;
+  scope->entries   = hashset_hir_scope_entry_new();
+  scope->depth     = depth;
   return scope;
 }
 
@@ -110,10 +110,10 @@ static void             hir_ctx_scopes_pop(hir_ctx *ctx);
 
 static void hir_ctx_init(hir_ctx *ctx, type_table *type_table,
                          list_exception *exceptions) {
-  ctx->scopes = list_hir_scope_new();
+  ctx->scopes      = list_hir_scope_new();
   ctx->scope_depth = 0;
-  ctx->type_table = type_table;
-  ctx->exceptions = exceptions;
+  ctx->type_table  = type_table;
+  ctx->exceptions  = exceptions;
 }
 
 static void hir_ctx_deinit(hir_ctx *ctx) {
@@ -160,11 +160,11 @@ static hir_scope_entry *hir_ctx_scopes_find(const hir_ctx       *ctx,
 
   for (list_hir_scope_it it = list_hir_scope_begin(ctx->scopes); !END(it);
        NEXT(it)) {
-    hir_scope                 *scope = GET(it);
+    hir_scope                 *scope    = GET(it);
     hashset_hir_scope_entry_it scope_it = hashset_hir_scope_entry_find(
         scope->entries,
         &(hir_scope_entry){.type_hir = (hir_type_base *)hir_type,
-                           .kind = kind});
+                           .kind     = kind});
 
     if (!END(scope_it)) {
       if (scope_out) {
@@ -267,7 +267,7 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
         return NULL;
       }
 
-      type_array *array = type_array_new(sub_entry->type_ref->type);
+      type_array *array    = type_array_new(sub_entry->type_ref->type);
       type_entry *type_ref = hir_ctx_table_emplace(ctx, (type_base *)array,
                                                    span_copy(self->base.span));
 
@@ -510,9 +510,9 @@ static void hir_bind_vars(hir_ctx *ctx, list_hir_var *vars) {
       hir_scope_entry *entry =
           hir_ctx_scopes_resolve(ctx, var->type_hir, CTX_SCOPE_USAGE, NULL);
       if (!entry) {
-        const char *var_s = (var->state & HIR_STATE_BIND_SYMBOL)
-                                ? var->id_ref->name
-                                : var->id_hir->name;
+        const char *var_s  = (var->state & HIR_STATE_BIND_SYMBOL)
+                                 ? var->id_ref->name
+                                 : var->id_hir->name;
         char       *type_s = hir_type_str(var->type_hir);
 
         hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
@@ -701,7 +701,7 @@ static type_class_t *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
 
   if ((found = hir_ctx_scopes_find(ctx, (hir_type_base *)hir_class_type,
                                    CTX_SCOPE_DECLARATION, NULL))) {
-    char *type_s = hir_type_str((hir_type_base *)hir_class_type);
+    char *type_s  = hir_type_str((hir_type_base *)hir_class_type);
     char *found_s = type_str(found->type_ref->type);
     hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_REDEFINITION, hir_class->base.span,
                   "type name collision %s with %s", type_s, type_s);
@@ -724,7 +724,7 @@ static type_class_t *hir_bind_class_id(hir_ctx *ctx, hir_class *hir_class) {
   // cleanup hir class id and span, now bound to type table
   hir_class->id->name = NULL;
   hir_id_free(hir_class->id);
-  hir_class->id = NULL;
+  hir_class->id        = NULL;
   hir_class->base.span = NULL;
 
   return class;
@@ -744,7 +744,7 @@ static void hir_bind_class_typenames(hir_ctx *ctx, hir_class *hir_class,
 
     if ((found = hir_ctx_scopes_find(ctx, (hir_type_base *)hir_typename_type,
                                      CTX_SCOPE_USAGE, NULL))) {
-      char *type_s = hir_type_str((hir_type_base *)hir_typename_type);
+      char *type_s  = hir_type_str((hir_type_base *)hir_typename_type);
       char *found_s = type_str(found->type_ref->type);
       hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_REDEFINITION,
                     hir_typename->base.span, "type name collision %s with %s",
@@ -765,7 +765,7 @@ static void hir_bind_class_typenames(hir_ctx *ctx, hir_class *hir_class,
 
     list_type_ref_push_back(class->typenames, (type_base *)typename);
 
-    hir_typename->name = NULL;
+    hir_typename->name      = NULL;
     hir_typename->base.span = NULL;
   }
   list_hir_id_free(hir_class->typenames);
@@ -892,7 +892,7 @@ static void hir_bind_classes(hir_ctx *ctx, hir *hir) {
   for (list_hir_class_it it = list_hir_class_begin(hir->classes); !END(it);
        NEXT(it), NEXT(classes_it)) {
     hir_class *hir_class = GET(it);
-    type_class_t *class = (typeof(class))GET(classes_it);
+    type_class_t *class  = (typeof(class))GET(classes_it);
 
     if (class) {
       hir_ctx_scopes_push(ctx);

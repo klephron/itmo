@@ -52,8 +52,8 @@ void *container_new_chars_chars(void *_data) {
   chars_chars *data = _data;
 
   chars_chars *new_data = MALLOC(chars_chars);
-  new_data->key = strdup(data->key);
-  new_data->value = strdup(data->value);
+  new_data->key         = strdup(data->key);
+  new_data->value       = strdup(data->value);
 
   return new_data;
 }
@@ -86,7 +86,7 @@ void container_delete_false(void *_data) { UNUSED(_data); }
 
 // HASH
 uint64_t container_hash_chars(const void *_data) {
-  const uint64_t pow = 757;
+  const uint64_t pow  = 757;
   uint64_t       hash = 353;
 
   const char *kc = _data;

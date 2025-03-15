@@ -34,16 +34,16 @@ typedef struct hir_ctx_struct {
 
 static void hir_ctx_init(hir_ctx *ctx, symbol_table *symbol_table,
                          list_exception *exceptions) {
-  ctx->scopes = list_hir_scope_new();
+  ctx->scopes       = list_hir_scope_new();
   ctx->symbol_table = symbol_table;
-  ctx->exceptions = exceptions;
+  ctx->exceptions   = exceptions;
 }
 
 static void hir_ctx_deinit(hir_ctx *ctx) { list_hir_scope_free(ctx->scopes); }
 
 static symbol_entry *hir_ctx_scopes_insert(hir_ctx *ctx, symbol_entry *entry) {
   hir_scope   *scope = list_hir_scope_front(ctx->scopes);
-  hir_scope_it it = hir_scope_insert(scope, entry);
+  hir_scope_it it    = hir_scope_insert(scope, entry);
   // debug("scope_size: %zu", scope->hashset.size);
   return GET(it);
 }
@@ -92,7 +92,7 @@ static int hir_bind_var(hir_ctx *ctx, hir_var *var) {
   symbol_entry *found;
 
   int is_bind_symbol = var->state & HIR_STATE_BIND_SYMBOL;
-  int is_bind_type = var->state & HIR_STATE_BIND_TYPE;
+  int is_bind_type   = var->state & HIR_STATE_BIND_TYPE;
 
   if (!(is_bind_symbol)) {
     if ((found = hir_ctx_scopes_find(ctx, var->id_hir->name))) {
@@ -110,7 +110,7 @@ static int hir_bind_var(hir_ctx *ctx, hir_var *var) {
     hir_ctx_scopes_insert(ctx, entry);
 
     hir_id_free(var->id_hir);
-    var->id_ref = entry;
+    var->id_ref    = entry;
     var->base.span = NULL;
     var->state |= HIR_STATE_BIND_SYMBOL;
   }
@@ -121,7 +121,7 @@ static int hir_bind_param(hir_ctx *ctx, hir_param *param) {
   symbol_entry *found;
 
   int is_bind_symbol = param->state & HIR_STATE_BIND_SYMBOL;
-  int is_bind_type = param->state & HIR_STATE_BIND_TYPE;
+  int is_bind_type   = param->state & HIR_STATE_BIND_TYPE;
 
   if (!(is_bind_symbol)) {
     if ((found = hir_ctx_scopes_find(ctx, param->id_hir->name))) {
@@ -140,7 +140,7 @@ static int hir_bind_param(hir_ctx *ctx, hir_param *param) {
     hir_ctx_scopes_insert(ctx, entry);
 
     hir_id_free(param->id_hir);
-    param->id_ref = entry;
+    param->id_ref    = entry;
     param->base.span = NULL;
     param->state |= HIR_STATE_BIND_SYMBOL;
   }
@@ -284,7 +284,7 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
                                           hir_subroutine *hir_subroutine) {
   symbol_entry *found;
   int           is_bind_symbol = hir_subroutine->state & HIR_STATE_BIND_SYMBOL;
-  int           is_bind_type = hir_subroutine->state & HIR_STATE_BIND_TYPE;
+  int           is_bind_type   = hir_subroutine->state & HIR_STATE_BIND_TYPE;
 
   // add subroutine to current scope
   if (!(is_bind_symbol)) {
@@ -305,7 +305,7 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
     hir_ctx_scopes_insert(ctx, entry);
 
     hir_id_free(hir_subroutine->id_hir);
-    hir_subroutine->id_ref = entry;
+    hir_subroutine->id_ref    = entry;
     hir_subroutine->base.span = NULL;
     hir_subroutine->state |= HIR_STATE_BIND_SYMBOL;
   }
@@ -375,7 +375,7 @@ static void hir_bind_class(hir_ctx *ctx, hir_class *hir_class) {
     // update span for bind_subroutine to get relevant info about location
     span_free(method->subroutine->base.span);
     method->subroutine->base.span = method->base.span;
-    method->base.span = NULL;
+    method->base.span             = NULL;
 
     hir_bind_subroutine_signature(ctx, method->subroutine);
   }
@@ -392,7 +392,7 @@ static void hir_bind_class(hir_ctx *ctx, hir_class *hir_class) {
 hir_bind_symbols_result hir_bind_symbols(hir *hir) {
   hir_bind_symbols_result result = {
       .symbol_table = symbol_table_new(),
-      .exceptions = list_exception_new(),
+      .exceptions   = list_exception_new(),
   };
 
   hir_ctx ctx;
