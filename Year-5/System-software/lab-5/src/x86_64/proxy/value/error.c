@@ -250,6 +250,5 @@ void __x86_64_proxy_error_op_repr(x86_64_value *out, x86_64_value *self) {
   value_string.op_tbl->op_drop(&value_string);
   strbuf_append(buffer, " }");
 
-  __x86_64_proxy_string_init(out, (uint8_t *)strbuf_data(buffer));
-  strbuf_free(buffer);
+  __x86_64_proxy_string_init_move(out, (uint8_t *)strbuf_detach(buffer));
 }

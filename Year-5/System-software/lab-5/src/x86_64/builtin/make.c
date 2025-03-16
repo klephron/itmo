@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "x86_64/proxy/util.h"
 #include "x86_64/proxy/value/array.h"
 #include "x86_64/proxy/value/bool.h"
 #include "x86_64/proxy/value/byte.h"
@@ -11,6 +12,9 @@
 #include "x86_64/proxy/value/uint.h"
 #include "x86_64/proxy/value/ulong.h"
 #include "x86_64/proxy/value/void.h"
+#include "x86_64/value/array.h"
+#include <stdarg.h>
+#include <stdlib.h>
 
 void (*__x86_64_make_void)(x86_64_value *out) = __x86_64_proxy_void_init;
 
@@ -38,12 +42,85 @@ void (*__x86_64_make_char)(x86_64_value *out,
 void (*__x86_64_make_string)(x86_64_value  *out,
                              const uint8_t *value) = __x86_64_proxy_string_init;
 
-void (*__x86_64_make_array)(x86_64_value *out,
-                            uint64_t      size) = __x86_64_proxy_array_init;
+static void __x86_64_make_array_recursive(x86_64_value *out, uint64_t *stack) {
+  uint64_t length = *stack;
+  if (!length) {
+    return;
+  }
+
+  __x86_64_proxy_array_init(out, length);
+  x86_64_data_array *data = (x86_64_data_array *)out->data_ptr;
+
+  for (uint64_t i = 0; i < length; i++) {
+    __x86_64_make_array_recursive(data->elements + i, stack + 1);
+  }
+}
+
+void __x86_64_make_array(x86_64_value *out, ...) {
+  uint64_t stack_len = 0;
+
+  va_list args;
+  va_start(args, out);
+
+  // get args count + validate them
+  va_list args_copy;
+  va_copy(args_copy, args);
+
+  do {
+    x86_64_value *value = va_arg(args_copy, x86_64_value *);
+    if (!value) {
+      break;
+    }
+
+    uint64_t length = __x86_64_proxy_value_as_index(value);
+    if (length == UINT64_MAX) {
+      __x86_64_proxy_op_error_not_number(out, value, "make");
+      goto cleanup;
+    }
+
+    ++stack_len;
+  } while (1);
+
+  va_end(args_copy);
+
+  if (!stack_len) {
+    __x86_64_proxy_op_error_string(out, "make", "no args passed");
+    goto cleanup;
+  }
+
+  // create stack with array sizes
+  uint64_t *stack = malloc(sizeof(uint64_t) * (stack_len + 1));
+
+  for (uint64_t i = 0; i < stack_len; ++i) {
+    x86_64_value *value = va_arg(args, x86_64_value *);
+    stack[i]            = __x86_64_proxy_value_as_index(value);
+  }
+  stack[stack_len] = 0;
+
+  __x86_64_make_array_recursive(out, stack);
+
+  free(stack);
+
+cleanup:
+  va_end(args);
+}
 
 void (*__x86_64_make_object)(x86_64_value                     *out,
                              const x86_64_data_object_symbols *symbols) =
     __x86_64_proxy_object_init;
+
+void __x86_64_make_object_defaults(x86_64_value                     *out,
+                                   const x86_64_data_object_symbols *symbols,
+                                   x86_64_value                     *defaults) {
+  __x86_64_proxy_object_init(out, symbols);
+  x86_64_data_object *data = (x86_64_data_object *)out->data_ptr;
+
+  for (uint64_t i = 0; i < data->symbols_ref->count; ++i) {
+    x86_64_value *member = data->members + i;
+    x86_64_value *def    = (x86_64_value *)defaults + i;
+    def->op_tbl->op_copy(member, def);
+  }
+}
 
 void (*__x86_64_make_error)(x86_64_value *out,
                             x86_64_value *value) = __x86_64_proxy_error_init;

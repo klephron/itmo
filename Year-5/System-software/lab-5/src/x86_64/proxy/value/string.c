@@ -21,6 +21,15 @@ void __x86_64_proxy_string_init(x86_64_value *out, const uint8_t *value) {
                           *(uint64_t *)&data);
 }
 
+void __x86_64_proxy_string_init_move(x86_64_value *out, uint8_t *value) {
+  x86_64_data_string data = {.value = value};
+
+  const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_STRING];
+
+  __x86_64_value_init_raw(out, X86_64_TYPE_STRING, (x86_64_op_tbl *)op_tbl,
+                          *(uint64_t *)&data);
+}
+
 x86_64_op_plus    __x86_64_proxy_string_op_plus;
 x86_64_op_minus   __x86_64_proxy_string_op_minus;
 x86_64_op_not     __x86_64_proxy_string_op_not;
@@ -135,7 +144,7 @@ void __x86_64_proxy_string_op_index(x86_64_value *out, x86_64_value *self,
 
   x86_64_value *arg = va_arg(args, x86_64_value *);
   if (!arg) {
-    __x86_64_proxy_string_init(out, (const uint8_t *)"op index no arg passed");
+    __x86_64_proxy_op_error_string(out, "index", "op index no arg passed");
     goto cleanup;
   }
 
@@ -160,8 +169,8 @@ void __x86_64_proxy_string_op_index_ref(x86_64_value *out, x86_64_value *self,
 
   x86_64_value *arg = va_arg(args, x86_64_value *);
   if (!arg) {
-    __x86_64_proxy_string_init(out,
-                               (const uint8_t *)"op index_ref no arg passed");
+    __x86_64_proxy_op_error_string(out, "index_ref",
+                                   "op index_ref no arg passed");
     goto cleanup;
   }
 

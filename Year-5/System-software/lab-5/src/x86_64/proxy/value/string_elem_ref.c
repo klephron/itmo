@@ -56,9 +56,9 @@ void __x86_64_proxy_string_elem_ref_op_deref(x86_64_value *out,
 x86_64_op_call __x86_64_proxy_string_elem_ref_op_call;
 
 void __x86_64_proxy_string_elem_ref_op_assign(x86_64_value *self,
-                                              x86_64_value *rsv) {
-  if (rsv->type != X86_64_TYPE_CHAR) {
-    __x86_64_proxy_op_error_type_mismatch(self, rsv, "assign",
+                                              x86_64_value *other) {
+  if (other->type != X86_64_TYPE_CHAR) {
+    __x86_64_proxy_op_error_type_mismatch(self, other, "assign",
                                           X86_64_TYPE_CHAR);
     return;
   }
@@ -66,7 +66,7 @@ void __x86_64_proxy_string_elem_ref_op_assign(x86_64_value *self,
   x86_64_data_string_elem_ref self_data =
       *(x86_64_data_string_elem_ref *)&self->data_raw;
 
-  x86_64_data_char rsv_data = *(x86_64_data_char *)&rsv->data_raw;
+  x86_64_data_char rsv_data = *(x86_64_data_char *)&other->data_raw;
 
   *self_data.value = rsv_data.value;
 }
@@ -87,7 +87,7 @@ x86_64_op_cast __x86_64_proxy_string_elem_ref_op_cast;
 
 void __x86_64_proxy_string_elem_ref_op_repr(x86_64_value *out,
                                             x86_64_value *self) {
-  strbuf      *buffer = strbuf_new(0, 0);
+  strbuf      *buffer = strbuf_new(64, 0);
   x86_64_value self_deref;
   self->op_tbl->op_deref(&self_deref, self);
 
@@ -102,7 +102,5 @@ void __x86_64_proxy_string_elem_ref_op_repr(x86_64_value *out,
 
   self_deref.op_tbl->op_drop(&self_deref);
 
-  __x86_64_proxy_string_init(out, (const uint8_t *)strbuf_data(buffer));
-
-  strbuf_free(buffer);
+  __x86_64_proxy_string_init_move(out, (uint8_t *)strbuf_detach(buffer));
 }

@@ -12,31 +12,51 @@
 #include "x86_64/value/uint.h"
 #include "x86_64/value/ulong.h"
 
+void __x86_64_proxy_op_call_func_error(x86_64_value *ret, ...) {
+  const char *err_msg = "op call is not implemented: error noop func is called";
+
+  error(err_msg);
+
+  x86_64_value error_value;
+  __x86_64_proxy_string_init(&error_value, (const uint8_t *)err_msg);
+  __x86_64_proxy_error_init(ret, &error_value);
+}
+
+void __x86_64_proxy_op_error_string(x86_64_value *out, const char *op,
+                                    const char *err_msg) {
+  strbuf *buffer = strbuf_new(64, 0);
+
+  strbuf_append(buffer, "op ");
+  strbuf_append(buffer, op);
+  strbuf_append(buffer, " ");
+  strbuf_append(buffer, err_msg);
+
+  x86_64_value error_msg;
+  __x86_64_proxy_string_init_move(&error_msg, (uint8_t *)strbuf_detach(buffer));
+
+  x86_64_value error;
+  __x86_64_proxy_error_init(&error, &error_msg);
+
+  *out = error;
+}
+
 void __x86_64_proxy_op_error_undefined(x86_64_value *out, x86_64_value *self,
                                        const char *op) {
   strbuf *buffer = strbuf_new(64, 0);
 
+  strbuf_append(buffer, "is undefined for `");
+
   x86_64_value self_string;
   self->op_tbl->op_repr(&self_string, self);
+  strbuf_append(buffer, (const char *)self_string.data_ptr);
+  self_string.op_tbl->op_drop(&self_string);
 
-  strbuf_append(buffer, "op ");
-  strbuf_append(buffer, op);
-  strbuf_append(buffer, " is undefined for `");
-  strbuf_append(buffer, (char *)self_string.data_ptr);
   strbuf_append(buffer, "`: ");
   strbuf_append(buffer, __x86_64_type_enum_str(self->type));
 
-  self_string.op_tbl->op_drop(&self_string);
-
-  x86_64_value error_value;
-  __x86_64_proxy_string_init(&error_value, (uint8_t *)strbuf_data(buffer));
+  __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));
 
   strbuf_free(buffer);
-
-  x86_64_value error;
-  __x86_64_proxy_error_init(&error, &error_value);
-
-  *out = error;
 }
 
 void __x86_64_proxy_op_error_type_mismatch(x86_64_value *out,
@@ -44,52 +64,76 @@ void __x86_64_proxy_op_error_type_mismatch(x86_64_value *out,
                                            x86_64_type_enum type) {
   strbuf *buffer = strbuf_new(64, 0);
 
+  strbuf_append(buffer, "type mismatch, expected ");
+  strbuf_append(buffer, __x86_64_type_enum_str(type));
+  strbuf_append(buffer, " got `");
+
   x86_64_value self_string;
   self->op_tbl->op_repr(&self_string, self);
-
-  strbuf_append(buffer, "op ");
-  strbuf_append(buffer, op);
-  strbuf_append(buffer, " type mismatch, expected ");
-  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
-  strbuf_append(buffer, " got `");
   strbuf_append(buffer, (char *)self_string.data_ptr);
+  self_string.op_tbl->op_drop(&self_string);
+
   strbuf_append(buffer, "`: ");
+  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
 
-  strbuf_append(buffer, __x86_64_type_enum_str(type));
-
-  self->op_tbl->op_drop(&self_string);
-
-  x86_64_value error_value;
-  __x86_64_proxy_string_init(&error_value, (uint8_t *)strbuf_data(buffer));
+  __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));
 
   strbuf_free(buffer);
-
-  x86_64_value error;
-  __x86_64_proxy_error_init(&error, &error_value);
-
-  *out = error;
 }
 
-void __x86_64_proxy_op_error_cast_unable(x86_64_value *out, x86_64_value *self,
-                                         x86_64_type_enum type) {
-  strbuf      *buffer = strbuf_new(0, 0);
-  x86_64_value error_value;
+void __x86_64_proxy_op_error_unable_to_cast(x86_64_value    *out,
+                                            x86_64_value    *self,
+                                            x86_64_type_enum type) {
+  strbuf *buffer = strbuf_new(0, 0);
 
   strbuf_append(buffer, "unable to cast `");
 
-  x86_64_value self_str;
-  self->op_tbl->op_repr(&self_str, self);
-  strbuf_append(buffer, self_str.data_ptr);
-  self_str.op_tbl->op_drop(&self_str);
+  x86_64_value self_string;
+  self->op_tbl->op_repr(&self_string, self);
+  strbuf_append(buffer, self_string.data_ptr);
+  self_string.op_tbl->op_drop(&self_string);
 
   strbuf_append(buffer, "`: ");
   strbuf_append(buffer, __x86_64_type_enum_str(self->type));
   strbuf_append(buffer, " to type ");
   strbuf_append(buffer, __x86_64_type_enum_str(type));
-  __x86_64_proxy_string_init(&error_value, (uint8_t *)strbuf_data(buffer));
-  strbuf_free(buffer);
 
-  __x86_64_proxy_error_init(out, &error_value);
+  __x86_64_proxy_op_error_string(out, "cast", strbuf_data(buffer));
+
+  strbuf_free(buffer);
+}
+
+void __x86_64_proxy_op_error_not_number(x86_64_value *out, x86_64_value *self,
+                                        const char *op) {
+  strbuf *buffer = strbuf_new(64, 0);
+
+  strbuf_append(buffer, "`");
+
+  x86_64_value self_string;
+  self->op_tbl->op_repr(&self_string, self);
+  strbuf_append(buffer, (char *)self_string.data_ptr);
+  self_string.op_tbl->op_drop(&self_string);
+
+  strbuf_append(buffer, "`: ");
+  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
+  strbuf_append(buffer, " can't convert to number (or uint64_t max) `");
+
+  __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));
+
+  strbuf_free(buffer);
+}
+
+void __x86_64_proxy_op_error_no_member(x86_64_value *out, const char *op,
+                                       const uint8_t *member) {
+  strbuf *buffer = strbuf_new(0, 0);
+
+  strbuf_append(buffer, "member `");
+  strbuf_append(buffer, (const char *)member);
+  strbuf_append(buffer, "` not present");
+
+  __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));
+
+  strbuf_free(buffer);
 }
 
 uint64_t __x86_64_proxy_value_as_index(const x86_64_value *self) {
@@ -129,42 +173,4 @@ uint64_t __x86_64_proxy_value_as_index(const x86_64_value *self) {
     default:
       return UINT64_MAX;
   }
-}
-
-void __x86_64_proxy_op_error_not_number(x86_64_value *out, x86_64_value *self,
-                                        const char *op) {
-  strbuf *buffer = strbuf_new(64, 0);
-
-  x86_64_value self_string;
-  self->op_tbl->op_repr(&self_string, self);
-
-  strbuf_append(buffer, "op ");
-  strbuf_append(buffer, op);
-  strbuf_append(buffer, " `");
-  strbuf_append(buffer, (char *)self_string.data_ptr);
-  strbuf_append(buffer, "`: ");
-  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
-  strbuf_append(buffer, " can't convert to number (or uint64_t max) `");
-
-  self->op_tbl->op_drop(&self_string);
-
-  x86_64_value error_value;
-  __x86_64_proxy_string_init(&error_value, (uint8_t *)strbuf_data(buffer));
-
-  strbuf_free(buffer);
-
-  x86_64_value error;
-  __x86_64_proxy_error_init(&error, &error_value);
-
-  *out = error;
-}
-
-void __x86_64_proxy_op_call_func_error(x86_64_value *ret, ...) {
-  const char *err_msg = "op call is not implemented: error noop func is called";
-
-  error(err_msg);
-
-  x86_64_value error_value;
-  __x86_64_proxy_string_init(&error_value, (const uint8_t *)err_msg);
-  __x86_64_proxy_error_init(ret, &error_value);
 }

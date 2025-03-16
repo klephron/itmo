@@ -1,6 +1,9 @@
 #include "value_ref.h"
 
+#include "util/strbuf.h"
 #include "x86_64/proxy/registry.h"
+#include "x86_64/proxy/value/string.h"
+#include "x86_64/proxy/value/void.h"
 #include "x86_64/value/value_ref.h"
 
 void __x86_64_proxy_value_ref_init(x86_64_value *out, x86_64_value *value) {
@@ -39,10 +42,46 @@ x86_64_op_index      __x86_64_proxy_value_ref_op_index;
 x86_64_op_index_ref  __x86_64_proxy_value_ref_op_index_ref;
 x86_64_op_member     __x86_64_proxy_value_ref_op_member;
 x86_64_op_member_ref __x86_64_proxy_value_ref_op_member_ref;
-x86_64_op_deref      __x86_64_proxy_value_ref_op_deref;
-x86_64_op_call       __x86_64_proxy_value_ref_op_call;
-x86_64_op_assign     __x86_64_proxy_value_ref_op_assign;
-x86_64_op_drop       __x86_64_proxy_value_ref_op_drop;
-x86_64_op_copy       __x86_64_proxy_value_ref_op_copy;
-x86_64_op_cast       __x86_64_proxy_value_ref_op_cast;
-x86_64_op_repr       __x86_64_proxy_value_ref_op_repr;
+
+void __x86_64_proxy_value_ref_op_deref(x86_64_value *out, x86_64_value *self) {
+  x86_64_data_value_ref data = *(x86_64_data_value_ref *)&self->data_raw;
+  data.value->op_tbl->op_copy(out, data.value);
+}
+
+x86_64_op_call __x86_64_proxy_value_ref_op_call;
+
+void __x86_64_proxy_value_ref_op_assign(x86_64_value *self,
+                                        x86_64_value *other) {
+  x86_64_data_value_ref data = *(x86_64_data_value_ref *)&self->data_raw;
+
+  data.value->op_tbl->op_drop(data.value);
+  other->op_tbl->op_copy(data.value, other);
+}
+
+void __x86_64_proxy_value_ref_op_drop(x86_64_value *self) {
+  __x86_64_proxy_void_init(self);
+}
+
+void __x86_64_proxy_value_ref_op_copy(x86_64_value *out, x86_64_value *self) {
+  x86_64_data_value_ref data = *(x86_64_data_value_ref *)&self->data_raw;
+  __x86_64_proxy_value_ref_init(out, data.value);
+}
+
+x86_64_op_cast __x86_64_proxy_value_ref_op_cast;
+
+void __x86_64_proxy_value_ref_op_repr(x86_64_value *out, x86_64_value *self) {
+  x86_64_data_value_ref data = *(x86_64_data_value_ref *)&self->data_raw;
+
+  strbuf *buffer = strbuf_new(64, 0);
+
+  strbuf_append(buffer, "{ ref: ");
+
+  x86_64_value value_repr;
+  data.value->op_tbl->op_repr(&value_repr, data.value);
+  strbuf_append(buffer, value_repr.data_ptr);
+  value_repr.op_tbl->op_drop(&value_repr);
+
+  strbuf_append(buffer, " }");
+
+  __x86_64_proxy_string_init_move(out, (uint8_t *)strbuf_detach(buffer));
+}

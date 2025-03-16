@@ -316,7 +316,7 @@ void __x86_64_proxy_ulong_op_cast(x86_64_value *out, x86_64_value *self,
     case X86_64_TYPE_STRING_ELEM_REF:
     case X86_64_TYPE_VALUE_REF:
     default: {
-      __x86_64_proxy_op_error_cast_unable(out, self, type);
+      __x86_64_proxy_op_error_unable_to_cast(out, self, type);
       break;
     }
   }
