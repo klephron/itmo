@@ -5,7 +5,6 @@
 #include "x86_64/builtin/builtin.h"
 #include "x86_64/proxy/value/int.h"
 #include "x86_64/proxy/value/object.h"
-#include "x86_64/proxy/value/uint.h"
 #include "x86_64/proxy/value/void.h"
 #include "x86_64/util.h"
 #include "x86_64/value.h"

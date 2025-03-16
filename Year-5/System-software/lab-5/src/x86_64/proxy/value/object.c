@@ -1,6 +1,5 @@
 #include "object.h"
 
-#include "util/log.h"
 #include "util/strbuf.h"
 #include "x86_64/proxy/registry.h"
 #include "x86_64/proxy/util.h"
