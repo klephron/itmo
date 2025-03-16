@@ -175,6 +175,12 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
             }
           }
           break;
+        case MIR_STMT_ASSIGN_SUB:
+          strbuf_append(buffer, stmt->assign.from_sub->symbol_ref->name);
+          strbuf_append(buffer, ")");
+          strbuf_append(buffer, "  # ");
+          mir_str_symbol(buffer, pad, stmt->assign.from_sub->symbol_ref);
+          break;
         default:
           warn("unhandled mir stmt assign kind %d %p", stmt->assign.kind, stmt);
           break;
@@ -446,6 +452,19 @@ char *mir_str(const mir *mir) {
   pad += MIR_STR_TAB;
   for (list_mir_subroutine_it it =
            list_mir_subroutine_begin(mir->imported_subs);
+       !END(it); NEXT(it)) {
+    const mir_subroutine *subroutine = GET(it);
+    strbuf_append_clx(buffer, "", pad);
+    mir_str_subroutine(buffer, pad, subroutine);
+  }
+  pad -= MIR_STR_TAB;
+  strbuf_append_clx(buffer, "]", pad);
+
+  // initializer subroutines
+  strbuf_append_clx(buffer, "INITIALIZER SUBROUTINES: [", pad);
+  pad += MIR_STR_TAB;
+  for (list_mir_subroutine_it it =
+           list_mir_subroutine_begin(mir->initializer_subs);
        !END(it); NEXT(it)) {
     const mir_subroutine *subroutine = GET(it);
     strbuf_append_clx(buffer, "", pad);

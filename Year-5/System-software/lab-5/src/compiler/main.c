@@ -35,9 +35,10 @@ typedef struct args_struct {
   int         cg;
   list_chars *cg_subroutines;
   int         hir_tree;
-  int         symbol_table;
-  int         type_table;
+  int         hir_symbols;
+  int         hir_types;
   int         mir;
+  int         mir_symbols;
   // status
   int code;
   int help;
@@ -61,9 +62,9 @@ static args *args_new() {
   args->cg             = 0;
   args->cg_subroutines = list_chars_new();
 
-  args->hir_tree     = 0;
-  args->symbol_table = 0;
-  args->type_table   = 0;
+  args->hir_tree    = 0;
+  args->hir_symbols = 0;
+  args->hir_types   = 0;
 
   args->mir = 0;
 
@@ -109,15 +110,16 @@ static void usage(args *args) {
          "-s <subroutine>  - set or add global subroutine for call graph "
          "generation (current: %s)\n"
          "--hir-tree       - print hir tree (current: %d)\n"
-         "--symbol-table   - print symbol table (current: %d)\n"
-         "--type-table     - print type table (current: %d)\n"
+         "--hir-symbols    - print symbol table (current: %d)\n"
+         "--hir-types      - print type table (current: %d)\n"
          "--mir            - print MIR tree (current: %d)\n"
+         "--mir-symbols    - print MIR tree (current: %d)\n"
          "-h\n"
          "--help           - show help\n",
          args->prog_name, args->output_dir, args->output_file, args->tee,
          args->ignore_errors, args->ast, args->cfg, args->cfg_add_expr,
-         args->cg, cg_subroutines, args->hir_tree, args->symbol_table,
-         args->type_table, args->mir);
+         args->cg, cg_subroutines, args->hir_tree, args->hir_symbols,
+         args->hir_types, args->mir, args->mir_symbols);
 }
 
 static void parse(args *args, int argc, char *argv[]) {
@@ -131,9 +133,10 @@ static void parse(args *args, int argc, char *argv[]) {
       {"cfg-add-expr", no_argument, &args->cfg_add_expr, 1},
       {"cg", no_argument, &args->cg, 1},
       {"hir-tree", no_argument, &args->hir_tree, 1},
-      {"symbol-table", no_argument, &args->symbol_table, 1},
-      {"type-table", no_argument, &args->type_table, 1},
+      {"hir-symbols", no_argument, &args->hir_symbols, 1},
+      {"hir-types", no_argument, &args->hir_types, 1},
       {"mir", no_argument, &args->mir, 1},
+      {"mir-symbols", no_argument, &args->mir_symbols, 1},
       {"help", no_argument, &args->help, 1},
   };
 
@@ -332,15 +335,15 @@ static int execute(args *args) {
   }
 
   // stage: build hir + handle exceptions
-  hir          *hir          = NULL;
-  symbol_table *symbol_table = NULL;
-  type_table   *type_table   = NULL;
+  hir          *hir              = NULL;
+  symbol_table *hir_symbol_table = NULL;
+  type_table   *hir_type_table   = NULL;
 
   if (execute_ok(args)) {
     hir_build_result result = hir_build(asts, args->ignore_errors);
     hir                     = result.hir;
-    symbol_table            = result.symbol_table;
-    type_table              = result.type_table;
+    hir_symbol_table        = result.symbol_table;
+    hir_type_table          = result.type_table;
 
     if (list_exception_count_by_level(result.exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
@@ -360,8 +363,8 @@ static int execute(args *args) {
   }
 
   // stage: print type table
-  if (execute_ok(args) && args->type_table) {
-    char *table = type_table_str(type_table);
+  if (execute_ok(args) && args->hir_symbols) {
+    char *table = type_table_str(hir_type_table, "HIR TYPE TABLE");
     fprintf(stdout, "%s", table);
     if (table) {
       free(table);
@@ -369,20 +372,22 @@ static int execute(args *args) {
   }
 
   // stage: print symbol table
-  if (execute_ok(args) && args->symbol_table) {
-    char *table = symbol_table_str(symbol_table);
+  if (execute_ok(args) && args->hir_types) {
+    char *table = symbol_table_str(hir_symbol_table, "HIR SYMBOL TABLE");
     fprintf(stdout, "%s", table);
     if (table) {
       free(table);
     }
   }
 
-  mir *mir = NULL;
+  mir          *mir              = NULL;
+  symbol_table *mir_symbol_table = NULL;
 
   if (execute_ok(args)) {
     mir_build_result result =
-        mir_build(hir, symbol_table, type_table, args->ignore_errors);
-    mir = result.mir;
+        mir_build(hir, hir_symbol_table, hir_type_table, args->ignore_errors);
+    mir              = result.mir;
+    mir_symbol_table = result.symbol_table;
 
     if (list_exception_count_by_level(result.exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
@@ -401,6 +406,15 @@ static int execute(args *args) {
     }
   }
 
+  // stage: print mir symbols
+  if (execute_ok(args) && args->mir_symbols) {
+    char *table = symbol_table_str(mir_symbol_table, "MIR SYMBOL TABLE");
+    fprintf(stdout, "%s", table);
+    if (table) {
+      free(table);
+    }
+  }
+
   // stage: dot cfg
   if (args->cfg && (!args->code || args->ignore_errors)) {
     for (list_mir_subroutine_it it =
@@ -410,9 +424,9 @@ static int execute(args *args) {
       const char           *sub_name = sub->symbol_ref->name;
       const char           *source   = sub->symbol_ref->span->source_ref;
 
-      dot_string *dot =
-          dot_cfg(mir, hir, type_table, symbol_table, sub, args->cfg_add_expr);
-      char *output = get_cfg_dot_path(args, source, sub_name);
+      dot_string *dot = dot_cfg(mir, hir, hir_type_table, hir_symbol_table, sub,
+                                args->cfg_add_expr);
+      char       *output = get_cfg_dot_path(args, source, sub_name);
       write_dot(args, dot, output);
       free(output);
       dot_string_free(dot);
@@ -429,7 +443,7 @@ static int execute(args *args) {
       const char           *source   = sub->symbol_ref->span->source_ref;
 
       if (has_subroutine(args, sub_name)) {
-        dot_string *dot    = dot_cg(mir, type_table, symbol_table, sub);
+        dot_string *dot    = dot_cg(mir, hir_type_table, hir_symbol_table, sub);
         char       *output = get_cg_dot_path(args, source, sub_name);
         write_dot(args, dot, output);
         free(output);
@@ -466,9 +480,11 @@ static int execute(args *args) {
   // cg_x86_64_free(cg);
 
   mir_free(mir);
+  symbol_table_free(mir_symbol_table);
+
   hir_free(hir);
-  symbol_table_free(symbol_table);
-  type_table_free(type_table);
+  symbol_table_free(hir_symbol_table);
+  type_table_free(hir_type_table);
 
   list_ast_free(asts);
 

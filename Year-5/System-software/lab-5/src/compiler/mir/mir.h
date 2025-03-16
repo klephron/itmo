@@ -118,6 +118,7 @@ typedef enum mir_stmt_assign_enum {
   MIR_STMT_ASSIGN_UNKNOWN,
   MIR_STMT_ASSIGN_LIT,
   MIR_STMT_ASSIGN_VALUE,
+  MIR_STMT_ASSIGN_SUB,
 } mir_stmt_assign_enum;
 
 // NOTE: references elements that are stored elsewhere
@@ -150,8 +151,9 @@ typedef struct mir_stmt_struct {
       mir_stmt_assign_enum kind;
       mir_value           *to;
       union {
-        mir_value *from_value;
-        mir_lit   *from_lit;
+        mir_value      *from_value;
+        mir_lit        *from_lit;
+        mir_subroutine *from_sub;
       };
     } assign; // value assignment
   };
@@ -292,6 +294,7 @@ typedef struct mir_struct {
   list_mir_subroutine *global_subs;
   list_mir_subroutine *external_subs;
   list_mir_subroutine *imported_subs;
+  list_mir_subroutine *initializer_subs;
   list_mir_subroutine *methods;
   list_mir_class      *classes;
   list_mir_lit        *literals;

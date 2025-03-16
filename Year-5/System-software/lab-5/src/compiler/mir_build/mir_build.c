@@ -1,4 +1,5 @@
 #include "mir_build.h"
+#include "compiler/mir_build/inject_init.h"
 #include "compiler/mir_build/lower_hir.h"
 #include "compiler/mir_build/merge_bb.h"
 #include "util/macro.h"
@@ -12,8 +13,9 @@ mir_build_result mir_build(const hir *hir, const symbol_table *symbol_table,
   UNUSED(symbol_table);
 
   mir_build_result result = {
-      .mir        = NULL,
-      .exceptions = list_exception_new(),
+      .mir          = NULL,
+      .symbol_table = NULL,
+      .exceptions   = list_exception_new(),
   };
 
   if (mir_ok(result.exceptions, ignore_errors)) {
@@ -25,6 +27,12 @@ mir_build_result mir_build(const hir *hir, const symbol_table *symbol_table,
   if (mir_ok(result.exceptions, ignore_errors)) {
     mir_merge_bb_result r = mir_merge_bb(result.mir);
     list_exception_extend(result.exceptions, r.exceptions);
+  }
+
+  if (mir_ok(result.exceptions, ignore_errors)) {
+    mir_inject_init_result r = mir_inject_init(result.mir);
+    list_exception_extend(result.exceptions, r.exceptions);
+    result.symbol_table = r.symbol_table;
   }
 
   return result;

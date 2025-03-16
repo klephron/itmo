@@ -18,7 +18,7 @@ static inline void container_delete_list_chars(void *data) {
 LIST_DECLARE_STATIC_INLINE(list_list_chars, list_chars, container_cmp_false,
                            container_new_move, container_delete_list_chars);
 
-char *symbol_table_str(const symbol_table *table) {
+char *symbol_table_str(const symbol_table *table, const char *title) {
   if (!table) {
     return NULL;
   }
@@ -67,7 +67,7 @@ char *symbol_table_str(const symbol_table *table) {
     list_list_chars_push_back(body, row);
   }
 
-  char *result = strtable_build("SYMBOL TABLE", &header->list, &body->list);
+  char *result = strtable_build(title, &header->list, &body->list);
 
   list_list_chars_free(body);
   list_chars_free(header);

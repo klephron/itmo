@@ -115,7 +115,7 @@ static char *type_table_str_extra(const type_entry *entry) {
   return strbuf_detach(buffer);
 }
 
-char *type_table_str(const type_table *table) {
+char *type_table_str(const type_table *table, const char *title) {
   if (!table) {
     return NULL;
   }
@@ -196,7 +196,7 @@ char *type_table_str(const type_table *table) {
     list_list_chars_push_back(body, row);
   }
 
-  char *result = strtable_build("TYPE TABLE", &header->list, &body->list);
+  char *result = strtable_build(title, &header->list, &body->list);
 
   list_list_chars_free(body);
   list_chars_free(header);

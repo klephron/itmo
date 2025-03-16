@@ -148,6 +148,9 @@ mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
     case MIR_STMT_ASSIGN_VALUE:
       self->assign.from_value = from;
       break;
+    case MIR_STMT_ASSIGN_SUB:
+      self->assign.from_sub = from;
+      break;
     case MIR_STMT_ASSIGN_UNKNOWN:
     default:
       error("unhandled assign kind %d", kind);
@@ -319,13 +322,14 @@ void mir_class_free(mir_class *self) {
 }
 
 mir *mir_new() {
-  mir *self           = MALLOC(mir);
-  self->global_subs   = list_mir_subroutine_new();
-  self->external_subs = list_mir_subroutine_new();
-  self->imported_subs = list_mir_subroutine_new();
-  self->methods       = list_mir_subroutine_new();
-  self->classes       = list_mir_class_new();
-  self->literals      = list_mir_lit_new();
+  mir *self              = MALLOC(mir);
+  self->global_subs      = list_mir_subroutine_new();
+  self->external_subs    = list_mir_subroutine_new();
+  self->imported_subs    = list_mir_subroutine_new();
+  self->initializer_subs = list_mir_subroutine_new();
+  self->methods          = list_mir_subroutine_new();
+  self->classes          = list_mir_class_new();
+  self->literals         = list_mir_lit_new();
   return self;
 }
 
@@ -334,6 +338,7 @@ void mir_free(mir *self) {
     list_mir_subroutine_free(self->global_subs);
     list_mir_subroutine_free(self->external_subs);
     list_mir_subroutine_free(self->imported_subs);
+    list_mir_subroutine_free(self->initializer_subs);
     list_mir_subroutine_free(self->methods);
     list_mir_class_free(self->classes);
     list_mir_lit_free(self->literals);
