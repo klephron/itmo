@@ -1,9 +1,9 @@
 #include <criterion/criterion.h>
 #include <stdint.h>
 
-#include "x86_64/proxy/value/array.h"
 #include "util/log.h"
 #include "x86_64/builtin/builtin.h"
+#include "x86_64/proxy/value/array.h"
 #include "x86_64/proxy/value/uint.h"
 #include "x86_64/util.h"
 #include "x86_64/value.h"
@@ -15,7 +15,8 @@ Test(x86_64_array, test1) {
   __x86_64_proxy_array_init(&value1, 10);
 
   value1.op_tbl->op_repr(&value2, &value1);
-  debug("array: %s, type %s", value2.data_ptr, __x86_64_type_enum_str(value1.type));
+  debug("array: %s, type %s", value2.data_ptr,
+        __x86_64_type_enum_str(value1.type));
   value2.op_tbl->op_drop(&value2);
 
   value1.op_tbl->op_drop(&value1);
@@ -71,7 +72,7 @@ Test(x86_64_array, test2_index_Nd_slice) {
   value6.op_tbl->op_drop(&value6);
 }
 
-Test(x86_64_array, test2_index_Nd_set) {
+Test(x86_64_array, test3_index_Nd_set) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -107,4 +108,49 @@ Test(x86_64_array, test2_index_Nd_set) {
   value6.op_tbl->op_drop(&value6);
   value7.op_tbl->op_drop(&value7);
   value8.op_tbl->op_drop(&value8);
+}
+
+Test(x86_64_array, test4_assign) {
+  x86_64_value value1;
+  x86_64_value value2;
+  x86_64_value value3;
+  x86_64_value value4;
+  x86_64_value value5;
+  x86_64_value value6;
+  x86_64_value value7;
+  x86_64_value value8;
+  x86_64_value value9;
+
+  __x86_64_make_int(&value2, 2);
+  __x86_64_make_int(&value3, 3);
+  __x86_64_make_int(&value4, 4);
+  __x86_64_make_int(&value5, 1);
+  __x86_64_make_string(&value8, (const uint8_t *)"ACDEF");
+
+  __x86_64_make_array(&value1, &value2, &value3, &value4, NULL);
+
+  value1.op_tbl->op_index_ref(&value6, &value1, &value5, &value5, NULL);
+
+  value6.op_tbl->op_assign(&value6, &value8);
+
+  __x86_64_make_void(&value9);
+  value9.op_tbl->op_assign(&value9, &value1);
+
+  value1.op_tbl->op_repr(&value7, &value1);
+  debug("array_index: %s", value7.data_ptr);
+  value7.op_tbl->op_drop(&value7);
+
+  value9.op_tbl->op_repr(&value7, &value9);
+  debug("array_index: %s", value7.data_ptr);
+  value7.op_tbl->op_drop(&value7);
+
+  value1.op_tbl->op_drop(&value1);
+  value2.op_tbl->op_drop(&value2);
+  value3.op_tbl->op_drop(&value3);
+  value4.op_tbl->op_drop(&value4);
+  value5.op_tbl->op_drop(&value5);
+  value6.op_tbl->op_drop(&value6);
+  value7.op_tbl->op_drop(&value7);
+  value8.op_tbl->op_drop(&value8);
+  value9.op_tbl->op_drop(&value9);
 }

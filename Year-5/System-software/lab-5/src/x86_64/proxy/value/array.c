@@ -100,20 +100,20 @@ void __x86_64_proxy_array_op_index_ref(x86_64_value *out, x86_64_value *self,
        arg               = va_arg(args, x86_64_value *)) {
 
     if (tmp.type != X86_64_TYPE_ARRAY) {
-      __x86_64_proxy_op_error_type_mismatch(out, &tmp, "index",
+      __x86_64_proxy_op_error_type_mismatch(out, &tmp, "index_ref",
                                             X86_64_TYPE_ARRAY);
       goto cleanup;
     }
 
     index = __x86_64_proxy_value_as_index(arg);
     if (index == UINT64_MAX) {
-      __x86_64_proxy_op_error_not_number(out, arg, "index");
+      __x86_64_proxy_op_error_not_number(out, arg, "index_ref");
       goto cleanup;
     }
 
     data = (x86_64_data_array *)tmp.data_ptr;
     if (index >= data->length) {
-      __x86_64_proxy_op_error_string(out, "index", "out of bounds");
+      __x86_64_proxy_op_error_string(out, "index_ref", "out of bounds");
       goto cleanup;
     }
 
@@ -154,8 +154,8 @@ void __x86_64_proxy_array_op_drop(x86_64_value *self) {
 
   if (!--data->ref_cnt) {
     for (uint64_t i = 0; i < data->length; ++i) {
-      x86_64_value value = data->elements[i];
-      value.op_tbl->op_drop(&value);
+      x86_64_value *value = data->elements + i;
+      value->op_tbl->op_drop(value);
     }
     free(data);
   }

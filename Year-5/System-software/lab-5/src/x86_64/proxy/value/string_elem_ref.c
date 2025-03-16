@@ -91,14 +91,14 @@ void __x86_64_proxy_string_elem_ref_op_repr(x86_64_value *out,
   x86_64_value self_deref;
   self->op_tbl->op_deref(&self_deref, self);
 
-  strbuf_append(buffer, "{ ref: ");
+  strbuf_append(buffer, "{ref: ");
 
   x86_64_value value_repr;
   self_deref.op_tbl->op_repr(&value_repr, &self_deref);
   strbuf_append(buffer, value_repr.data_ptr);
   value_repr.op_tbl->op_drop(&value_repr);
 
-  strbuf_append(buffer, " }");
+  strbuf_append(buffer, "}");
 
   self_deref.op_tbl->op_drop(&self_deref);
 

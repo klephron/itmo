@@ -9,10 +9,11 @@ typedef struct __attribute__((packed)) x86_64_data_object_symbol_struct {
 
 typedef struct __attribute__((packed)) x86_64_data_object_symbols_struct {
   uint64_t                  count;
-  x86_64_data_object_symbol entries[0];
+  x86_64_data_object_symbol symbols[0];
 } x86_64_data_object_symbols;
 
 typedef struct __attribute__((packed)) x86_64_data_object_struct {
+  uint64_t                          ref_cnt;
   const x86_64_data_object_symbols *symbols_ref;
   x86_64_value                      members[0];
 } x86_64_data_object;
