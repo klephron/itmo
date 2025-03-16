@@ -65,7 +65,7 @@ Test(x86_64_make, test2_object) {
   free(symbols);
 }
 
-Test(x86_64_make, test2_object_defaults) {
+Test(x86_64_make, test2_object_setup) {
   x86_64_value value1;
   x86_64_value value2;
   x86_64_value value3;
@@ -87,7 +87,7 @@ Test(x86_64_make, test2_object_defaults) {
   __x86_64_make_string(defaults + 0, (const uint8_t *)"first_value");
   __x86_64_make_ulong(defaults + 1, UINT64_MAX);
 
-  __x86_64_make_object_defaults(&value1, symbols, defaults);
+  __x86_64_make_object_setup(&value1, symbols, defaults);
 
   __x86_64_proxy_int_init(&value4, 0);
 
@@ -103,9 +103,5 @@ Test(x86_64_make, test2_object_defaults) {
   value3.op_tbl->op_drop(&value3);
 
   free(symbols);
-
-  for (uint64_t i = 0; i < symbols_count; ++i) {
-    defaults[i].op_tbl->op_drop(defaults + i);
-  }
   free(defaults);
 }

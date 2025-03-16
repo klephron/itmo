@@ -12,8 +12,8 @@ mir_build_result mir_build(const hir *hir, const symbol_table *symbol_table,
   UNUSED(symbol_table);
 
   mir_build_result result = {
-      .mir          = NULL,
-      .exceptions   = list_exception_new(),
+      .mir        = NULL,
+      .exceptions = list_exception_new(),
   };
 
   if (mir_ok(result.exceptions, ignore_errors)) {

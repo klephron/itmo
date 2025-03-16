@@ -113,16 +113,14 @@ void (*__x86_64_make_object)(x86_64_value                     *out,
                              const x86_64_data_object_symbols *symbols) =
     __x86_64_proxy_object_init;
 
-void __x86_64_make_object_defaults(x86_64_value                     *out,
-                                   const x86_64_data_object_symbols *symbols,
-                                   x86_64_value                     *defaults) {
+void __x86_64_make_object_setup(x86_64_value                     *out,
+                                const x86_64_data_object_symbols *symbols,
+                                x86_64_value                     *defaults) {
   __x86_64_proxy_object_init(out, symbols);
   x86_64_data_object *data = (x86_64_data_object *)out->data_ptr;
 
   for (uint64_t i = 0; i < data->symbols_ref->count; ++i) {
-    x86_64_value *member = data->members + i;
-    x86_64_value *def    = (x86_64_value *)defaults + i;
-    def->op_tbl->op_copy(member, def);
+    data->members[i] = defaults[i];
   }
 }
 

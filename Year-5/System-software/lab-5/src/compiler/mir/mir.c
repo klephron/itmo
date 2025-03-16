@@ -322,13 +322,13 @@ void mir_class_free(mir_class *self) {
 }
 
 mir *mir_new() {
-  mir *self              = MALLOC(mir);
-  self->global_subs      = list_mir_subroutine_new();
-  self->external_subs    = list_mir_subroutine_new();
-  self->imported_subs    = list_mir_subroutine_new();
-  self->methods          = list_mir_subroutine_new();
-  self->classes          = list_mir_class_new();
-  self->literals         = list_mir_lit_new();
+  mir *self           = MALLOC(mir);
+  self->global_subs   = list_mir_subroutine_new();
+  self->external_subs = list_mir_subroutine_new();
+  self->imported_subs = list_mir_subroutine_new();
+  self->methods       = list_mir_subroutine_new();
+  self->classes       = list_mir_class_new();
+  self->literals      = list_mir_lit_new();
   return self;
 }
 
