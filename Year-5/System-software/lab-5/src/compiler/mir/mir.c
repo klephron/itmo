@@ -326,7 +326,6 @@ mir *mir_new() {
   self->global_subs      = list_mir_subroutine_new();
   self->external_subs    = list_mir_subroutine_new();
   self->imported_subs    = list_mir_subroutine_new();
-  self->initializer_subs = list_mir_subroutine_new();
   self->methods          = list_mir_subroutine_new();
   self->classes          = list_mir_class_new();
   self->literals         = list_mir_lit_new();
@@ -338,7 +337,6 @@ void mir_free(mir *self) {
     list_mir_subroutine_free(self->global_subs);
     list_mir_subroutine_free(self->external_subs);
     list_mir_subroutine_free(self->imported_subs);
-    list_mir_subroutine_free(self->initializer_subs);
     list_mir_subroutine_free(self->methods);
     list_mir_class_free(self->classes);
     list_mir_lit_free(self->literals);

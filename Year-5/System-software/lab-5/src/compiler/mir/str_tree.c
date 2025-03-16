@@ -460,19 +460,6 @@ char *mir_str(const mir *mir) {
   pad -= MIR_STR_TAB;
   strbuf_append_clx(buffer, "]", pad);
 
-  // initializer subroutines
-  strbuf_append_clx(buffer, "INITIALIZER SUBROUTINES: [", pad);
-  pad += MIR_STR_TAB;
-  for (list_mir_subroutine_it it =
-           list_mir_subroutine_begin(mir->initializer_subs);
-       !END(it); NEXT(it)) {
-    const mir_subroutine *subroutine = GET(it);
-    strbuf_append_clx(buffer, "", pad);
-    mir_str_subroutine(buffer, pad, subroutine);
-  }
-  pad -= MIR_STR_TAB;
-  strbuf_append_clx(buffer, "]", pad);
-
   // methods
   strbuf_append_clx(buffer, "METHODS: [", pad);
   pad += MIR_STR_TAB;

@@ -3,6 +3,7 @@
 #include "x86_64/proxy/value/array.h"
 #include "x86_64/proxy/value/bool.h"
 #include "x86_64/proxy/value/byte.h"
+#include "x86_64/proxy/value/callable.h"
 #include "x86_64/proxy/value/char.h"
 #include "x86_64/proxy/value/error.h"
 #include "x86_64/proxy/value/int.h"
@@ -41,6 +42,9 @@ void (*__x86_64_make_char)(x86_64_value *out,
 
 void (*__x86_64_make_string)(x86_64_value  *out,
                              const uint8_t *value) = __x86_64_proxy_string_init;
+
+void (*__x86_64_make_callable)(x86_64_value *out, x86_64_func *func) =
+    __x86_64_proxy_callable_init;
 
 static void __x86_64_make_array_recursive(x86_64_value *out, uint64_t *stack) {
   uint64_t length = *stack;

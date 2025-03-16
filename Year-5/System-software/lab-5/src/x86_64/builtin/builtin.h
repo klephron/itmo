@@ -16,6 +16,7 @@ extern void (*__x86_64_make_long)(x86_64_value *out, int64_t value);
 extern void (*__x86_64_make_ulong)(x86_64_value *out, uint64_t value);
 extern void (*__x86_64_make_char)(x86_64_value *out, uint8_t value);
 extern void (*__x86_64_make_string)(x86_64_value *out, const uint8_t *value);
+extern void (*__x86_64_make_callable)(x86_64_value *out, x86_64_func *func);
 // args are of type x86_64_value *
 void __x86_64_make_array(x86_64_value *out, ...);
 extern void (*__x86_64_make_object)(x86_64_value                     *out,

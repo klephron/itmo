@@ -38,7 +38,6 @@ typedef struct args_struct {
   int         hir_symbols;
   int         hir_types;
   int         mir;
-  int         mir_symbols;
   // status
   int code;
   int help;
@@ -109,17 +108,16 @@ static void usage(args *args) {
          "(current: %d)\n"
          "-s <subroutine>  - set or add global subroutine for call graph "
          "generation (current: %s)\n"
-         "--hir-tree       - print hir tree (current: %d)\n"
-         "--hir-symbols    - print symbol table (current: %d)\n"
-         "--hir-types      - print type table (current: %d)\n"
+         "--hir-tree       - print HIR tree (current: %d)\n"
+         "--hir-symbols    - print HIR symbol table (current: %d)\n"
+         "--hir-types      - print HIR type table (current: %d)\n"
          "--mir            - print MIR tree (current: %d)\n"
-         "--mir-symbols    - print MIR tree (current: %d)\n"
          "-h\n"
          "--help           - show help\n",
          args->prog_name, args->output_dir, args->output_file, args->tee,
          args->ignore_errors, args->ast, args->cfg, args->cfg_add_expr,
          args->cg, cg_subroutines, args->hir_tree, args->hir_symbols,
-         args->hir_types, args->mir, args->mir_symbols);
+         args->hir_types, args->mir);
 }
 
 static void parse(args *args, int argc, char *argv[]) {
@@ -136,7 +134,6 @@ static void parse(args *args, int argc, char *argv[]) {
       {"hir-symbols", no_argument, &args->hir_symbols, 1},
       {"hir-types", no_argument, &args->hir_types, 1},
       {"mir", no_argument, &args->mir, 1},
-      {"mir-symbols", no_argument, &args->mir_symbols, 1},
       {"help", no_argument, &args->help, 1},
   };
 
@@ -380,14 +377,12 @@ static int execute(args *args) {
     }
   }
 
-  mir          *mir              = NULL;
-  symbol_table *mir_symbol_table = NULL;
+  mir *mir = NULL;
 
   if (execute_ok(args)) {
     mir_build_result result =
         mir_build(hir, hir_symbol_table, hir_type_table, args->ignore_errors);
-    mir              = result.mir;
-    mir_symbol_table = result.symbol_table;
+    mir = result.mir;
 
     if (list_exception_count_by_level(result.exceptions,
                                       EXCEPTION_LEVEL_ERROR)) {
@@ -403,15 +398,6 @@ static int execute(args *args) {
     fprintf(stdout, "MIR:\n%s\n", mir_s);
     if (mir_s) {
       free(mir_s);
-    }
-  }
-
-  // stage: print mir symbols
-  if (execute_ok(args) && args->mir_symbols) {
-    char *table = symbol_table_str(mir_symbol_table, "MIR SYMBOL TABLE");
-    fprintf(stdout, "%s", table);
-    if (table) {
-      free(table);
     }
   }
 
@@ -480,7 +466,6 @@ static int execute(args *args) {
   // cg_x86_64_free(cg);
 
   mir_free(mir);
-  symbol_table_free(mir_symbol_table);
 
   hir_free(hir);
   symbol_table_free(hir_symbol_table);

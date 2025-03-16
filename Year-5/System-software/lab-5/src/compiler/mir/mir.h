@@ -294,7 +294,6 @@ typedef struct mir_struct {
   list_mir_subroutine *global_subs;
   list_mir_subroutine *external_subs;
   list_mir_subroutine *imported_subs;
-  list_mir_subroutine *initializer_subs;
   list_mir_subroutine *methods;
   list_mir_class      *classes;
   list_mir_lit        *literals;

@@ -6,7 +6,6 @@
 
 typedef struct mir_build_result_struct {
   mir            *mir;
-  symbol_table   *symbol_table; // injected symbols
   list_exception *exceptions;
 } mir_build_result;
 
