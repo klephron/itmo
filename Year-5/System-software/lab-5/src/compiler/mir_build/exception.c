@@ -22,7 +22,7 @@ void mir_exception_add_error_v(list_exception       *exceptions,
                                exception_subtype_mir subtype, const span *span,
                                const char *format, va_list args) {
   exception *exc =
-      exception_new_v(EXCEPTION_LEVEL_ERROR, EXCEPTION_HIR, subtype,
+      exception_new_v(EXCEPTION_LEVEL_ERROR, EXCEPTION_MIR, subtype,
                       span->source_ref, span->line_start, span->pos_start,
                       exception_subtype_mir_str(subtype), format, args);
   list_exception_push_back(exceptions, exc);
@@ -33,7 +33,7 @@ void mir_exception_add_warning_v(list_exception       *exceptions,
                                  const span *span, const char *format,
                                  va_list args) {
   exception *exc =
-      exception_new_v(EXCEPTION_LEVEL_WARNING, EXCEPTION_HIR, subtype,
+      exception_new_v(EXCEPTION_LEVEL_WARNING, EXCEPTION_MIR, subtype,
                       span->source_ref, span->line_start, span->pos_start,
                       exception_subtype_mir_str(subtype), format, args);
   list_exception_push_back(exceptions, exc);

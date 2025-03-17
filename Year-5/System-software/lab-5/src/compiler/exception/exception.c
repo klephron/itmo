@@ -253,10 +253,8 @@ const char *exception_subtype_mir_str(exception_subtype_mir type) {
 
 const char *exception_subtype_cg_str(exception_subtype_cg type) {
   switch (type) {
-    case EXCEPTION_CG_IMPLICIT_CALLABLE:
-      return "implicit callable";
-    case EXCEPTION_CG_EXTERNAL_SUBROUTINE_ARGC:
-      return "external subroutine argc mismatch";
+    case EXCEPTION_CG_UNEXPECTED_EMIT_FORMAT:
+      return "unexpected emit format";
     case EXCEPTION_CG_UNKNOWN:
       break;
   }

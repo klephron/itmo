@@ -3,6 +3,9 @@
 #include <stdlib.h>
 
 #include "compiler/ast/ast.h"
+#include "compiler/codegen/x86_64/x86_64.h"
+#include "compiler/codegen/x86_64_build/x86_64_build.h"
+#include "compiler/codegen/x86_64_emit/x86_64_emit.h"
 #include "compiler/dot/dot.h"
 #include "compiler/exception/exception.h"
 #include "compiler/hir/hir.h"
@@ -438,32 +441,40 @@ static int execute(args *args) {
     }
   }
 
-  // cg_x86_64     *cg = cg_x86_64_new();
-  // cg_x86_64_ctx *cg_ctx = cg_x86_64_ctx_new(cg);
+  cg_x86_64 *code = NULL;
 
-  // // stage: build x86_64 structs
-  // if (!args->code || args->ignore_errors) {
-  //   cg_x86_64_ctx_build(cg_ctx, mir);
-  //   if (list_exception_count_by_level(cg_ctx->exceptions,
-  //                                     EXCEPTION_LEVEL_ERROR)) {
-  //     args->code = 1;
-  //   }
-  //   print_exceptions(args, cg_ctx->exceptions);
-  // }
+  // stage: build x86_64 structs
+  if (!args->code || args->ignore_errors) {
+    cg_x86_64_build_result result = cg_x86_64_build(mir);
+    code                          = result.code;
 
-  // // stage: emit x86_64 assembly code
-  // if (!args->code || args->ignore_errors) {
-  //   char *data = cg_x86_64_ctx_emit(cg_ctx);
-  //   if (data) {
-  //     char *path = get_asm_path(args, args->output_file);
-  //     write_asm(args, data, path);
-  //     free(path);
-  //     free(data);
-  //   }
-  // }
+    if (list_exception_count_by_level(result.exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      args->code = 1;
+    }
+    print_exceptions(args, result.exceptions);
+    list_exception_free(result.exceptions);
+  }
 
-  // cg_x86_64_ctx_free(cg_ctx);
-  // cg_x86_64_free(cg);
+  // stage: emit x86_64 assembly code
+  if (!args->code || args->ignore_errors) {
+    cg_x86_64_emit_result result =
+        cg_x86_64_emit(code, CG_X86_64_EMIT_FORMAT_GAS);
+
+    if (list_exception_count_by_level(result.exceptions,
+                                      EXCEPTION_LEVEL_ERROR)) {
+      args->code = 1;
+    } else {
+      char *path = get_asm_path(args, args->output_file);
+      write_asm(args, result.asm_str, path);
+      free(path);
+      free(result.asm_str);
+    }
+    print_exceptions(args, result.exceptions);
+    list_exception_free(result.exceptions);
+  }
+
+  cg_x86_64_free(code);
 
   mir_free(mir);
 
