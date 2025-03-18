@@ -329,7 +329,8 @@ hir_subroutine *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
   span_free(root_span);
   // debug("%zu:%zu %zu:%zu", span->line_start, span->pos_start, span->line_end,
   // span->pos_end);
-  return hir_subroutine_new(span, id, params, ret_type, NULL);
+  return hir_subroutine_new(span, id, params, ret_type,
+                            HIR_SUBROUTINE_SPEC_EMPTY, NULL);
 }
 
 list_hir_var *hir_build_var_entry(hir_ctx *ctx, list_hir_id *ids,
@@ -365,8 +366,23 @@ void hir_build_var_list_extend(hir_ctx *ctx, list_hir_var *first,
 }
 
 hir_subroutine *hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
-                               hir_subroutine_body *body) {
+                               hir_subroutine_body *body,
+                               ANTLR3_BASE_TREE    *sp_extern) {
   UNUSED(ctx);
+
+  // include specifiers into subroutine span
+  if (sp_extern) {
+    span *span_extern = hir_span_new(sp_extern, ctx->ast_cur_ref->name_ref);
+    span *span        = hir_span_new_range(span_extern, subroutine->base.span);
+    span_free(span_extern);
+    span_free(subroutine->base.span);
+    subroutine->base.span = span;
+  }
+
+  if (sp_extern) {
+    subroutine->spec |= HIR_SUBROUTINE_SPEC_EXTERN;
+  }
+
   subroutine->body = body;
   return subroutine;
 }
@@ -404,7 +420,7 @@ hir_method *hir_build_method(hir_ctx *ctx, ANTLR3_BASE_TREE *mod_t,
                     (hir_type_base *)hir_type_custom_new(
                         NULL, strdup(class_id_ref->name), typenames)));
 
-  if (!mod_t || modifier == HIR_METHOD_MODIFIER_ENUM_ABSCENT) {
+  if (!mod_t || modifier == HIR_METHOD_MODIFIER_ENUM_EMPTY) {
     span *span = span_copy(func->base.span);
     return hir_method_new(span, modifier, func);
   } else {

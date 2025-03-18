@@ -501,7 +501,6 @@ static type_base *hir_expand_type(hir_ctx *ctx, type_base *type) {
           list_type_ref_free(new_types);
           return type;
         }
-        case TYPE_UNKNOWN:
         default:
           error("unknown type %d %s", type->kind, type);
           return NULL;
@@ -603,8 +602,6 @@ static hir_expr_base *hir_expand_templates_expr(hir_ctx             *ctx,
       return (hir_expr_base *)hir_expr_builtin_new_typed(
           span_copy(span), new_type_ref, self->kind, args);
     }
-    case HIR_EXPR_UNKNOWN:
-      break;
   }
   error("unexpected expr kind %d %p", expr_t->kind, expr_t);
   return NULL;
@@ -661,8 +658,6 @@ static hir_stmt_base *hir_expand_templates_stmt(hir_ctx             *ctx,
       return (hir_stmt_base *)hir_stmt_return_new(
           span_copy(span), hir_expand_templates_expr(ctx, self->expr));
     }
-    case HIR_STMT_UNKNOWN:
-      break;
   }
   error("unexpected stmt kind %d %p", stmt_t->kind, stmt_t);
   return NULL;
@@ -699,7 +694,7 @@ hir_expand_templates_subroutine(hir_ctx              *ctx,
                 ctx, (hir_stmt_base *)subroutine_t->body->body.block.block));
         break;
       }
-      case HIR_SUBROUTINE_BODY_UNKNOWN:
+      default:
         error("unexpected body kind %d %p", subroutine_t->body->kind,
               subroutine_t->body);
         break;
@@ -709,7 +704,8 @@ hir_expand_templates_subroutine(hir_ctx              *ctx,
   return hir_subroutine_new_typed(
       span_copy(subroutine_t->base.span), hir_id_copy(subroutine_t->id_hir),
       params,
-      hir_expand_type(ctx, subroutine_t->type_ref->type)->type_entry_ref, body);
+      hir_expand_type(ctx, subroutine_t->type_ref->type)->type_entry_ref,
+      subroutine_t->spec, body);
 }
 
 static hir_class *hir_expand_templates_class(hir_ctx   *ctx,

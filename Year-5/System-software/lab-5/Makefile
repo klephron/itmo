@@ -19,7 +19,7 @@ GEN_DIR        ?= $(BUILD_DIR)/_gen
 TARGET_DIR     ?= $(BUILD_DIR)
 TARGET_TST_DIR ?= $(BUILD_DIR)/test
 
-PDF.COMPILER_FLAGS ?= --ast --cfg --cfg-add-expr --cg --hir-tree --hir-symbols --hir-types
+PDF.COMPILER_FLAGS ?= --ast --cfg --cfg-add-expr --cg --hir-tree --hir-symbols --hir-types --mir
 
 ASM.AS_FLAGS       ?= --64 -g
 ASM.LD_FLAGS       ?= -g -z noexecstack

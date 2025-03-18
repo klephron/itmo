@@ -140,7 +140,6 @@ int type_cmp(const type_base *lsv, const type_base *rsv) {
       }
       return 0;
     }
-    case TYPE_UNKNOWN:
     default:
       error("unexpected type kind %d", lsv->kind);
       return -1;
@@ -207,7 +206,6 @@ uint64_t type_hash(const type_base *lsv) {
         hash = hash_combine(hash, type_hash(GET(it)));
       }
     } break;
-    case TYPE_UNKNOWN:
     default:
       error("unexpected type kind %d", lsv->kind);
       return 0;

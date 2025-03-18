@@ -10,9 +10,8 @@
 // are variables, methods).
 
 typedef enum hir_type_enum {
-  HIR_TYPE_UNKNOWN,
   // primitives
-  HIR_TYPE_BOOL,
+  HIR_TYPE_BOOL = 1,
   HIR_TYPE_BYTE,
   HIR_TYPE_INT,
   HIR_TYPE_UINT,

@@ -10,8 +10,7 @@ typedef enum hir_state_enum {
 } hir_state_enum;
 
 typedef enum hir_node_enum {
-  HIR_NODE_UNKNOWN,
-  HIR_NODE_ID,
+  HIR_NODE_ID = 1,
   HIR_NODE_LIT,
   HIR_NODE_PARAM,
   HIR_NODE_VAR,

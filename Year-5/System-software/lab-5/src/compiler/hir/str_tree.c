@@ -304,8 +304,6 @@ static void hir_tree_str_expr(strbuf *buffer, size_t pad,
       return hir_tree_str_expr_index(buffer, pad, (hir_expr_index *)expr);
     case HIR_EXPR_BUILTIN:
       return hir_tree_str_expr_builtin(buffer, pad, (hir_expr_builtin *)expr);
-    case HIR_EXPR_UNKNOWN:
-      break;
   }
   warn("unknown expr kind %d", expr->kind);
 }
@@ -536,8 +534,6 @@ static void hir_tree_str_stmt(strbuf *buffer, size_t pad,
       return hir_tree_str_stmt_expr(buffer, pad, (hir_stmt_expr *)stmt);
     case HIR_STMT_RETURN:
       return hir_tree_str_stmt_return(buffer, pad, (hir_stmt_return *)stmt);
-    case HIR_STMT_UNKNOWN:
-      break;
   }
   warn("unknown stmt kind %d", stmt->kind);
 }
@@ -762,7 +758,6 @@ static void hir_tree_str_subroutine_body(strbuf *buffer, size_t pad,
       hir_tree_str_stmt_block(buffer, pad, body->body.block.block);
       strbuf_appendln(buffer, "");
       break;
-    case HIR_SUBROUTINE_BODY_UNKNOWN:
     default:
       warn("unknown subroutine body kind %d %p", body->kind, body);
       break;
@@ -820,6 +815,11 @@ static void hir_tree_str_subroutine(strbuf *buffer, size_t pad,
     hir_tree_str_type(buffer, pad, subroutine->type_ret);
     strbuf_appendln(buffer, "");
   }
+
+  strbuf_append_padding(buffer, pad);
+  strbuf_append(buffer, "spec: ");
+  strbuf_append(buffer, hir_subroutine_spec_str(subroutine->spec));
+  strbuf_appendln(buffer, "");
 
   strbuf_append_padding(buffer, pad);
   strbuf_append(buffer, "body: ");

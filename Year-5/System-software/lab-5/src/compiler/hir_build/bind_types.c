@@ -580,7 +580,7 @@ static void hir_bind_expr(hir_ctx *ctx, hir_expr_base *base) {
       }
       break;
     }
-    case HIR_EXPR_UNKNOWN:
+    default:
       error("unexpected expr kind %d %p", base->kind, base);
       break;
   }
@@ -651,8 +651,6 @@ static void hir_bind_stmt(hir_ctx *ctx, hir_stmt_base *base) {
       hir_bind_expr(ctx, self->expr);
       return;
     }
-    case HIR_STMT_UNKNOWN:
-      break;
   }
   error("unexpected stmt kind %d %p", base->kind, base);
 }
@@ -667,8 +665,6 @@ static void hir_bind_stmt_block(hir_ctx *ctx, hir_stmt_block *block) {
 static void hir_bind_subroutine_body(hir_ctx *ctx, hir_subroutine_body *body) {
   if (body) {
     switch (body->kind) {
-      case HIR_SUBROUTINE_BODY_UNKNOWN:
-        break;
       case HIR_SUBROUTINE_BODY_IMPORT:
         hir_bind_lit(ctx, body->body.import.lib);
         hir_bind_lit(ctx, body->body.import.entry);

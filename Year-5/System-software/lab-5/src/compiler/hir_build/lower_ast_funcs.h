@@ -45,7 +45,8 @@ hir_subroutine      *hir_build_signature(hir_ctx *ctx, ANTLR3_BASE_TREE *root,
                                          hir_id *id, list_hir_param *params,
                                          hir_type_base *ret_type);
 hir_subroutine      *hir_build_func(hir_ctx *ctx, hir_subroutine *subroutine,
-                                    hir_subroutine_body *body);
+                                    hir_subroutine_body *body,
+                                    ANTLR3_BASE_TREE    *sp_extern);
 hir_subroutine_body *hir_build_func_body_block(hir_ctx *ctx, list_hir_var *vars,
                                                hir_stmt_block *body);
 hir_subroutine_body *hir_build_func_body_import(hir_ctx *ctx, hir_lit *lib,

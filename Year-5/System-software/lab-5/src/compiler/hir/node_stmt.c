@@ -33,8 +33,6 @@ void hir_stmt_free(hir_stmt_base *generic) {
         return hir_stmt_expr_free((hir_stmt_expr *)generic);
       case HIR_STMT_RETURN:
         return hir_stmt_return_free((hir_stmt_return *)generic);
-      case HIR_STMT_UNKNOWN:
-        break;
     }
     error("unknown stmt kind to free %d %p", generic->kind, generic);
   }

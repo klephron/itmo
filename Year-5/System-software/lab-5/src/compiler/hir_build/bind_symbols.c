@@ -223,8 +223,6 @@ static void hir_bind_subroutine_body_expr(hir_ctx *ctx, hir_expr_base *base) {
       }
       return;
     }
-    case HIR_EXPR_UNKNOWN:
-      break;
   }
   error("unexpected expr kind %d %p", base->kind, base);
 }
@@ -274,8 +272,6 @@ static void hir_bind_subroutine_body_stmt(hir_ctx *ctx, hir_stmt_base *base) {
       hir_bind_subroutine_body_expr(ctx, self->expr);
       return;
     }
-    case HIR_STMT_UNKNOWN:
-      break;
   }
   error("unexpected stmt kind %d %p", base->kind, base);
 }
@@ -353,8 +349,6 @@ static void hir_bind_subroutine_body(hir_ctx        *ctx,
 
       hir_ctx_scopes_pop(ctx);
       return;
-    case HIR_SUBROUTINE_BODY_UNKNOWN:
-      break;
   }
   error("unexpected body kind %d %p", hir_body->kind, hir_body);
 }

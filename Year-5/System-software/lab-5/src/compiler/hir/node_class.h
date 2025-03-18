@@ -6,8 +6,7 @@
 #include "util/list.h"
 
 typedef enum hir_method_modifier_enum {
-  HIR_METHOD_MODIFIER_ENUM_UNKNOWN,
-  HIR_METHOD_MODIFIER_ENUM_ABSCENT,
+  HIR_METHOD_MODIFIER_ENUM_EMPTY,
   HIR_METHOD_MODIFIER_ENUM_PUBLIC,
   HIR_METHOD_MODIFIER_ENUM_PRIVATE,
 } hir_method_modifier_enum;

@@ -38,38 +38,38 @@ mir_lit *mir_lit_new(size_t id, const type_entry *type_ref,
 void mir_lit_free(mir_lit *self) {
   if (self) {
     const type_base *type = self->type_ref ? self->type_ref->type : NULL;
-    type_enum        kind = type ? type->kind : TYPE_UNKNOWN;
 
-    switch (kind) {
-      case TYPE_PRIMITIVE: {
-        type_primitive *primitive = (typeof(primitive))type;
-        switch (primitive->type) {
-          case TYPE_PRIMITIVE_STRING:
-            if (self->value.v_str) {
-              free(self->value.v_str);
-            }
-            break;
-          case TYPE_PRIMITIVE_UNKNOWN:
-          case TYPE_PRIMITIVE_BOOL:
-          case TYPE_PRIMITIVE_BYTE:
-          case TYPE_PRIMITIVE_INT:
-          case TYPE_PRIMITIVE_UINT:
-          case TYPE_PRIMITIVE_LONG:
-          case TYPE_PRIMITIVE_ULONG:
-          case TYPE_PRIMITIVE_CHAR:
-          case TYPE_PRIMITIVE_VOID:
-            break;
+    if (type) {
+      switch (type->kind) {
+        case TYPE_PRIMITIVE: {
+          type_primitive *primitive = (typeof(primitive))type;
+          switch (primitive->type) {
+            case TYPE_PRIMITIVE_STRING:
+              if (self->value.v_str) {
+                free(self->value.v_str);
+              }
+              break;
+            case TYPE_PRIMITIVE_BOOL:
+            case TYPE_PRIMITIVE_BYTE:
+            case TYPE_PRIMITIVE_INT:
+            case TYPE_PRIMITIVE_UINT:
+            case TYPE_PRIMITIVE_LONG:
+            case TYPE_PRIMITIVE_ULONG:
+            case TYPE_PRIMITIVE_CHAR:
+            case TYPE_PRIMITIVE_VOID:
+              break;
+          }
+          break;
         }
-        break;
+        case TYPE_ARRAY:
+        case TYPE_CALLABLE:
+        case TYPE_CLASS_T:
+        case TYPE_TYPENAME:
+        case TYPE_MONO:
+        default:
+          error("unsupported literal kind %d %p", type->kind, self);
+          break;
       }
-      case TYPE_ARRAY:
-      case TYPE_CALLABLE:
-      case TYPE_CLASS_T:
-      case TYPE_TYPENAME:
-      case TYPE_MONO:
-      case TYPE_UNKNOWN:
-        error("unsupported literal kind %d %p", kind, self);
-        break;
     }
     free(self);
   }
@@ -81,10 +81,7 @@ static void mir_stmt_init(mir_stmt *stmt, mir_stmt_enum kind) {
   mir_debug_init(&stmt->debug, NULL, 0, 0);
 }
 
-static void mir_stmt_deinit(mir_stmt *stmt) {
-  stmt->kind = MIR_STMT_UNKNOWN;
-  mir_debug_deinit(&stmt->debug);
-}
+static void mir_stmt_deinit(mir_stmt *stmt) { mir_debug_deinit(&stmt->debug); }
 
 mir_stmt *mir_stmt_new_op(mir_stmt_op_enum kind, mir_value *ret,
                           list_mir_value_ref *args) {
@@ -151,7 +148,6 @@ mir_stmt *mir_stmt_new_assign(mir_stmt_assign_enum kind, mir_value *to,
     case MIR_STMT_ASSIGN_SUB:
       self->assign.from_sub = from;
       break;
-    case MIR_STMT_ASSIGN_UNKNOWN:
     default:
       error("unhandled assign kind %d", kind);
       break;
@@ -184,7 +180,6 @@ void mir_stmt_free(mir_stmt *self) {
         break;
       case MIR_STMT_ASSIGN:
         break;
-      case MIR_STMT_UNKNOWN:
       default:
         error("unknown stmt kind %d %p", self->kind, self);
         break;
@@ -237,40 +232,43 @@ mir_bb_enum mir_bb_get_cond(const mir_bb *self) {
   return MIR_BB_TERM;
 }
 
-mir_subroutine *mir_subroutine_new_basic(const symbol_entry *symbol_ref,
-                                         const type_entry   *type_ref,
-                                         mir_value *ret, list_mir_value *params,
-                                         list_mir_value *vars,
-                                         list_mir_value *tmps,
-                                         list_mir_bb    *bbs) {
+mir_subroutine *mir_subroutine_new_defined(
+    const symbol_entry *symbol_ref, const type_entry *type_ref,
+    mir_subroutine_spec spec, mir_value *ret, list_mir_value *params,
+    list_mir_value *vars, list_mir_value *tmps, list_mir_bb *bbs) {
   mir_subroutine *self = MALLOC(mir_subroutine);
-  self->kind           = MIR_SUBROUTINE_BASIC;
+  self->kind           = MIR_SUBROUTINE_DEFINED;
   self->symbol_ref     = symbol_ref;
   self->type_ref       = type_ref;
-  self->basic.ret      = ret;
-  self->basic.params   = params;
-  self->basic.vars     = vars;
-  self->basic.tmps     = tmps;
-  self->basic.bbs      = bbs;
+  self->spec           = spec;
+  self->defined.ret    = ret;
+  self->defined.params = params;
+  self->defined.vars   = vars;
+  self->defined.tmps   = tmps;
+  self->defined.bbs    = bbs;
   return self;
 }
 
-mir_subroutine *mir_subroutine_new_external(const symbol_entry *symbol_ref,
-                                            const type_entry   *type_ref) {
+mir_subroutine *mir_subroutine_new_declared(const symbol_entry *symbol_ref,
+                                            const type_entry   *type_ref,
+                                            mir_subroutine_spec spec) {
   mir_subroutine *self = MALLOC(mir_subroutine);
-  self->kind           = MIR_SUBROUTINE_EXTERNAL;
+  self->kind           = MIR_SUBROUTINE_DECLARED;
   self->symbol_ref     = symbol_ref;
   self->type_ref       = type_ref;
+  self->spec           = spec;
   return self;
 }
 
 mir_subroutine *mir_subroutine_new_imported(const symbol_entry *symbol_ref,
                                             const type_entry   *type_ref,
-                                            char *lib, char *entry) {
+                                            mir_subroutine_spec spec, char *lib,
+                                            char *entry) {
   mir_subroutine *self = MALLOC(mir_subroutine);
   self->kind           = MIR_SUBROUTINE_IMPORTED;
   self->symbol_ref     = symbol_ref;
   self->type_ref       = type_ref;
+  self->spec           = spec;
   self->imported.lib   = lib;
   self->imported.entry = entry;
   return self;
@@ -279,14 +277,14 @@ mir_subroutine *mir_subroutine_new_imported(const symbol_entry *symbol_ref,
 void mir_subroutine_free(mir_subroutine *self) {
   if (self) {
     switch (self->kind) {
-      case MIR_SUBROUTINE_BASIC:
-        mir_value_free(self->basic.ret);
-        list_mir_value_free(self->basic.params);
-        list_mir_value_free(self->basic.vars);
-        list_mir_value_free(self->basic.tmps);
-        list_mir_bb_free(self->basic.bbs);
+      case MIR_SUBROUTINE_DEFINED:
+        mir_value_free(self->defined.ret);
+        list_mir_value_free(self->defined.params);
+        list_mir_value_free(self->defined.vars);
+        list_mir_value_free(self->defined.tmps);
+        list_mir_bb_free(self->defined.bbs);
         break;
-      case MIR_SUBROUTINE_EXTERNAL:
+      case MIR_SUBROUTINE_DECLARED:
         break;
       case MIR_SUBROUTINE_IMPORTED:
         if (self->imported.lib) {
@@ -296,7 +294,7 @@ void mir_subroutine_free(mir_subroutine *self) {
           free(self->imported.entry);
         }
         break;
-      case MIR_SUBROUTINE_UNKNOWN:
+      default:
         error("unknown subroutine kind %d %p", self->kind, self);
         break;
     }
@@ -323,8 +321,8 @@ void mir_class_free(mir_class *self) {
 
 mir *mir_new() {
   mir *self           = MALLOC(mir);
-  self->global_subs   = list_mir_subroutine_new();
-  self->external_subs = list_mir_subroutine_new();
+  self->defined_subs  = list_mir_subroutine_new();
+  self->declared_subs = list_mir_subroutine_new();
   self->imported_subs = list_mir_subroutine_new();
   self->methods       = list_mir_subroutine_new();
   self->classes       = list_mir_class_new();
@@ -334,8 +332,8 @@ mir *mir_new() {
 
 void mir_free(mir *self) {
   if (self) {
-    list_mir_subroutine_free(self->global_subs);
-    list_mir_subroutine_free(self->external_subs);
+    list_mir_subroutine_free(self->defined_subs);
+    list_mir_subroutine_free(self->declared_subs);
     list_mir_subroutine_free(self->imported_subs);
     list_mir_subroutine_free(self->methods);
     list_mir_class_free(self->classes);

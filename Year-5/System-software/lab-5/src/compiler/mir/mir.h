@@ -66,8 +66,7 @@ LIST_DECLARE_STATIC_INLINE(list_mir_lit, mir_lit, container_cmp_false,
 
 // MIR_STMT
 typedef enum mir_stmt_enum {
-  MIR_STMT_UNKNOWN,
-  MIR_STMT_OP,
+  MIR_STMT_OP = 1,
   MIR_STMT_CALL,
   MIR_STMT_MEMBER,
   MIR_STMT_MEMBER_REF,
@@ -76,8 +75,7 @@ typedef enum mir_stmt_enum {
 } mir_stmt_enum;
 
 typedef enum mir_stmt_op_enum {
-  MIR_STMT_OP_UNKNOWN,
-  MIR_STMT_OP_UNARY_PLUS,
+  MIR_STMT_OP_UNARY_PLUS = 1,
   MIR_STMT_OP_UNARY_MINUS,
   MIR_STMT_OP_UNARY_LOGICAL_NOT,
   MIR_STMT_OP_UNARY_BITWISE_NOT,
@@ -108,15 +106,13 @@ typedef enum mir_stmt_op_enum {
 } mir_stmt_op_enum;
 
 typedef enum mir_stmt_builtin_enum {
-  MIR_STMT_BUILTIN_UNKNOWN,
-  MIR_STMT_BUILTIN_CAST,
+  MIR_STMT_BUILTIN_CAST = 1,
   MIR_STMT_BUILTIN_MAKE,
   MIR_STMT_BUILTIN_PRINT,
 } mir_stmt_builtin_enum;
 
 typedef enum mir_stmt_assign_enum {
-  MIR_STMT_ASSIGN_UNKNOWN,
-  MIR_STMT_ASSIGN_LIT,
+  MIR_STMT_ASSIGN_LIT = 1,
   MIR_STMT_ASSIGN_VALUE,
   MIR_STMT_ASSIGN_SUB,
 } mir_stmt_assign_enum;
@@ -221,11 +217,15 @@ LIST_DECLARE_STATIC_INLINE(list_mir_bb, mir_bb, container_cmp_false,
 
 // SUBROUTINE
 typedef enum mir_subroutine_enum {
-  MIR_SUBROUTINE_UNKNOWN,
-  MIR_SUBROUTINE_BASIC,
-  MIR_SUBROUTINE_EXTERNAL,
+  MIR_SUBROUTINE_DEFINED = 1,
+  MIR_SUBROUTINE_DECLARED,
   MIR_SUBROUTINE_IMPORTED
 } mir_subroutine_enum;
+
+typedef enum mir_subroutine_spec_enum {
+  MIR_SUBROUTINE_SPEC_EMPTY,
+  MIR_SUBROUTINE_SPEC_EXTERN,
+} mir_subroutine_spec;
 
 struct mir_subroutine_struct {
   mir_subroutine_enum kind;
@@ -238,27 +238,28 @@ struct mir_subroutine_struct {
       list_mir_value *vars;
       list_mir_value *tmps;
       list_mir_bb    *bbs;
-    } basic;
+    } defined;
     struct {
-    } external;
+    } declared;
     struct {
       char *lib;
       char *entry;
     } imported;
   };
+  mir_subroutine_spec spec;
 };
 
-mir_subroutine *mir_subroutine_new_basic(const symbol_entry *symbol_ref,
-                                         const type_entry   *type_ref,
-                                         mir_value *ret, list_mir_value *params,
-                                         list_mir_value *vars,
-                                         list_mir_value *tmps,
-                                         list_mir_bb    *bbs);
-mir_subroutine *mir_subroutine_new_external(const symbol_entry *symbol_ref,
-                                            const type_entry   *type_ref);
+mir_subroutine *mir_subroutine_new_defined(
+    const symbol_entry *symbol_ref, const type_entry *type_ref,
+    mir_subroutine_spec spec, mir_value *ret, list_mir_value *params,
+    list_mir_value *vars, list_mir_value *tmps, list_mir_bb *bbs);
+mir_subroutine *mir_subroutine_new_declared(const symbol_entry *symbol_ref,
+                                            const type_entry   *type_ref,
+                                            mir_subroutine_spec spec);
 mir_subroutine *mir_subroutine_new_imported(const symbol_entry *symbol_ref,
                                             const type_entry   *type_ref,
-                                            char *lib, char *entry);
+                                            mir_subroutine_spec spec, char *lib,
+                                            char *entry);
 void            mir_subroutine_free(mir_subroutine *self);
 
 static inline void container_delete_mir_subroutine(void *data) {
@@ -291,8 +292,8 @@ LIST_DECLARE_STATIC_INLINE(list_mir_class, mir_class, container_cmp_false,
 
 // MIR
 typedef struct mir_struct {
-  list_mir_subroutine *global_subs;
-  list_mir_subroutine *external_subs;
+  list_mir_subroutine *defined_subs;
+  list_mir_subroutine *declared_subs;
   list_mir_subroutine *imported_subs;
   list_mir_subroutine *methods;
   list_mir_class      *classes;

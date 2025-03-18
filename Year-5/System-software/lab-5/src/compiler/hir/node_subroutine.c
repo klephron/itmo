@@ -33,7 +33,6 @@ void hir_subroutine_body_free(hir_subroutine_body *self) {
         hir_stmt_block_free(self->body.block.block);
         list_hir_var_free(self->body.block.vars);
         break;
-      case HIR_SUBROUTINE_BODY_UNKNOWN:
       default:
         error("unexpected body kind %d %p", self->kind, self);
         break;
@@ -45,6 +44,7 @@ void hir_subroutine_body_free(hir_subroutine_body *self) {
 hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
                                    list_hir_param      *params,
                                    hir_type_base       *ret_type,
+                                   hir_subroutine_spec  spec,
                                    hir_subroutine_body *body) {
   hir_subroutine *self = MALLOC(hir_subroutine);
   hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
@@ -52,6 +52,7 @@ hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
   self->id_hir   = id;
   self->params   = params;
   self->type_ret = ret_type;
+  self->spec     = spec;
   self->body     = body;
   return self;
 }
@@ -59,6 +60,7 @@ hir_subroutine *hir_subroutine_new(span *span, hir_id *id,
 hir_subroutine *hir_subroutine_new_typed(span *span, hir_id *id,
                                          list_hir_param      *params,
                                          type_entry          *type_ref,
+                                         hir_subroutine_spec  spec,
                                          hir_subroutine_body *body) {
   hir_subroutine *self = MALLOC(hir_subroutine);
   hir_base_init(&self->base, span, HIR_NODE_SUBROUTINE);
@@ -66,6 +68,7 @@ hir_subroutine *hir_subroutine_new_typed(span *span, hir_id *id,
   self->id_hir   = id;
   self->params   = params;
   self->type_ref = type_ref;
+  self->spec     = spec;
   self->body     = body;
   return self;
 }

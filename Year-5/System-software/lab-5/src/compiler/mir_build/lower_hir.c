@@ -335,7 +335,7 @@ static mir_value *mir_ctx_sym_value_find(mir_ctx            *ctx,
 static mir_bb *mir_ctx_sub_emplace_back_bb(mir_ctx *ctx) {
   mir_bb *bb = mir_bb_new(ctx->bb_cnt++, list_mir_stmt_new(), NULL, NULL, NULL,
                           list_hir_expr_ref_new());
-  list_mir_bb_push_back(ctx->sub_ref->basic.bbs, bb);
+  list_mir_bb_push_back(ctx->sub_ref->defined.bbs, bb);
   return bb;
 }
 
@@ -361,16 +361,30 @@ static inline mir_expr_r mir_expr_r_empty() {
   return (mir_expr_r){.value = NULL, .ref = 0};
 }
 
-// static inline int mir_expr_r_is_empty(mir_expr_r res) {
-//   return res.value == NULL;
-// }
-
 // constructs without subroutine body
 // (to properly resolve references if used before declaration)
+static mir_subroutine_spec
+mir_declare_subroutine_spec(mir_ctx *ctx, hir_subroutine_spec spec) {
+  UNUSED(ctx);
+
+  switch (spec) {
+    case HIR_SUBROUTINE_SPEC_EMPTY:
+      return MIR_SUBROUTINE_SPEC_EMPTY;
+    case HIR_SUBROUTINE_SPEC_EXTERN:
+      return MIR_SUBROUTINE_SPEC_EXTERN;
+  }
+
+  error("unhandled mir subroutine spec %d", spec);
+  return MIR_SUBROUTINE_SPEC_EMPTY;
+}
+
 static mir_subroutine *mir_declare_subroutine(mir_ctx              *ctx,
                                               const hir_subroutine *sub_hir) {
+  mir_subroutine_spec spec = mir_declare_subroutine_spec(ctx, sub_hir->spec);
+
   if (!sub_hir->body) {
-    return mir_subroutine_new_external(sub_hir->id_ref, sub_hir->type_ref);
+    return mir_subroutine_new_declared(sub_hir->id_ref, sub_hir->type_ref,
+                                       spec);
   }
 
   switch (sub_hir->body->kind) {
@@ -382,7 +396,7 @@ static mir_subroutine *mir_declare_subroutine(mir_ctx              *ctx,
       char *entry = entry_lit ? strdup(entry_lit->value.v_str) : NULL;
 
       return mir_subroutine_new_imported(sub_hir->id_ref, sub_hir->type_ref,
-                                         lib, entry);
+                                         spec, lib, entry);
     }
     case HIR_SUBROUTINE_BODY_BLOCK: {
       union {
@@ -419,11 +433,10 @@ static mir_subroutine *mir_declare_subroutine(mir_ctx              *ctx,
         list_mir_value_push_back(params, param);
       }
 
-      return mir_subroutine_new_basic(sub_hir->id_ref, sub_hir->type_ref,
-                                      ret_value, params, NULL, NULL, NULL);
+      return mir_subroutine_new_defined(sub_hir->id_ref, sub_hir->type_ref,
+                                        spec, ret_value, params, NULL, NULL,
+                                        NULL);
     }
-    case HIR_SUBROUTINE_BODY_UNKNOWN:
-      break;
   }
   error("unexpected subroutine body kind %d %p", sub_hir->body->kind, sub_hir);
   return NULL;
@@ -461,7 +474,7 @@ static list_mir_value_ref *mir_define_mir_value_args(mir_value *first_ref,
 static mir_value *mir_define_mir_value_tmp(mir_ctx          *ctx,
                                            const type_entry *type_ref) {
   mir_value *res = mir_value_new(ctx->value_cnt++, NULL, type_ref);
-  list_mir_value_push_back(ctx->sub_ref->basic.tmps, res);
+  list_mir_value_push_back(ctx->sub_ref->defined.tmps, res);
   return res;
 }
 
@@ -493,7 +506,7 @@ static mir_lit *mir_define_mir_lit(mir_ctx *ctx, const hir_expr_lit *expr) {
       case TYPE_CLASS_T:
       case TYPE_TYPENAME:
       case TYPE_MONO:
-      case TYPE_UNKNOWN: {
+      default: {
         char *type_s = type_str(entry_ref->type);
         error("unsupported lit type %s %p", type_s, expr);
         ok = 0;
@@ -538,7 +551,6 @@ static mir_lit *mir_define_mir_lit(mir_ctx *ctx, const hir_expr_lit *expr) {
     case TYPE_PRIMITIVE_VOID:
       value.v_bool = 0;
       break;
-    case TYPE_PRIMITIVE_UNKNOWN:
     default:
       error("type %d is unresolved", type->type);
       value.v_bool = 0;
@@ -635,7 +647,6 @@ static mir_expr_r mir_define_expr_unary(mir_ctx              *ctx,
       break;
     }
 
-    case HIR_EXPR_UNARY_UNKNOWN:
     default:
       ok = 0;
       break;
@@ -716,8 +727,6 @@ static mir_expr_r mir_define_expr_unary(mir_ctx              *ctx,
 
       return mir_expr_r_make(ret, 0);
     }
-    case HIR_EXPR_UNARY_UNKNOWN:
-      break;
   }
 
   error("unhandled hir unary expr %s(%d) %p", hir_expr_unary_enum_str(expr->op),
@@ -802,7 +811,6 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
     case HIR_EXPR_BINARY_MUL:
     case HIR_EXPR_BINARY_DIV:
     case HIR_EXPR_BINARY_REM:
-    case HIR_EXPR_BINARY_UNKNOWN:
       break;
   }
 
@@ -917,8 +925,6 @@ static mir_expr_r mir_define_expr_binary(mir_ctx               *ctx,
 
       return mir_expr_r_make(ret, opts.lvalue);
     }
-    case HIR_EXPR_BINARY_UNKNOWN:
-      break;
   }
 
   error("unhandled hir binary expr %s(%d) %p",
@@ -1016,9 +1022,6 @@ static mir_expr_r mir_define_expr_call(mir_ctx             *ctx,
         return mir_expr_r_make(ret, 0);
       }
     }
-
-    case HIR_EXPR_UNKNOWN:
-      break;
   }
 
   list_mir_value_ref_free(args);
@@ -1097,8 +1100,6 @@ static mir_expr_r mir_define_expr_builtin(mir_ctx                *ctx,
     case HIR_EXPR_BUILTIN_PRINT: {
       return mir_define_expr_builtin_generic(ctx, expr, MIR_STMT_BUILTIN_PRINT);
     }
-    case HIR_EXPR_BUILTIN_UNKNOWN:
-      break;
   }
 
   error("unexpected builtin expr kind");
@@ -1126,8 +1127,6 @@ static mir_expr_r mir_define_expr(mir_ctx *ctx, const hir_expr_base *expr,
       return mir_define_expr_index(ctx, (hir_expr_index *)expr, opts);
     case HIR_EXPR_BUILTIN:
       return mir_define_expr_builtin(ctx, (hir_expr_builtin *)expr);
-    case HIR_EXPR_UNKNOWN:
-      break;
   }
 
   error("unexpected expr kind %d %p", expr->kind, expr);
@@ -1310,7 +1309,7 @@ static mir_bb_seq mir_define_stmt_return(mir_ctx               *ctx,
   list_hir_expr_ref_push_back(root.first->hir_exprs, stmt->expr);
 
   mir_stmt *stmt_ass = mir_stmt_new_assign(MIR_STMT_ASSIGN_VALUE,
-                                           ctx->sub_ref->basic.ret, value);
+                                           ctx->sub_ref->defined.ret, value);
   list_mir_stmt_push_back(root.first->stmts, stmt_ass);
 
   mir_stmt_debug_init_span(stmt_ass, stmt->base.base.span);
@@ -1341,52 +1340,50 @@ static mir_bb_seq mir_define_stmt(mir_ctx *ctx, const hir_stmt_base *stmt) {
       return mir_define_stmt_expr(ctx, (hir_stmt_expr *)stmt);
     case HIR_STMT_RETURN:
       return mir_define_stmt_return(ctx, (hir_stmt_return *)stmt);
-    case HIR_STMT_UNKNOWN:
-      break;
   }
 
   error("unexpectes stmt kind %d %p", stmt->kind, stmt);
   return mir_define_bb_seq_empty();
 }
 
-static void mir_define_subroutine_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
-                                        const hir_subroutine *sub_hir) {
+static void mir_define_subroutine_defined(mir_ctx *ctx, mir_subroutine *sub_mir,
+                                          const hir_subroutine *sub_hir) {
   const list_hir_var   *hir_vars = sub_hir->body->body.block.vars;
   const hir_stmt_block *hir_root = sub_hir->body->body.block.block;
 
   ctx->sub_ref   = sub_mir;
-  ctx->value_cnt = 1 + list_mir_value_size(sub_mir->basic.params);
+  ctx->value_cnt = 1 + list_mir_value_size(sub_mir->defined.params);
   ctx->bb_cnt    = 0;
 
   // add vars
-  sub_mir->basic.vars = list_mir_value_new();
+  sub_mir->defined.vars = list_mir_value_new();
 
   for (list_hir_var_it it = list_hir_var_begin(hir_vars); !END(it); NEXT(it)) {
     const hir_var *var_hir = GET(it);
 
     mir_value *value =
         mir_value_new(ctx->value_cnt++, var_hir->id_ref, var_hir->type_ref);
-    list_mir_value_push_back(sub_mir->basic.vars, value);
+    list_mir_value_push_back(sub_mir->defined.vars, value);
   }
 
   // add values to symbol scope
   mir_ctx_sym_value_create(ctx);
 
-  for (list_mir_value_it it = list_mir_value_begin(sub_mir->basic.params);
+  for (list_mir_value_it it = list_mir_value_begin(sub_mir->defined.params);
        !END(it); NEXT(it)) {
     mir_value *param = GET(it);
     mir_ctx_sym_value_emplace(ctx, param->symbol_ref, param);
   }
-  for (list_mir_value_it it = list_mir_value_begin(sub_mir->basic.vars);
+  for (list_mir_value_it it = list_mir_value_begin(sub_mir->defined.vars);
        !END(it); NEXT(it)) {
     mir_value *param = GET(it);
     mir_ctx_sym_value_emplace(ctx, param->symbol_ref, param);
   }
 
   // handle body
-  sub_mir->basic.tmps = list_mir_value_new();
-  sub_mir->basic.bbs  = list_mir_bb_new();
-  ctx->scope_stack    = list_mir_scope_ref_new();
+  sub_mir->defined.tmps = list_mir_value_new();
+  sub_mir->defined.bbs  = list_mir_bb_new();
+  ctx->scope_stack      = list_mir_scope_ref_new();
 
   // add last block to handle returns
   mir_bb *bb_last  = mir_bb_new(ctx->bb_cnt++, list_mir_stmt_new(), NULL, NULL,
@@ -1399,7 +1396,7 @@ static void mir_define_subroutine_basic(mir_ctx *ctx, mir_subroutine *sub_mir,
   if (mir_bb_get_cond(seq.last) == MIR_BB_TERM) {
     seq.last->jmp.next_ref = ctx->bb_last_ref;
   }
-  list_mir_bb_push_back(ctx->sub_ref->basic.bbs, bb_last);
+  list_mir_bb_push_back(ctx->sub_ref->defined.bbs, bb_last);
 
   list_mir_scope_ref_free(ctx->scope_stack);
   mir_ctx_sym_value_destroy(ctx);
@@ -1618,8 +1615,8 @@ static mir_class *mir_define_class(mir_ctx          *ctx,
         error("method %s hasn't been declared", method_symbol->name);
         continue;
       }
-      if (method->kind == MIR_SUBROUTINE_BASIC) {
-        mir_define_subroutine_basic(ctx, method, method_hir->subroutine);
+      if (method->kind == MIR_SUBROUTINE_DEFINED) {
+        mir_define_subroutine_defined(ctx, method, method_hir->subroutine);
       }
       list_mir_subroutine_push_back(ctx->mir->methods, method);
       mir_ctx_sym_sub_emplace(ctx, method_symbol, method);
@@ -1666,17 +1663,14 @@ static void mir_lower_subs(mir_ctx *ctx, const hir *hir) {
     mir_ctx_sym_sub_emplace(ctx, sub->symbol_ref, sub);
 
     switch (sub->kind) {
-      case MIR_SUBROUTINE_BASIC:
-        list_mir_subroutine_push_back(ctx->mir->global_subs, sub);
+      case MIR_SUBROUTINE_DEFINED:
+        list_mir_subroutine_push_back(ctx->mir->defined_subs, sub);
         break;
-      case MIR_SUBROUTINE_EXTERNAL:
-        list_mir_subroutine_push_back(ctx->mir->external_subs, sub);
+      case MIR_SUBROUTINE_DECLARED:
+        list_mir_subroutine_push_back(ctx->mir->declared_subs, sub);
         break;
       case MIR_SUBROUTINE_IMPORTED:
         list_mir_subroutine_push_back(ctx->mir->imported_subs, sub);
-        break;
-      case MIR_SUBROUTINE_UNKNOWN:
-      default:
         break;
     }
   }
@@ -1691,8 +1685,8 @@ static void mir_lower_subs(mir_ctx *ctx, const hir *hir) {
       continue;
     }
 
-    if (sub_mir->kind == MIR_SUBROUTINE_BASIC) {
-      mir_define_subroutine_basic(ctx, sub_mir, sub_hir);
+    if (sub_mir->kind == MIR_SUBROUTINE_DEFINED) {
+      mir_define_subroutine_defined(ctx, sub_mir, sub_hir);
     }
   }
 }

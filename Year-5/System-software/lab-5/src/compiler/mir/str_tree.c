@@ -187,7 +187,6 @@ static void mir_str_stmt(strbuf *buffer, size_t pad, const mir_stmt *stmt) {
       }
       break;
 
-    case MIR_STMT_UNKNOWN:
     default:
       warn("unexpected stmt kind %d %p", stmt->kind, stmt);
       break;
@@ -236,7 +235,7 @@ static void mir_str_bb(strbuf *buffer, size_t pad, const mir_subroutine *sub,
       strbuf_append_f(buffer, buf, "jmp() -> bb.%lu", bb->jmp.next_ref->id);
       break;
     case MIR_BB_TERM:
-      strbuf_append_f(buffer, buf, "return _%lu", sub->basic.ret->id);
+      strbuf_append_f(buffer, buf, "return _%lu", sub->defined.ret->id);
       break;
     case MIR_BB_UNKNOWN:
     default:
@@ -285,28 +284,33 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
   strbuf_append_clx(buffer, "kind: ", pad);
   strbuf_append(buffer, mir_subroutine_enum_str(sub->kind));
 
+  if (sub->spec != MIR_SUBROUTINE_SPEC_EMPTY) {
+    strbuf_append_clx(buffer, "spec: ", pad);
+    strbuf_append(buffer, mir_subroutine_spec_str(sub->spec));
+  }
+
   switch (sub->kind) {
-    case MIR_SUBROUTINE_BASIC:
+    case MIR_SUBROUTINE_DEFINED:
       strbuf_append_clx(buffer, "", pad);
       // ret
       strbuf_append_clx(buffer, "", pad);
-      mir_str_value(buffer, pad, sub->basic.ret, "ret");
+      mir_str_value(buffer, pad, sub->defined.ret, "ret");
       // params
-      for (list_mir_value_it it = list_mir_value_begin(sub->basic.params);
+      for (list_mir_value_it it = list_mir_value_begin(sub->defined.params);
            !END(it); NEXT(it)) {
         const mir_value *param = GET(it);
         strbuf_append_clx(buffer, "", pad);
         mir_str_value(buffer, pad, param, "param");
       }
       // vars
-      for (list_mir_value_it it = list_mir_value_begin(sub->basic.vars);
+      for (list_mir_value_it it = list_mir_value_begin(sub->defined.vars);
            !END(it); NEXT(it)) {
         const mir_value *param = GET(it);
         strbuf_append_clx(buffer, "", pad);
         mir_str_value(buffer, pad, param, "var");
       }
       // tmps
-      for (list_mir_value_it it = list_mir_value_begin(sub->basic.tmps);
+      for (list_mir_value_it it = list_mir_value_begin(sub->defined.tmps);
            !END(it); NEXT(it)) {
         const mir_value *param = GET(it);
         strbuf_append_clx(buffer, "", pad);
@@ -314,14 +318,14 @@ static void mir_str_subroutine(strbuf *buffer, size_t pad,
       }
       // bbs
       strbuf_append_clx(buffer, "", pad);
-      for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
+      for (list_mir_bb_it it = list_mir_bb_begin(sub->defined.bbs); !END(it);
            NEXT(it)) {
         const mir_bb *bb = GET(it);
         strbuf_append_clx(buffer, "", pad);
         mir_str_bb(buffer, pad, sub, bb);
       }
       break;
-    case MIR_SUBROUTINE_EXTERNAL:
+    case MIR_SUBROUTINE_DECLARED:
       break;
     case MIR_SUBROUTINE_IMPORTED:
       strbuf_append_clx(buffer, "lib: ", pad);
@@ -422,10 +426,10 @@ char *mir_str(const mir *mir) {
   strbuf_append_clx(buffer, "{", pad);
   pad += MIR_STR_TAB;
 
-  // global subroutines
-  strbuf_append_clx(buffer, "GLOBAL SUBROUTINES: [", pad);
+  // defined subroutines
+  strbuf_append_clx(buffer, "DEFINED SUBROUTINES: [", pad);
   pad += MIR_STR_TAB;
-  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->global_subs);
+  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->defined_subs);
        !END(it); NEXT(it)) {
     const mir_subroutine *subroutine = GET(it);
     strbuf_append_clx(buffer, "", pad);
@@ -434,11 +438,11 @@ char *mir_str(const mir *mir) {
   pad -= MIR_STR_TAB;
   strbuf_append_clx(buffer, "]", pad);
 
-  // external subroutines
-  strbuf_append_clx(buffer, "EXTERNAL SUBROUTINES: [", pad);
+  // declared subroutines
+  strbuf_append_clx(buffer, "DECLARED SUBROUTINES: [", pad);
   pad += MIR_STR_TAB;
   for (list_mir_subroutine_it it =
-           list_mir_subroutine_begin(mir->external_subs);
+           list_mir_subroutine_begin(mir->declared_subs);
        !END(it); NEXT(it)) {
     const mir_subroutine *subroutine = GET(it);
     strbuf_append_clx(buffer, "", pad);

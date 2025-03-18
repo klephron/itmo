@@ -4,8 +4,7 @@
 #include "compiler/hir/node_expr.h"
 
 typedef enum hir_stmt_enum {
-  HIR_STMT_UNKNOWN,
-  HIR_STMT_IF,
+  HIR_STMT_IF = 1,
   HIR_STMT_BLOCK,
   HIR_STMT_WHILE,
   HIR_STMT_DO,

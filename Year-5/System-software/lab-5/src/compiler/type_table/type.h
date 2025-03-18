@@ -6,8 +6,7 @@
 typedef struct type_entry_struct type_entry;
 
 typedef enum type_enum {
-  TYPE_UNKNOWN,
-  TYPE_PRIMITIVE,
+  TYPE_PRIMITIVE = 1,
   TYPE_ARRAY,
   TYPE_CALLABLE,
   TYPE_CLASS_T,
@@ -50,8 +49,7 @@ type_base     *type_copy(const type_base *generic);
 list_type_ref *type_copy_list_ref(const list_type_ref *from);
 
 typedef enum type_primitive_enum {
-  TYPE_PRIMITIVE_UNKNOWN,
-  TYPE_PRIMITIVE_BOOL,
+  TYPE_PRIMITIVE_BOOL = 1,
   TYPE_PRIMITIVE_BYTE,
   TYPE_PRIMITIVE_INT,
   TYPE_PRIMITIVE_UINT,

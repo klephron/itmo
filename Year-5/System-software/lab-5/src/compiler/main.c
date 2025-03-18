@@ -407,7 +407,7 @@ static int execute(args *args) {
   // stage: dot cfg
   if (args->cfg && (!args->code || args->ignore_errors)) {
     for (list_mir_subroutine_it it =
-             list_mir_subroutine_begin(mir->global_subs);
+             list_mir_subroutine_begin(mir->defined_subs);
          !END(it); NEXT(it)) {
       const mir_subroutine *sub      = GET(it);
       const char           *sub_name = sub->symbol_ref->name;
@@ -425,7 +425,7 @@ static int execute(args *args) {
   // stage: dot cg
   if (args->cg && (!args->code || args->ignore_errors)) {
     for (list_mir_subroutine_it it =
-             list_mir_subroutine_begin(mir->global_subs);
+             list_mir_subroutine_begin(mir->defined_subs);
          !END(it); NEXT(it)) {
       const mir_subroutine *sub      = GET(it);
       const char           *sub_name = sub->symbol_ref->name;

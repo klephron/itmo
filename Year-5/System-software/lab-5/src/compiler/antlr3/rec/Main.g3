@@ -32,12 +32,13 @@ tokens {
   TEMPLATE;
   TYPENAMES;
   PARENTS;
-  MODIFIER;
+  ACCESS;  // access specifiers (public, private, protected)
   METHODS;
   METHOD;
   MEMBER;
   OP_SHR;
   OP_SHL;
+  SPECIFIERS; // storage, function specifiers (static, inline, extern)
 }
 
 @headers{
@@ -85,7 +86,7 @@ param
 
 // FUNCTIONS
 func_def
-  : ls='method' func_signature func_def_sel -> ^(FUNC[$ls, "FUNC"] func_signature func_def_sel)
+  : sp_extern='extern'? fn='method' func_signature func_def_sel -> ^(FUNC[$fn, "FUNC"] func_signature func_def_sel ^(SPECIFIERS $sp_extern))
   ;
 
 // NOTE: can be resolved to empty
@@ -125,7 +126,7 @@ class_method_list
   ;
 
 class_method
-  : (modifier='public' | modifier='private')? func_def -> ^(METHOD func_def ^(MODIFIER $modifier)?)
+  : (access='public' | modifier='private')? func_def -> ^(METHOD func_def ^(ACCESS $access)?)
   ;
 
 

@@ -11,5 +11,6 @@ const char *mir_stmt_enum_str(mir_stmt_enum kind);
 const char *mir_stmt_builtin_enum_str(mir_stmt_builtin_enum kind);
 const char *mir_stmt_op_enum_str(mir_stmt_op_enum kind);
 const char *mir_subroutine_enum_str(mir_subroutine_enum kind);
+const char *mir_subroutine_spec_str(mir_subroutine_spec spec);
 
 char *mir_str(const mir *mir);

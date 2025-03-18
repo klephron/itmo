@@ -3,8 +3,7 @@
 #include "compiler/hir/node_basic.h"
 
 typedef enum hir_expr_enum {
-  HIR_EXPR_UNKNOWN,
-  HIR_EXPR_UNARY,
+  HIR_EXPR_UNARY = 1,
   HIR_EXPR_BINARY,
   HIR_EXPR_LITERAL,
   HIR_EXPR_IDENTIFIER,
@@ -14,8 +13,7 @@ typedef enum hir_expr_enum {
 } hir_expr_enum;
 
 typedef enum hir_expr_unary_enum {
-  HIR_EXPR_UNARY_UNKNOWN,
-  HIR_EXPR_UNARY_PLUS,
+  HIR_EXPR_UNARY_PLUS = 1,
   HIR_EXPR_UNARY_MINUS,
   HIR_EXPR_UNARY_LOGICAL_NOT,
   HIR_EXPR_UNARY_BITWISE_NOT,
@@ -24,8 +22,7 @@ typedef enum hir_expr_unary_enum {
 } hir_expr_unary_enum;
 
 typedef enum hir_expr_binary_enum {
-  HIR_EXPR_BINARY_UNKNOWN,
-  HIR_EXPR_BINARY_ASSIGN,
+  HIR_EXPR_BINARY_ASSIGN = 1,
   HIR_EXPR_BINARY_LOGICAL_OR,
   HIR_EXPR_BINARY_LOGICAL_AND,
   HIR_EXPR_BINARY_BITWISE_OR,
@@ -48,8 +45,7 @@ typedef enum hir_expr_binary_enum {
 } hir_expr_binary_enum;
 
 typedef enum hir_expr_builtin_enum {
-  HIR_EXPR_BUILTIN_UNKNOWN,
-  HIR_EXPR_BUILTIN_CAST,
+  HIR_EXPR_BUILTIN_CAST = 1,
   HIR_EXPR_BUILTIN_MAKE,
   HIR_EXPR_BUILTIN_PRINT,
 } hir_expr_builtin_enum;

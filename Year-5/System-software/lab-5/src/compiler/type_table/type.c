@@ -130,7 +130,6 @@ void type_free(type_base *generic) {
         return type_typename_free((type_typename *)generic);
       case TYPE_MONO:
         return type_mono_free((type_mono *)generic);
-      case TYPE_UNKNOWN:
       default:
         error("unexpected type_entry kind %d %p", generic->kind, generic);
         break;
@@ -153,7 +152,6 @@ void type_set_type_entry(type_base *generic, type_entry *type_entry_ref) {
     case TYPE_MONO:
       generic->type_entry_ref = type_entry_ref;
       break;
-    case TYPE_UNKNOWN:
     default:
       error("unexpected type_entry kind %d %p", generic->kind, generic);
       break;
@@ -209,8 +207,6 @@ type_base *type_copy(const type_base *generic) {
       return (type_base *)type_mono_new(self->type_ref,
                                         type_copy_list_ref(self->types));
     }
-    case TYPE_UNKNOWN:
-      break;
   }
   error("unknown type kind %d %p", generic->kind, generic);
   return NULL;

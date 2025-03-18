@@ -81,7 +81,6 @@ static void strbuf_append_type_primitive(type_ctx *ctx, strbuf *buffer,
     case TYPE_PRIMITIVE_VOID:
       strbuf_append(buffer, "void");
       break;
-    case TYPE_PRIMITIVE_UNKNOWN:
     default:
       warn("unexpected primitive type %d %p", type->type, type);
   }
@@ -165,7 +164,6 @@ static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,
 
   if (type->type_ref) {
     switch (type->type_ref->kind) {
-      case TYPE_UNKNOWN:
       case TYPE_PRIMITIVE:
       case TYPE_ARRAY:
       case TYPE_CALLABLE:
@@ -234,7 +232,6 @@ static void strbuf_append_type(type_ctx *ctx, strbuf *buffer,
     case TYPE_MONO:
       strbuf_append_type_mono(ctx, buffer, (const type_mono *)generic);
       break;
-    case TYPE_UNKNOWN:
     default:
       warn("unexpected type kind %d %p", generic->kind, generic);
       break;
@@ -255,11 +252,9 @@ const char *type_enum_str(type_enum kind) {
       return "TYPENAME";
     case TYPE_MONO:
       return "MONO";
-    case TYPE_UNKNOWN:
-    default:
-      warn("unknown type kind %d", kind);
-      return "UNKNOWN";
   }
+  warn("unknown type kind %d", kind);
+  return "UNKNOWN";
 }
 
 char *type_str(const type_base *generic) {

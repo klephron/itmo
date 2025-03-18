@@ -68,8 +68,6 @@ void hir_type_free(hir_type_base *generic) {
         return hir_type_custom_free((hir_type_custom *)generic);
       case HIR_TYPE_ARRAY:
         return hir_type_array_free((hir_type_array *)generic);
-      case HIR_TYPE_UNKNOWN:
-        break;
     }
     error("unknown hir type %d", generic->type);
   }
@@ -101,8 +99,6 @@ hir_type_base *hir_type_copy(const hir_type_base *self) {
       return (hir_type_base *)hir_type_array_new(
           span_copy(self->span), hir_type_copy(array->elem_type));
     }
-    case HIR_TYPE_UNKNOWN:
-      break;
   }
 
   error("unknown hir type %d", self->type);
@@ -146,8 +142,6 @@ int hir_type_cmp(const hir_type_base *lsv, const hir_type_base *rsv) {
       const hir_type_array *r = (typeof(r))rsv;
       return hir_type_cmp(l->elem_type, r->elem_type);
     }
-    case HIR_TYPE_UNKNOWN:
-      break;
   }
   error("unexpected hir type kind %d %p", lsv->type, lsv);
   return 0;
@@ -182,8 +176,6 @@ uint64_t hir_type_hash(const hir_type_base *lsv) {
       const hir_type_array *l = (typeof(l))lsv;
       return hash_combine(hash, hir_type_hash(l->elem_type));
     }
-    case HIR_TYPE_UNKNOWN:
-      break;
   }
 
   error("unexpected hir type kind %d %p", lsv->type, lsv);

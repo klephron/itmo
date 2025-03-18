@@ -19,8 +19,6 @@ const char *hir_expr_unary_enum_str(hir_expr_unary_enum type) {
       return "INC";
     case HIR_EXPR_UNARY_DEC:
       return "DEC";
-    case HIR_EXPR_UNARY_UNKNOWN:
-      break;
   }
   warn("unknown expr_unary_enum %d", type);
   return "UNKNOWN";
@@ -68,8 +66,6 @@ const char *hir_expr_binary_enum_str(hir_expr_binary_enum type) {
       return "REM";
     case HIR_EXPR_BINARY_MEMBER:
       return "MEMBER";
-    case HIR_EXPR_BINARY_UNKNOWN:
-      break;
   }
   warn("unknown expr_binary_enum %d", type);
   return "UNKNOWN";
@@ -95,8 +91,6 @@ const char *hir_node_enum_str(hir_node_enum kind) {
       return "CLASS";
     case HIR_NODE_METHOD:
       return "METHOD";
-    case HIR_NODE_UNKNOWN:
-      break;
   }
   warn("unknown hir_node_enum %d", kind);
   return "UNKNOWN";
@@ -118,8 +112,6 @@ const char *hir_stmt_enum_str(hir_stmt_enum kind) {
       return "EXPR";
     case HIR_STMT_RETURN:
       return "RETURN";
-    case HIR_STMT_UNKNOWN:
-      break;
   }
   warn("unknown stmt enum %d", kind);
   return "UNKNOWN";
@@ -141,8 +133,6 @@ const char *hir_expr_enum_str(hir_expr_enum kind) {
       return "INDEX";
     case HIR_EXPR_BUILTIN:
       return "BUILTIN";
-    case HIR_EXPR_UNKNOWN:
-      break;
   }
   warn("unknown expr enum %d", kind);
   return "UNKNOWN";
@@ -156,8 +146,6 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
       return "MAKE";
     case HIR_EXPR_BUILTIN_PRINT:
       return "PRINT";
-    case HIR_EXPR_BUILTIN_UNKNOWN:
-      break;
   }
   warn("unknown expr builtin enum %d", kind);
   return "UNKNOWN";
@@ -165,6 +153,7 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
 
 char *hir_lit_value_str(const hir_lit *lit) {
   hir_type_enum type;
+  int           type_expected = 1;
 
   if (lit->state & HIR_STATE_BIND_TYPE) {
     switch (lit->type_ref->type->kind) {
@@ -198,57 +187,55 @@ char *hir_lit_value_str(const hir_lit *lit) {
           case TYPE_PRIMITIVE_VOID:
             type = HIR_TYPE_VOID;
             break;
-          case TYPE_PRIMITIVE_UNKNOWN:
           default:
-            type = HIR_TYPE_UNKNOWN;
+            type_expected = 0;
             break;
         }
       } break;
-      case TYPE_UNKNOWN:
       case TYPE_ARRAY:
       case TYPE_CALLABLE:
       case TYPE_CLASS_T:
       case TYPE_TYPENAME:
       case TYPE_MONO:
       default:
-        type = HIR_TYPE_UNKNOWN;
+        type_expected = 0;
         break;
     }
   } else {
     type = lit->type_hir->type;
   }
 
-  switch (type) {
-    case HIR_TYPE_STRING:
-      return strdup(lit->value.v_str);
-    case HIR_TYPE_CHAR:
-      return strdup(lit->value.v_char);
-    case HIR_TYPE_BOOL: {
-      if (lit->value.v_bool) {
-        return strdup("true");
-      } else {
-        return strdup("false");
+  if (type_expected) {
+    switch (type) {
+      case HIR_TYPE_STRING:
+        return strdup(lit->value.v_str);
+      case HIR_TYPE_CHAR:
+        return strdup(lit->value.v_char);
+      case HIR_TYPE_BOOL: {
+        if (lit->value.v_bool) {
+          return strdup("true");
+        } else {
+          return strdup("false");
+        }
+      } break;
+      case HIR_TYPE_VOID:
+        return strdup("()");
+      case HIR_TYPE_BYTE:
+      case HIR_TYPE_INT:
+      case HIR_TYPE_LONG: {
+        char *buf = MALLOCN(char, 32);
+        snprintf(buf, 31, "%ld", lit->value.v_long);
+        return buf;
       }
-    } break;
-    case HIR_TYPE_VOID:
-      return strdup("()");
-    case HIR_TYPE_BYTE:
-    case HIR_TYPE_INT:
-    case HIR_TYPE_LONG: {
-      char *buf = MALLOCN(char, 32);
-      snprintf(buf, 31, "%ld", lit->value.v_long);
-      return buf;
+      case HIR_TYPE_UINT:
+      case HIR_TYPE_ULONG: {
+        char *buf = MALLOCN(char, 32);
+        snprintf(buf, 31, "%lu", lit->value.v_ulong);
+        return buf;
+      }
+      default:
+        break;
     }
-    case HIR_TYPE_UINT:
-    case HIR_TYPE_ULONG: {
-      char *buf = MALLOCN(char, 32);
-      snprintf(buf, 31, "%lu", lit->value.v_ulong);
-      return buf;
-    }
-    case HIR_TYPE_CUSTOM:
-    case HIR_TYPE_ARRAY:
-    case HIR_TYPE_UNKNOWN:
-      break;
   }
   warn("unexpected lit type %d", type);
   return strdup("(unknown)");
@@ -256,14 +243,12 @@ char *hir_lit_value_str(const hir_lit *lit) {
 
 const char *hir_method_modifier_enum_str(hir_method_modifier_enum kind) {
   switch (kind) {
-    case HIR_METHOD_MODIFIER_ENUM_ABSCENT:
-      return "ABSCENT";
+    case HIR_METHOD_MODIFIER_ENUM_EMPTY:
+      return "EMPTY";
     case HIR_METHOD_MODIFIER_ENUM_PUBLIC:
       return "PUBLIC";
     case HIR_METHOD_MODIFIER_ENUM_PRIVATE:
       return "PRIVATE";
-    case HIR_METHOD_MODIFIER_ENUM_UNKNOWN:
-      break;
   }
   warn("unexpected method modifier kind %d", kind);
   return "UNKNOWN";
@@ -281,6 +266,17 @@ const char *hir_state_enum_str(hir_state_enum state) {
     case HIR_STATE_BIND_SYMBOL_AND_TYPE:
       return "BIND_SYMBOL | BIND_TYPE";
   }
-  error("unexpected hir state %d", state);
+  warn("unexpected hir state %d", state);
+  return "UNKNOWN";
+}
+
+const char *hir_subroutine_spec_str(hir_subroutine_spec spec) {
+  switch (spec) {
+    case HIR_SUBROUTINE_SPEC_EMPTY:
+      return "EMPTY";
+    case HIR_SUBROUTINE_SPEC_EXTERN:
+      return "EXTERN";
+  }
+  warn("unexpected subroutine spec %d", spec);
   return "UNKNOWN";
 }

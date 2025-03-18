@@ -140,7 +140,6 @@ char *type_table_str(const type_table *table, const char *title) {
     list_chars_push_back(row, buf);
     // TYPE_KIND
     switch (entry->type->kind) {
-      case TYPE_UNKNOWN:
       case TYPE_PRIMITIVE:
       case TYPE_ARRAY:
       case TYPE_CALLABLE:

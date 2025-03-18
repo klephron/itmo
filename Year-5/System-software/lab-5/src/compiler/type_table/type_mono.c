@@ -80,9 +80,6 @@ type_mono_enum type_calc_mono(const type_base *generic) {
           return TYPE_MONO_UNSET;
       }
     }
-
-    case TYPE_UNKNOWN:
-      break;
   }
   error("unexpected type kind %d %p", generic->kind, generic);
   return TYPE_MONO_UNSET;
@@ -105,8 +102,6 @@ type_mono_enum type_get_mono(const type_base *generic) {
       return TYPE_MONO_NOT_FULL;
     case TYPE_MONO:
       return ((const type_mono *)generic)->mono_kind;
-    case TYPE_UNKNOWN:
-      break;
   }
   error("unexpected type kind %d %p", generic->kind, generic);
   return TYPE_MONO_UNSET;
@@ -132,7 +127,6 @@ void type_set_mono(type_base *generic, type_mono_enum mono) {
     case TYPE_MONO:
       ((type_mono *)generic)->mono_kind = mono;
       break;
-    case TYPE_UNKNOWN:
     default:
       error("unexpected type kind %d %p", generic->kind, generic);
       break;

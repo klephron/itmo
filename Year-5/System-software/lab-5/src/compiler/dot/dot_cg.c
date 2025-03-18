@@ -90,7 +90,7 @@ static void dot_ctx_deinit(dot_ctx *ctx) {
 }
 
 static void dot_ctx_setup(dot_ctx *ctx, const mir *mir) {
-  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->global_subs);
+  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->defined_subs);
        !END(it); NEXT(it)) {
     mir_subroutine *sub = GET(it);
     hashset_dot_sym_sub_insert(ctx->map_sym_sub,
@@ -98,7 +98,7 @@ static void dot_ctx_setup(dot_ctx *ctx, const mir *mir) {
   }
 
   for (list_mir_subroutine_it it =
-           list_mir_subroutine_begin(mir->external_subs);
+           list_mir_subroutine_begin(mir->declared_subs);
        !END(it); NEXT(it)) {
     mir_subroutine *sub = GET(it);
     hashset_dot_sym_sub_insert(ctx->map_sym_sub,
@@ -136,12 +136,11 @@ static dot_sub *dot_cg_traverse(dot_ctx *ctx, const mir_subroutine *sub) {
   strbuf_append(ctx->buffer, sub->symbol_ref->name);
   strbuf_append(ctx->buffer, "</b></FONT><br/><FONT POINT-SIZE=\"12\">");
   switch (sub->kind) {
-    case MIR_SUBROUTINE_UNKNOWN:
-    case MIR_SUBROUTINE_BASIC:
-      strbuf_append(ctx->buffer, "global");
+    case MIR_SUBROUTINE_DEFINED:
+      strbuf_append(ctx->buffer, "defined");
       break;
-    case MIR_SUBROUTINE_EXTERNAL:
-      strbuf_append(ctx->buffer, "external");
+    case MIR_SUBROUTINE_DECLARED:
+      strbuf_append(ctx->buffer, "declared");
       break;
     case MIR_SUBROUTINE_IMPORTED:
       strbuf_append(ctx->buffer, "from \"");
@@ -157,11 +156,11 @@ static dot_sub *dot_cg_traverse(dot_ctx *ctx, const mir_subroutine *sub) {
   strbuf_append(ctx->buffer, "</FONT> >");
   strbuf_append(ctx->buffer, "];\n");
 
-  if (sub->kind != MIR_SUBROUTINE_BASIC) {
+  if (sub->kind != MIR_SUBROUTINE_DEFINED) {
     return dot_cur;
   }
 
-  for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
+  for (list_mir_bb_it it = list_mir_bb_begin(sub->defined.bbs); !END(it);
        NEXT(it)) {
     mir_bb *bb = GET(it);
 

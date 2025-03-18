@@ -53,7 +53,6 @@ char *mir_lit_value_str(const mir_lit *lit) {
         case TYPE_PRIMITIVE_VOID:
           strbuf_append(buffer, "()");
           break;
-        case TYPE_PRIMITIVE_UNKNOWN:
         default:
           warn("unexpected primitive kind %d %p", self->type, lit);
           strbuf_append(buffer, "<unknown>");
@@ -65,8 +64,7 @@ char *mir_lit_value_str(const mir_lit *lit) {
     case TYPE_CALLABLE:
     case TYPE_CLASS_T:
     case TYPE_TYPENAME:
-    case TYPE_MONO:
-    case TYPE_UNKNOWN: {
+    case TYPE_MONO: {
       strbuf *buffer = strbuf_new(64, 0);
       char   *type_s = type_str(type);
 
@@ -100,8 +98,6 @@ const char *mir_stmt_enum_str(mir_stmt_enum kind) {
       return "builtin";
     case MIR_STMT_ASSIGN:
       return "assign";
-    case MIR_STMT_UNKNOWN:
-      break;
   }
   warn("unexpected stmt kind %d", kind);
   return "unknown";
@@ -115,8 +111,6 @@ const char *mir_stmt_builtin_enum_str(mir_stmt_builtin_enum kind) {
       return "make";
     case MIR_STMT_BUILTIN_PRINT:
       return "print";
-    case MIR_STMT_BUILTIN_UNKNOWN:
-      break;
   }
   warn("unexpected stmt builtin kind %d", kind);
   return "unknown";
@@ -180,8 +174,6 @@ const char *mir_stmt_op_enum_str(mir_stmt_op_enum kind) {
       return "index_ref";
     case MIR_STMT_OP_DEREF:
       return "deref";
-    case MIR_STMT_OP_UNKNOWN:
-      break;
   }
   warn("unexpected stmt_op kind %d", kind);
   return "unknown";
@@ -189,15 +181,24 @@ const char *mir_stmt_op_enum_str(mir_stmt_op_enum kind) {
 
 const char *mir_subroutine_enum_str(mir_subroutine_enum kind) {
   switch (kind) {
-    case MIR_SUBROUTINE_BASIC:
-      return "BASIC";
-    case MIR_SUBROUTINE_EXTERNAL:
-      return "EXTERNAL";
+    case MIR_SUBROUTINE_DEFINED:
+      return "DEFINED";
+    case MIR_SUBROUTINE_DECLARED:
+      return "DECLARED";
     case MIR_SUBROUTINE_IMPORTED:
       return "IMPORTED";
-    case MIR_SUBROUTINE_UNKNOWN:
-      break;
   }
   warn("unexpected subroutine kind %d", kind);
+  return "UNKNOWN";
+}
+
+const char *mir_subroutine_spec_str(mir_subroutine_spec spec) {
+  switch (spec) {
+    case MIR_SUBROUTINE_SPEC_EMPTY:
+      return "NATIVE";
+    case MIR_SUBROUTINE_SPEC_EXTERN:
+      return "EXTERN";
+  }
+  warn("unexpected subroutine spec %d", spec);
   return "UNKNOWN";
 }

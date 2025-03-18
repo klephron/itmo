@@ -196,7 +196,7 @@ static mir_bb *mir_ctx_bb_merge_block(mir_ctx *ctx, mir_bb *cur) {
 }
 
 static void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
-  if (!list_mir_bb_size(sub->basic.bbs)) {
+  if (!list_mir_bb_size(sub->defined.bbs)) {
     return;
   }
 
@@ -205,7 +205,7 @@ static void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
   ctx->deleted = hashset_mir_bb_ref_new();
 
   // calculate predicates for all bbs
-  for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
+  for (list_mir_bb_it it = list_mir_bb_begin(sub->defined.bbs); !END(it);
        NEXT(it)) {
     mir_ctx_get_preds(ctx, GET(it));
   }
@@ -225,8 +225,8 @@ static void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
   list_mir_bb *new_bbs = list_mir_bb_new();
 
   // bb_first may be redundant (need to check)
-  while (!list_mir_bb_empty(sub->basic.bbs)) {
-    mir_bb *cur      = list_mir_bb_pop_front(sub->basic.bbs);
+  while (!list_mir_bb_empty(sub->defined.bbs)) {
+    mir_bb *cur      = list_mir_bb_pop_front(sub->defined.bbs);
     mir_bb *cur_next = mir_ctx_bb_merge_block(ctx, cur);
     if (cur_next) {
       hashset_mir_bb_ref_insert(ctx->deleted, cur);
@@ -236,8 +236,8 @@ static void mir_ctx_bb_merge_subroutine(mir_ctx *ctx, mir_subroutine *sub) {
     }
   }
 
-  list_mir_bb_free(sub->basic.bbs);
-  sub->basic.bbs = new_bbs;
+  list_mir_bb_free(sub->defined.bbs);
+  sub->defined.bbs = new_bbs;
 
   hashset_mir_bb_ref_free(ctx->deleted);
   hashset_mir_bb_ref_free(ctx->visited);
@@ -256,10 +256,10 @@ mir_merge_bb_result mir_merge_bb(mir *mir) {
       .exceptions = result.exceptions,
   };
 
-  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->global_subs);
+  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->defined_subs);
        !END(it); NEXT(it)) {
     mir_subroutine *sub = GET(it);
-    if (sub->kind == MIR_SUBROUTINE_BASIC) {
+    if (sub->kind == MIR_SUBROUTINE_DEFINED) {
       mir_ctx_bb_merge_subroutine(&ctx, sub);
     }
   }
@@ -267,7 +267,7 @@ mir_merge_bb_result mir_merge_bb(mir *mir) {
   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->methods);
        !END(it); NEXT(it)) {
     mir_subroutine *sub = GET(it);
-    if (sub->kind == MIR_SUBROUTINE_BASIC) {
+    if (sub->kind == MIR_SUBROUTINE_DEFINED) {
       mir_ctx_bb_merge_subroutine(&ctx, sub);
     }
   }

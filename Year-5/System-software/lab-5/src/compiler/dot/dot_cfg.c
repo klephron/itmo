@@ -97,7 +97,7 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
       strbuf_append(ctx->buffer, "\"");
       break;
     }
-    case HIR_EXPR_UNKNOWN:
+    default:
       warn("unhandled expr kind %d", expr->kind);
       break;
   }
@@ -175,7 +175,7 @@ static size_t dot_cfg_traverse_expr_node(dot_ctx             *ctx,
       }
       break;
     }
-    case HIR_EXPR_UNKNOWN:
+    default:
       warn("unhandled expr kind %d", expr->kind);
       break;
   }
@@ -260,19 +260,19 @@ static void dot_cfg_traverse_bb_edges(dot_ctx *ctx, mir_bb *bb) {
 static void dot_cfg_traverse(dot_ctx *ctx, const mir_subroutine *sub) {
   char buf[256];
 
-  if (sub->kind != MIR_SUBROUTINE_BASIC) {
+  if (sub->kind != MIR_SUBROUTINE_DEFINED) {
     return;
   }
 
-  for (list_mir_bb_it it = list_mir_bb_begin(sub->basic.bbs); !END(it);
+  for (list_mir_bb_it it = list_mir_bb_begin(sub->defined.bbs); !END(it);
        NEXT(it)) {
     mir_bb *bb  = GET(it);
     ctx->bb_ref = bb;
 
     char label[64];
-    if (list_mir_bb_front(sub->basic.bbs) == bb) {
+    if (list_mir_bb_front(sub->defined.bbs) == bb) {
       snprintf(label, STRMAXLEN(label), "block_%lu (START)", bb->id);
-    } else if (list_mir_bb_back(sub->basic.bbs) == bb) {
+    } else if (list_mir_bb_back(sub->defined.bbs) == bb) {
       snprintf(label, STRMAXLEN(label), "block_%lu (END)", bb->id);
     } else {
       snprintf(label, STRMAXLEN(label), "block_%lu", bb->id);

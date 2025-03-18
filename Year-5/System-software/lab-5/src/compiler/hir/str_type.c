@@ -68,8 +68,6 @@ static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
       strbuf_append(buffer, "]");
       return;
     }
-    case HIR_TYPE_UNKNOWN:
-      break;
   }
   warn("unknown type %d %p", generic->type, generic);
   strbuf_append(buffer, "unknown");
@@ -99,8 +97,6 @@ const char *hir_type_enum_str(hir_type_enum type) {
       return "CUSTOM";
     case HIR_TYPE_ARRAY:
       return "ARRAY";
-    case HIR_TYPE_UNKNOWN:
-      break;
   }
   return "UNKNOWN";
 }
