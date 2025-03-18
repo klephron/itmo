@@ -32,33 +32,33 @@ SRC_DIR := $(CURDIR)/src
 util.SRC_DIR   := $(SRC_DIR)/util
 util.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(util.SRC_DIR))
 
-x86_64.SRC_DIR   := $(SRC_DIR)/x86_64
-x86_64.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(x86_64.SRC_DIR))
-x86_64.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
-x86_64.LIBS      :=
+x86_64_core.SRC_DIR   := $(SRC_DIR)/x86_64_core
+x86_64_core.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(x86_64_core.SRC_DIR))
+x86_64_core.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
+x86_64_core.LIBS      := $(util.BUILD_DIR)/libutil.a
 
 compiler.SRC_DIR   := $(SRC_DIR)/compiler
 compiler.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(compiler.SRC_DIR))
 compiler.GEN_DIR   := $(patsubst $(SRC_DIR)/%,$(GEN_DIR)/%, $(compiler.SRC_DIR))
-compiler.LIBS      := $(util.BUILD_DIR)/libutil.a $(x86_64.BUILD_DIR)/libx86_64_all.a
+compiler.LIBS      := $(util.BUILD_DIR)/libutil.a $(x86_64_core.BUILD_DIR)/libx86_64_core.a
 
-stdc.SRC_DIR   := $(SRC_DIR)/stdc
-stdc.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(stdc.SRC_DIR))
-stdc.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
+x86_64_std.SRC_DIR   := $(SRC_DIR)/x86_64_std
+x86_64_std.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(x86_64_std.SRC_DIR))
+x86_64_std.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
 
 debugger.SRC_DIR   := $(SRC_DIR)/debugger
 debugger.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(debugger.SRC_DIR))
-debugger.LIBS      := $(x86_64.BUILD_DIR)/libx86_64_all.a $(util.BUILD_DIR)/libutil.a
+debugger.LIBS      := $(x86_64_core.BUILD_DIR)/libx86_64_core.a $(util.BUILD_DIR)/libutil.a
 
 test.SRC_DIR   := $(CURDIR)/test
 test.BUILD_DIR := $(patsubst $(CURDIR)/%,$(BUILD_DIR)/%,$(test.SRC_DIR))
-test.LIBS      := $(debugger.BUILD_DIR)/libdebugger.a $(compiler.BUILD_DIR)/libcompiler.a $(x86_64.BUILD_DIR)/libx86_64_all.a $(stdc.BUILD_DIR)/libstdc.a  $(util.BUILD_DIR)/libutil.a
+test.LIBS      := $(debugger.BUILD_DIR)/libdebugger.a $(compiler.BUILD_DIR)/libcompiler.a $(x86_64_core.BUILD_DIR)/libx86_64_core.a $(x86_64_std.BUILD_DIR)/libx86_64_std.a  $(util.BUILD_DIR)/libutil.a
 
-MODULES := util compiler x86_64 stdc debugger test
+MODULES := util compiler x86_64_core x86_64_std debugger test
 
 .DEFAULT_GOAL := compiler
-.PHONY := clean/build clean/out compiler debugger format help index run/asm run/pdf run/test stdc test util x86_64
-.PRECIOUS: $(util.LIBS) $(compiler.LIBS) $(x86_64.LIBS) $(stdc.LIBS) $(debugger.LIBS) $(test.LIBS)
+.PHONY := clean/build clean/out compiler debugger format help index run/asm run/pdf run/test x86_64_std test util x86_64_core
+.PRECIOUS: $(util.LIBS) $(compiler.LIBS) $(x86_64_core.LIBS) $(x86_64_std.LIBS) $(debugger.LIBS) $(test.LIBS)
 
 FORCE:
 
@@ -84,20 +84,21 @@ define util.ENV
 	AR="$(AR)"
 endef
 
-define x86_64.ENV
+define x86_64_core.ENV
 	MKDIR="$(MKDIR)" \
 	CC="$(CC)" \
-	FLAGS="$(x86_64.FLAGS)" \
+	FLAGS="$(x86_64_core.FLAGS)" \
+	LIBS="$(x86_64_core.LIBS)" \
 	INCS="-I$(SRC_DIR)" \
-	BUILD_DIR="$(x86_64.BUILD_DIR)"
+	BUILD_DIR="$(x86_64_core.BUILD_DIR)"
 endef
 
-define stdc.ENV
+define x86_64_std.ENV
 	MKDIR="$(MKDIR)" \
 	CC="$(CC)" \
-	FLAGS="$(stdc.FLAGS)" \
+	FLAGS="$(x86_64_std.FLAGS)" \
 	INCS="-I$(SRC_DIR)" \
-	BUILD_DIR="$(stdc.BUILD_DIR)"
+	BUILD_DIR="$(x86_64_std.BUILD_DIR)"
 endef
 
 define debugger.ENV
@@ -140,10 +141,10 @@ util: util/build/libutil.a
 compiler: compiler/build/main
 
 ### Build libx86_64_core.a
-x86_64: x86_64/build/libx86_64_core.a
+x86_64_core: x86_64_core/build/libx86_64_core.a
 
-### Build libstdc.a
-stdc: stdc/build/libstdc.a
+### Build libx86_64_std.a
+x86_64_std: x86_64_std/build/libx86_64_std.a
 
 ### Build debugger executable
 debugger: debugger/build/main
@@ -175,7 +176,7 @@ run/asm/%: ASM.INPUT_FILE=$(patsubst run/asm/%,%,$@)
 run/asm/%: ASM.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
 run/asm/%: ASM.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
 run/asm/%: ASM.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
-run/asm/%: compiler/build/main x86_64/build/libx86_64_core.a stdc/build/libstdc.a
+run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a x86_64_std/build/libx86_64_std.a
 	./build/compiler/main $(ASM.COMPILER_FLAGS) \
 		-o $(ASM.ASM_FILE) $(ASM.INPUT_FILE)
 	@echo "--------------------ASSEMBLY($(ASM.ASM_FILE))--------------------"
@@ -188,8 +189,8 @@ run/asm/%: compiler/build/main x86_64/build/libx86_64_core.a stdc/build/libstdc.
 		/usr/lib/x86_64-linux-gnu/crti.o \
 		-lc \
 		$(ASM.OBJECT_FILE) \
-		$(BUILD_DIR)/x86_64/libx86_64_core.a \
-		$(BUILD_DIR)/stdc/libstdc.a \
+		$(BUILD_DIR)/x86_64_core/libx86_64_core.a \
+		$(BUILD_DIR)/x86_64_std/libx86_64_std.a \
 		/usr/lib/x86_64-linux-gnu/crtn.o
 
 ### Run debugger
@@ -207,7 +208,7 @@ format:
 index:
 	make clean/build
 	bear          -- make -j$(nproc) util
-	bear --append -- make -j$(nproc) x86_64
+	bear --append -- make -j$(nproc) x86_64_core
 	bear --append -- make -j$(nproc) compiler
 	bear --append -- make -j$(nproc) debugger
 	bear --append -- make -j$(nproc) test/build
