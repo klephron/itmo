@@ -2,18 +2,18 @@
 #include <limits.h>
 #include <stdint.h>
 
-#include "x86_64/builtin/builtin.h"
-#include "x86_64/proxy/value/bool.h"
-#include "x86_64/proxy/value/byte.h"
-#include "x86_64/proxy/value/char.h"
-#include "x86_64/proxy/value/error.h"
-#include "x86_64/proxy/value/int.h"
-#include "x86_64/proxy/value/long.h"
-#include "x86_64/proxy/value/string.h"
-#include "x86_64/proxy/value/uint.h"
-#include "x86_64/proxy/value/ulong.h"
-#include "x86_64/proxy/value/void.h"
-#include "x86_64/value.h"
+#include "x86_64_core/builtin/builtin.h"
+#include "x86_64_core/proxy/value/bool.h"
+#include "x86_64_core/proxy/value/byte.h"
+#include "x86_64_core/proxy/value/char.h"
+#include "x86_64_core/proxy/value/error.h"
+#include "x86_64_core/proxy/value/int.h"
+#include "x86_64_core/proxy/value/long.h"
+#include "x86_64_core/proxy/value/string.h"
+#include "x86_64_core/proxy/value/uint.h"
+#include "x86_64_core/proxy/value/ulong.h"
+#include "x86_64_core/proxy/value/void.h"
+#include "x86_64_core/value.h"
 
 Test(x86_64_print, test1_bool) {
   x86_64_value value1;

@@ -3,8 +3,8 @@
 #include <stdint.h>
 
 #include "util/log.h"
-#include "x86_64/proxy/value/ulong.h"
-#include "x86_64/value.h"
+#include "x86_64_core/proxy/value/ulong.h"
+#include "x86_64_core/value.h"
 
 Test(x86_64_ulong, test1) {
   x86_64_value value1;

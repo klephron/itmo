@@ -2,10 +2,10 @@
 #include <stdint.h>
 
 #include "util/log.h"
-#include "x86_64/builtin/builtin.h"
-#include "x86_64/proxy/value/int.h"
-#include "x86_64/util.h"
-#include "x86_64/value.h"
+#include "x86_64_core/builtin/builtin.h"
+#include "x86_64_core/proxy/value/int.h"
+#include "x86_64_core/util.h"
+#include "x86_64_core/value.h"
 
 Test(x86_64_make, test1_array) {
   x86_64_value value1;

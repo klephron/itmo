@@ -10,14 +10,14 @@ BUILD_DIR := $(BUILD_DIR)
 SRCS := $(call rwildcard,$(CURDIR),*.c)
 HDRS := $(call rwildcard,$(CURDIR), *.h)
 OBJS := $(patsubst $(CURDIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
-TGTS := $(patsubst %.o,%.out,$(OBJS))
+TGTS := $(patsubst %.o,%,$(OBJS))
 
 DIRS := $(sort $(dir $(OBJS)))
 $(sort $(DIRS)):
 	$(MKDIR) $(@:dir/%=%)
 
 # compile object files excluding generated
-$(BUILD_DIR)/%.out: $(CURDIR)/%.c $(LIBS) | $(DIRS)
+$(BUILD_DIR)/%: $(CURDIR)/%.c $(LIBS) | $(DIRS)
 	$(CC) $(FLAGS) $^ -o $@ $(INCS)
 
 build/%:

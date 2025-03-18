@@ -2,12 +2,12 @@
 #include <stdint.h>
 
 #include "util/log.h"
-#include "x86_64/builtin/builtin.h"
-#include "x86_64/proxy/value/int.h"
-#include "x86_64/proxy/value/object.h"
-#include "x86_64/proxy/value/void.h"
-#include "x86_64/util.h"
-#include "x86_64/value.h"
+#include "x86_64_core/builtin/builtin.h"
+#include "x86_64_core/proxy/value/int.h"
+#include "x86_64_core/proxy/value/object.h"
+#include "x86_64_core/proxy/value/void.h"
+#include "x86_64_core/util.h"
+#include "x86_64_core/value.h"
 
 Test(x86_64_object, test1) {
   x86_64_value value1;

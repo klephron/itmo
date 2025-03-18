@@ -1,8 +1,8 @@
 #include <criterion/criterion.h>
 #include <stdint.h>
 
-#include "x86_64/builtin/builtin.h"
-#include "x86_64/value.h"
+#include "x86_64_core/builtin/builtin.h"
+#include "x86_64_core/value.h"
 
 Test(x86_64_void, test1) {
   x86_64_value value;

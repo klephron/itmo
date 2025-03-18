@@ -1,13 +1,13 @@
-#include "x86_64/proxy/value/callable.h"
 #include <criterion/criterion.h>
 #include <stdarg.h>
 #include <stdint.h>
 
 #include "util/log.h"
-#include "x86_64/builtin/builtin.h"
-#include "x86_64/proxy/value/bool.h"
-#include "x86_64/proxy/value/int.h"
-#include "x86_64/value.h"
+#include "x86_64_core/proxy/value/callable.h"
+#include "x86_64_core/builtin/builtin.h"
+#include "x86_64_core/proxy/value/bool.h"
+#include "x86_64_core/proxy/value/int.h"
+#include "x86_64_core/value.h"
 
 static void test_func(x86_64_value *ret, ...) {
   va_list args;

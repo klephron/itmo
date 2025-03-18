@@ -2,8 +2,8 @@
 #include <stdint.h>
 
 #include "util/log.h"
-#include "x86_64/builtin/builtin.h"
-#include "x86_64/value.h"
+#include "x86_64_core/builtin/builtin.h"
+#include "x86_64_core/value.h"
 
 Test(x86_64_error, test1) {
   x86_64_value value1;

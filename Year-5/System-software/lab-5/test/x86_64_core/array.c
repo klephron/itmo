@@ -2,11 +2,11 @@
 #include <stdint.h>
 
 #include "util/log.h"
-#include "x86_64/builtin/builtin.h"
-#include "x86_64/proxy/value/array.h"
-#include "x86_64/proxy/value/uint.h"
-#include "x86_64/util.h"
-#include "x86_64/value.h"
+#include "x86_64_core/builtin/builtin.h"
+#include "x86_64_core/proxy/value/array.h"
+#include "x86_64_core/proxy/value/uint.h"
+#include "x86_64_core/util.h"
+#include "x86_64_core/value.h"
 
 Test(x86_64_array, test1) {
   x86_64_value value1;
