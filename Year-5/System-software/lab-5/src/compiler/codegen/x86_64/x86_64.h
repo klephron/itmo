@@ -23,7 +23,6 @@ LIST_DECLARE_STATIC_INLINE(list_cg_x86_64_unit, cg_x86_64_unit,
                            container_delete_cg_x86_64_unit);
 
 typedef enum cg_x86_64_symbol_kind_enum {
-  CG_X86_64_SYMBOL_UNKNOWN,
   CG_X86_64_SYMBOL_DATA,
   CG_X86_64_SYMBOL_TEXT,
   CG_X86_64_SYMBOL_EXTERN,
@@ -210,8 +209,8 @@ cg_x86_64_text *cg_x86_64_text_new(cg_x86_64_mnem     mnem,
                                    list_cg_x86_64_op *operands);
 
 typedef struct cg_x86_64_struct {
-  list_cg_x86_64_unit *text;
   list_cg_x86_64_unit *data;
+  list_cg_x86_64_unit *text;
   list_cg_x86_64_unit *debug_info;
   list_cg_x86_64_unit *debug_line;
   list_cg_x86_64_unit *debug_str;

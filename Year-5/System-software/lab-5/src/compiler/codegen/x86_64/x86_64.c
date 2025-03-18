@@ -282,8 +282,8 @@ static void cg_x86_64_text_free(cg_x86_64_text *self) {
 
 cg_x86_64 *cg_x86_64_new() {
   cg_x86_64 *self  = MALLOC(cg_x86_64);
-  self->text       = list_cg_x86_64_unit_new();
   self->data       = list_cg_x86_64_unit_new();
+  self->text       = list_cg_x86_64_unit_new();
   self->debug_info = list_cg_x86_64_unit_new();
   self->debug_line = list_cg_x86_64_unit_new();
   self->debug_str  = list_cg_x86_64_unit_new();
@@ -294,8 +294,8 @@ void cg_x86_64_free(cg_x86_64 *self) {
   if (!self) {
     return;
   }
-  list_cg_x86_64_unit_free(self->text);
   list_cg_x86_64_unit_free(self->data);
+  list_cg_x86_64_unit_free(self->text);
   list_cg_x86_64_unit_free(self->debug_info);
   list_cg_x86_64_unit_free(self->debug_line);
   list_cg_x86_64_unit_free(self->debug_str);

@@ -19,11 +19,11 @@ GEN_DIR        ?= $(BUILD_DIR)/_gen
 TARGET_DIR     ?= $(BUILD_DIR)
 TARGET_TST_DIR ?= $(BUILD_DIR)/test
 
-PDF.COMPILER_FLAGS ?= --ast --cfg --cfg-add-expr --cg --hir-tree --hir-symbols --hir-types --mir
+PDF.COMPILER_FLAGS ?= --ast --cfg --cfg-add-expr --cg --hir-tree --hir-symbols --hir-types
 
 ASM.AS_FLAGS       ?= --64 -g
 ASM.LD_FLAGS       ?= -g -z noexecstack
-ASM.COMPILER_FLAGS ?=
+ASM.COMPILER_FLAGS ?= --mir
 ASM.DL_PATH        ?= /usr/lib64/ld-linux-x86-64.so.2
 
 
