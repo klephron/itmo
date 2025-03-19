@@ -203,13 +203,13 @@ static void cg_inst_sub_def_locals_deinit(cg_ctx               *ctx,
   }
 }
 
-static void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub) {
+static int cg_inst_sub_ok(cg_ctx *ctx, const mir_subroutine *sub) {
   const char *sub_name = sub->symbol_ref->name;
 
   if (sub->kind != MIR_SUBROUTINE_DEFINED) {
     error("subroutine '%s' def got kind %d %p, expected %d", sub_name,
           sub->kind, sub, MIR_SUBROUTINE_DEFINED);
-    return;
+    return 0;
   }
 
   if (sub->spec & MIR_SUBROUTINE_SPEC_EXTERN) {
@@ -218,10 +218,19 @@ static void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub) {
         sub->symbol_ref->span,
         "subroutine '%s' can't be instantiated: is defined, but extern",
         sub_name);
+    return 0;
+  }
+
+  return 1;
+}
+
+static void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub) {
+  if (!cg_inst_sub_ok(ctx, sub)) {
     return;
   }
 
-  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(strdup(sub_name)));
+  cg_ctx_text_push_back(ctx,
+                        cg_x86_64_symbol_new_text(cg_sub_global_label(sub)));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
 
@@ -308,24 +317,12 @@ static void cg_inst_sub_main_epilogue(cg_ctx *ctx, const mir_subroutine *sub) {
 }
 
 static void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub) {
-  const char *sub_name = sub->symbol_ref->name;
-
-  if (sub->kind != MIR_SUBROUTINE_DEFINED) {
-    error("subroutine '%s' def got kind %d %p, expected %d", sub_name,
-          sub->kind, sub, MIR_SUBROUTINE_DEFINED);
+  if (!cg_inst_sub_ok(ctx, sub)) {
     return;
   }
 
-  if (sub->spec & MIR_SUBROUTINE_SPEC_EXTERN) {
-    cg_exception_add_error(
-        ctx->exceptions, EXCEPTION_CG_UNEXPECTED_EXTERN_DEFINITION,
-        sub->symbol_ref->span,
-        "subroutine '%s' can't be instantiated: is defined, but extern",
-        sub_name);
-    return;
-  }
-
-  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(strdup(sub_name)));
+  cg_ctx_text_push_back(ctx,
+                        cg_x86_64_symbol_new_text(cg_sub_global_label(sub)));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
 
@@ -373,7 +370,7 @@ static void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub) {
   hashset_cg_value_meta_free(ctx->map_value_meta);
 }
 
-cg_inst_sub_result cg_inst_sub(cg_x86_64 *code, const mir *mir) {
+cg_inst_sub_result cg_inst_subs(cg_x86_64 *code, const mir *mir) {
   cg_inst_sub_result result = {
       .exceptions = list_exception_new(),
   };

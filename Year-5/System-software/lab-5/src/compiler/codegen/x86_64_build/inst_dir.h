@@ -8,4 +8,4 @@ typedef struct cg_inst_dir_result_struct {
   list_exception *exceptions;
 } cg_inst_dir_result;
 
-cg_inst_dir_result cg_inst_dir(cg_x86_64 *code, const mir *mir);
+cg_inst_dir_result cg_inst_dirs(cg_x86_64 *code, const mir *mir);

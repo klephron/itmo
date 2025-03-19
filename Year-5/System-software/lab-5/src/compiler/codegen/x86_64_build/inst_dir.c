@@ -22,7 +22,7 @@ static inline void cg_ctx_text_push_back(cg_ctx *ctx, void *unit) {
   list_cg_x86_64_unit_push_back(ctx->code->text, (cg_x86_64_unit *)unit);
 }
 
-static void cg_add_directive_extern_core(cg_ctx *ctx, const mir *mir) {
+static void cg_add_dir_extern_core(cg_ctx *ctx, const mir *mir) {
   UNUSED(mir);
   // io
   cg_ctx_text_push_back(ctx,
@@ -99,7 +99,7 @@ static void cg_add_dir_global_defined(cg_ctx *ctx, const mir *mir) {
   }
 }
 
-cg_inst_dir_result cg_inst_dir(cg_x86_64 *code, const mir *mir) {
+cg_inst_dir_result cg_inst_dirs(cg_x86_64 *code, const mir *mir) {
   cg_inst_dir_result result = {
       .exceptions = list_exception_new(),
   };
@@ -107,7 +107,7 @@ cg_inst_dir_result cg_inst_dir(cg_x86_64 *code, const mir *mir) {
   cg_ctx ctx;
   cg_ctx_init(&ctx, code, result.exceptions);
 
-  cg_add_directive_extern_core(&ctx, mir);
+  cg_add_dir_extern_core(&ctx, mir);
   cg_add_dir_extern_declared(&ctx, mir);
   cg_add_dir_global_defined(&ctx, mir);
 

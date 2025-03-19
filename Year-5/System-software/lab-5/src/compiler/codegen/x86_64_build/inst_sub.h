@@ -9,7 +9,7 @@ typedef struct cg_inst_sub_result_struct {
   list_exception *exceptions;
 } cg_inst_sub_result;
 
-cg_inst_sub_result cg_inst_sub(cg_x86_64 *code, const mir *mir);
+cg_inst_sub_result cg_inst_subs(cg_x86_64 *code, const mir *mir);
 
 // ctx
 typedef struct cg_value_meta_struct {

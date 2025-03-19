@@ -14,12 +14,12 @@ cg_x86_64_build_result cg_x86_64_build(const mir *mir, int ignore_errors) {
   };
 
   if (cg_ok(result.exceptions, ignore_errors)) {
-    cg_inst_dir_result r = cg_inst_dir(result.code, mir);
+    cg_inst_dir_result r = cg_inst_dirs(result.code, mir);
     list_exception_extend(result.exceptions, r.exceptions);
   }
 
   if (cg_ok(result.exceptions, ignore_errors)) {
-    cg_inst_sub_result r = cg_inst_sub(result.code, mir);
+    cg_inst_sub_result r = cg_inst_subs(result.code, mir);
     list_exception_extend(result.exceptions, r.exceptions);
   }
 
