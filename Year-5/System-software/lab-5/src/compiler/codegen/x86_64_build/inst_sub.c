@@ -203,7 +203,7 @@ static void cg_inst_sub_def_locals_deinit(cg_ctx               *ctx,
   }
 }
 
-static int cg_inst_sub_ok(cg_ctx *ctx, const mir_subroutine *sub) {
+static int cg_inst_sub_def_ok(cg_ctx *ctx, const mir_subroutine *sub) {
   const char *sub_name = sub->symbol_ref->name;
 
   if (sub->kind != MIR_SUBROUTINE_DEFINED) {
@@ -225,7 +225,7 @@ static int cg_inst_sub_ok(cg_ctx *ctx, const mir_subroutine *sub) {
 }
 
 static void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub) {
-  if (!cg_inst_sub_ok(ctx, sub)) {
+  if (!cg_inst_sub_def_ok(ctx, sub)) {
     return;
   }
 
@@ -317,7 +317,7 @@ static void cg_inst_sub_main_epilogue(cg_ctx *ctx, const mir_subroutine *sub) {
 }
 
 static void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub) {
-  if (!cg_inst_sub_ok(ctx, sub)) {
+  if (!cg_inst_sub_def_ok(ctx, sub)) {
     return;
   }
 

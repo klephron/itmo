@@ -16,6 +16,6 @@ char *cg_sub_global_label_suf(const mir_subroutine *sub, const char *suffix) {
   return strbuf_detach(buffer);
 }
 
-size_t cg_aligned(size_t size, size_t align) {
+uint64_t cg_aligned(uint64_t size, uint64_t align) {
   return ((size - 1) / align + 1) * align;
 }
