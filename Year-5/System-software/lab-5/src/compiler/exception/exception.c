@@ -255,6 +255,8 @@ const char *exception_subtype_cg_str(exception_subtype_cg type) {
   switch (type) {
     case EXCEPTION_CG_UNEXPECTED_EMIT_FORMAT:
       return "unexpected emit format";
+    case EXCEPTION_CG_UNSUPPORTED_IMPORTED:
+      return "unsupported imported subroutine";
     case EXCEPTION_CG_UNKNOWN:
       break;
   }

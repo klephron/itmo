@@ -445,7 +445,7 @@ static int execute(args *args) {
 
   // stage: build x86_64 structs
   if (!args->code || args->ignore_errors) {
-    cg_x86_64_build_result result = cg_x86_64_build(mir);
+    cg_x86_64_build_result result = cg_x86_64_build(mir, args->ignore_errors);
     code                          = result.code;
 
     if (list_exception_count_by_level(result.exceptions,

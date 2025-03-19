@@ -1,0 +1,11 @@
+method main2(): void;
+
+method main(): void
+var
+  a, b, c;
+begin
+  a = 10;
+  b = "string";
+  c = cast!<int>(5);
+  c = c + cast!<int>(a);
+end;

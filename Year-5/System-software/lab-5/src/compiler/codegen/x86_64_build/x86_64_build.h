@@ -9,4 +9,4 @@ typedef struct cg_x86_64_build_result_struct {
   list_exception *exceptions;
 } cg_x86_64_build_result;
 
-cg_x86_64_build_result cg_x86_64_build(const mir *mir);
+cg_x86_64_build_result cg_x86_64_build(const mir *mir, int ignore_errors);
