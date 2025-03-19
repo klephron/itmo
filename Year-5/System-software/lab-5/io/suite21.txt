@@ -1,6 +1,13 @@
 method main2(): void;
 
-method main(a1, a2, a3, a4, a5, a6, a7, a8): void
+method fun1(a1, a2, a3, a4, a5, a6, a7): void
+var
+  b, c;
+begin
+  return 0;
+end;
+
+method main(): int
 var
   a, b, c;
 begin
@@ -8,4 +15,5 @@ begin
   b = "string";
   c = cast!<int>(5);
   c = c + cast!<int>(a);
+  return 0;
 end;

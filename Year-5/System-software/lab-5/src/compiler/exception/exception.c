@@ -259,6 +259,8 @@ const char *exception_subtype_cg_str(exception_subtype_cg type) {
       return "unsupported imported subroutine";
     case EXCEPTION_CG_UNEXPECTED_EXTERN_DEFINITION:
       return "unexpected extern definition";
+    case EXCEPTION_CG_UNEXPECTED_RETURN_TYPE:
+      return "unexpected return type";
     case EXCEPTION_CG_UNKNOWN:
       break;
   }

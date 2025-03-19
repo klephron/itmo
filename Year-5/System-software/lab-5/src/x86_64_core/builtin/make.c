@@ -17,34 +17,43 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-void (*__x86_64_make_void)(x86_64_value *out) = __x86_64_proxy_void_init;
+void __x86_64_make_void(x86_64_value *out) { __x86_64_proxy_void_init(out); }
 
-void (*__x86_64_make_bool)(x86_64_value *out,
-                           uint8_t       value) = __x86_64_proxy_bool_init;
+void __x86_64_make_bool(x86_64_value *out, uint8_t value) {
+  __x86_64_proxy_bool_init(out, value);
+}
 
-void (*__x86_64_make_byte)(x86_64_value *out,
-                           uint8_t       value) = __x86_64_proxy_byte_init;
+void __x86_64_make_byte(x86_64_value *out, uint8_t value) {
+  __x86_64_proxy_byte_init(out, value);
+}
 
-void (*__x86_64_make_int)(x86_64_value *out,
-                          int32_t       value) = __x86_64_proxy_int_init;
+void __x86_64_make_int(x86_64_value *out, int32_t value) {
+  __x86_64_proxy_int_init(out, value);
+}
 
-void (*__x86_64_make_uint)(x86_64_value *out,
-                           uint32_t      value) = __x86_64_proxy_uint_init;
+void __x86_64_make_uint(x86_64_value *out, uint32_t value) {
+  __x86_64_proxy_uint_init(out, value);
+}
 
-void (*__x86_64_make_long)(x86_64_value *out,
-                           int64_t       value) = __x86_64_proxy_long_init;
+void __x86_64_make_long(x86_64_value *out, int64_t value) {
+  __x86_64_proxy_long_init(out, value);
+}
 
-void (*__x86_64_make_ulong)(x86_64_value *out,
-                            uint64_t      value) = __x86_64_proxy_ulong_init;
+void __x86_64_make_ulong(x86_64_value *out, uint64_t value) {
+  __x86_64_proxy_ulong_init(out, value);
+}
 
-void (*__x86_64_make_char)(x86_64_value *out,
-                           uint8_t       value) = __x86_64_proxy_char_init;
+void __x86_64_make_char(x86_64_value *out, uint8_t value) {
+  __x86_64_proxy_char_init(out, value);
+}
 
-void (*__x86_64_make_string)(x86_64_value  *out,
-                             const uint8_t *value) = __x86_64_proxy_string_init;
+void __x86_64_make_string(x86_64_value *out, const uint8_t *value) {
+  __x86_64_proxy_string_init(out, value);
+}
 
-void (*__x86_64_make_callable)(x86_64_value *out, x86_64_func *func) =
-    __x86_64_proxy_callable_init;
+void __x86_64_make_callable(x86_64_value *out, x86_64_func *func) {
+  __x86_64_proxy_callable_init(out, func);
+}
 
 static void __x86_64_make_array_recursive(x86_64_value *out, uint64_t *stack) {
   uint64_t length = *stack;
@@ -109,9 +118,10 @@ cleanup:
   va_end(args);
 }
 
-void (*__x86_64_make_object)(x86_64_value                     *out,
-                             const x86_64_data_object_symbols *symbols) =
-    __x86_64_proxy_object_init;
+void __x86_64_make_object(x86_64_value                     *out,
+                          const x86_64_data_object_symbols *symbols) {
+  __x86_64_proxy_object_init(out, symbols);
+}
 
 void __x86_64_make_object_setup(x86_64_value                     *out,
                                 const x86_64_data_object_symbols *symbols,
@@ -124,5 +134,6 @@ void __x86_64_make_object_setup(x86_64_value                     *out,
   }
 }
 
-void (*__x86_64_make_error)(x86_64_value *out,
-                            x86_64_value *value) = __x86_64_proxy_error_init;
+void __x86_64_make_error(x86_64_value *out, x86_64_value *value) {
+  __x86_64_proxy_error_init(out, value);
+}

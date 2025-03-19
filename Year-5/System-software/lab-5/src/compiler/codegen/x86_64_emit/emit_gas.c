@@ -291,9 +291,29 @@ static void cg_emit_unit_data(cg_ctx *ctx, const cg_x86_64_data *data) {
   strbuf_append(ctx->buffer, "\n");
 }
 
-static void cg_emit_unit_text_op(cg_ctx *ctx, const cg_x86_64_op *op,
-                                 uint64_t size) {
+static void cg_emit_unit_text_op(cg_ctx *ctx, cg_x86_64_mnem mnem,
+                                 const cg_x86_64_op *op, uint64_t size) {
   char buf[64];
+
+  // add * for ca
+  switch (mnem) {
+    case CG_X86_64_MNEM_CALL:
+    case CG_X86_64_MNEM_JZ:
+    case CG_X86_64_MNEM_JNZ:
+    case CG_X86_64_MNEM_JMP:
+      switch (op->kind) {
+        case CG_X86_64_MODE_REGISTER:
+        case CG_X86_64_MODE_INDEXED:
+        case CG_X86_64_MODE_INDIRECT:
+        case CG_X86_64_MODE_BASE:
+          strbuf_append(ctx->buffer, "*");
+          break;
+        default:
+          break;
+      }
+    default:
+      break;
+  }
 
   switch (op->kind) {
     case CG_X86_64_MODE_REGISTER:
@@ -395,11 +415,11 @@ static void cg_emit_unit_text(cg_ctx *ctx, const cg_x86_64_text *text) {
   list_cg_x86_64_op_it it = list_cg_x86_64_op_begin(text->operands);
   if (!END(it)) {
     strbuf_append(ctx->buffer, " ");
-    cg_emit_unit_text_op(ctx, GET(it), op_size);
+    cg_emit_unit_text_op(ctx, text->mnem, GET(it), op_size);
   }
   for (NEXT(it); !END(it); NEXT(it)) {
     strbuf_append(ctx->buffer, ", ");
-    cg_emit_unit_text_op(ctx, GET(it), op_size);
+    cg_emit_unit_text_op(ctx, text->mnem, GET(it), op_size);
   }
 
   strbuf_append(ctx->buffer, "\n");

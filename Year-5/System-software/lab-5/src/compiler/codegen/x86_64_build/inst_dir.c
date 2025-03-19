@@ -59,6 +59,25 @@ static void cg_add_directive_extern_core(cg_ctx *ctx, const mir *mir) {
   // print
   cg_ctx_text_push_back(ctx,
                         cg_x86_64_symbol_new_extern(strdup("__x86_64_print")));
+  // unwrap
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_void")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_bool")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_byte")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_int")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_uint")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_long")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_ulong")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_char")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_extern(strdup("__x86_64_unwrap_string")));
 }
 
 static void cg_add_dir_extern_declared(cg_ctx *ctx, const mir *mir) {
