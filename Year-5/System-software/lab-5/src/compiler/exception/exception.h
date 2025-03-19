@@ -69,6 +69,7 @@ typedef enum enception_subtype_cg_enum {
   EXCEPTION_CG_UNKNOWN,
   EXCEPTION_CG_UNEXPECTED_EMIT_FORMAT,
   EXCEPTION_CG_UNSUPPORTED_IMPORTED,
+  EXCEPTION_CG_UNEXPECTED_EXTERN_DEFINITION,
 } exception_subtype_cg;
 
 typedef struct exception_struct {

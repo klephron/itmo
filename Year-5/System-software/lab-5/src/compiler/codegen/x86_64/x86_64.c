@@ -196,6 +196,7 @@ cg_x86_64_op *cg_x86_64_op_new_base(uint64_t      imm_offset,
 
 cg_x86_64_op *cg_x86_64_op_new_immediate(uint64_t imm_const) {
   cg_x86_64_op *self  = MALLOC(cg_x86_64_op);
+  self->kind          = CG_X86_64_MODE_IMMEDIATE;
   self->imm.imm_const = imm_const;
   return self;
 }
@@ -224,43 +225,43 @@ void cg_x86_64_op_free(cg_x86_64_op *self) {
   }
 }
 
-uint64_t cg_x86_64_mnem_size(cg_x86_64_mnem mnem) {
+cg_x86_64_size cg_x86_64_mnem_size(cg_x86_64_mnem mnem) {
   switch (mnem) {
     case CG_X86_64_MNEM_PUSHQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_POPQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_MOVB:
-      return 8;
+      return CG_X86_64_SIZE_BYTE;
     case CG_X86_64_MNEM_MOVL:
-      return 32;
+      return CG_X86_64_SIZE_LONG;
     case CG_X86_64_MNEM_MOVQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_RETQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_SYSCALL:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_XORQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_SUBQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_ADDQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_LEAQ:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_CALL:
-      return 64;
+      return CG_X86_64_SIZE_QUAD;
     case CG_X86_64_MNEM_TESTB:
-      return 8;
+      return CG_X86_64_SIZE_BYTE;
     case CG_X86_64_MNEM_JZ:
-      return 0;
+      return CG_X86_64_SIZE_UNKNOWN;
     case CG_X86_64_MNEM_JNZ:
-      return 0;
+      return CG_X86_64_SIZE_UNKNOWN;
     case CG_X86_64_MNEM_JMP:
-      return 0;
+      return CG_X86_64_SIZE_UNKNOWN;
   }
   error("unexpected mnem %d", mnem);
-  return UINT64_MAX;
+  return CG_X86_64_SIZE_UNKNOWN;
 }
 
 cg_x86_64_text *cg_x86_64_text_new(cg_x86_64_mnem     mnem,

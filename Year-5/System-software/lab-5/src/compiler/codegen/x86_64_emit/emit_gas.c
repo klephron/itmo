@@ -22,7 +22,7 @@ static void cg_ctx_deinit(cg_ctx *ctx) {
 
 static void cg_emit_reg(cg_ctx *ctx, cg_x86_64_reg reg, uint64_t size) {
   switch (size) {
-    case 8:
+    case 1:
       switch (reg) {
         case CG_X86_64_REG_RAX:
           strbuf_append(ctx->buffer, "%al");
@@ -77,7 +77,7 @@ static void cg_emit_reg(cg_ctx *ctx, cg_x86_64_reg reg, uint64_t size) {
           break;
       }
       break;
-    case 16:
+    case 2:
       switch (reg) {
         case CG_X86_64_REG_RAX:
           strbuf_append(ctx->buffer, "%ax");
@@ -132,7 +132,7 @@ static void cg_emit_reg(cg_ctx *ctx, cg_x86_64_reg reg, uint64_t size) {
           break;
       }
       break;
-    case 32:
+    case 4:
       switch (reg) {
         case CG_X86_64_REG_RAX:
           strbuf_append(ctx->buffer, "%eax");
@@ -187,7 +187,7 @@ static void cg_emit_reg(cg_ctx *ctx, cg_x86_64_reg reg, uint64_t size) {
           break;
       }
       break;
-    case 64:
+    case 8:
       switch (reg) {
         case CG_X86_64_REG_RAX:
           strbuf_append(ctx->buffer, "%rax");
@@ -395,6 +395,7 @@ static void cg_emit_unit_text(cg_ctx *ctx, const cg_x86_64_text *text) {
   list_cg_x86_64_op_it it = list_cg_x86_64_op_begin(text->operands);
   if (!END(it)) {
     strbuf_append(ctx->buffer, " ");
+    cg_emit_unit_text_op(ctx, GET(it), op_size);
   }
   for (NEXT(it); !END(it); NEXT(it)) {
     strbuf_append(ctx->buffer, ", ");

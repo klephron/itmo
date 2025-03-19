@@ -196,7 +196,15 @@ typedef enum cg_x86_64_mnem_enum {
   CG_X86_64_MNEM_JMP,
 } cg_x86_64_mnem;
 
-uint64_t cg_x86_64_mnem_size(cg_x86_64_mnem mnem);
+typedef enum cg_x86_64_size_enum {
+  CG_X86_64_SIZE_UNKNOWN = 0,
+  CG_X86_64_SIZE_BYTE    = 1,
+  CG_X86_64_SIZE_WORD    = 2,
+  CG_X86_64_SIZE_LONG    = 4,
+  CG_X86_64_SIZE_QUAD    = 8,
+} cg_x86_64_size;
+
+cg_x86_64_size cg_x86_64_mnem_size(cg_x86_64_mnem mnem);
 
 // at&t instruction order
 typedef struct cg_x86_64_text_struct {

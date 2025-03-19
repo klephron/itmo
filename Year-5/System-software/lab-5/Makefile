@@ -31,16 +31,18 @@ SRC_DIR := $(CURDIR)/src
 
 util.SRC_DIR   := $(SRC_DIR)/util
 util.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(util.SRC_DIR))
+util.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
 
 x86_64_core.SRC_DIR   := $(SRC_DIR)/x86_64_core
 x86_64_core.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(x86_64_core.SRC_DIR))
-x86_64_core.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
 x86_64_core.LIBS      := $(util.BUILD_DIR)/libutil.a
+x86_64_core.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
 
 compiler.SRC_DIR   := $(SRC_DIR)/compiler
 compiler.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(compiler.SRC_DIR))
 compiler.GEN_DIR   := $(patsubst $(SRC_DIR)/%,$(GEN_DIR)/%, $(compiler.SRC_DIR))
 compiler.LIBS      := $(util.BUILD_DIR)/libutil.a $(x86_64_core.BUILD_DIR)/libx86_64_core.a
+compiler.FLAGS     := $(FLAGS)
 
 x86_64_std.SRC_DIR   := $(SRC_DIR)/x86_64_std
 x86_64_std.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(x86_64_std.SRC_DIR))
@@ -49,6 +51,7 @@ x86_64_std.FLAGS     := -g3 -O0 -m64 -Wall -Wextra
 debugger.SRC_DIR   := $(SRC_DIR)/debugger
 debugger.BUILD_DIR := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(debugger.SRC_DIR))
 debugger.LIBS      := $(x86_64_core.BUILD_DIR)/libx86_64_core.a $(util.BUILD_DIR)/libutil.a
+debugger.FLAGS     := $(FLAGS)
 
 test.SRC_DIR   := $(CURDIR)/test
 test.BUILD_DIR := $(patsubst $(CURDIR)/%,$(BUILD_DIR)/%,$(test.SRC_DIR))
@@ -67,7 +70,7 @@ define compiler.ENV
 	MKDIR="$(MKDIR)" \
 	CP="$(CP)" \
 	CC="$(CC)" \
-	FLAGS="$(FLAGS)" \
+	FLAGS="$(compiler.FLAGS)" \
 	LIBS="$(compiler.LIBS)" \
 	INCS="$(patsubst %,-I%,$(sort $(SRC_DIR) $(GEN_DIR))) -lantlr3c" \
 	ANTLR="$(ANTLR)" \
@@ -78,7 +81,7 @@ endef
 define util.ENV
 	MKDIR="$(MKDIR)" \
 	CC="$(CC)" \
-	FLAGS="$(FLAGS)" \
+	FLAGS="$(util.FLAGS)" \
 	INCS="-I$(SRC_DIR)" \
 	BUILD_DIR="$(util.BUILD_DIR)" \
 	AR="$(AR)"
@@ -104,7 +107,7 @@ endef
 define debugger.ENV
 	MKDIR="$(MKDIR)" \
 	CC="$(CC)" \
-	FLAGS="$(FLAGS)" \
+	FLAGS="$(debugger.FLAGS)" \
 	LIBS="$(debugger.LIBS)" \
 	INCS="-I$(SRC_DIR) -lbfd -lopcodes" \
 	BUILD_DIR="$(debugger.BUILD_DIR)"
@@ -189,8 +192,9 @@ run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a x86_64_std/bui
 		/usr/lib/x86_64-linux-gnu/crti.o \
 		-lc \
 		$(ASM.OBJECT_FILE) \
-		$(BUILD_DIR)/x86_64_core/libx86_64_core.a \
-		$(BUILD_DIR)/x86_64_std/libx86_64_std.a \
+		$(x86_64_core.BUILD_DIR)/libx86_64_core.a \
+		$(x86_64_std.BUILD_DIR)/libx86_64_std.a \
+		$(util.BUILD_DIR)/libutil.a \
 		/usr/lib/x86_64-linux-gnu/crtn.o
 
 ### Run debugger
