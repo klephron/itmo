@@ -44,6 +44,7 @@ typedef struct cg_ctx_struct {
   cg_x86_64      *code;
   list_exception *exceptions;
 
+  const mir_subroutine  *sub;
   hashset_cg_value_meta *map_value_meta;
   uint64_t               frame_size;
 } cg_ctx;
@@ -72,3 +73,6 @@ char *cg_sub_global_label_suf(const mir_subroutine *sub, const char *suffix);
 
 // utility
 uint64_t cg_aligned(uint64_t size, uint64_t align);
+
+// bb
+void cg_inst_sub_bbs(cg_ctx *ctx, const list_mir_bb *bbs);
