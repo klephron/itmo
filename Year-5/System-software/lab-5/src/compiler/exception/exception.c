@@ -158,7 +158,6 @@ char *exception_str(const exception *exc, int is_color) {
       break;
     case EXCEPTION_UNKNOWN:
     default:
-      warn("unknown exception type %d", exc->type);
       snprintf(buf, STRMAXLEN(buf), "(U%d): %s -> %s", exc->subtype, exc_name,
                exc_message);
       break;

@@ -46,6 +46,8 @@ typedef struct args_struct {
   int help;
 } args;
 
+static void print_exception(args *args, exception *exc);
+
 static args *args_new() {
   args *args = MALLOC(struct args_struct);
 
@@ -190,7 +192,18 @@ static void parse(args *args, int argc, char *argv[]) {
 
   for (; argc > 0; --argc, ++argv) {
     char *file = argv[0];
-    list_chars_push_back(args->input_files, realpath(file, NULL));
+    char *path = realpath(file, NULL);
+
+    if (!path) {
+      exception *exc = exception_new_f(
+          EXCEPTION_LEVEL_ERROR, EXCEPTION_UNKNOWN, 0, file, 0, 0, "not found",
+          "file '%s' path can't be resolved", file);
+      print_exception(args, exc);
+      exception_free(exc);
+      continue;
+    }
+
+    list_chars_push_back(args->input_files, path);
   }
 
   if (list_chars_size(args->cg_subroutines) == 0) {
@@ -257,6 +270,16 @@ static int has_subroutine(args *args, const char *subroutine) {
   return !END(it);
 }
 
+static void print_exception(args *args, exception *exc) {
+  UNUSED(args);
+  if (!exc) {
+    return;
+  }
+  char *msg = exception_str(exc, isatty(STDERR_FILENO));
+  fprintf(stderr, "%s\n", msg);
+  free(msg);
+}
+
 static void print_exceptions(args *args, list_exception *exceptions) {
   UNUSED(args);
   if (!exceptions) {
@@ -265,9 +288,7 @@ static void print_exceptions(args *args, list_exception *exceptions) {
   for (list_exception_it it = list_exception_begin(exceptions); !END(it);
        NEXT(it)) {
     exception *exc = GET(it);
-    char      *msg = exception_str(exc, isatty(STDERR_FILENO));
-    fprintf(stderr, "%s\n", msg);
-    free(msg);
+    print_exception(args, exc);
   }
 }
 
