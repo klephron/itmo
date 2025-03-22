@@ -93,7 +93,7 @@ static void cg_inst_sub_def_locals_place(cg_ctx *ctx) {
 }
 
 static void cg_inst_sub_def_epilogue(cg_ctx *ctx) {
-  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(cg_sub_global_label_suf(
+  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(cg_label_sub_global_suf(
                                  ctx->sub, "epilogue")));
 
   cg_ctx_text_emplace_back_text(
@@ -109,7 +109,7 @@ static void cg_inst_sub_def_epilogue(cg_ctx *ctx) {
 
 static void cg_inst_sub_def_locals_init(cg_ctx *ctx) {
   cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(
-                                 cg_sub_global_label_suf(ctx->sub, "init")));
+                                 cg_label_sub_global_suf(ctx->sub, "init")));
 
   for (list_mir_value_it it = list_mir_value_begin(ctx->sub->defined.vars);
        !END(it); NEXT(it)) {
@@ -144,7 +144,7 @@ static void cg_inst_sub_def_locals_init(cg_ctx *ctx) {
 
 static void cg_inst_sub_def_locals_deinit(cg_ctx *ctx) {
   cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(
-                                 cg_sub_global_label_suf(ctx->sub, "deinit")));
+                                 cg_label_sub_global_suf(ctx->sub, "deinit")));
 
   for (list_mir_value_it it = list_mir_value_begin(ctx->sub->defined.vars);
        !END(it); NEXT(it)) {
@@ -230,7 +230,7 @@ static void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub) {
   ctx->sub = sub;
 
   cg_ctx_text_push_back(ctx,
-                        cg_x86_64_symbol_new_text(cg_sub_global_label(sub)));
+                        cg_x86_64_symbol_new_text(cg_label_sub_global(sub)));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
 
@@ -243,7 +243,7 @@ static void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub) {
   cg_inst_sub_def_locals_place(ctx);
 
   // alloc memory for locals
-  ctx->frame_size = cg_aligned(ctx->frame_size, 16);
+  ctx->frame_size = cg_aligned(ctx->frame_size);
 
   if (frame_size_old != ctx->frame_size) {
     cg_ctx_text_emplace_back_text(
@@ -274,7 +274,7 @@ static void cg_inst_sub_main_prologue(cg_ctx *ctx) {
 }
 
 static void cg_inst_sub_main_epilogue(cg_ctx *ctx) {
-  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(cg_sub_global_label_suf(
+  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(cg_label_sub_global_suf(
                                  ctx->sub, "epilogue")));
 
   cg_ctx_text_emplace_back_text(
@@ -325,7 +325,7 @@ static void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub) {
   ctx->sub = sub;
 
   cg_ctx_text_push_back(ctx,
-                        cg_x86_64_symbol_new_text(cg_sub_global_label(sub)));
+                        cg_x86_64_symbol_new_text(cg_label_sub_global(sub)));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
 
@@ -343,7 +343,7 @@ static void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub) {
   cg_inst_sub_def_locals_place(ctx);
 
   // alloc memory for locals
-  ctx->frame_size = cg_aligned(ctx->frame_size, 16);
+  ctx->frame_size = cg_aligned(ctx->frame_size);
 
   if (frame_size_old != ctx->frame_size) {
     cg_ctx_text_emplace_back_text(

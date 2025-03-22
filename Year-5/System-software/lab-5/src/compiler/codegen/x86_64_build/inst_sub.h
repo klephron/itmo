@@ -47,6 +47,8 @@ typedef struct cg_ctx_struct {
   const mir_subroutine  *sub;
   hashset_cg_value_meta *map_value_meta;
   uint64_t               frame_size;
+
+  const mir_bb *bb;
 } cg_ctx;
 
 void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions);
@@ -68,11 +70,12 @@ uint64_t cg_ctx_text_emplace_back_text(cg_ctx *ctx, cg_x86_64_mnem mnem, ...);
 int64_t cg_ctx_rbp_offset(cg_ctx *ctx);
 
 // labels
-char *cg_sub_global_label(const mir_subroutine *sub);
-char *cg_sub_global_label_suf(const mir_subroutine *sub, const char *suffix);
+char *cg_label_sub_global(const mir_subroutine *sub);
+char *cg_label_sub_global_suf(const mir_subroutine *sub, const char *suffix);
+char *cg_label_sub_global_bb(const mir_subroutine *sub, const mir_bb *bb);
 
 // utility
-uint64_t cg_aligned(uint64_t size, uint64_t align);
+uint64_t cg_aligned(uint64_t size);
 
 // bb
 void cg_inst_sub_bbs(cg_ctx *ctx, const list_mir_bb *bbs);

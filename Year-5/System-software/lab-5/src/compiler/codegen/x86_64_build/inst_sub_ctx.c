@@ -24,6 +24,8 @@ void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions) {
   ctx->sub            = NULL;
   ctx->map_value_meta = NULL;
   ctx->frame_size     = 0;
+
+  ctx->bb = NULL;
 }
 
 void cg_ctx_deinit(cg_ctx *ctx) {
@@ -33,6 +35,8 @@ void cg_ctx_deinit(cg_ctx *ctx) {
   ctx->sub            = NULL;
   ctx->map_value_meta = NULL;
   ctx->frame_size     = 0;
+
+  ctx->bb = NULL;
 }
 
 cg_value_meta *cg_ctx_value_meta_find(cg_ctx *ctx, const mir_value *value) {

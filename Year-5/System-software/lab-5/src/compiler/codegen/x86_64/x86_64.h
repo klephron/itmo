@@ -202,6 +202,7 @@ typedef enum cg_x86_64_size_enum {
   CG_X86_64_SIZE_WORD    = 2,
   CG_X86_64_SIZE_LONG    = 4,
   CG_X86_64_SIZE_QUAD    = 8,
+  CG_X86_64_SIZE_ALIGN   = 16,
 } cg_x86_64_size;
 
 cg_x86_64_size cg_x86_64_mnem_size(cg_x86_64_mnem mnem);
