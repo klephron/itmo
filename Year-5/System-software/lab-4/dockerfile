@@ -2,7 +2,7 @@ FROM zubrailx/base-antlr3c:latest
 
 # Locales
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install --no-install-recommends \
-  locales \
+  locales git \
   && rm -rf /var/lib/apt/lists/*
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
