@@ -90,6 +90,7 @@ typedef enum cg_x86_64_reg_enum {
   CG_X86_64_REG_R13,
   CG_X86_64_REG_R14,
   CG_X86_64_REG_R15,
+  CG_X86_64_REG_RIP,
 } cg_x86_64_reg;
 
 // ----------------------------------------------------------------------------
@@ -129,7 +130,8 @@ typedef enum x86_64_mode_kind_enum {
   CG_X86_64_MODE_DIRECT,    // symbol
   CG_X86_64_MODE_INDEXED,   // symbol + index + multi
   CG_X86_64_MODE_INDIRECT,  //          base
-  CG_X86_64_MODE_BASE,      // offset + base
+  CG_X86_64_MODE_BASE_IMM,  // offset + base
+  CG_X86_64_MODE_BASE_SYM,  // symbol + base
   CG_X86_64_MODE_IMMEDIATE, // imm
 } cg_x86_64_mode_kind;
 
@@ -153,7 +155,11 @@ typedef struct cg_x86_64_op_struct {
     struct {
       uint64_t      imm_offset;
       cg_x86_64_reg reg_base;
-    } base;
+    } base_imm;
+    struct {
+      char         *sym_addr;
+      cg_x86_64_reg reg_base;
+    } base_sym;
     struct {
       uint64_t imm_const;
     } imm;
@@ -165,8 +171,9 @@ cg_x86_64_op *cg_x86_64_op_new_direct(char *sym_addr);
 cg_x86_64_op *cg_x86_64_op_new_indexed(char *sym_addr, cg_x86_64_reg reg_index,
                                        uint64_t imm_multi);
 cg_x86_64_op *cg_x86_64_op_new_indirect(cg_x86_64_reg reg_base);
-cg_x86_64_op *cg_x86_64_op_new_base(uint64_t      imm_offset,
-                                    cg_x86_64_reg reg_base);
+cg_x86_64_op *cg_x86_64_op_new_base_imm(uint64_t      imm_offset,
+                                        cg_x86_64_reg reg_base);
+cg_x86_64_op *cg_x86_64_op_new_base_sym(char *sym_addr, cg_x86_64_reg reg_base);
 cg_x86_64_op *cg_x86_64_op_new_immediate(uint64_t imm_const);
 
 void cg_x86_64_op_free(cg_x86_64_op *self);

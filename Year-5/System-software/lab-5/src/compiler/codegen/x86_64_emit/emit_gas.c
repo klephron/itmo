@@ -237,6 +237,9 @@ static void cg_emit_reg(cg_ctx *ctx, cg_x86_64_reg reg, uint64_t size) {
         case CG_X86_64_REG_R15:
           strbuf_append(ctx->buffer, "%r15");
           break;
+        case CG_X86_64_REG_RIP:
+          strbuf_append(ctx->buffer, "%rip");
+          break;
         default:
           error("unhandled reg size %lu with reg %d", size, reg);
           break;
@@ -305,7 +308,8 @@ static void cg_emit_unit_text_op(cg_ctx *ctx, cg_x86_64_mnem mnem,
         case CG_X86_64_MODE_REGISTER:
         case CG_X86_64_MODE_INDEXED:
         case CG_X86_64_MODE_INDIRECT:
-        case CG_X86_64_MODE_BASE:
+        case CG_X86_64_MODE_BASE_IMM:
+        case CG_X86_64_MODE_BASE_SYM:
           strbuf_append(ctx->buffer, "*");
           break;
         default:
@@ -333,14 +337,20 @@ static void cg_emit_unit_text_op(cg_ctx *ctx, cg_x86_64_mnem mnem,
       cg_emit_reg(ctx, op->indirect.reg_base, size);
       strbuf_append(ctx->buffer, ")");
       break;
-    case CG_X86_64_MODE_BASE:
-      if ((int64_t)op->base.imm_offset < 0) {
-        strbuf_append_f(ctx->buffer, buf, "-%#lx", -op->base.imm_offset);
+    case CG_X86_64_MODE_BASE_IMM:
+      if ((int64_t)op->base_imm.imm_offset < 0) {
+        strbuf_append_f(ctx->buffer, buf, "-%#lx", -op->base_imm.imm_offset);
       } else {
-        strbuf_append_f(ctx->buffer, buf, "%#lx", op->base.imm_offset);
+        strbuf_append_f(ctx->buffer, buf, "%#lx", op->base_imm.imm_offset);
       }
       strbuf_append(ctx->buffer, "(");
-      cg_emit_reg(ctx, op->base.reg_base, size);
+      cg_emit_reg(ctx, op->base_imm.reg_base, size);
+      strbuf_append(ctx->buffer, ")");
+      break;
+    case CG_X86_64_MODE_BASE_SYM:
+      strbuf_append(ctx->buffer, op->base_sym.sym_addr);
+      strbuf_append(ctx->buffer, "(");
+      cg_emit_reg(ctx, op->base_sym.reg_base, size);
       strbuf_append(ctx->buffer, ")");
       break;
     case CG_X86_64_MODE_IMMEDIATE:

@@ -10,7 +10,7 @@
 #define _impl_PASTE(a, b) a##b
 #define _impl_CASSERT_LINE(predicate, line, file)                              \
   typedef char _impl_PASTE(assertion_failed_##file##_,                         \
-                           line)[2 * !!(predicate)-1];
+                           line)[2 * !!(predicate) - 1];
 
 #define GET(x) (x.get(&x))
 #define NEXT(x) (x.next(&x))

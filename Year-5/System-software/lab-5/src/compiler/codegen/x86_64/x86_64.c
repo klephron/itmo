@@ -185,12 +185,21 @@ cg_x86_64_op *cg_x86_64_op_new_indirect(cg_x86_64_reg reg_base) {
   return self;
 }
 
-cg_x86_64_op *cg_x86_64_op_new_base(uint64_t      imm_offset,
-                                    cg_x86_64_reg reg_base) {
-  cg_x86_64_op *self    = MALLOC(cg_x86_64_op);
-  self->kind            = CG_X86_64_MODE_BASE;
-  self->base.imm_offset = imm_offset;
-  self->base.reg_base   = reg_base;
+cg_x86_64_op *cg_x86_64_op_new_base_imm(uint64_t      imm_offset,
+                                        cg_x86_64_reg reg_base) {
+  cg_x86_64_op *self        = MALLOC(cg_x86_64_op);
+  self->kind                = CG_X86_64_MODE_BASE_IMM;
+  self->base_imm.imm_offset = imm_offset;
+  self->base_imm.reg_base   = reg_base;
+  return self;
+}
+
+cg_x86_64_op *cg_x86_64_op_new_base_sym(char         *sym_addr,
+                                        cg_x86_64_reg reg_base) {
+  cg_x86_64_op *self      = MALLOC(cg_x86_64_op);
+  self->kind              = CG_X86_64_MODE_BASE_SYM;
+  self->base_sym.sym_addr = sym_addr;
+  self->base_sym.reg_base = reg_base;
   return self;
 }
 
@@ -214,11 +223,13 @@ void cg_x86_64_op_free(cg_x86_64_op *self) {
         break;
       case CG_X86_64_MODE_INDIRECT:
         break;
-      case CG_X86_64_MODE_BASE:
+      case CG_X86_64_MODE_BASE_IMM:
+        break;
+      case CG_X86_64_MODE_BASE_SYM:
+        free(self->base_sym.sym_addr);
         break;
       case CG_X86_64_MODE_IMMEDIATE:
         break;
-      default:
         error("unexpected op kind %d %p", self->kind, self);
     }
     free(self);

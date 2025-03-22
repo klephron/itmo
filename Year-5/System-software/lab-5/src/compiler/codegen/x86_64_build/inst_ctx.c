@@ -1,6 +1,21 @@
-#include "inst_sub.h"
+#include "inst.h"
 
 #include "util/macro.h"
+#include <stdio.h>
+#include <string.h>
+
+cg_mir_sym *cg_mir_sym_new(const void *mir_ref, const char *sym_ref) {
+  cg_mir_sym *self = MALLOC(cg_mir_sym);
+  self->mir_ref    = mir_ref;
+  self->sym_ref    = sym_ref;
+  return self;
+}
+
+void cg_mir_sym_free(cg_mir_sym *self) {
+  if (self) {
+    free(self);
+  }
+}
 
 cg_value_meta *cg_value_meta_new(const mir_value *value_ref, int64_t offset,
                                  int is_ptr) {
@@ -18,25 +33,68 @@ void cg_value_meta_free(cg_value_meta *self) {
 }
 
 void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions) {
-  ctx->code       = code;
-  ctx->exceptions = exceptions;
+  ctx->map_mir_sym = hashset_cg_mir_sym_new();
+  ctx->lit_cnt     = 0;
 
   ctx->sub            = NULL;
+  ctx->sub_sym        = NULL;
   ctx->map_value_meta = NULL;
   ctx->frame_size     = 0;
 
   ctx->bb = NULL;
+
+  ctx->code       = code;
+  ctx->exceptions = exceptions;
 }
 
 void cg_ctx_deinit(cg_ctx *ctx) {
-  ctx->code       = NULL;
-  ctx->exceptions = NULL;
+  hashset_cg_mir_sym_free(ctx->map_mir_sym);
+  ctx->lit_cnt = 0;
 
   ctx->sub            = NULL;
+  ctx->sub_sym        = NULL;
   ctx->map_value_meta = NULL;
   ctx->frame_size     = 0;
 
   ctx->bb = NULL;
+
+  ctx->code       = NULL;
+  ctx->exceptions = NULL;
+}
+
+static inline const char *cg_ctx_mir_sym_find(cg_ctx     *ctx,
+                                              const void *mir_ref) {
+  hashset_cg_mir_sym_it it = hashset_cg_mir_sym_find(
+      ctx->map_mir_sym, &(cg_mir_sym){.mir_ref = mir_ref});
+  if (END(it)) {
+    return NULL;
+  }
+  return GET(it)->sym_ref;
+}
+
+const char *cg_ctx_mir_sym_find_lit(cg_ctx *ctx, const mir_lit *lit_ref) {
+  return cg_ctx_mir_sym_find(ctx, lit_ref);
+}
+
+char *cg_ctx_mir_sym_emplace_lit(cg_ctx *ctx, const mir_lit *lit_ref) {
+  char buf[64];
+  snprintf(buf, STRMAXLEN(buf), "_lit_%lu", ctx->lit_cnt++);
+
+  char *sym = strdup(buf);
+
+  hashset_cg_mir_sym_insert(ctx->map_mir_sym, cg_mir_sym_new(lit_ref, sym));
+
+  return sym;
+}
+
+const char *cg_ctx_mir_sym_find_sub(cg_ctx               *ctx,
+                                    const mir_subroutine *sub_ref) {
+  return cg_ctx_mir_sym_find(ctx, sub_ref);
+}
+
+void cg_ctx_mir_sym_emplace_sub(cg_ctx *ctx, const mir_subroutine *sub_ref,
+                                const char *sym_ref) {
+  hashset_cg_mir_sym_insert(ctx->map_mir_sym, cg_mir_sym_new(sub_ref, sym_ref));
 }
 
 cg_value_meta *cg_ctx_value_meta_find(cg_ctx *ctx, const mir_value *value) {

@@ -11,6 +11,14 @@ static void mir_debug_init(mir_debug *debug, const char *source_ref,
 
 static void mir_debug_deinit(mir_debug *debug) { debug->source_ref = NULL; }
 
+span *mir_debug_to_span(const mir_debug *debug) {
+  if (!debug || !debug->source_ref) {
+    return NULL;
+  }
+  return span_new(debug->source_ref, debug->line, debug->line, debug->pos,
+                  debug->pos);
+}
+
 mir_value *mir_value_new(size_t id, const symbol_entry *symbol_ref,
                          const type_entry *type_ref) {
   mir_value *self  = MALLOC(mir_value);

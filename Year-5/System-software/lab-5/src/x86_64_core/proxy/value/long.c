@@ -1,5 +1,6 @@
 #include "long.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 #include "x86_64_core/proxy/registry.h"
 #include "x86_64_core/proxy/util.h"

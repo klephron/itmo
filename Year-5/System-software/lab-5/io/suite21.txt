@@ -1,19 +1,27 @@
-method main2(): void;
-
-method fun1(a1, a2, a3, a4, a5, a6, a7): void
+method fun1(a1, a2):
 var
-  b, c;
+  a;
 begin
-  return 0;
+  print!("Recursion!", a1, a2);
+  a = fun1;
+  return a;
+end;
+
+method fun2(a1, a2, a3, a4, a5, a6, a7):
+var
+  a;
+begin
+  print!("fun2!", a1, a2, a3, a4, a5, a6, a7);
+  return a;
 end;
 
 method main(): int
 var
   a, b, c;
 begin
-  a = 10;
-  b = "string";
+  fun1("fun1 call", "arg2")("rec_2_1", "rec_2_2");
+  a = fun1;
   print!(a);
-  print!(b);
-  return 0;
+  fun2("fun1 call", "arg2", 3, 4, 5, 6, 7);
+  return cast!<int>(0);
 end;

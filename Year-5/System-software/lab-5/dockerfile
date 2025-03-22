@@ -28,5 +28,12 @@ ENTRYPOINT ["bash", "-c", "service ssh restart && /usr/bin/bash" ]
 
 ## Tools
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install --no-install-recommends \
-  bear gdb graphviz libcriterion-dev clang-format valgrind binutils-dev \
+  bear gdb graphviz libcriterion-dev valgrind binutils-dev \
   && rm -rf /var/lib/apt/lists/*
+# experimental clang-format
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key -o /etc/apt/keyrings/llvm.asc && \
+    echo "deb [signed-by=/etc/apt/keyrings/llvm.asc] http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-20 main" | tee /etc/apt/sources.list.d/llvm-toolchain.list && \
+    apt update && \
+    apt install -y clang-format-20 && \
+    rm -rf /var/lib/apt/lists/*

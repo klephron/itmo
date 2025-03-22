@@ -18,6 +18,8 @@ typedef struct mir_debug_struct {
   int64_t     pos;
 } mir_debug;
 
+span *mir_debug_to_span(const mir_debug *debug);
+
 // VALUE
 typedef struct mir_value_struct {
   size_t              id;

@@ -3,7 +3,7 @@ rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(su
 MKDIR          ?= mkdir -p
 CP             ?= cp -f
 ANTLR          ?= java -jar /usr/local/maven/m2/repository/org/antlr/antlr-complete/3.5.3/antlr-complete-3.5.3.jar
-FORMAT         ?= clang-format --verbose -i
+FORMAT         ?= clang-format-20 --verbose -i
 CC             ?= gcc
 AR             ?= ar
 AS             ?= as

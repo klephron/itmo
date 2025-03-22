@@ -33,15 +33,15 @@ static void lexer_display_error(pANTLR3_BASE_RECOGNIZER recognizer,
   if (recognizer->state) {
     exh.subtype = EXCEPTION_LEXER_MATCHING;
     exc         = exception_new_from_helper(
-                &exh, "error matching from [Line: %d, LinePos: %d]",
-                recognizer->state->tokenStartLine,
-                recognizer->state->tokenStartCharPositionInLine);
+        &exh, "error matching from [Line: %d, LinePos: %d]",
+        recognizer->state->tokenStartLine,
+        recognizer->state->tokenStartCharPositionInLine);
 
   } else {
     exh.subtype = EXCEPTION_LEXER_UNKNOWN;
     exc         = exception_new_from_helper(
-                &exh, "error, dumb implementation, may help [Line: %d, LinePos: %d]",
-                exh.line, exh.offset);
+        &exh, "error, dumb implementation, may help [Line: %d, LinePos: %d]",
+        exh.line, exh.offset);
   }
 
   list_exception_push_back(userp->exceptions, exc);
