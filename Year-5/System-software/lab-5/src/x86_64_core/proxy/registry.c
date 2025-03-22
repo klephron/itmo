@@ -51,6 +51,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_ARRAY = {
     .op_copy       = __x86_64_proxy_array_op_copy,
     .op_cast       = __x86_64_proxy_default_op_cast,
     .op_repr       = __x86_64_proxy_array_op_repr,
+    .op_type       = __x86_64_proxy_array_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_BOOL = {
@@ -87,6 +88,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_BOOL = {
     .op_copy       = __x86_64_proxy_bool_op_copy,
     .op_cast       = __x86_64_proxy_bool_op_cast,
     .op_repr       = __x86_64_proxy_bool_op_repr,
+    .op_type       = __x86_64_proxy_bool_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_BYTE = {
@@ -123,6 +125,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_BYTE = {
     .op_copy       = __x86_64_proxy_byte_op_copy,
     .op_cast       = __x86_64_proxy_byte_op_cast,
     .op_repr       = __x86_64_proxy_byte_op_repr,
+    .op_type       = __x86_64_proxy_byte_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_CALLABLE = {
@@ -159,6 +162,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_CALLABLE = {
     .op_copy       = __x86_64_proxy_callable_op_copy,
     .op_cast       = __x86_64_proxy_default_op_cast,
     .op_repr       = __x86_64_proxy_callable_op_repr,
+    .op_type       = __x86_64_proxy_callable_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_CHAR = {
@@ -195,6 +199,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_CHAR = {
     .op_copy       = __x86_64_proxy_char_op_copy,
     .op_cast       = __x86_64_proxy_char_op_cast,
     .op_repr       = __x86_64_proxy_char_op_repr,
+    .op_type       = __x86_64_proxy_char_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_ERROR = {
@@ -231,6 +236,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_ERROR = {
     .op_copy       = __x86_64_proxy_error_op_copy,
     .op_cast       = __x86_64_proxy_error_op_cast,
     .op_repr       = __x86_64_proxy_error_op_repr,
+    .op_type       = __x86_64_proxy_error_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_INT = {
@@ -267,6 +273,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_INT = {
     .op_copy       = __x86_64_proxy_int_op_copy,
     .op_cast       = __x86_64_proxy_int_op_cast,
     .op_repr       = __x86_64_proxy_int_op_repr,
+    .op_type       = __x86_64_proxy_int_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_LONG = {
@@ -303,6 +310,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_LONG = {
     .op_copy       = __x86_64_proxy_long_op_copy,
     .op_cast       = __x86_64_proxy_long_op_cast,
     .op_repr       = __x86_64_proxy_long_op_repr,
+    .op_type       = __x86_64_proxy_long_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_OBJECT = {
@@ -339,6 +347,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_OBJECT = {
     .op_copy       = __x86_64_proxy_object_op_copy,
     .op_cast       = __x86_64_proxy_default_op_cast,
     .op_repr       = __x86_64_proxy_object_op_repr,
+    .op_type       = __x86_64_proxy_object_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_STRING = {
@@ -375,6 +384,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_STRING = {
     .op_copy       = __x86_64_proxy_string_op_copy,
     .op_cast       = __x86_64_proxy_default_op_cast,
     .op_repr       = __x86_64_proxy_string_op_repr,
+    .op_type       = __x86_64_proxy_string_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_STRING_ELEM_REF = {
@@ -411,6 +421,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_STRING_ELEM_REF = {
     .op_copy       = __x86_64_proxy_string_elem_ref_op_copy,
     .op_cast       = __x86_64_proxy_default_op_cast,
     .op_repr       = __x86_64_proxy_string_elem_ref_op_repr,
+    .op_type       = __x86_64_proxy_string_elem_ref_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_UINT = {
@@ -447,6 +458,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_UINT = {
     .op_copy       = __x86_64_proxy_uint_op_copy,
     .op_cast       = __x86_64_proxy_uint_op_cast,
     .op_repr       = __x86_64_proxy_uint_op_repr,
+    .op_type       = __x86_64_proxy_uint_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_ULONG = {
@@ -483,6 +495,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_ULONG = {
     .op_copy       = __x86_64_proxy_ulong_op_copy,
     .op_cast       = __x86_64_proxy_ulong_op_cast,
     .op_repr       = __x86_64_proxy_ulong_op_repr,
+    .op_type       = __x86_64_proxy_ulong_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_VALUE_REF = {
@@ -519,6 +532,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_VALUE_REF = {
     .op_copy       = __x86_64_proxy_value_ref_op_copy,
     .op_cast       = __x86_64_proxy_default_op_cast,
     .op_repr       = __x86_64_proxy_value_ref_op_repr,
+    .op_type       = __x86_64_proxy_value_ref_op_type,
 };
 
 static const x86_64_op_tbl X86_64_OP_TBL_VOID = {
@@ -555,6 +569,7 @@ static const x86_64_op_tbl X86_64_OP_TBL_VOID = {
     .op_copy       = __x86_64_proxy_void_op_copy,
     .op_cast       = __x86_64_proxy_void_op_cast,
     .op_repr       = __x86_64_proxy_void_op_repr,
+    .op_type       = __x86_64_proxy_void_op_type,
 };
 
 static const x86_64_op_tbl *X86_64_OP_TBL_ARR[] = {

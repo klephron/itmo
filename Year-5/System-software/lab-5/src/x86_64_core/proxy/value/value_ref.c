@@ -1,5 +1,6 @@
 #include "value_ref.h"
 
+#include "util/macro.h"
 #include "util/strbuf.h"
 #include "x86_64_core/proxy/registry.h"
 #include "x86_64_core/proxy/value/string.h"
@@ -84,4 +85,9 @@ void __x86_64_proxy_value_ref_op_repr(x86_64_value *out, x86_64_value *self) {
   strbuf_append(buffer, "}");
 
   __x86_64_proxy_string_init_move(out, (uint8_t *)strbuf_detach(buffer));
+}
+
+void __x86_64_proxy_value_ref_op_type(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"value_ref");
 }

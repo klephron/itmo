@@ -1,6 +1,5 @@
 #include "long.h"
 
-#include "util/log.h"
 #include "util/macro.h"
 #include "x86_64_core/proxy/registry.h"
 #include "x86_64_core/proxy/util.h"
@@ -329,4 +328,9 @@ void __x86_64_proxy_long_op_repr(x86_64_value *out, x86_64_value *self) {
   x86_64_data_long data = *(x86_64_data_long *)&self->data_raw;
   snprintf((char *)buf, STRMAXLEN(buf), "%ld", data.value);
   __x86_64_proxy_string_init(out, buf);
+}
+
+void __x86_64_proxy_long_op_type(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"long");
 }

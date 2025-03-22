@@ -436,6 +436,9 @@ expr_0_builtin returns [ hir_expr_builtin *v ]
       |(c='print!'           e15=expr_15 {
           $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_PRINT, NULL, $e15.v);
         })
+      |(c='type!'            e15=expr_15 {
+          $v = hir_build_expr_builtin(ANTLR3_USERP(), $c, HIR_EXPR_BUILTIN_TYPE, NULL, $e15.v);
+        })
       )
     )
   ;

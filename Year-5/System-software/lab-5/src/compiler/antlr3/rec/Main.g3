@@ -272,7 +272,7 @@ expr_0_identifier
 
 expr_0_builtin
   : c=('cast!' | 'make!') '<' type_ref '>' '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c type_ref ^(ARGS expr_15))
-  | c=('print!') '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c ^(ARGS expr_15))
+  | c=('print!' | 'type!') '(' expr_15 ')' -> ^(BUILTIN[$c, "BUILTIN"] $c ^(ARGS expr_15))
   ;
 
 expr_0_literal

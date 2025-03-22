@@ -48,6 +48,7 @@ typedef enum hir_expr_builtin_enum {
   HIR_EXPR_BUILTIN_CAST = 1,
   HIR_EXPR_BUILTIN_MAKE,
   HIR_EXPR_BUILTIN_PRINT,
+  HIR_EXPR_BUILTIN_TYPE,
 } hir_expr_builtin_enum;
 
 typedef struct hir_expr_base_struct {

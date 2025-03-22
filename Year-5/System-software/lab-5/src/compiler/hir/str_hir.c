@@ -146,6 +146,8 @@ const char *hir_expr_builtin_enum_str(hir_expr_builtin_enum kind) {
       return "MAKE";
     case HIR_EXPR_BUILTIN_PRINT:
       return "PRINT";
+    case HIR_EXPR_BUILTIN_TYPE:
+      return "TYPE";
   }
   warn("unknown expr builtin enum %d", kind);
   return "UNKNOWN";

@@ -38,3 +38,4 @@ x86_64_op_drop       __x86_64_proxy_string_op_drop;
 x86_64_op_copy       __x86_64_proxy_string_op_copy;
 x86_64_op_cast       __x86_64_proxy_string_op_cast;
 x86_64_op_repr       __x86_64_proxy_string_op_repr;
+x86_64_op_type       __x86_64_proxy_string_op_type;

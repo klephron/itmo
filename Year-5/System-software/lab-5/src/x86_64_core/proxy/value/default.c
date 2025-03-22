@@ -196,3 +196,7 @@ void __x86_64_proxy_default_op_cast_v(x86_64_value *out, x86_64_value *self,
 void __x86_64_proxy_default_op_repr(x86_64_value *out, x86_64_value *self) {
   __x86_64_proxy_op_error_undefined(out, self, "repr");
 }
+
+void __x86_64_proxy_default_op_type(x86_64_value *out, x86_64_value *self) {
+  __x86_64_proxy_op_error_undefined(out, self, "type");
+}

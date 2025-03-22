@@ -111,6 +111,7 @@ typedef enum mir_stmt_builtin_enum {
   MIR_STMT_BUILTIN_CAST = 1,
   MIR_STMT_BUILTIN_MAKE,
   MIR_STMT_BUILTIN_PRINT,
+  MIR_STMT_BUILTIN_TYPE,
 } mir_stmt_builtin_enum;
 
 typedef enum mir_stmt_assign_enum {

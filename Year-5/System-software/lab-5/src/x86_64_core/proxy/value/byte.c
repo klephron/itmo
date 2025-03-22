@@ -328,3 +328,8 @@ void __x86_64_proxy_byte_op_repr(x86_64_value *out, x86_64_value *self) {
   snprintf((char *)buf, STRMAXLEN(buf), "%hhu", data.value);
   __x86_64_proxy_string_init(out, buf);
 }
+
+void __x86_64_proxy_byte_op_type(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"byte");
+}

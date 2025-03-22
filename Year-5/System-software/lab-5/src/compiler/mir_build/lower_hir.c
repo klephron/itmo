@@ -1117,6 +1117,8 @@ static mir_expr_r mir_define_expr_builtin(mir_ctx                *ctx,
     case HIR_EXPR_BUILTIN_PRINT: {
       return mir_define_expr_builtin_generic(ctx, expr, MIR_STMT_BUILTIN_PRINT);
     }
+    case HIR_EXPR_BUILTIN_TYPE:
+      return mir_define_expr_builtin_generic(ctx, expr, MIR_STMT_BUILTIN_TYPE);
   }
 
   error("unexpected builtin expr kind");

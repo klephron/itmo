@@ -1,5 +1,6 @@
 #include "string.h"
 
+#include "util/macro.h"
 #include "x86_64_core/proxy/registry.h"
 #include "x86_64_core/proxy/util.h"
 #include "x86_64_core/proxy/value/bool.h"
@@ -216,4 +217,9 @@ x86_64_op_cast __x86_64_proxy_string_op_cast;
 
 void __x86_64_proxy_string_op_repr(x86_64_value *out, x86_64_value *self) {
   self->op_tbl->op_copy(out, self);
+}
+
+void __x86_64_proxy_string_op_type(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"string");
 }

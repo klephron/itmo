@@ -1,5 +1,6 @@
 #include "string_elem_ref.h"
 
+#include "util/macro.h"
 #include "util/strbuf.h"
 #include "x86_64_core/proxy/registry.h"
 #include "x86_64_core/proxy/util.h"
@@ -104,4 +105,10 @@ void __x86_64_proxy_string_elem_ref_op_repr(x86_64_value *out,
   self_deref.op_tbl->op_drop(&self_deref);
 
   __x86_64_proxy_string_init_move(out, (uint8_t *)strbuf_detach(buffer));
+}
+
+void __x86_64_proxy_string_elem_ref_op_type(x86_64_value *out,
+                                            x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"string_elem_ref");
 }

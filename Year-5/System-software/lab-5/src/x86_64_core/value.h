@@ -90,6 +90,7 @@ typedef void x86_64_op_cast(x86_64_value *out, x86_64_value *self,
 typedef void x86_64_op_cast_v(x86_64_value *out, x86_64_value *self,
                               x86_64_type_enum type, va_list args);
 typedef void x86_64_op_repr(x86_64_value *out, x86_64_value *self);
+typedef void x86_64_op_type(x86_64_value *out, x86_64_value *self);
 
 typedef struct __attribute__((packed)) x86_64_op_tbl_struct {
   x86_64_op_plus       *op_plus;
@@ -125,6 +126,7 @@ typedef struct __attribute__((packed)) x86_64_op_tbl_struct {
   x86_64_op_copy       *op_copy;
   x86_64_op_cast       *op_cast;
   x86_64_op_repr       *op_repr;
+  x86_64_op_type       *op_type;
 } x86_64_op_tbl;
 
 typedef struct __attribute__((packed)) x86_64_value_struct {

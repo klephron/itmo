@@ -252,3 +252,8 @@ void __x86_64_proxy_error_op_repr(x86_64_value *out, x86_64_value *self) {
 
   __x86_64_proxy_string_init_move(out, (uint8_t *)strbuf_detach(buffer));
 }
+
+void __x86_64_proxy_error_op_type(x86_64_value *out, x86_64_value *self) {
+  UNUSED(self);
+  __x86_64_proxy_string_init(out, (const uint8_t *)"error");
+}

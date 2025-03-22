@@ -561,6 +561,27 @@ static void cg_inst_stmt_builtin_print(cg_ctx *ctx, const mir_stmt *stmt) {
   }
 }
 
+static void cg_inst_stmt_builtin_type(cg_ctx *ctx, const mir_stmt *stmt) {
+  if (list_mir_value_ref_size(stmt->builtin.args) != 1) {
+    span *span = mir_debug_to_span(&stmt->debug);
+    cg_exception_add_error(ctx->exceptions, EXCEPTION_CG_UNEXPECTED_ARGS, span,
+                           "cast expected 1 argument");
+    span_free(span);
+    return;
+  }
+
+  const mir_value     *ret      = stmt->builtin.ret;
+  const cg_value_meta *ret_meta = cg_ctx_value_meta_find(ctx, ret);
+
+  const mir_value     *value = list_mir_value_ref_front(stmt->builtin.args);
+  const cg_value_meta *value_meta = cg_ctx_value_meta_find(ctx, value);
+
+  cg_inst_value_reg(ctx, ret_meta, CG_X86_64_REG_RDI);
+  cg_inst_value_reg(ctx, value_meta, CG_X86_64_REG_RSI);
+
+  cg_inst_call_op_tbl(ctx, value, offsetof(x86_64_op_tbl, op_type));
+}
+
 static void cg_inst_stmt_builtin(cg_ctx *ctx, const mir_stmt *stmt) {
   switch (stmt->builtin.kind) {
     case MIR_STMT_BUILTIN_CAST: {
@@ -571,6 +592,9 @@ static void cg_inst_stmt_builtin(cg_ctx *ctx, const mir_stmt *stmt) {
     }
     case MIR_STMT_BUILTIN_PRINT: {
       return cg_inst_stmt_builtin_print(ctx, stmt);
+    }
+    case MIR_STMT_BUILTIN_TYPE: {
+      return cg_inst_stmt_builtin_type(ctx, stmt);
     }
   }
   error("unhandled builtin kind %d %p", stmt->builtin.kind, stmt);

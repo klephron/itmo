@@ -2,9 +2,10 @@ method main(): int
 var
   n: long;
 begin
-  n = 100000000;
+  n = 1000;
   while (n > 0) do begin
     --n;
   end
+  print!(type!(n));
   return cast!<int>(n);
 end;

@@ -4,7 +4,6 @@
 #include "util/strbuf.h"
 #include "x86_64_core/proxy/value/error.h"
 #include "x86_64_core/proxy/value/string.h"
-#include "x86_64_core/util.h"
 #include "x86_64_core/value/byte.h"
 #include "x86_64_core/value/char.h"
 #include "x86_64_core/value/int.h"
@@ -42,17 +41,21 @@ void __x86_64_proxy_op_error_string(x86_64_value *out, const char *op,
 
 void __x86_64_proxy_op_error_undefined(x86_64_value *out, x86_64_value *self,
                                        const char *op) {
-  strbuf *buffer = strbuf_new(64, 0);
+  x86_64_value self_repr;
+  x86_64_value self_type;
+  strbuf      *buffer = strbuf_new(64, 0);
 
   strbuf_append(buffer, "is undefined for `");
 
-  x86_64_value self_string;
-  self->op_tbl->op_repr(&self_string, self);
-  strbuf_append(buffer, (const char *)self_string.data_ptr);
-  self_string.op_tbl->op_drop(&self_string);
+  self->op_tbl->op_repr(&self_repr, self);
+  strbuf_append(buffer, (const char *)self_repr.data_ptr);
+  self_repr.op_tbl->op_drop(&self_repr);
 
   strbuf_append(buffer, "`: ");
-  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
+
+  self->op_tbl->op_type(&self_type, self);
+  strbuf_append(buffer, (const char *)self_type.data_ptr);
+  self_type.op_tbl->op_drop(&self_type);
 
   __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));
 
@@ -62,19 +65,27 @@ void __x86_64_proxy_op_error_undefined(x86_64_value *out, x86_64_value *self,
 void __x86_64_proxy_op_error_type_mismatch(x86_64_value *out,
                                            x86_64_value *self, const char *op,
                                            x86_64_type_enum type) {
+  char         buf[64];
+  x86_64_value self_repr;
+  x86_64_value self_type;
+
   strbuf *buffer = strbuf_new(64, 0);
 
   strbuf_append(buffer, "type mismatch, expected ");
-  strbuf_append(buffer, __x86_64_type_enum_str(type));
+  strbuf_append_f(buffer, buf, "%d", type);
   strbuf_append(buffer, " got `");
 
-  x86_64_value self_string;
-  self->op_tbl->op_repr(&self_string, self);
-  strbuf_append(buffer, (char *)self_string.data_ptr);
-  self_string.op_tbl->op_drop(&self_string);
+  self->op_tbl->op_repr(&self_repr, self);
+  strbuf_append(buffer, (char *)self_repr.data_ptr);
+  self_repr.op_tbl->op_drop(&self_repr);
 
   strbuf_append(buffer, "`: ");
-  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
+
+  self->op_tbl->op_type(&self_type, self);
+  strbuf_append(buffer, (const char *)self_type.data_ptr);
+  self_type.op_tbl->op_drop(&self_type);
+
+  strbuf_append_f(buffer, buf, "(%d)", self->type);
 
   __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));
 
@@ -84,19 +95,27 @@ void __x86_64_proxy_op_error_type_mismatch(x86_64_value *out,
 void __x86_64_proxy_op_error_unable_to_cast(x86_64_value    *out,
                                             x86_64_value    *self,
                                             x86_64_type_enum type) {
-  strbuf *buffer = strbuf_new(0, 0);
+  char         buf[64];
+  x86_64_value self_repr;
+  x86_64_value self_type;
+  strbuf      *buffer = strbuf_new(0, 0);
 
   strbuf_append(buffer, "unable to cast `");
 
-  x86_64_value self_string;
-  self->op_tbl->op_repr(&self_string, self);
-  strbuf_append(buffer, self_string.data_ptr);
-  self_string.op_tbl->op_drop(&self_string);
+  self->op_tbl->op_repr(&self_repr, self);
+  strbuf_append(buffer, self_repr.data_ptr);
+  self_repr.op_tbl->op_drop(&self_repr);
 
   strbuf_append(buffer, "`: ");
-  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
+
+  self->op_tbl->op_type(&self_type, self);
+  strbuf_append(buffer, (const char *)self_type.data_ptr);
+  self_type.op_tbl->op_drop(&self_type);
+
+  strbuf_append_f(buffer, buf, "(%d)", self->type);
+
   strbuf_append(buffer, " to type ");
-  strbuf_append(buffer, __x86_64_type_enum_str(type));
+  strbuf_append_f(buffer, buf, "%d", type);
 
   __x86_64_proxy_op_error_string(out, "cast", strbuf_data(buffer));
 
@@ -105,17 +124,25 @@ void __x86_64_proxy_op_error_unable_to_cast(x86_64_value    *out,
 
 void __x86_64_proxy_op_error_not_number(x86_64_value *out, x86_64_value *self,
                                         const char *op) {
-  strbuf *buffer = strbuf_new(64, 0);
+  char         buf[64];
+  x86_64_value self_repr;
+  x86_64_value self_type;
+  strbuf      *buffer = strbuf_new(64, 0);
 
   strbuf_append(buffer, "`");
 
-  x86_64_value self_string;
-  self->op_tbl->op_repr(&self_string, self);
-  strbuf_append(buffer, (char *)self_string.data_ptr);
-  self_string.op_tbl->op_drop(&self_string);
+  self->op_tbl->op_repr(&self_repr, self);
+  strbuf_append(buffer, (char *)self_repr.data_ptr);
+  self_repr.op_tbl->op_drop(&self_repr);
 
   strbuf_append(buffer, "`: ");
-  strbuf_append(buffer, __x86_64_type_enum_str(self->type));
+
+  self->op_tbl->op_type(&self_type, self);
+  strbuf_append(buffer, (const char *)self_type.data_ptr);
+  self_type.op_tbl->op_drop(&self_type);
+
+  strbuf_append_f(buffer, buf, "(%d)", self->type);
+
   strbuf_append(buffer, " can't convert to number (or uint64_t max) `");
 
   __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));

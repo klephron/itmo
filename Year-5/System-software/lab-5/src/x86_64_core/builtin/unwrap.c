@@ -1,7 +1,6 @@
 #include "builtin.h"
 #include "util/log.h"
 
-#include "x86_64_core/util.h"
 #include "x86_64_core/value/bool.h"
 #include "x86_64_core/value/byte.h"
 #include "x86_64_core/value/char.h"
@@ -16,8 +15,7 @@
 static void x86_64_error_type(x86_64_value *out, x86_64_type_enum type) {
   x86_64_value out_repr;
   out->op_tbl->op_repr(&out_repr, out);
-  error("value %s is not of type %s", (char *)out_repr.data_ptr,
-        __x86_64_type_enum_str(type));
+  error("value %s is not of type %d", (char *)out_repr.data_ptr, type);
   out_repr.op_tbl->op_drop(&out_repr);
 }
 

@@ -111,6 +111,8 @@ const char *mir_stmt_builtin_enum_str(mir_stmt_builtin_enum kind) {
       return "make";
     case MIR_STMT_BUILTIN_PRINT:
       return "print";
+    case MIR_STMT_BUILTIN_TYPE:
+      return "type";
   }
   warn("unexpected stmt builtin kind %d", kind);
   return "unknown";
