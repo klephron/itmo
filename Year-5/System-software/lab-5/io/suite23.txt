@@ -1,3 +1,14 @@
+method factorial(n):
+begin
+  if (n == 0) then
+    return 1;
+  else if (n == 1) then
+    return 1;
+  else begin
+    return n * factorial(n - 1);
+  end
+end;
+
 method main(): int
 var
   n: long;
@@ -12,22 +23,37 @@ begin
   print!(f);
   g = 'a';
   h = "hello";
-  test_args(a, b, c, d, e, f, g, h);
-  write_bool(a);
-  write_string("\n");
-  write_byte(b);
-  write_string("\n");
-  write_char(g);
-  write_string("\n");
-  write_int(c);
-  write_string("\n");
-  write_uint(d);
-  write_string("\n");
-  write_long(e);
-  write_string("\n");
-  write_ulong(f);
-  write_string("\n");
-  write_string(h);
-  write_string("\n");
+  std_test_args(a, b, c, d, e, f, g, h);
+
+  std_write_bool(a);
+  std_write_string("\n");
+  std_write_byte(b);
+  std_write_string("\n");
+  std_write_char(g);
+  std_write_string("\n");
+  std_write_int(c);
+  std_write_string("\n");
+  std_write_uint(d);
+  std_write_string("\n");
+  std_write_long(e);
+  std_write_string("\n");
+  std_write_ulong(f);
+  std_write_string("\n");
+  std_write_string(h);
+  std_write_string("\n");
+
+  std_write("absolute value of ");
+  std_write(e);
+  std_write("=");
+  std_write(std_abs(e));
+  std_write("\n");
+
+  n = 10;
+  std_write("factorial of ");
+  std_write(n);
+  std_write(" is ");
+  std_write(factorial(n));
+  std_write("\n");
+
   return cast!<int>(0);
 end;

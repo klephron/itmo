@@ -1,12 +1,11 @@
-#pragma once
+#include "test_extern.h"
 
-#include <stdint.h>
 #include <stdio.h>
 
-uint8_t test_first();
+uint8_t std_test_first() { return 42; }
 
-void test_args(uint8_t a, uint8_t b, int32_t c, uint32_t d, int64_t e,
-               uint64_t f, uint8_t g, const char *h) {
+void std_test_args(uint8_t a, uint8_t b, int32_t c, uint32_t d, int64_t e,
+                   uint64_t f, uint8_t g, const char *h) {
   printf("----------\n");
   printf("bool=%hhu\n", a);
   printf("byte=%hhu\n", b);

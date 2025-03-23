@@ -522,7 +522,7 @@ int cg_inst_sub_extern_check_ret(const type_base *ret) {
   return ret_ok;
 }
 
-int cg_inst_sub_extern_check(cg_ctx *ctx, const mir_subroutine *sub) {
+int cg_inst_sub_decl_check(cg_ctx *ctx, const mir_subroutine *sub) {
   const char *sub_sym = cg_ctx_mir_sym_find_sub(ctx, sub);
   if (!sub_sym) {
     error("subroutine not found in mir index");
@@ -542,6 +542,10 @@ int cg_inst_sub_extern_check(cg_ctx *ctx, const mir_subroutine *sub) {
   }
 
   int ok = 1;
+
+  if (!(sub->spec & MIR_SUBROUTINE_SPEC_EXTERN)) {
+    return ok;
+  }
 
   for (list_type_ref_it it = list_type_ref_begin(type.sub->params); !END(it);
        NEXT(it)) {
@@ -632,11 +636,11 @@ cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir) {
     cg_ctx_mir_sym_emplace_sub(&ctx, sub_def, sub_sym);
   }
 
-  // validate extern subroutines
+  // validate subroutine declarations
   for (list_mir_subroutine_it it =
            list_mir_subroutine_begin(mir->declared_subs);
        !END(it); NEXT(it)) {
-    cg_inst_sub_extern_check(&ctx, GET(it));
+    cg_inst_sub_decl_check(&ctx, GET(it));
   }
 
   // defined subroutines
