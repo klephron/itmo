@@ -11,6 +11,9 @@ typedef struct cg_inst_result_struct {
 
 cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir);
 
+int cg_inst_sub_extern_check_param(const type_base *param);
+int cg_inst_sub_extern_check_ret(const type_base *ret);
+
 // value_meta
 typedef struct cg_value_meta_struct {
   const mir_value *value_ref;

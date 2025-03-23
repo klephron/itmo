@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "io.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -17,14 +17,19 @@ static char *trim_end(char *str) {
 }
 
 uint8_t read_bool() {
-  uint8_t v;
-  scanf("%s", &v);
-  return v;
+  char buf[16];
+  scanf("%15s", buf);
+
+  if (strcmp(buf, "true")) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 uint8_t read_byte() {
   uint8_t v;
-  scanf("%s", &v);
+  scanf("%hhu", &v);
   return v;
 }
 
@@ -54,7 +59,7 @@ int64_t read_long() {
 
 uint64_t read_ulong() {
   uint64_t v;
-  scanf("%ld", &v);
+  scanf("%lu", &v);
   return v;
 }
 
@@ -68,3 +73,18 @@ uint8_t *read_string() {
   line = trim_end(line);
   return (uint8_t *)line;
 }
+
+void write_bool(uint8_t v) {
+  if (v) {
+    printf("true");
+  } else {
+    printf("false");
+  }
+}
+void write_byte(uint8_t v) { printf("%hhu", v); }
+void write_char(uint8_t v) { printf("%c", v); }
+void write_int(int32_t v) { printf("%d", v); }
+void write_uint(uint32_t v) { printf("%u", v); }
+void write_long(int64_t v) { printf("%ld", v); }
+void write_ulong(uint64_t v) { printf("%lu", v); }
+void write_string(const uint8_t *v) { printf("%s", v); }

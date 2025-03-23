@@ -1,6 +1,7 @@
 #include "inst.h"
 #include "compiler/codegen/exception.h"
 #include "compiler/codegen/x86_64/x86_64.h"
+#include "compiler/type_table/str.h"
 #include "util/log.h"
 #include "util/macro.h"
 #include "x86_64_core/value.h"
@@ -451,6 +452,128 @@ static void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub) {
   hashset_cg_value_meta_free(ctx->map_value_meta);
 }
 
+int cg_inst_sub_extern_check_param(const type_base *param) {
+  int param_ok = 1;
+
+  switch (param->kind) {
+    case TYPE_PRIMITIVE: {
+      const type_primitive *prim = (typeof(prim))param;
+      switch (prim->type) {
+        case TYPE_PRIMITIVE_BOOL:
+        case TYPE_PRIMITIVE_BYTE:
+        case TYPE_PRIMITIVE_INT:
+        case TYPE_PRIMITIVE_UINT:
+        case TYPE_PRIMITIVE_LONG:
+        case TYPE_PRIMITIVE_ULONG:
+        case TYPE_PRIMITIVE_CHAR:
+        case TYPE_PRIMITIVE_STRING:
+          break;
+        case TYPE_PRIMITIVE_VOID:
+        case TYPE_PRIMITIVE_ANY:
+        default:
+          param_ok = 0;
+          break;
+      }
+      break;
+    }
+    case TYPE_ARRAY:
+    case TYPE_CALLABLE:
+    case TYPE_CLASS_T:
+    case TYPE_TYPENAME:
+    case TYPE_MONO:
+      param_ok = 0;
+      break;
+  }
+  return param_ok;
+}
+
+int cg_inst_sub_extern_check_ret(const type_base *ret) {
+  int ret_ok = 1;
+
+  switch (ret->kind) {
+    case TYPE_PRIMITIVE: {
+      const type_primitive *prim = (typeof(prim))ret;
+      switch (prim->type) {
+        case TYPE_PRIMITIVE_BOOL:
+        case TYPE_PRIMITIVE_BYTE:
+        case TYPE_PRIMITIVE_INT:
+        case TYPE_PRIMITIVE_UINT:
+        case TYPE_PRIMITIVE_LONG:
+        case TYPE_PRIMITIVE_ULONG:
+        case TYPE_PRIMITIVE_CHAR:
+        case TYPE_PRIMITIVE_STRING:
+        case TYPE_PRIMITIVE_VOID:
+          break;
+        case TYPE_PRIMITIVE_ANY:
+        default:
+          ret_ok = 0;
+          break;
+      }
+      break;
+    }
+    case TYPE_ARRAY:
+    case TYPE_CALLABLE:
+    case TYPE_CLASS_T:
+    case TYPE_TYPENAME:
+    case TYPE_MONO:
+      ret_ok = 0;
+      break;
+  }
+  return ret_ok;
+}
+
+int cg_inst_sub_extern_check(cg_ctx *ctx, const mir_subroutine *sub) {
+  const char *sub_sym = cg_ctx_mir_sym_find_sub(ctx, sub);
+  if (!sub_sym) {
+    error("subroutine not found in mir index");
+    return 0;
+  }
+
+  union {
+    const type_base     *base;
+    const type_callable *sub;
+  } type;
+
+  type.base = sub->type_ref->type;
+
+  if (type.base->kind != TYPE_CALLABLE) {
+    error("subroutine %s expected callable type for subroutine", sub_sym);
+    return 0;
+  }
+
+  int ok = 1;
+
+  for (list_type_ref_it it = list_type_ref_begin(type.sub->params); !END(it);
+       NEXT(it)) {
+    const type_base *param    = GET(it);
+    int              param_ok = cg_inst_sub_extern_check_param(param);
+
+    if (!param_ok) {
+      char *type_s = type_str(param);
+      cg_exception_add_error(
+          ctx->exceptions, EXCEPTION_CG_UNSUPPORTED_EXTERN_TYPE,
+          param->type_entry_ref->span,
+          "subroutine '%s' param type '%s' is unsupported", sub_sym, type_s);
+      free(type_s);
+      ok = 0;
+    }
+  }
+
+  const type_base *ret    = type.sub->ret_ref;
+  int              ret_ok = cg_inst_sub_extern_check_ret(ret);
+
+  if (!ret_ok) {
+    char *type_s = type_str(ret);
+    cg_exception_add_error(
+        ctx->exceptions, EXCEPTION_CG_UNSUPPORTED_EXTERN_TYPE,
+        ret->type_entry_ref->span,
+        "subroutine '%s' ret type '%s' is unsupported", sub_sym, type_s);
+    free(type_s);
+    ok = 0;
+  }
+  return ok;
+}
+
 cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir) {
   cg_inst_result result = {
       .exceptions = list_exception_new(),
@@ -507,6 +630,13 @@ cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir) {
     const char           *sub_sym = sub_def->symbol_ref->name;
 
     cg_ctx_mir_sym_emplace_sub(&ctx, sub_def, sub_sym);
+  }
+
+  // validate extern subroutines
+  for (list_mir_subroutine_it it =
+           list_mir_subroutine_begin(mir->declared_subs);
+       !END(it); NEXT(it)) {
+    cg_inst_sub_extern_check(&ctx, GET(it));
   }
 
   // defined subroutines

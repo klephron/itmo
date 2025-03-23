@@ -19,7 +19,7 @@ void __x86_64_proxy_ulong_init(x86_64_value *out, uint64_t value) {
 
   const x86_64_op_tbl *op_tbl = X86_64_REGISTRY.op_tbl_arr[X86_64_TYPE_ULONG];
 
-  __x86_64_value_init_raw(out, X86_64_TYPE_LONG, (x86_64_op_tbl *)op_tbl,
+  __x86_64_value_init_raw(out, X86_64_TYPE_ULONG, (x86_64_op_tbl *)op_tbl,
                           *(uint64_t *)&data);
 }
 

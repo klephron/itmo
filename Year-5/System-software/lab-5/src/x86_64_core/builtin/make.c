@@ -51,6 +51,10 @@ void __x86_64_make_string(x86_64_value *out, const uint8_t *value) {
   __x86_64_proxy_string_init(out, value);
 }
 
+void __x86_64_make_string_move(x86_64_value *out, uint8_t *value) {
+  __x86_64_proxy_string_init_move(out, value);
+}
+
 void __x86_64_make_callable(x86_64_value *out, x86_64_func *func) {
   __x86_64_proxy_callable_init(out, func);
 }

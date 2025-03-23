@@ -23,9 +23,12 @@ PDF.COMPILER_FLAGS ?= --ast --cfg --cfg-add-expr --cg --hir-tree --hir-symbols -
 
 ASM.AS_FLAGS       ?= --64 -g
 ASM.LD_FLAGS       ?= -g -z noexecstack
-ASM.COMPILER_FLAGS ?= --mir
+ASM.COMPILER_FLAGS ?=
 ASM.DL_PATH        ?= /usr/lib64/ld-linux-x86-64.so.2
 
+COMPILE.AS_FLAGS   ?= --64 -g
+COMPILE.LD_FLAGS   ?= -g -z noexecstack
+COMPILE.DL_PATH    ?= /usr/lib64/ld-linux-x86-64.so.2
 
 SRC_DIR := $(CURDIR)/src
 
@@ -179,19 +182,26 @@ run/asm/%: ASM.INPUT_FILE=$(patsubst run/asm/%,%,$@)
 run/asm/%: ASM.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
 run/asm/%: ASM.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
 run/asm/%: ASM.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
-run/asm/%: compiler/build/main x86_64_core/build/libx86_64_core.a x86_64_std/build/libx86_64_std.a
+run/asm/%: compiler/build/main
 	./build/compiler/main $(ASM.COMPILER_FLAGS) \
-		-o $(ASM.ASM_FILE) $(ASM.INPUT_FILE)
+		-o $(ASM.ASM_FILE) $(ASM.INPUT_FILE) $(x86_64_std.SRC_DIR)/x86_64_std.txt
 	@echo "--------------------ASSEMBLY($(ASM.ASM_FILE))--------------------"
 	@cat $(ASM.ASM_FILE)
 	@echo "--------------------COMPILE($(ASM.ASM_FILE))--------------------"
-	$(AS) $(ASM.AS_FLAGS) -o $(ASM.OBJECT_FILE) $(ASM.ASM_FILE)
-	$(LD) $(ASM.LD_FLAGS) -o $(ASM.OUTPUT_FILE) \
-		-dynamic-linker $(ASM.DL_PATH) \
+	@$(MAKE) --no-print-directory run/compile/$(ASM.ASM_FILE)
+
+run/compile: run/compile/io/suite8.txt.asm
+run/compile/%: COMPILE.ASM_FILE=$(patsubst run/compile/%,%,$@)
+run/compile/%: COMPILE.OBJECT_FILE=$(patsubst run/compile/%,%.o,$@)
+run/compile/%: COMPILE.OUTPUT_FILE=$(patsubst run/compile/%,%.out,$@)
+run/compile/%: x86_64_core/build/libx86_64_core.a x86_64_std/build/libx86_64_std.a
+	$(AS) $(COMPILE.AS_FLAGS) -o $(COMPILE.OBJECT_FILE) $(COMPILE.ASM_FILE)
+	$(LD) $(COMPILE.LD_FLAGS) -o $(COMPILE.OUTPUT_FILE) \
+		-dynamic-linker $(COMPILE.DL_PATH) \
 		/usr/lib/x86_64-linux-gnu/crt1.o \
 		/usr/lib/x86_64-linux-gnu/crti.o \
 		-lc \
-		$(ASM.OBJECT_FILE) \
+		$(COMPILE.OBJECT_FILE) \
 		$(x86_64_core.BUILD_DIR)/libx86_64_core.a \
 		$(x86_64_std.BUILD_DIR)/libx86_64_std.a \
 		$(util.BUILD_DIR)/libutil.a \

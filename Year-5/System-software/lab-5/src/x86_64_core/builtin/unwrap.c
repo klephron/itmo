@@ -14,9 +14,14 @@
 
 static void x86_64_error_type(x86_64_value *out, x86_64_type_enum type) {
   x86_64_value out_repr;
+  x86_64_value out_type;
+
   out->op_tbl->op_repr(&out_repr, out);
-  error("value %s is not of type %d", (char *)out_repr.data_ptr, type);
+  out->op_tbl->op_type(&out_type, out);
+  error("value %s: %s(%d) is not of type %d", (char *)out_repr.data_ptr,
+        (char *)out_type.data_ptr, out->type, type);
   out_repr.op_tbl->op_drop(&out_repr);
+  out_type.op_tbl->op_drop(&out_type);
 }
 
 void __x86_64_unwrap_void(x86_64_value *out) {

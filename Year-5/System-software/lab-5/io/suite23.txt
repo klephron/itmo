@@ -1,19 +1,33 @@
-class A
-var
-  a, b;
-begin
-end;
-
-method fun1(a: any, b, c):
-var
-  k: int;
-begin
-end;
-
 method main(): int
 var
   n: long;
-  a, b;
+  a, b, c, d, e, f, g, h;
 begin
-  make!<A>(1, 2);
+  a = true;
+  b = cast!<byte>(42);
+  c = cast!<int>(-42);
+  d = cast!<uint>(53);
+  e = cast!<long>(-53333);
+  f = cast!<ulong>(53333);
+  print!(f);
+  g = 'a';
+  h = "hello";
+  test_args(a, b, c, d, e, f, g, h);
+  write_bool(a);
+  write_string("\n");
+  write_byte(b);
+  write_string("\n");
+  write_char(g);
+  write_string("\n");
+  write_int(c);
+  write_string("\n");
+  write_uint(d);
+  write_string("\n");
+  write_long(e);
+  write_string("\n");
+  write_ulong(f);
+  write_string("\n");
+  write_string(h);
+  write_string("\n");
+  return cast!<int>(0);
 end;

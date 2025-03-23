@@ -1,0 +1,22 @@
+// extern/io
+extern method read_bool(): bool;
+extern method read_byte(): byte;
+extern method read_char(): char;
+extern method read_int(): int;
+extern method read_uint(): uint;
+extern method read_long(): long;
+extern method read_ulong(): ulong;
+extern method read_string(): string;
+
+extern method write_bool(v: bool): void;
+extern method write_byte(v: byte): void;
+extern method write_char(v: char): void;
+extern method write_int(v: int): void;
+extern method write_uint(v: uint): void;
+extern method write_long(v: long): void;
+extern method write_ulong(v: ulong): void;
+extern method write_string(v: string): void;
+
+// extern/test
+extern method test_first(): byte;
+extern method test_args(a: bool, b: byte, c: int, d: uint, e: long, f: ulong, g: char, h: string): void;

@@ -372,17 +372,357 @@ cleanup:
 }
 
 static void cg_inst_stmt_call_extern(cg_ctx *ctx, const mir_stmt *stmt) {
-  warn("TODO: unimplemented extern call");
-}
+  const mir_subroutine *sub     = stmt->call.sub;
+  const char           *sub_sym = cg_ctx_mir_sym_find_sub(ctx, stmt->call.sub);
+  int                   ok      = 1;
 
-static void cg_inst_stmt_call(cg_ctx *ctx, const mir_stmt *stmt) {
-  int is_extern = stmt->call.sub->spec & MIR_SUBROUTINE_SPEC_EXTERN;
-
-  if (is_extern) {
-    cg_inst_stmt_call_extern(ctx, stmt);
+  if (!sub_sym) {
     return;
   }
 
+  union {
+    const type_base     *base;
+    const type_callable *sub;
+  } type;
+
+  type.base = sub->type_ref->type;
+
+  if (type.base->kind != TYPE_CALLABLE) {
+    return;
+  }
+
+  // errors are generated on validation phase not to create duplications
+  for (list_type_ref_it it = list_type_ref_begin(type.sub->params); !END(it);
+       NEXT(it)) {
+    const type_base *param_type = GET(it);
+    if (!cg_inst_sub_extern_check_param(param_type)) {
+      ok = 0;
+    }
+  }
+
+  if (!cg_inst_sub_extern_check_ret(type.sub->ret_ref)) {
+    ok = 0;
+  }
+
+  // get argc and check if it matches extern
+  uint64_t args_cnt   = list_mir_value_ref_size(stmt->call.args);
+  uint64_t params_cnt = list_type_ref_size(type.sub->params);
+
+  if (args_cnt != params_cnt) {
+    span *span = mir_debug_to_span(&stmt->debug);
+    cg_exception_add_error(
+        ctx->exceptions, EXCEPTION_CG_UNEXPECTED_ARGS, span,
+        "args count doesn't match declaration: expected %lu, got %lu",
+        params_cnt, args_cnt);
+    span_free(span);
+    ok = 0;
+  }
+
+  if (!ok) {
+    return;
+  }
+
+  // allocate memory on stack required for argument unwrapping
+  uint64_t frame_size_old = ctx->frame_size;
+
+  ctx->frame_size =
+      cg_aligned(ctx->frame_size + args_cnt * CG_X86_64_SIZE_QUAD);
+
+  if (frame_size_old != ctx->frame_size) {
+    uint64_t size = ctx->frame_size - frame_size_old;
+    cg_ctx_text_emplace_back_text(
+        ctx, CG_X86_64_MNEM_SUBQ, cg_x86_64_op_new_immediate(size),
+        cg_x86_64_op_new_register(CG_X86_64_REG_RSP), NULL);
+  }
+
+  // store unwrapped values on stack
+  {
+    list_type_ref_it type_it = list_type_ref_begin(type.sub->params);
+    uint64_t         arg_i   = 0;
+
+    for (list_mir_value_ref_it it = list_mir_value_ref_begin(stmt->call.args);
+         !END(it); NEXT(it), ++arg_i, NEXT(type_it)) {
+      const mir_value     *arg  = GET(it);
+      const cg_value_meta *meta = cg_ctx_value_meta_find(ctx, arg);
+      const type_base     *type = GET(type_it);
+      int                  ok   = 1;
+
+      // should match validation
+      switch (type->kind) {
+        case TYPE_PRIMITIVE: {
+          const type_primitive *prim = (typeof(prim))type;
+          switch (prim->type) {
+            case TYPE_PRIMITIVE_BOOL: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_bool")),
+                  NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_BYTE: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_byte")),
+                  NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_INT: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_int")), NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_UINT: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_uint")),
+                  NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_LONG: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_long")),
+                  NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_ULONG: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_ulong")),
+                  NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_CHAR: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_char")),
+                  NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_STRING: {
+              cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+              cg_ctx_text_emplace_back_text(
+                  ctx, CG_X86_64_MNEM_CALL,
+                  cg_x86_64_op_new_direct(strdup("__x86_64_unwrap_string")),
+                  NULL);
+              break;
+            }
+            case TYPE_PRIMITIVE_VOID:
+            case TYPE_PRIMITIVE_ANY:
+              ok = 0;
+              break;
+          }
+          break;
+        }
+        default:
+          ok = 0;
+          break;
+      }
+
+      if (!ok) {
+        char *type_s = type_str(type);
+        error("unexpected type %s", type_s);
+        free(type_s);
+        continue;
+      }
+
+      cg_ctx_text_emplace_back_text(
+          ctx, CG_X86_64_MNEM_MOVQ,
+          cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+          cg_x86_64_op_new_base_imm((uint64_t)CG_X86_64_SIZE_QUAD * arg_i,
+                                    CG_X86_64_REG_RSP),
+          NULL);
+    }
+  }
+
+  // pop max 6 arguments from stack
+  for (uint64_t i = 0; i < 6 && i < args_cnt; ++i) {
+    switch (i) {
+      case 0: {
+        ctx->frame_size -= cg_ctx_text_emplace_back_text(
+            ctx, CG_X86_64_MNEM_POPQ,
+            cg_x86_64_op_new_register(CG_X86_64_REG_RDI), NULL);
+        break;
+      }
+      case 1: {
+        ctx->frame_size -= cg_ctx_text_emplace_back_text(
+            ctx, CG_X86_64_MNEM_POPQ,
+            cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+        break;
+      }
+      case 2: {
+        ctx->frame_size -= cg_ctx_text_emplace_back_text(
+            ctx, CG_X86_64_MNEM_POPQ,
+            cg_x86_64_op_new_register(CG_X86_64_REG_RDX), NULL);
+        break;
+      }
+      case 3: {
+        ctx->frame_size -= cg_ctx_text_emplace_back_text(
+            ctx, CG_X86_64_MNEM_POPQ,
+            cg_x86_64_op_new_register(CG_X86_64_REG_RCX), NULL);
+        break;
+      }
+      case 4: {
+        ctx->frame_size -= cg_ctx_text_emplace_back_text(
+            ctx, CG_X86_64_MNEM_POPQ,
+            cg_x86_64_op_new_register(CG_X86_64_REG_R8), NULL);
+        break;
+      }
+      case 5: {
+        ctx->frame_size -= cg_ctx_text_emplace_back_text(
+            ctx, CG_X86_64_MNEM_POPQ,
+            cg_x86_64_op_new_register(CG_X86_64_REG_R9), NULL);
+        break;
+      }
+    }
+  }
+
+  // call
+  cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_CALL,
+                                cg_x86_64_op_new_direct(strdup(sub_sym)), NULL);
+
+  // push result from RAX to resulting var
+  {
+    int              ok  = 1;
+    const type_base *ret = type.sub->ret_ref;
+
+    // should match validation
+    switch (ret->kind) {
+      case TYPE_PRIMITIVE: {
+        const type_primitive *prim  = (typeof(prim))ret;
+        const mir_value      *value = stmt->call.ret;
+        const cg_value_meta  *meta  = cg_ctx_value_meta_find(ctx, value);
+
+        switch (prim->type) {
+          case TYPE_PRIMITIVE_BOOL: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVB,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_bool")), NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_BYTE: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVB,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_byte")), NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_INT: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVL,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_int")), NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_UINT: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVL,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_uint")), NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_LONG: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVQ,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_long")), NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_ULONG: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVQ,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_ulong")), NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_CHAR: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVB,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_char")), NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_STRING: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_MOVQ,
+                cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
+                cg_x86_64_op_new_register(CG_X86_64_REG_RSI), NULL);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_string_move")),
+                NULL);
+            break;
+          }
+          case TYPE_PRIMITIVE_VOID: {
+            cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+            cg_ctx_text_emplace_back_text(
+                ctx, CG_X86_64_MNEM_CALL,
+                cg_x86_64_op_new_direct(strdup("__x86_64_make_void")), NULL);
+          } break;
+          case TYPE_PRIMITIVE_ANY:
+            ok = 0;
+            break;
+        }
+      } break;
+      case TYPE_ARRAY:
+      case TYPE_CALLABLE:
+      case TYPE_CLASS_T:
+      case TYPE_TYPENAME:
+      case TYPE_MONO:
+        ok = 0;
+        break;
+    }
+
+    if (!ok) {
+      char *type_s = type_str(ret);
+      error("unexpected type %s", type_s);
+      free(type_s);
+    }
+  }
+
+  // restore stack frame
+  cg_inst_frame_restore(ctx, frame_size_old);
+}
+
+static void cg_inst_stmt_call_native(cg_ctx *ctx, const mir_stmt *stmt) {
   const char *sub_sym = cg_ctx_mir_sym_find_sub(ctx, stmt->call.sub);
   if (!sub_sym) {
     error("subroutine not found in mir index");
@@ -403,6 +743,16 @@ static void cg_inst_stmt_call(cg_ctx *ctx, const mir_stmt *stmt) {
   cg_inst_frame_restore(ctx, frame_size_old);
 
   free(values);
+}
+
+static void cg_inst_stmt_call(cg_ctx *ctx, const mir_stmt *stmt) {
+  int is_extern = stmt->call.sub->spec & MIR_SUBROUTINE_SPEC_EXTERN;
+
+  if (is_extern) {
+    cg_inst_stmt_call_extern(ctx, stmt);
+  } else {
+    cg_inst_stmt_call_native(ctx, stmt);
+  }
 }
 
 static void cg_inst_stmt_member(cg_ctx *ctx, const mir_stmt *stmt) {
