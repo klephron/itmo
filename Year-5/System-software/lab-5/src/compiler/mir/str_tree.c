@@ -46,7 +46,7 @@ static void mir_str_type(strbuf *buffer, size_t pad, const type_entry *type) {
     }
     strbuf_append_f(buffer, buf, ", type_table(%p)", type);
   } else {
-    strbuf_append(buffer, "any");
+    strbuf_append(buffer, "(nil)");
   }
 }
 

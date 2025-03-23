@@ -1,0 +1,19 @@
+class A
+var
+  a, b;
+begin
+end;
+
+method fun1(a: any, b, c):
+var
+  k: int;
+begin
+end;
+
+method main(): int
+var
+  n: long;
+  a, b;
+begin
+  make!<A>(1, 2);
+end;

@@ -40,7 +40,8 @@ type_ref returns [hir_type_base *v]
   | ^(TYPE t='ulong') { $v = hir_build_type_ulong(ANTLR3_USERP(), $t); }
   | ^(TYPE t='char')  { $v = hir_build_type_char(ANTLR3_USERP(), $t); }
   | ^(TYPE t='string'){ $v = hir_build_type_string(ANTLR3_USERP(), $t); }
-  | ^(TYPE t='void'){ $v = hir_build_type_void(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='void')  { $v = hir_build_type_void(ANTLR3_USERP(), $t); }
+  | ^(TYPE t='any')   { $v = hir_build_type_any(ANTLR3_USERP(), $t); }
   | ^(TYPE id=identifier (tp=type_template { tp_v = $tp.v; })? ) {
       $v = (hir_type_base *) hir_build_type_custom(ANTLR3_USERP(), $id.v, tp_v);
     }

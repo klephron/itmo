@@ -56,34 +56,36 @@ static void strbuf_append_type_primitive(type_ctx *ctx, strbuf *buffer,
   switch (type->type) {
     case TYPE_PRIMITIVE_BOOL:
       strbuf_append(buffer, "bool");
-      break;
+      return;
     case TYPE_PRIMITIVE_BYTE:
       strbuf_append(buffer, "byte");
-      break;
+      return;
     case TYPE_PRIMITIVE_INT:
       strbuf_append(buffer, "int");
-      break;
+      return;
     case TYPE_PRIMITIVE_UINT:
       strbuf_append(buffer, "uint");
-      break;
+      return;
     case TYPE_PRIMITIVE_LONG:
       strbuf_append(buffer, "long");
-      break;
+      return;
     case TYPE_PRIMITIVE_ULONG:
       strbuf_append(buffer, "ulong");
-      break;
+      return;
     case TYPE_PRIMITIVE_CHAR:
       strbuf_append(buffer, "char");
-      break;
+      return;
     case TYPE_PRIMITIVE_STRING:
       strbuf_append(buffer, "string");
-      break;
+      return;
     case TYPE_PRIMITIVE_VOID:
       strbuf_append(buffer, "void");
-      break;
-    default:
-      warn("unexpected primitive type %d %p", type->type, type);
+      return;
+    case TYPE_PRIMITIVE_ANY:
+      strbuf_append(buffer, "any");
+      return;
   }
+  warn("unexpected primitive type %d %p", type->type, type);
 }
 
 static void strbuf_append_type_array(type_ctx *ctx, strbuf *buffer,
@@ -201,7 +203,7 @@ static void strbuf_append_type_mono(type_ctx *ctx, strbuf *buffer,
 static void strbuf_append_type(type_ctx *ctx, strbuf *buffer,
                                const type_base *generic) {
   if (!generic) {
-    strbuf_append(buffer, "any");
+    strbuf_append(buffer, "(nil)");
     return;
   }
 

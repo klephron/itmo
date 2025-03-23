@@ -182,14 +182,18 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
                                                const hir_type_base *base,
                                                ctx_scope_kind       kind,
                                                hir_scope          **scope_out) {
+  hir_scope       *scope_max, *scope;
+  hir_scope_entry *entry;
+
   if (!base) {
-    return NULL;
+    hir_type_base *any = hir_type_base_new(NULL, HIR_TYPE_ANY);
+    entry              = hir_ctx_scopes_find(ctx, any, kind, scope_out);
+    hir_type_free(any);
+  } else {
+    entry = hir_ctx_scopes_find(ctx, base, kind, scope_out);
   }
 
-  hir_scope       *scope_max, *scope;
-  hir_scope_entry *entry = hir_ctx_scopes_find(ctx, base, kind, scope_out);
-
-  if (entry) {
+  if (entry || !base) {
     return entry;
   }
 
@@ -249,8 +253,8 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
           hir_scope_entry_new(hir_type_copy((hir_type_base *)self), kind,
                               type_ref),
           scope_max);
-
-    } break;
+      break;
+    }
 
     case HIR_TYPE_ARRAY: {
       const hir_type_array *self = (typeof(self))base;
@@ -276,8 +280,8 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
           hir_scope_entry_new(hir_type_copy((hir_type_base *)self), kind,
                               type_ref),
           scope_max);
-
-    } break;
+      break;
+    }
     case HIR_TYPE_BOOL:
     case HIR_TYPE_BYTE:
     case HIR_TYPE_INT:
@@ -287,12 +291,13 @@ static hir_scope_entry *hir_ctx_scopes_resolve(hir_ctx             *ctx,
     case HIR_TYPE_CHAR:
     case HIR_TYPE_STRING:
     case HIR_TYPE_VOID:
+    case HIR_TYPE_ANY:
       error("type %s should be already be in scope, but not found",
             hir_type_enum_str(base->type));
-      break;
+      return NULL;
     default:
       error("unexpected type kind %d", base->type);
-      break;
+      return NULL;
   }
 
   if (scope_out) {
@@ -417,6 +422,13 @@ static void hir_bind_builtin(hir_ctx *ctx) {
                hir_ctx_table_emplace(
                    ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_VOID),
                    NULL)));
+
+  hir_ctx_scopes_insert_global(
+      ctx,
+      hir_scope_entry_new(
+          hir_type_base_new(NULL, HIR_TYPE_ANY), CTX_SCOPE_USAGE,
+          hir_ctx_table_emplace(
+              ctx, (type_base *)type_primitive_new(TYPE_PRIMITIVE_ANY), NULL)));
 }
 
 static void hir_bind_lit(hir_ctx *ctx, hir_lit *lit) {
@@ -424,38 +436,36 @@ static void hir_bind_lit(hir_ctx *ctx, hir_lit *lit) {
     return;
   }
 
-  if (lit->type_hir) {
-    hir_scope_entry *entry =
-        hir_ctx_scopes_resolve(ctx, lit->type_hir, CTX_SCOPE_USAGE, NULL);
-    if (!entry) {
-      char *type_s = hir_type_str(lit->type_hir);
+  hir_scope_entry *entry =
+      hir_ctx_scopes_resolve(ctx, lit->type_hir, CTX_SCOPE_USAGE, NULL);
+  if (!entry) {
+    char *type_s = hir_type_str(lit->type_hir);
 
-      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, lit->base.span,
-                    "lit with type %s can't be resolved", type_s);
+    hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, lit->base.span,
+                  "lit with type %s can't be resolved", type_s);
 
-      free(type_s);
-      return;
-    }
-    hir_type_free(lit->type_hir);
-    lit->type_ref = entry->type_ref;
+    free(type_s);
+    return;
   }
+  hir_type_free(lit->type_hir);
+  lit->type_ref = entry->type_ref;
+
   lit->state |= HIR_STATE_BIND_TYPE;
 }
 
 static void hir_bind_subroutine_signature(hir_ctx        *ctx,
                                           hir_subroutine *subroutine) {
   hir_scope_entry *ret_entry = NULL;
-  if (subroutine->type_ret) {
-    ret_entry = hir_ctx_scopes_resolve(ctx, subroutine->type_ret,
-                                       CTX_SCOPE_USAGE, NULL);
 
-    if (!ret_entry) {
-      char *type_s = hir_type_str(subroutine->type_ret);
-      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, subroutine->base.span,
-                    "return type %s can't be resolved", type_s);
-      free(type_s);
-      return;
-    }
+  ret_entry =
+      hir_ctx_scopes_resolve(ctx, subroutine->type_ret, CTX_SCOPE_USAGE, NULL);
+
+  if (!ret_entry) {
+    char *type_s = hir_type_str(subroutine->type_ret);
+    hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, subroutine->base.span,
+                  "return type %s can't be resolved", type_s);
+    free(type_s);
+    return;
   }
 
   list_type_ref *params = list_type_ref_new();
@@ -464,24 +474,22 @@ static void hir_bind_subroutine_signature(hir_ctx        *ctx,
     hir_param *param = GET(it);
 
     if (!(param->state & HIR_STATE_BIND_TYPE)) {
-      if (param->type_hir) {
-        hir_scope_entry *param_entry =
-            hir_ctx_scopes_resolve(ctx, param->type_hir, CTX_SCOPE_USAGE, NULL);
+      hir_scope_entry *param_entry =
+          hir_ctx_scopes_resolve(ctx, param->type_hir, CTX_SCOPE_USAGE, NULL);
 
-        if (!param_entry) {
-          char *type_s = hir_type_str(param->type_hir);
-          hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED,
-                        subroutine->base.span,
-                        "param with type %s can't be resolved", type_s);
-          free(type_s);
+      if (!param_entry) {
+        char *type_s = hir_type_str(param->type_hir);
+        hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, subroutine->base.span,
+                      "param with type %s can't be resolved", type_s);
+        free(type_s);
 
-          list_type_ref_free(params);
-          return; // can't parse subroutine type signature
-        }
-
-        hir_type_free(param->type_hir);
-        param->type_ref = param_entry->type_ref;
+        list_type_ref_free(params);
+        return; // can't parse subroutine type signature
       }
+
+      hir_type_free(param->type_hir);
+      param->type_ref = param_entry->type_ref;
+
       param->state |= HIR_STATE_BIND_TYPE;
     }
 
@@ -506,25 +514,24 @@ static void hir_bind_vars(hir_ctx *ctx, list_hir_var *vars) {
   for (list_hir_var_it it = list_hir_var_begin(vars); !END(it); NEXT(it)) {
     hir_var *var = GET(it);
 
-    if (var->type_hir) {
-      hir_scope_entry *entry =
-          hir_ctx_scopes_resolve(ctx, var->type_hir, CTX_SCOPE_USAGE, NULL);
-      if (!entry) {
-        const char *var_s  = (var->state & HIR_STATE_BIND_SYMBOL)
-                                 ? var->id_ref->name
-                                 : var->id_hir->name;
-        char       *type_s = hir_type_str(var->type_hir);
+    hir_scope_entry *entry =
+        hir_ctx_scopes_resolve(ctx, var->type_hir, CTX_SCOPE_USAGE, NULL);
+    if (!entry) {
+      const char *var_s  = (var->state & HIR_STATE_BIND_SYMBOL)
+                               ? var->id_ref->name
+                               : var->id_hir->name;
+      char       *type_s = hir_type_str(var->type_hir);
 
-        hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
-                      "var %s type %s can't be resolved", var_s, type_s);
+      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
+                    "var %s type %s can't be resolved", var_s, type_s);
 
-        free(type_s);
-        continue;
-      }
-
-      hir_type_free(var->type_hir);
-      var->type_ref = entry->type_ref;
+      free(type_s);
+      continue;
     }
+
+    hir_type_free(var->type_hir);
+    var->type_ref = entry->type_ref;
+
     var->state |= HIR_STATE_BIND_TYPE;
   }
 }
@@ -586,22 +593,21 @@ static void hir_bind_expr(hir_ctx *ctx, hir_expr_base *base) {
   }
 
   if (!(base->state & HIR_STATE_BIND_TYPE)) {
-    if (base->type_hir) {
-      hir_scope_entry *entry =
-          hir_ctx_scopes_resolve(ctx, base->type_hir, CTX_SCOPE_USAGE, NULL);
-      if (!entry) {
-        char *type_s = hir_type_str(base->type_hir);
+    hir_scope_entry *entry =
+        hir_ctx_scopes_resolve(ctx, base->type_hir, CTX_SCOPE_USAGE, NULL);
+    if (!entry) {
+      char *type_s = hir_type_str(base->type_hir);
 
-        hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, base->base.span,
-                      "expr type %s can't be resolved", type_s);
+      hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, base->base.span,
+                    "expr type %s can't be resolved", type_s);
 
-        free(type_s);
-        return;
-      }
-
-      hir_type_free(base->type_hir);
-      base->type_ref = entry->type_ref;
+      free(type_s);
+      return;
     }
+
+    hir_type_free(base->type_hir);
+    base->type_ref = entry->type_ref;
+
     base->state |= HIR_STATE_BIND_TYPE;
   }
 }
@@ -823,22 +829,21 @@ static void hir_bind_class_fields(hir_ctx *ctx, hir_class *hir_class,
     hir_var *var = GET(it);
 
     if (!(var->state & HIR_STATE_BIND_TYPE)) {
-      if (var->type_hir) {
-        hir_scope_entry *var_entry =
-            hir_ctx_scopes_resolve(ctx, var->type_hir, CTX_SCOPE_USAGE, NULL);
+      hir_scope_entry *var_entry =
+          hir_ctx_scopes_resolve(ctx, var->type_hir, CTX_SCOPE_USAGE, NULL);
 
-        if (!var_entry) {
-          char *type_s = hir_type_str(var->type_hir);
-          hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
-                        "var with type %s can't be resolved", type_s);
-          free(type_s);
+      if (!var_entry) {
+        char *type_s = hir_type_str(var->type_hir);
+        hir_ctx_error(ctx, EXCEPTION_HIR_TYPE_UNRESOLVED, var->base.span,
+                      "var with type %s can't be resolved", type_s);
+        free(type_s);
 
-          continue;
-        }
-
-        hir_type_free(var->type_hir);
-        var->type_ref = var_entry->type_ref;
+        continue;
       }
+
+      hir_type_free(var->type_hir);
+      var->type_ref = var_entry->type_ref;
+
       var->state |= HIR_STATE_BIND_TYPE;
     }
   }

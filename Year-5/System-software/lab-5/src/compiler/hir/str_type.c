@@ -23,7 +23,7 @@ static void strbuf_append_type_list(strbuf *buffer, const list_hir_type *list,
 
 static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
   if (!generic) {
-    strbuf_append(buffer, "any");
+    strbuf_append(buffer, "(nil)");
     return;
   }
 
@@ -54,6 +54,9 @@ static void strbuf_append_type(strbuf *buffer, const hir_type_base *generic) {
       return;
     case HIR_TYPE_VOID:
       strbuf_append(buffer, "void");
+      return;
+    case HIR_TYPE_ANY:
+      strbuf_append(buffer, "any");
       return;
     case HIR_TYPE_CUSTOM: {
       hir_type_custom *custom = (typeof(custom))generic;
@@ -97,6 +100,8 @@ const char *hir_type_enum_str(hir_type_enum type) {
       return "CUSTOM";
     case HIR_TYPE_ARRAY:
       return "ARRAY";
+    case HIR_TYPE_ANY:
+      return "ANY";
   }
   return "UNKNOWN";
 }

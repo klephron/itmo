@@ -65,6 +65,7 @@ void mir_lit_free(mir_lit *self) {
             case TYPE_PRIMITIVE_ULONG:
             case TYPE_PRIMITIVE_CHAR:
             case TYPE_PRIMITIVE_VOID:
+            case TYPE_PRIMITIVE_ANY:
               break;
           }
           break;

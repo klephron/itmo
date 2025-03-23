@@ -91,7 +91,7 @@ static void hir_tree_str_type_entry(strbuf *buffer, size_t pad,
   UNUSED(pad);
 
   if (!entry_ref) {
-    strbuf_append(buffer, "(nil/any)");
+    strbuf_append(buffer, "(nil)");
     return;
   }
 

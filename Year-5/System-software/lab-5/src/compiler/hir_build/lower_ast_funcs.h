@@ -27,6 +27,7 @@ hir_type_base   *hir_build_type_ulong(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_type_base   *hir_build_type_char(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_type_base   *hir_build_type_string(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_type_base   *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
+hir_type_base   *hir_build_type_any(hir_ctx *ctx, ANTLR3_BASE_TREE *node);
 hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id,
                                        list_hir_type *templates);
 hir_type_array  *hir_build_type_array(hir_ctx *ctx, ANTLR3_BASE_TREE *node,

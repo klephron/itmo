@@ -58,6 +58,7 @@ typedef enum type_primitive_enum {
   TYPE_PRIMITIVE_CHAR,
   TYPE_PRIMITIVE_STRING,
   TYPE_PRIMITIVE_VOID,
+  TYPE_PRIMITIVE_ANY,
 } type_primitive_enum;
 
 typedef struct type_primitive_struct {

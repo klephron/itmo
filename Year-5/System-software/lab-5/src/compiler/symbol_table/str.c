@@ -54,7 +54,7 @@ char *symbol_table_str(const symbol_table *table, const char *title) {
       list_chars_push_back(row, type_s);
       free(type_s);
     } else {
-      list_chars_push_back(row, "any");
+      list_chars_push_back(row, "(nil)");
     }
     // SPAN
     if (entry->span) {

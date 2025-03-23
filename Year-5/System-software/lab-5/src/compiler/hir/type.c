@@ -63,6 +63,7 @@ void hir_type_free(hir_type_base *generic) {
       case HIR_TYPE_CHAR:
       case HIR_TYPE_STRING:
       case HIR_TYPE_VOID:
+      case HIR_TYPE_ANY:
         return hir_type_base_free(generic);
       case HIR_TYPE_CUSTOM:
         return hir_type_custom_free((hir_type_custom *)generic);
@@ -87,6 +88,7 @@ hir_type_base *hir_type_copy(const hir_type_base *self) {
     case HIR_TYPE_CHAR:
     case HIR_TYPE_STRING:
     case HIR_TYPE_VOID:
+    case HIR_TYPE_ANY:
       return hir_type_base_new(span_copy(self->span), self->type);
     case HIR_TYPE_CUSTOM: {
       const hir_type_custom *custom = (typeof(custom))self;
@@ -126,6 +128,7 @@ int hir_type_cmp(const hir_type_base *lsv, const hir_type_base *rsv) {
     case HIR_TYPE_CHAR:
     case HIR_TYPE_STRING:
     case HIR_TYPE_VOID:
+    case HIR_TYPE_ANY:
       return 0;
     case HIR_TYPE_CUSTOM: {
       const hir_type_custom *l = (typeof(l))lsv;
@@ -166,6 +169,7 @@ uint64_t hir_type_hash(const hir_type_base *lsv) {
     case HIR_TYPE_CHAR:
     case HIR_TYPE_STRING:
     case HIR_TYPE_VOID:
+    case HIR_TYPE_ANY:
       return hash;
     case HIR_TYPE_CUSTOM: {
       const hir_type_custom *l = (typeof(l))lsv;

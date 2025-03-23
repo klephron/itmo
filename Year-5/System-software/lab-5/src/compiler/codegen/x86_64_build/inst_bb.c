@@ -544,7 +544,44 @@ static void cg_inst_stmt_builtin_cast(cg_ctx *ctx, const mir_stmt *stmt) {
 }
 
 static void cg_inst_stmt_builtin_make(cg_ctx *ctx, const mir_stmt *stmt) {
-  warn("TODO: unimplemented builtin make");
+  const type_base *type = stmt->builtin.type ? stmt->builtin.type->type : NULL;
+  if (!type) {
+    span *span = mir_debug_to_span(&stmt->debug);
+    cg_exception_add_error(ctx->exceptions, EXCEPTION_CG_UNEXPECTED_TYPE, span,
+                           "no type specified to make expression");
+    span_free(span);
+    return;
+  }
+
+  switch (type->kind) {
+    case TYPE_PRIMITIVE: {
+      char *type_s = type_str(type);
+      span *span   = mir_debug_to_span(&stmt->debug);
+      cg_exception_add_error(
+          ctx->exceptions, EXCEPTION_CG_UNEXPECTED_TYPE, span,
+          "primitive type %s can't be instantiated with make", type_s);
+      span_free(span);
+      free(type_s);
+      return;
+    }
+    case TYPE_ARRAY: {
+      const type_array *t = (typeof(t))type;
+      // calculate type dimensions
+    }
+    case TYPE_MONO: {
+
+    } break;
+    default:
+    case TYPE_CALLABLE:
+    case TYPE_CLASS_T:
+    case TYPE_TYPENAME: {
+      char *type_s = type_str(type);
+      error("unexpected type %s with kind %d for make expression", type_s,
+            type->kind);
+      free(type_s);
+      break;
+    }
+  }
 }
 
 static void cg_inst_stmt_builtin_print(cg_ctx *ctx, const mir_stmt *stmt) {
@@ -604,12 +641,7 @@ static void cg_inst_stmt_assign_lit(cg_ctx *ctx, const mir_stmt *stmt) {
   const mir_value *to_value = stmt->assign.to;
   const mir_lit   *from_lit = stmt->assign.from_lit;
 
-  const type_base *type = from_lit->type_ref ? from_lit->type_ref->type : NULL;
-
-  if (!type) {
-    error("lit type is unset %p", stmt);
-    return;
-  }
+  const type_base *type = from_lit->type_ref->type;
 
   const cg_value_meta *to_meta = cg_ctx_value_meta_find(ctx, to_value);
 

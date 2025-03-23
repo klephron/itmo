@@ -264,7 +264,8 @@ const char *exception_subtype_cg_str(exception_subtype_cg type) {
       return "unexpected args";
     case EXCEPTION_CG_EXTERN_SUBROUTINE_ASSIGNMENT:
       return "unexpected extern subroutine assignment";
-      break;
+    case EXCEPTION_CG_UNEXPECTED_TYPE:
+      return "unexpected type";
     case EXCEPTION_CG_UNKNOWN:
       break;
   }

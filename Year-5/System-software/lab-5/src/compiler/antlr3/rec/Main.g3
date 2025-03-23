@@ -57,7 +57,7 @@ source_item
 
 // TYPES
 type_ref
-  : (tr='bool' | tr='byte' | tr='int' | tr='uint' | tr='long' | tr='ulong' | tr='char' | tr='string' | tr='void') -> ^(TYPE $tr)
+  : (tr='bool' | tr='byte' | tr='int' | tr='uint' | tr='long' | tr='ulong' | tr='char' | tr='string' | tr='void' | tr='any') -> ^(TYPE $tr)
   | identifier type_template? -> ^(TYPE identifier type_template?)
   | 'array' '[' (elems+=',')* ']' 'of' type_ref -> ^(TYPE ^('array' ^(type_ref) ^(ELEMS $elems*)))
   ;

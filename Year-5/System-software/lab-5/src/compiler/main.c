@@ -384,7 +384,7 @@ static int execute(args *args) {
   }
 
   // stage: print type table
-  if (execute_ok(args) && args->hir_symbols) {
+  if (execute_ok(args) && args->hir_types) {
     char *table = type_table_str(hir_type_table, "HIR TYPE TABLE");
     fprintf(stdout, "%s", table);
     if (table) {
@@ -393,7 +393,7 @@ static int execute(args *args) {
   }
 
   // stage: print symbol table
-  if (execute_ok(args) && args->hir_types) {
+  if (execute_ok(args) && args->hir_symbols) {
     char *table = symbol_table_str(hir_symbol_table, "HIR SYMBOL TABLE");
     fprintf(stdout, "%s", table);
     if (table) {

@@ -381,9 +381,7 @@ static void cg_inst_sub_main_epilogue(cg_ctx *ctx) {
       ctx, CG_X86_64_MNEM_CALL,
       cg_x86_64_op_new_direct(strdup("__x86_64_flush")), NULL);
 
-  const type_base *ret_type = ctx->sub->defined.ret->type_ref
-                                  ? ctx->sub->defined.ret->type_ref->type
-                                  : NULL;
+  const type_base *ret_type = ctx->sub->defined.ret->type_ref->type;
 
   if (ret_type && ret_type->kind == TYPE_PRIMITIVE &&
       ((type_primitive *)ret_type)->type == TYPE_PRIMITIVE_INT) {

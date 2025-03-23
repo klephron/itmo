@@ -20,6 +20,7 @@ typedef enum hir_type_enum {
   HIR_TYPE_CHAR,
   HIR_TYPE_STRING,
   HIR_TYPE_VOID,
+  HIR_TYPE_ANY,
   // when initially building templates/classes can't be resolved without scopes
   HIR_TYPE_CUSTOM,
   // non-primitive (can have templates)

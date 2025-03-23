@@ -73,6 +73,7 @@ typedef enum enception_subtype_cg_enum {
   EXCEPTION_CG_UNEXPECTED_RETURN_TYPE,
   EXCEPTION_CG_UNEXPECTED_ARGS,
   EXCEPTION_CG_EXTERN_SUBROUTINE_ASSIGNMENT,
+  EXCEPTION_CG_UNEXPECTED_TYPE,
 } exception_subtype_cg;
 
 typedef struct exception_struct {

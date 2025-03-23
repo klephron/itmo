@@ -273,6 +273,11 @@ hir_type_base *hir_build_type_void(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
   return hir_type_base_new(span, HIR_TYPE_VOID);
 }
 
+hir_type_base *hir_build_type_any(hir_ctx *ctx, ANTLR3_BASE_TREE *node) {
+  span *span = hir_span_new(node, ctx->ast_cur_ref->name_ref);
+  return hir_type_base_new(span, HIR_TYPE_ANY);
+}
+
 hir_type_custom *hir_build_type_custom(hir_ctx *ctx, hir_id *id,
                                        list_hir_type *templates) {
   UNUSED(ctx);
