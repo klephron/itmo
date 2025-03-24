@@ -6,6 +6,7 @@
 #include "x86_64_core/proxy/value/bool.h"
 #include "x86_64_core/proxy/value/char.h"
 #include "x86_64_core/proxy/value/string_elem_ref.h"
+#include "x86_64_core/proxy/value/ulong.h"
 #include "x86_64_core/proxy/value/void.h"
 #include "x86_64_core/value.h"
 #include "x86_64_core/value/string.h"
@@ -142,54 +143,69 @@ void __x86_64_proxy_string_op_index(x86_64_value *out, x86_64_value *self,
                                     ...) {
   va_list args;
   va_start(args, self);
+  __x86_64_proxy_string_op_index_v(out, self, args);
+  va_end(args);
+}
 
+void __x86_64_proxy_string_op_index_v(x86_64_value *out, x86_64_value *self,
+                                      va_list args) {
   x86_64_value *arg = va_arg(args, x86_64_value *);
   if (!arg) {
     __x86_64_proxy_op_error_string(out, "index", "op index no arg passed");
-    goto cleanup;
+    return;
   }
 
   uint64_t index = __x86_64_proxy_value_as_index(arg);
   if (index == UINT64_MAX) {
     __x86_64_proxy_op_error_not_number(out, arg, "index");
-    goto cleanup;
+    return;
   }
 
   x86_64_data_string data = *(x86_64_data_string *)&self->data_raw;
 
   __x86_64_proxy_char_init(out, data.value[index]);
-
-cleanup:
-  va_end(args);
 }
 
 void __x86_64_proxy_string_op_index_ref(x86_64_value *out, x86_64_value *self,
                                         ...) {
   va_list args;
   va_start(args, self);
+  __x86_64_proxy_string_op_index_ref_v(out, self, args);
+  va_end(args);
+}
 
+void __x86_64_proxy_string_op_index_ref_v(x86_64_value *out, x86_64_value *self,
+                                          va_list args) {
   x86_64_value *arg = va_arg(args, x86_64_value *);
   if (!arg) {
     __x86_64_proxy_op_error_string(out, "index_ref",
                                    "op index_ref no arg passed");
-    goto cleanup;
+    return;
   }
 
   uint64_t index = __x86_64_proxy_value_as_index(arg);
   if (index == UINT64_MAX) {
     __x86_64_proxy_op_error_not_number(out, arg, "index_ref");
-    goto cleanup;
+    return;
   }
 
   x86_64_data_string data = *(x86_64_data_string *)&self->data_raw;
 
   __x86_64_proxy_string_elem_ref_init(out, data.value + index);
-
-cleanup:
-  va_end(args);
 }
 
-x86_64_op_member     __x86_64_proxy_string_op_member;
+void __x86_64_proxy_string_op_member(x86_64_value *out, x86_64_value *self,
+                                     const uint8_t *member) {
+  x86_64_data_string data = *(x86_64_data_string *)&self->data_raw;
+
+  if (!strcmp((const char *)member, "length")) {
+    uint64_t length = strlen((const char *)data.value);
+    __x86_64_proxy_ulong_init(out, length);
+  } else {
+    __x86_64_proxy_op_error_no_member(out, "index", member);
+  }
+}
+
 x86_64_op_member_ref __x86_64_proxy_string_op_member_ref;
 x86_64_op_deref      __x86_64_proxy_string_op_deref;
 x86_64_op_call       __x86_64_proxy_string_op_call;

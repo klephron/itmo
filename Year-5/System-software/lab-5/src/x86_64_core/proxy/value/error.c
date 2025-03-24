@@ -178,8 +178,22 @@ void __x86_64_proxy_error_op_index(x86_64_value *out, x86_64_value *self, ...) {
   self->op_tbl->op_copy(out, self);
 }
 
+void __x86_64_proxy_error_op_index_v(x86_64_value *out, x86_64_value *self,
+                                     va_list args) {
+  UNUSED(args);
+  x86_64_proxy_error_unhandled(self, "index");
+  self->op_tbl->op_copy(out, self);
+}
+
 void __x86_64_proxy_error_op_index_ref(x86_64_value *out, x86_64_value *self,
                                        ...) {
+  x86_64_proxy_error_unhandled(self, "index_ref");
+  self->op_tbl->op_copy(out, self);
+}
+
+void __x86_64_proxy_error_op_index_ref_v(x86_64_value *out, x86_64_value *self,
+                                         va_list args) {
+  UNUSED(args);
   x86_64_proxy_error_unhandled(self, "index_ref");
   self->op_tbl->op_copy(out, self);
 }

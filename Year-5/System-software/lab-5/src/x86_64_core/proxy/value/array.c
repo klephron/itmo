@@ -54,7 +54,12 @@ x86_64_op_rem     __x86_64_proxy_array_op_rem;
 void __x86_64_proxy_array_op_index(x86_64_value *out, x86_64_value *self, ...) {
   va_list args;
   va_start(args, self);
+  __x86_64_proxy_array_op_index_v(out, self, args);
+  va_end(args);
+}
 
+void __x86_64_proxy_array_op_index_v(x86_64_value *out, x86_64_value *self,
+                                     va_list args) {
   x86_64_value tmp = *self;
 
   for (x86_64_value *arg = va_arg(args, x86_64_value *); arg;
@@ -63,34 +68,37 @@ void __x86_64_proxy_array_op_index(x86_64_value *out, x86_64_value *self, ...) {
     if (tmp.type != X86_64_TYPE_ARRAY) {
       __x86_64_proxy_op_error_type_mismatch(out, &tmp, "index",
                                             X86_64_TYPE_ARRAY);
-      goto cleanup;
+      return;
     }
 
     uint64_t index = __x86_64_proxy_value_as_index(arg);
     if (index == UINT64_MAX) {
       __x86_64_proxy_op_error_not_number(out, arg, "index");
-      goto cleanup;
+      return;
     }
 
     x86_64_data_array *data = (x86_64_data_array *)tmp.data_ptr;
     if (index >= data->length) {
       __x86_64_proxy_op_error_string(out, "index", "out of bounds");
-      goto cleanup;
+      return;
     }
 
     tmp = data->elements[index];
   }
 
   tmp.op_tbl->op_copy(out, &tmp);
-
-cleanup:
-  va_end(args);
 }
 
 void __x86_64_proxy_array_op_index_ref(x86_64_value *out, x86_64_value *self,
                                        ...) {
   va_list args;
   va_start(args, self);
+  __x86_64_proxy_array_op_index_ref_v(out, self, args);
+  va_end(args);
+}
+
+void __x86_64_proxy_array_op_index_ref_v(x86_64_value *out, x86_64_value *self,
+                                         va_list args) {
 
   x86_64_value tmp = *self;
 
@@ -103,28 +111,25 @@ void __x86_64_proxy_array_op_index_ref(x86_64_value *out, x86_64_value *self,
     if (tmp.type != X86_64_TYPE_ARRAY) {
       __x86_64_proxy_op_error_type_mismatch(out, &tmp, "index_ref",
                                             X86_64_TYPE_ARRAY);
-      goto cleanup;
+      return;
     }
 
     index = __x86_64_proxy_value_as_index(arg);
     if (index == UINT64_MAX) {
       __x86_64_proxy_op_error_not_number(out, arg, "index_ref");
-      goto cleanup;
+      return;
     }
 
     data = (x86_64_data_array *)tmp.data_ptr;
     if (index >= data->length) {
       __x86_64_proxy_op_error_string(out, "index_ref", "out of bounds");
-      goto cleanup;
+      return;
     }
 
     tmp = data->elements[index];
   }
 
   __x86_64_proxy_value_ref_init(out, data->elements + index);
-
-cleanup:
-  va_end(args);
 }
 
 void __x86_64_proxy_array_op_member(x86_64_value *out, x86_64_value *self,
@@ -132,10 +137,9 @@ void __x86_64_proxy_array_op_member(x86_64_value *out, x86_64_value *self,
   if (!strcmp((const char *)member, "length")) {
     x86_64_data_array *data = (x86_64_data_array *)self->data_ptr;
     __x86_64_proxy_ulong_init(out, data->length);
-    return;
+  } else {
+    __x86_64_proxy_op_error_no_member(out, "index", member);
   }
-
-  __x86_64_proxy_op_error_no_member(out, "index", member);
 }
 
 x86_64_op_member_ref __x86_64_proxy_array_op_member_ref;

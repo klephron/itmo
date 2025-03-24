@@ -426,18 +426,6 @@ char *mir_str(const mir *mir) {
   strbuf_append_clx(buffer, "{", pad);
   pad += MIR_STR_TAB;
 
-  // defined subroutines
-  strbuf_append_clx(buffer, "DEFINED SUBROUTINES: [", pad);
-  pad += MIR_STR_TAB;
-  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->defined_subs);
-       !END(it); NEXT(it)) {
-    const mir_subroutine *subroutine = GET(it);
-    strbuf_append_clx(buffer, "", pad);
-    mir_str_subroutine(buffer, pad, subroutine);
-  }
-  pad -= MIR_STR_TAB;
-  strbuf_append_clx(buffer, "]", pad);
-
   // declared subroutines
   strbuf_append_clx(buffer, "DECLARED SUBROUTINES: [", pad);
   pad += MIR_STR_TAB;
@@ -456,6 +444,18 @@ char *mir_str(const mir *mir) {
   pad += MIR_STR_TAB;
   for (list_mir_subroutine_it it =
            list_mir_subroutine_begin(mir->imported_subs);
+       !END(it); NEXT(it)) {
+    const mir_subroutine *subroutine = GET(it);
+    strbuf_append_clx(buffer, "", pad);
+    mir_str_subroutine(buffer, pad, subroutine);
+  }
+  pad -= MIR_STR_TAB;
+  strbuf_append_clx(buffer, "]", pad);
+
+  // defined subroutines
+  strbuf_append_clx(buffer, "DEFINED SUBROUTINES: [", pad);
+  pad += MIR_STR_TAB;
+  for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->defined_subs);
        !END(it); NEXT(it)) {
     const mir_subroutine *subroutine = GET(it);
     strbuf_append_clx(buffer, "", pad);

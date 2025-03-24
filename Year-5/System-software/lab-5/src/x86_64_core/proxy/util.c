@@ -129,7 +129,7 @@ void __x86_64_proxy_op_error_not_number(x86_64_value *out, x86_64_value *self,
   x86_64_value self_type;
   strbuf      *buffer = strbuf_new(64, 0);
 
-  strbuf_append(buffer, "`");
+  strbuf_append(buffer, "unable to convert `");
 
   self->op_tbl->op_repr(&self_repr, self);
   strbuf_append(buffer, (char *)self_repr.data_ptr);
@@ -143,7 +143,7 @@ void __x86_64_proxy_op_error_not_number(x86_64_value *out, x86_64_value *self,
 
   strbuf_append_f(buffer, buf, "(%d)", self->type);
 
-  strbuf_append(buffer, " can't convert to number (or uint64_t max) `");
+  strbuf_append(buffer, " to number");
 
   __x86_64_proxy_op_error_string(out, op, strbuf_data(buffer));
 

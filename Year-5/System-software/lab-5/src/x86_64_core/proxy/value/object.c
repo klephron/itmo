@@ -54,63 +54,66 @@ void __x86_64_proxy_object_op_index(x86_64_value *out, x86_64_value *self,
                                     ...) {
   va_list args;
   va_start(args, self);
+  __x86_64_proxy_object_op_index_v(out, self, args);
+  va_end(args);
+}
 
+void __x86_64_proxy_object_op_index_v(x86_64_value *out, x86_64_value *self,
+                                      va_list args) {
   x86_64_value *value = va_arg(args, typeof(value));
   if (!value) {
     __x86_64_proxy_op_error_string(out, "index", "op index no arg passed");
-    goto cleanup;
+    return;
   }
 
   uint64_t index = __x86_64_proxy_value_as_index(value);
   if (index == UINT64_MAX) {
     __x86_64_proxy_op_error_not_number(out, value, "index");
-    goto cleanup;
+    return;
   }
 
   x86_64_data_object *data = (x86_64_data_object *)self->data_ptr;
 
   if (index >= data->symbols_ref->count) {
     __x86_64_proxy_op_error_string(out, "index", "out of bounds");
-    goto cleanup;
+    return;
   }
 
   x86_64_value *elem = data->members + index;
   elem->op_tbl->op_copy(out, elem);
-
-cleanup:
-  va_end(args);
 }
 
 void __x86_64_proxy_object_op_index_ref(x86_64_value *out, x86_64_value *self,
                                         ...) {
   va_list args;
   va_start(args, self);
-
+  __x86_64_proxy_object_op_index_ref_v(out, self, args);
+  va_end(args);
+}
+void __x86_64_proxy_object_op_index_ref_v(x86_64_value *out, x86_64_value *self,
+                                          va_list args) {
   x86_64_value *value = va_arg(args, typeof(value));
   if (!value) {
     __x86_64_proxy_op_error_string(out, "index_ref", "op index no arg passed");
-    goto cleanup;
+    return;
   }
 
   uint64_t index = __x86_64_proxy_value_as_index(value);
   if (index == UINT64_MAX) {
     __x86_64_proxy_op_error_not_number(out, value, "index_ref");
-    goto cleanup;
+    return;
   }
 
   x86_64_data_object *data = (x86_64_data_object *)self->data_ptr;
 
   if (index >= data->symbols_ref->count) {
     __x86_64_proxy_op_error_string(out, "index_ref", "out of bounds");
-    goto cleanup;
+    return;
   }
 
   x86_64_value *elem = data->members + index;
 
   __x86_64_proxy_value_ref_init(out, elem);
-
-cleanup:
-  va_end(args);
 }
 
 void __x86_64_proxy_object_op_member(x86_64_value *out, x86_64_value *self,

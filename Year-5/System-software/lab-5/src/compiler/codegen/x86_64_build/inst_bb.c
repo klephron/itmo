@@ -1,4 +1,5 @@
 #include "compiler/codegen/exception.h"
+#include "compiler/codegen/x86_64/x86_64.h"
 #include "compiler/mir/str.h"
 #include "compiler/type_table/str.h"
 #include "inst.h"
@@ -18,48 +19,59 @@ static void cg_inst_frame_restore(cg_ctx *ctx, uint64_t frame_size_old) {
   }
 }
 
+// if meta == NULL, push NULL
 static void cg_inst_value_reg(cg_ctx *ctx, const cg_value_meta *meta,
                               cg_x86_64_reg reg) {
-  if (meta->is_ptr) {
-    cg_ctx_text_emplace_back_text(
-        ctx, CG_X86_64_MNEM_MOVQ,
-        cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP),
-        cg_x86_64_op_new_register(reg), NULL);
+  if (meta) {
+    if (meta->is_ptr) {
+      cg_ctx_text_emplace_back_text(
+          ctx, CG_X86_64_MNEM_MOVQ,
+          cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP),
+          cg_x86_64_op_new_register(reg), NULL);
+    } else {
+      cg_ctx_text_emplace_back_text(
+          ctx, CG_X86_64_MNEM_LEAQ,
+          cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP),
+          cg_x86_64_op_new_register(reg), NULL);
+    }
   } else {
-    cg_ctx_text_emplace_back_text(
-        ctx, CG_X86_64_MNEM_LEAQ,
-        cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP),
-        cg_x86_64_op_new_register(reg), NULL);
+    cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_MOVQ,
+                                  cg_x86_64_op_new_immediate(0),
+                                  cg_x86_64_op_new_register(reg), NULL);
   }
 }
 
+// if meta == NULL, pushes NULL
 static void cg_inst_value_push(cg_ctx *ctx, const cg_value_meta *meta) {
-  if (meta->is_ptr) {
-    ctx->frame_size += cg_ctx_text_emplace_back_text(
-        ctx, CG_X86_64_MNEM_PUSHQ,
-        cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP), NULL);
-  } else {
-    cg_ctx_text_emplace_back_text(
-        ctx, CG_X86_64_MNEM_LEAQ,
-        cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP),
-        cg_x86_64_op_new_register(CG_X86_64_REG_RAX), NULL);
+  if (meta) {
+    if (meta->is_ptr) {
+      ctx->frame_size += cg_ctx_text_emplace_back_text(
+          ctx, CG_X86_64_MNEM_PUSHQ,
+          cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP), NULL);
+    } else {
+      cg_ctx_text_emplace_back_text(
+          ctx, CG_X86_64_MNEM_LEAQ,
+          cg_x86_64_op_new_base_imm(meta->offset, CG_X86_64_REG_RBP),
+          cg_x86_64_op_new_register(CG_X86_64_REG_RAX), NULL);
 
+      ctx->frame_size += cg_ctx_text_emplace_back_text(
+          ctx, CG_X86_64_MNEM_PUSHQ,
+          cg_x86_64_op_new_register(CG_X86_64_REG_RAX), NULL);
+    }
+  } else {
     ctx->frame_size += cg_ctx_text_emplace_back_text(
-        ctx, CG_X86_64_MNEM_PUSHQ, cg_x86_64_op_new_register(CG_X86_64_REG_RAX),
-        NULL);
+        ctx, CG_X86_64_MNEM_PUSHQ, cg_x86_64_op_new_immediate(0), NULL);
   }
 }
 
-// updates frame size
-static void cg_inst_call_prep_values(cg_ctx *ctx, uint64_t values_cnt,
+// updates frame size, if value == NULL then need to add NULL as argument
+static void cg_inst_call_pass_values(cg_ctx *ctx, uint64_t values_cnt,
                                      const mir_value *const *values) {
 
   // calculate memory that will be used for arguments and add alignment
-  uint64_t frame_size_new = ctx->frame_size;
-
-  if (values_cnt > 6) {
-    frame_size_new = ctx->frame_size + CG_X86_64_SIZE_QUAD * (values_cnt - 6);
-  }
+  uint64_t frame_size_new =
+      ctx->frame_size +
+      ((values_cnt > 6) ? CG_X86_64_SIZE_QUAD * (values_cnt - 6) : 0);
 
   uint64_t alignment = cg_aligned(frame_size_new) - (frame_size_new);
   if (alignment) {
@@ -72,7 +84,8 @@ static void cg_inst_call_prep_values(cg_ctx *ctx, uint64_t values_cnt,
   // will overflow to uint64_max, prepares args from last to first
   for (uint64_t i = values_cnt - 1; i != UINT64_MAX; --i) {
     const mir_value     *value = values[i];
-    const cg_value_meta *meta  = cg_ctx_value_meta_find(ctx, value);
+    const cg_value_meta *meta =
+        value ? cg_ctx_value_meta_find(ctx, value) : NULL;
 
     switch (i) {
       case 0: {
@@ -142,11 +155,13 @@ static void cg_inst_call_op_tbl(cg_ctx *ctx, const mir_value *self,
                                 NULL);
 }
 
+// if o_null is set then adds NULL as last elements
 static uint64_t cg_inst_call_values(const mir_value    *ret,
                                     list_mir_value_ref *args,
-                                    const mir_value  ***values_out) {
-  uint64_t values_cnt =
-      (ret ? 1 : 0) + (args ? list_mir_value_ref_size(args) : 0);
+                                    const mir_value ***values_out, int o_null) {
+  uint64_t values_cnt = (ret ? 1 : 0) +
+                        (args ? list_mir_value_ref_size(args) : 0) +
+                        (o_null ? 1 : 0);
 
   const mir_value **values = MALLOCN(const mir_value *, values_cnt);
   {
@@ -155,10 +170,13 @@ static uint64_t cg_inst_call_values(const mir_value    *ret,
       values[i++] = ret;
     }
     if (args) {
-      for (list_mir_value_ref_it it = list_mir_value_ref_begin(args);
-           i != values_cnt; ++i, NEXT(it)) {
+      for (list_mir_value_ref_it it = list_mir_value_ref_begin(args); !END(it);
+           ++i, NEXT(it)) {
         values[i] = GET(it);
       }
+    }
+    if (o_null) {
+      values[i] = NULL;
     }
   }
 
@@ -167,11 +185,10 @@ static uint64_t cg_inst_call_values(const mir_value    *ret,
 }
 
 static void cg_inst_stmt_op(cg_ctx *ctx, const mir_stmt *stmt) {
-  const mir_value **values;
-  uint64_t          values_cnt =
-      cg_inst_call_values(stmt->op.ret, stmt->op.args, &values);
-
   uint64_t frame_size_old = ctx->frame_size;
+
+  const mir_value **values = NULL;
+  uint64_t          values_cnt;
 
   const mir_value *self = list_mir_value_ref_front(stmt->op.args);
   if (!self) {
@@ -182,86 +199,102 @@ static void cg_inst_stmt_op(cg_ctx *ctx, const mir_stmt *stmt) {
 
   switch (stmt->op.kind) {
     case MIR_STMT_OP_UNARY_PLUS: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_plus));
       break;
     }
     case MIR_STMT_OP_UNARY_MINUS: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_minus));
       break;
     }
     case MIR_STMT_OP_UNARY_LOGICAL_NOT: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_not));
       break;
     }
     case MIR_STMT_OP_UNARY_BITWISE_NOT: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_bit_not));
       break;
     }
     case MIR_STMT_OP_UNARY_INC: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_inc));
       break;
     }
     case MIR_STMT_OP_UNARY_DEC: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_dec));
       break;
     }
     case MIR_STMT_OP_BINARY_LOGICAL_OR: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_or));
       break;
     }
     case MIR_STMT_OP_BINARY_LOGICAL_AND: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_and));
       break;
     }
     case MIR_STMT_OP_BINARY_BITWISE_OR: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_bit_or));
       break;
     }
     case MIR_STMT_OP_BINARY_BITWISE_XOR: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_bit_xor));
       break;
     }
     case MIR_STMT_OP_BINARY_BITWISE_AND: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_bit_and));
       break;
     }
     case MIR_STMT_OP_BINARY_EQUALS: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_eq));
       break;
     }
     case MIR_STMT_OP_BINARY_NOT_EQUALS: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_neq));
       break;
     }
     case MIR_STMT_OP_BINARY_LESS: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_less));
       break;
     }
     case MIR_STMT_OP_BINARY_LESS_EQUALS: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_less_eq));
       break;
     }
     case MIR_STMT_OP_BINARY_GREATER: {
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
       if (values_cnt >= 3) {
         const mir_value *tmp = values[1];
         values[1]            = values[2];
         values[2]            = tmp;
-        cg_inst_call_prep_values(ctx, values_cnt, values);
+        cg_inst_call_pass_values(ctx, values_cnt, values);
         cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_less));
       } else {
         error("expected at least 3 arguments for %s(%d) to modify order %p",
@@ -270,11 +303,12 @@ static void cg_inst_stmt_op(cg_ctx *ctx, const mir_stmt *stmt) {
       break;
     }
     case MIR_STMT_OP_BINARY_GREATER_EQUALS: {
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
       if (values_cnt >= 3) {
         const mir_value *tmp = values[1];
         values[1]            = values[2];
         values[2]            = tmp;
-        cg_inst_call_prep_values(ctx, values_cnt, values);
+        cg_inst_call_pass_values(ctx, values_cnt, values);
         cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_less_eq));
       } else {
         error("expected at least 3 arguments for %s(%d) to modify order %p",
@@ -283,42 +317,49 @@ static void cg_inst_stmt_op(cg_ctx *ctx, const mir_stmt *stmt) {
       break;
     }
     case MIR_STMT_OP_BINARY_BITWISE_SHIFT_LEFT: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_bit_shl));
       break;
     }
     case MIR_STMT_OP_BINARY_BITWISE_SHIFT_RIGHT: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_bit_shr));
       break;
     }
     case MIR_STMT_OP_BINARY_ADD: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_add));
       break;
     }
     case MIR_STMT_OP_BINARY_SUB: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_sub));
       break;
     }
     case MIR_STMT_OP_BINARY_MUL: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_mul));
       break;
     }
     case MIR_STMT_OP_BINARY_DIV: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_div));
       break;
     }
     case MIR_STMT_OP_BINARY_REM: {
-      cg_inst_call_prep_values(ctx, values_cnt, values);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_rem));
       break;
     }
     case MIR_STMT_OP_CALL: {
-      cg_inst_call_prep_values(ctx, 1, &self);
+      cg_inst_call_pass_values(ctx, 1, &self);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_call));
 
       ctx->frame_size += cg_ctx_text_emplace_back_text(
@@ -328,8 +369,9 @@ static void cg_inst_stmt_op(cg_ctx *ctx, const mir_stmt *stmt) {
       uint64_t frame_size_rax = ctx->frame_size;
 
       // move values[0] to values[1] thus overwriting op_call
-      values[1] = values[0];
-      cg_inst_call_prep_values(ctx, values_cnt - 1, values + 1);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      values[1]  = values[0];
+      cg_inst_call_pass_values(ctx, values_cnt - 1, values + 1);
 
       uint64_t rax_offset = ctx->frame_size - frame_size_rax;
 
@@ -345,17 +387,20 @@ static void cg_inst_stmt_op(cg_ctx *ctx, const mir_stmt *stmt) {
       break;
     }
     case MIR_STMT_OP_INDEX: {
-      cg_inst_call_prep_values(ctx, 1, &self);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 1);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_index));
       break;
     }
     case MIR_STMT_OP_INDEX_REF: {
-      cg_inst_call_prep_values(ctx, 1, &self);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 1);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_index_ref));
       break;
     }
     case MIR_STMT_OP_DEREF: {
-      cg_inst_call_prep_values(ctx, 1, &self);
+      values_cnt = cg_inst_call_values(stmt->op.ret, stmt->op.args, &values, 0);
+      cg_inst_call_pass_values(ctx, values_cnt, values);
       cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_deref));
       break;
     }
@@ -368,7 +413,9 @@ static void cg_inst_stmt_op(cg_ctx *ctx, const mir_stmt *stmt) {
 cleanup:
   cg_inst_frame_restore(ctx, frame_size_old);
 
-  free(values);
+  if (values) {
+    free(values);
+  }
 }
 
 static void cg_inst_stmt_call_extern(cg_ctx *ctx, const mir_stmt *stmt) {
@@ -731,11 +778,11 @@ static void cg_inst_stmt_call_native(cg_ctx *ctx, const mir_stmt *stmt) {
 
   const mir_value **values;
   uint64_t          values_cnt =
-      cg_inst_call_values(stmt->call.ret, stmt->call.args, &values);
+      cg_inst_call_values(stmt->call.ret, stmt->call.args, &values, 0);
 
   uint64_t frame_size_old = ctx->frame_size;
 
-  cg_inst_call_prep_values(ctx, values_cnt, values);
+  cg_inst_call_pass_values(ctx, values_cnt, values);
 
   cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_CALL,
                                 cg_x86_64_op_new_direct(strdup(sub_sym)), NULL);
@@ -755,12 +802,48 @@ static void cg_inst_stmt_call(cg_ctx *ctx, const mir_stmt *stmt) {
   }
 }
 
-static void cg_inst_stmt_member(cg_ctx *ctx, const mir_stmt *stmt) {
-  warn("TODO: unimplemented member");
-}
+static void cg_inst_stmt_member(cg_ctx *ctx, const mir_stmt *stmt, int o_ref) {
+  const mir_lit   *member      = stmt->member.member;
+  const type_base *member_type = member->type_ref->type;
 
-static void cg_inst_stmt_member_ref(cg_ctx *ctx, const mir_stmt *stmt) {
-  warn("TODO: unimplemented member_ref");
+  if (member_type->kind != TYPE_PRIMITIVE &&
+      ((type_primitive *)member_type)->type != TYPE_PRIMITIVE_STRING) {
+    char *type_s = type_str(member_type);
+    error("expected member type TYPE_PRIMITIVE, STRING, got '%s'", type_s);
+    free(type_s);
+    return;
+  }
+
+  const char *member_sym = cg_ctx_mir_sym_find_lit(ctx, member);
+  if (!member_sym) {
+    char *sym = cg_ctx_mir_sym_emplace_lit(ctx, stmt->member.member);
+
+    cg_ctx_data_push_back(ctx, cg_x86_64_symbol_new_data(sym));
+    cg_ctx_data_push_back(ctx, cg_x86_64_data_new_ascii((uint8_t *)strdup(
+                                   (char *)stmt->member.member->value.v_str)));
+
+    member_sym = sym;
+  }
+
+  const mir_value     *ret      = stmt->member.ret;
+  const cg_value_meta *ret_meta = cg_ctx_value_meta_find(ctx, ret);
+
+  const mir_value     *self      = stmt->member.obj;
+  const cg_value_meta *self_meta = cg_ctx_value_meta_find(ctx, self);
+
+  cg_inst_value_reg(ctx, ret_meta, CG_X86_64_REG_RDI);
+  cg_inst_value_reg(ctx, self_meta, CG_X86_64_REG_RSI);
+
+  cg_ctx_text_emplace_back_text(
+      ctx, CG_X86_64_MNEM_LEAQ,
+      cg_x86_64_op_new_base_sym(strdup(member_sym), CG_X86_64_REG_RIP),
+      cg_x86_64_op_new_register(CG_X86_64_REG_RDX), NULL);
+
+  if (o_ref) {
+    cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_member_ref));
+  } else {
+    cg_inst_call_op_tbl(ctx, self, offsetof(x86_64_op_tbl, op_member));
+  }
 }
 
 static void cg_inst_stmt_builtin_cast(cg_ctx *ctx, const mir_stmt *stmt) {
@@ -894,14 +977,7 @@ static void cg_inst_stmt_builtin_cast(cg_ctx *ctx, const mir_stmt *stmt) {
 }
 
 static void cg_inst_stmt_builtin_make(cg_ctx *ctx, const mir_stmt *stmt) {
-  const type_base *type = stmt->builtin.type ? stmt->builtin.type->type : NULL;
-  if (!type) {
-    span *span = mir_debug_to_span(&stmt->debug);
-    cg_exception_add_error(ctx->exceptions, EXCEPTION_CG_UNEXPECTED_TYPE, span,
-                           "no type specified to make expression");
-    span_free(span);
-    return;
-  }
+  const type_base *type = stmt->builtin.type->type;
 
   switch (type->kind) {
     case TYPE_PRIMITIVE: {
@@ -909,24 +985,68 @@ static void cg_inst_stmt_builtin_make(cg_ctx *ctx, const mir_stmt *stmt) {
       span *span   = mir_debug_to_span(&stmt->debug);
       cg_exception_add_error(
           ctx->exceptions, EXCEPTION_CG_UNEXPECTED_TYPE, span,
-          "primitive type %s can't be instantiated with make", type_s);
+          "primitive type '%s' cannot be instantiated with make", type_s);
       span_free(span);
       free(type_s);
-      return;
+      break;
     }
     case TYPE_ARRAY: {
-      const type_array *t = (typeof(t))type;
-      // calculate type dimensions
+      const type_array *array = (typeof(array))type;
+
+      // calculate array depth
+      uint64_t depth = 0;
+      {
+        union {
+          const type_base  *base;
+          const type_array *arr;
+        } tu;
+
+        tu.base = type;
+
+        while (tu.base->kind == TYPE_ARRAY) {
+          tu.base = tu.arr->element_ref;
+          ++depth;
+        }
+      }
+
+      uint64_t args_cnt = list_mir_value_ref_size(stmt->builtin.args);
+      if (args_cnt != depth) {
+        span *span = mir_debug_to_span(&stmt->debug);
+        cg_exception_add_error(
+            ctx->exceptions, EXCEPTION_CG_UNEXPECTED_ARGS, span,
+            "array args count mismatch array depth: expected %lu, got %lu",
+            depth, args_cnt);
+        span_free(span);
+        break;
+      }
+
+      uint64_t frame_size_old = ctx->frame_size;
+
+      const mir_value **values;
+      const uint64_t    values_cnt = cg_inst_call_values(
+          stmt->builtin.ret, stmt->builtin.args, &values, 1);
+
+      cg_inst_call_pass_values(ctx, values_cnt, values);
+
+      cg_ctx_text_emplace_back_text(
+          ctx, CG_X86_64_MNEM_CALL,
+          cg_x86_64_op_new_direct(strdup("__x86_64_make_array")), NULL);
+
+      cg_inst_frame_restore(ctx, frame_size_old);
+
+      free(values);
+      break;
     }
     case TYPE_MONO: {
-
-    } break;
+      warn("TODO: make MONO");
+      break;
+    }
     default:
     case TYPE_CALLABLE:
     case TYPE_CLASS_T:
     case TYPE_TYPENAME: {
       char *type_s = type_str(type);
-      error("unexpected type %s with kind %d for make expression", type_s,
+      error("unexpected type '%s' with kind %d for make expression", type_s,
             type->kind);
       free(type_s);
       break;
@@ -1132,7 +1252,7 @@ static void cg_inst_stmt_assign_value(cg_ctx *ctx, const mir_stmt *stmt) {
 
   uint64_t frame_size_old = ctx->frame_size;
 
-  cg_inst_call_prep_values(ctx, sizeof(values) / sizeof(values[0]), values);
+  cg_inst_call_pass_values(ctx, sizeof(values) / sizeof(values[0]), values);
 
   cg_inst_call_op_tbl(ctx, to_value, offsetof(x86_64_op_tbl, op_assign));
 
@@ -1195,9 +1315,9 @@ static void cg_inst_stmt(cg_ctx *ctx, const mir_stmt *stmt) {
     case MIR_STMT_CALL:
       return cg_inst_stmt_call(ctx, stmt);
     case MIR_STMT_MEMBER:
-      return cg_inst_stmt_member(ctx, stmt);
+      return cg_inst_stmt_member(ctx, stmt, 0);
     case MIR_STMT_MEMBER_REF:
-      return cg_inst_stmt_member_ref(ctx, stmt);
+      return cg_inst_stmt_member(ctx, stmt, 1);
     case MIR_STMT_BUILTIN:
       return cg_inst_stmt_builtin(ctx, stmt);
     case MIR_STMT_ASSIGN:

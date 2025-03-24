@@ -94,21 +94,23 @@ void __x86_64_proxy_bool_op_neq(x86_64_value *out, x86_64_value *self,
   __x86_64_proxy_bool_init(out, self_data.value != rsv_data.value);
 }
 
-x86_64_op_less       __x86_64_proxy_bool_op_less;
-x86_64_op_less_eq    __x86_64_proxy_bool_op_less_eq;
-x86_64_op_bit_shl    __x86_64_proxy_bool_op_bit_shl;
-x86_64_op_bit_shr    __x86_64_proxy_bool_op_bit_shr;
-x86_64_op_add        __x86_64_proxy_bool_op_add;
-x86_64_op_sub        __x86_64_proxy_bool_op_sub;
-x86_64_op_mul        __x86_64_proxy_bool_op_mul;
-x86_64_op_div        __x86_64_proxy_bool_op_div;
-x86_64_op_rem        __x86_64_proxy_bool_op_rem;
-x86_64_op_index      __x86_64_proxy_bool_op_index;
-x86_64_op_index_ref  __x86_64_proxy_bool_op_index_ref;
-x86_64_op_member     __x86_64_proxy_bool_op_member;
-x86_64_op_member_ref __x86_64_proxy_bool_op_member_ref;
-x86_64_op_deref      __x86_64_proxy_bool_op_deref;
-x86_64_op_call       __x86_64_proxy_bool_op_call;
+x86_64_op_less        __x86_64_proxy_bool_op_less;
+x86_64_op_less_eq     __x86_64_proxy_bool_op_less_eq;
+x86_64_op_bit_shl     __x86_64_proxy_bool_op_bit_shl;
+x86_64_op_bit_shr     __x86_64_proxy_bool_op_bit_shr;
+x86_64_op_add         __x86_64_proxy_bool_op_add;
+x86_64_op_sub         __x86_64_proxy_bool_op_sub;
+x86_64_op_mul         __x86_64_proxy_bool_op_mul;
+x86_64_op_div         __x86_64_proxy_bool_op_div;
+x86_64_op_rem         __x86_64_proxy_bool_op_rem;
+x86_64_op_index       __x86_64_proxy_bool_op_index;
+x86_64_op_index_v     __x86_64_proxy_bool_op_index_v;
+x86_64_op_index_ref   __x86_64_proxy_bool_op_index_ref;
+x86_64_op_index_ref_v __x86_64_proxy_bool_op_index_ref_v;
+x86_64_op_member      __x86_64_proxy_bool_op_member;
+x86_64_op_member_ref  __x86_64_proxy_bool_op_member_ref;
+x86_64_op_deref       __x86_64_proxy_bool_op_deref;
+x86_64_op_call        __x86_64_proxy_bool_op_call;
 
 void __x86_64_proxy_bool_op_assign(x86_64_value *self, x86_64_value *other) {
   other->op_tbl->op_copy(self, other);

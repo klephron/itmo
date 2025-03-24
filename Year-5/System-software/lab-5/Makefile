@@ -23,7 +23,7 @@ PDF.COMPILER_FLAGS ?= --ast --cfg --cfg-add-expr --cg --hir-tree --hir-symbols -
 
 ASM.AS_FLAGS       ?= --64 -g
 ASM.LD_FLAGS       ?= -g -z noexecstack
-ASM.COMPILER_FLAGS ?=
+ASM.COMPILER_FLAGS ?= --mir
 ASM.DL_PATH        ?= /usr/lib64/ld-linux-x86-64.so.2
 
 COMPILE.AS_FLAGS   ?= --64 -g
@@ -184,7 +184,8 @@ run/asm/%: ASM.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
 run/asm/%: ASM.OUTPUT_FILE=$(patsubst run/asm/%,%.out,$@)
 run/asm/%: compiler/build/main
 	./build/compiler/main $(ASM.COMPILER_FLAGS) \
-		-o $(ASM.ASM_FILE) $(ASM.INPUT_FILE) $(x86_64_std.SRC_DIR)/x86_64_std.txt
+		-o $(ASM.ASM_FILE) \
+		$(ASM.INPUT_FILE) $(x86_64_std.SRC_DIR)/x86_64_std.txt
 	@echo "--------------------ASSEMBLY($(ASM.ASM_FILE))--------------------"
 	@cat $(ASM.ASM_FILE)
 	@echo "--------------------COMPILE($(ASM.ASM_FILE))--------------------"

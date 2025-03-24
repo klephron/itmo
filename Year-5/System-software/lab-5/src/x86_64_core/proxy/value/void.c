@@ -163,9 +163,23 @@ void __x86_64_proxy_void_op_index(x86_64_value *out, x86_64_value *self, ...) {
   __x86_64_proxy_void_init(out);
 }
 
+void __x86_64_proxy_void_op_index_v(x86_64_value *out, x86_64_value *self,
+                                    va_list args) {
+  UNUSED(self);
+  UNUSED(args);
+  __x86_64_proxy_void_init(out);
+}
+
 void __x86_64_proxy_void_op_index_ref(x86_64_value *out, x86_64_value *self,
                                       ...) {
   UNUSED(self);
+  __x86_64_proxy_void_init(out);
+}
+
+void __x86_64_proxy_void_op_index_ref_v(x86_64_value *out, x86_64_value *self,
+                                        va_list args) {
+  UNUSED(self);
+  UNUSED(args);
   __x86_64_proxy_void_init(out);
 }
 
