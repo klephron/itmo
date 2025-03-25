@@ -23,6 +23,8 @@ typedef struct cg_ctx_struct {
 
   const mir_subroutine  *sub;
   const char            *sub_sym;
+  cg_debug_sub          *sub_debug;
+  uint64_t               line_cnt; // also for debug
   hashset_cg_value_meta *map_value_meta;
   uint64_t               frame_size;
 
@@ -74,10 +76,9 @@ void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym);
 void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym);
 
 // labels
-char *cg_label_local_suf(const char *base, const char *suffix);
-char *cg_label_local_suf_idx(const char *base, const char *suffix,
-                             uint64_t idx);
-char *cg_label_local_bb(const char *base, const mir_bb *bb);
+char *cg_sym_local_suf(const char *base, const char *suffix);
+char *cg_sym_local_suf_idx(const char *base, const char *suffix, uint64_t idx);
+char *cg_sym_local_bb(const char *base, const mir_bb *bb);
 
 // utility
 uint64_t cg_aligned(uint64_t size);

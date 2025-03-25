@@ -89,7 +89,7 @@ static void cg_inst_sub_def_params_copy(cg_ctx *ctx) {
   uint64_t frame_size_start = ctx->frame_size - params * CG_X86_64_SIZE_QUAD;
 
   cg_ctx_text_push_back(
-      ctx, cg_x86_64_symbol_new_text(cg_label_local_suf(ctx->sub_sym, "copy")));
+      ctx, cg_x86_64_symbol_new_text(cg_sym_local_suf(ctx->sub_sym, "copy")));
 
   // update stack pointer, because of call
   ctx->frame_size = frame_size_start + sizeof(x86_64_value) * params;
@@ -152,7 +152,7 @@ static void cg_inst_sub_def_params_copy(cg_ctx *ctx) {
 
 static void cg_inst_sub_def_epilogue(cg_ctx *ctx) {
   cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(
-                                 cg_label_local_suf(ctx->sub_sym, "epilogue")));
+                                 cg_sym_local_suf(ctx->sub_sym, "epilogue")));
 
   cg_ctx_text_emplace_back_text(
       ctx, CG_X86_64_MNEM_MOVQ, cg_x86_64_op_new_register(CG_X86_64_REG_RBP),
@@ -167,7 +167,7 @@ static void cg_inst_sub_def_epilogue(cg_ctx *ctx) {
 
 static void cg_inst_sub_def_locals_init(cg_ctx *ctx, int ret) {
   cg_ctx_text_push_back(
-      ctx, cg_x86_64_symbol_new_text(cg_label_local_suf(ctx->sub_sym, "init")));
+      ctx, cg_x86_64_symbol_new_text(cg_sym_local_suf(ctx->sub_sym, "init")));
 
   uint64_t frame_size_old = ctx->frame_size;
 
@@ -247,8 +247,8 @@ static void cg_inst_sub_def_locals_init(cg_ctx *ctx, int ret) {
 }
 
 static void cg_inst_sub_def_locals_deinit(cg_ctx *ctx) {
-  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(
-                                 cg_label_local_suf(ctx->sub_sym, "deinit")));
+  cg_ctx_text_push_back(
+      ctx, cg_x86_64_symbol_new_text(cg_sym_local_suf(ctx->sub_sym, "deinit")));
 
   for (list_mir_value_it it = list_mir_value_begin(ctx->sub->defined.vars);
        !END(it); NEXT(it)) {
@@ -332,14 +332,24 @@ void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym) {
     return;
   }
 
-  ctx->sub     = sub;
-  ctx->sub_sym = sub_sym;
+  ctx->sub      = sub;
+  ctx->sub_sym  = sub_sym;
+  ctx->line_cnt = 0;
+
+  if (cg_debug_enabled(ctx->debug)) {
+    ctx->sub_debug = cg_debug_sub_new(NULL, NULL, sub->symbol_ref->name);
+  }
 
   cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sub_sym));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
+  ctx->frame_size     = CG_X86_64_SIZE_QUAD;
 
-  ctx->frame_size = CG_X86_64_SIZE_QUAD;
+  if (cg_debug_enabled(ctx->debug)) {
+    char *sym_start = cg_sym_local_suf(ctx->sub_sym, "S");
+    cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sym_start));
+    ctx->sub_debug->sym_start_ref = sym_start;
+  }
 
   cg_inst_sub_def_prologue(ctx);
 
@@ -347,13 +357,34 @@ void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym) {
 
   cg_inst_sub_def_locals_init(ctx, 0);
 
-  debug("locals_value_meta '%s':", ctx->sub_sym);
-  for (hashset_cg_value_meta_it it =
-           hashset_cg_value_meta_begin(ctx->map_value_meta);
-       !END(it); NEXT(it)) {
-    cg_value_meta *meta = GET(it);
-    debug("  _%lu -> p=%d, off=%ld(-0x%lx)", meta->value_ref->id, meta->is_ptr,
-          meta->offset, -meta->offset);
+  // debug("locals_value_meta '%s':", ctx->sub_sym);
+  // for (hashset_cg_value_meta_it it =
+  //          hashset_cg_value_meta_begin(ctx->map_value_meta);
+  //      !END(it); NEXT(it)) {
+  //   cg_value_meta *meta = GET(it);
+  //   debug("  _%lu -> p=%d, off=%ld(-0x%lx)", meta->value_ref->id,
+  //   meta->is_ptr,
+  //         meta->offset, -meta->offset);
+  // }
+
+  if (cg_debug_enabled(ctx->debug)) {
+    for (list_mir_value_it it = list_mir_value_begin(sub->defined.params);
+         !END(it); NEXT(it)) {
+      mir_value     *value = GET(it);
+      cg_value_meta *meta  = cg_ctx_value_meta_find(ctx, value);
+      list_cg_debug_param_push_back(
+          ctx->sub_debug->params,
+          cg_debug_param_new(meta->offset, value->symbol_ref->name));
+    }
+
+    for (list_mir_value_it it = list_mir_value_begin(sub->defined.vars);
+         !END(it); NEXT(it)) {
+      mir_value     *value = GET(it);
+      cg_value_meta *meta  = cg_ctx_value_meta_find(ctx, value);
+      list_cg_debug_var_push_back(
+          ctx->sub_debug->vars,
+          cg_debug_var_new(meta->offset, value->symbol_ref->name));
+    }
   }
 
   cg_inst_bbs(ctx, sub->defined.bbs);
@@ -361,6 +392,14 @@ void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym) {
   cg_inst_sub_def_locals_deinit(ctx);
 
   cg_inst_sub_def_epilogue(ctx);
+
+  if (cg_debug_enabled(ctx->debug)) {
+    char *sym_end = cg_sym_local_suf(ctx->sub_sym, "E");
+    cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sym_end));
+    ctx->sub_debug->sym_end_ref = sym_end;
+
+    list_cg_debug_sub_push_back(ctx->debug->subroutines, ctx->sub_debug);
+  }
 
   hashset_cg_value_meta_free(ctx->map_value_meta);
 }
@@ -377,7 +416,7 @@ static void cg_inst_sub_main_prologue(cg_ctx *ctx) {
 
 static void cg_inst_sub_main_epilogue(cg_ctx *ctx) {
   cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(
-                                 cg_label_local_suf(ctx->sub_sym, "epilogue")));
+                                 cg_sym_local_suf(ctx->sub_sym, "epilogue")));
 
   cg_ctx_text_emplace_back_text(
       ctx, CG_X86_64_MNEM_CALL,
@@ -423,26 +462,57 @@ void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym) {
     return;
   }
 
-  ctx->sub     = sub;
-  ctx->sub_sym = sub_sym;
+  ctx->sub      = sub;
+  ctx->sub_sym  = sub_sym;
+  ctx->line_cnt = 0;
+
+  if (cg_debug_enabled(ctx->debug)) {
+    ctx->sub_debug = cg_debug_sub_new(NULL, NULL, sub->symbol_ref->name);
+  }
 
   cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sub_sym));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
+  ctx->frame_size     = CG_X86_64_SIZE_QUAD;
 
-  ctx->frame_size = CG_X86_64_SIZE_QUAD;
+  if (cg_debug_enabled(ctx->debug)) {
+    char *sym_start = cg_sym_local_suf(ctx->sub_sym, "S");
+    cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sym_start));
+    ctx->sub_debug->sym_start_ref = sym_start;
+  }
 
   cg_inst_sub_main_prologue(ctx);
 
   cg_inst_sub_def_locals_init(ctx, 1);
 
-  debug("locals_value_meta '%s':", ctx->sub_sym);
-  for (hashset_cg_value_meta_it it =
-           hashset_cg_value_meta_begin(ctx->map_value_meta);
-       !END(it); NEXT(it)) {
-    cg_value_meta *meta = GET(it);
-    debug("  _%lu -> p=%d, off=%ld(-0x%lx)", meta->value_ref->id, meta->is_ptr,
-          meta->offset, -meta->offset);
+  // debug("locals_value_meta '%s':", ctx->sub_sym);
+  // for (hashset_cg_value_meta_it it =
+  //          hashset_cg_value_meta_begin(ctx->map_value_meta);
+  //      !END(it); NEXT(it)) {
+  //   cg_value_meta *meta = GET(it);
+  //   debug("  _%lu -> p=%d, off=%ld(-0x%lx)", meta->value_ref->id,
+  //   meta->is_ptr,
+  //         meta->offset, -meta->offset);
+  // }
+
+  if (cg_debug_enabled(ctx->debug)) {
+    for (list_mir_value_it it = list_mir_value_begin(sub->defined.params);
+         !END(it); NEXT(it)) {
+      mir_value     *value = GET(it);
+      cg_value_meta *meta  = cg_ctx_value_meta_find(ctx, value);
+      list_cg_debug_param_push_back(
+          ctx->sub_debug->params,
+          cg_debug_param_new(meta->offset, value->symbol_ref->name));
+    }
+
+    for (list_mir_value_it it = list_mir_value_begin(sub->defined.vars);
+         !END(it); NEXT(it)) {
+      mir_value     *value = GET(it);
+      cg_value_meta *meta  = cg_ctx_value_meta_find(ctx, value);
+      list_cg_debug_var_push_back(
+          ctx->sub_debug->vars,
+          cg_debug_var_new(meta->offset, value->symbol_ref->name));
+    }
   }
 
   cg_inst_bbs(ctx, sub->defined.bbs);
@@ -450,6 +520,14 @@ void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym) {
   cg_inst_sub_def_locals_deinit(ctx);
 
   cg_inst_sub_main_epilogue(ctx);
+
+  if (cg_debug_enabled(ctx->debug)) {
+    char *sym_end = cg_sym_local_suf(ctx->sub_sym, "E");
+    cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sym_end));
+    ctx->sub_debug->sym_end_ref = sym_end;
+
+    list_cg_debug_sub_push_back(ctx->debug->subroutines, ctx->sub_debug);
+  }
 
   hashset_cg_value_meta_free(ctx->map_value_meta);
 }

@@ -14,6 +14,8 @@ void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, cg_debug *debug,
 
   ctx->sub            = NULL;
   ctx->sub_sym        = NULL;
+  ctx->sub_debug      = NULL;
+  ctx->line_cnt       = 0;
   ctx->map_value_meta = NULL;
   ctx->frame_size     = 0;
 
@@ -33,6 +35,8 @@ void cg_ctx_deinit(cg_ctx *ctx) {
 
   ctx->sub            = NULL;
   ctx->sub_sym        = NULL;
+  ctx->sub_debug      = NULL;
+  ctx->line_cnt       = 0;
   ctx->map_value_meta = NULL;
   ctx->frame_size     = 0;
 

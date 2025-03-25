@@ -81,3 +81,5 @@ typedef struct cg_debug_struct {
 
 cg_debug *cg_debug_new(cg_debug_level level);
 void      cg_debug_free(cg_debug *debug);
+
+int cg_debug_enabled(cg_debug *debug);

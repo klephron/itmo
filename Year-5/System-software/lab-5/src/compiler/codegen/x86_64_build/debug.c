@@ -77,3 +77,7 @@ void cg_debug_free(cg_debug *self) {
     free(self);
   }
 }
+
+int cg_debug_enabled(cg_debug *debug) {
+  return debug->level == CG_CTX_DEBUG_LEVEL_ENABLED ? 1 : 0;
+}

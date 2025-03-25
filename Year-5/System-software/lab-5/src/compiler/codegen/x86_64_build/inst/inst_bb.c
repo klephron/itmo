@@ -1354,6 +1354,17 @@ static void cg_inst_stmt_assign(cg_ctx *ctx, const mir_stmt *stmt) {
 }
 
 static void cg_inst_stmt(cg_ctx *ctx, const mir_stmt *stmt) {
+
+  if (cg_debug_enabled(ctx->debug)) {
+    char *sym = cg_sym_local_suf_idx(ctx->sub_sym, "L", ctx->line_cnt++);
+
+    cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sym));
+
+    list_cg_debug_line_push_back(
+        ctx->debug->lines,
+        cg_debug_line_new(sym, stmt->debug.source_ref, stmt->debug.pos));
+  }
+
   switch (stmt->kind) {
     case MIR_STMT_OP:
       return cg_inst_stmt_op(ctx, stmt);
@@ -1375,12 +1386,20 @@ static void cg_inst_bb(cg_ctx *ctx, const mir_bb *bb) {
   ctx->bb = bb;
 
   cg_ctx_text_push_back(
-      ctx, cg_x86_64_symbol_new_text(cg_label_local_bb(ctx->sub_sym, bb)));
+      ctx, cg_x86_64_symbol_new_text(cg_sym_local_bb(ctx->sub_sym, bb)));
 
   for (list_mir_stmt_it it = list_mir_stmt_begin(bb->stmts); !END(it);
        NEXT(it)) {
     const mir_stmt *stmt = GET(it);
     cg_inst_stmt(ctx, stmt);
+  }
+
+  if (cg_debug_enabled(ctx->debug)) {
+    char *sym = cg_sym_local_suf_idx(ctx->sub_sym, "L", ctx->line_cnt);
+    cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sym));
+    list_cg_debug_line_push_back(
+        ctx->debug->lines,
+        cg_debug_line_new(sym, bb->jmp.debug.source_ref, bb->jmp.debug.line));
   }
 
   mir_bb_enum kind = mir_bb_get_cond(bb);
@@ -1402,19 +1421,19 @@ static void cg_inst_bb(cg_ctx *ctx, const mir_bb *bb) {
           cg_x86_64_op_new_register(CG_X86_64_REG_RAX), NULL);
 
       cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_JNZ,
-                                    cg_x86_64_op_new_direct(cg_label_local_bb(
+                                    cg_x86_64_op_new_direct(cg_sym_local_bb(
                                         ctx->sub_sym, bb->jmp.je_ref)),
                                     NULL);
 
       cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_JMP,
-                                    cg_x86_64_op_new_direct(cg_label_local_bb(
+                                    cg_x86_64_op_new_direct(cg_sym_local_bb(
                                         ctx->sub_sym, bb->jmp.jz_ref)),
                                     NULL);
       break;
     }
     case MIR_BB_NEXT: {
       cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_JMP,
-                                    cg_x86_64_op_new_direct(cg_label_local_bb(
+                                    cg_x86_64_op_new_direct(cg_sym_local_bb(
                                         ctx->sub_sym, bb->jmp.next_ref)),
                                     NULL);
       break;
@@ -1422,7 +1441,7 @@ static void cg_inst_bb(cg_ctx *ctx, const mir_bb *bb) {
     case MIR_BB_TERM: {
       cg_ctx_text_emplace_back_text(
           ctx, CG_X86_64_MNEM_JMP,
-          cg_x86_64_op_new_direct(cg_label_local_suf(ctx->sub_sym, "deinit")),
+          cg_x86_64_op_new_direct(cg_sym_local_suf(ctx->sub_sym, "deinit")),
           NULL);
       break;
     }

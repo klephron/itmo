@@ -3,7 +3,7 @@
 #include "util/strbuf.h"
 #include <string.h>
 
-char *cg_label_local_suf(const char *base, const char *suffix) {
+char *cg_sym_local_suf(const char *base, const char *suffix) {
   strbuf *buffer = strbuf_new(64, 0);
 
   if (strlen(base) < 2 || base[0] != '.' || base[1] != 'L') {
@@ -16,8 +16,7 @@ char *cg_label_local_suf(const char *base, const char *suffix) {
   return strbuf_detach(buffer);
 }
 
-char *cg_label_local_suf_idx(const char *base, const char *suffix,
-                             uint64_t idx) {
+char *cg_sym_local_suf_idx(const char *base, const char *suffix, uint64_t idx) {
   char    buf[64];
   strbuf *buffer = strbuf_new(64, 0);
 
@@ -34,7 +33,7 @@ char *cg_label_local_suf_idx(const char *base, const char *suffix,
   return strbuf_detach(buffer);
 }
 
-char *cg_label_local_bb(const char *base, const mir_bb *bb) {
+char *cg_sym_local_bb(const char *base, const mir_bb *bb) {
   char    buf[64];
   strbuf *buffer = strbuf_new(64, 0);
 

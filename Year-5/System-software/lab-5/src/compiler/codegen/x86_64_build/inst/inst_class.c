@@ -49,7 +49,7 @@ static const char *cg_inst_class_init_symbols(cg_ctx *ctx,
     const mir_value *value      = GET(it);
     const char      *value_name = value->symbol_ref->name;
 
-    char *sym = cg_label_local_suf_idx(ctx->sub_sym, "name", cnt);
+    char *sym = cg_sym_local_suf_idx(ctx->sub_sym, "name", cnt);
 
     cg_ctx_data_push_back(ctx, cg_x86_64_symbol_new_data(sym));
     cg_ctx_data_push_back(
@@ -62,7 +62,7 @@ static const char *cg_inst_class_init_symbols(cg_ctx *ctx,
     const mir_subroutine *value      = GET(it);
     const char           *value_name = value->symbol_ref->name;
 
-    char *sym = cg_label_local_suf_idx(ctx->sub_sym, "name", cnt);
+    char *sym = cg_sym_local_suf_idx(ctx->sub_sym, "name", cnt);
 
     cg_ctx_data_push_back(ctx, cg_x86_64_symbol_new_data(sym));
     cg_ctx_data_push_back(
@@ -73,7 +73,7 @@ static const char *cg_inst_class_init_symbols(cg_ctx *ctx,
   const char *symbols;
 
   {
-    char *sym = cg_label_local_suf(ctx->sub_sym, "symbols");
+    char *sym = cg_sym_local_suf(ctx->sub_sym, "symbols");
     cg_ctx_data_push_back(ctx, cg_x86_64_symbol_new_data_ln(sym));
     symbols = sym;
   }
@@ -81,7 +81,7 @@ static const char *cg_inst_class_init_symbols(cg_ctx *ctx,
   cg_ctx_data_push_back(ctx, cg_x86_64_data_new_quad(cnt));
 
   for (uint64_t i = 0; i < cnt; ++i) {
-    char *sym = cg_label_local_suf_idx(ctx->sub_sym, "name", i);
+    char *sym = cg_sym_local_suf_idx(ctx->sub_sym, "name", i);
     cg_ctx_data_push_back(ctx, cg_x86_64_data_new_symbol(sym));
   }
 
