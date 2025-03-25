@@ -3,38 +3,12 @@
 #include "util/macro.h"
 #include <stdio.h>
 #include <string.h>
-
-cg_mir_sym *cg_mir_sym_new(const void *mir_ref, const char *sym_ref) {
-  cg_mir_sym *self = MALLOC(cg_mir_sym);
-  self->mir_ref    = mir_ref;
-  self->sym_ref    = sym_ref;
-  return self;
-}
-
-void cg_mir_sym_free(cg_mir_sym *self) {
-  if (self) {
-    free(self);
-  }
-}
-
-cg_value_meta *cg_value_meta_new(const mir_value *value_ref, int64_t offset,
-                                 int is_ptr) {
-  cg_value_meta *self = MALLOC(cg_value_meta);
-  self->value_ref     = value_ref;
-  self->offset        = offset;
-  self->is_ptr        = is_ptr;
-  return self;
-}
-
-void cg_value_meta_free(cg_value_meta *self) {
-  if (self) {
-    free(self);
-  }
-}
-
 void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions) {
-  ctx->map_mir_sym = hashset_cg_mir_sym_new();
-  ctx->lit_cnt     = 0;
+  ctx->map_mir_sym       = hashset_cg_mir_sym_new();
+  ctx->lit_cnt           = 0;
+  ctx->method_cnt        = 0;
+  ctx->map_type_sym_init = hashset_cg_type_sym_new();
+  ctx->class_cnt         = 0;
 
   ctx->sub            = NULL;
   ctx->sub_sym        = NULL;
@@ -49,7 +23,10 @@ void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions) {
 
 void cg_ctx_deinit(cg_ctx *ctx) {
   hashset_cg_mir_sym_free(ctx->map_mir_sym);
-  ctx->lit_cnt = 0;
+  ctx->lit_cnt    = 0;
+  ctx->method_cnt = 0;
+  hashset_cg_type_sym_free(ctx->map_type_sym_init);
+  ctx->class_cnt = 0;
 
   ctx->sub            = NULL;
   ctx->sub_sym        = NULL;
@@ -78,7 +55,7 @@ const char *cg_ctx_mir_sym_find_lit(cg_ctx *ctx, const mir_lit *lit_ref) {
 
 char *cg_ctx_mir_sym_emplace_lit(cg_ctx *ctx, const mir_lit *lit_ref) {
   char buf[64];
-  snprintf(buf, STRMAXLEN(buf), "_lit_%lu", ctx->lit_cnt++);
+  snprintf(buf, STRMAXLEN(buf), ".L_lit_%lu", ctx->lit_cnt++);
 
   char *sym = strdup(buf);
 
@@ -95,6 +72,41 @@ const char *cg_ctx_mir_sym_find_sub(cg_ctx               *ctx,
 void cg_ctx_mir_sym_emplace_sub(cg_ctx *ctx, const mir_subroutine *sub_ref,
                                 const char *sym_ref) {
   hashset_cg_mir_sym_insert(ctx->map_mir_sym, cg_mir_sym_new(sub_ref, sym_ref));
+}
+
+char *cg_ctx_mir_sym_emplace_method(cg_ctx               *ctx,
+                                    const mir_subroutine *sub_ref) {
+  char buf[64];
+  snprintf(buf, STRMAXLEN(buf), ".L_method_%lu", ctx->method_cnt++);
+
+  char *sym = strdup(buf);
+
+  hashset_cg_mir_sym_insert(ctx->map_mir_sym, cg_mir_sym_new(sub_ref, sym));
+
+  return sym;
+}
+
+const char *cg_ctx_type_sym_init_find_class(cg_ctx          *ctx,
+                                            const type_mono *mono_ref) {
+  hashset_cg_type_sym_it it = hashset_cg_type_sym_find(
+      ctx->map_type_sym_init, &(cg_type_sym){.mono_ref = mono_ref});
+  if (END(it)) {
+    return NULL;
+  }
+  return GET(it)->sym_ref;
+}
+
+char *cg_ctx_type_sym_init_emplace_class(cg_ctx          *ctx,
+                                         const type_mono *mono_ref) {
+  char buf[64];
+  snprintf(buf, STRMAXLEN(buf), ".L_class_init_%lu", ctx->class_cnt++);
+
+  char *sym = strdup(buf);
+
+  hashset_cg_type_sym_insert(ctx->map_type_sym_init,
+                             cg_type_sym_new(mono_ref, sym));
+
+  return sym;
 }
 
 cg_value_meta *cg_ctx_value_meta_find(cg_ctx *ctx, const mir_value *value) {
