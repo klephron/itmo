@@ -6,7 +6,9 @@
 #include "compiler/hir_build/lower_ast.h"
 
 static inline int hir_ok(list_exception *exceptions, int ignore_errors) {
-  return exceptions && (list_exception_empty(exceptions) || ignore_errors);
+  return exceptions &&
+         (!list_exception_count_by_level(exceptions, EXCEPTION_LEVEL_ERROR) ||
+          ignore_errors);
 }
 
 hir_build_result hir_build(const list_ast *asts, int ignore_errors) {

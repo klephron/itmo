@@ -438,8 +438,12 @@ static void cg_emit_unit_text(cg_ctx *ctx, const cg_x86_64_text *text) {
 static void cg_emit_unit_symbol(cg_ctx *ctx, const cg_x86_64_symbol *symbol) {
   switch (symbol->kind) {
     case CG_X86_64_SYMBOL_DATA:
+    case CG_X86_64_SYMBOL_DATA_LN:
       strbuf_append(ctx->buffer, symbol->name);
       strbuf_append(ctx->buffer, ": ");
+      if (symbol->kind == CG_X86_64_SYMBOL_DATA_LN) {
+        strbuf_append(ctx->buffer, "\n");
+      }
       break;
     case CG_X86_64_SYMBOL_TEXT:
       strbuf_append(ctx->buffer, symbol->name);

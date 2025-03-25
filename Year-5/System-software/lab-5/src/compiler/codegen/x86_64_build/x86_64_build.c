@@ -3,7 +3,9 @@
 #include "compiler/codegen/x86_64_build/inst.h"
 
 static inline int cg_ok(list_exception *exceptions, int ignore_errors) {
-  return exceptions && (list_exception_empty(exceptions) || ignore_errors);
+  return exceptions &&
+         (!list_exception_count_by_level(exceptions, EXCEPTION_LEVEL_ERROR) ||
+          ignore_errors);
 }
 
 cg_x86_64_build_result cg_x86_64_build(const mir *mir, int ignore_errors) {

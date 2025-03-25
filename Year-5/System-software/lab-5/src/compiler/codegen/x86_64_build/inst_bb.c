@@ -1038,7 +1038,52 @@ static void cg_inst_stmt_builtin_make(cg_ctx *ctx, const mir_stmt *stmt) {
       break;
     }
     case TYPE_MONO: {
-      warn("TODO: make MONO");
+      const type_mono *mono = (typeof(mono))type;
+      switch (mono->type_ref->kind) {
+        case TYPE_CLASS_T:
+          if (!list_mir_value_ref_empty(stmt->builtin.args)) {
+            span *span   = mir_debug_to_span(&stmt->debug);
+            char *type_s = type_str(type);
+            cg_exception_add_warning(ctx->exceptions,
+                                     EXCEPTION_CG_UNEXPECTED_ARGS, span,
+                                     "make type '%s' args are ignored", type_s);
+            span_free(span);
+            free(type_s);
+          }
+
+          const mir_value     *out  = stmt->builtin.ret;
+          const cg_value_meta *meta = cg_ctx_value_meta_find(ctx, out);
+          cg_inst_value_reg(ctx, meta, CG_X86_64_REG_RDI);
+
+          const char *sym = cg_ctx_type_sym_init_find_class(ctx, mono);
+
+          if (!sym) {
+            char *type_s = type_str(type);
+            error("type '%s' initializer not found", type_s);
+            free(type_s);
+            break;
+          }
+
+          cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_CALL,
+                                        cg_x86_64_op_new_direct(strdup(sym)),
+                                        NULL);
+          break;
+        case TYPE_PRIMITIVE:
+        case TYPE_ARRAY:
+        case TYPE_CALLABLE:
+        case TYPE_TYPENAME:
+        case TYPE_MONO:
+        default: {
+          span *span   = mir_debug_to_span(&stmt->debug);
+          char *type_s = type_str(type);
+          cg_exception_add_error(ctx->exceptions, EXCEPTION_CG_UNEXPECTED_TYPE,
+                                 span, "cannot make type '%s'", type_s);
+          span_free(span);
+          free(type_s);
+          break;
+        }
+      }
+
       break;
     }
     default:

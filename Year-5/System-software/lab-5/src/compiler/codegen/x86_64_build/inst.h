@@ -66,11 +66,13 @@ int64_t cg_ctx_rbp_offset(cg_ctx *ctx);
 int  cg_inst_sub_extern_check_param(const type_base *param);
 int  cg_inst_sub_extern_check_ret(const type_base *ret);
 int  cg_inst_sub_decl_check(cg_ctx *ctx, const mir_subroutine *sub);
-void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub);
-void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub);
+void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym);
+void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym);
 
 // labels
 char *cg_label_local_suf(const char *base, const char *suffix);
+char *cg_label_local_suf_idx(const char *base, const char *suffix,
+                             uint64_t idx);
 char *cg_label_local_bb(const char *base, const mir_bb *bb);
 
 // utility
@@ -84,4 +86,4 @@ void cg_inst_core(cg_ctx *ctx);
 
 // class
 void cg_inst_class_methods(cg_ctx *ctx, list_cg_method_sym *methods);
-void cg_inst_class_init(cg_ctx *ctx, list_cg_class_sym *class_inits);
+void cg_inst_class_inits(cg_ctx *ctx, list_cg_class_sym *class_inits);

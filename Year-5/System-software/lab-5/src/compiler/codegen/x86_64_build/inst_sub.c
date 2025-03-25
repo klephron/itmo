@@ -326,15 +326,16 @@ static int cg_inst_sub_def_ok(cg_ctx *ctx, const mir_subroutine *sub) {
   return 1;
 }
 
-void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub) {
+void cg_inst_sub_def(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym) {
   if (!cg_inst_sub_def_ok(ctx, sub)) {
+    free(sub_sym);
     return;
   }
 
   ctx->sub     = sub;
-  ctx->sub_sym = cg_ctx_mir_sym_find_sub(ctx, sub);
+  ctx->sub_sym = sub_sym;
 
-  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(strdup(ctx->sub_sym)));
+  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sub_sym));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
 
@@ -416,15 +417,16 @@ static void cg_inst_sub_main_epilogue(cg_ctx *ctx) {
   cg_ctx_text_emplace_back_text(ctx, CG_X86_64_MNEM_SYSCALL, NULL);
 }
 
-void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub) {
+void cg_inst_sub_main(cg_ctx *ctx, const mir_subroutine *sub, char *sub_sym) {
   if (!cg_inst_sub_def_ok(ctx, sub)) {
+    free(sub_sym);
     return;
   }
 
   ctx->sub     = sub;
-  ctx->sub_sym = cg_ctx_mir_sym_find_sub(ctx, sub);
+  ctx->sub_sym = sub_sym;
 
-  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(strdup(ctx->sub_sym)));
+  cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sub_sym));
 
   ctx->map_value_meta = hashset_cg_value_meta_new();
 

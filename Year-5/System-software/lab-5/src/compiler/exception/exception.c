@@ -268,6 +268,10 @@ const char *exception_subtype_cg_str(exception_subtype_cg type) {
       return "unexpected type";
     case EXCEPTION_CG_UNSUPPORTED_EXTERN_TYPE:
       return "unsupported extern type";
+    case EXCEPTION_CG_UNSUPPORTED_CLASS_DECLARED:
+      return "unsupported class declared subroutine";
+    case EXCEPTION_CG_UNSUPPORTED_CLASS_IMPORTED:
+      return "unsupported class imported subroutine";
     case EXCEPTION_CG_UNKNOWN:
       break;
   }

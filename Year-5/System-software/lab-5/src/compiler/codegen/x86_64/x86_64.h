@@ -24,6 +24,7 @@ LIST_DECLARE_STATIC_INLINE(list_cg_x86_64_unit, cg_x86_64_unit,
 
 typedef enum cg_x86_64_symbol_kind_enum {
   CG_X86_64_SYMBOL_DATA,
+  CG_X86_64_SYMBOL_DATA_LN,
   CG_X86_64_SYMBOL_TEXT,
   CG_X86_64_SYMBOL_EXTERN,
   CG_X86_64_SYMBOL_GLOBAL,
@@ -36,6 +37,7 @@ typedef struct cg_x86_64_symbol_struct {
 } cg_x86_64_symbol;
 
 cg_x86_64_symbol *cg_x86_64_symbol_new_data(char *name);
+cg_x86_64_symbol *cg_x86_64_symbol_new_data_ln(char *name);
 cg_x86_64_symbol *cg_x86_64_symbol_new_text(char *name);
 cg_x86_64_symbol *cg_x86_64_symbol_new_extern(char *name);
 cg_x86_64_symbol *cg_x86_64_symbol_new_global(char *name);

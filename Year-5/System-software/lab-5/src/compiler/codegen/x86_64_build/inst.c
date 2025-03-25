@@ -54,14 +54,11 @@ cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir) {
     const type_base *type  = class->type_ref->type;
     char            *sym;
 
-    const char *sym_c;
-    if ((sym_c =
-             cg_ctx_type_sym_init_find_class(&ctx, (const type_mono *)type))) {
-      sym = strdup(sym_c);
-    } else {
-      sym = cg_ctx_type_sym_init_emplace_class(&ctx, (const type_mono *)type);
+    if (cg_ctx_type_sym_init_find_class(&ctx, (const type_mono *)type)) {
+      continue;
     }
 
+    sym = cg_ctx_type_sym_init_emplace_class(&ctx, (const type_mono *)type);
     list_cg_class_sym_push_back(class_inits, cg_class_sym_new(class, sym));
   }
 
@@ -78,13 +75,11 @@ cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir) {
       const mir_subroutine *method = GET(it_s);
       char                 *sym;
 
-      const char *sym_c;
-      if ((sym_c = cg_ctx_mir_sym_find_sub(&ctx, method))) {
-        sym = strdup(sym_c);
-      } else {
-        sym = cg_ctx_mir_sym_emplace_method(&ctx, method);
+      if (cg_ctx_mir_sym_find_sub(&ctx, method)) {
+        continue;
       }
 
+      sym = cg_ctx_mir_sym_emplace_method(&ctx, method);
       list_cg_method_sym_push_back(class_methods,
                                    cg_method_sym_new(method, sym));
     }
@@ -119,18 +114,19 @@ cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir) {
   // instantiate defined_subs
   for (list_mir_subroutine_it it = list_mir_subroutine_begin(mir->defined_subs);
        !END(it); NEXT(it)) {
-    const mir_subroutine *sub = GET(it);
+    const mir_subroutine *sub     = GET(it);
+    const char           *sub_sym = cg_ctx_mir_sym_find_sub(&ctx, sub);
 
     int is_main = !strcmp(sub->symbol_ref->name, "main");
     if (is_main) {
-      cg_inst_sub_main(&ctx, sub);
+      cg_inst_sub_main(&ctx, sub, strdup(sub_sym));
     } else {
-      cg_inst_sub_def(&ctx, sub);
+      cg_inst_sub_def(&ctx, sub, strdup(sub_sym));
     }
   }
 
   // instantiate class initializers and methods
-  cg_inst_class_init(&ctx, class_inits);
+  cg_inst_class_inits(&ctx, class_inits);
   cg_inst_class_methods(&ctx, class_methods);
 
   cg_ctx_deinit(&ctx);

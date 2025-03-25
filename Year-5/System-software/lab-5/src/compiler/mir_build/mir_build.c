@@ -4,7 +4,9 @@
 #include "util/macro.h"
 
 static inline int mir_ok(list_exception *exceptions, int ignore_errors) {
-  return exceptions && (list_exception_empty(exceptions) || ignore_errors);
+  return exceptions &&
+         (!list_exception_count_by_level(exceptions, EXCEPTION_LEVEL_ERROR) ||
+          ignore_errors);
 }
 
 mir_build_result mir_build(const hir *hir, const symbol_table *symbol_table,

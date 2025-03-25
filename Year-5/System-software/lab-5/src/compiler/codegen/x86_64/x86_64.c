@@ -37,6 +37,14 @@ cg_x86_64_symbol *cg_x86_64_symbol_new_data(char *name) {
   return self;
 }
 
+cg_x86_64_symbol *cg_x86_64_symbol_new_data_ln(char *name) {
+  cg_x86_64_symbol *self = MALLOC(cg_x86_64_symbol);
+  cg_x86_64_unit_init(&self->base, CG_X86_64_UNIT_SYMBOL);
+  self->kind = CG_X86_64_SYMBOL_DATA_LN;
+  self->name = name;
+  return self;
+}
+
 cg_x86_64_symbol *cg_x86_64_symbol_new_text(char *name) {
   cg_x86_64_symbol *self = MALLOC(cg_x86_64_symbol);
   cg_x86_64_unit_init(&self->base, CG_X86_64_UNIT_SYMBOL);

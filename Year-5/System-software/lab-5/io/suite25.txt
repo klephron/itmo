@@ -25,11 +25,10 @@ var
   e: U;
   n;
 begin
-  extern method three(a, b, c): int
+  method three(a, b, c): int
   var
     d: array [] of U;
   begin
-    cast!<A<A<int>>>();
     return 1 + 2 * 3 * a;
   end
 end;
@@ -39,10 +38,17 @@ var
   a: array [] of T;
   b, c: byte;
 begin
-  extern method three(a, b, c): int
+  method three(a, b, c): int
   var
     d: array [] of long;
   begin
+    std_write("args: ");
+    std_write(a);
+    std_write(", ");
+    std_write(b);
+    std_write(", ");
+    std_write(c);
+    std_write("\n");
   end
 end;
 
@@ -50,7 +56,22 @@ extern method read(): void;
 extern method write(): void;
 
 method main(): int
+var
+  a, b, c;
 begin
-  make!<B<char, A<int, array [] of A<string>>>>();
+  a = make!<B<char, A<int, array [] of A<string>>>>();
+  print!(a);
+  b = make!<A>();
+  print!(b);
+  a.three(b, "arg_2", 3);
+  a.b = a.three;
+  a.a = "something_inside_a";
+  a.b(1, 2, 3);
+  print!(a);
+  print!("-----------------------------");
+  c = make!<A<int>>();
+  c.f = a;
+  c.f.b(11, 22, 33);
+  print!(c);
   return cast!<int>(0);
 end;
