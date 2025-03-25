@@ -46,7 +46,7 @@ list of null-terminated strings, index - pos in list (from 0):
 <string1><string2><string3>
  */
 
-// DEBUG_INFO
+// debug_info
 typedef struct __attribute__((packed)) x86_64_debug_info_struct {
   uint64_t subroutines_cnt;
   uint64_t files_cnt;
@@ -78,7 +78,7 @@ typedef struct __attribute__((packed)) x86_64_debug_info_file_struct {
   uint64_t strs_index;
 } x86_64_debug_info_file;
 
-// DEBUG_STR
+// debug_str
 typedef struct __attribute__((packed)) x86_64_debug_str_struct {
   uint64_t strs_cnt;
   uint64_t data[0];
@@ -88,7 +88,7 @@ typedef struct __attribute__((packed)) x86_64_debug_str_str_struct {
   uint8_t data[0];
 } x86_64_debug_str_str;
 
-// DEBUG_LINE
+// debug_line
 typedef struct __attribute__((packed)) x86_64_debug_line_struct {
   uint64_t entries_cnt;
   uint8_t  data[0];

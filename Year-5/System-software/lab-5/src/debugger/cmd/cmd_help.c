@@ -5,9 +5,9 @@
 #include "util/math.h"
 #include "util/string.h"
 
-static const char *desc = "Help";
+static const char *DESC = "Help";
 
-static const char *help = "Usage: <command> [<cmd>]";
+static const char *HELP = "Usage: <command> [<cmd>]";
 
 static void fn_all(cmd_handler *handler, context *ctx) {
   context_out_appendln(ctx, "Commands:");
@@ -88,5 +88,5 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 }
 
 cmd *cmd_help(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

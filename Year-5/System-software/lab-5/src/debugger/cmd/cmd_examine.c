@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <sys/ptrace.h>
 
-static const char *desc = "Examine memory";
+static const char *DESC = "Examine memory";
 
-static const char *help = "Usage: <command> <n> <format> <size> <start>\n"
+static const char *HELP = "Usage: <command> <n> <format> <size> <start>\n"
                           "\t<n>: elements count\n"
                           "\t<format>: x(hex)|z(hex-left)|d(decimal)\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)\n"
@@ -219,7 +219,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   goto cleanup;
 
 error_format:
-  cmd_error_format(ctx, args, help);
+  cmd_error_format(ctx, args, HELP);
 
 cleanup:
   if (args) {
@@ -241,5 +241,5 @@ cleanup:
 }
 
 cmd *cmd_examine(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

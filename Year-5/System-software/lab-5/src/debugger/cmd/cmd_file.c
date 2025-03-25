@@ -5,9 +5,9 @@
 
 #include <stdlib.h>
 
-static const char *desc = "Load target";
+static const char *DESC = "Load target";
 
-static const char *help = "Usage: <command> <file>";
+static const char *HELP = "Usage: <command> <file>";
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
@@ -51,7 +51,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   goto cleanup;
 
 error_format:
-  cmd_error_format(ctx, args, help);
+  cmd_error_format(ctx, args, HELP);
 
 error_cleanup:
   if (abfd_asymbols) {
@@ -68,5 +68,5 @@ cleanup:
 }
 
 cmd *cmd_file(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

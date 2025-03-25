@@ -5,9 +5,9 @@
 
 #include <stdlib.h>
 
-static const char *desc = "Disassemble memory";
+static const char *DESC = "Disassemble memory";
 
-static const char *help = "Usage: <command> <start> <size>\n"
+static const char *HELP = "Usage: <command> <start> <size>\n"
                           "\t<start>: start address in hex\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)";
 
@@ -49,7 +49,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   goto cleanup;
 
 error_format:
-  cmd_error_format(ctx, args, help);
+  cmd_error_format(ctx, args, HELP);
 
 cleanup:
   if (args) {
@@ -136,7 +136,7 @@ static int fn_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
 }
 
 cmd *cmd_disassemble(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }
 
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {

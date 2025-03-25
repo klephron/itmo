@@ -47,8 +47,7 @@ void context_free(context *self) {
       bfd_close(self->abfd);
     }
     hashset_breakpoint_free(self->breaks);
-    // WARN: disabled debug context (enable when fixed)
-    // context_dbg_deinit(self);
+    context_dbg_deinit(self);
     free(self);
   }
 }

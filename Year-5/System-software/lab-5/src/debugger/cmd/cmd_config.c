@@ -2,9 +2,9 @@
 #include "util/macro.h"
 #include "util/string.h"
 
-static const char *desc = "Configure debugger";
+static const char *DESC = "Configure debugger";
 
-static const char *help = "Usage: <command> <arg>...\n"
+static const char *HELP = "Usage: <command> <arg>...\n"
                           "Options:\n"
                           "* source asm|language - display next command as asm "
                           "instruction or source line";
@@ -74,7 +74,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (status == -1) {
-    cmd_error_format(ctx, args, help);
+    cmd_error_format(ctx, args, HELP);
   }
 
   if (arg_rest) {
@@ -89,5 +89,5 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 }
 
 cmd *cmd_config(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

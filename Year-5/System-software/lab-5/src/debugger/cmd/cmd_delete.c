@@ -4,9 +4,9 @@
 #include "util/macro.h"
 #include "util/string.h"
 
-static const char *desc = "Delete breakpoint by id or all";
+static const char *DESC = "Delete breakpoint by id or all";
 
-static const char *help = "Usage: <command> [<id>]\n"
+static const char *HELP = "Usage: <command> [<id>]\n"
                           "\t<id>: id of breakpoint";
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
@@ -78,5 +78,5 @@ cleanup:
 }
 
 cmd *cmd_delete(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

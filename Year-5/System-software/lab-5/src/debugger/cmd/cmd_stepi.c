@@ -10,9 +10,9 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 
-static const char *desc = "Step one instruction exactly";
+static const char *DESC = "Step one instruction exactly";
 
-static const char *help = "Usage: <command> [<n>]\n"
+static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
 static void fn(cmd_handler *handler, context *ctx, const char *rest) {
@@ -69,5 +69,5 @@ int cmd_stepi_fn(context *ctx, uint64_t n) {
 }
 
 cmd *cmd_stepi(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

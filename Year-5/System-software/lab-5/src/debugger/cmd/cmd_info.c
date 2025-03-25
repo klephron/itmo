@@ -10,9 +10,9 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-static const char *desc = "Show things about program being debugged";
+static const char *DESC = "Show things about program being debugged";
 
-static const char *help = "Usage: <command> "
+static const char *HELP = "Usage: <command> "
                           "(sections|symbols|target|registers|breakpoints|"
                           "info|lines|strs|files)";
 
@@ -364,7 +364,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   } else if (!strcmp(args, "files")) {
     fn_debug_files(ctx);
   } else {
-    cmd_error_format(ctx, args, help);
+    cmd_error_format(ctx, args, HELP);
   }
 
   if (args) {
@@ -373,5 +373,5 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 }
 
 cmd *cmd_info(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

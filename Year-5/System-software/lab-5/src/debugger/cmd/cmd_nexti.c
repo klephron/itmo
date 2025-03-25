@@ -12,10 +12,10 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 
-static const char *desc =
+static const char *DESC =
     "Step one instruction, but proceed through subroutine calls";
 
-static const char *help = "Usage: <command> [<n>]\n"
+static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
 static int fn_fprintf(void *stream, const char *fmt, ...) {
@@ -162,5 +162,5 @@ int cmd_nexti_fn(context *ctx, disassemble_info *info_p,
 }
 
 cmd *cmd_nexti(const char *cmd_ref) {
-  return cmd_entry_new(fn, desc, help, cmd_ref);
+  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
 }

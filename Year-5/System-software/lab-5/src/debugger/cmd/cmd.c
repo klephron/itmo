@@ -91,8 +91,7 @@ void cmd_ctx_out_file_header(context *ctx, uint64_t file_id) {
   snprintf(buf, STRMAXLEN(buf), "// id: %zu", file_id);
   context_out_append(ctx, buf);
   context_out_append(ctx, ", name: ");
-  // WARN: disabled debug context (enable when fixed)
-  // context_out_appendln(ctx, context_dbg_file_by_id(ctx, file_id));
+  context_out_appendln(ctx, context_dbg_file_by_id(ctx, file_id));
 }
 
 void cmd_ctx_out_source_line(context *ctx, debug_line line) {
