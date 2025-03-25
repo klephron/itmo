@@ -18,14 +18,14 @@ static const char *DESC =
 static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
-static int fn_fprintf(void *stream, const char *fmt, ...) {
+static int cmd_nexti_fprintf(void *stream, const char *fmt, ...) {
   UNUSED(stream);
   UNUSED(fmt);
   return 0;
 }
 
-static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
-                                   const char *fmt, ...) {
+static int cmd_nexti_fprintf_styled(void *stream, enum disassembler_style style,
+                                    const char *fmt, ...) {
   char    buf[64];
   va_list args;
 
@@ -48,7 +48,7 @@ static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
   return 0;
 }
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_nexti_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
   size_t                  n    = 1;
@@ -71,7 +71,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
     cmd_nexti_disasm_init(ctx, &info, &dftype, &is_call);
 
-    if (cmd_nexti_fn(ctx, &info, &dftype, &is_call, n) == -1) {
+    if (cmd_nexti_exec(ctx, &info, &dftype, &is_call, n) == -1) {
       goto cleanup;
     }
   }
@@ -93,7 +93,8 @@ cleanup:
 
 void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
                            disassembler_ftype *dftype_p, int *is_call_p) {
-  init_disassemble_info(info_p, is_call_p, fn_fprintf, fn_fprintf_styled_ftype);
+  init_disassemble_info(info_p, is_call_p, cmd_nexti_fprintf,
+                        cmd_nexti_fprintf_styled);
   info_p->arch              = bfd_arch_i386;
   info_p->mach              = bfd_mach_x86_64;
   info_p->application_data  = ctx;
@@ -103,8 +104,8 @@ void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
 }
 
 // 0 - ok, -1 - error + outputs to context error
-int cmd_nexti_fn(context *ctx, disassemble_info *info_p,
-                 disassembler_ftype *dftype_p, int *is_call_p, uint64_t n) {
+int cmd_nexti_exec(context *ctx, disassemble_info *info_p,
+                   disassembler_ftype *dftype_p, int *is_call_p, uint64_t n) {
   struct user_regs_struct regs;
 
   if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
@@ -162,5 +163,5 @@ int cmd_nexti_fn(context *ctx, disassemble_info *info_p,
 }
 
 cmd *cmd_nexti(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_nexti_fn, DESC, HELP, cmd_ref);
 }

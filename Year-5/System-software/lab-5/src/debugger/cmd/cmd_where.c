@@ -5,11 +5,11 @@ static const char *DESC = "Print stacktrace";
 
 static const char *HELP = "Usage: <command>";
 
-static uint64_t cmd_parent_rip_p(uint64_t rbp) { return rbp + 8; }
-static uint64_t cmd_parent_rbp_p(uint64_t rbp) { return rbp; }
+static uint64_t cmd_where_p_rip(uint64_t rbp) { return rbp + 8; }
+static uint64_t cmd_where_p_rbp(uint64_t rbp) { return rbp; }
 
 // TODO: check current instruction if in prologue/epilogue
-static void cmd_traverse(context *ctx, uint64_t rbp, uint64_t rip) {
+static void cmd_where_traverse(context *ctx, uint64_t rbp, uint64_t rip) {
   char buf[64];
   // reaches top (also can check if top main reached)
   if (rbp == 1) {
@@ -50,21 +50,21 @@ static void cmd_traverse(context *ctx, uint64_t rbp, uint64_t rip) {
   context_out_appendln(ctx, ")");
 
   uint64_t p_rip;
-  if (context_tg_peekdata(ctx, cmd_parent_rip_p(rbp), &p_rip) == TARGET_ERROR) {
+  if (context_tg_peekdata(ctx, cmd_where_p_rip(rbp), &p_rip) == TARGET_ERROR) {
     context_error(ctx, "unable to peek data");
     return;
   }
 
   uint64_t p_rbp;
-  if (context_tg_peekdata(ctx, cmd_parent_rbp_p(rbp), &p_rbp) == TARGET_ERROR) {
+  if (context_tg_peekdata(ctx, cmd_where_p_rbp(rbp), &p_rbp) == TARGET_ERROR) {
     context_error(ctx, "unable to peek data");
     return;
   }
 
-  cmd_traverse(ctx, p_rbp, p_rip);
+  cmd_where_traverse(ctx, p_rbp, p_rip);
 }
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_where_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   UNUSED(rest);
   struct user_regs_struct regs;
@@ -78,12 +78,12 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  cmd_traverse(ctx, regs.rbp, regs.rip);
+  cmd_where_traverse(ctx, regs.rbp, regs.rip);
 
 cleanup:
   return;
 }
 
 cmd *cmd_where(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_where_fn, DESC, HELP, cmd_ref);
 }

@@ -6,7 +6,7 @@ static const char *DESC = "Exit debugger";
 
 static const char *HELP = "Usage: <command>";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_exit_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   UNUSED(rest);
 
@@ -14,5 +14,5 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 }
 
 cmd *cmd_exit(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_exit_fn, DESC, HELP, cmd_ref);
 }

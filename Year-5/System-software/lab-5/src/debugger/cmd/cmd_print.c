@@ -17,7 +17,7 @@ static const char *HELP = "Usage: <command> (<register>|<arg>|<var>)\n"
                           "\t<arg>: argument name\n"
                           "\t<var>: variable name";
 
-static int fn_register(context *ctx, const char *rest) {
+static int cmd_print_register(context *ctx, const char *rest) {
   char                    buf[64];
   struct user_regs_struct regs;
   const char             *reg = rest + 1;
@@ -96,7 +96,7 @@ static int fn_register(context *ctx, const char *rest) {
   return 0;
 }
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_print_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
 
   char *args = trim(strdup(rest));
@@ -106,7 +106,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   if (args[0] == '$') {
-    fn_register(ctx, args);
+    cmd_print_register(ctx, args);
   }
   goto cleanup;
 
@@ -120,5 +120,5 @@ cleanup:
 }
 
 cmd *cmd_print(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_print_fn, DESC, HELP, cmd_ref);
 }

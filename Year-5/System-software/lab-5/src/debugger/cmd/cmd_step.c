@@ -16,7 +16,7 @@ static const char *DESC = "Step one source line exactly";
 static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_step_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
   size_t                  n    = 1;
@@ -43,7 +43,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   for (size_t i = 0; i < n; ++i) {
     while (!context_dbg_line_changed(ctx, curr)) {
-      if (cmd_stepi_fn(ctx, 1) == -1) {
+      if (cmd_stepi_exec(ctx, 1) == -1) {
         goto cleanup;
       };
 
@@ -73,5 +73,5 @@ cleanup:
 }
 
 cmd *cmd_step(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_step_fn, DESC, HELP, cmd_ref);
 }

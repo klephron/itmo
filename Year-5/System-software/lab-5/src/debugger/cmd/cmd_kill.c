@@ -12,7 +12,7 @@ static const char *DESC = "Kill running target";
 
 static const char *HELP = "Usage: <command>";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_kill_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args = NULL;
   int   sig  = SIGKILL;
@@ -41,5 +41,5 @@ cleanup:
 }
 
 cmd *cmd_kill(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_kill_fn, DESC, HELP, cmd_ref);
 }

@@ -16,8 +16,8 @@ static const char *HELP = "Usage: <command> <n> <format> <size> <start>\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)\n"
                           "\t<start>: start address in hex";
 
-static void fn_out_le_8bytes(context *ctx, uint64_t data, char format,
-                             size_t size) {
+static void cmd_examine_out_le_8bytes(context *ctx, uint64_t data, char format,
+                                      size_t size) {
   char   buf[64];
   size_t offset = 0;
 
@@ -116,7 +116,8 @@ static void fn_out_le_8bytes(context *ctx, uint64_t data, char format,
   }
 }
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_examine_fn(cmd_handler *handler, context *ctx,
+                           const char *rest) {
   UNUSED(handler);
   char *args        = trim(strdup(rest));
   char *arg_n       = NULL;
@@ -212,7 +213,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     } else {
       context_out_append(ctx, buf);
       context_out_append(ctx, ": ");
-      fn_out_le_8bytes(ctx, data, format, size);
+      cmd_examine_out_le_8bytes(ctx, data, format, size);
       context_out_appendln(ctx, "");
     }
   }
@@ -241,5 +242,5 @@ cleanup:
 }
 
 cmd *cmd_examine(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_examine_fn, DESC, HELP, cmd_ref);
 }

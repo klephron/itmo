@@ -15,7 +15,7 @@ static const char *DESC = "Step one instruction exactly";
 static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_stepi_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
   size_t                  n    = 1;
@@ -55,7 +55,7 @@ cleanup:
 }
 
 // 0 - ok, -1 - error
-int cmd_stepi_fn(context *ctx, uint64_t n) {
+int cmd_stepi_exec(context *ctx, uint64_t n) {
   for (size_t i = 0; i < n; ++i) {
     target_state_enum status = context_tg_stepi(ctx);
     if (status == TARGET_ERROR) {
@@ -69,5 +69,5 @@ int cmd_stepi_fn(context *ctx, uint64_t n) {
 }
 
 cmd *cmd_stepi(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_stepi_fn, DESC, HELP, cmd_ref);
 }

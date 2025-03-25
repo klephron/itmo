@@ -13,7 +13,7 @@ static const char *DESC = "Run target";
 
 static const char *HELP = "Usage: <command>";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_run_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char  *args = NULL;
   char **argv = NULL;
@@ -76,5 +76,5 @@ cleanup:
 }
 
 cmd *cmd_run(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_run_fn, DESC, HELP, cmd_ref);
 }

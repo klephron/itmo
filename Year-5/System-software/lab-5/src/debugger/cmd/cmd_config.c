@@ -9,7 +9,7 @@ static const char *HELP = "Usage: <command> <arg>...\n"
                           "* source asm|language - display next command as asm "
                           "instruction or source line";
 
-static int fn_source(context *ctx, char *rest) {
+static int cmd_config_source(context *ctx, char *rest) {
   int   status = 0;
   char *arg    = NULL;
 
@@ -41,7 +41,8 @@ cleanup:
   return status;
 }
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_config_fn(cmd_handler *handler, context *ctx,
+                          const char *rest) {
   UNUSED(handler);
   char *args       = trim(strdup(rest));
   char *arg_option = NULL;
@@ -67,7 +68,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   if (status != -1) {
     if (!strcmp(arg_option, "source")) {
-      status = fn_source(ctx, arg_rest);
+      status = cmd_config_source(ctx, arg_rest);
     } else {
       status = -1;
     }
@@ -89,5 +90,5 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 }
 
 cmd *cmd_config(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_config_fn, DESC, HELP, cmd_ref);
 }

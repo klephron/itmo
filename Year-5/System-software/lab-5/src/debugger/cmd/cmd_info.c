@@ -20,8 +20,8 @@ static char *ctx_debug_idx_str(context *ctx, uint64_t str_idx) {
   return ctx->debug.strs[str_idx];
 }
 
-static void fn_register_g(context *ctx, struct user_regs_struct *regs,
-                          const char *reg, size_t offset) {
+static void cmd_info_register_g(context *ctx, struct user_regs_struct *regs,
+                                const char *reg, size_t offset) {
   char                buf[64];
   unsigned long long *addr = (void *)regs + offset;
 
@@ -38,7 +38,7 @@ static void fn_register_g(context *ctx, struct user_regs_struct *regs,
   context_out_appendln(ctx, "");
 }
 
-static void fn_sections(context *ctx) {
+static void cmd_info_sections(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -62,7 +62,7 @@ static void fn_sections(context *ctx) {
   }
 }
 
-static void fn_symbols(context *ctx) {
+static void cmd_info_symbols(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -85,7 +85,7 @@ static void fn_symbols(context *ctx) {
   }
 }
 
-static void fn_target(context *ctx) {
+static void cmd_info_target(context *ctx) {
   char buf[64];
 
   if (cmd_error_if_no_target(ctx)) {
@@ -106,41 +106,56 @@ static void fn_target(context *ctx) {
   }
 }
 
-static void fn_registers(context *ctx) {
+static void cmd_info_registers(context *ctx) {
   if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
     return;
   }
 
   struct user_regs_struct regs;
 
-  fn_register_g(ctx, &regs, "rax", offsetof(struct user_regs_struct, rax));
-  fn_register_g(ctx, &regs, "rbx", offsetof(struct user_regs_struct, rbx));
-  fn_register_g(ctx, &regs, "rcx", offsetof(struct user_regs_struct, rcx));
-  fn_register_g(ctx, &regs, "rdx", offsetof(struct user_regs_struct, rdx));
-  fn_register_g(ctx, &regs, "rsi", offsetof(struct user_regs_struct, rsi));
-  fn_register_g(ctx, &regs, "rdi", offsetof(struct user_regs_struct, rdi));
-  fn_register_g(ctx, &regs, "rbp", offsetof(struct user_regs_struct, rbp));
-  fn_register_g(ctx, &regs, "rsp", offsetof(struct user_regs_struct, rsp));
-  fn_register_g(ctx, &regs, "r8", offsetof(struct user_regs_struct, r8));
-  fn_register_g(ctx, &regs, "r9", offsetof(struct user_regs_struct, r9));
-  fn_register_g(ctx, &regs, "r10", offsetof(struct user_regs_struct, r10));
-  fn_register_g(ctx, &regs, "r11", offsetof(struct user_regs_struct, r11));
-  fn_register_g(ctx, &regs, "r12", offsetof(struct user_regs_struct, r12));
-  fn_register_g(ctx, &regs, "r13", offsetof(struct user_regs_struct, r13));
-  fn_register_g(ctx, &regs, "r14", offsetof(struct user_regs_struct, r14));
-  fn_register_g(ctx, &regs, "r15", offsetof(struct user_regs_struct, r15));
-  fn_register_g(ctx, &regs, "rip", offsetof(struct user_regs_struct, rip));
-  fn_register_g(ctx, &regs, "eflags",
-                offsetof(struct user_regs_struct, eflags));
-  fn_register_g(ctx, &regs, "cs", offsetof(struct user_regs_struct, cs));
-  fn_register_g(ctx, &regs, "ss", offsetof(struct user_regs_struct, ss));
-  fn_register_g(ctx, &regs, "ds", offsetof(struct user_regs_struct, ds));
-  fn_register_g(ctx, &regs, "es", offsetof(struct user_regs_struct, es));
-  fn_register_g(ctx, &regs, "fs", offsetof(struct user_regs_struct, fs));
-  fn_register_g(ctx, &regs, "gs", offsetof(struct user_regs_struct, gs));
+  cmd_info_register_g(ctx, &regs, "rax",
+                      offsetof(struct user_regs_struct, rax));
+  cmd_info_register_g(ctx, &regs, "rbx",
+                      offsetof(struct user_regs_struct, rbx));
+  cmd_info_register_g(ctx, &regs, "rcx",
+                      offsetof(struct user_regs_struct, rcx));
+  cmd_info_register_g(ctx, &regs, "rdx",
+                      offsetof(struct user_regs_struct, rdx));
+  cmd_info_register_g(ctx, &regs, "rsi",
+                      offsetof(struct user_regs_struct, rsi));
+  cmd_info_register_g(ctx, &regs, "rdi",
+                      offsetof(struct user_regs_struct, rdi));
+  cmd_info_register_g(ctx, &regs, "rbp",
+                      offsetof(struct user_regs_struct, rbp));
+  cmd_info_register_g(ctx, &regs, "rsp",
+                      offsetof(struct user_regs_struct, rsp));
+  cmd_info_register_g(ctx, &regs, "r8", offsetof(struct user_regs_struct, r8));
+  cmd_info_register_g(ctx, &regs, "r9", offsetof(struct user_regs_struct, r9));
+  cmd_info_register_g(ctx, &regs, "r10",
+                      offsetof(struct user_regs_struct, r10));
+  cmd_info_register_g(ctx, &regs, "r11",
+                      offsetof(struct user_regs_struct, r11));
+  cmd_info_register_g(ctx, &regs, "r12",
+                      offsetof(struct user_regs_struct, r12));
+  cmd_info_register_g(ctx, &regs, "r13",
+                      offsetof(struct user_regs_struct, r13));
+  cmd_info_register_g(ctx, &regs, "r14",
+                      offsetof(struct user_regs_struct, r14));
+  cmd_info_register_g(ctx, &regs, "r15",
+                      offsetof(struct user_regs_struct, r15));
+  cmd_info_register_g(ctx, &regs, "rip",
+                      offsetof(struct user_regs_struct, rip));
+  cmd_info_register_g(ctx, &regs, "eflags",
+                      offsetof(struct user_regs_struct, eflags));
+  cmd_info_register_g(ctx, &regs, "cs", offsetof(struct user_regs_struct, cs));
+  cmd_info_register_g(ctx, &regs, "ss", offsetof(struct user_regs_struct, ss));
+  cmd_info_register_g(ctx, &regs, "ds", offsetof(struct user_regs_struct, ds));
+  cmd_info_register_g(ctx, &regs, "es", offsetof(struct user_regs_struct, es));
+  cmd_info_register_g(ctx, &regs, "fs", offsetof(struct user_regs_struct, fs));
+  cmd_info_register_g(ctx, &regs, "gs", offsetof(struct user_regs_struct, gs));
 }
 
-static void fn_breakpoints(context *ctx) {
+static void cmd_info_breakpoints(context *ctx) {
   char   buf[64];
   size_t cnt = 0;
   for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
@@ -207,7 +222,7 @@ static void fn_breakpoints(context *ctx) {
   free(breakpoints);
 }
 
-static void fn_debug_info(context *ctx) {
+static void cmd_info_debug_info(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -280,7 +295,7 @@ static void fn_debug_info(context *ctx) {
   }
 }
 
-static void fn_debug_lines(context *ctx) {
+static void cmd_info_debug_lines(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -308,7 +323,7 @@ static void fn_debug_lines(context *ctx) {
   }
 }
 
-static void fn_debug_strs(context *ctx) {
+static void cmd_info_debug_strs(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -320,7 +335,7 @@ static void fn_debug_strs(context *ctx) {
   }
 }
 
-static void fn_debug_files(context *ctx) {
+static void cmd_info_debug_files(context *ctx) {
   if (cmd_error_if_no_target(ctx)) {
     return;
   }
@@ -340,29 +355,29 @@ static void fn_debug_files(context *ctx) {
   }
 }
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_info_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char *args;
   args = trim(strdup(rest));
 
   if (!strcmp(args, "sections")) {
-    fn_sections(ctx);
+    cmd_info_sections(ctx);
   } else if (!strcmp(args, "symbols")) {
-    fn_symbols(ctx);
+    cmd_info_symbols(ctx);
   } else if (!strcmp(args, "target")) {
-    fn_target(ctx);
+    cmd_info_target(ctx);
   } else if (!strcmp(args, "registers")) {
-    fn_registers(ctx);
+    cmd_info_registers(ctx);
   } else if (!strcmp(args, "breakpoints")) {
-    fn_breakpoints(ctx);
+    cmd_info_breakpoints(ctx);
   } else if (!strcmp(args, "info")) {
-    fn_debug_info(ctx);
+    cmd_info_debug_info(ctx);
   } else if (!strcmp(args, "lines")) {
-    fn_debug_lines(ctx);
+    cmd_info_debug_lines(ctx);
   } else if (!strcmp(args, "strs")) {
-    fn_debug_strs(ctx);
+    cmd_info_debug_strs(ctx);
   } else if (!strcmp(args, "files")) {
-    fn_debug_files(ctx);
+    cmd_info_debug_files(ctx);
   } else {
     cmd_error_format(ctx, args, HELP);
   }
@@ -373,5 +388,5 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 }
 
 cmd *cmd_info(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_info_fn, DESC, HELP, cmd_ref);
 }

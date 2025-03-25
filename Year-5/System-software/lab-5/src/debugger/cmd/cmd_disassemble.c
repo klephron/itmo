@@ -11,7 +11,8 @@ static const char *HELP = "Usage: <command> <start> <size>\n"
                           "\t<start>: start address in hex\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_disassemble_fn(cmd_handler *handler, context *ctx,
+                               const char *rest) {
   UNUSED(handler);
   char *args        = trim(strdup(rest));
   char *arg_address = NULL;
@@ -64,13 +65,13 @@ cleanup:
   return;
 }
 
-typedef struct dis_ctx_struct {
+typedef struct cmd_disassemle_ctx_struct {
   context *ctx;
   strbuf  *buffer;
   int      error;
-} dis_ctx;
+} cmd_disassemble_ctx;
 
-static int fn_fprintf(void *stream, const char *fmt, ...) {
+static int cmd_disassemble_printf(void *stream, const char *fmt, ...) {
   char buf[256];
 
   strbuf *buffer = (strbuf *)stream;
@@ -85,8 +86,9 @@ static int fn_fprintf(void *stream, const char *fmt, ...) {
   return len;
 }
 
-static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
-                                   const char *fmt, ...) {
+static int cmd_disassemble_fn_printf_styled(void                   *stream,
+                                            enum disassembler_style style,
+                                            const char             *fmt, ...) {
   UNUSED(style);
   char    buf[256];
   strbuf *buffer = (strbuf *)stream;
@@ -101,23 +103,24 @@ static int fn_fprintf_styled_ftype(void *stream, enum disassembler_style style,
   return len;
 }
 
-static void fn_memory_error(int status, bfd_vma memaddr,
-                            struct disassemble_info *info) {
+static void cmd_disassemble_memory_error(int status, bfd_vma memaddr,
+                                         struct disassemble_info *info) {
   UNUSED(status);
   UNUSED(memaddr);
 
-  char     buf[64];
-  dis_ctx *dis = info->application_data;
-  dis->error   = 1;
+  char                 buf[64];
+  cmd_disassemble_ctx *dis = info->application_data;
+  dis->error               = 1;
 
   snprintf(buf, STRMAXLEN(buf), "[unable to peek data]");
   strbuf_append(dis->buffer, buf);
 }
 
-static int fn_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
-                          struct disassemble_info *info) {
-  dis_ctx *dis = info->application_data;
-  uint64_t data;
+static int cmd_disassemble_read_memory(bfd_vma memaddr, bfd_byte *addr,
+                                       unsigned int             length,
+                                       struct disassemble_info *info) {
+  cmd_disassemble_ctx *dis = info->application_data;
+  uint64_t             data;
 
   uint64_t bytes = 0;
   for (bfd_vma addr_cur = memaddr; bytes < length; addr_cur += sizeof(long)) {
@@ -136,7 +139,7 @@ static int fn_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
 }
 
 cmd *cmd_disassemble(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_disassemble_fn, DESC, HELP, cmd_ref);
 }
 
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
@@ -144,15 +147,17 @@ void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
   strbuf *buffer = strbuf_new(0, 0);
 
   struct disassemble_info info;
-  init_disassemble_info(&info, buffer, fn_fprintf, fn_fprintf_styled_ftype);
+  init_disassemble_info(&info, buffer, cmd_disassemble_printf,
+                        cmd_disassemble_fn_printf_styled);
 
   info.arch = bfd_arch_i386;
   info.mach = bfd_mach_x86_64;
 
-  dis_ctx dis            = (dis_ctx){.ctx = ctx, .buffer = buffer, .error = 0};
+  cmd_disassemble_ctx dis =
+      (cmd_disassemble_ctx){.ctx = ctx, .buffer = buffer, .error = 0};
   info.application_data  = &dis;
-  info.read_memory_func  = fn_read_memory;
-  info.memory_error_func = fn_memory_error;
+  info.read_memory_func  = cmd_disassemble_read_memory;
+  info.memory_error_func = cmd_disassemble_memory_error;
 
   disassembler_ftype disasm =
       disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);

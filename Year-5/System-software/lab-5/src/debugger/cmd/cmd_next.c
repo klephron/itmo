@@ -17,7 +17,7 @@ static const char *DESC =
 static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_next_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
   size_t                  n    = 1;
@@ -49,7 +49,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   for (size_t i = 0; i < n; ++i) {
     while (!context_dbg_line_changed(ctx, curr)) {
-      if (cmd_nexti_fn(ctx, &info, &dftype, &is_call, n) == -1) {
+      if (cmd_nexti_exec(ctx, &info, &dftype, &is_call, n) == -1) {
         goto cleanup;
       }
 
@@ -79,5 +79,5 @@ cleanup:
 }
 
 cmd *cmd_next(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_next_fn, DESC, HELP, cmd_ref);
 }

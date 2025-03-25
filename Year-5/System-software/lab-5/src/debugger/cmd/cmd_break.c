@@ -12,7 +12,7 @@ static const char *HELP =
     "\t<file_id>: id of file, see 'info info' or 'info files'\n"
     "\t<line>: line in file";
 
-static void fn_out_breakpoint(context *ctx, breakpoint *breakpoint) {
+static void cmd_break_out_breakpoint(context *ctx, breakpoint *breakpoint) {
   char buf[64];
   context_out_append(ctx, "breakpoint ");
   snprintf(buf, STRMAXLEN(buf), "%zu ", breakpoint->id);
@@ -35,7 +35,7 @@ static void fn_out_breakpoint(context *ctx, breakpoint *breakpoint) {
   context_out_appendln(ctx, "");
 }
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_break_fn(cmd_handler *handler, context *ctx, const char *rest) {
   UNUSED(handler);
 
   char *args       = NULL;
@@ -116,7 +116,7 @@ static void fn(cmd_handler *handler, context *ctx, const char *rest) {
     context_bp_place(ctx, breakpoint);
   }
 
-  fn_out_breakpoint(ctx, breakpoint);
+  cmd_break_out_breakpoint(ctx, breakpoint);
   goto cleanup;
 
 error_format:
@@ -135,5 +135,5 @@ cleanup:
 }
 
 cmd *cmd_break(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_break_fn, DESC, HELP, cmd_ref);
 }

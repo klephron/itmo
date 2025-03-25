@@ -9,7 +9,8 @@ static const char *DESC = "Delete breakpoint by id or all";
 static const char *HELP = "Usage: <command> [<id>]\n"
                           "\t<id>: id of breakpoint";
 
-static void fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_delete_fn(cmd_handler *handler, context *ctx,
+                          const char *rest) {
   UNUSED(handler);
   char *args   = NULL;
   char *arg_id = NULL;
@@ -78,5 +79,5 @@ cleanup:
 }
 
 cmd *cmd_delete(const char *cmd_ref) {
-  return cmd_entry_new(fn, DESC, HELP, cmd_ref);
+  return cmd_entry_new(cmd_delete_fn, DESC, HELP, cmd_ref);
 }

@@ -57,6 +57,6 @@ cmd_new cmd_where;
 void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size);
 void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
                            disassembler_ftype *dftype_p, int *is_call_p);
-int  cmd_nexti_fn(context *ctx, disassemble_info *info_p,
-                  disassembler_ftype *dftype_p, int *is_call_p, uint64_t n);
-int  cmd_stepi_fn(context *ctx, uint64_t n);
+int  cmd_nexti_exec(context *ctx, disassemble_info *info_p,
+                    disassembler_ftype *dftype_p, int *is_call_p, uint64_t n);
+int  cmd_stepi_exec(context *ctx, uint64_t n);
