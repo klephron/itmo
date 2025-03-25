@@ -26,11 +26,14 @@ public class PatternEntity {
     private String patternName;
 
     @Lob
+    @NotNull
+    @NotEmpty
     private String inputItems;  // "[{\"itemName\":\"Iron Ingot\",\"count\":3}, ...]"
 
     @NotNull
-    @NotEmpty
-    private String outputItemName; // change to id
+    @ManyToOne
+    @JoinColumn(name = "output_item_id")
+    private ItemEntity outputItem;
 
     @NotNull
     @Min(0)

@@ -110,7 +110,7 @@ public class ImportBusService {
         }
     }
 
-    private List<StorageCellEntity> findAllCellsInNetwork(Long networkId) {
+    public List<StorageCellEntity> findAllCellsInNetwork(Long networkId) {
         List<DriveEntity> drives = this.driveRepository.findAll().stream()
                 .filter(d -> d.getNetwork() != null && d.getNetwork().getId().equals(networkId))
                 .toList();
@@ -125,14 +125,14 @@ public class ImportBusService {
         return result;
     }
 
-    private int getTotalItemsInCell(Long cellId) {
+    public int getTotalItemsInCell(Long cellId) {
         return this.cellItemRepository.findAll().stream()
                 .filter(ci -> ci.getStorageCell().getId().equals(cellId))
                 .mapToInt(CellItemEntity::getQuantity)
                 .sum();
     }
 
-    private CellItemEntity findCellItemByName(Long cellId, String itemName) {
+    public CellItemEntity findCellItemByName(Long cellId, String itemName) {
         return this.cellItemRepository.findAll().stream()
                 .filter(ci -> ci.getStorageCell().getId().equals(cellId))
                 .filter(ci -> ci.getItemName().equalsIgnoreCase(itemName))

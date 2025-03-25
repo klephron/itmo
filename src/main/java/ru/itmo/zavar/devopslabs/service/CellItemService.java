@@ -67,7 +67,7 @@ public class CellItemService {
         this.cellItemRepository.deleteById(id);
     }
 
-    //wat
+    //better to move it to database?
     private int getTotalItemsInCell(Long cellId) {
         List<CellItemEntity> items = this.cellItemRepository.findAll();
         return items.stream()
