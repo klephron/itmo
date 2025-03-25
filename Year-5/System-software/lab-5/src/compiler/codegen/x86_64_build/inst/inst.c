@@ -6,11 +6,12 @@
 
 cg_inst_result cg_inst(cg_x86_64 *code, const mir *mir) {
   cg_inst_result result = {
+      .debug      = cg_debug_new(CG_CTX_DEBUG_LEVEL_ENABLED),
       .exceptions = list_exception_new(),
   };
 
   cg_ctx ctx;
-  cg_ctx_init(&ctx, code, result.exceptions);
+  cg_ctx_init(&ctx, code, result.debug, result.exceptions);
 
   // core
   cg_inst_core(&ctx);

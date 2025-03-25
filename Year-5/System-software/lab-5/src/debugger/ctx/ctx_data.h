@@ -42,30 +42,28 @@ HASHSET_DECLARE_STATIC_INLINE(hashset_ctx_breakpoint, ctx_breakpoint,
                               container_hash_ctx_breakpoint);
 
 // debug
-typedef struct ctx_debug_info_arg_struct {
+typedef struct ctx_debug_info_param_struct {
   int64_t  rbp_offset;
-  uint64_t strs_index;
-} ctx_debug_arg;
+  uint64_t debug_str_id;
+} ctx_debug_param;
 
 typedef struct ctx_debug_var_struct {
   int64_t  rbp_offset;
-  uint64_t strs_index;
+  uint64_t debug_str_id;
 } ctx_debug_var;
 
 typedef struct ctx_debug_sub_struct {
-  uint64_t       address_start;
-  uint64_t       address_end;
-  uint64_t       address_prologue_end;
-  uint64_t       address_epilogue_start;
-  uint64_t       strs_index;
-  uint64_t       args_cnt;
-  ctx_debug_arg *args;
-  uint64_t       vars_cnt;
-  ctx_debug_var *vars;
+  uint64_t         address_start;
+  uint64_t         address_end;
+  uint64_t         debug_str_id;
+  uint64_t         params_cnt;
+  ctx_debug_param *params;
+  uint64_t         vars_cnt;
+  ctx_debug_var   *vars;
 } ctx_debug_sub;
 
 typedef struct ctx_debug_file_struct {
-  uint64_t strs_index;
+  uint64_t debug_str_id;
   uint64_t lines_cnt;
   char   **lines;
 } ctx_debug_file;

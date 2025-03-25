@@ -195,7 +195,7 @@ static void cmd_info_breakpoints(ctx *ctx) {
 
     ctx_out_append(ctx, ", file: ");
     if (b->file_id != UINT64_MAX) {
-      uint64_t strs_idx = ctx->debug.files[b->file_id]->strs_index;
+      uint64_t strs_idx = ctx->debug.files[b->file_id]->debug_str_id;
       ctx_out_append(ctx, ctx_debug_idx_str(ctx, strs_idx));
     } else {
       ctx_out_append(ctx, "-");
@@ -240,7 +240,7 @@ static void cmd_info_debug_info(ctx *ctx) {
     ctx_debug_sub *sub = ctx->debug.subroutines[i];
 
     ctx_out_append(ctx, "- name: ");
-    ctx_out_appendln(ctx, ctx_debug_idx_str(ctx, sub->strs_index));
+    ctx_out_appendln(ctx, ctx_debug_idx_str(ctx, sub->debug_str_id));
 
     snprintf(buf, STRMAXLEN(buf), "\taddress_start: 0x%lx", sub->address_start);
     ctx_out_appendln(ctx, buf);
@@ -248,22 +248,14 @@ static void cmd_info_debug_info(ctx *ctx) {
     snprintf(buf, STRMAXLEN(buf), "\taddress_end: 0x%lx", sub->address_end);
     ctx_out_appendln(ctx, buf);
 
-    snprintf(buf, STRMAXLEN(buf), "\taddress_epilogue_start: 0x%lx",
-             sub->address_epilogue_start);
+    snprintf(buf, STRMAXLEN(buf), "\tparams_cnt: %lu", sub->params_cnt);
     ctx_out_appendln(ctx, buf);
 
-    snprintf(buf, STRMAXLEN(buf), "\taddress_prologue_end: 0x%lx",
-             sub->address_prologue_end);
-    ctx_out_appendln(ctx, buf);
-
-    snprintf(buf, STRMAXLEN(buf), "\targs_cnt: %lu", sub->args_cnt);
-    ctx_out_appendln(ctx, buf);
-
-    for (uint64_t j = 0; j < sub->args_cnt; ++j) {
-      ctx_debug_arg arg = sub->args[j];
+    for (uint64_t j = 0; j < sub->params_cnt; ++j) {
+      ctx_debug_param arg = sub->params[j];
 
       snprintf(buf, STRMAXLEN(buf), "\t- name: %s",
-               ctx_debug_idx_str(ctx, arg.strs_index));
+               ctx_debug_idx_str(ctx, arg.debug_str_id));
       ctx_out_append(ctx, buf);
 
       snprintf(buf, STRMAXLEN(buf), ", rbp_offset: %ld", arg.rbp_offset);
@@ -277,7 +269,7 @@ static void cmd_info_debug_info(ctx *ctx) {
       ctx_debug_var var = sub->vars[j];
 
       snprintf(buf, STRMAXLEN(buf), "\t- name: %s",
-               ctx_debug_idx_str(ctx, var.strs_index));
+               ctx_debug_idx_str(ctx, var.debug_str_id));
       ctx_out_append(ctx, buf);
 
       snprintf(buf, STRMAXLEN(buf), ", rbp_offset: %ld", var.rbp_offset);
@@ -291,7 +283,7 @@ static void cmd_info_debug_info(ctx *ctx) {
     snprintf(buf, STRMAXLEN(buf), "- id: %lu", i);
     ctx_out_append(ctx, buf);
     ctx_out_append(ctx, ", name: ");
-    ctx_out_appendln(ctx, ctx_debug_idx_str(ctx, file->strs_index));
+    ctx_out_appendln(ctx, ctx_debug_idx_str(ctx, file->debug_str_id));
   }
 }
 

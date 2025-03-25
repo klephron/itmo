@@ -25,11 +25,11 @@ static void cmd_where_traverse(ctx *ctx, uint64_t rbp, uint64_t rip) {
   snprintf(buf, STRMAXLEN(buf), "0x%016lx: ", rip);
   ctx_out_append(ctx, buf);
 
-  ctx_out_append(ctx, ctx_dbg_str_by_id(ctx, sub->strs_index));
+  ctx_out_append(ctx, ctx_dbg_str_by_id(ctx, sub->debug_str_id));
 
   ctx_out_append(ctx, " (");
-  for (uint64_t i = 0; i < sub->args_cnt; ++i) {
-    ctx_debug_arg *arg = sub->args + i;
+  for (uint64_t i = 0; i < sub->params_cnt; ++i) {
+    ctx_debug_param *arg = sub->params + i;
 
     // TODO: print value string
     UNUSED(arg);

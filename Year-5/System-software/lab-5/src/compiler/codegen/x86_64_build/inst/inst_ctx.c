@@ -3,7 +3,9 @@
 #include "util/macro.h"
 #include <stdio.h>
 #include <string.h>
-void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions) {
+
+void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, cg_debug *debug,
+                 list_exception *exceptions) {
   ctx->map_mir_sym       = hashset_cg_mir_sym_new();
   ctx->lit_cnt           = 0;
   ctx->method_cnt        = 0;
@@ -18,6 +20,7 @@ void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions) {
   ctx->bb = NULL;
 
   ctx->code       = code;
+  ctx->debug      = debug;
   ctx->exceptions = exceptions;
 }
 
@@ -36,6 +39,7 @@ void cg_ctx_deinit(cg_ctx *ctx) {
   ctx->bb = NULL;
 
   ctx->code       = NULL;
+  ctx->debug      = NULL;
   ctx->exceptions = NULL;
 }
 
@@ -132,18 +136,6 @@ void cg_ctx_text_push_back(cg_ctx *ctx, void *unit) {
 
 void cg_ctx_data_push_back(cg_ctx *ctx, void *unit) {
   list_cg_x86_64_unit_push_back(ctx->code->data, (cg_x86_64_unit *)unit);
-}
-
-void cg_ctx_debug_info_push_back(cg_ctx *ctx, void *unit) {
-  list_cg_x86_64_unit_push_back(ctx->code->debug_info, (cg_x86_64_unit *)unit);
-}
-
-void cg_ctx_debug_line_push_back(cg_ctx *ctx, void *unit) {
-  list_cg_x86_64_unit_push_back(ctx->code->debug_line, (cg_x86_64_unit *)unit);
-}
-
-void cg_ctx_debug_str_push_back(cg_ctx *ctx, void *unit) {
-  list_cg_x86_64_unit_push_back(ctx->code->debug_str, (cg_x86_64_unit *)unit);
 }
 
 // args of type cg_x86_64_op*, last arg is NULL

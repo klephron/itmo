@@ -1,4 +1,4 @@
-#include "inst_data.h"
+#include "data.h"
 
 #include "util/macro.h"
 

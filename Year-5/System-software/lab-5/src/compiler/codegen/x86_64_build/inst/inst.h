@@ -1,11 +1,13 @@
 #pragma once
 
 #include "compiler/codegen/x86_64/x86_64.h"
-#include "compiler/codegen/x86_64_build/inst_data.h"
+#include "compiler/codegen/x86_64_build/data.h"
+#include "compiler/codegen/x86_64_build/debug.h"
 #include "compiler/exception/list.h"
 #include "compiler/mir/mir.h"
 
 typedef struct cg_inst_result_struct {
+  cg_debug       *debug;
   list_exception *exceptions;
 } cg_inst_result;
 
@@ -26,11 +28,13 @@ typedef struct cg_ctx_struct {
 
   const mir_bb *bb;
 
+  cg_debug       *debug;
   cg_x86_64      *code;
   list_exception *exceptions;
 } cg_ctx;
 
-void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, list_exception *exceptions);
+void cg_ctx_init(cg_ctx *ctx, cg_x86_64 *code, cg_debug *debug,
+                 list_exception *exceptions);
 void cg_ctx_deinit(cg_ctx *ctx);
 
 const char *cg_ctx_mir_sym_find_lit(cg_ctx *ctx, const mir_lit *lit_ref);
