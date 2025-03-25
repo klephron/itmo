@@ -95,7 +95,6 @@ public class NetworkServiceTest {
         verify(networkRepository).deleteById(1L);
     }
 
-    // Захватываем 2 канала: 3 + 2 = 5, что меньше или равно 10
     @Test
     public void testOccupyChannels_Success() throws NetworkOutOfCapacityException {
         NetworkEntity network = new NetworkEntity(1L, "Network1", 10, 3);
@@ -104,7 +103,6 @@ public class NetworkServiceTest {
         verify(networkRepository).save(network);
     }
 
-    // Захват 3 каналов: 8 + 3 = 11 > 10 – должно выброситься исключение
     @Test
     public void testOccupyChannels_Failure() {
         NetworkEntity network = new NetworkEntity(1L, "Network1", 10, 8);
@@ -114,7 +112,6 @@ public class NetworkServiceTest {
         verify(networkRepository, never()).save(network);
     }
 
-    // Освобождаем 3 канала: 5 - 3 = 2
     @Test
     public void testFreeChannels() {
         NetworkEntity network = new NetworkEntity(1L, "Network1", 10, 5);
@@ -124,7 +121,6 @@ public class NetworkServiceTest {
     }
 
 
-    // Освобождаем 5 каналов: не может получиться отрицательное число, должно стать 0
     @Test
     public void testFreeChannels_DoesNotGoNegative() {
         NetworkEntity network = new NetworkEntity(1L, "Network1", 10, 2);
