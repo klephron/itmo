@@ -62,9 +62,8 @@ ctx_target_state ctx_tg_set(ctx *self, uint64_t abfd_asymbols_count,
   self->fname    = fname;
   self->s_target = TARGET_NOT_RUNNING;
 
-  // WARN: disabled debug context (enable when fixed)
-  // context_dbg_deinit(self);
-  // context_dbg_init(self);
+  ctx_dbg_deinit(self);
+  ctx_dbg_init(self);
 
   return ctx_tg_get_state(self);
 }
