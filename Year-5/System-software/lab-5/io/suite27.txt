@@ -5,6 +5,7 @@ begin
   var
   begin
     print!("a, fun");
+    print!(this);
   end;
 end;
 

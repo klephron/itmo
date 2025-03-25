@@ -1,4 +1,5 @@
 #include "cmd.h"
+#include "util/log.h"
 #include "util/macro.h"
 
 static const char *DESC = "Print stacktrace";
@@ -29,23 +30,11 @@ static void cmd_where_traverse(ctx *ctx, uint64_t rbp, uint64_t rip) {
 
   ctx_out_append(ctx, " (");
   for (uint64_t i = 0; i < sub->params_cnt; ++i) {
-    ctx_debug_param *arg = sub->params + i;
+    ctx_debug_param *param      = sub->params + i;
+    const char      *param_name = ctx_dbg_str_by_id(ctx, param->debug_str_id);
 
-    // TODO: print value string
-    UNUSED(arg);
-
-    // cmd_value_str value = cmd_print_value_str(ctx, rbp + arg->rbp_offset);
-    // context_out_append(ctx, context_dbg_str_by_id(ctx, arg->strs_index));
-    // if (value.type) {
-    //   context_out_append(ctx, ": ");
-    //   context_out_append(ctx, value.type);
-    //   free(value.type);
-    // }
-    // context_out_append(ctx, " = ");
-    // if (value.value) {
-    //   context_out_append(ctx, value.value);
-    //   free(value.value);
-    // }
+    UNUSED(param);
+    warn("TODO: print param '%s' = value: type", param_name);
   }
   ctx_out_appendln(ctx, ")");
 

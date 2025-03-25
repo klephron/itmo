@@ -9,7 +9,7 @@ static const char *DESC = "Disassemble memory";
 
 static const char *HELP = "Usage: <command> <start> <size>\n"
                           "\t<start>: start address in hex\n"
-                          "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)";
+                          "\t<size>: bytes";
 
 static void cmd_disassemble_fn(cmd_handler *handler, ctx *ctx,
                                const char *rest) {

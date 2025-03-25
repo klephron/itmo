@@ -1362,7 +1362,7 @@ static void cg_inst_stmt(cg_ctx *ctx, const mir_stmt *stmt) {
 
     list_cg_debug_line_push_back(
         ctx->debug->lines,
-        cg_debug_line_new(sym, stmt->debug.source_ref, stmt->debug.pos));
+        cg_debug_line_new(sym, stmt->debug.source_ref, stmt->debug.line));
   }
 
   switch (stmt->kind) {
@@ -1394,8 +1394,8 @@ static void cg_inst_bb(cg_ctx *ctx, const mir_bb *bb) {
     cg_inst_stmt(ctx, stmt);
   }
 
-  if (cg_debug_enabled(ctx->debug)) {
-    char *sym = cg_sym_local_suf_idx(ctx->sub_sym, "L", ctx->line_cnt);
+  if (cg_debug_enabled(ctx->debug) && bb->jmp.debug.source_ref) {
+    char *sym = cg_sym_local_suf_idx(ctx->sub_sym, "L", ctx->line_cnt++);
     cg_ctx_text_push_back(ctx, cg_x86_64_symbol_new_text(sym));
     list_cg_debug_line_push_back(
         ctx->debug->lines,

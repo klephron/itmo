@@ -1,5 +1,6 @@
 #include "cmd.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -96,6 +97,62 @@ static int cmd_print_register(ctx *ctx, const char *rest) {
   return 0;
 }
 
+static int cmd_print_param_var(ctx *ctx, const char *rest) {
+  const char             *args = rest;
+  struct user_regs_struct regs;
+
+  if (cmd_error_if_no_target(ctx) || cmd_error_if_not_running(ctx)) {
+    return -1;
+  }
+
+  if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+    ctx_error(ctx, "failed to get regs");
+    return -1;
+  }
+
+  // get current subroutine based on rsp
+  ctx_debug_sub *sub = ctx_dbg_sub_by_address(ctx, regs.rip);
+  if (!sub) {
+    ctx_error(ctx, "no debug info about current subroutine");
+    return -1;
+  }
+
+  int found = 0;
+
+  for (uint64_t i = 0; i < sub->params_cnt; ++i) {
+    const ctx_debug_param *param = sub->params + i;
+    const char *param_name       = ctx_dbg_str_by_id(ctx, param->debug_str_id);
+    if (!strcmp(param_name, args)) {
+      uint64_t address = regs.rbp + param->rbp_offset;
+      UNUSED(address);
+
+      warn("TODO: print param '%s' value: type", param_name);
+      found = 1;
+    }
+  }
+
+  for (uint64_t i = 0; i < sub->vars_cnt; ++i) {
+    const ctx_debug_var *var      = sub->vars + i;
+    const char          *var_name = ctx_dbg_str_by_id(ctx, var->debug_str_id);
+    if (!strcmp(var_name, args)) {
+      uint64_t address = regs.rbp + var->rbp_offset;
+      UNUSED(address);
+
+      warn("TODO: print var '%s' value: type", var_name);
+      found = 1;
+    }
+  }
+
+  if (!found) {
+    ctx_err_append(ctx, "in subroutine ");
+    ctx_err_append(ctx, ctx_dbg_str_by_id(ctx, sub->debug_str_id));
+    ctx_error(ctx, " arg or var not found");
+    return -1;
+  }
+
+  return 0;
+}
+
 static void cmd_print_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
 
@@ -107,6 +164,8 @@ static void cmd_print_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
 
   if (args[0] == '$') {
     cmd_print_register(ctx, args);
+  } else {
+    cmd_print_param_var(ctx, args);
   }
   goto cleanup;
 

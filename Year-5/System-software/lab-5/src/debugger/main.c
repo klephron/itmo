@@ -96,9 +96,11 @@ static char *next_cmd(FILE *init_fp, FILE **fp_out) {
 
   if (init_fp && getline(&line, &len, init_fp) != -1) {
     *fp_out = init_fp;
-  } else {
-    getline(&line, &len, stdin);
+  } else if (getline(&line, &len, stdin) != -1) {
     *fp_out = stdin;
+  } else if (line) {
+    free(line);
+    line = NULL;
   }
 
   return line;
@@ -163,13 +165,15 @@ static int execute(args *args) {
     fprintf(stdout, "(dbg) ");
 
     char *cmd = next_cmd(init_fp, &fp);
-    if (fileno(fp) != STDIN_FILENO) {
-      fprintf(stdout, "%s", cmd);
-    }
 
     if (cmd) {
+      if (fileno(fp) != STDIN_FILENO) {
+        fprintf(stdout, "%s", cmd);
+      }
       cmd_handler_handle(handler, ctx, cmd);
       free(cmd);
+    } else {
+      ctx->s_debugger = DEBUGGER_EXITING;
     }
 
     debug("debugger: %s, target: %s", state_debugger_enum_str(ctx->s_debugger),
