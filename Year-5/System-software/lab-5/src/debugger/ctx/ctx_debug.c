@@ -1,15 +1,15 @@
-#include "context.h"
+#include "ctx.h"
 
 #include "util/macro.h"
 #include "x86_64_core/debug.h"
 #include <stdio.h>
 
-void context_dbg_init(context *self) {
+void ctx_dbg_init(ctx *self) {
   if (!self->abfd) {
     return;
   }
 
-  debug_data *dbg = &self->debug;
+  ctx_debug_data *dbg = &self->debug;
 
   for (asection *section = self->abfd->sections; section;
        section           = section->next) {
@@ -26,10 +26,10 @@ void context_dbg_init(context *self) {
       dbg->files_cnt       = ((x86_64_debug_info *)cur)->files_cnt;
       cur += sizeof(x86_64_debug_info);
 
-      dbg->subroutines = MALLOCN(debug_sub *, dbg->subroutines_cnt);
+      dbg->subroutines = MALLOCN(ctx_debug_sub *, dbg->subroutines_cnt);
       for (uint64_t i = 0; i < dbg->subroutines_cnt; ++i) {
-        dbg->subroutines[i] = MALLOC(debug_sub);
-        debug_sub *sub      = dbg->subroutines[i];
+        dbg->subroutines[i] = MALLOC(ctx_debug_sub);
+        ctx_debug_sub *sub  = dbg->subroutines[i];
 
         sub->address_start = ((x86_64_debug_info_sub *)cur)->address_start;
         sub->address_end   = ((x86_64_debug_info_sub *)cur)->address_end;
@@ -43,27 +43,27 @@ void context_dbg_init(context *self) {
         sub->vars_cnt   = ((x86_64_debug_info_sub *)cur)->vars_cnt;
         cur += sizeof(x86_64_debug_info_sub);
 
-        sub->args = MALLOCN(debug_arg, sub->args_cnt);
+        sub->args = MALLOCN(ctx_debug_arg, sub->args_cnt);
         for (uint64_t j = 0; j < sub->args_cnt; ++j) {
-          debug_arg *arg  = sub->args + j;
-          arg->rbp_offset = ((x86_64_debug_info_arg *)cur)->rbp_offset;
-          arg->strs_index = ((x86_64_debug_info_arg *)cur)->strs_index;
+          ctx_debug_arg *arg = sub->args + j;
+          arg->rbp_offset    = ((x86_64_debug_info_arg *)cur)->rbp_offset;
+          arg->strs_index    = ((x86_64_debug_info_arg *)cur)->strs_index;
           cur += sizeof(x86_64_debug_info_arg);
         }
 
-        sub->vars = MALLOCN(debug_var, sub->vars_cnt);
+        sub->vars = MALLOCN(ctx_debug_var, sub->vars_cnt);
         for (uint64_t j = 0; j < sub->vars_cnt; ++j) {
-          debug_var *var  = sub->vars + j;
-          var->rbp_offset = ((x86_64_debug_info_var *)cur)->rbp_offset;
-          var->strs_index = ((x86_64_debug_info_var *)cur)->strs_index;
+          ctx_debug_var *var = sub->vars + j;
+          var->rbp_offset    = ((x86_64_debug_info_var *)cur)->rbp_offset;
+          var->strs_index    = ((x86_64_debug_info_var *)cur)->strs_index;
           cur += sizeof(x86_64_debug_info_var);
         }
       }
 
-      dbg->files = MALLOCN(debug_file *, dbg->files_cnt);
+      dbg->files = MALLOCN(ctx_debug_file *, dbg->files_cnt);
       for (uint64_t i = 0; i < dbg->files_cnt; ++i) {
-        dbg->files[i]    = MALLOC(debug_file);
-        debug_file *file = dbg->files[i];
+        dbg->files[i]        = MALLOC(ctx_debug_file);
+        ctx_debug_file *file = dbg->files[i];
 
         file->strs_index = ((x86_64_debug_info_file *)cur)->strs_index;
         file->lines_cnt  = 0;
@@ -83,12 +83,12 @@ void context_dbg_init(context *self) {
       dbg->lines_cnt = ((x86_64_debug_line *)cur)->entries_cnt;
       cur += sizeof(x86_64_debug_line);
 
-      dbg->lines = MALLOCN(debug_line, dbg->lines_cnt);
+      dbg->lines = MALLOCN(ctx_debug_line, dbg->lines_cnt);
       for (uint64_t i = 0; i < dbg->lines_cnt; ++i) {
-        debug_line *line = dbg->lines + i;
-        line->line       = ((x86_64_debug_line_entry *)cur)->line;
-        line->file_id    = ((x86_64_debug_line_entry *)cur)->file_id;
-        line->address    = ((x86_64_debug_line_entry *)cur)->address;
+        ctx_debug_line *line = dbg->lines + i;
+        line->line           = ((x86_64_debug_line_entry *)cur)->line;
+        line->file_id        = ((x86_64_debug_line_entry *)cur)->file_id;
+        line->address        = ((x86_64_debug_line_entry *)cur)->address;
         cur += sizeof(x86_64_debug_line_entry);
       }
 
@@ -115,9 +115,9 @@ void context_dbg_init(context *self) {
 
   // post init files lines
   for (uint64_t i = 0; i < self->debug.files_cnt; ++i) {
-    debug_file *file    = self->debug.files[i];
-    FILE       *file_fp = NULL;
-    file_fp             = fopen(dbg->strs[file->strs_index], "r");
+    ctx_debug_file *file    = self->debug.files[i];
+    FILE           *file_fp = NULL;
+    file_fp                 = fopen(dbg->strs[file->strs_index], "r");
     if (file_fp) {
       char  *line = NULL;
       size_t len  = 0;
@@ -151,11 +151,11 @@ void context_dbg_init(context *self) {
   }
 }
 
-void context_dbg_deinit(context *self) {
-  debug_data *dbg = &self->debug;
+void ctx_dbg_deinit(ctx *self) {
+  ctx_debug_data *dbg = &self->debug;
 
   for (uint64_t i = 0; i < dbg->subroutines_cnt; ++i) {
-    debug_sub *sub = dbg->subroutines[i];
+    ctx_debug_sub *sub = dbg->subroutines[i];
     free(sub->args);
     free(sub->vars);
     free(sub);
@@ -165,7 +165,7 @@ void context_dbg_deinit(context *self) {
   dbg->subroutines     = NULL;
 
   for (uint64_t i = 0; i < dbg->files_cnt; ++i) {
-    debug_file *file = dbg->files[i];
+    ctx_debug_file *file = dbg->files[i];
     if (file->lines) {
       for (uint64_t j = 0; j < file->lines_cnt; ++j) {
         if (file->lines[j]) {
@@ -192,9 +192,9 @@ void context_dbg_deinit(context *self) {
   dbg->strs     = NULL;
 }
 
-int context_dbg_line_by_source(context *self, debug_line *result) {
+int ctx_dbg_line_by_source(ctx *self, ctx_debug_line *result) {
   for (uint64_t i = 0; i < self->debug.lines_cnt; ++i) {
-    debug_line debug = self->debug.lines[i];
+    ctx_debug_line debug = self->debug.lines[i];
     if (debug.file_id == result->file_id && debug.line == result->line) {
       result->address = debug.address;
       return 0;
@@ -204,9 +204,9 @@ int context_dbg_line_by_source(context *self, debug_line *result) {
 }
 
 // TODO: rewrite to binary search
-int context_dbg_line_by_address(context *self, debug_line *result) {
+int ctx_dbg_line_by_address(ctx *self, ctx_debug_line *result) {
   for (uint64_t i = 0; i < self->debug.lines_cnt; ++i) {
-    debug_line debug = self->debug.lines[i];
+    ctx_debug_line debug = self->debug.lines[i];
     if (debug.address == result->address) {
       result->file_id = debug.file_id;
       result->line    = debug.line;
@@ -216,18 +216,18 @@ int context_dbg_line_by_address(context *self, debug_line *result) {
   return -1;
 }
 
-const char *context_dbg_str_by_id(context *self, uint64_t id) {
+const char *ctx_dbg_str_by_id(ctx *self, uint64_t id) {
   return self->debug.strs[id];
 }
 
-const char *context_dbg_file_by_id(context *self, uint64_t file) {
-  return context_dbg_str_by_id(self, self->debug.files[file]->strs_index);
+const char *ctx_dbg_file_by_id(ctx *self, uint64_t file) {
+  return ctx_dbg_str_by_id(self, self->debug.files[file]->strs_index);
 }
 
 // TODO: rewrite to binary search
-debug_sub *context_dbg_sub_by_address(context *self, uint64_t address) {
+ctx_debug_sub *ctx_dbg_sub_by_address(ctx *self, uint64_t address) {
   for (uint64_t i = 0; i < self->debug.subroutines_cnt; ++i) {
-    debug_sub *sub = self->debug.subroutines[i];
+    ctx_debug_sub *sub = self->debug.subroutines[i];
     if (sub->address_start <= address && sub->address_end > address) {
       return sub;
     }
@@ -235,19 +235,19 @@ debug_sub *context_dbg_sub_by_address(context *self, uint64_t address) {
   return NULL;
 }
 
-void context_dbg_line_reset(context *self) {
+void ctx_dbg_line_reset(ctx *self) {
   self->line.address = UINT64_MAX;
   self->line.line    = UINT64_MAX;
   self->line.file_id = UINT64_MAX;
 }
 
-void context_dbg_line_set(context *self, debug_line line) {
+void ctx_dbg_line_set(ctx *self, ctx_debug_line line) {
   if (line.line != UINT64_MAX && line.file_id != UINT64_MAX) {
     self->line = line;
   }
 }
 
-int context_dbg_line_changed(context *self, debug_line line) {
+int ctx_dbg_line_changed(ctx *self, ctx_debug_line line) {
   if ((line.line != UINT64_MAX) && (line.file_id != UINT64_MAX)) {
     if ((line.file_id != self->line.file_id) ||
         (line.line != self->line.line)) {

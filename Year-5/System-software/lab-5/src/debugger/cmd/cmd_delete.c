@@ -1,6 +1,5 @@
 #include "debugger/cmd/cmd.h"
 
-#include "debugger/context/context.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -9,8 +8,7 @@ static const char *DESC = "Delete breakpoint by id or all";
 static const char *HELP = "Usage: <command> [<id>]\n"
                           "\t<id>: id of breakpoint";
 
-static void cmd_delete_fn(cmd_handler *handler, context *ctx,
-                          const char *rest) {
+static void cmd_delete_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   char *args   = NULL;
   char *arg_id = NULL;
@@ -42,30 +40,30 @@ static void cmd_delete_fn(cmd_handler *handler, context *ctx,
 
   size_t deleted = 0;
 
-  for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
+  for (hashset_ctx_breakpoint_it it = hashset_ctx_breakpoint_begin(ctx->breaks);
        !END(it); NEXT(it)) {
 
-    breakpoint *b = GET(it);
+    ctx_breakpoint *b = GET(it);
 
     if (!id || b->id == id) {
       ++deleted;
-      if (context_tg_is_running(ctx)) {
-        context_bp_remove(ctx, b);
+      if (ctx_tg_is_running(ctx)) {
+        ctx_bp_remove(ctx, b);
       }
       if (id) {
-        hashset_breakpoint_erase(ctx->breaks, it);
+        hashset_ctx_breakpoint_erase(ctx->breaks, it);
         break;
       }
     }
   }
 
   if (!id) {
-    hashset_breakpoint_free(ctx->breaks);
-    ctx->breaks = hashset_breakpoint_new();
+    hashset_ctx_breakpoint_free(ctx->breaks);
+    ctx->breaks = hashset_ctx_breakpoint_new();
   }
 
   if (!deleted) {
-    context_error(ctx, "no breakpoints match");
+    ctx_error(ctx, "no breakpoints match");
     goto cleanup;
   }
 

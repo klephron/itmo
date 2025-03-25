@@ -1,6 +1,5 @@
 #include "debugger/cmd/cmd.h"
 
-#include "debugger/context/context.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -17,12 +16,12 @@ static const char *DESC =
 static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
-static void cmd_next_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_next_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
   size_t                  n    = 1;
   struct user_regs_struct regs;
-  debug_line              curr;
+  ctx_debug_line          curr;
 
   args = trim(strdup(rest));
 
@@ -35,8 +34,8 @@ static void cmd_next_fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   // get current address
-  if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-    context_error(ctx, "failed to get regs");
+  if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+    ctx_error(ctx, "failed to get regs");
     goto cleanup;
   }
 
@@ -48,27 +47,27 @@ static void cmd_next_fn(cmd_handler *handler, context *ctx, const char *rest) {
   cmd_nexti_disasm_init(ctx, &info, &dftype, &is_call);
 
   for (size_t i = 0; i < n; ++i) {
-    while (!context_dbg_line_changed(ctx, curr)) {
+    while (!ctx_dbg_line_changed(ctx, curr)) {
       if (cmd_nexti_exec(ctx, &info, &dftype, &is_call, n) == -1) {
         goto cleanup;
       }
 
-      if (!context_tg_is_running(ctx)) {
+      if (!ctx_tg_is_running(ctx)) {
         break;
       }
 
-      if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-        context_error(ctx, "failed to get regs");
+      if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+        ctx_error(ctx, "failed to get regs");
         goto cleanup;
       }
 
       curr.address = regs.rip;
-      context_dbg_line_by_address(ctx, &curr);
+      ctx_dbg_line_by_address(ctx, &curr);
     }
-    context_dbg_line_set(ctx, curr);
+    ctx_dbg_line_set(ctx, curr);
   }
 
-  if (context_tg_is_running(ctx)) {
+  if (ctx_tg_is_running(ctx)) {
     cmd_ctx_out_line(ctx, curr);
   }
 

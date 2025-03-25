@@ -5,7 +5,6 @@
 #include "x86_64_core/builtin/builtin.h"
 #include "x86_64_core/proxy/value/array.h"
 #include "x86_64_core/proxy/value/uint.h"
-#include "x86_64_core/util.h"
 #include "x86_64_core/value.h"
 
 Test(x86_64_array, test1) {
@@ -15,8 +14,7 @@ Test(x86_64_array, test1) {
   __x86_64_proxy_array_init(&value1, 10);
 
   value1.op_tbl->op_repr(&value2, &value1);
-  debug("array: %s, type %s", value2.data_ptr,
-        __x86_64_type_enum_str(value1.type));
+  debug("array: %s, type %d", value2.data_ptr, value1.type);
   value2.op_tbl->op_drop(&value2);
 
   value1.op_tbl->op_drop(&value1);

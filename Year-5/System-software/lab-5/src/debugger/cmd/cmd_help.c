@@ -9,8 +9,8 @@ static const char *DESC = "Help";
 
 static const char *HELP = "Usage: <command> [<cmd>]";
 
-static void cmd_help_all(cmd_handler *handler, context *ctx) {
-  context_out_appendln(ctx, "Commands:");
+static void cmd_help_all(cmd_handler *handler, ctx *ctx) {
+  ctx_out_appendln(ctx, "Commands:");
   size_t first_w     = 0;
   size_t entries_cnt = 0;
   for (hashset_cmd_it it = hashset_cmd_begin(handler->cmds); !END(it);
@@ -42,26 +42,26 @@ static void cmd_help_all(cmd_handler *handler, context *ctx) {
 
   for (size_t i = 0; i < entries_cnt; ++i) {
     cmd *entry = entries[i];
-    context_out_append(ctx, entry->cmd_ref);
+    ctx_out_append(ctx, entry->cmd_ref);
 
     for (size_t i = 0; i < first_w - strlen(entry->cmd_ref); ++i) {
-      context_out_append(ctx, " ");
+      ctx_out_append(ctx, " ");
     }
-    context_out_append(ctx, " -- ");
-    context_out_appendln(ctx, entry->desc_ref);
+    ctx_out_append(ctx, " -- ");
+    ctx_out_appendln(ctx, entry->desc_ref);
   }
 
   free(entries);
 }
 
-static void cmd_help_one(context *ctx, cmd *entry) {
-  context_out_append(ctx, entry->cmd_ref);
-  context_out_append(ctx, " -- ");
-  context_out_appendln(ctx, entry->desc_ref);
-  context_out_appendln(ctx, entry->help_ref);
+static void cmd_help_one(ctx *ctx, cmd *entry) {
+  ctx_out_append(ctx, entry->cmd_ref);
+  ctx_out_append(ctx, " -- ");
+  ctx_out_appendln(ctx, entry->desc_ref);
+  ctx_out_appendln(ctx, entry->help_ref);
 }
 
-static void cmd_help_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_help_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   char *args = trim(strdup(rest));
 
   if (!args || !*args) {
@@ -77,7 +77,7 @@ static void cmd_help_fn(cmd_handler *handler, context *ctx, const char *rest) {
       }
     }
     if (!found) {
-      context_error(ctx, "command not found");
+      ctx_error(ctx, "command not found");
       cmd_help_all(handler, ctx);
     }
   }

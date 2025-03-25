@@ -11,7 +11,7 @@ static const char *HELP = "Usage: <command> <start> <size>\n"
                           "\t<start>: start address in hex\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)";
 
-static void cmd_disassemble_fn(cmd_handler *handler, context *ctx,
+static void cmd_disassemble_fn(cmd_handler *handler, ctx *ctx,
                                const char *rest) {
   UNUSED(handler);
   char *args        = trim(strdup(rest));
@@ -66,9 +66,9 @@ cleanup:
 }
 
 typedef struct cmd_disassemle_ctx_struct {
-  context *ctx;
-  strbuf  *buffer;
-  int      error;
+  ctx    *ctx;
+  strbuf *buffer;
+  int     error;
 } cmd_disassemble_ctx;
 
 static int cmd_disassemble_printf(void *stream, const char *fmt, ...) {
@@ -124,7 +124,7 @@ static int cmd_disassemble_read_memory(bfd_vma memaddr, bfd_byte *addr,
 
   uint64_t bytes = 0;
   for (bfd_vma addr_cur = memaddr; bytes < length; addr_cur += sizeof(long)) {
-    if (context_tg_peekdata(dis->ctx, addr_cur, &data) == TARGET_ERROR) {
+    if (ctx_tg_peekdata(dis->ctx, addr_cur, &data) == TARGET_ERROR) {
       return 1;
     }
     uint64_t bytes_to_copy = sizeof(long);
@@ -142,7 +142,7 @@ cmd *cmd_disassemble(const char *cmd_ref) {
   return cmd_entry_new(cmd_disassemble_fn, DESC, HELP, cmd_ref);
 }
 
-void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
+void cmd_disassemble_at_address(ctx *ctx, uint64_t address, uint64_t size) {
   char    buf[64];
   strbuf *buffer = strbuf_new(0, 0);
 
@@ -169,11 +169,11 @@ void cmd_disassemble_at_address(context *ctx, uint64_t address, uint64_t size) {
 
     size_t insn_size = disasm(pc, &info);
     pc += insn_size;
-    context_out_appendln(ctx, strbuf_data(buffer));
+    ctx_out_appendln(ctx, strbuf_data(buffer));
     strbuf_reset(buffer);
   }
   if (dis.error) {
-    context_error(ctx, "error occured while disassembling");
+    ctx_error(ctx, "error occured while disassembling");
   }
   strbuf_free(buffer);
 }

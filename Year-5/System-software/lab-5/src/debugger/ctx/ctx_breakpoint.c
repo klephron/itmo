@@ -1,29 +1,9 @@
-#include "context.h"
+#include "ctx.h"
 #include "util/log.h"
-#include "util/macro.h"
 #include <errno.h>
 #include <sys/ptrace.h>
 
-breakpoint *breakpoint_new(size_t id, uint8_t data, uint64_t address,
-                           uint64_t file_id, size_t line) {
-  breakpoint *self = MALLOC(breakpoint);
-  self->id         = id;
-  self->data       = data;
-  self->address    = address;
-  self->file_id    = file_id;
-  self->line       = line;
-  self->is_enabled = 0;
-  self->is_placed  = 0;
-  return self;
-}
-
-void breakpoint_free(breakpoint *self) {
-  if (self) {
-    free(self);
-  }
-}
-
-int context_bp_place(context *self, breakpoint *bp) {
+int ctx_bp_place(ctx *self, ctx_breakpoint *bp) {
   if (bp->is_enabled && !bp->is_placed) {
     errno         = 0;
     uint64_t data = ptrace(PTRACE_PEEKDATA, self->pid, bp->address, NULL);
@@ -31,8 +11,8 @@ int context_bp_place(context *self, breakpoint *bp) {
       error("errno!");
       return -1;
     }
-    bp->data = peekdata_brkpt_to_store(data);
-    data     = peekdata_brkpt_with_int3(data);
+    bp->data = CTX_STORE(data);
+    data     = CTX_WITH_INT3(data);
     if (ptrace(PTRACE_POKEDATA, self->pid, bp->address, data) == -1) {
       error("ptrace!");
       return -1;
@@ -42,7 +22,7 @@ int context_bp_place(context *self, breakpoint *bp) {
   return 0;
 }
 
-int context_bp_remove(context *self, breakpoint *bp) {
+int ctx_bp_remove(ctx *self, ctx_breakpoint *bp) {
   if (bp->is_enabled && bp->is_placed) {
     errno         = 0;
     uint64_t data = ptrace(PTRACE_PEEKDATA, self->pid, bp->address, NULL);
@@ -50,7 +30,7 @@ int context_bp_remove(context *self, breakpoint *bp) {
       error("errno!");
       return -1;
     }
-    data = peekdata_bpkpt_with_stored(data, bp->data);
+    data = CTX_WITH_STORED(data, bp->data);
     if (ptrace(PTRACE_POKEDATA, self->pid, bp->address, data) == -1) {
       error("ptrace!");
       return -1;

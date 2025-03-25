@@ -6,8 +6,8 @@
 
 #include "debugger/cmd/cmd.h"
 #include "debugger/cmd/handler.h"
-#include "debugger/context/context.h"
-#include "debugger/context/str.h"
+#include "debugger/ctx/ctx.h"
+#include "debugger/ctx/str.h"
 #include "util/log.h"
 #include "util/macro.h"
 
@@ -152,7 +152,7 @@ static int execute(args *args) {
     }
   }
 
-  context *ctx = context_new();
+  ctx *ctx = ctx_new();
 
   cmd_handler *handler = cmd_handler_new();
   register_cmds(handler);
@@ -173,7 +173,7 @@ static int execute(args *args) {
     }
 
     debug("debugger: %s, target: %s", state_debugger_enum_str(ctx->s_debugger),
-          state_target_enum_str(context_tg_get_state(ctx)));
+          state_target_enum_str(ctx_tg_get_state(ctx)));
 
     if (ctx->s_debugger == DEBUGGER_ERROR) {
       fprintf(stderr, "error: %s", strbuf_data(ctx->buf_err));
@@ -188,7 +188,7 @@ static int execute(args *args) {
   }
 
   cmd_handler_free(handler);
-  context_free(ctx);
+  ctx_free(ctx);
 
   if (init_fp) {
     fclose(init_fp);

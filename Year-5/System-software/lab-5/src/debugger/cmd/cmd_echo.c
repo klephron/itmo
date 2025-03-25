@@ -5,9 +5,9 @@ static const char *DESC = "Echo command";
 
 static const char *HELP = "Usage: <command> <arg>...";
 
-static void cmd_echo_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_echo_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
-  context_out_append(ctx, rest);
+  ctx_out_append(ctx, rest);
 }
 
 cmd *cmd_echo(const char *cmd_ref) {

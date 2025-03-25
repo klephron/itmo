@@ -13,7 +13,7 @@ static const char *DESC = "Run target";
 
 static const char *HELP = "Usage: <command>";
 
-static void cmd_run_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_run_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   char  *args = NULL;
   char **argv = NULL;
@@ -24,8 +24,8 @@ static void cmd_run_fn(cmd_handler *handler, context *ctx, const char *rest) {
     goto cleanup;
   }
 
-  if (context_tg_is_running(ctx)) {
-    context_error(ctx, "target is already running");
+  if (ctx_tg_is_running(ctx)) {
+    ctx_error(ctx, "target is already running");
     goto cleanup;
   }
 
@@ -44,24 +44,24 @@ static void cmd_run_fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
   argv[argc] = NULL;
 
-  if (context_tg_run(ctx, argv) == TARGET_ERROR) {
-    context_error(ctx, "target is not created");
+  if (ctx_tg_run(ctx, argv) == TARGET_ERROR) {
+    ctx_error(ctx, "target is not created");
     goto cleanup;
   }
 
   char buf[64];
-  context_out_append(ctx, "started with pid ");
+  ctx_out_append(ctx, "started with pid ");
   snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
-  context_out_appendln(ctx, buf);
+  ctx_out_appendln(ctx, buf);
 
-  for (hashset_breakpoint_it it = hashset_breakpoint_begin(ctx->breaks);
+  for (hashset_ctx_breakpoint_it it = hashset_ctx_breakpoint_begin(ctx->breaks);
        !END(it); NEXT(it)) {
-    breakpoint *bp = GET(it);
-    bp->is_placed  = 0;
-    context_bp_place(ctx, bp);
+    ctx_breakpoint *bp = GET(it);
+    bp->is_placed      = 0;
+    ctx_bp_place(ctx, bp);
   }
 
-  context_dbg_line_reset(ctx);
+  ctx_dbg_line_reset(ctx);
 
 cleanup:
   if (argv) {

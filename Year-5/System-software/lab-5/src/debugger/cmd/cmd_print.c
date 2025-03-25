@@ -17,7 +17,7 @@ static const char *HELP = "Usage: <command> (<register>|<arg>|<var>)\n"
                           "\t<arg>: argument name\n"
                           "\t<var>: variable name";
 
-static int cmd_print_register(context *ctx, const char *rest) {
+static int cmd_print_register(ctx *ctx, const char *rest) {
   char                    buf[64];
   struct user_regs_struct regs;
   const char             *reg = rest + 1;
@@ -26,8 +26,8 @@ static int cmd_print_register(context *ctx, const char *rest) {
     return -1;
   }
 
-  if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-    context_error(ctx, "failed to get regs");
+  if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+    ctx_error(ctx, "failed to get regs");
     return -1;
   }
 
@@ -85,18 +85,18 @@ static int cmd_print_register(context *ctx, const char *rest) {
 
   if (offset == SIZE_MAX) {
     ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_append(ctx, "unknown register ");
-    context_err_appendln(ctx, reg);
+    ctx_err_append(ctx, "unknown register ");
+    ctx_err_appendln(ctx, reg);
     return -1;
   }
 
   snprintf(buf, STRMAXLEN(buf), "%#llx",
            *(unsigned long long *)(((void *)&regs) + offset));
-  context_out_appendln(ctx, buf);
+  ctx_out_appendln(ctx, buf);
   return 0;
 }
 
-static void cmd_print_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_print_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
 
   char *args = trim(strdup(rest));

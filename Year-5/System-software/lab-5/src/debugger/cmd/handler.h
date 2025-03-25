@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cmd.h"
-#include "debugger/context/context.h"
 #include "util/container_util.h"
 #include "util/hashset.h"
 
@@ -36,4 +35,4 @@ cmd_handler *cmd_handler_new();
 void         cmd_handler_free(cmd_handler *self);
 
 void cmd_handler_register(cmd_handler *self, cmd *entry);
-void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd);
+void cmd_handler_handle(cmd_handler *self, ctx *ctx, const char *cmd);

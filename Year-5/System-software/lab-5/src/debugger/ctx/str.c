@@ -1,7 +1,7 @@
 #include "str.h"
 #include "util/log.h"
 
-const char *state_target_enum_str(target_state_enum state) {
+const char *state_target_enum_str(ctx_target_state state) {
   switch (state) {
     case TARGET_NO_TARGET:
       return "NO_TARGET";
@@ -20,7 +20,7 @@ const char *state_target_enum_str(target_state_enum state) {
   return "UNKNOWN";
 }
 
-const char *state_debugger_enum_str(debugger_state_enum state) {
+const char *state_debugger_enum_str(ctx_debugger_state state) {
   switch (state) {
     case DEBUGGER_IDLE:
       return "IDLE";

@@ -32,7 +32,7 @@ void cmd_handler_register(cmd_handler *self, cmd *entry) {
   debug("handler %p added cmd %s", self, entry->cmd_ref);
 }
 
-void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
+void cmd_handler_handle(cmd_handler *self, ctx *ctx, const char *cmd_ref) {
   char  c_tmp;
   char *args       = strdup(cmd_ref);
   char *args_start = trim_start(args);
@@ -58,9 +58,9 @@ void cmd_handler_handle(cmd_handler *self, context *ctx, const char *cmd_ref) {
 
   if (END(it)) {
     ctx->s_debugger = DEBUGGER_ERROR;
-    context_err_append(ctx, "unknown command: ");
-    context_err_append(ctx, args_start);
-    context_err_appendln(ctx, ", try help");
+    ctx_err_append(ctx, "unknown command: ");
+    ctx_err_append(ctx, args_start);
+    ctx_err_appendln(ctx, ", try help");
     goto cleanup;
   }
 

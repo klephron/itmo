@@ -16,7 +16,7 @@ static const char *HELP = "Usage: <command> <n> <format> <size> <start>\n"
                           "\t<size>: b(byte)|h(halfword)|w(word)|g(giant)\n"
                           "\t<start>: start address in hex";
 
-static void cmd_examine_out_le_8bytes(context *ctx, uint64_t data, char format,
+static void cmd_examine_out_le_8bytes(ctx *ctx, uint64_t data, char format,
                                       size_t size) {
   char   buf[64];
   size_t offset = 0;
@@ -111,13 +111,12 @@ static void cmd_examine_out_le_8bytes(context *ctx, uint64_t data, char format,
         return;
     }
     offset += size;
-    context_out_append(ctx, buf);
-    context_out_append(ctx, " ");
+    ctx_out_append(ctx, buf);
+    ctx_out_append(ctx, " ");
   }
 }
 
-static void cmd_examine_fn(cmd_handler *handler, context *ctx,
-                           const char *rest) {
+static void cmd_examine_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   char *args        = trim(strdup(rest));
   char *arg_n       = NULL;
@@ -206,15 +205,15 @@ static void cmd_examine_fn(cmd_handler *handler, context *ctx,
        addr_cur <= addr_end; addr_cur += sizeof(uint64_t)) {
     uint64_t data;
     snprintf(buf, STRMAXLEN(buf), "0x%lx", addr_cur);
-    if (context_tg_peekdata(ctx, addr_cur, &data) == TARGET_ERROR) {
-      context_err_append(ctx, "unable to fetch data at address ");
-      context_error(ctx, buf);
+    if (ctx_tg_peekdata(ctx, addr_cur, &data) == TARGET_ERROR) {
+      ctx_err_append(ctx, "unable to fetch data at address ");
+      ctx_error(ctx, buf);
       continue;
     } else {
-      context_out_append(ctx, buf);
-      context_out_append(ctx, ": ");
+      ctx_out_append(ctx, buf);
+      ctx_out_append(ctx, ": ");
       cmd_examine_out_le_8bytes(ctx, data, format, size);
-      context_out_appendln(ctx, "");
+      ctx_out_appendln(ctx, "");
     }
   }
   goto cleanup;

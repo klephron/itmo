@@ -1,6 +1,5 @@
 #include "debugger/cmd/cmd.h"
 
-#include "debugger/context/context.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -48,7 +47,7 @@ static int cmd_nexti_fprintf_styled(void *stream, enum disassembler_style style,
   return 0;
 }
 
-static void cmd_nexti_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_nexti_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
   size_t                  n    = 1;
@@ -76,9 +75,9 @@ static void cmd_nexti_fn(cmd_handler *handler, context *ctx, const char *rest) {
     }
   }
 
-  if (context_tg_is_running(ctx)) {
-    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-      context_error(ctx, "failed to get regs");
+  if (ctx_tg_is_running(ctx)) {
+    if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "failed to get regs");
       goto cleanup;
     }
 
@@ -91,7 +90,7 @@ cleanup:
   }
 }
 
-void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
+void cmd_nexti_disasm_init(ctx *ctx, disassemble_info *info_p,
                            disassembler_ftype *dftype_p, int *is_call_p) {
   init_disassemble_info(info_p, is_call_p, cmd_nexti_fprintf,
                         cmd_nexti_fprintf_styled);
@@ -104,12 +103,12 @@ void cmd_nexti_disasm_init(context *ctx, disassemble_info *info_p,
 }
 
 // 0 - ok, -1 - error + outputs to context error
-int cmd_nexti_exec(context *ctx, disassemble_info *info_p,
+int cmd_nexti_exec(ctx *ctx, disassemble_info *info_p,
                    disassembler_ftype *dftype_p, int *is_call_p, uint64_t n) {
   struct user_regs_struct regs;
 
-  if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-    context_error(ctx, "failed to get regs");
+  if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+    ctx_error(ctx, "failed to get regs");
     return -1;
   }
 
@@ -126,36 +125,36 @@ int cmd_nexti_exec(context *ctx, disassemble_info *info_p,
       // 3. remove implicit breakpoint
       uint64_t data;
 
-      if (context_tg_peekdata(ctx, pc, &data) == TARGET_ERROR) {
-        context_error(ctx, "unable to peek data");
+      if (ctx_tg_peekdata(ctx, pc, &data) == TARGET_ERROR) {
+        ctx_error(ctx, "unable to peek data");
         break;
       }
 
-      uint64_t data_int3 = peekdata_brkpt_with_int3(data);
+      uint64_t data_int3 = CTX_WITH_INT3(data);
 
-      if (context_tg_pokedata(ctx, pc, data_int3) == TARGET_ERROR) {
-        context_error(ctx, "unable to poke data");
+      if (ctx_tg_pokedata(ctx, pc, data_int3) == TARGET_ERROR) {
+        ctx_error(ctx, "unable to poke data");
         break;
       }
 
-      if (context_tg_continue(ctx) == TARGET_ERROR) {
-        context_error(ctx, "unable to continue");
+      if (ctx_tg_continue(ctx) == TARGET_ERROR) {
+        ctx_error(ctx, "unable to continue");
         break;
       }
 
-      if (context_tg_is_running(ctx) &&
-          context_tg_pokedata(ctx, pc, data) == TARGET_ERROR) {
-        context_error(ctx, "unable to delete implicit breakpoint");
+      if (ctx_tg_is_running(ctx) &&
+          ctx_tg_pokedata(ctx, pc, data) == TARGET_ERROR) {
+        ctx_error(ctx, "unable to delete implicit breakpoint");
         break;
       }
     } else {
-      if (context_tg_stepi(ctx) == TARGET_ERROR) {
-        context_error(ctx, "unable to stepi");
+      if (ctx_tg_stepi(ctx) == TARGET_ERROR) {
+        ctx_error(ctx, "unable to stepi");
         break;
       }
     }
 
-    if (!context_tg_is_running(ctx)) {
+    if (!ctx_tg_is_running(ctx)) {
       break;
     }
   }

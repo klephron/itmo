@@ -1,6 +1,5 @@
 #include "debugger/cmd/cmd.h"
 
-#include "debugger/context/context.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -15,7 +14,7 @@ static const char *DESC = "Step one instruction exactly";
 static const char *HELP = "Usage: <command> [<n>]\n"
                           "\t<n>: number of times";
 
-static void cmd_stepi_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_stepi_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   char                   *args = NULL;
   size_t                  n    = 1;
@@ -32,17 +31,17 @@ static void cmd_stepi_fn(cmd_handler *handler, context *ctx, const char *rest) {
   }
 
   for (size_t i = 0; i < n; ++i) {
-    target_state_enum status = context_tg_stepi(ctx);
+    ctx_target_state status = ctx_tg_stepi(ctx);
     if (status == TARGET_ERROR) {
-      context_error(ctx, "error while stepping");
+      ctx_error(ctx, "error while stepping");
     } else if (status == TARGET_NOT_RUNNING) {
       break;
     }
   }
 
-  if (context_tg_is_running(ctx)) {
-    if (context_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-      context_error(ctx, "failed to get regs");
+  if (ctx_tg_is_running(ctx)) {
+    if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "failed to get regs");
       goto cleanup;
     }
     cmd_disassemble_at_address(ctx, regs.rip, 1);
@@ -55,11 +54,11 @@ cleanup:
 }
 
 // 0 - ok, -1 - error
-int cmd_stepi_exec(context *ctx, uint64_t n) {
+int cmd_stepi_exec(ctx *ctx, uint64_t n) {
   for (size_t i = 0; i < n; ++i) {
-    target_state_enum status = context_tg_stepi(ctx);
+    ctx_target_state status = ctx_tg_stepi(ctx);
     if (status == TARGET_ERROR) {
-      context_error(ctx, "error while stepping");
+      ctx_error(ctx, "error while stepping");
       return -1;
     } else if (status == TARGET_NOT_RUNNING) {
       break;

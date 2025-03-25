@@ -9,7 +9,7 @@ static const char *DESC = "Load target";
 
 static const char *HELP = "Usage: <command> <file>";
 
-static void cmd_file_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_file_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   bfd      *abfd          = NULL;
   char     *args          = NULL;
@@ -24,18 +24,18 @@ static void cmd_file_fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   abfd = bfd_openr(args, NULL);
   if (!abfd) {
-    context_error(ctx, "failed to open file");
+    ctx_error(ctx, "failed to open file");
     goto error_cleanup;
   }
 
   if (!bfd_check_format(abfd, bfd_object)) {
-    context_error(ctx, "not an object file");
+    ctx_error(ctx, "not an object file");
     goto error_cleanup;
   }
 
   int64_t abfd_asymbols_size = bfd_get_symtab_upper_bound(abfd);
   if (abfd_asymbols_size < 0) {
-    context_error(ctx, "failed to get symbol table size");
+    ctx_error(ctx, "failed to get symbol table size");
     goto error_cleanup;
   }
 
@@ -43,11 +43,11 @@ static void cmd_file_fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   int64_t abfd_asymbols_count = bfd_canonicalize_symtab(abfd, abfd_asymbols);
   if (abfd_asymbols_count < 0) {
-    context_error(ctx, "failed to canonicalize symbol table");
+    ctx_error(ctx, "failed to canonicalize symbol table");
     goto error_cleanup;
   }
 
-  context_tg_set(ctx, abfd_asymbols_count, abfd_asymbols, abfd, args);
+  ctx_tg_set(ctx, abfd_asymbols_count, abfd_asymbols, abfd, args);
   goto cleanup;
 
 error_format:

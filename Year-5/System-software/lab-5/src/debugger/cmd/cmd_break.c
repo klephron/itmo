@@ -1,6 +1,5 @@
 #include "debugger/cmd/cmd.h"
 
-#include "debugger/context/context.h"
 #include "util/macro.h"
 #include "util/string.h"
 
@@ -12,30 +11,30 @@ static const char *HELP =
     "\t<file_id>: id of file, see 'info info' or 'info files'\n"
     "\t<line>: line in file";
 
-static void cmd_break_out_breakpoint(context *ctx, breakpoint *breakpoint) {
+static void cmd_break_out_breakpoint(ctx *ctx, ctx_breakpoint *breakpoint) {
   char buf[64];
-  context_out_append(ctx, "breakpoint ");
+  ctx_out_append(ctx, "breakpoint ");
   snprintf(buf, STRMAXLEN(buf), "%zu ", breakpoint->id);
-  context_out_append(ctx, buf);
+  ctx_out_append(ctx, buf);
   snprintf(buf, STRMAXLEN(buf), "at 0x%lx: ", breakpoint->address);
-  context_out_append(ctx, buf);
-  context_out_append(ctx, "file ");
+  ctx_out_append(ctx, buf);
+  ctx_out_append(ctx, "file ");
   if (breakpoint->file_id != UINT64_MAX) {
-    context_out_append(ctx, context_dbg_file_by_id(ctx, breakpoint->file_id));
+    ctx_out_append(ctx, ctx_dbg_file_by_id(ctx, breakpoint->file_id));
   } else {
-    context_out_append(ctx, "-");
+    ctx_out_append(ctx, "-");
   }
-  context_out_append(ctx, ", line: ");
+  ctx_out_append(ctx, ", line: ");
   if (breakpoint->line != UINT64_MAX) {
     snprintf(buf, STRMAXLEN(buf), "%zu", breakpoint->line);
-    context_out_append(ctx, buf);
+    ctx_out_append(ctx, buf);
   } else {
-    context_out_append(ctx, "-");
+    ctx_out_append(ctx, "-");
   }
-  context_out_appendln(ctx, "");
+  ctx_out_appendln(ctx, "");
 }
 
-static void cmd_break_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_break_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
 
   char *args       = NULL;
@@ -74,20 +73,20 @@ static void cmd_break_fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   // breakpoint from file+line
   if (arg_second && *arg_second) {
-    debug_line d_line;
+    ctx_debug_line d_line;
     sscanf(arg_first, "%lu", &file_id);
     sscanf(arg_second, "%lu", &line);
     d_line.file_id = file_id;
     d_line.line    = line;
-    if (context_dbg_line_by_source(ctx, &d_line) == -1) {
+    if (ctx_dbg_line_by_source(ctx, &d_line) == -1) {
       char buf[64];
-      context_err_append(ctx, "debug info for file: ");
-      context_err_append(ctx, context_dbg_file_by_id(ctx, file_id));
-      context_err_append(ctx, buf);
-      context_err_append(ctx, ", line: ");
+      ctx_err_append(ctx, "debug info for file: ");
+      ctx_err_append(ctx, ctx_dbg_file_by_id(ctx, file_id));
+      ctx_err_append(ctx, buf);
+      ctx_err_append(ctx, ", line: ");
       snprintf(buf, STRMAXLEN(buf), "%lu", line);
-      context_err_append(ctx, buf);
-      context_error(ctx, " doesn't exist");
+      ctx_err_append(ctx, buf);
+      ctx_error(ctx, " doesn't exist");
       goto cleanup;
     }
     address = d_line.address;
@@ -95,25 +94,25 @@ static void cmd_break_fn(cmd_handler *handler, context *ctx, const char *rest) {
     sscanf(arg_first, "%lx", &address);
   }
 
-  hashset_breakpoint_it it =
-      hashset_breakpoint_find(ctx->breaks, &(breakpoint){.address = address});
+  hashset_ctx_breakpoint_it it = hashset_ctx_breakpoint_find(
+      ctx->breaks, &(ctx_breakpoint){.address = address});
   if (!END(it)) {
     char buf[64];
-    context_err_append(ctx, "breakpoint on address ");
+    ctx_err_append(ctx, "breakpoint on address ");
     snprintf(buf, STRMAXLEN(buf), "0x%lx", address);
-    context_err_append(ctx, buf);
-    context_error(ctx, " already exists");
+    ctx_err_append(ctx, buf);
+    ctx_error(ctx, " already exists");
     goto cleanup;
   }
 
-  breakpoint *breakpoint =
-      breakpoint_new(++ctx->breaks_cnt, 0, address, file_id, line);
+  ctx_breakpoint *breakpoint =
+      ctx_breakpoint_new(++ctx->breaks_cnt, 0, address, file_id, line);
   breakpoint->is_enabled = 1;
 
-  hashset_breakpoint_insert(ctx->breaks, breakpoint);
+  hashset_ctx_breakpoint_insert(ctx->breaks, breakpoint);
 
-  if (context_tg_is_running(ctx)) {
-    context_bp_place(ctx, breakpoint);
+  if (ctx_tg_is_running(ctx)) {
+    ctx_bp_place(ctx, breakpoint);
   }
 
   cmd_break_out_breakpoint(ctx, breakpoint);

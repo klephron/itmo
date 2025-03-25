@@ -12,7 +12,7 @@ static const char *DESC = "Kill running target";
 
 static const char *HELP = "Usage: <command>";
 
-static void cmd_kill_fn(cmd_handler *handler, context *ctx, const char *rest) {
+static void cmd_kill_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   UNUSED(handler);
   char *args = NULL;
   int   sig  = SIGKILL;
@@ -29,9 +29,9 @@ static void cmd_kill_fn(cmd_handler *handler, context *ctx, const char *rest) {
 
   snprintf(buf, STRMAXLEN(buf), "%d", ctx->pid);
 
-  if (context_tg_kill(ctx, sig) != TARGET_ERROR) {
-    context_out_append(ctx, "killed child with pid ");
-    context_out_appendln(ctx, buf);
+  if (ctx_tg_kill(ctx, sig) != TARGET_ERROR) {
+    ctx_out_append(ctx, "killed child with pid ");
+    ctx_out_appendln(ctx, buf);
   }
 
 cleanup:

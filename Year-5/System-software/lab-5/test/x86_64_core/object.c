@@ -6,7 +6,6 @@
 #include "x86_64_core/proxy/value/int.h"
 #include "x86_64_core/proxy/value/object.h"
 #include "x86_64_core/proxy/value/void.h"
-#include "x86_64_core/util.h"
 #include "x86_64_core/value.h"
 
 Test(x86_64_object, test1) {
@@ -23,8 +22,7 @@ Test(x86_64_object, test1) {
   __x86_64_proxy_object_init(&value1, symbols);
 
   value1.op_tbl->op_repr(&value2, &value1);
-  debug("object: %s, type %s", value2.data_ptr,
-        __x86_64_type_enum_str(value1.type));
+  debug("object: %s, type %d", value2.data_ptr, value1.type);
   value2.op_tbl->op_drop(&value2);
 
   __x86_64_print(&value1);
@@ -52,8 +50,7 @@ Test(x86_64_object, test2) {
   __x86_64_proxy_object_init(&value1, symbols);
 
   value1.op_tbl->op_repr(&value2, &value1);
-  debug("object: %s, type %s", value2.data_ptr,
-        __x86_64_type_enum_str(value1.type));
+  debug("object: %s, type %d", value2.data_ptr, value1.type);
   value2.op_tbl->op_drop(&value2);
 
   __x86_64_print(&value1);
@@ -88,8 +85,7 @@ Test(x86_64_object, test3_index) {
   value3.op_tbl->op_assign(&value3, &value4);
 
   value3.op_tbl->op_repr(&value2, &value3);
-  debug("object_index: %s, type %s", value2.data_ptr,
-        __x86_64_type_enum_str(value3.type));
+  debug("object_index: %s, type %d", value2.data_ptr, value3.type);
   value2.op_tbl->op_drop(&value2);
 
   __x86_64_print(&value1);
@@ -125,8 +121,7 @@ Test(x86_64_object, test4_member) {
   value3.op_tbl->op_assign(&value3, &value4);
 
   value3.op_tbl->op_repr(&value2, &value3);
-  debug("object_member: %s, type %s", value2.data_ptr,
-        __x86_64_type_enum_str(value3.type));
+  debug("object_member: %s, type %d", value2.data_ptr, value3.type);
   value2.op_tbl->op_drop(&value2);
 
   value1.op_tbl->op_drop(&value1);
@@ -167,13 +162,11 @@ Test(x86_64_object, test5_assign) {
 
   // print each element
   value1.op_tbl->op_repr(&value2, &value1);
-  debug("object_assign_1: %s, type %s", value2.data_ptr,
-        __x86_64_type_enum_str(value1.type));
+  debug("object_assign_1: %s, type %d", value2.data_ptr, value1.type);
   value2.op_tbl->op_drop(&value2);
 
   value4.op_tbl->op_repr(&value2, &value4);
-  debug("object_assign_4: %s, type %s", value2.data_ptr,
-        __x86_64_type_enum_str(value4.type));
+  debug("object_assign_4: %s, type %d", value2.data_ptr, value4.type);
   value2.op_tbl->op_drop(&value2);
 
   value1.op_tbl->op_drop(&value1);

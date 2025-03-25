@@ -1,4 +1,4 @@
-#include "context.h"
+#include "ctx.h"
 #include "util/macro.h"
 
 #include <assert.h>
@@ -16,15 +16,15 @@ static void context_tg_brkpt_fix_regs(struct user_regs_struct *regs_p) {
 }
 
 // NOTE: can optimize place calls
-static target_state_enum context_tg_brkpt_fix(context *self) {
+static ctx_target_state context_tg_brkpt_fix(ctx *self) {
   struct user_regs_struct regs;
-  context_tg_getregs(self, &regs);
+  ctx_tg_getregs(self, &regs);
   context_tg_brkpt_fix_regs(&regs);
-  context_tg_setregs(self, &regs);
-  return context_tg_get_state(self);
+  ctx_tg_setregs(self, &regs);
+  return ctx_tg_get_state(self);
 }
 
-int context_tg_is_running(context *self) {
+int ctx_tg_is_running(ctx *self) {
   assert(self->s_target != TARGET_ERROR);
   switch (self->s_target) {
     case TARGET_BRKPT:
@@ -35,17 +35,16 @@ int context_tg_is_running(context *self) {
   }
 }
 
-target_state_enum context_tg_get_state(context *self) {
+ctx_target_state ctx_tg_get_state(ctx *self) {
   // debug("target state: %s", state_target_enum_str(self->s_target));
   assert(self->s_target != TARGET_ERROR);
   return self->s_target;
 }
 
-target_state_enum context_tg_set(context *self, uint64_t abfd_asymbols_count,
-                                 asymbol **abfd_asymbols, bfd *abfd,
-                                 char *fname) {
-  if (context_tg_is_running(self)) {
-    context_tg_kill(self, SIGKILL);
+ctx_target_state ctx_tg_set(ctx *self, uint64_t abfd_asymbols_count,
+                            asymbol **abfd_asymbols, bfd *abfd, char *fname) {
+  if (ctx_tg_is_running(self)) {
+    ctx_tg_kill(self, SIGKILL);
   }
 
   self->abfd_asymbols_count = abfd_asymbols_count;
@@ -67,10 +66,10 @@ target_state_enum context_tg_set(context *self, uint64_t abfd_asymbols_count,
   // context_dbg_deinit(self);
   // context_dbg_init(self);
 
-  return context_tg_get_state(self);
+  return ctx_tg_get_state(self);
 }
 
-target_state_enum context_tg_wait(context *self) {
+ctx_target_state ctx_tg_wait(ctx *self) {
   int status;
   int wres = waitpid(self->pid, &status, 0);
   if (wres == -1) {
@@ -89,61 +88,61 @@ target_state_enum context_tg_wait(context *self) {
       }
     }
   }
-  return context_tg_get_state(self);
+  return ctx_tg_get_state(self);
 }
 
-target_state_enum context_tg_kill(context *self, int signal) {
+ctx_target_state ctx_tg_kill(ctx *self, int signal) {
   if (kill(self->pid, signal) == -1) {
     return TARGET_ERROR;
   } else {
-    return context_tg_wait(self);
+    return ctx_tg_wait(self);
   }
 }
 
-target_state_enum context_tg_continue(context *self) {
+ctx_target_state ctx_tg_continue(ctx *self) {
   // handle breakpoints
-  context_tg_stepi(self);
+  ctx_tg_stepi(self);
 
   if (ptrace(PTRACE_CONT, self->pid, NULL, NULL) == -1) {
     return TARGET_ERROR;
   }
-  return context_tg_wait(self);
+  return ctx_tg_wait(self);
 }
 
-target_state_enum context_tg_stepi(context *self) {
+ctx_target_state ctx_tg_stepi(ctx *self) {
   struct user_regs_struct regs;
-  target_state_enum       state_before;
-  target_state_enum       state;
-  breakpoint             *b = NULL;
+  ctx_target_state        state_before;
+  ctx_target_state        state;
+  ctx_breakpoint         *b = NULL;
 
-  if ((state_before = context_tg_get_state(self)) == TARGET_BRKPT) {
-    context_tg_getregs(self, &regs);
+  if ((state_before = ctx_tg_get_state(self)) == TARGET_BRKPT) {
+    ctx_tg_getregs(self, &regs);
 
-    hashset_breakpoint_it it = hashset_breakpoint_find(
-        self->breaks, &(breakpoint){.address = regs.rip});
+    hashset_ctx_breakpoint_it it = hashset_ctx_breakpoint_find(
+        self->breaks, &(ctx_breakpoint){.address = regs.rip});
 
     // in case of implicit breakpoints (handled not by ctx->breaks)
     if (!END(it)) {
       b = GET(it);
-      context_bp_remove(self, b);
+      ctx_bp_remove(self, b);
     }
   }
 
   if (ptrace(PTRACE_SINGLESTEP, self->pid, NULL, NULL) == -1) {
     return TARGET_ERROR;
   }
-  state = context_tg_wait(self);
+  state = ctx_tg_wait(self);
 
   if (b) {
-    context_bp_place(self, b);
+    ctx_bp_place(self, b);
   }
 
   return state;
 }
 
 // NOTE: assuming address is aligned to instructions (to check breakpoints)
-target_state_enum context_tg_peekdata(context *self, uint64_t address,
-                                      uint64_t *data_p) {
+ctx_target_state ctx_tg_peekdata(ctx *self, uint64_t address,
+                                 uint64_t *data_p) {
   uint64_t data;
 
   data  = ptrace(PTRACE_PEEKDATA, self->pid, address, NULL);
@@ -152,31 +151,30 @@ target_state_enum context_tg_peekdata(context *self, uint64_t address,
     return TARGET_ERROR;
   }
 
-  hashset_breakpoint_it it =
-      hashset_breakpoint_find(self->breaks, &(breakpoint){.address = address});
+  hashset_ctx_breakpoint_it it = hashset_ctx_breakpoint_find(
+      self->breaks, &(ctx_breakpoint){.address = address});
 
   if (!END(it)) {
-    breakpoint *b = GET(it);
+    ctx_breakpoint *b = GET(it);
     if (b->is_placed) {
-      data = peekdata_bpkpt_with_stored(data, b->data);
+      data = CTX_WITH_STORED(data, b->data);
     }
   }
 
   *data_p = data;
-  return context_tg_get_state(self);
+  return ctx_tg_get_state(self);
 }
 
 // NOTE: assuming address is aligned to instructions (to check breakpoints)
-target_state_enum context_tg_pokedata(context *self, uint64_t address,
-                                      uint64_t data) {
-  hashset_breakpoint_it b_it =
-      hashset_breakpoint_find(self->breaks, &(breakpoint){.address = address});
+ctx_target_state ctx_tg_pokedata(ctx *self, uint64_t address, uint64_t data) {
+  hashset_ctx_breakpoint_it b_it = hashset_ctx_breakpoint_find(
+      self->breaks, &(ctx_breakpoint){.address = address});
 
   if (!END(b_it)) {
-    breakpoint *b = GET(b_it);
+    ctx_breakpoint *b = GET(b_it);
     if (b->is_placed) {
-      b->data = peekdata_brkpt_to_store(data);
-      data    = peekdata_brkpt_with_int3(data);
+      b->data = CTX_STORE(data);
+      data    = CTX_WITH_INT3(data);
     }
   }
 
@@ -184,10 +182,10 @@ target_state_enum context_tg_pokedata(context *self, uint64_t address,
     return TARGET_ERROR;
   }
 
-  return context_tg_get_state(self);
+  return ctx_tg_get_state(self);
 }
 
-target_state_enum context_tg_run(context *self, char **argv) {
+ctx_target_state ctx_tg_run(ctx *self, char **argv) {
   pid_t pid = fork();
   if (pid == -1) {
     return TARGET_ERROR;
@@ -203,23 +201,21 @@ target_state_enum context_tg_run(context *self, char **argv) {
     exit(1);
   } else {
     self->pid = pid;
-    return context_tg_wait(self);
+    return ctx_tg_wait(self);
   }
-  return context_tg_get_state(self);
+  return ctx_tg_get_state(self);
 }
 
-target_state_enum context_tg_getregs(context                 *self,
-                                     struct user_regs_struct *regs) {
+ctx_target_state ctx_tg_getregs(ctx *self, struct user_regs_struct *regs) {
   if (ptrace(PTRACE_GETREGS, self->pid, NULL, regs)) {
     return TARGET_ERROR;
   }
-  return context_tg_get_state(self);
+  return ctx_tg_get_state(self);
 }
 
-target_state_enum context_tg_setregs(context                 *self,
-                                     struct user_regs_struct *regs) {
+ctx_target_state ctx_tg_setregs(ctx *self, struct user_regs_struct *regs) {
   if (ptrace(PTRACE_SETREGS, self->pid, NULL, regs)) {
     return TARGET_ERROR;
   }
-  return context_tg_get_state(self);
+  return ctx_tg_get_state(self);
 }

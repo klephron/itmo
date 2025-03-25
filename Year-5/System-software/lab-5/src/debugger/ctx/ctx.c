@@ -1,12 +1,12 @@
-#include "context.h"
+#include "ctx.h"
 
 #include "util/macro.h"
 #include "util/strbuf.h"
 #include <stdlib.h>
 #include <sys/wait.h>
 
-context *context_new() {
-  context *self    = MALLOC(context);
+ctx *ctx_new() {
+  ctx *self        = MALLOC(ctx);
   self->s_debugger = DEBUGGER_IDLE;
   self->s_target   = TARGET_NO_TARGET;
   self->buf_out    = strbuf_new(0, 0);
@@ -17,7 +17,7 @@ context *context_new() {
   self->abfd_asymbols       = NULL;
   self->abfd_asymbols_count = 0;
   self->pid                 = 0;
-  self->breaks              = hashset_breakpoint_new();
+  self->breaks              = hashset_ctx_breakpoint_new();
   self->breaks_cnt          = 0;
 
   self->debug.subroutines_cnt = 0;
@@ -33,7 +33,7 @@ context *context_new() {
   return self;
 }
 
-void context_free(context *self) {
+void ctx_free(ctx *self) {
   if (self) {
     strbuf_free(self->buf_out);
     strbuf_free(self->buf_err);
@@ -46,31 +46,31 @@ void context_free(context *self) {
     if (self->abfd) {
       bfd_close(self->abfd);
     }
-    hashset_breakpoint_free(self->breaks);
-    context_dbg_deinit(self);
+    hashset_ctx_breakpoint_free(self->breaks);
+    ctx_dbg_deinit(self);
     free(self);
   }
 }
 
-void context_out_append(context *self, const char *data) {
+void ctx_out_append(ctx *self, const char *data) {
   strbuf_append(self->buf_out, data);
 }
 
-void context_out_appendln(context *self, const char *data) {
-  context_out_append(self, data);
-  context_out_append(self, "\n");
+void ctx_out_appendln(ctx *self, const char *data) {
+  ctx_out_append(self, data);
+  ctx_out_append(self, "\n");
 }
 
-void context_err_append(context *self, const char *data) {
+void ctx_err_append(ctx *self, const char *data) {
   strbuf_append(self->buf_err, data);
 }
 
-void context_err_appendln(context *self, const char *data) {
-  context_err_append(self, data);
-  context_err_append(self, "\n");
+void ctx_err_appendln(ctx *self, const char *data) {
+  ctx_err_append(self, data);
+  ctx_err_append(self, "\n");
 }
 
-void context_error(context *ctx, const char *msg) {
+void ctx_error(ctx *ctx, const char *msg) {
   ctx->s_debugger = DEBUGGER_ERROR;
-  context_err_appendln(ctx, msg);
+  ctx_err_appendln(ctx, msg);
 }
