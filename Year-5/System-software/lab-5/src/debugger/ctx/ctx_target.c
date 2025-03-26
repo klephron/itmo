@@ -99,7 +99,7 @@ ctx_target_state ctx_tg_kill(ctx *self, int signal) {
 }
 
 ctx_target_state ctx_tg_continue(ctx *self) {
-  // handle breakpoints
+  // to handle breakpoints
   ctx_tg_stepi(self);
 
   if (ptrace(PTRACE_CONT, self->pid, NULL, NULL) == -1) {
@@ -108,6 +108,7 @@ ctx_target_state ctx_tg_continue(ctx *self) {
   return ctx_tg_wait(self);
 }
 
+// already handles breakpoints
 ctx_target_state ctx_tg_stepi(ctx *self) {
   struct user_regs_struct regs;
   ctx_target_state        state_before;

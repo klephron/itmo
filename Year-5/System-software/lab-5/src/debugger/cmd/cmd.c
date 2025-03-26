@@ -124,7 +124,7 @@ void cmd_out_value(ctx *ctx, const char *name, char *data, char *type) {
   } else {
     ctx_out_append(ctx, "<unk>");
   }
-  ctx_out_append(ctx, ": ");
+  ctx_out_append(ctx, " : ");
   if (type) {
     ctx_out_append(ctx, type);
     free(type);

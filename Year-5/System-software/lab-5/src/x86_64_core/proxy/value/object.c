@@ -1,5 +1,6 @@
 #include "object.h"
 
+#include "util/log.h"
 #include "util/macro.h"
 #include "util/strbuf.h"
 #include "x86_64_core/proxy/registry.h"

@@ -1,8 +1,8 @@
 #include "cmd.h"
 
-#include "util/log.h"
 #include "util/macro.h"
 #include "util/string.h"
+#include "x86_64_core/value.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
+#include <unistd.h>
 
 static const char *DESC = "Print register, argument or variable";
 
@@ -184,16 +185,338 @@ cleanup:
   }
 }
 
+static uint64_t cmd_print_aligned(uint64_t address) {
+  return address - (address % 16);
+}
+
+// returns reference to created breakpoint, don't delete
+static ctx_breakpoint *cmd_print_bp_place(ctx *ctx, uint64_t address) {
+  ctx_breakpoint *bp = NULL;
+
+  hashset_ctx_breakpoint_it it = hashset_ctx_breakpoint_find(
+      ctx->breaks, &(ctx_breakpoint){.address = address});
+
+  if (END(it)) {
+    bp = ctx_breakpoint_new(ctx->breaks_cnt++, address, UINT64_MAX, UINT64_MAX);
+    bp->is_enabled = 1;
+
+    hashset_ctx_breakpoint_insert(ctx->breaks, bp);
+    ctx_bp_place(ctx, bp);
+  }
+
+  return bp;
+}
+
+static void cmd_print_bp_delete(ctx *ctx, ctx_breakpoint *bp) {
+  if (bp) {
+    ctx_bp_remove(ctx, bp);
+    hashset_ctx_breakpoint_erase(ctx->breaks,
+                                 hashset_ctx_breakpoint_find(ctx->breaks, bp));
+    --ctx->breaks_cnt;
+  }
+}
+
+// get func address of op_repr
+static int cmd_print_op_tbl_func(ctx *ctx, uint64_t address, uint64_t offset,
+                                 uint64_t *addr_func_out) {
+  if (ctx_tg_peekdata(ctx, address + offsetof(x86_64_value, op_tbl),
+                      addr_func_out) == TARGET_ERROR) {
+    ctx_error(ctx, "unable to peek data(op_tbl value)");
+    return -1;
+  }
+
+  if (ctx_tg_peekdata(ctx, *addr_func_out + offset, addr_func_out) ==
+      TARGET_ERROR) {
+    ctx_error(ctx, "unable to peek data(op_tbl value)");
+    return -1;
+  }
+
+  return 0;
+}
+
+// call function and check whether rbp matches old rbp
+static int cmd_print_call(ctx *ctx, const struct user_regs_struct *regs_old) {
+  struct user_regs_struct regs;
+  int                     is_inside   = 0;
+  int                     is_other_bp = 0;
+
+  do {
+    switch (ctx_tg_continue(ctx)) {
+      case TARGET_BRKPT:
+      case TARGET_TRAPPED: {
+        if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+          ctx_error(ctx, "unable to get regs while handling breakpoints");
+          return -1;
+        }
+        is_inside   = regs.rbp != regs_old->rbp;
+        is_other_bp = regs.rip != regs_old->rip;
+        break;
+      }
+      case TARGET_UNKNOWN:
+      case TARGET_NO_TARGET:
+      case TARGET_NOT_RUNNING:
+      case TARGET_ERROR:
+        is_inside   = 0;
+        is_other_bp = 0;
+        break;
+    }
+
+  } while (is_inside || is_other_bp);
+
+  return 0;
+}
+
+static char *cmd_print_string(ctx *ctx, uint64_t addr_value) {
+  uint64_t data;
+  int32_t  type;
+
+  if (ctx_tg_peekdata(ctx, addr_value, &data) == TARGET_ERROR) {
+    ctx_error(ctx, "unable to fetch result type");
+    return NULL;
+  }
+
+  type = data;
+
+  if (type != X86_64_TYPE_STRING) {
+    char buf[64];
+    snprintf(buf, STRMAXLEN(buf), "op_repr returned type %d instead of %d(%s)",
+             type, X86_64_TYPE_STRING, "string");
+    ctx_error(ctx, buf);
+    return NULL;
+  }
+
+  if (ctx_tg_peekdata(ctx, addr_value + offsetof(x86_64_value, data_ptr),
+                      &data) == TARGET_ERROR) {
+    ctx_error(ctx, "unable to fetch result string");
+    return NULL;
+  }
+
+  // copy string to local memory
+  strbuf *buffer = strbuf_new(0, 0);
+
+  char bytes[9];
+  bytes[8] = '\0';
+
+  for (uint64_t offset = 0; offset != UINT64_MAX; offset += 8) {
+    if (ctx_tg_peekdata(ctx, data + offset, (uint64_t *)bytes) ==
+        TARGET_ERROR) {
+      ctx_error(ctx, "unable to fetch result string");
+      strbuf_free(buffer);
+      return NULL;
+    }
+
+    strbuf_append(buffer, bytes);
+
+    // check whether reached the end of string
+    for (uint64_t i = 0; i < 8; ++i) {
+      if (bytes[i] == 0) {
+        offset = UINT64_MAX - 8;
+        break;
+      }
+    }
+  }
+
+  return strbuf_detach(buffer);
+}
+
 char *cmd_print_value_data(ctx *ctx, uint64_t address) {
-  UNUSED(ctx);
-  UNUSED(address);
-  return NULL;
+  struct user_regs_struct regs_old;
+  struct user_regs_struct regs;
+  ctx_breakpoint         *bp     = NULL;
+  char                   *result = NULL;
+
+  if (ctx_tg_getregs(ctx, &regs_old) == TARGET_ERROR) {
+    ctx_error(ctx, "failed to get regs");
+    goto cleanup;
+  }
+
+  regs = regs_old;
+
+  // place breakpoint under current instruction of no breakpoints present
+  bp = cmd_print_bp_place(ctx, regs.rip);
+
+  // call op_repr
+  {
+    uint64_t addr_func;
+
+    if (cmd_print_op_tbl_func(ctx, address, offsetof(x86_64_op_tbl, op_repr),
+                              &addr_func)) {
+      goto cleanup;
+    }
+
+    regs.rsp -= sizeof(x86_64_value);
+    regs.rsp = cmd_print_aligned(regs.rsp);
+
+    regs.rdi = regs.rsp;
+    regs.rsi = address;
+
+    regs.rsp -= 8;
+    if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to ret return address of addr_func");
+      goto cleanup;
+    }
+    regs.rip = addr_func;
+
+    if (ctx_tg_setregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to set regs(with op_repr)");
+      goto cleanup;
+    }
+
+    if (cmd_print_call(ctx, &regs_old)) {
+      goto cleanup;
+    }
+  }
+
+  // retrieve result
+  {
+    if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to get regs after calling addr_func");
+      goto cleanup;
+    }
+
+    result = cmd_print_string(ctx, regs.rsp);
+    if (!result) {
+      goto cleanup;
+    }
+  }
+
+  // call destructor on result
+  {
+    uint64_t addr_drop;
+
+    if (cmd_print_op_tbl_func(ctx, regs.rsp, offsetof(x86_64_op_tbl, op_drop),
+                              &addr_drop)) {
+      goto cleanup;
+    };
+
+    regs.rdi = regs.rsp;
+
+    regs.rsp -= 8;
+    if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to ret return address of result op_drop");
+      goto cleanup;
+    }
+    regs.rip = addr_drop;
+
+    if (ctx_tg_setregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to set regs(with op_repr)");
+      goto cleanup;
+    }
+
+    if (cmd_print_call(ctx, &regs_old)) {
+      goto cleanup;
+    }
+  }
+
+cleanup:
+  cmd_print_bp_delete(ctx, bp);
+
+  // restore registers
+  if (ctx_tg_setregs(ctx, &regs_old) == TARGET_ERROR) {
+    ctx_error(ctx, "unable to restore regs");
+  }
+
+  return result;
 }
 
 char *cmd_print_value_type(ctx *ctx, uint64_t address) {
-  UNUSED(ctx);
-  UNUSED(address);
-  return NULL;
+  struct user_regs_struct regs_old;
+  struct user_regs_struct regs;
+  ctx_breakpoint         *bp     = NULL;
+  char                   *result = NULL;
+
+  if (ctx_tg_getregs(ctx, &regs_old) == TARGET_ERROR) {
+    ctx_error(ctx, "failed to get regs");
+    goto cleanup;
+  }
+
+  regs = regs_old;
+
+  // place breakpoint under current instruction of no breakpoints present
+  bp = cmd_print_bp_place(ctx, regs.rip);
+
+  // call op_type
+  {
+    uint64_t addr_func;
+
+    if (cmd_print_op_tbl_func(ctx, address, offsetof(x86_64_op_tbl, op_type),
+                              &addr_func)) {
+      goto cleanup;
+    }
+
+    regs.rsp -= sizeof(x86_64_value);
+    regs.rsp = cmd_print_aligned(regs.rsp);
+
+    regs.rdi = regs.rsp;
+    regs.rsi = address;
+
+    regs.rsp -= 8;
+    if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to ret return address of addr_func");
+      goto cleanup;
+    }
+    regs.rip = addr_func;
+
+    if (ctx_tg_setregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to set regs(with op_repr)");
+      goto cleanup;
+    }
+
+    if (cmd_print_call(ctx, &regs_old)) {
+      goto cleanup;
+    }
+  }
+
+  // retrieve result
+  {
+    if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to get regs after calling addr_func");
+      goto cleanup;
+    }
+
+    result = cmd_print_string(ctx, regs.rsp);
+    if (!result) {
+      goto cleanup;
+    }
+  }
+
+  // call destructor on result
+  {
+    uint64_t addr_drop;
+
+    if (cmd_print_op_tbl_func(ctx, regs.rsp, offsetof(x86_64_op_tbl, op_drop),
+                              &addr_drop)) {
+      goto cleanup;
+    };
+
+    regs.rdi = regs.rsp;
+
+    regs.rsp -= 8;
+    if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to ret return address of result op_drop");
+      goto cleanup;
+    }
+    regs.rip = addr_drop;
+
+    if (ctx_tg_setregs(ctx, &regs) == TARGET_ERROR) {
+      ctx_error(ctx, "unable to set regs(with op_repr)");
+      goto cleanup;
+    }
+
+    if (cmd_print_call(ctx, &regs_old)) {
+      goto cleanup;
+    }
+  }
+
+cleanup:
+  cmd_print_bp_delete(ctx, bp);
+
+  // restore registers
+  if (ctx_tg_setregs(ctx, &regs_old) == TARGET_ERROR) {
+    ctx_error(ctx, "unable to restore regs");
+  }
+
+  return result;
 }
 
 cmd *cmd_print(const char *cmd_ref) {

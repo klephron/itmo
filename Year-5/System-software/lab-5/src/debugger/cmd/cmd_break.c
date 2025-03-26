@@ -106,7 +106,7 @@ static void cmd_break_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   }
 
   ctx_breakpoint *breakpoint =
-      ctx_breakpoint_new(++ctx->breaks_cnt, 0, address, file_id, line);
+      ctx_breakpoint_new(++ctx->breaks_cnt, address, file_id, line);
   breakpoint->is_enabled = 1;
 
   hashset_ctx_breakpoint_insert(ctx->breaks, breakpoint);

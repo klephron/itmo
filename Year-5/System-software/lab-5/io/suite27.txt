@@ -21,10 +21,12 @@ end;
 
 method main(): int
 var
-  a, b;
+  a, b, c, d;
 begin
   b = make!<B<A>>();
   a = b.build();
+  c = "hello!";
+  d = 4;
 
   print!(type!(a));
   a.fun();

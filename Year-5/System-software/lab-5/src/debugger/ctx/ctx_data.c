@@ -2,11 +2,11 @@
 
 #include "util/macro.h"
 
-ctx_breakpoint *ctx_breakpoint_new(size_t id, uint8_t data, uint64_t address,
+ctx_breakpoint *ctx_breakpoint_new(size_t id, uint64_t address,
                                    uint64_t file_id, size_t line) {
   ctx_breakpoint *self = MALLOC(ctx_breakpoint);
   self->id             = id;
-  self->data           = data;
+  self->data           = 0;
   self->address        = address;
   self->file_id        = file_id;
   self->line           = line;

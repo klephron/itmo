@@ -113,6 +113,11 @@ static void cmd_info_registers(ctx *ctx) {
 
   struct user_regs_struct regs;
 
+  if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
+    ctx_error(ctx, "unable to get registers");
+    return;
+  }
+
   cmd_info_register_g(ctx, &regs, "rax",
                       offsetof(struct user_regs_struct, rax));
   cmd_info_register_g(ctx, &regs, "rbx",

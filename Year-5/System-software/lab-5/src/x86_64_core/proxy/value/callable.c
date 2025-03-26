@@ -72,7 +72,7 @@ void __x86_64_proxy_callable_op_repr(x86_64_value *out, x86_64_value *self) {
 
   x86_64_data_callable data = *(x86_64_data_callable *)&self->data_raw;
 
-  snprintf((char *)buf, STRMAXLEN(buf), "{ callable: 0x%016lx }",
+  snprintf((char *)buf, STRMAXLEN(buf), "{callable: 0x%016lx}",
            (uintptr_t)data.func);
 
   __x86_64_proxy_string_init(out, buf);

@@ -120,21 +120,18 @@ int cmd_nexti_exec(ctx *ctx, disassemble_info *info_p,
     pc += insn_size;
 
     if (*is_call_p) {
-      // 1. create implicit breakpoint
-      // 2. continue
-      // 3. remove implicit breakpoint
-      uint64_t data;
+      ctx_breakpoint *bp = NULL;
 
-      if (ctx_tg_peekdata(ctx, pc, &data) == TARGET_ERROR) {
-        ctx_error(ctx, "unable to peek data");
-        break;
-      }
+      hashset_ctx_breakpoint_it it = hashset_ctx_breakpoint_find(
+          ctx->breaks, &(ctx_breakpoint){.address = pc});
 
-      uint64_t data_int3 = CTX_WITH_INT3(data);
+      if (END(it)) {
+        bp = ctx_breakpoint_new(++ctx->breaks_cnt, pc, UINT64_MAX, UINT64_MAX);
+        bp->is_enabled = 1;
 
-      if (ctx_tg_pokedata(ctx, pc, data_int3) == TARGET_ERROR) {
-        ctx_error(ctx, "unable to poke data");
-        break;
+        hashset_ctx_breakpoint_insert(ctx->breaks, bp);
+
+        ctx_bp_place(ctx, bp);
       }
 
       if (ctx_tg_continue(ctx) == TARGET_ERROR) {
@@ -142,11 +139,13 @@ int cmd_nexti_exec(ctx *ctx, disassemble_info *info_p,
         break;
       }
 
-      if (ctx_tg_is_running(ctx) &&
-          ctx_tg_pokedata(ctx, pc, data) == TARGET_ERROR) {
-        ctx_error(ctx, "unable to delete implicit breakpoint");
-        break;
+      if (bp) {
+        ctx_bp_remove(ctx, bp);
+        hashset_ctx_breakpoint_erase(
+            ctx->breaks, hashset_ctx_breakpoint_find(ctx->breaks, bp));
+        --ctx->breaks_cnt;
       }
+
     } else {
       if (ctx_tg_stepi(ctx) == TARGET_ERROR) {
         ctx_error(ctx, "unable to stepi");

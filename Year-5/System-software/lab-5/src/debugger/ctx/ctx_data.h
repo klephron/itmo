@@ -17,7 +17,7 @@ typedef struct ctx_breakpoint_struct {
   int      is_placed;
 } ctx_breakpoint;
 
-ctx_breakpoint *ctx_breakpoint_new(size_t id, uint8_t data, uint64_t address,
+ctx_breakpoint *ctx_breakpoint_new(size_t id, uint64_t address,
                                    uint64_t file_id, size_t line);
 void            ctx_breakpoint_free(ctx_breakpoint *self);
 

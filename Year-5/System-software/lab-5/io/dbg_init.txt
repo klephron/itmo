@@ -1,7 +1,6 @@
 config source language
-file io/suite27.txt.asm.out
-run
+file io/suite23.txt.asm.out
 info target
-b 0 7
+b 0 3
+run
 continue
-print this
