@@ -19,7 +19,6 @@ public class ImportBusService {
     private final ImportBusRepository importBusRepository;
     private final NetworkService networkService;
 
-    // Чтобы искать ячейки и предметы:
     private final DriveRepository driveRepository;
     private final StorageCellRepository storageCellRepository;
     private final CellItemRepository cellItemRepository;

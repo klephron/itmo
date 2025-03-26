@@ -62,11 +62,11 @@ public class PatternService {
     }
 
     public void craftItem(Long patternId, int times) {
-        PatternEntity pattern = findById(patternId);
+        PatternEntity pattern = this.findById(patternId);
         MeInterfaceEntity meInterface = pattern.getMeInterface();
         NetworkEntity network = meInterface.getNetwork();
 
-        List<Ingredient> ingredients = parseInputItems(pattern.getInputItems());
+        List<Ingredient> ingredients = this.parseInputItems(pattern.getInputItems());
         List<StorageCellEntity> cells = this.importBusService.findAllCellsInNetwork(network.getId());
 
         for (Ingredient ingredient : ingredients) {
