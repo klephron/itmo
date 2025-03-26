@@ -43,35 +43,35 @@ void cmd_error_format(ctx *ctx, const char *args, const char *help) {
   ctx_error(ctx, help);
 }
 
-void cmd_ctx_memory_error(int status, bfd_vma memaddr,
-                          struct disassemble_info *info) {
+void cmd_memory_error(int status, bfd_vma memaddr,
+                      struct disassemble_info *info) {
   UNUSED(status);
   UNUSED(memaddr);
   UNUSED(info);
 }
 
-int cmd_ctx_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
-                        struct disassemble_info *info) {
+int cmd_read_memory(bfd_vma memaddr, bfd_byte *addr, unsigned int length,
+                    struct disassemble_info *info) {
   ctx     *ctx = info->application_data;
   uint64_t data;
 
-  uint64_t bytes = 0;
-  for (bfd_vma addr_cur = memaddr; bytes < length; addr_cur += sizeof(long)) {
-    if (ctx_tg_peekdata(ctx, addr_cur, &data) == TARGET_ERROR) {
+  uint64_t offset = 0;
+  for (bfd_vma curaddr = memaddr; offset < length; curaddr += sizeof(long)) {
+    if (ctx_tg_peekdata(ctx, curaddr, &data) == TARGET_ERROR) {
       return 1;
     }
     uint64_t bytes_to_copy = sizeof(long);
-    if (bytes + bytes_to_copy > length) {
-      bytes_to_copy = length - bytes;
+    if (offset + bytes_to_copy > length) {
+      bytes_to_copy = length - offset;
     }
 
-    memcpy(addr + bytes, &data, bytes_to_copy);
-    bytes += bytes_to_copy;
+    memcpy(addr + offset, &data, bytes_to_copy);
+    offset += bytes_to_copy;
   }
   return 0;
 }
 
-void cmd_ctx_align(ctx *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
+void cmd_align(ctx *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
   if (cur_cnt == 0) {
     cur_cnt = 1;
   }
@@ -85,7 +85,7 @@ void cmd_ctx_align(ctx *ctx, uint64_t max_cnt, uint64_t cur_cnt) {
   }
 }
 
-void cmd_ctx_out_file_header(ctx *ctx, uint64_t file_id) {
+void cmd_out_file_header(ctx *ctx, uint64_t file_id) {
   char buf[64];
   snprintf(buf, STRMAXLEN(buf), "// id: %zu", file_id);
   ctx_out_append(ctx, buf);
@@ -93,24 +93,42 @@ void cmd_ctx_out_file_header(ctx *ctx, uint64_t file_id) {
   ctx_out_appendln(ctx, ctx_dbg_file_by_id(ctx, file_id));
 }
 
-void cmd_ctx_out_source_line(ctx *ctx, ctx_debug_line line) {
+void cmd_out_source_line(ctx *ctx, ctx_debug_line line) {
   char buf[64];
 
   ctx_debug_file *file = ctx->debug.files[line.file_id];
-  cmd_ctx_out_file_header(ctx, line.file_id);
+  cmd_out_file_header(ctx, line.file_id);
 
-  cmd_ctx_align(ctx, ctx->debug.lines_cnt, line.line);
+  cmd_align(ctx, ctx->debug.lines_cnt, line.line);
   snprintf(buf, STRMAXLEN(buf), "%zu│", line.line);
 
   ctx_out_append(ctx, buf);
   ctx_out_append(ctx, file->lines[line.line]);
 }
 
-void cmd_ctx_out_line(ctx *ctx, ctx_debug_line line) {
+void cmd_out_line(ctx *ctx, ctx_debug_line line) {
   if (ctx->options.source_lang && line.file_id != UINT64_MAX &&
       line.line != UINT64_MAX) {
-    cmd_ctx_out_source_line(ctx, line);
+    cmd_out_source_line(ctx, line);
   } else {
     cmd_disassemble_at_address(ctx, line.address, 1);
+  }
+}
+
+void cmd_out_value(ctx *ctx, const char *name, char *data, char *type) {
+  ctx_out_append(ctx, name);
+  ctx_out_append(ctx, " = ");
+  if (data) {
+    ctx_out_append(ctx, data);
+    free(data);
+  } else {
+    ctx_out_append(ctx, "<unk>");
+  }
+  ctx_out_append(ctx, ": ");
+  if (type) {
+    ctx_out_append(ctx, type);
+    free(type);
+  } else {
+    ctx_out_append(ctx, "<unk>");
   }
 }

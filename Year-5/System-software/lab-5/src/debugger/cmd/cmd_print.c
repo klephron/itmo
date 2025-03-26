@@ -124,9 +124,12 @@ static int cmd_print_param_var(ctx *ctx, const char *rest) {
     const char *param_name       = ctx_dbg_str_by_id(ctx, param->debug_str_id);
     if (!strcmp(param_name, args)) {
       uint64_t address = regs.rbp + param->rbp_offset;
-      UNUSED(address);
+      char    *data    = cmd_print_value_data(ctx, address);
+      char    *type    = cmd_print_value_type(ctx, address);
 
-      warn("TODO: print param '%s' value: type", param_name);
+      cmd_out_value(ctx, param_name, data, type);
+      ctx_out_appendln(ctx, "");
+
       found = 1;
     }
   }
@@ -136,9 +139,12 @@ static int cmd_print_param_var(ctx *ctx, const char *rest) {
     const char          *var_name = ctx_dbg_str_by_id(ctx, var->debug_str_id);
     if (!strcmp(var_name, args)) {
       uint64_t address = regs.rbp + var->rbp_offset;
-      UNUSED(address);
+      char    *data    = cmd_print_value_data(ctx, address);
+      char    *type    = cmd_print_value_type(ctx, address);
 
-      warn("TODO: print var '%s' value: type", var_name);
+      cmd_out_value(ctx, var_name, data, type);
+      ctx_out_appendln(ctx, "");
+
       found = 1;
     }
   }
@@ -176,6 +182,18 @@ cleanup:
   if (args) {
     free(args);
   }
+}
+
+char *cmd_print_value_data(ctx *ctx, uint64_t address) {
+  UNUSED(ctx);
+  UNUSED(address);
+  return NULL;
+}
+
+char *cmd_print_value_type(ctx *ctx, uint64_t address) {
+  UNUSED(ctx);
+  UNUSED(address);
+  return NULL;
 }
 
 cmd *cmd_print(const char *cmd_ref) {

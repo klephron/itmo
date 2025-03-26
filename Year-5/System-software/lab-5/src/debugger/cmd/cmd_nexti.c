@@ -97,8 +97,8 @@ void cmd_nexti_disasm_init(ctx *ctx, disassemble_info *info_p,
   info_p->arch              = bfd_arch_i386;
   info_p->mach              = bfd_mach_x86_64;
   info_p->application_data  = ctx;
-  info_p->read_memory_func  = cmd_ctx_read_memory;
-  info_p->memory_error_func = cmd_ctx_memory_error;
+  info_p->read_memory_func  = cmd_read_memory;
+  info_p->memory_error_func = cmd_memory_error;
   *dftype_p = disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);
 }
 

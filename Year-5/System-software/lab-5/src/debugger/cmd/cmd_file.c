@@ -47,7 +47,7 @@ static void cmd_file_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
     goto error_cleanup;
   }
 
-  ctx_tg_set(ctx, abfd_asymbols_count, abfd_asymbols, abfd, args);
+  ctx_tg_load(ctx, abfd_asymbols_count, abfd_asymbols, abfd, args);
   goto cleanup;
 
 error_format:

@@ -2,3 +2,6 @@ config source language
 file io/suite27.txt.asm.out
 run
 info target
+b 0 7
+continue
+print this

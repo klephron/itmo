@@ -62,7 +62,7 @@ static void cmd_step_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
   }
 
   if (ctx_tg_is_running(ctx)) {
-    cmd_ctx_out_line(ctx, curr);
+    cmd_out_line(ctx, curr);
   }
 
 cleanup:

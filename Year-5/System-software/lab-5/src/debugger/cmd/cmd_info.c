@@ -297,7 +297,7 @@ static void cmd_info_debug_lines(ctx *ctx) {
 
     snprintf(buf, STRMAXLEN(buf), "%zu: ", i);
     ctx_out_append(ctx, buf);
-    cmd_ctx_align(ctx, ctx->debug.lines_cnt, i);
+    cmd_align(ctx, ctx->debug.lines_cnt, i);
 
     ctx_out_append(ctx, "address: ");
     snprintf(buf, STRMAXLEN(buf), "0x%016lx", line.address);
@@ -335,10 +335,10 @@ static void cmd_info_debug_files(ctx *ctx) {
   for (uint64_t i = 0; i < ctx->debug.files_cnt; ++i) {
     ctx_debug_file *file = ctx->debug.files[i];
 
-    cmd_ctx_out_file_header(ctx, i);
+    cmd_out_file_header(ctx, i);
 
     for (uint64_t j = 1; j < file->lines_cnt; ++j) {
-      cmd_ctx_align(ctx, file->lines_cnt, j);
+      cmd_align(ctx, file->lines_cnt, j);
       snprintf(buf, STRMAXLEN(buf), "%lu", j);
       ctx_out_append(ctx, buf);
       ctx_out_append(ctx, "│");

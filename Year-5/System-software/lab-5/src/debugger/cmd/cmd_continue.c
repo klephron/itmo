@@ -34,7 +34,7 @@ static void cmd_continue_fn(cmd_handler *handler, ctx *ctx, const char *rest) {
       ctx_dbg_line_set(ctx, curr);
     }
 
-    cmd_ctx_out_line(ctx, curr);
+    cmd_out_line(ctx, curr);
   }
 
 cleanup:

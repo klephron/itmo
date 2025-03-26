@@ -39,8 +39,8 @@ void ctx_error(ctx *ctx, const char *msg);
 
 int              ctx_tg_is_running(ctx *self);
 ctx_target_state ctx_tg_get_state(ctx *self);
-ctx_target_state ctx_tg_set(ctx *self, uint64_t abfd_asymbols_count,
-                            asymbol **abfd_asymbols, bfd *abfd, char *fname);
+ctx_target_state ctx_tg_load(ctx *self, uint64_t abfd_asymbols_count,
+                             asymbol **abfd_asymbols, bfd *abfd, char *fname);
 ctx_target_state ctx_tg_wait(ctx *self);
 ctx_target_state ctx_tg_kill(ctx *self, int signal);
 ctx_target_state ctx_tg_continue(ctx *self);

@@ -11,15 +11,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-static void context_tg_brkpt_fix_regs(struct user_regs_struct *regs_p) {
+static void ctx_tg_brkpt_fix_regs(struct user_regs_struct *regs_p) {
   regs_p->rip -= 1;
 }
 
 // NOTE: can optimize place calls
-static ctx_target_state context_tg_brkpt_fix(ctx *self) {
+static ctx_target_state ctx_tg_brkpt_fix(ctx *self) {
   struct user_regs_struct regs;
   ctx_tg_getregs(self, &regs);
-  context_tg_brkpt_fix_regs(&regs);
+  ctx_tg_brkpt_fix_regs(&regs);
   ctx_tg_setregs(self, &regs);
   return ctx_tg_get_state(self);
 }
@@ -41,8 +41,8 @@ ctx_target_state ctx_tg_get_state(ctx *self) {
   return self->s_target;
 }
 
-ctx_target_state ctx_tg_set(ctx *self, uint64_t abfd_asymbols_count,
-                            asymbol **abfd_asymbols, bfd *abfd, char *fname) {
+ctx_target_state ctx_tg_load(ctx *self, uint64_t abfd_asymbols_count,
+                             asymbol **abfd_asymbols, bfd *abfd, char *fname) {
   if (ctx_tg_is_running(self)) {
     ctx_tg_kill(self, SIGKILL);
   }
@@ -81,7 +81,7 @@ ctx_target_state ctx_tg_wait(ctx *self) {
     if (ptrace(PTRACE_GETSIGINFO, self->pid, NULL, &siginfo) == 0) {
       if (siginfo.si_code == SI_KERNEL) {
         self->s_target = TARGET_BRKPT;
-        context_tg_brkpt_fix(self);
+        ctx_tg_brkpt_fix(self);
       } else {
         self->s_target = TARGET_TRAPPED;
       }
