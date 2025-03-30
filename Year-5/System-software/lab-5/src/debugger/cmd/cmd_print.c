@@ -352,7 +352,7 @@ char *cmd_print_value_data(ctx *ctx, uint64_t address) {
 
     regs.rsp -= 8;
     if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
-      ctx_error(ctx, "unable to ret return address of addr_func");
+      ctx_error(ctx, "unable to set return address after op_repr call");
       goto cleanup;
     }
     regs.rip = addr_func;
@@ -370,7 +370,7 @@ char *cmd_print_value_data(ctx *ctx, uint64_t address) {
   // retrieve result
   {
     if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-      ctx_error(ctx, "unable to get regs after calling addr_func");
+      ctx_error(ctx, "unable to get regs after calling op_repr");
       goto cleanup;
     }
 
@@ -393,7 +393,7 @@ char *cmd_print_value_data(ctx *ctx, uint64_t address) {
 
     regs.rsp -= 8;
     if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
-      ctx_error(ctx, "unable to ret return address of result op_drop");
+      ctx_error(ctx, "unable to set return address after op_drop call");
       goto cleanup;
     }
     regs.rip = addr_drop;
@@ -452,7 +452,7 @@ char *cmd_print_value_type(ctx *ctx, uint64_t address) {
 
     regs.rsp -= 8;
     if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
-      ctx_error(ctx, "unable to ret return address of addr_func");
+      ctx_error(ctx, "unable to set return address after op_type call");
       goto cleanup;
     }
     regs.rip = addr_func;
@@ -470,7 +470,7 @@ char *cmd_print_value_type(ctx *ctx, uint64_t address) {
   // retrieve result
   {
     if (ctx_tg_getregs(ctx, &regs) == TARGET_ERROR) {
-      ctx_error(ctx, "unable to get regs after calling addr_func");
+      ctx_error(ctx, "unable to get regs after calling op_type");
       goto cleanup;
     }
 
@@ -493,7 +493,7 @@ char *cmd_print_value_type(ctx *ctx, uint64_t address) {
 
     regs.rsp -= 8;
     if (ctx_tg_pokedata(ctx, regs.rsp, regs.rip) == TARGET_ERROR) {
-      ctx_error(ctx, "unable to ret return address of result op_drop");
+      ctx_error(ctx, "unable to set return address after op_drop call");
       goto cleanup;
     }
     regs.rip = addr_drop;
