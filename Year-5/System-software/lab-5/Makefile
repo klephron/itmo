@@ -160,13 +160,13 @@ test: test/build
 
 ### Run all tests or specific
 run/test: FORCE | test/build
-	@for file in $(call rwildcard,$(test.BUILD_DIR),*.out); do echo "Test file: $$file" && "$$file"; done;
+	@for file in $$(find $(test.BUILD_DIR) -executable -type f); do echo "Test file: $$file" && "$$file"; done;
 run/test/%: test/build/%
 	@$(eval TEST_FILE=$(patsubst run/test/%,$(test.BUILD_DIR)/%,$@)) \
 		echo "Test file: $(TEST_FILE)" && $(TEST_FILE)
 
 ### Run main executable and generate dot
-run/pdf: run/pdf/io/suite8.txt
+run/pdf: run/pdf/io/suite28.txt
 run/pdf/%: PDF.INPUT_FILE=$(patsubst run/pdf/%,%,$@)
 run/pdf/%: PDF.ASM_FILE=$(patsubst run/pdf/%,%.asm,$@)
 run/pdf/%: compiler/build/main
@@ -177,7 +177,7 @@ run/pdf/%: compiler/build/main
 	for file in $$(find io -type f -name "*.dot"); do dot -Tpdf "$$file" -o "$${file%.dot}.pdf" && echo "converted $$file" || true; done
 
 ### Compile file
-run/asm: run/asm/io/suite8.txt
+run/asm: run/asm/io/suite28.txt
 run/asm/%: ASM.INPUT_FILE=$(patsubst run/asm/%,%,$@)
 run/asm/%: ASM.ASM_FILE=$(patsubst run/asm/%,%.asm,$@)
 run/asm/%: ASM.OBJECT_FILE=$(patsubst run/asm/%,%.o,$@)
@@ -191,7 +191,7 @@ run/asm/%: compiler/build/main
 	@echo "--------------------COMPILE($(ASM.ASM_FILE))--------------------"
 	@$(MAKE) --no-print-directory run/compile/$(ASM.ASM_FILE)
 
-run/compile: run/compile/io/suite8.txt.asm
+run/compile: run/compile/io/suite28.txt.asm
 run/compile/%: COMPILE.ASM_FILE=$(patsubst run/compile/%,%,$@)
 run/compile/%: COMPILE.OBJECT_FILE=$(patsubst run/compile/%,%.o,$@)
 run/compile/%: COMPILE.OUTPUT_FILE=$(patsubst run/compile/%,%.out,$@)

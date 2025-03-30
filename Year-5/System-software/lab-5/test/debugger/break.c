@@ -7,8 +7,8 @@
 Test(debugger, break_1) {
   hashset_ctx_breakpoint *breaks = hashset_ctx_breakpoint_new();
 
-  ctx_breakpoint *b1 = ctx_breakpoint_new(1, 0, 1, UINT64_MAX, UINT64_MAX);
-  ctx_breakpoint *b2 = ctx_breakpoint_new(2, 12, 1, UINT64_MAX, UINT64_MAX);
+  ctx_breakpoint *b1 = ctx_breakpoint_new(1, 1, UINT64_MAX, UINT64_MAX);
+  ctx_breakpoint *b2 = ctx_breakpoint_new(2, 1, UINT64_MAX, UINT64_MAX);
 
   hashset_ctx_breakpoint_insert(breaks, b1);
 
