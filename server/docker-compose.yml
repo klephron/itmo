@@ -1,40 +1,33 @@
-version: "3.9"
-
 services:
-  me-system-service:
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+  server:
     build: .
-    container_name: me-system
     depends_on:
       postgres:
         condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-me_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-me}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-me}
     ports:
-      - "8080:8080"
+      - "${SV_PORT:-8080}:8080"
 
   postgres:
     image: postgres:latest
-    container_name: postgres_container
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-me}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-me}
+      POSTGRES_DB: ${DB_NAME:-me_db}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     volumes:
-      - ./pgdata:/var/lib/postgresql/data/pgdata
+      - postgres_data:/var/lib/postgresql/data/pgdata
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-me} -d ${DB_NAME:-me_db}" ]
       interval: 5s
       timeout: 5s
       retries: 10
-    restart: unless-stopped
-    tty: true
-    stdin_open: true
 
 volumes:
-  pgdata:
-    driver: local
+  postgres_data:
