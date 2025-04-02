@@ -1,9 +1,13 @@
+# Server
+
 To build and run:
-```
-docker-compose up
+
+```bash
+docker-compose up --build
 ```
 
 Swagger URL:
-```
+
+```bash
 http://localhost:8080/swagger-ui/index.html
 ```
