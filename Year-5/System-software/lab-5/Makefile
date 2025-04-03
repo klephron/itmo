@@ -62,7 +62,7 @@ test.LIBS      := $(debugger.BUILD_DIR)/libdebugger.a $(compiler.BUILD_DIR)/libc
 
 MODULES := util compiler x86_64_core x86_64_std debugger test
 
-.DEFAULT_GOAL := compiler
+.DEFAULT_GOAL := all
 .PHONY := clean/build clean/out compiler debugger format help index run/asm run/pdf run/test x86_64_std test util x86_64_core
 .PRECIOUS: $(util.LIBS) $(compiler.LIBS) $(x86_64_core.LIBS) $(x86_64_std.LIBS) $(debugger.LIBS) $(test.LIBS)
 
@@ -139,6 +139,9 @@ $(foreach module, $(MODULES), $(eval $(call make-module-rule,$(module))))
 	$(eval ENV_NAME=$(patsubst %,%.ENV,$(TARGET_NAME))) \
 	$(foreach lib,$($(TARGET_NAME).LIBS),$(MAKE) --no-print-directory $(lib) &&) \
 	$(MAKE) --no-print-directory -C $(SRC_DIR)/$(TARGET_NAME) $@ $($(ENV_NAME))
+
+### Build compiler x86_64_core x86_64_std debugger
+all: compiler x86_64_core x86_64_std debugger
 
 ### Build libutil.a
 util: util/build/libutil.a
