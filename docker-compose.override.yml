@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  iot-controller:
+    deploy:
+      replicas: 5
+  rule-engine:
+    deploy:
+      replicas: 5

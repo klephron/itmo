@@ -1,0 +1,179 @@
+version: "3.9"
+
+services:
+
+  metrics-service:
+    build: ./metrics-service
+    container_name: metrics-service
+    ports:
+      - "8080:8080"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "9091:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+
+  logstash:
+    build: ./logstash
+    container_name: logstash
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "5044:5044"
+    volumes:
+      - ./logstash/pipeline/:/usr/share/logstash/pipeline/
+      - ./logs:/var/log/mongodb
+    user: "0:0"
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.2
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://kibana:5601/api/status || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  mqtt-broker:
+    image: emqx/emqx:latest
+    container_name: mqtt-broker
+    environment:
+      - EMQX_MQTT__MAX_MQUEUE_LEN=1000
+      - EMQX_MQTT__MESSAGE_EXPIRY_INTERVAL=3600
+    ports:
+      - "1883:1883"
+      - "18083:18083"
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "15692:15692"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    depends_on:
+      mqtt-broker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "node_health_check", "-q"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - mongodb_data:/data/db
+      - ./logs:/var/log/mongodb
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    command: mongod --logpath /var/log/mongodb/mongod.log --logappend
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  mongodb-exporter:
+    image: bitnami/mongodb-exporter:latest
+    environment:
+      MONGODB_URI: "mongodb://root:root@mongodb:27017/admin"
+    command: ["--collect-all", "--compatible-mode", "--discovering-mode"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "9216:9216"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: root
+      ME_CONFIG_BASICAUTH_PASSWORD: root
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongodb:27017/
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  iot-controller:
+    build: ./iot-controller
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    entrypoint: [ "./entrypoint.sh" ]
+    command: [ "tcp://mqtt-broker:1883", "$$share/myGroup/radiator/data", "rabbitmq", "5672", "guest", "guest", "testQueue", "mongodb://zavar:zavar@mongodb:27017/", "iot-db", "radiator" ]
+
+  data-simulator:
+    build: ./data-simulator
+    container_name: data-simulator
+    depends_on:
+      - iot-controller
+    command: ["5", "1000", "tcp://mqtt-broker:1883", "radiator/data"]
+
+  rule-engine:
+    build: ./rule-engine
+    depends_on:
+      - iot-controller
+    command: [ "redis", "6379", "rabbitmq", "5672", "guest", "guest", "testQueue", "mongodb://zavar:zavar@mongodb:27017/", "iot-db", "rules" ]
+
+volumes:
+  mongodb_data:
+  redis_data:
