@@ -1,12 +1,10 @@
 package ru.itmo.zavar.redis;
 
-import io.lettuce.core.RedisClient;
+import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.sync.RedisCommands;
 import ru.itmo.zavar.payload.RadiatorRabbitPayload;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RedisFactStorage {
@@ -19,15 +17,15 @@ public class RedisFactStorage {
     }
 
     public void addFact(RadiatorRabbitPayload payload) {
-        String key = "radiator:" + payload.deviceId();
-        redis.zadd(key, payload.timestamp(),
-                payload.deviceId() + ":" + payload.roomTemp() + ":"
-                        + payload.radiatorTemp() + ":" + payload.timestamp());
+        String script = "redis.call('ZADD', KEYS[1], ARGV[1], ARGV[2]);" +
+                "local excess = redis.call('ZCARD', KEYS[1]) - tonumber(ARGV[3]);" +
+                "if excess > 0 then redis.call('ZREMRANGEBYRANK', KEYS[1], 0, excess - 1); end";
 
-        long excessCount = redis.zcard(key) - maxFacts;
-        if (excessCount > 0) {
-            redis.zremrangebyrank(key, 0, excessCount - 1);
-        }
+        redis.eval(script, ScriptOutputType.STATUS,
+                new String[]{"radiator:" + payload.deviceId()},
+                String.valueOf(payload.timestamp()),
+                payload.deviceId() + ":" + payload.roomTemp() + ":" + payload.radiatorTemp() + ":" + payload.timestamp(),
+                String.valueOf(maxFacts));
     }
 
     public List<String[]> getFacts(String key) {

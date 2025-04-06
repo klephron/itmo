@@ -4,7 +4,6 @@ global:
     monitor: 'emqx-monitor'
 
 scrape_configs:
-  # EMQX
   - job_name: 'emqx_stats'
     static_configs:
       - targets: ['mqtt-broker:18083']
@@ -32,20 +31,17 @@ scrape_configs:
       username: ''
       password: ''
 
-  # MongoDB
   - job_name: 'mongodb'
     metrics_path: /metrics
     scheme: http
     static_configs:
     - targets: ['mongodb-exporter:9216']
 
-  # RabbitMQ
   - job_name: 'rabbitmq'
     static_configs:
       - targets: ['rabbitmq:15692']
 
-  # Java Application (Micrometer or JMX Exporter)
   - job_name: 'metrics-service'
     scrape_interval: 15s
     static_configs:
-      - targets: ['metrics-service:8080']  # Замените порт на порт вашего JMX Exporter или Micrometer
+      - targets: ['metrics-service:8080']
