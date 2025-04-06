@@ -11,9 +11,10 @@
     "test": "vitest",
     "eslint": "eslint .",
     "eslint.fix": "eslint . --fix",
-    "stylelint": "npx stylelint '**/*.css' '**/*.scss'",
-    "stylelint.fix": "npx stylelint '**/*.css' '**/*.scss' --fix",
-    "format": "npx prettier -w ./src ./test"
+    "stylelint": "stylelint '**/*.css' '**/*.scss'",
+    "stylelint.fix": "stylelint '**/*.css' '**/*.scss' --fix",
+    "format": "prettier -w .",
+    "coverage": "vitest run --coverage"
   },
   "license": "MIT",
   "devDependencies": {
