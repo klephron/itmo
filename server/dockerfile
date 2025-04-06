@@ -13,7 +13,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 
-FROM eclipse-temurin:17 as bundler
+FROM eclipse-temurin:17 AS bundler
 
 WORKDIR /opt/build
 COPY --from=builder /opt/build/target/*.jar ./application.jar
