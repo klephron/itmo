@@ -1,15 +1,10 @@
 import { defineConfig } from "vite";
-import solidPlugin from "vite-plugin-solid";
+import solid from "vite-plugin-solid";
 
 export default defineConfig({
-  plugins: [solidPlugin()],
-  build: {
-    target: "esnext",
-  },
+  plugins: [solid()],
   test: {
-    globals: true,
     environment: "jsdom",
-    reporters: ["verbose"],
   },
   resolve: {
     conditions: ["development", "browser"],

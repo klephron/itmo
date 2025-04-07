@@ -7,8 +7,8 @@ pipeline {
     REGISTRY_URL = 'https://index.docker.io/v1/'
     REGISTRY_CREDS = 'registry-creds'
 
-    FRONT_PATH = './front'
-    SERVER_PATH = './server'
+    FRONT_PATH = "${WORKSPACE}/front"
+    SERVER_PATH = "${WORKSPACE}/server"
   }
 
   options {
@@ -33,15 +33,18 @@ pipeline {
             stage('Front Unit') {
               steps {
                 unstash 'workspace'
-
                 dir("${FRONT_PATH}") {
                   script {
-                    def frontTestImage = docker.build("zubrailx/devops-front-yarn", "-f yarn.dockerfile .")
-                    frontTestImage.inside {
-                      sh 'cp /opt/build/yarn.lock .'
-                      sh 'yarn install'
-                      sh 'yarn run test'
-                    }
+                      def frontTestImage = docker.build("zubrailx/devops-front-test", "-f test-prepare.dockerfile .")
+                      frontTestImage.inside("--user root") {
+                        sh '''
+                          cd /app
+                          mv ${FRONT_PATH}/src ./
+                          mv ${FRONT_PATH}/test ./
+                          yarn run test
+                          yarn run coverage
+                        '''
+                      }
                   }
                 }
               }
@@ -83,8 +86,13 @@ pipeline {
                 unstash 'workspace'
                 dir("${SERVER_PATH}") {
                   script {
-                    docker.image('maven:3.9.4-eclipse-temurin-17').inside {
-                      sh 'mvn test'
+                    def serverTestImage = docker.build("zubrailx/devops-server-test", "-f test-prepare.dockerfile .")
+                    serverTestImage.inside("--user root") {
+                      sh '''
+                        cd /app
+                        mv ${SERVER_PATH}/src ./
+                        mvn test
+                      '''
                     }
                   }
                 }
@@ -120,6 +128,11 @@ pipeline {
           }
         }
       }
+    }
+  }
+  post {
+    always {
+      cleanWs()
     }
   }
 }
