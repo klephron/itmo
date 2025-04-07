@@ -9,7 +9,8 @@ RUN bun install
 FROM installer AS builder
 
 COPY index.html tsconfig.json vite.config.ts ./
-COPY src ./src
+COPY src/ ./src
+COPY .env.production ./
 RUN bun run build
 
 
