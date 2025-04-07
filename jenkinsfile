@@ -9,7 +9,7 @@ pipeline {
     CRED_REGISTRY = 'zubrailx-registry'
 
     FRONT_PATH = "${WORKSPACE}/front"
-    FRONT_ENV = credentials('devops-front-env')
+    FRONT_ENV_PATH = credentials('devops-front-env')
 
     SERVER_PATH = "${WORKSPACE}/server"
   }
@@ -63,10 +63,7 @@ pipeline {
 
                   dir("${FRONT_PATH}") {
                     script {
-                      writeFile(file: '.env.production', text: env.FRONT_ENV, encoding: 'UTF-8')
-
-                      sh 'echo "${FRONT_ENV}"'
-                      sh 'ls -la'
+                      sh 'cp "${FRONT_ENV_PATH}" .env.production'
 
                       frontTag = "zubrailx/devops-front:${commitHash}"
                       frontImage = docker.build(frontTag, "${FRONT_PATH}")

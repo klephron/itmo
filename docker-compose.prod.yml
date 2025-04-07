@@ -1,0 +1,65 @@
+services:
+  front:
+    image: zubrailx/devops-front:latest
+    container_name: "devops-front"
+    depends_on:
+      - server
+    ports:
+      - "${FRONT_PORT}:80"
+  server:
+    image: zubrailx/devops-server:latest
+    container_name: "devops-server"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${SERVER_PORT}:8080"
+
+  postgres:
+    image: postgres:17.4
+    container_name: "devops-postgres"
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  jenkins:
+    image: jenkins/jenkins:lts-jdk21
+    container_name: "devops-jenkins"
+    ports:
+      - "${JENKINS_PORT}:8080"
+    volumes:
+      - jenkins-home:/var/jenkins_home
+
+  jenkins-agent:
+    build:
+      context: .
+      dockerfile: jenkins-agent.dockerfile
+    # WARN: unable to set container name with sysbox-runc
+    # container_name: devops-jenkins-agent
+    runtime: sysbox-runc
+    environment:
+      JENKINS_AGENT_SSH_PUBKEY: ${JENKINS_AGENT_SSH_PUBKEY}
+
+volumes:
+  postgres-data:
+    name: "devops-postgres-data"
+  jenkins-home:
+    name: "devops-jenkins-home"
