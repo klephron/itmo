@@ -60,9 +60,9 @@ public class ComplexRadiatorGenerator {
         return base;
     }
 
-    public RadiatorMqttPayload createPayload(long deviceId) {
+    public RadiatorMqttPayload createPayload(long deviceId, long prevHeat) {
         double radiatorTemp = generateRadiatorTemperature();
         double roomTemp = generateRoomTemperature();
-        return RadiatorMqttPayload.create(deviceId, radiatorTemp, roomTemp);
+        return RadiatorMqttPayload.create(deviceId, radiatorTemp, roomTemp, prevHeat + 1);
     }
 }

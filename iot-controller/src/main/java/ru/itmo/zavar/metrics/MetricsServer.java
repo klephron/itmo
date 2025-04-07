@@ -18,9 +18,17 @@ public final class MetricsServer {
         this.server = HttpServer.create(new InetSocketAddress(this.port), 0);
         this.server.createContext("/metrics", exchange -> {
             String response = MetricsConfig.getRegistry().scrape();
-            exchange.sendResponseHeaders(200, response.getBytes().length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes());
+            byte[] responseBytes = response.getBytes();
+
+            exchange.getResponseHeaders().set("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
+
+            if (exchange.getRequestMethod().equals("HEAD")) {
+                exchange.sendResponseHeaders(200, -1);
+            } else {
+                exchange.sendResponseHeaders(200, responseBytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(responseBytes);
+                }
             }
         });
     }

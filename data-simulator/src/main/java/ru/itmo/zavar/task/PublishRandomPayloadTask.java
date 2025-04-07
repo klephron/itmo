@@ -24,12 +24,12 @@ public final class PublishRandomPayloadTask implements Runnable {
     public void run() {
         try {
             final Gson gson = new Gson();
-            for (int deviceIndex = 1; deviceIndex <= deviceCount; deviceIndex++) {
+            for (long deviceIndex = 1; deviceIndex <= deviceCount; deviceIndex++) {
                 if (random.nextDouble() < skipProbability) {
                     continue;
                 }
                 MqttMessage message = new MqttMessage(gson
-                        .toJson(RadiatorMqttPayload.createRandom(deviceIndex, random, anomalyProbability))
+                        .toJson(RadiatorMqttPayload.createRandom(deviceIndex, random, anomalyProbability, 0))
                         .getBytes());
                 int QOS = 2;
                 message.setQos(QOS);

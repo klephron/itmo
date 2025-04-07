@@ -113,7 +113,8 @@ public final class IotMqttCallback implements MqttCallback {
                             payload.deviceId(),
                             payload.radiatorTemp(),
                             payload.roomTemp(),
-                            payload.timestamp()
+                            payload.timestamp(),
+                            payload.heat()
                     ));
             try {
                 channel.basicPublish("", rabbitQueueName, null, new String(message.getPayload()).getBytes(StandardCharsets.UTF_8));

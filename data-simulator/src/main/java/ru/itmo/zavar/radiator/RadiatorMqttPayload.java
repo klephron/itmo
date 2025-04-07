@@ -3,7 +3,7 @@ package ru.itmo.zavar.radiator;
 import java.time.Instant;
 import java.util.Random;
 
-public record RadiatorMqttPayload(Long deviceId, double radiatorTemp, double roomTemp, long timestamp) {
+public record RadiatorMqttPayload(Long deviceId, double radiatorTemp, double roomTemp, long timestamp, long heat) {
     private static double generateRadiatorTemperature(final Random random, final double anomalyProbability) {
         double base = 65.0 + random.nextGaussian() * 3;
         if (random.nextDouble() < anomalyProbability) {
@@ -21,14 +21,14 @@ public record RadiatorMqttPayload(Long deviceId, double radiatorTemp, double roo
         return base;
     }
 
-    public static RadiatorMqttPayload createRandom(final long deviceIndex, final Random random, final double anomalyProbability) {
+    public static RadiatorMqttPayload createRandom(final Long deviceId, final Random random, final double anomalyProbability, long heat) {
         double radiatorTemp = generateRadiatorTemperature(random, anomalyProbability);
         double roomTemp = generateRoomTemperature(random, anomalyProbability);
         long timestamp = Instant.now().getEpochSecond();
-        return new RadiatorMqttPayload(deviceIndex, radiatorTemp, roomTemp, timestamp);
+        return new RadiatorMqttPayload(deviceId, radiatorTemp, roomTemp, timestamp, heat);
     }
 
-    public static RadiatorMqttPayload create(long deviceId, double radiatorTemp, double roomTemp) {
-        return new RadiatorMqttPayload(deviceId, radiatorTemp, roomTemp, Instant.now().toEpochMilli());
+    public static RadiatorMqttPayload create(final Long deviceId, final double radiatorTemp, final double roomTemp, long heat) {
+        return new RadiatorMqttPayload(deviceId, radiatorTemp, roomTemp, Instant.now().toEpochMilli(), heat);
     }
 }

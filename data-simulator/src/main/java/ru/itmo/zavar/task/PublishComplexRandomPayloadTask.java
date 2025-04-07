@@ -25,6 +25,7 @@ public final class PublishComplexRandomPayloadTask implements Runnable {
     private final double strangeDataProbability;
     private final String mqttTopic;
     private final MqttClient client;
+    private final long[] prevHeat;
 
     private static class DeviceState {
         boolean offline;
@@ -66,7 +67,8 @@ public final class PublishComplexRandomPayloadTask implements Runnable {
                 continue;
             }
 
-            RadiatorMqttPayload payload = generator.createPayload(deviceId);
+            RadiatorMqttPayload payload = generator.createPayload(deviceId, prevHeat[(int) (deviceId - 1)]);
+            prevHeat[(int) (deviceId - 1)] = payload.heat();
 
             try {
                 MqttMessage message = new MqttMessage(gson.toJson(payload).getBytes());

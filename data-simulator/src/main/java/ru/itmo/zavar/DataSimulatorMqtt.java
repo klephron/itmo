@@ -59,8 +59,9 @@ public final class DataSimulatorMqtt {
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
+        long[] prevHeat = new long[deviceCount];
         scheduler.scheduleAtFixedRate(new PublishComplexRandomPayloadTask(random, deviceCount, skipProbability,
-               anomalyProbability, strangeDataProbability, mqttTopic, client),0, sendIntervalMs, TimeUnit.MILLISECONDS);
+               anomalyProbability, strangeDataProbability, mqttTopic, client, prevHeat),0, sendIntervalMs, TimeUnit.MILLISECONDS);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             scheduler.shutdown();
