@@ -17,3 +17,8 @@ Build project:
 ```bash
 bun run build
 ```
+
+Environment variables (files):
+
+- `.env.development` - for development
+- `.env.production` - for production serving
