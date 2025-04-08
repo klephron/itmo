@@ -27,7 +27,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         try {
-            userService.register(req.getUsername(), req.getPassword(), req.getAuthorities());
+            this.userService.register(req.getUsername(), req.getPassword(), req.getAuthorities());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -36,11 +36,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest req) {
-        if (!userService.checkPassword(req.getUsername(), req.getPassword())) {
+        if (!this.userService.checkPassword(req.getUsername(), req.getPassword())) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
-        UserDetails user = userService.loadUserByUsername(req.getUsername());
-        String token = jwtUtil.generateToken(user);
+        UserDetails user = this.userService.loadUserByUsername(req.getUsername());
+        String token = this.jwtUtil.generateToken(user);
         return ResponseEntity.ok(new AuthResponse(token));
     }
 }

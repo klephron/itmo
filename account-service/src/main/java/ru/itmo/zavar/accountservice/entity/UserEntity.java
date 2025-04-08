@@ -1,5 +1,7 @@
 package ru.itmo.zavar.accountservice.entity;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -12,8 +14,14 @@ import java.util.List;
 @Setter
 public class UserEntity {
     @Id
+    @NotNull
     private String id;
+    @NotNull
+    @NotEmpty
     private String username;
+    @NotNull
+    @NotEmpty
     private String password;
+    @NotNull
     private List<String> authorities;
 }

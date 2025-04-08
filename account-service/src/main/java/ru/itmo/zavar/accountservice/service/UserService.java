@@ -1,12 +1,11 @@
 package ru.itmo.zavar.accountservice.service;
 
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.itmo.zavar.accountservice.dto.UserDto;
 import ru.itmo.zavar.accountservice.entity.UserEntity;
+import ru.itmo.zavar.accountservice.mapper.UserMapper;
 import ru.itmo.zavar.accountservice.repository.UserRepository;
 
 import java.util.List;
@@ -16,20 +15,36 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository repo;
     private final PasswordEncoder encoder;
+    private final UserCache userCache;
+    private final UserMapper userMapper;
 
-    public UserService(UserRepository repo, PasswordEncoder encoder) {
+    public UserService(UserRepository repo, PasswordEncoder encoder, UserCache userCache, UserMapper userMapper) {
         this.repo = repo;
         this.encoder = encoder;
+        this.userCache = userCache;
+        this.userMapper = userMapper;
+    }
+
+    public UserDto loadUserById(String id) throws UsernameNotFoundException {
+        UserEntity userEntity = repo.findById(id).orElseThrow(() -> new UsernameNotFoundException(id));
+        return userMapper.toDto(userEntity);
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserDetails cached = userCache.getUserFromCache(username);
+        if (cached != null) {
+            return cached;
+        }
+
         UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        return User.builder()
-                .username(userEntity.getUsername())
-                .password(userEntity.getPassword())
-                .authorities(userEntity.getAuthorities().toArray(new String[0]))
-                .build();
+        UserDetails build = User.builder()
+                    .username(userEntity.getUsername())
+                    .password(userEntity.getPassword())
+                    .authorities(userEntity.getAuthorities().toArray(new String[0]))
+                    .build();
+        userCache.putUserInCache(build);
+        return build;
     }
 
     public UserDetails setAuthorities(String username, List<String> authorities) throws UsernameNotFoundException {
@@ -61,6 +76,7 @@ public class UserService implements UserDetailsService {
         userEntity.setPassword(encoder.encode(password));
         userEntity.setAuthorities(roles);
         repo.save(userEntity);
+        userCache.removeUserFromCache(username);
     }
 
     public boolean checkPassword(String username, String rawPassword) {
