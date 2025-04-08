@@ -39,5 +39,4 @@ services:
       retries: 10
 
 volumes:
-  postgres_data:
   jenkins_home:

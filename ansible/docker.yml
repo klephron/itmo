@@ -1,0 +1,72 @@
+---
+- hosts: all
+  become: true
+  pre_tasks:
+    - name: fail if not Ubuntu
+      fail:
+        msg: "This playbook only supports Ubuntu."
+      when: ansible_distribution not in ["Ubuntu"]
+
+    - name: update cache
+      tags: always
+      apt:
+        update_cache: true
+      changed_when: false
+
+- hosts: all
+  become: true
+  tasks:
+    - name: install dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - ca-certificates
+        - curl
+
+    - name: add GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: add docker repository to apt
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+
+    - name: install docker
+      apt:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+
+    - name: check docker is active
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      notify: start docker
+
+    - name: ensure group docker exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: add {{ ansible_user }} to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+  handlers:
+    - name: start docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
