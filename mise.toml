@@ -2,3 +2,4 @@
 ansible = "11.4.0"
 bun = "1.2.8"
 node = "23.11.0"
+terraform = "1.11.3"
