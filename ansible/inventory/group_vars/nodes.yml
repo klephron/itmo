@@ -4,4 +4,4 @@ nodes_postgres_db: me_db
 nodes_postgres_user: me
 nodes_postgres_password: me
 
-nodes_server_port: 8102
+nodes_server_port: 8101
