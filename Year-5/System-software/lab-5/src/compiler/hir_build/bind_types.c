@@ -6,7 +6,7 @@
 #include "util/log.h"
 #include "util/macro.h"
 #include "util/math.h"
-// #include "util/strbuf.h"
+#include "util/strbuf.h"
 #include <string.h>
 
 typedef enum ctx_scope_kind_enum {
