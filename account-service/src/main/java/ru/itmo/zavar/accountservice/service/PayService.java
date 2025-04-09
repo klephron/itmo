@@ -1,5 +1,6 @@
 package ru.itmo.zavar.accountservice.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.accountservice.dto.PayHistoryDto;
@@ -13,17 +14,12 @@ import ru.itmo.zavar.accountservice.repository.PayHistoryRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Service
 public class PayService {
     private final PayHistoryRepository payHistoryRepository;
     private final PayHistoryMapper payHistoryMapper;
     private final BillRepository billRepository;
-
-    public PayService(PayHistoryRepository payHistoryRepository, PayHistoryMapper payHistoryMapper, BillRepository billRepository) {
-        this.payHistoryRepository = payHistoryRepository;
-        this.payHistoryMapper = payHistoryMapper;
-        this.billRepository = billRepository;
-    }
 
     @Transactional
     public PayHistoryDto pay(String billId) throws ObjectNotFoundException {

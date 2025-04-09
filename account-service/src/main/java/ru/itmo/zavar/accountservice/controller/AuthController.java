@@ -12,6 +12,8 @@ import ru.itmo.zavar.accountservice.dto.response.AuthResponse;
 import ru.itmo.zavar.accountservice.security.jwt.JwtUtil;
 import ru.itmo.zavar.accountservice.service.UserService;
 
+import java.util.ArrayList;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -27,7 +29,9 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         try {
-            this.userService.register(req.getUsername(), req.getPassword(), req.getAuthorities());
+            ArrayList<String> authorities = new ArrayList<>();
+            authorities.add("USER");
+            this.userService.register(req.getUsername(), req.getPassword(), authorities);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

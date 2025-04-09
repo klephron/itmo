@@ -1,5 +1,6 @@
 package ru.itmo.zavar.accountservice.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itmo.zavar.accountservice.dto.BillDto;
 import ru.itmo.zavar.accountservice.entity.BillEntity;
@@ -9,15 +10,11 @@ import ru.itmo.zavar.accountservice.repository.BillRepository;
 
 import java.util.List;
 
+@AllArgsConstructor
 @Service
 public class BillService {
     private final BillRepository billRepository;
     private final BillMapper billMapper;
-
-    public BillService(BillRepository billRepository, BillMapper billMapper) {
-        this.billRepository = billRepository;
-        this.billMapper = billMapper;
-    }
 
     public BillDto getBillById(String id) throws ObjectNotFoundException {
         BillEntity bill = this.billRepository.findById(id).orElseThrow(() -> new ObjectNotFoundException("Bill not found"));

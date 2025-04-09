@@ -1,5 +1,6 @@
 package ru.itmo.zavar.accountservice.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.itmo.zavar.accountservice.dto.ApartmentDto;
@@ -15,6 +16,7 @@ import ru.itmo.zavar.accountservice.repository.RadiatorToApartmentRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Service
 public class ApartmentService {
     private final ApartmentRepository apartmentRepository;
@@ -22,14 +24,6 @@ public class ApartmentService {
     private final UserService userService;
     private final ApartmentMapper apartmentMapper;
     private final RadiatorToApartmentMapper radiatorToApartmentMapper;
-
-    public ApartmentService(ApartmentRepository apartmentRepository, RadiatorToApartmentRepository radiatorToApartmentRepository, UserService userService, ApartmentMapper apartmentMapper, RadiatorToApartmentMapper radiatorToApartmentMapper) {
-        this.apartmentRepository = apartmentRepository;
-        this.radiatorToApartmentRepository = radiatorToApartmentRepository;
-        this.userService = userService;
-        this.apartmentMapper = apartmentMapper;
-        this.radiatorToApartmentMapper = radiatorToApartmentMapper;
-    }
 
     public ApartmentDto createNewApartment(String userId, String apartmentName) throws UsernameNotFoundException {
         this.userService.loadUserById(userId);

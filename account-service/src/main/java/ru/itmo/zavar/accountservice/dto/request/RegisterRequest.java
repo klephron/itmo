@@ -10,5 +10,4 @@ import java.util.List;
 public class RegisterRequest {
     private String username;
     private String password;
-    private List<String> authorities;
 }

@@ -1,5 +1,6 @@
 package ru.itmo.zavar.accountservice.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import ru.itmo.zavar.accountservice.repository.UserRepository;
 
 import java.util.List;
 
+@AllArgsConstructor
 @Service
 public class UserService implements UserDetailsService {
 
@@ -17,13 +19,6 @@ public class UserService implements UserDetailsService {
     private final PasswordEncoder encoder;
     private final UserCache userCache;
     private final UserMapper userMapper;
-
-    public UserService(UserRepository repo, PasswordEncoder encoder, UserCache userCache, UserMapper userMapper) {
-        this.repo = repo;
-        this.encoder = encoder;
-        this.userCache = userCache;
-        this.userMapper = userMapper;
-    }
 
     public UserDto loadUserById(String id) throws UsernameNotFoundException {
         UserEntity userEntity = repo.findById(id).orElseThrow(() -> new UsernameNotFoundException(id));
