@@ -13,7 +13,9 @@
 import { PatternEntityDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Patterns<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Patterns<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -34,7 +36,11 @@ export class Patterns<SecurityDataType = unknown> extends HttpClient<SecurityDat
    * @name UpdatePattern
    * @request PUT:/patterns/{id}
    */
-  updatePattern = (id: number, data: PatternEntityDto, params: RequestParams = {}) =>
+  updatePattern = (
+    id: number,
+    data: PatternEntityDto,
+    params: RequestParams = {},
+  ) =>
     this.request<PatternEntityDto, any>({
       path: `/patterns/${id}`,
       method: "PUT",

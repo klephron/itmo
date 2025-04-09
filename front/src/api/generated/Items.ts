@@ -13,7 +13,9 @@
 import { ItemDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Items<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Items<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *

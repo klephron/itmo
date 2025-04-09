@@ -13,7 +13,9 @@
 import { DriveEntityDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Drives<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Drives<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -34,7 +36,11 @@ export class Drives<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    * @name UpdateDrive
    * @request PUT:/drives/{id}
    */
-  updateDrive = (id: number, data: DriveEntityDto, params: RequestParams = {}) =>
+  updateDrive = (
+    id: number,
+    data: DriveEntityDto,
+    params: RequestParams = {},
+  ) =>
     this.request<DriveEntityDto, any>({
       path: `/drives/${id}`,
       method: "PUT",

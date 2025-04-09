@@ -13,7 +13,9 @@
 import { StorageCellEntityDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class StorageCells<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class StorageCells<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -34,7 +36,11 @@ export class StorageCells<SecurityDataType = unknown> extends HttpClient<Securit
    * @name UpdateStorageCell
    * @request PUT:/storageCells/{id}
    */
-  updateStorageCell = (id: number, data: StorageCellEntityDto, params: RequestParams = {}) =>
+  updateStorageCell = (
+    id: number,
+    data: StorageCellEntityDto,
+    params: RequestParams = {},
+  ) =>
     this.request<StorageCellEntityDto, any>({
       path: `/storageCells/${id}`,
       method: "PUT",

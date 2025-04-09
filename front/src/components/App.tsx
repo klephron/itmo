@@ -28,7 +28,7 @@ enum Section {
 
 export const App = () => {
   const client = clientGet();
-  const [selectedSection, setSelectedSection] = createSignal(Section.CellItems);
+  const [selectedSection, selectedSectionSet] = createSignal(Section.CellItems);
 
   const [cellItems, cellItemsSet] = createStore<CellItemEntityDto[]>([]);
   const [drives, drivesSet] = createStore<DriveEntityDto[]>([]);
@@ -46,47 +46,65 @@ export const App = () => {
     switch (section) {
       case Section.CellItems:
         client.cellItems.getAllCellItems().then((r) => {
-          cellItemsSet(r.data);
+          r.json().then((data) => {
+            cellItemsSet(data);
+          });
         });
         break;
       case Section.Drives:
         client.drives.getAllDrives().then((r) => {
-          drivesSet(r.data);
+          r.json().then((data) => {
+            drivesSet(data);
+          });
         });
         break;
       case Section.ExportBuses:
         client.exportBuses.getAllExportBuses().then((r) => {
-          exportBusesSet(r.data);
+          r.json().then((data) => {
+            exportBusesSet(data);
+          });
         });
         break;
       case Section.ImportBuses:
         client.importBuses.getAllImportBuses().then((r) => {
-          importBusesSet(r.data);
+          r.json().then((data) => {
+            importBusesSet(data);
+          });
         });
         break;
       case Section.Interfaces:
         client.interfaces.getAllInterfaces().then((r) => {
-          interfacesSet(r.data);
+          r.json().then((data) => {
+            interfacesSet(data);
+          });
         });
         break;
       case Section.Items:
         client.items.getAllItems().then((r) => {
-          itemsSet(r.data);
+          r.json().then((data) => {
+            itemsSet(data);
+          });
         });
         break;
       case Section.Networks:
         client.networks.getAllNetworks().then((r) => {
-          networksSet(r.data);
+          r.json().then((data) => {
+            networksSet(data);
+          });
         });
         break;
       case Section.Patterns:
         client.patterns.getAllPatterns().then((r) => {
-          patternsSet(r.data);
+          r.json().then((data) => {
+            patternsSet(data);
+          });
         });
         break;
       case Section.StorageCells:
         client.storageCells.getAllStorageCells().then((r) => {
-          storageCellsSet(r.data);
+          r.json().then((data) => {
+            storageCellsSet(data);
+          });
         });
         break;
       default:
@@ -94,7 +112,9 @@ export const App = () => {
     }
   }
 
-  onMount(() => {});
+  onMount(() => {
+    fetchSection(selectedSection());
+  });
 
   return (
     <div class={styles.app}>
@@ -106,7 +126,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.CellItems,
             }}
             onClick={() => {
-              setSelectedSection(Section.CellItems);
+              selectedSectionSet(Section.CellItems);
               fetchSection(Section.CellItems);
             }}
           >
@@ -118,7 +138,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.Drives,
             }}
             onClick={() => {
-              setSelectedSection(Section.Drives);
+              selectedSectionSet(Section.Drives);
               fetchSection(Section.Drives);
             }}
           >
@@ -130,7 +150,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.ExportBuses,
             }}
             onClick={() => {
-              setSelectedSection(Section.ExportBuses);
+              selectedSectionSet(Section.ExportBuses);
               fetchSection(Section.ExportBuses);
             }}
           >
@@ -142,7 +162,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.ImportBuses,
             }}
             onClick={() => {
-              setSelectedSection(Section.ImportBuses);
+              selectedSectionSet(Section.ImportBuses);
               fetchSection(Section.ImportBuses);
             }}
           >
@@ -154,7 +174,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.Interfaces,
             }}
             onClick={() => {
-              setSelectedSection(Section.Interfaces);
+              selectedSectionSet(Section.Interfaces);
               fetchSection(Section.Interfaces);
             }}
           >
@@ -166,7 +186,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.Items,
             }}
             onClick={() => {
-              setSelectedSection(Section.Items);
+              selectedSectionSet(Section.Items);
               fetchSection(Section.Items);
             }}
           >
@@ -178,7 +198,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.Networks,
             }}
             onClick={() => {
-              setSelectedSection(Section.Networks);
+              selectedSectionSet(Section.Networks);
               fetchSection(Section.Networks);
             }}
           >
@@ -190,7 +210,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.Patterns,
             }}
             onClick={() => {
-              setSelectedSection(Section.Patterns);
+              selectedSectionSet(Section.Patterns);
               fetchSection(Section.Patterns);
             }}
           >
@@ -202,7 +222,7 @@ export const App = () => {
               [styles.active]: selectedSection() === Section.StorageCells,
             }}
             onClick={() => {
-              setSelectedSection(Section.StorageCells);
+              selectedSectionSet(Section.StorageCells);
               fetchSection(Section.StorageCells);
             }}
           >

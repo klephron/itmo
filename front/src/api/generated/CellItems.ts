@@ -13,7 +13,9 @@
 import { CellItemEntityDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class CellItems<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class CellItems<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -34,7 +36,11 @@ export class CellItems<SecurityDataType = unknown> extends HttpClient<SecurityDa
    * @name UpdateCellItem
    * @request PUT:/cellItems/{id}
    */
-  updateCellItem = (id: number, data: CellItemEntityDto, params: RequestParams = {}) =>
+  updateCellItem = (
+    id: number,
+    data: CellItemEntityDto,
+    params: RequestParams = {},
+  ) =>
     this.request<CellItemEntityDto, any>({
       path: `/cellItems/${id}`,
       method: "PUT",

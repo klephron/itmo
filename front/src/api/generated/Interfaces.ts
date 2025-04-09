@@ -13,7 +13,9 @@
 import { MeInterfaceDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Interfaces<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Interfaces<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -34,7 +36,11 @@ export class Interfaces<SecurityDataType = unknown> extends HttpClient<SecurityD
    * @name UpdateInterface
    * @request PUT:/interfaces/{id}
    */
-  updateInterface = (id: number, data: MeInterfaceDto, params: RequestParams = {}) =>
+  updateInterface = (
+    id: number,
+    data: MeInterfaceDto,
+    params: RequestParams = {},
+  ) =>
     this.request<MeInterfaceDto, any>({
       path: `/interfaces/${id}`,
       method: "PUT",

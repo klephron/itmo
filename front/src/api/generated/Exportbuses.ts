@@ -13,7 +13,9 @@
 import { ExportBusEntityDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Exportbuses<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Exportbuses<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -34,7 +36,11 @@ export class Exportbuses<SecurityDataType = unknown> extends HttpClient<Security
    * @name UpdateExportBus
    * @request PUT:/exportbuses/{id}
    */
-  updateExportBus = (id: number, data: ExportBusEntityDto, params: RequestParams = {}) =>
+  updateExportBus = (
+    id: number,
+    data: ExportBusEntityDto,
+    params: RequestParams = {},
+  ) =>
     this.request<ExportBusEntityDto, any>({
       path: `/exportbuses/${id}`,
       method: "PUT",
