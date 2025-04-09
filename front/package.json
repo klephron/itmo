@@ -14,7 +14,8 @@
     "stylelint": "stylelint '**/*.css' '**/*.scss'",
     "stylelint.fix": "stylelint '**/*.css' '**/*.scss' --fix",
     "format": "prettier -w .",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "api.generate": "bun run ./scripts/api-generate.ts"
   },
   "license": "MIT",
   "devDependencies": {
@@ -37,6 +38,7 @@
     "vitest": "^3.1.1"
   },
   "dependencies": {
-    "solid-js": "^1.9.5"
+    "solid-js": "^1.9.5",
+    "swagger-typescript-api": "^13.0.28"
   }
 }
