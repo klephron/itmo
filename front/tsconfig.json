@@ -10,6 +10,12 @@
     "jsxImportSource": "solid-js",
     "types": ["vite/client", "@testing-library/jest-dom", "vitest/globals"],
     "noEmit": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "paths": {
+      "@api/*": ["./src/api/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@components/*": ["./src/components/*"],
+      "@state/*": ["./src/state/*"]
+    }
   }
 }
