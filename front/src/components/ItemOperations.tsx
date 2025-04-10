@@ -13,12 +13,11 @@ export const ItemOperations = (props: {
   const [operationGet, operationSet] = createSignal(Operation.Add);
   const [idGet, idSet] = createSignal("");
   const [itemNameGet, itemNameSet] = createSignal("");
-  const [quantityGet, quantitySet] = createSignal("");
 
   function addItem() {
     const item: ItemDto = {
       itemName: itemNameGet(),
-      quantity: Number(quantityGet()),
+      quantity: 0,
     };
 
     client.items.createItem(item).then(() => {
@@ -37,7 +36,7 @@ export const ItemOperations = (props: {
     const item: ItemDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       itemName: itemNameGet(),
-      quantity: Number(quantityGet()),
+      quantity: 0,
     };
 
     client.items.updateItem(item.id!, item).then(() => {
@@ -64,13 +63,6 @@ export const ItemOperations = (props: {
                 placeholder="Item Name"
                 value={itemNameGet()}
                 onChange={(e) => itemNameSet(e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="Quantity"
-                min="0"
-                value={quantityGet()}
-                onChange={(e) => quantitySet(e.target.value)}
               />
               <button onClick={addItem}>Add Item</button>
             </div>
@@ -99,13 +91,6 @@ export const ItemOperations = (props: {
                 placeholder="New Item Name"
                 value={itemNameGet()}
                 onChange={(e) => itemNameSet(e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="New Quantity"
-                min="0"
-                value={quantityGet()}
-                onChange={(e) => quantitySet(e.target.value)}
               />
               <button onClick={updateItem}>Update Item</button>
             </div>

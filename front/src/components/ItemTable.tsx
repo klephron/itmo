@@ -9,7 +9,6 @@ export const ItemTable = (props: { items: ItemDto[] }) => {
         <tr>
           <th>ID</th>
           <th>Item Name</th>
-          <th>Quantity</th>
         </tr>
       </thead>
       <tbody>
@@ -17,7 +16,6 @@ export const ItemTable = (props: { items: ItemDto[] }) => {
           <tr>
             <td>{item.id}</td>
             <td>{item.itemName}</td>
-            <td>{item.quantity}</td>
           </tr>
         ))}
       </tbody>
