@@ -2,10 +2,7 @@
   "openapi": "3.0.1",
   "info": { "title": "OpenAPI definition", "version": "v0" },
   "servers": [
-    {
-      "url": "http://89.208.104.131:8101",
-      "description": "Generated server url"
-    }
+    { "url": "http://localhost:8091", "description": "Generated server url" }
   ],
   "paths": {
     "/storageCells/{id}": {
@@ -23,13 +20,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StorageCellEntityDto"
-                }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -47,7 +38,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/StorageCellEntityDto" }
+              "schema": { "$ref": "#/components/schemas/StorageCellDto" }
             }
           },
           "required": true
@@ -55,13 +46,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StorageCellEntityDto"
-                }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -76,7 +61,12 @@
             "schema": { "type": "integer", "format": "int64" }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
       }
     },
     "/patterns/{id}": {
@@ -94,11 +84,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/PatternEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -116,7 +102,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PatternEntityDto" }
+              "schema": { "$ref": "#/components/schemas/PatternDto" }
             }
           },
           "required": true
@@ -124,11 +110,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/PatternEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -161,9 +143,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/NetworkDto" } }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -189,9 +169,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/NetworkDto" } }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -206,70 +184,12 @@
             "schema": { "type": "integer", "format": "int64" }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
-      }
-    },
-    "/items/{id}": {
-      "get": {
-        "tags": ["item-controller"],
-        "operationId": "getItemById",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "format": "int64" }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/ItemDto" } }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
-      },
-      "put": {
-        "tags": ["item-controller"],
-        "operationId": "updateItem",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "format": "int64" }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ItemDto" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/ItemDto" } }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["item-controller"],
-        "operationId": "deleteItem",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "format": "int64" }
-          }
-        ],
-        "responses": { "200": { "description": "OK" } }
       }
     },
     "/interfaces/{id}": {
@@ -287,11 +207,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/MeInterfaceDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -317,11 +233,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/MeInterfaceDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -336,7 +248,12 @@
             "schema": { "type": "integer", "format": "int64" }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
       }
     },
     "/importbuses/{id}": {
@@ -354,11 +271,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ImportBusEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -376,7 +289,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ImportBusEntityDto" }
+              "schema": { "$ref": "#/components/schemas/ImportBusDto" }
             }
           },
           "required": true
@@ -384,11 +297,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ImportBusEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -421,11 +330,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ExportBusEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -443,7 +348,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ExportBusEntityDto" }
+              "schema": { "$ref": "#/components/schemas/ExportBusDto" }
             }
           },
           "required": true
@@ -451,11 +356,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ExportBusEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -489,9 +390,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/DriveEntityDto" }
-              }
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriveDto" } }
             }
           }
         }
@@ -510,7 +409,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/DriveEntityDto" }
+              "schema": { "$ref": "#/components/schemas/DriveDto" }
             }
           },
           "required": true
@@ -519,9 +418,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/DriveEntityDto" }
-              }
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriveDto" } }
             }
           }
         }
@@ -555,11 +452,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/CellItemEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -577,7 +470,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CellItemEntityDto" }
+              "schema": { "$ref": "#/components/schemas/CellItemDto" }
             }
           },
           "required": true
@@ -585,11 +478,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/CellItemEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       },
@@ -604,7 +493,12 @@
             "schema": { "type": "integer", "format": "int64" }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
       }
     },
     "/storageCells": {
@@ -618,9 +512,7 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StorageCellEntityDto"
-                  }
+                  "items": { "$ref": "#/components/schemas/StorageCellDto" }
                 }
               }
             }
@@ -641,7 +533,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/StorageCellEntityDto" }
+              "schema": { "$ref": "#/components/schemas/StorageCellDto" }
             }
           },
           "required": true
@@ -649,13 +541,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StorageCellEntityDto"
-                }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       }
@@ -671,7 +557,7 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/PatternEntityDto" }
+                  "items": { "$ref": "#/components/schemas/PatternDto" }
                 }
               }
             }
@@ -684,7 +570,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PatternEntityDto" }
+              "schema": { "$ref": "#/components/schemas/PatternDto" }
             }
           },
           "required": true
@@ -692,11 +578,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/PatternEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       }
@@ -719,7 +601,12 @@
             "schema": { "type": "integer", "format": "int32" }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
       }
     },
     "/networks": {
@@ -756,45 +643,6 @@
             "description": "OK",
             "content": {
               "*/*": { "schema": { "$ref": "#/components/schemas/NetworkDto" } }
-            }
-          }
-        }
-      }
-    },
-    "/items": {
-      "get": {
-        "tags": ["item-controller"],
-        "operationId": "getAllItems",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/ItemDto" }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": ["item-controller"],
-        "operationId": "createItem",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ItemDto" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": { "schema": { "$ref": "#/components/schemas/ItemDto" } }
             }
           }
         }
@@ -840,11 +688,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/MeInterfaceDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       }
@@ -860,7 +704,7 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/ImportBusEntityDto" }
+                  "items": { "$ref": "#/components/schemas/ImportBusDto" }
                 }
               }
             }
@@ -881,7 +725,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ImportBusEntityDto" }
+              "schema": { "$ref": "#/components/schemas/ImportBusDto" }
             }
           },
           "required": true
@@ -889,11 +733,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ImportBusEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       }
@@ -922,7 +762,12 @@
             "schema": { "type": "integer", "format": "int32" }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "object" } } }
+          }
+        }
       }
     },
     "/exportbuses": {
@@ -936,7 +781,7 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/ExportBusEntityDto" }
+                  "items": { "$ref": "#/components/schemas/ExportBusDto" }
                 }
               }
             }
@@ -957,7 +802,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ExportBusEntityDto" }
+              "schema": { "$ref": "#/components/schemas/ExportBusDto" }
             }
           },
           "required": true
@@ -965,11 +810,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/ExportBusEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       }
@@ -1001,9 +842,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": { "schema": { "type": "integer", "format": "int32" } }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       }
@@ -1019,7 +858,7 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/DriveEntityDto" }
+                  "items": { "$ref": "#/components/schemas/DriveDto" }
                 }
               }
             }
@@ -1040,7 +879,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/DriveEntityDto" }
+              "schema": { "$ref": "#/components/schemas/DriveDto" }
             }
           },
           "required": true
@@ -1049,9 +888,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/DriveEntityDto" }
-              }
+              "*/*": { "schema": { "$ref": "#/components/schemas/DriveDto" } }
             }
           }
         }
@@ -1068,7 +905,7 @@
               "*/*": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/CellItemEntityDto" }
+                  "items": { "$ref": "#/components/schemas/CellItemDto" }
                 }
               }
             }
@@ -1089,7 +926,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CellItemEntityDto" }
+              "schema": { "$ref": "#/components/schemas/CellItemDto" }
             }
           },
           "required": true
@@ -1097,11 +934,7 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": { "$ref": "#/components/schemas/CellItemEntityDto" }
-              }
-            }
+            "content": { "*/*": { "schema": { "type": "object" } } }
           }
         }
       }
@@ -1109,7 +942,7 @@
   },
   "components": {
     "schemas": {
-      "StorageCellEntityDto": {
+      "StorageCellDto": {
         "required": ["capacity", "driveId"],
         "type": "object",
         "properties": {
@@ -1118,14 +951,19 @@
           "driveId": { "type": "integer", "format": "int64" }
         }
       },
-      "PatternEntityDto": {
-        "required": ["inputItems", "outputQuantity", "patternName"],
+      "PatternDto": {
+        "required": [
+          "inputItems",
+          "outputItem",
+          "outputQuantity",
+          "patternName"
+        ],
         "type": "object",
         "properties": {
           "id": { "type": "integer", "format": "int64" },
           "patternName": { "type": "string" },
           "inputItems": { "type": "string" },
-          "outputItemId": { "type": "integer", "format": "int64" },
+          "outputItem": { "type": "string" },
           "outputQuantity": {
             "minimum": 0,
             "type": "integer",
@@ -1148,15 +986,6 @@
           "usedChannels": { "minimum": 0, "type": "integer", "format": "int32" }
         }
       },
-      "ItemDto": {
-        "required": ["itemName", "quantity"],
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "itemName": { "type": "string" },
-          "quantity": { "minimum": 0, "type": "integer", "format": "int32" }
-        }
-      },
       "MeInterfaceDto": {
         "required": ["interfaceName", "networkId"],
         "type": "object",
@@ -1171,7 +1000,7 @@
           "networkId": { "type": "integer", "format": "int64" }
         }
       },
-      "ImportBusEntityDto": {
+      "ImportBusDto": {
         "required": ["busName", "channelsUsed", "networkId"],
         "type": "object",
         "properties": {
@@ -1185,7 +1014,7 @@
           "networkId": { "type": "integer", "format": "int64" }
         }
       },
-      "ExportBusEntityDto": {
+      "ExportBusDto": {
         "required": ["busName", "networkId"],
         "type": "object",
         "properties": {
@@ -1199,7 +1028,7 @@
           "networkId": { "type": "integer", "format": "int64" }
         }
       },
-      "DriveEntityDto": {
+      "DriveDto": {
         "required": ["channelsUsed", "driveName", "networkId"],
         "type": "object",
         "properties": {
@@ -1213,7 +1042,7 @@
           "networkId": { "type": "integer", "format": "int64" }
         }
       },
-      "CellItemEntityDto": {
+      "CellItemDto": {
         "required": ["itemName", "quantity", "storageCellId"],
         "type": "object",
         "properties": {

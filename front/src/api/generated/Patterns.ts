@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { PatternEntityDto } from "./data-contracts";
+import { PatternDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Patterns<
@@ -24,7 +24,7 @@ export class Patterns<
    * @request GET:/patterns/{id}
    */
   getPatternById = (id: number, params: RequestParams = {}) =>
-    this.request<PatternEntityDto, any>({
+    this.request<object, any>({
       path: `/patterns/${id}`,
       method: "GET",
       ...params,
@@ -36,12 +36,8 @@ export class Patterns<
    * @name UpdatePattern
    * @request PUT:/patterns/{id}
    */
-  updatePattern = (
-    id: number,
-    data: PatternEntityDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<PatternEntityDto, any>({
+  updatePattern = (id: number, data: PatternDto, params: RequestParams = {}) =>
+    this.request<object, any>({
       path: `/patterns/${id}`,
       method: "PUT",
       body: data,
@@ -69,7 +65,7 @@ export class Patterns<
    * @request GET:/patterns
    */
   getAllPatterns = (params: RequestParams = {}) =>
-    this.request<PatternEntityDto[], any>({
+    this.request<PatternDto[], any>({
       path: `/patterns`,
       method: "GET",
       ...params,
@@ -81,8 +77,8 @@ export class Patterns<
    * @name CreatePattern
    * @request POST:/patterns
    */
-  createPattern = (data: PatternEntityDto, params: RequestParams = {}) =>
-    this.request<PatternEntityDto, any>({
+  createPattern = (data: PatternDto, params: RequestParams = {}) =>
+    this.request<object, any>({
       path: `/patterns`,
       method: "POST",
       body: data,
@@ -104,7 +100,7 @@ export class Patterns<
     },
     params: RequestParams = {},
   ) =>
-    this.request<void, any>({
+    this.request<object, any>({
       path: `/patterns/${id}/craft`,
       method: "POST",
       query: query,

@@ -1,4 +1,4 @@
-import { PatternEntityDto } from "@api/generated/data-contracts";
+import { PatternDto } from "@api/generated/data-contracts";
 import { Operation } from "./kind";
 import styles from "./App.module.scss";
 import { createSignal, Match, Switch } from "solid-js";
@@ -6,8 +6,8 @@ import { clientGet } from "@state/client";
 import { hasString } from "./util";
 
 export const PatternOperations = (props: {
-  onUpdate: (op: Operation, pattern: PatternEntityDto) => void;
-  onCraft: (pattern: PatternEntityDto) => void;
+  onUpdate: (op: Operation, pattern: PatternDto) => void;
+  onCraft: (pattern: PatternDto) => void;
 }) => {
   const client = clientGet();
 
@@ -15,18 +15,18 @@ export const PatternOperations = (props: {
   const [idGet, idSet] = createSignal("");
   const [patternNameGet, patternNameSet] = createSignal("");
   const [inputItemsGet, inputItemsSet] = createSignal("");
-  const [outputItemIdGet, outputItemIdSet] = createSignal("");
+  const [outputItemNameGet, outputItemNameSet] = createSignal("");
   const [outputQuantityGet, outputQuantitySet] = createSignal("");
   const [meInterfaceIdGet, meInterfaceIdSet] = createSignal("");
 
   const [craftTimesGet, craftTimesSet] = createSignal("");
 
   function addPattern() {
-    const pattern: PatternEntityDto = {
+    const pattern: PatternDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       patternName: patternNameGet(),
       inputItems: inputItemsGet(),
-      outputItemId: Number(outputItemIdGet()),
+      outputItem: outputItemNameGet(),
       outputQuantity: Number(outputQuantityGet()),
       meInterfaceId: Number(meInterfaceIdGet()),
     };
@@ -39,16 +39,16 @@ export const PatternOperations = (props: {
   function deletePattern() {
     const id = Number(idGet());
     client.patterns.deletePattern(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as PatternEntityDto);
+      props.onUpdate(Operation.Delete, { id } as PatternDto);
     });
   }
 
   function updatePattern() {
-    const pattern: PatternEntityDto = {
+    const pattern: PatternDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       patternName: patternNameGet(),
       inputItems: inputItemsGet(),
-      outputItemId: Number(outputItemIdGet()),
+      outputItem: outputItemNameGet(),
       outputQuantity: Number(outputQuantityGet()),
       meInterfaceId: Number(meInterfaceIdGet()),
     };
@@ -62,7 +62,7 @@ export const PatternOperations = (props: {
     const id = Number(idGet());
     const times = hasString(craftTimesGet()) ? Number(craftTimesGet()) : 0;
     client.patterns.craftPattern(id, { times: times }).then(() => {
-      props.onCraft({ id: id } as PatternEntityDto);
+      props.onCraft({ id: id } as PatternDto);
     });
   }
 
@@ -94,9 +94,9 @@ export const PatternOperations = (props: {
               />
               <input
                 type="number"
-                placeholder="Output Item ID (must exist)"
-                value={outputItemIdGet()}
-                onChange={(e) => outputItemIdSet(e.target.value)}
+                placeholder="Output Item Name"
+                value={outputItemNameGet()}
+                onChange={(e) => outputItemNameSet(e.target.value)}
               />
               <input
                 type="number"
@@ -147,9 +147,9 @@ export const PatternOperations = (props: {
               />
               <input
                 type="number"
-                placeholder="New Output Item ID"
-                value={outputItemIdGet()}
-                onChange={(e) => outputItemIdSet(e.target.value)}
+                placeholder="New Output Item Name"
+                value={outputItemNameGet()}
+                onChange={(e) => outputItemNameSet(e.target.value)}
               />
               <input
                 type="number"

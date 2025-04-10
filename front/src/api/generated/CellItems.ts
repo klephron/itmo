@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { CellItemEntityDto } from "./data-contracts";
+import { CellItemDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class CellItems<
@@ -24,7 +24,7 @@ export class CellItems<
    * @request GET:/cellItems/{id}
    */
   getCellItemById = (id: number, params: RequestParams = {}) =>
-    this.request<CellItemEntityDto, any>({
+    this.request<object, any>({
       path: `/cellItems/${id}`,
       method: "GET",
       ...params,
@@ -38,10 +38,10 @@ export class CellItems<
    */
   updateCellItem = (
     id: number,
-    data: CellItemEntityDto,
+    data: CellItemDto,
     params: RequestParams = {},
   ) =>
-    this.request<CellItemEntityDto, any>({
+    this.request<object, any>({
       path: `/cellItems/${id}`,
       method: "PUT",
       body: data,
@@ -56,7 +56,7 @@ export class CellItems<
    * @request DELETE:/cellItems/{id}
    */
   deleteCellItem = (id: number, params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<object, any>({
       path: `/cellItems/${id}`,
       method: "DELETE",
       ...params,
@@ -69,7 +69,7 @@ export class CellItems<
    * @request GET:/cellItems
    */
   getAllCellItems = (params: RequestParams = {}) =>
-    this.request<CellItemEntityDto[], any>({
+    this.request<CellItemDto[], any>({
       path: `/cellItems`,
       method: "GET",
       ...params,
@@ -86,10 +86,10 @@ export class CellItems<
       /** @format int64 */
       storageCellId: number;
     },
-    data: CellItemEntityDto,
+    data: CellItemDto,
     params: RequestParams = {},
   ) =>
-    this.request<CellItemEntityDto, any>({
+    this.request<object, any>({
       path: `/cellItems`,
       method: "POST",
       query: query,

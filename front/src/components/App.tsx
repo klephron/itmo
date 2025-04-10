@@ -2,15 +2,14 @@ import { createStore } from "solid-js/store";
 import { createSignal, Match, onMount, Switch } from "solid-js";
 import { clientGet } from "@state/client";
 import {
-  CellItemEntityDto,
-  DriveEntityDto,
-  ExportBusEntityDto,
-  ImportBusEntityDto,
-  ItemDto,
+  CellItemDto,
+  DriveDto,
+  ExportBusDto,
+  ImportBusDto,
   MeInterfaceDto,
   NetworkDto,
-  PatternEntityDto,
-  StorageCellEntityDto,
+  PatternDto,
+  StorageCellDto,
 } from "@api/generated/data-contracts";
 import styles from "./App.module.scss";
 import { Section } from "./kind";
@@ -19,7 +18,6 @@ import { DriveTable } from "./DriveTable";
 import { ExportBusTable } from "./ExportBusTable";
 import { ImportBusTable } from "./ImportBusTable";
 import { InterfaceTable } from "./InterfaceTable";
-import { ItemTable } from "./ItemTable";
 import { NetworkTable } from "./NetworkTable";
 import { PatternTable } from "./PatternTable";
 import { StorageCellTable } from "./StorageCellTable";
@@ -29,7 +27,6 @@ import { DriveOperations } from "./DriveOperations";
 import { ExportBusOperations } from "./ExportBusOperations";
 import { ImportBusOperations } from "./ImportBusOperations";
 import { InterfaceOperations } from "./InterfaceOperations";
-import { ItemOperations } from "./ItemOperations";
 import { PatternOperations } from "./PatternOperations";
 import { StorageCellOperations } from "./StorageCellOperations";
 
@@ -37,44 +34,41 @@ export const App = () => {
   const client = clientGet();
   const [sectionGet, sectionSet] = createSignal(Section.CellItems);
 
-  const [cellItems, cellItemsSet] = createStore<CellItemEntityDto[]>([]);
-  const [drives, drivesSet] = createStore<DriveEntityDto[]>([]);
-  const [exportBuses, exportBusesSet] = createStore<ExportBusEntityDto[]>([]);
-  const [importBuses, importBusesSet] = createStore<ImportBusEntityDto[]>([]);
+  const [cellItems, cellItemsSet] = createStore<CellItemDto[]>([]);
+  const [drives, drivesSet] = createStore<DriveDto[]>([]);
+  const [exportBuses, exportBusesSet] = createStore<ExportBusDto[]>([]);
+  const [importBuses, importBusesSet] = createStore<ImportBusDto[]>([]);
   const [interfaces, interfacesSet] = createStore<MeInterfaceDto[]>([]);
-  const [items, itemsSet] = createStore<ItemDto[]>([]);
   const [networks, networksSet] = createStore<NetworkDto[]>([]);
-  const [patterns, patternsSet] = createStore<PatternEntityDto[]>([]);
-  const [storageCells, storageCellsSet] = createStore<StorageCellEntityDto[]>(
-    [],
-  );
+  const [patterns, patternsSet] = createStore<PatternDto[]>([]);
+  const [storageCells, storageCellsSet] = createStore<StorageCellDto[]>([]);
 
   function fetchSection(section: Section) {
     switch (section) {
       case Section.CellItems:
         client.cellItems.getAllCellItems().then((r) => {
-          r.json().then((data: CellItemEntityDto[]) => {
+          r.json().then((data: CellItemDto[]) => {
             cellItemsSet(data);
           });
         });
         break;
       case Section.Drives:
         client.drives.getAllDrives().then((r) => {
-          r.json().then((data: DriveEntityDto[]) => {
+          r.json().then((data: DriveDto[]) => {
             drivesSet(data);
           });
         });
         break;
       case Section.ExportBuses:
         client.exportBuses.getAllExportBuses().then((r) => {
-          r.json().then((data: ExportBusEntityDto[]) => {
+          r.json().then((data: ExportBusDto[]) => {
             exportBusesSet(data);
           });
         });
         break;
       case Section.ImportBuses:
         client.importBuses.getAllImportBuses().then((r) => {
-          r.json().then((data: ImportBusEntityDto[]) => {
+          r.json().then((data: ImportBusDto[]) => {
             importBusesSet(data);
           });
         });
@@ -83,13 +77,6 @@ export const App = () => {
         client.interfaces.getAllInterfaces().then((r) => {
           r.json().then((data: MeInterfaceDto[]) => {
             interfacesSet(data);
-          });
-        });
-        break;
-      case Section.Items:
-        client.items.getAllItems().then((r) => {
-          r.json().then((data: ItemDto[]) => {
-            itemsSet(data);
           });
         });
         break;
@@ -102,14 +89,14 @@ export const App = () => {
         break;
       case Section.Patterns:
         client.patterns.getAllPatterns().then((r) => {
-          r.json().then((data: PatternEntityDto[]) => {
+          r.json().then((data: PatternDto[]) => {
             patternsSet(data);
           });
         });
         break;
       case Section.StorageCells:
         client.storageCells.getAllStorageCells().then((r) => {
-          r.json().then((data: StorageCellEntityDto[]) => {
+          r.json().then((data: StorageCellDto[]) => {
             storageCellsSet(data);
           });
         });
@@ -190,18 +177,6 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: sectionGet() === Section.Items,
-            }}
-            onClick={() => {
-              sectionSet(Section.Items);
-              fetchSection(Section.Items);
-            }}
-          >
-            Items
-          </div>
-          <div
-            class={styles.navItem}
-            classList={{
               [styles.active]: sectionGet() === Section.Networks,
             }}
             onClick={() => {
@@ -253,9 +228,6 @@ export const App = () => {
             <Match when={sectionGet() === Section.Interfaces}>
               <InterfaceTable items={interfaces} />
             </Match>
-            <Match when={sectionGet() === Section.Items}>
-              <ItemTable items={items} />
-            </Match>
             <Match when={sectionGet() === Section.Networks}>
               <NetworkTable items={networks} />
             </Match>
@@ -292,9 +264,6 @@ export const App = () => {
             <InterfaceOperations
               onUpdate={() => fetchSection(Section.Interfaces)}
             />
-          </Match>
-          <Match when={sectionGet() === Section.Items}>
-            <ItemOperations onUpdate={() => fetchSection(Section.Items)} />
           </Match>
           <Match when={sectionGet() === Section.Networks}>
             <NetworkOperations

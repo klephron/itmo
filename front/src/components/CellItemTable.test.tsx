@@ -2,10 +2,10 @@ import { expect, test, describe, afterEach } from "vitest";
 
 import { render, screen, cleanup } from "@solidjs/testing-library";
 import { CellItemTable } from "./CellItemTable"; // Adjust the import path
-import { CellItemEntityDto } from "@api/generated/data-contracts";
+import { CellItemDto } from "@api/generated/data-contracts";
 
 describe("CellItemTable", () => {
-  const mockItems: CellItemEntityDto[] = [
+  const mockItems: CellItemDto[] = [
     {
       id: 1,
       itemName: "Iron Ingot",

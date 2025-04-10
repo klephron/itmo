@@ -1,4 +1,4 @@
-import { StorageCellEntityDto } from "@api/generated/data-contracts";
+import { StorageCellDto } from "@api/generated/data-contracts";
 import { Operation } from "./kind";
 import styles from "./App.module.scss";
 import { createSignal, Match, Switch } from "solid-js";
@@ -6,7 +6,7 @@ import { clientGet } from "@state/client";
 import { hasString } from "./util";
 
 export const StorageCellOperations = (props: {
-  onUpdate: (op: Operation, cell: StorageCellEntityDto) => void;
+  onUpdate: (op: Operation, cell: StorageCellDto) => void;
 }) => {
   const client = clientGet();
 
@@ -16,7 +16,7 @@ export const StorageCellOperations = (props: {
   const [driveIdGet, driveIdSet] = createSignal("");
 
   function addStorageCell() {
-    const cell: StorageCellEntityDto = {
+    const cell: StorageCellDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       capacity: Number(capacityGet()),
       driveId: Number(driveIdGet()),
@@ -32,12 +32,12 @@ export const StorageCellOperations = (props: {
   function deleteStorageCell() {
     const id = Number(idGet());
     client.storageCells.deleteStorageCell(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as StorageCellEntityDto);
+      props.onUpdate(Operation.Delete, { id } as StorageCellDto);
     });
   }
 
   function updateStorageCell() {
-    const cell: StorageCellEntityDto = {
+    const cell: StorageCellDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       capacity: Number(capacityGet()),
       driveId: 0,

@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { ExportBusEntityDto } from "./data-contracts";
+import { ExportBusDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Exportbuses<
@@ -24,7 +24,7 @@ export class Exportbuses<
    * @request GET:/exportbuses/{id}
    */
   getExportBusById = (id: number, params: RequestParams = {}) =>
-    this.request<ExportBusEntityDto, any>({
+    this.request<object, any>({
       path: `/exportbuses/${id}`,
       method: "GET",
       ...params,
@@ -38,10 +38,10 @@ export class Exportbuses<
    */
   updateExportBus = (
     id: number,
-    data: ExportBusEntityDto,
+    data: ExportBusDto,
     params: RequestParams = {},
   ) =>
-    this.request<ExportBusEntityDto, any>({
+    this.request<object, any>({
       path: `/exportbuses/${id}`,
       method: "PUT",
       body: data,
@@ -69,7 +69,7 @@ export class Exportbuses<
    * @request GET:/exportbuses
    */
   getAllExportBuses = (params: RequestParams = {}) =>
-    this.request<ExportBusEntityDto[], any>({
+    this.request<ExportBusDto[], any>({
       path: `/exportbuses`,
       method: "GET",
       ...params,
@@ -86,10 +86,10 @@ export class Exportbuses<
       /** @format int64 */
       networkId: number;
     },
-    data: ExportBusEntityDto,
+    data: ExportBusDto,
     params: RequestParams = {},
   ) =>
-    this.request<ExportBusEntityDto, any>({
+    this.request<object, any>({
       path: `/exportbuses`,
       method: "POST",
       query: query,
@@ -113,7 +113,7 @@ export class Exportbuses<
     },
     params: RequestParams = {},
   ) =>
-    this.request<number, any>({
+    this.request<object, any>({
       path: `/exportbuses/${id}/export`,
       method: "POST",
       query: query,

@@ -24,7 +24,7 @@ export class Networks<
    * @request GET:/networks/{id}
    */
   getNetworkById = (id: number, params: RequestParams = {}) =>
-    this.request<NetworkDto, any>({
+    this.request<object, any>({
       path: `/networks/${id}`,
       method: "GET",
       ...params,
@@ -37,7 +37,7 @@ export class Networks<
    * @request PUT:/networks/{id}
    */
   updateNetwork = (id: number, data: NetworkDto, params: RequestParams = {}) =>
-    this.request<NetworkDto, any>({
+    this.request<object, any>({
       path: `/networks/${id}`,
       method: "PUT",
       body: data,
@@ -52,7 +52,7 @@ export class Networks<
    * @request DELETE:/networks/{id}
    */
   deleteNetwork = (id: number, params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<object, any>({
       path: `/networks/${id}`,
       method: "DELETE",
       ...params,

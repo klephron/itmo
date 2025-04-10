@@ -9,7 +9,6 @@ describe("Section Enum", () => {
       "ExportBuses",
       "ImportBuses",
       "Interfaces",
-      "Items",
       "Networks",
       "Patterns",
       "StorageCells",
@@ -28,17 +27,16 @@ describe("Section Enum", () => {
     expect(Section.ExportBuses).toBe(2);
     expect(Section.ImportBuses).toBe(3);
     expect(Section.Interfaces).toBe(4);
-    expect(Section.Items).toBe(5);
-    expect(Section.Networks).toBe(6);
-    expect(Section.Patterns).toBe(7);
-    expect(Section.StorageCells).toBe(8);
+    expect(Section.Networks).toBe(5);
+    expect(Section.Patterns).toBe(6);
+    expect(Section.StorageCells).toBe(7);
   });
 
   test("has the correct number of members", () => {
     const enumSize = Object.keys(Section).filter((key) =>
       isNaN(Number(key)),
     ).length;
-    expect(enumSize).toBe(9);
+    expect(enumSize).toBe(8);
   });
 });
 

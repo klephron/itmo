@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-export interface StorageCellEntityDto {
+export interface StorageCellDto {
   /** @format int64 */
   id?: number;
   /**
@@ -22,13 +22,12 @@ export interface StorageCellEntityDto {
   driveId: number;
 }
 
-export interface PatternEntityDto {
+export interface PatternDto {
   /** @format int64 */
   id?: number;
   patternName: string;
   inputItems: string;
-  /** @format int64 */
-  outputItemId?: number;
+  outputItem: string;
   /**
    * @format int32
    * @min 0
@@ -54,17 +53,6 @@ export interface NetworkDto {
   usedChannels: number;
 }
 
-export interface ItemDto {
-  /** @format int64 */
-  id?: number;
-  itemName: string;
-  /**
-   * @format int32
-   * @min 0
-   */
-  quantity: number;
-}
-
 export interface MeInterfaceDto {
   /** @format int64 */
   id?: number;
@@ -78,7 +66,7 @@ export interface MeInterfaceDto {
   networkId: number;
 }
 
-export interface ImportBusEntityDto {
+export interface ImportBusDto {
   /** @format int64 */
   id?: number;
   busName: string;
@@ -91,7 +79,7 @@ export interface ImportBusEntityDto {
   networkId: number;
 }
 
-export interface ExportBusEntityDto {
+export interface ExportBusDto {
   /** @format int64 */
   id?: number;
   busName: string;
@@ -104,7 +92,7 @@ export interface ExportBusEntityDto {
   networkId: number;
 }
 
-export interface DriveEntityDto {
+export interface DriveDto {
   /** @format int64 */
   id?: number;
   driveName: string;
@@ -117,7 +105,7 @@ export interface DriveEntityDto {
   networkId: number;
 }
 
-export interface CellItemEntityDto {
+export interface CellItemDto {
   /** @format int64 */
   id?: number;
   itemName: string;

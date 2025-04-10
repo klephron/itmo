@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { DriveEntityDto } from "./data-contracts";
+import { DriveDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Drives<
@@ -24,7 +24,7 @@ export class Drives<
    * @request GET:/drives/{id}
    */
   getDriveById = (id: number, params: RequestParams = {}) =>
-    this.request<DriveEntityDto, any>({
+    this.request<DriveDto, any>({
       path: `/drives/${id}`,
       method: "GET",
       ...params,
@@ -36,12 +36,8 @@ export class Drives<
    * @name UpdateDrive
    * @request PUT:/drives/{id}
    */
-  updateDrive = (
-    id: number,
-    data: DriveEntityDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<DriveEntityDto, any>({
+  updateDrive = (id: number, data: DriveDto, params: RequestParams = {}) =>
+    this.request<DriveDto, any>({
       path: `/drives/${id}`,
       method: "PUT",
       body: data,
@@ -69,7 +65,7 @@ export class Drives<
    * @request GET:/drives
    */
   getAllDrives = (params: RequestParams = {}) =>
-    this.request<DriveEntityDto[], any>({
+    this.request<DriveDto[], any>({
       path: `/drives`,
       method: "GET",
       ...params,
@@ -86,10 +82,10 @@ export class Drives<
       /** @format int64 */
       networkId: number;
     },
-    data: DriveEntityDto,
+    data: DriveDto,
     params: RequestParams = {},
   ) =>
-    this.request<DriveEntityDto, any>({
+    this.request<DriveDto, any>({
       path: `/drives`,
       method: "POST",
       query: query,

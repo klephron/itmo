@@ -1,8 +1,8 @@
-import { ImportBusEntityDto } from "@api/generated/data-contracts";
+import { ImportBusDto } from "@api/generated/data-contracts";
 
 import styles from "./App.module.scss";
 
-export const ImportBusTable = (props: { items: ImportBusEntityDto[] }) => {
+export const ImportBusTable = (props: { items: ImportBusDto[] }) => {
   return (
     <table class={styles.table}>
       <thead>

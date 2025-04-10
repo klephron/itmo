@@ -24,7 +24,7 @@ export class Interfaces<
    * @request GET:/interfaces/{id}
    */
   getInterfaceById = (id: number, params: RequestParams = {}) =>
-    this.request<MeInterfaceDto, any>({
+    this.request<object, any>({
       path: `/interfaces/${id}`,
       method: "GET",
       ...params,
@@ -41,7 +41,7 @@ export class Interfaces<
     data: MeInterfaceDto,
     params: RequestParams = {},
   ) =>
-    this.request<MeInterfaceDto, any>({
+    this.request<object, any>({
       path: `/interfaces/${id}`,
       method: "PUT",
       body: data,
@@ -56,7 +56,7 @@ export class Interfaces<
    * @request DELETE:/interfaces/{id}
    */
   deleteInterface = (id: number, params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<object, any>({
       path: `/interfaces/${id}`,
       method: "DELETE",
       ...params,
@@ -89,7 +89,7 @@ export class Interfaces<
     data: MeInterfaceDto,
     params: RequestParams = {},
   ) =>
-    this.request<MeInterfaceDto, any>({
+    this.request<object, any>({
       path: `/interfaces`,
       method: "POST",
       query: query,

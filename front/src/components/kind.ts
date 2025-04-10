@@ -4,7 +4,6 @@ export enum Section {
   ExportBuses,
   ImportBuses,
   Interfaces,
-  Items,
   Networks,
   Patterns,
   StorageCells,

@@ -1,4 +1,4 @@
-import { CellItemEntityDto } from "@api/generated/data-contracts";
+import { CellItemDto } from "@api/generated/data-contracts";
 import { Operation } from "./kind";
 
 import styles from "./App.module.scss";
@@ -7,7 +7,7 @@ import { clientGet } from "@state/client";
 import { hasString } from "./util";
 
 export const CellItemOperations = (props: {
-  onUpdate: (op: Operation, item: CellItemEntityDto) => void;
+  onUpdate: (op: Operation, item: CellItemDto) => void;
 }) => {
   const client = clientGet();
 
@@ -18,7 +18,7 @@ export const CellItemOperations = (props: {
   const [storageCellIdGet, storageCellIdSet] = createSignal("");
 
   function addCellItem() {
-    const cellItem: CellItemEntityDto = {
+    const cellItem: CellItemDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       itemName: itemNameGet(),
       quantity: Number(quantityGet()),
@@ -35,12 +35,12 @@ export const CellItemOperations = (props: {
   function deleteCellItem() {
     const id = Number(idGet());
     client.cellItems.deleteCellItem(id).then(() => {
-      props.onUpdate(Operation.Delete, { id: id } as CellItemEntityDto);
+      props.onUpdate(Operation.Delete, { id: id } as CellItemDto);
     });
   }
 
   function updateCellItem() {
-    const cellItem: CellItemEntityDto = {
+    const cellItem: CellItemDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       itemName: itemNameGet(),
       quantity: Number(quantityGet()),

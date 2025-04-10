@@ -1,4 +1,4 @@
-import { ExportBusEntityDto } from "@api/generated/data-contracts";
+import { ExportBusDto } from "@api/generated/data-contracts";
 import { Operation } from "./kind";
 import styles from "./App.module.scss";
 import { createSignal, Match, Switch } from "solid-js";
@@ -6,8 +6,8 @@ import { clientGet } from "@state/client";
 import { hasString } from "./util";
 
 export const ExportBusOperations = (props: {
-  onUpdate: (op: Operation, bus: ExportBusEntityDto) => void;
-  onExport: (bus: ExportBusEntityDto) => void;
+  onUpdate: (op: Operation, bus: ExportBusDto) => void;
+  onExport: (bus: ExportBusDto) => void;
 }) => {
   const client = clientGet();
 
@@ -20,7 +20,7 @@ export const ExportBusOperations = (props: {
   const [itemQuantityGet, itemQuantitySet] = createSignal("");
 
   function addExportBus() {
-    const bus: ExportBusEntityDto = {
+    const bus: ExportBusDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       busName: busNameGet(),
       channelsUsed: 0,
@@ -37,12 +37,12 @@ export const ExportBusOperations = (props: {
   function deleteExportBus() {
     const id = Number(idGet());
     client.exportBuses.deleteExportBus(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as ExportBusEntityDto);
+      props.onUpdate(Operation.Delete, { id } as ExportBusDto);
     });
   }
 
   function updateExportBus() {
-    const bus: ExportBusEntityDto = {
+    const bus: ExportBusDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       busName: busNameGet(),
       channelsUsed: 0,
@@ -62,7 +62,7 @@ export const ExportBusOperations = (props: {
         quantity: hasString(itemQuantityGet()) ? Number(itemQuantityGet()) : 0,
       })
       .then(() => {
-        props.onExport({ id: id } as ExportBusEntityDto);
+        props.onExport({ id: id } as ExportBusDto);
       });
   }
 

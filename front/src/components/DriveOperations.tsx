@@ -1,4 +1,4 @@
-import { DriveEntityDto } from "@api/generated/data-contracts";
+import { DriveDto } from "@api/generated/data-contracts";
 import { Operation } from "./kind";
 import styles from "./App.module.scss";
 import { createSignal, Match, Switch } from "solid-js";
@@ -6,7 +6,7 @@ import { clientGet } from "@state/client";
 import { hasString } from "./util";
 
 export const DriveOperations = (props: {
-  onUpdate: (op: Operation, drive: DriveEntityDto) => void;
+  onUpdate: (op: Operation, drive: DriveDto) => void;
 }) => {
   const client = clientGet();
 
@@ -16,7 +16,7 @@ export const DriveOperations = (props: {
   const [networkIdGet, networkIdSet] = createSignal("");
 
   function addDrive() {
-    const drive: DriveEntityDto = {
+    const drive: DriveDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       driveName: driveNameGet(),
       channelsUsed: 0,
@@ -33,12 +33,12 @@ export const DriveOperations = (props: {
   function deleteDrive() {
     const id = Number(idGet());
     client.drives.deleteDrive(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as DriveEntityDto);
+      props.onUpdate(Operation.Delete, { id } as DriveDto);
     });
   }
 
   function updateDrive() {
-    const drive: DriveEntityDto = {
+    const drive: DriveDto = {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       driveName: driveNameGet(),
       channelsUsed: 0,

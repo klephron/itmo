@@ -1,8 +1,8 @@
-import { CellItemEntityDto } from "@api/generated/data-contracts";
+import { CellItemDto } from "@api/generated/data-contracts";
 
 import styles from "./App.module.scss";
 
-export const CellItemTable = (props: { items: CellItemEntityDto[] }) => {
+export const CellItemTable = (props: { items: CellItemDto[] }) => {
   return (
     <table class={styles.table}>
       <thead>

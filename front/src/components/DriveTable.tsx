@@ -1,8 +1,8 @@
-import { DriveEntityDto } from "@api/generated/data-contracts";
+import { DriveDto } from "@api/generated/data-contracts";
 
 import styles from "./App.module.scss";
 
-export const DriveTable = (props: { items: DriveEntityDto[] }) => {
+export const DriveTable = (props: { items: DriveDto[] }) => {
   return (
     <table class={styles.table}>
       <thead>

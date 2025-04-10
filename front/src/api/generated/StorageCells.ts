@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { StorageCellEntityDto } from "./data-contracts";
+import { StorageCellDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class StorageCells<
@@ -24,7 +24,7 @@ export class StorageCells<
    * @request GET:/storageCells/{id}
    */
   getStorageCellById = (id: number, params: RequestParams = {}) =>
-    this.request<StorageCellEntityDto, any>({
+    this.request<object, any>({
       path: `/storageCells/${id}`,
       method: "GET",
       ...params,
@@ -38,10 +38,10 @@ export class StorageCells<
    */
   updateStorageCell = (
     id: number,
-    data: StorageCellEntityDto,
+    data: StorageCellDto,
     params: RequestParams = {},
   ) =>
-    this.request<StorageCellEntityDto, any>({
+    this.request<object, any>({
       path: `/storageCells/${id}`,
       method: "PUT",
       body: data,
@@ -56,7 +56,7 @@ export class StorageCells<
    * @request DELETE:/storageCells/{id}
    */
   deleteStorageCell = (id: number, params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<object, any>({
       path: `/storageCells/${id}`,
       method: "DELETE",
       ...params,
@@ -69,7 +69,7 @@ export class StorageCells<
    * @request GET:/storageCells
    */
   getAllStorageCells = (params: RequestParams = {}) =>
-    this.request<StorageCellEntityDto[], any>({
+    this.request<StorageCellDto[], any>({
       path: `/storageCells`,
       method: "GET",
       ...params,
@@ -86,10 +86,10 @@ export class StorageCells<
       /** @format int64 */
       driveId: number;
     },
-    data: StorageCellEntityDto,
+    data: StorageCellDto,
     params: RequestParams = {},
   ) =>
-    this.request<StorageCellEntityDto, any>({
+    this.request<object, any>({
       path: `/storageCells`,
       method: "POST",
       query: query,
