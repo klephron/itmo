@@ -150,7 +150,7 @@ export const PatternOperations = (props: {
                 onChange={(e) => inputItemsSet(e.target.value)}
               />
               <input
-                type="number"
+                type="text"
                 placeholder="New Output Item Name"
                 value={outputItemNameGet()}
                 onChange={(e) => outputItemNameSet(e.target.value)}
