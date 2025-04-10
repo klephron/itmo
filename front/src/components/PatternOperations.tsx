@@ -31,16 +31,18 @@ export const PatternOperations = (props: {
       meInterfaceId: Number(meInterfaceIdGet()),
     };
 
-    client.patterns.createPattern(pattern).then(() => {
-      props.onUpdate(Operation.Add, pattern);
-    });
+    client.patterns
+      .createPattern(pattern)
+      .then(() => props.onUpdate(Operation.Add, pattern))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deletePattern() {
     const id = Number(idGet());
-    client.patterns.deletePattern(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as PatternDto);
-    });
+    client.patterns
+      .deletePattern(id)
+      .then(() => props.onUpdate(Operation.Delete, { id } as PatternDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updatePattern() {
@@ -53,17 +55,19 @@ export const PatternOperations = (props: {
       meInterfaceId: Number(meInterfaceIdGet()),
     };
 
-    client.patterns.updatePattern(pattern.id!, pattern).then(() => {
-      props.onUpdate(Operation.Update, pattern);
-    });
+    client.patterns
+      .updatePattern(pattern.id!, pattern)
+      .then(() => props.onUpdate(Operation.Update, pattern))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function craftItems() {
     const id = Number(idGet());
     const times = hasString(craftTimesGet()) ? Number(craftTimesGet()) : 0;
-    client.patterns.craftPattern(id, { times: times }).then(() => {
-      props.onCraft({ id: id } as PatternDto);
-    });
+    client.patterns
+      .craftPattern(id, { times: times })
+      .then(() => props.onCraft({ id: id } as PatternDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (

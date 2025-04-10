@@ -25,16 +25,16 @@ export const DriveOperations = (props: {
 
     client.drives
       .createDrive({ networkId: drive.networkId }, drive)
-      .then(() => {
-        props.onUpdate(Operation.Add, drive);
-      });
+      .then(() => props.onUpdate(Operation.Add, drive))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deleteDrive() {
     const id = Number(idGet());
-    client.drives.deleteDrive(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as DriveDto);
-    });
+    client.drives
+      .deleteDrive(id)
+      .then(() => props.onUpdate(Operation.Delete, { id } as DriveDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updateDrive() {
@@ -45,9 +45,10 @@ export const DriveOperations = (props: {
       networkId: 0,
     };
 
-    client.drives.updateDrive(drive.id!, drive).then(() => {
-      props.onUpdate(Operation.Update, drive);
-    });
+    client.drives
+      .updateDrive(drive.id!, drive)
+      .then(() => props.onUpdate(Operation.Update, drive))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (

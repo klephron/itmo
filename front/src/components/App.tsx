@@ -46,63 +46,63 @@ export const App = () => {
   function fetchSection(section: Section) {
     switch (section) {
       case Section.CellItems:
-        client.cellItems.getAllCellItems().then((r) => {
-          r.json().then((data: CellItemDto[]) => {
-            cellItemsSet(data);
-          });
-        });
+        client.cellItems
+          .getAllCellItems()
+          .then((r) =>
+            r.json().then((data: CellItemDto[]) => cellItemsSet(data)),
+          )
+          .catch(async (e) => alert(await e.text()));
         break;
       case Section.Drives:
-        client.drives.getAllDrives().then((r) => {
-          r.json().then((data: DriveDto[]) => {
-            drivesSet(data);
-          });
-        });
+        client.drives
+          .getAllDrives()
+          .then((r) => r.json().then((data: DriveDto[]) => drivesSet(data)))
+          .catch(async (e) => alert(await e.text()));
         break;
       case Section.ExportBuses:
-        client.exportBuses.getAllExportBuses().then((r) => {
-          r.json().then((data: ExportBusDto[]) => {
-            exportBusesSet(data);
-          });
-        });
+        client.exportBuses
+          .getAllExportBuses()
+          .then((r) =>
+            r.json().then((data: ExportBusDto[]) => exportBusesSet(data)),
+          )
+          .catch(async (e) => alert(await e.text()));
         break;
       case Section.ImportBuses:
-        client.importBuses.getAllImportBuses().then((r) => {
-          r.json().then((data: ImportBusDto[]) => {
-            importBusesSet(data);
-          });
-        });
+        client.importBuses
+          .getAllImportBuses()
+          .then((r) =>
+            r.json().then((data: ImportBusDto[]) => importBusesSet(data)),
+          )
+          .catch(async (e) => alert(await e.text()));
         break;
       case Section.Interfaces:
-        client.interfaces.getAllInterfaces().then((r) => {
-          r.json().then((data: MeInterfaceDto[]) => {
-            interfacesSet(data);
-          });
-        });
+        client.interfaces
+          .getAllInterfaces()
+          .then((r) =>
+            r.json().then((data: MeInterfaceDto[]) => interfacesSet(data)),
+          )
+          .catch(async (e) => alert(await e.text()));
         break;
       case Section.Networks:
-        client.networks.getAllNetworks().then((r) => {
-          r.json().then((data: NetworkDto[]) => {
-            networksSet(data);
-          });
-        });
+        client.networks
+          .getAllNetworks()
+          .then((r) => r.json().then((data: NetworkDto[]) => networksSet(data)))
+          .catch(async (e) => alert(await e.text()));
         break;
       case Section.Patterns:
-        client.patterns.getAllPatterns().then((r) => {
-          r.json().then((data: PatternDto[]) => {
-            patternsSet(data);
-          });
-        });
+        client.patterns
+          .getAllPatterns()
+          .then((r) => r.json().then((data: PatternDto[]) => patternsSet(data)))
+          .catch(async (e) => alert(await e.text()));
         break;
       case Section.StorageCells:
-        client.storageCells.getAllStorageCells().then((r) => {
-          r.json().then((data: StorageCellDto[]) => {
-            storageCellsSet(data);
-          });
-        });
+        client.storageCells
+          .getAllStorageCells()
+          .then((r) =>
+            r.json().then((data: StorageCellDto[]) => storageCellsSet(data)),
+          )
+          .catch(async (e) => alert(await e.text()));
         break;
-      default:
-        console.warn("unknown section " + section + " to update");
     }
   }
 

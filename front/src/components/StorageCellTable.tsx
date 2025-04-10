@@ -1,8 +1,8 @@
-import { StorageCellEntityDto } from "@api/generated/data-contracts";
+import { StorageCellDto } from "@api/generated/data-contracts";
 
 import styles from "./App.module.scss";
 
-export const StorageCellTable = (props: { items: StorageCellEntityDto[] }) => {
+export const StorageCellTable = (props: { items: StorageCellDto[] }) => {
   return (
     <table class={styles.table}>
       <thead>

@@ -24,16 +24,18 @@ export const NetworkOperations = (props: {
       usedChannels: Number(usedChannelsGet()),
     };
 
-    client.networks.createNetwork(network).then(() => {
-      props.onUpdate(Operation.Add, network);
-    });
+    client.networks
+      .createNetwork(network)
+      .then(() => props.onUpdate(Operation.Add, network))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deleteNetwork() {
     const id = Number(idGet());
-    client.networks.deleteNetwork(id).then(() => {
-      props.onUpdate(Operation.Delete, { id: id } as NetworkDto);
-    });
+    client.networks
+      .deleteNetwork(id)
+      .then(() => props.onUpdate(Operation.Delete, { id: id } as NetworkDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updateNetwork() {
@@ -44,9 +46,10 @@ export const NetworkOperations = (props: {
       usedChannels: Number(usedChannelsGet()),
     };
 
-    client.networks.updateNetwork(network.id!, network).then(() => {
-      props.onUpdate(Operation.Update, network);
-    });
+    client.networks
+      .updateNetwork(network.id!, network)
+      .then(() => props.onUpdate(Operation.Update, network))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (

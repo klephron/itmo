@@ -23,16 +23,16 @@ export const InterfaceOperations = (props: {
 
     client.interfaces
       .createInterface({ networkId: meInterface.networkId }, meInterface)
-      .then(() => {
-        props.onUpdate(Operation.Add, meInterface);
-      });
+      .then(() => props.onUpdate(Operation.Add, meInterface))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deleteInterface() {
     const id = Number(idGet());
-    client.interfaces.deleteInterface(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as MeInterfaceDto);
-    });
+    client.interfaces
+      .deleteInterface(id)
+      .then(() => props.onUpdate(Operation.Delete, { id } as MeInterfaceDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updateInterface() {
@@ -42,9 +42,10 @@ export const InterfaceOperations = (props: {
       networkId: Number(networkIdGet()),
     };
 
-    client.interfaces.updateInterface(meInterface.id!, meInterface).then(() => {
-      props.onUpdate(Operation.Update, meInterface);
-    });
+    client.interfaces
+      .updateInterface(meInterface.id!, meInterface)
+      .then(() => props.onUpdate(Operation.Update, meInterface))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (

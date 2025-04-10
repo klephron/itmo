@@ -29,16 +29,16 @@ export const ExportBusOperations = (props: {
 
     client.exportBuses
       .createExportBus({ networkId: bus.networkId }, bus)
-      .then(() => {
-        props.onUpdate(Operation.Add, bus);
-      });
+      .then(() => props.onUpdate(Operation.Add, bus))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deleteExportBus() {
     const id = Number(idGet());
-    client.exportBuses.deleteExportBus(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as ExportBusDto);
-    });
+    client.exportBuses
+      .deleteExportBus(id)
+      .then(() => props.onUpdate(Operation.Delete, { id } as ExportBusDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updateExportBus() {
@@ -49,9 +49,10 @@ export const ExportBusOperations = (props: {
       networkId: Number(networkIdGet()),
     };
 
-    client.exportBuses.updateExportBus(bus.id!, bus).then(() => {
-      props.onUpdate(Operation.Update, bus);
-    });
+    client.exportBuses
+      .updateExportBus(bus.id!, bus)
+      .then(() => props.onUpdate(Operation.Update, bus))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function exportItems() {
@@ -61,9 +62,8 @@ export const ExportBusOperations = (props: {
         itemName: itemNameGet(),
         quantity: hasString(itemQuantityGet()) ? Number(itemQuantityGet()) : 0,
       })
-      .then(() => {
-        props.onExport({ id: id } as ExportBusDto);
-      });
+      .then(() => props.onExport({ id: id } as ExportBusDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (

@@ -29,16 +29,16 @@ export const ImportBusOperations = (props: {
 
     client.importBuses
       .createImportBus({ networkId: bus.networkId }, bus)
-      .then(() => {
-        props.onUpdate(Operation.Add, bus);
-      });
+      .then(() => props.onUpdate(Operation.Add, bus))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deleteImportBus() {
     const id = Number(idGet());
-    client.importBuses.deleteImportBus(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as ImportBusDto);
-    });
+    client.importBuses
+      .deleteImportBus(id)
+      .then(() => props.onUpdate(Operation.Delete, { id } as ImportBusDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updateImportBus() {
@@ -49,9 +49,10 @@ export const ImportBusOperations = (props: {
       networkId: Number(networkIdGet()),
     };
 
-    client.importBuses.updateImportBus(bus.id!, bus).then(() => {
-      props.onUpdate(Operation.Update, bus);
-    });
+    client.importBuses
+      .updateImportBus(bus.id!, bus)
+      .then(() => props.onUpdate(Operation.Update, bus))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function importItems() {
@@ -61,9 +62,8 @@ export const ImportBusOperations = (props: {
         itemName: itemNameGet(),
         quantity: hasString(itemQuantityGet()) ? Number(itemQuantityGet()) : 0,
       })
-      .then(() => {
-        props.onImport({ id: id } as ImportBusDto);
-      });
+      .then(() => props.onImport({ id: id } as ImportBusDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (

@@ -24,16 +24,16 @@ export const StorageCellOperations = (props: {
 
     client.storageCells
       .createStorageCell({ driveId: cell.driveId }, cell)
-      .then(() => {
-        props.onUpdate(Operation.Add, cell);
-      });
+      .then(() => props.onUpdate(Operation.Add, cell))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deleteStorageCell() {
     const id = Number(idGet());
-    client.storageCells.deleteStorageCell(id).then(() => {
-      props.onUpdate(Operation.Delete, { id } as StorageCellDto);
-    });
+    client.storageCells
+      .deleteStorageCell(id)
+      .then(() => props.onUpdate(Operation.Delete, { id } as StorageCellDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updateStorageCell() {
@@ -43,9 +43,10 @@ export const StorageCellOperations = (props: {
       driveId: 0,
     };
 
-    client.storageCells.updateStorageCell(cell.id!, cell).then(() => {
-      props.onUpdate(Operation.Update, cell);
-    });
+    client.storageCells
+      .updateStorageCell(cell.id!, cell)
+      .then(() => props.onUpdate(Operation.Update, cell))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (

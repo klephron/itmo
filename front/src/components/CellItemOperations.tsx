@@ -27,16 +27,16 @@ export const CellItemOperations = (props: {
 
     client.cellItems
       .createCellItem({ storageCellId: cellItem.storageCellId }, cellItem)
-      .then(() => {
-        props.onUpdate(Operation.Add, cellItem);
-      });
+      .then(() => props.onUpdate(Operation.Add, cellItem))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function deleteCellItem() {
     const id = Number(idGet());
-    client.cellItems.deleteCellItem(id).then(() => {
-      props.onUpdate(Operation.Delete, { id: id } as CellItemDto);
-    });
+    client.cellItems
+      .deleteCellItem(id)
+      .then(() => props.onUpdate(Operation.Delete, { id: id } as CellItemDto))
+      .catch(async (e) => alert(await e.text()));
   }
 
   function updateCellItem() {
@@ -47,9 +47,10 @@ export const CellItemOperations = (props: {
       storageCellId: 0,
     };
 
-    client.cellItems.updateCellItem(cellItem.id!, cellItem).then(() => {
-      props.onUpdate(Operation.Update, cellItem);
-    });
+    client.cellItems
+      .updateCellItem(cellItem.id!, cellItem)
+      .then(() => props.onUpdate(Operation.Update, cellItem))
+      .catch(async (e) => alert(await e.text()));
   }
 
   return (
