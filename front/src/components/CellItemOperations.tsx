@@ -34,7 +34,6 @@ export const CellItemOperations = (props: {
 
   function deleteCellItem() {
     const id = Number(idGet());
-    console.log(id);
     client.cellItems.deleteCellItem(id).then(() => {
       props.onUpdate(Operation.Delete, { id: id } as CellItemEntityDto);
     });
@@ -45,7 +44,7 @@ export const CellItemOperations = (props: {
       id: hasString(idGet()) ? Number(idGet()) : undefined,
       itemName: itemNameGet(),
       quantity: Number(quantityGet()),
-      storageCellId: Number(storageCellIdGet()),
+      storageCellId: 0,
     };
 
     client.cellItems.updateCellItem(cellItem.id!, cellItem).then(() => {
