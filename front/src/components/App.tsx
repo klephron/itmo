@@ -1,5 +1,5 @@
 import { createStore } from "solid-js/store";
-import { createSignal, onMount } from "solid-js";
+import { createSignal, Match, onMount, Switch } from "solid-js";
 import { clientGet } from "@state/client";
 import {
   CellItemEntityDto,
@@ -13,22 +13,29 @@ import {
   StorageCellEntityDto,
 } from "@api/generated/data-contracts";
 import styles from "./App.module.scss";
-
-enum Section {
-  CellItems,
-  Drives,
-  ExportBuses,
-  ImportBuses,
-  Interfaces,
-  Items,
-  Networks,
-  Patterns,
-  StorageCells,
-}
+import { Section } from "./kind";
+import { CellItemTable } from "./CellItemTable";
+import { DriveTable } from "./DriveTable";
+import { ExportBusTable } from "./ExportBusTable";
+import { ImportBusTable } from "./ImportBusTable";
+import { InterfaceTable } from "./InterfaceTable";
+import { ItemTable } from "./ItemTable";
+import { NetworkTable } from "./NetworkTable";
+import { PatternTable } from "./PatternTable";
+import { StorageCellTable } from "./StorageCellTable";
+import { CellItemOperations } from "./CellItemOperations";
+import { NetworkOperations } from "./NetworkOperations";
+import { DriveOperations } from "./DriveOperations";
+import { ExportBusOperations } from "./ExportBusOperations";
+import { ImportBusOperations } from "./ImportBusOperations";
+import { InterfaceOperations } from "./InterfaceOperations";
+import { ItemOperations } from "./ItemOperations";
+import { PatternOperations } from "./PatternOperations";
+import { StorageCellOperations } from "./StorageCellOperations";
 
 export const App = () => {
   const client = clientGet();
-  const [selectedSection, selectedSectionSet] = createSignal(Section.CellItems);
+  const [sectionGet, sectionSet] = createSignal(Section.CellItems);
 
   const [cellItems, cellItemsSet] = createStore<CellItemEntityDto[]>([]);
   const [drives, drivesSet] = createStore<DriveEntityDto[]>([]);
@@ -46,63 +53,63 @@ export const App = () => {
     switch (section) {
       case Section.CellItems:
         client.cellItems.getAllCellItems().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: CellItemEntityDto[]) => {
             cellItemsSet(data);
           });
         });
         break;
       case Section.Drives:
         client.drives.getAllDrives().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: DriveEntityDto[]) => {
             drivesSet(data);
           });
         });
         break;
       case Section.ExportBuses:
         client.exportBuses.getAllExportBuses().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: ExportBusEntityDto[]) => {
             exportBusesSet(data);
           });
         });
         break;
       case Section.ImportBuses:
         client.importBuses.getAllImportBuses().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: ImportBusEntityDto[]) => {
             importBusesSet(data);
           });
         });
         break;
       case Section.Interfaces:
         client.interfaces.getAllInterfaces().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: MeInterfaceDto[]) => {
             interfacesSet(data);
           });
         });
         break;
       case Section.Items:
         client.items.getAllItems().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: ItemDto[]) => {
             itemsSet(data);
           });
         });
         break;
       case Section.Networks:
         client.networks.getAllNetworks().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: NetworkDto[]) => {
             networksSet(data);
           });
         });
         break;
       case Section.Patterns:
         client.patterns.getAllPatterns().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: PatternEntityDto[]) => {
             patternsSet(data);
           });
         });
         break;
       case Section.StorageCells:
         client.storageCells.getAllStorageCells().then((r) => {
-          r.json().then((data) => {
+          r.json().then((data: StorageCellEntityDto[]) => {
             storageCellsSet(data);
           });
         });
@@ -113,7 +120,7 @@ export const App = () => {
   }
 
   onMount(() => {
-    fetchSection(selectedSection());
+    fetchSection(sectionGet());
   });
 
   return (
@@ -123,10 +130,10 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.CellItems,
+              [styles.active]: sectionGet() === Section.CellItems,
             }}
             onClick={() => {
-              selectedSectionSet(Section.CellItems);
+              sectionSet(Section.CellItems);
               fetchSection(Section.CellItems);
             }}
           >
@@ -135,10 +142,10 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.Drives,
+              [styles.active]: sectionGet() === Section.Drives,
             }}
             onClick={() => {
-              selectedSectionSet(Section.Drives);
+              sectionSet(Section.Drives);
               fetchSection(Section.Drives);
             }}
           >
@@ -147,10 +154,10 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.ExportBuses,
+              [styles.active]: sectionGet() === Section.ExportBuses,
             }}
             onClick={() => {
-              selectedSectionSet(Section.ExportBuses);
+              sectionSet(Section.ExportBuses);
               fetchSection(Section.ExportBuses);
             }}
           >
@@ -159,10 +166,10 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.ImportBuses,
+              [styles.active]: sectionGet() === Section.ImportBuses,
             }}
             onClick={() => {
-              selectedSectionSet(Section.ImportBuses);
+              sectionSet(Section.ImportBuses);
               fetchSection(Section.ImportBuses);
             }}
           >
@@ -171,22 +178,22 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.Interfaces,
+              [styles.active]: sectionGet() === Section.Interfaces,
             }}
             onClick={() => {
-              selectedSectionSet(Section.Interfaces);
+              sectionSet(Section.Interfaces);
               fetchSection(Section.Interfaces);
             }}
           >
-            Interfaces
+            ME Interfaces
           </div>
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.Items,
+              [styles.active]: sectionGet() === Section.Items,
             }}
             onClick={() => {
-              selectedSectionSet(Section.Items);
+              sectionSet(Section.Items);
               fetchSection(Section.Items);
             }}
           >
@@ -195,10 +202,10 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.Networks,
+              [styles.active]: sectionGet() === Section.Networks,
             }}
             onClick={() => {
-              selectedSectionSet(Section.Networks);
+              sectionSet(Section.Networks);
               fetchSection(Section.Networks);
             }}
           >
@@ -207,10 +214,10 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.Patterns,
+              [styles.active]: sectionGet() === Section.Patterns,
             }}
             onClick={() => {
-              selectedSectionSet(Section.Patterns);
+              sectionSet(Section.Patterns);
               fetchSection(Section.Patterns);
             }}
           >
@@ -219,225 +226,93 @@ export const App = () => {
           <div
             class={styles.navItem}
             classList={{
-              [styles.active]: selectedSection() === Section.StorageCells,
+              [styles.active]: sectionGet() === Section.StorageCells,
             }}
             onClick={() => {
-              selectedSectionSet(Section.StorageCells);
+              sectionSet(Section.StorageCells);
               fetchSection(Section.StorageCells);
             }}
           >
             Storage Cells
           </div>
         </nav>
-
-        <main class={styles.content}>
-          {selectedSection() === Section.CellItems && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Item Name</th>
-                  <th>Quantity</th>
-                  <th>Storage Cell ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cellItems.map((item) => (
-                  <tr>
-                    <td>{item.id}</td>
-                    <td>{item.itemName}</td>
-                    <td>{item.quantity}</td>
-                    <td>{item.storageCellId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.Drives && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Drive Name</th>
-                  <th>Channels Used</th>
-                  <th>Network ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {drives.map((drive) => (
-                  <tr>
-                    <td>{drive.id}</td>
-                    <td>{drive.driveName}</td>
-                    <td>{drive.channelsUsed}</td>
-                    <td>{drive.networkId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.ExportBuses && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Bus Name</th>
-                  <th>Channels Used</th>
-                  <th>Network ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exportBuses.map((bus) => (
-                  <tr>
-                    <td>{bus.id}</td>
-                    <td>{bus.busName}</td>
-                    <td>{bus.channelsUsed}</td>
-                    <td>{bus.networkId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.ImportBuses && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Bus Name</th>
-                  <th>Channels Used</th>
-                  <th>Network ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {importBuses.map((bus) => (
-                  <tr>
-                    <td>{bus.id}</td>
-                    <td>{bus.busName}</td>
-                    <td>{bus.channelsUsed}</td>
-                    <td>{bus.networkId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.Interfaces && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Interface Name</th>
-                  <th>Channels Used</th>
-                  <th>Network Id</th>
-                </tr>
-              </thead>
-              <tbody>
-                {interfaces.map((item) => (
-                  <tr>
-                    <td>{item.id}</td>
-                    <td>{item.interfaceName}</td>
-                    <td>{item.channelsUsed}</td>
-                    <td>{item.networkId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.Items && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Item Name</th>
-                  <th>Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr>
-                    <td>{item.id}</td>
-                    <td>{item.itemName}</td>
-                    <td>{item.quantity}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.Networks && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Channel Capacity</th>
-                  <th>Used Channels</th>
-                </tr>
-              </thead>
-              <tbody>
-                {networks.map((network) => (
-                  <tr>
-                    <td>{network.id}</td>
-                    <td>{network.name}</td>
-                    <td>{network.channelCapacity}</td>
-                    <td>{network.usedChannels}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.Patterns && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Pattern Name</th>
-                  <th>Input Items</th>
-                  <th>Output Item ID</th>
-                  <th>Output Quantity</th>
-                  <th>ME Interface ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {patterns.map((pattern) => (
-                  <tr>
-                    <td>{pattern.id}</td>
-                    <td>{pattern.patternName}</td>
-                    <td>{pattern.inputItems}</td>
-                    <td>{pattern.outputItemId}</td>
-                    <td>{pattern.outputQuantity}</td>
-                    <td>{pattern.meInterfaceId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedSection() === Section.StorageCells && (
-            <table class={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Capacity</th>
-                  <th>Drive ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {storageCells.map((cell) => (
-                  <tr>
-                    <td>{cell.id}</td>
-                    <td>{cell.capacity}</td>
-                    <td>{cell.driveId}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </main>
+        <div class={styles.tableContent}>
+          <Switch>
+            <Match when={sectionGet() === Section.CellItems}>
+              <CellItemTable items={cellItems} />
+            </Match>
+            <Match when={sectionGet() === Section.Drives}>
+              <DriveTable items={drives} />
+            </Match>
+            <Match when={sectionGet() === Section.ExportBuses}>
+              <ExportBusTable items={exportBuses} />
+            </Match>
+            <Match when={sectionGet() === Section.ImportBuses}>
+              <ImportBusTable items={importBuses} />
+            </Match>
+            <Match when={sectionGet() === Section.Interfaces}>
+              <InterfaceTable items={interfaces} />
+            </Match>
+            <Match when={sectionGet() === Section.Items}>
+              <ItemTable items={items} />
+            </Match>
+            <Match when={sectionGet() === Section.Networks}>
+              <NetworkTable items={networks} />
+            </Match>
+            <Match when={sectionGet() === Section.Patterns}>
+              <PatternTable items={patterns} />
+            </Match>
+            <Match when={sectionGet() === Section.StorageCells}>
+              <StorageCellTable items={storageCells} />
+            </Match>
+          </Switch>
+        </div>
+        <Switch>
+          <Match when={sectionGet() === Section.CellItems}>
+            <CellItemOperations
+              onUpdate={() => fetchSection(Section.CellItems)}
+            />
+          </Match>
+          <Match when={sectionGet() === Section.Drives}>
+            <DriveOperations onUpdate={() => fetchSection(Section.Drives)} />
+          </Match>
+          <Match when={sectionGet() === Section.ExportBuses}>
+            <ExportBusOperations
+              onUpdate={() => fetchSection(Section.ExportBuses)}
+              onExport={() => {}}
+            />
+          </Match>
+          <Match when={sectionGet() === Section.ImportBuses}>
+            <ImportBusOperations
+              onUpdate={() => fetchSection(Section.ImportBuses)}
+              onImport={() => {}}
+            />
+          </Match>
+          <Match when={sectionGet() === Section.Interfaces}>
+            <InterfaceOperations
+              onUpdate={() => fetchSection(Section.Interfaces)}
+            />
+          </Match>
+          <Match when={sectionGet() === Section.Items}>
+            <ItemOperations onUpdate={() => fetchSection(Section.Items)} />
+          </Match>
+          <Match when={sectionGet() === Section.Networks}>
+            <NetworkOperations
+              onUpdate={() => fetchSection(Section.Networks)}
+            />
+          </Match>
+          <Match when={sectionGet() === Section.Patterns}>
+            <PatternOperations
+              onUpdate={() => fetchSection(Section.Patterns)}
+              onCraft={() => {}}
+            />
+          </Match>
+          <Match when={sectionGet() === Section.StorageCells}>
+            <StorageCellOperations
+              onUpdate={() => fetchSection(Section.StorageCells)}
+            />
+          </Match>
+        </Switch>
       </div>
     </div>
   );

@@ -1,0 +1,131 @@
+import { CellItemEntityDto } from "@api/generated/data-contracts";
+import { Operation } from "./kind";
+
+import styles from "./App.module.scss";
+import { createSignal, Match, Switch } from "solid-js";
+import { clientGet } from "@state/client";
+import { hasString } from "./util";
+
+export const CellItemOperations = (props: {
+  onUpdate: (op: Operation, item: CellItemEntityDto) => void;
+}) => {
+  const client = clientGet();
+
+  const [operationGet, operationSet] = createSignal(Operation.Add);
+  const [idGet, idSet] = createSignal("");
+  const [itemNameGet, itemNameSet] = createSignal("");
+  const [quantityGet, quantitySet] = createSignal("");
+  const [storageCellIdGet, storageCellIdSet] = createSignal("");
+
+  function addCellItem() {
+    const cellItem: CellItemEntityDto = {
+      id: hasString(idGet()) ? Number(idGet()) : undefined,
+      itemName: itemNameGet(),
+      quantity: Number(quantityGet()),
+      storageCellId: Number(storageCellIdGet()),
+    };
+
+    client.cellItems
+      .createCellItem({ storageCellId: cellItem.storageCellId }, cellItem)
+      .then(() => {
+        props.onUpdate(Operation.Add, cellItem);
+      });
+  }
+
+  function deleteCellItem() {
+    const id = Number(idGet());
+    console.log(id);
+    client.cellItems.deleteCellItem(id).then(() => {
+      props.onUpdate(Operation.Delete, { id: id } as CellItemEntityDto);
+    });
+  }
+
+  function updateCellItem() {
+    const cellItem: CellItemEntityDto = {
+      id: hasString(idGet()) ? Number(idGet()) : undefined,
+      itemName: itemNameGet(),
+      quantity: Number(quantityGet()),
+      storageCellId: Number(storageCellIdGet()),
+    };
+
+    client.cellItems.updateCellItem(cellItem.id!, cellItem).then(() => {
+      props.onUpdate(Operation.Update, cellItem);
+    });
+  }
+
+  return (
+    <div class={styles.operations}>
+      <div class={styles.operation}>
+        <select
+          value={operationGet()}
+          onChange={(e) => operationSet(parseInt(e.target.value))}
+        >
+          <option value={Operation.Add}>Add Cell Item</option>
+          <option value={Operation.Delete}>Delete Cell Item</option>
+          <option value={Operation.Update}>Update Cell Item</option>
+        </select>
+        <Switch>
+          <Match when={operationGet() === Operation.Add}>
+            <div class={styles.form}>
+              <input
+                type="text"
+                placeholder="Item Name"
+                value={itemNameGet()}
+                onChange={(e) => itemNameSet(e.target.value)}
+              />
+              <input
+                type="number"
+                placeholder="Quantity"
+                min="0"
+                value={quantityGet()}
+                onChange={(e) => quantitySet(e.target.value)}
+              />
+              <input
+                type="number"
+                placeholder="Storage Cell ID"
+                value={storageCellIdGet()}
+                onChange={(e) => storageCellIdSet(e.target.value)}
+              />
+              <button onClick={addCellItem}>Add Cell Item</button>
+            </div>
+          </Match>
+          <Match when={operationGet() === Operation.Delete}>
+            <div class={styles.form}>
+              <input
+                type="number"
+                placeholder="ID to Delete"
+                value={idGet()}
+                onChange={(e) => idSet(e.target.value)}
+              />
+              <button onClick={deleteCellItem}>Delete Cell Item</button>
+            </div>
+          </Match>
+          <Match when={operationGet() === Operation.Update}>
+            <div class={styles.form}>
+              <input
+                type="number"
+                placeholder="ID to Update"
+                value={idGet()}
+                onChange={(e) => idSet(e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="New Item Name"
+                value={itemNameGet()}
+                onChange={(e) => itemNameSet(e.target.value)}
+              />
+              <input
+                type="number"
+                placeholder="New Quantity"
+                min="0"
+                value={quantityGet()}
+                onChange={(e) => quantitySet(e.target.value)}
+              />
+              <button onClick={updateCellItem}>Update Cell Item</button>
+            </div>
+          </Match>
+        </Switch>
+      </div>
+    </div>
+  );
+};
