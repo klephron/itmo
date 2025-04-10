@@ -8,7 +8,6 @@ import ru.itmo.zavar.devopslabs.entity.*;
 import ru.itmo.zavar.devopslabs.exception.NotEnoughItemsException;
 import ru.itmo.zavar.devopslabs.exception.StorageCellOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.repository.CellItemRepository;
-import ru.itmo.zavar.devopslabs.repository.ItemRepository;
 import ru.itmo.zavar.devopslabs.repository.PatternRepository;
 
 import java.util.List;
@@ -83,7 +82,7 @@ public class PatternService {
         }
 
         int totalOutput = pattern.getOutputQuantity() * times;
-        this.storeItemsInCells(cells, pattern.getOutputItem().getItemName(), totalOutput);
+        this.storeItemsInCells(cells, pattern.getOutputItem(), totalOutput);
     }
 
     private List<Ingredient> parseInputItems(String inputItemsJson) {

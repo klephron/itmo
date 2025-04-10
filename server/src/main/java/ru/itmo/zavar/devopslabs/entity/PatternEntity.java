@@ -31,9 +31,8 @@ public class PatternEntity {
     private String inputItems;  // "[{\"itemName\":\"Iron Ingot\",\"count\":3}, ...]"
 
     @NotNull
-    @ManyToOne
-    @JoinColumn(name = "output_item_id")
-    private ItemEntity outputItem;
+    @NotEmpty
+    private String outputItem;
 
     @NotNull
     @Min(0)

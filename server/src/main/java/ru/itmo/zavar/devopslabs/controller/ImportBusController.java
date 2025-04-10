@@ -2,7 +2,7 @@ package ru.itmo.zavar.devopslabs.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.itmo.zavar.devopslabs.dto.ImportBusEntityDto;
+import ru.itmo.zavar.devopslabs.dto.ImportBusDto;
 import ru.itmo.zavar.devopslabs.entity.ImportBusEntity;
 import ru.itmo.zavar.devopslabs.exception.NetworkOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.mapper.ImportBusMapper;
@@ -25,45 +25,45 @@ public class ImportBusController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ImportBusEntityDto>> getAllImportBuses() {
+    public ResponseEntity<List<ImportBusDto>> getAllImportBuses() {
         List<ImportBusEntity> buses = importBusService.findAll();
-        List<ImportBusEntityDto> dtos = buses.stream()
+        List<ImportBusDto> dtos = buses.stream()
                 .map(importBusMapper::toDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ImportBusEntityDto> getImportBusById(@PathVariable Long id) {
+    public ResponseEntity<?> getImportBusById(@PathVariable Long id) {
         try {
             ImportBusEntity bus = importBusService.findById(id);
             return ResponseEntity.ok(importBusMapper.toDto(bus));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping
-    public ResponseEntity<ImportBusEntityDto> createImportBus(@RequestBody ImportBusEntityDto dto,
-                                                              @RequestParam Long networkId) {
+    public ResponseEntity<?> createImportBus(@RequestBody ImportBusDto dto,
+                                                        @RequestParam Long networkId) {
         try {
             ImportBusEntity bus = importBusMapper.fromDto(dto);
             ImportBusEntity created = importBusService.create(bus, networkId);
             return ResponseEntity.ok(importBusMapper.toDto(created));
         } catch (NoSuchElementException | NetworkOutOfCapacityException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ImportBusEntityDto> updateImportBus(@PathVariable Long id,
-                                                              @RequestBody ImportBusEntityDto dto) {
+    public ResponseEntity<?> updateImportBus(@PathVariable Long id,
+                                                        @RequestBody ImportBusDto dto) {
         try {
             ImportBusEntity bus = importBusMapper.fromDto(dto);
             ImportBusEntity updated = importBusService.update(id, bus);
             return ResponseEntity.ok(importBusMapper.toDto(updated));
         } catch (NoSuchElementException | NetworkOutOfCapacityException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -78,16 +78,14 @@ public class ImportBusController {
     }
 
     @PostMapping("/{id}/import")
-    public ResponseEntity<Void> importItems(@PathVariable("id") Long importBusId,
+    public ResponseEntity<?> importItems(@PathVariable("id") Long importBusId,
                                             @RequestParam String itemName,
                                             @RequestParam int quantity) {
         try {
             importBusService.importItems(importBusId, itemName, quantity);
             return ResponseEntity.ok().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

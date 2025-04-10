@@ -1,4 +1,4 @@
-package ru.itmo.zavar.devopslabs;
+package ru.itmo.zavar.devopslabs.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

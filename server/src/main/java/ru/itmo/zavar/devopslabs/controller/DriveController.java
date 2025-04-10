@@ -2,7 +2,7 @@ package ru.itmo.zavar.devopslabs.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.itmo.zavar.devopslabs.dto.DriveEntityDto;
+import ru.itmo.zavar.devopslabs.dto.DriveDto;
 import ru.itmo.zavar.devopslabs.entity.DriveEntity;
 import ru.itmo.zavar.devopslabs.exception.NetworkOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.mapper.DriveMapper;
@@ -25,16 +25,16 @@ public class DriveController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DriveEntityDto>> getAllDrives() {
+    public ResponseEntity<List<DriveDto>> getAllDrives() {
         List<DriveEntity> drives = driveService.findAll();
-        List<DriveEntityDto> dtos = drives.stream()
+        List<DriveDto> dtos = drives.stream()
                 .map(driveMapper::toDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DriveEntityDto> getDriveById(@PathVariable Long id) {
+    public ResponseEntity<DriveDto> getDriveById(@PathVariable Long id) {
         try {
             DriveEntity drive = driveService.findById(id);
             return ResponseEntity.ok(driveMapper.toDto(drive));
@@ -44,8 +44,8 @@ public class DriveController {
     }
 
     @PostMapping
-    public ResponseEntity<DriveEntityDto> createDrive(@RequestBody DriveEntityDto dto,
-                                                      @RequestParam Long networkId) {
+    public ResponseEntity<DriveDto> createDrive(@RequestBody DriveDto dto,
+                                                @RequestParam Long networkId) {
         try {
             DriveEntity drive = driveMapper.fromDto(dto);
             DriveEntity created = driveService.create(drive, networkId);
@@ -56,8 +56,8 @@ public class DriveController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DriveEntityDto> updateDrive(@PathVariable Long id,
-                                                      @RequestBody DriveEntityDto dto) {
+    public ResponseEntity<DriveDto> updateDrive(@PathVariable Long id,
+                                                @RequestBody DriveDto dto) {
         try {
             DriveEntity drive = driveMapper.fromDto(dto);
             DriveEntity updated = driveService.update(id, drive);

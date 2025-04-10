@@ -9,5 +9,5 @@ import java.io.Serializable;
 /**
  * DTO for {@link ru.itmo.zavar.devopslabs.entity.PatternEntity}
  */
-public record PatternEntityDto(Long id, @NotNull @NotEmpty String patternName, @NotNull @NotEmpty String inputItems, Long outputItemId, @NotNull @Min(0) Integer outputQuantity, Long meInterfaceId) implements Serializable {
+public record PatternDto(Long id, @NotNull @NotEmpty String patternName, @NotNull @NotEmpty String inputItems, @NotNull @NotEmpty String outputItem, @NotNull @Min(0) Integer outputQuantity, Long meInterfaceId) implements Serializable {
   }

@@ -2,7 +2,7 @@ package ru.itmo.zavar.devopslabs.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.itmo.zavar.devopslabs.dto.PatternEntityDto;
+import ru.itmo.zavar.devopslabs.dto.PatternDto;
 import ru.itmo.zavar.devopslabs.entity.PatternEntity;
 import ru.itmo.zavar.devopslabs.mapper.PatternMapper;
 import ru.itmo.zavar.devopslabs.service.PatternService;
@@ -24,44 +24,44 @@ public class PatternController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PatternEntityDto>> getAllPatterns() {
+    public ResponseEntity<List<PatternDto>> getAllPatterns() {
         List<PatternEntity> patterns = patternService.findAll();
-        List<PatternEntityDto> dtos = patterns.stream()
+        List<PatternDto> dtos = patterns.stream()
                 .map(patternMapper::toDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PatternEntityDto> getPatternById(@PathVariable Long id) {
+    public ResponseEntity<?> getPatternById(@PathVariable Long id) {
         try {
             PatternEntity pattern = patternService.findById(id);
             return ResponseEntity.ok(patternMapper.toDto(pattern));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping
-    public ResponseEntity<PatternEntityDto> createPattern(@RequestBody PatternEntityDto dto) {
+    public ResponseEntity<?> createPattern(@RequestBody PatternDto dto) {
         try {
-            PatternEntity entity = patternMapper.fromDto(dto);
+            PatternEntity entity = patternMapper.toEntity(dto);
             PatternEntity created = patternService.create(entity, dto.meInterfaceId());
             return ResponseEntity.ok(patternMapper.toDto(created));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PatternEntityDto> updatePattern(@PathVariable Long id,
-                                                          @RequestBody PatternEntityDto dto) {
+    public ResponseEntity<?> updatePattern(@PathVariable Long id,
+                                                    @RequestBody PatternDto dto) {
         try {
-            PatternEntity entity = patternMapper.fromDto(dto);
+            PatternEntity entity = patternMapper.toEntity(dto);
             PatternEntity updated = patternService.update(id, entity);
             return ResponseEntity.ok(patternMapper.toDto(updated));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -72,13 +72,13 @@ public class PatternController {
     }
 
     @PostMapping("/{id}/craft")
-    public ResponseEntity<Void> craftPattern(@PathVariable Long id,
+    public ResponseEntity<?> craftPattern(@PathVariable Long id,
                                              @RequestParam int times) {
         try {
             patternService.craftItem(id, times);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

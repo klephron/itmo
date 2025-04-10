@@ -34,12 +34,12 @@ public class NetworkController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<NetworkDto> getNetworkById(@PathVariable Long id) {
+    public ResponseEntity<?> getNetworkById(@PathVariable Long id) {
         try {
             NetworkEntity network = networkService.findById(id);
             return ResponseEntity.ok(networkMapper.toDto(network));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -51,23 +51,23 @@ public class NetworkController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NetworkDto> updateNetwork(@PathVariable Long id, @RequestBody NetworkDto dto) {
+    public ResponseEntity<?> updateNetwork(@PathVariable Long id, @RequestBody NetworkDto dto) {
         try {
             NetworkEntity entity = networkMapper.fromDto(dto);
             NetworkEntity updated = networkService.update(id, entity);
             return ResponseEntity.ok(networkMapper.toDto(updated));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNetwork(@PathVariable Long id) {
+    public ResponseEntity<?> deleteNetwork(@PathVariable Long id) {
         try {
             networkService.delete(id);
             return ResponseEntity.noContent().build();
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

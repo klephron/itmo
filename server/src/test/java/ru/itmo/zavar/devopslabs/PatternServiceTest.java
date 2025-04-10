@@ -41,7 +41,7 @@ public class PatternServiceTest {
 
     private NetworkEntity network;
     private MeInterfaceEntity meInterface;
-    private ItemEntity outputItem;
+    private String outputItem;
     private PatternEntity pattern;
     private StorageCellEntity cell;
     private DriveEntity drive;
@@ -51,7 +51,7 @@ public class PatternServiceTest {
         network = new NetworkEntity(1L, "Network1", 100, 0);
         meInterface = new MeInterfaceEntity();
         meInterface.setNetwork(network);
-        outputItem = new ItemEntity(1L, "Steel Ingot", 0);
+        outputItem = "Steel Ingot";
         String inputItemsJson = "[{\"itemName\":\"Iron Ingot\", \"count\":3}]";
         pattern = new PatternEntity(1L, "TestPattern", inputItemsJson, outputItem, 1, meInterface);
         drive = new DriveEntity(1L, "Drive1", 0, network);

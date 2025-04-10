@@ -9,6 +9,6 @@ import java.io.Serializable;
 /**
  * DTO for {@link ru.itmo.zavar.devopslabs.entity.DriveEntity}
  */
-public record DriveEntityDto(Long id, @NotNull @NotEmpty String driveName, @NotNull @Min(0) Integer channelsUsed,
-                             @NotNull Long networkId) implements Serializable {
+public record DriveDto(Long id, @NotNull @NotEmpty String driveName, @NotNull @Min(0) Integer channelsUsed,
+                       @NotNull Long networkId) implements Serializable {
 }

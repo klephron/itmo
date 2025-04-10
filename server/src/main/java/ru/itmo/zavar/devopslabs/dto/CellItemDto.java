@@ -9,6 +9,6 @@ import java.io.Serializable;
 /**
  * DTO for {@link ru.itmo.zavar.devopslabs.entity.CellItemEntity}
  */
-public record CellItemEntityDto(Long id, @NotNull @NotEmpty String itemName, @NotNull @Min(0) Integer quantity,
-                                @NotNull Long storageCellId) implements Serializable {
+public record CellItemDto(Long id, @NotNull @NotEmpty String itemName, @NotNull @Min(0) Integer quantity,
+                          @NotNull Long storageCellId) implements Serializable {
 }

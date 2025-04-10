@@ -33,48 +33,46 @@ public class MeInterfaceController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MeInterfaceDto> getInterfaceById(@PathVariable Long id) {
+    public ResponseEntity<?> getInterfaceById(@PathVariable Long id) {
         try {
             MeInterfaceEntity entity = meInterfaceService.findById(id);
             return ResponseEntity.ok(meInterfaceMapper.toDto(entity));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping
-    public ResponseEntity<MeInterfaceDto> createInterface(@RequestBody MeInterfaceDto dto,
+    public ResponseEntity<?> createInterface(@RequestBody MeInterfaceDto dto,
                                                           @RequestParam Long networkId) {
         try {
             MeInterfaceEntity entity = meInterfaceMapper.fromDto(dto);
             MeInterfaceEntity created = meInterfaceService.create(entity, networkId);
             return ResponseEntity.ok(meInterfaceMapper.toDto(created));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MeInterfaceDto> updateInterface(@PathVariable Long id,
+    public ResponseEntity<?> updateInterface(@PathVariable Long id,
                                                           @RequestBody MeInterfaceDto dto) {
         try {
             MeInterfaceEntity entity = meInterfaceMapper.fromDto(dto);
             MeInterfaceEntity updated = meInterfaceService.update(id, entity);
             return ResponseEntity.ok(meInterfaceMapper.toDto(updated));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteInterface(@PathVariable Long id) {
+    public ResponseEntity<?> deleteInterface(@PathVariable Long id) {
         try {
             meInterfaceService.delete(id);
             return ResponseEntity.noContent().build();
         } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

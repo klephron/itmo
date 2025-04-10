@@ -9,6 +9,6 @@ import java.io.Serializable;
 /**
  * DTO for {@link ru.itmo.zavar.devopslabs.entity.ImportBusEntity}
  */
-public record ImportBusEntityDto(Long id, @NotNull @NotEmpty String busName, @NotNull @Min(0) Integer channelsUsed,
-                                 @NotNull Long networkId) implements Serializable {
+public record ImportBusDto(Long id, @NotNull @NotEmpty String busName, @NotNull @Min(0) Integer channelsUsed,
+                           @NotNull Long networkId) implements Serializable {
 }

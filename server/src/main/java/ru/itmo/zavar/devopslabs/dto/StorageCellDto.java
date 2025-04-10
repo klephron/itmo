@@ -8,6 +8,6 @@ import java.io.Serializable;
 /**
  * DTO for {@link ru.itmo.zavar.devopslabs.entity.StorageCellEntity}
  */
-public record StorageCellEntityDto(Long id, @NotNull @Min(0) Integer capacity,
-                                   @NotNull Long driveId) implements Serializable {
+public record StorageCellDto(Long id, @NotNull @Min(0) Integer capacity,
+                             @NotNull Long driveId) implements Serializable {
 }
