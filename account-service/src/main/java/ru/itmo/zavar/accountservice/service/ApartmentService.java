@@ -52,7 +52,7 @@ public class ApartmentService {
         this.apartmentRepository.deleteById(apartmentId);
     }
 
-    public RadiatorToApartmentDto attachRadiatorToApartment(String apartmentId, String deviceId) throws ObjectNotFoundException {
+    public RadiatorToApartmentDto attachRadiatorToApartment(String apartmentId, Long deviceId) throws ObjectNotFoundException {
         RadiatorToApartmentEntity radiatorToApartmentEntity = new RadiatorToApartmentEntity();
         this.getApartmentById(apartmentId);
         radiatorToApartmentEntity.setApartmentId(apartmentId);

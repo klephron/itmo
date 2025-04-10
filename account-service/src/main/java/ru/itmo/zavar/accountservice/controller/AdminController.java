@@ -23,11 +23,11 @@ public class AdminController {
     }
 
     @GetMapping("/admin/user/{username}")
-    public ResponseEntity<UserDetails> getUser(@PathVariable String username) {
+    public ResponseEntity<?> getUser(@PathVariable String username) {
         try {
             return ResponseEntity.ok(this.userService.loadUserByUsername(username));
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -35,8 +35,8 @@ public class AdminController {
     public ResponseEntity<?> setAuthorities(@PathVariable String username, @RequestBody AuthorityRequest authorityRequest) {
         try {
             return ResponseEntity.ok(this.userService.setAuthorities(username, authorityRequest.getAuthorities()));
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

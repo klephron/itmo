@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -24,18 +25,25 @@ public class UserController {
         this.payService = payService;
     }
 
+    @PreAuthorize("hasAuthority('TSJ')")
     @GetMapping("/bills/{id}")
-    public ResponseEntity<BillDto> getBillById(@PathVariable String id) throws ObjectNotFoundException {
-        BillDto bill = this.billService.getBillById(id);
-        return ResponseEntity.ok(bill);
+    public ResponseEntity<?> getBillById(@PathVariable String id) {
+        try {
+            BillDto bill = this.billService.getBillById(id);
+            return ResponseEntity.ok(bill);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    @PreAuthorize("hasAuthority('TSJ')")
     @GetMapping("/bills")
     public ResponseEntity<List<BillDto>> getAllBills() {
         List<BillDto> bills = this.billService.getAllBills();
         return ResponseEntity.ok(bills);
     }
 
+    @PreAuthorize("hasAuthority('TSJ')")
     @GetMapping("/bills/by-user/{userId}")
     public ResponseEntity<List<BillDto>> getAllBillsByUserId(@PathVariable String userId) {
         List<BillDto> bills = this.billService.getAllBillsByUserId(userId);
@@ -43,11 +51,16 @@ public class UserController {
     }
 
     @PostMapping("/pay/by-bill/{billId}")
-    public ResponseEntity<PayHistoryDto> payBill(@PathVariable String billId) throws ObjectNotFoundException {
-        PayHistoryDto result = this.payService.pay(billId);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> payBill(@PathVariable String billId) {
+        try {
+            PayHistoryDto result = this.payService.pay(billId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
+    @PreAuthorize("hasAuthority('TSJ')")
     @GetMapping("/pay/history-by-user/{userId}")
     public ResponseEntity<List<PayHistoryDto>> getUserPayHistory(@PathVariable String userId) {
         List<PayHistoryDto> history = this.payService.getPayHistoryByUserId(userId);

@@ -8,6 +8,7 @@ import ru.itmo.zavar.accountservice.dto.UserDto;
 import ru.itmo.zavar.accountservice.entity.UserEntity;
 import ru.itmo.zavar.accountservice.mapper.UserMapper;
 import ru.itmo.zavar.accountservice.repository.UserRepository;
+import ru.itmo.zavar.accountservice.security.Roles;
 
 import java.util.List;
 
@@ -42,8 +43,10 @@ public class UserService implements UserDetailsService {
         return build;
     }
 
-    public UserDetails setAuthorities(String username, List<String> authorities) throws UsernameNotFoundException {
+    public UserDetails setAuthorities(String username, List<String> authorities) throws UsernameNotFoundException, IllegalArgumentException {
         UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (!authorities.stream().allMatch(Roles::isValid))
+            throw new IllegalArgumentException("Invalid authorities");
         userEntity.setAuthorities(authorities);
         userEntity = repo.save(userEntity);
         return User.builder()
@@ -63,13 +66,14 @@ public class UserService implements UserDetailsService {
                 .build()).toList();
     }
 
-    public void register(String username, String password, List<String> roles) throws RuntimeException {
+    public void register(String username, String password, String email, List<String> roles) throws RuntimeException {
         if (repo.findByUsername(username).isPresent())
             throw new RuntimeException("User exists");
         UserEntity userEntity = new UserEntity();
         userEntity.setUsername(username);
         userEntity.setPassword(encoder.encode(password));
         userEntity.setAuthorities(roles);
+        userEntity.setEmail(email);
         repo.save(userEntity);
         userCache.removeUserFromCache(username);
     }

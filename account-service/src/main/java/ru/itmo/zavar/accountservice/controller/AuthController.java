@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.itmo.zavar.accountservice.dto.request.AuthRequest;
 import ru.itmo.zavar.accountservice.dto.request.RegisterRequest;
 import ru.itmo.zavar.accountservice.dto.response.AuthResponse;
+import ru.itmo.zavar.accountservice.security.Roles;
 import ru.itmo.zavar.accountservice.security.jwt.JwtUtil;
 import ru.itmo.zavar.accountservice.service.UserService;
 
@@ -30,9 +31,9 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         try {
             ArrayList<String> authorities = new ArrayList<>();
-            authorities.add("USER");
-            this.userService.register(req.getUsername(), req.getPassword(), authorities);
-        } catch (RuntimeException e) {
+            authorities.add(Roles.USER.toString());
+            this.userService.register(req.getUsername(), req.getPassword(), req.getEmail(), authorities);
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok("Registered");

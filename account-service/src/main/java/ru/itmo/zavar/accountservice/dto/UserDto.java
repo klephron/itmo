@@ -17,5 +17,9 @@ public class UserDto implements Serializable {
     @NotNull
     @NotEmpty
     String username;
+    @NotNull
+    @NotEmpty
+    String email;
+    @NotNull
     List<String> authorities;
 }

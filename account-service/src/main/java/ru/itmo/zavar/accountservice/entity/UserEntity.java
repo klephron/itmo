@@ -23,5 +23,8 @@ public final class UserEntity {
     @NotEmpty
     private String password;
     @NotNull
+    @NotEmpty
+    private String email;
+    @NotNull
     private List<String> authorities;
 }

@@ -15,6 +15,5 @@ public class RadiatorToApartmentDto implements Serializable {
     @NotEmpty
     String apartmentId;
     @NotNull
-    @NotEmpty
-    String radiatorId;
+    Long deviceId;
 }

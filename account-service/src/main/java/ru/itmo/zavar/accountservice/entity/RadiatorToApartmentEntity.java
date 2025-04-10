@@ -15,5 +15,5 @@ public final class RadiatorToApartmentEntity {
     private String apartmentId;
     @NotNull
     @NotEmpty
-    private String deviceId;
+    private Long deviceId;
 }

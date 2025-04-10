@@ -2,12 +2,14 @@ package ru.itmo.zavar.accountservice.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import ru.itmo.zavar.accountservice.security.jwt.UserDetailsJwtConverter;
 
+@EnableMethodSecurity(prePostEnabled = true)
 @Configuration
 public class SecurityConfig {
 
@@ -27,8 +29,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html")
                         .permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/apartments/**").hasAuthority("ADMIN")
+                        .requestMatchers("/admin/**").hasAuthority(Roles.ADMIN.toString())
+                        .requestMatchers("/apartments/**").hasAuthority(Roles.ADMIN.toString())
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->
