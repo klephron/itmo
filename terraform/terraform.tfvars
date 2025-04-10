@@ -1,1 +1,1 @@
-pool_path_prefix = "/opt/devops/vms"
+pool_path_prefix = "/opt/devops/terraform"

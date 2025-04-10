@@ -18,7 +18,7 @@ resource "libvirt_volume" "ubuntu_20_04" {
   name   = "ubuntu-20.04.qcow2"
   format = "qcow2"
   pool   = libvirt_pool.images.name
-  source = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-disk-kvm.img"
+  source = "${var.pool_path_prefix}/focal-server-cloudimg-amd64-disk-kvm.img"
 }
 
 data "template_file" "ubuntu_20_04_user_data" {

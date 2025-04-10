@@ -18,6 +18,11 @@
         dest: "{{ project_compose_file }}"
         mode: "0644"
 
+    - name: Pull docker-compose images
+      shell: "docker compose -f {{ project_compose_file }} pull"
+      args:
+        chdir: "{{ project_src }}"
+
     - name: Reload docker-compose
       shell: "docker compose -f {{ project_compose_file }} up -d --remove-orphans"
       args:
