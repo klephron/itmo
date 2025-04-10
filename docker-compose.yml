@@ -155,24 +155,49 @@ services:
 
   iot-controller:
     build: ./iot-controller
+    environment:
+      MQTT_BROKER_URL: tcp://mqtt-broker:1883
+      MQTT_TOPIC: $$share/myGroup/radiator/data
+      RABBIT_MQ_HOST: rabbitmq
+      RABBIT_MQ_PORT: 5672
+      RABBIT_MQ_USER: guest
+      RABBIT_MQ_PASS: guest
+      RABBIT_QUEUE_NAME: testQueue
+      MONGO_URI: mongodb://zavar:zavar@mongodb:27017/
+      MONGO_DB_NAME: iot-db
+      MONGO_DB_COLLECTION: radiator
     depends_on:
       rabbitmq:
         condition: service_healthy
     entrypoint: [ "./entrypoint.sh" ]
-    command: [ "tcp://mqtt-broker:1883", "$$share/myGroup/radiator/data", "rabbitmq", "5672", "guest", "guest", "testQueue", "mongodb://zavar:zavar@mongodb:27017/", "iot-db", "radiator" ]
 
   data-simulator:
     build: ./data-simulator
     container_name: data-simulator
+    environment:
+      DEVICE_COUNT: 5
+      SEND_INTERVAL_MS: 1000
+      MQTT_BROKER_URL: tcp://mqtt-broker:1883
+      MQTT_TOPIC: radiator/data
+      MQTT_RESET_TOPIC: radiator/reset
     depends_on:
       - iot-controller
-    command: ["5", "1000", "tcp://mqtt-broker:1883", "radiator/data"]
 
   rule-engine:
     build: ./rule-engine
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBIT_MQ_HOST: rabbitmq
+      RABBIT_MQ_PORT: 5672
+      RABBIT_MQ_USER: guest
+      RABBIT_MQ_PASS: guest
+      RABBIT_QUEUE_NAME: testQueue
+      MONGO_URI: mongodb://zavar:zavar@mongodb:27017/
+      MONGO_DB_NAME: iot-db
+      MONGO_DB_COLLECTION: rules
     depends_on:
       - iot-controller
-    command: [ "redis", "6379", "rabbitmq", "5672", "guest", "guest", "testQueue", "mongodb://zavar:zavar@mongodb:27017/", "iot-db", "rules" ]
 
 volumes:
   mongodb_data:

@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("apartments")
 @Getter
 @Setter
-public class ApartmentEntity {
+public final class ApartmentEntity {
     @Id
     @NotNull
     private String id;

@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("pay_history")
 @Getter
 @Setter
-public class PayHistoryEntity {
+public final class PayHistoryEntity {
     @Id
     @NotNull
     private String id;

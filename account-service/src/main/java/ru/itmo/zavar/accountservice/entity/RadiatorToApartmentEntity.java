@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("radiator_to_apartment")
 @Getter
 @Setter
-public class RadiatorToApartmentEntity {
+public final class RadiatorToApartmentEntity {
     @NotNull
     @NotEmpty
     private String apartmentId;

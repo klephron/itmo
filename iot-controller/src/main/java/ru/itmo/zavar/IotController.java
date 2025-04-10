@@ -53,39 +53,37 @@ public class IotController {
         Logger.getLogger("org.eclipse.paho.client.mqttv3").setLevel(java.util.logging.Level.OFF);
         Logger.getLogger("org.eclipse.paho.mqttv5.client").setLevel(java.util.logging.Level.OFF);
 
-        if (args.length >= 1) {
-            mqttBrokerUrl = args[0];
+        if (System.getenv("MQTT_BROKER_URL") != null) {
+            mqttBrokerUrl = System.getenv("MQTT_BROKER_URL");
         }
-        if (args.length >= 2) {
-            mqttTopic = args[1];
+        if (System.getenv("MQTT_TOPIC") != null) {
+            mqttTopic = System.getenv("MQTT_TOPIC");
         }
-        if (args.length >= 3) {
-            rabbitMqHost = args[2];
+        if (System.getenv("RABBIT_MQ_HOST") != null) {
+            rabbitMqHost = System.getenv("RABBIT_MQ_HOST");
         }
-        if (args.length >= 4) {
-            rabbitMqPort = Integer.parseInt(args[3]);
+        if (System.getenv("RABBIT_MQ_PORT") != null) {
+            rabbitMqPort = Integer.parseInt(System.getenv("RABBIT_MQ_PORT"));
         }
-        if (args.length >= 5) {
-            rabbitMqUser = args[4];
+        if (System.getenv("RABBIT_MQ_USER") != null) {
+            rabbitMqUser = System.getenv("RABBIT_MQ_USER");
         }
-        if (args.length >= 6) {
-            rabbitMqPass = args[5];
+        if (System.getenv("RABBIT_MQ_PASS") != null) {
+            rabbitMqPass = System.getenv("RABBIT_MQ_PASS");
         }
-        if (args.length >= 7) {
-            rabbitQueueName = args[6];
+        if (System.getenv("RABBIT_QUEUE_NAME") != null) {
+            rabbitQueueName = System.getenv("RABBIT_QUEUE_NAME");
         }
-        if (args.length >= 8) {
-            mongoUri = args[7];
+        if (System.getenv("MONGO_URI") != null) {
+            mongoUri = System.getenv("MONGO_URI");
         }
-        if (args.length >= 9) {
-            mongoDbName = args[8];
+        if (System.getenv("MONGO_DB_NAME") != null) {
+            mongoDbName = System.getenv("MONGO_DB_NAME");
         }
-        if (args.length >= 10) {
-            mongoDbCollection = args[9];
+        if (System.getenv("MONGO_DB_COLLECTION") != null) {
+            mongoDbCollection = System.getenv("MONGO_DB_COLLECTION");
         }
-        if (args.length >= 11) {
-            replicaNumber = args[10];
-        }
+        replicaNumber = args[args.length - 1];
 
         mongoUri = mongoUri + mongoDbName;
 

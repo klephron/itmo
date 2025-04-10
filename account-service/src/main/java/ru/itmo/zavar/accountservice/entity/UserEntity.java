@@ -12,7 +12,7 @@ import java.util.List;
 @Document("users")
 @Getter
 @Setter
-public class UserEntity {
+public final class UserEntity {
     @Id
     @NotNull
     private String id;

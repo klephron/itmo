@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("bills")
 @Getter
 @Setter
-public class BillEntity {
+public final class BillEntity {
     @Id
     @NotNull
     private String id;

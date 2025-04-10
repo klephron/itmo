@@ -32,17 +32,20 @@ public final class DataSimulatorMqtt {
 
     public static void main(String[] args) throws MqttException {
 
-        if (args.length >= 1) {
-            deviceCount = Integer.parseInt(args[0]);
+        if (System.getenv("DEVICE_COUNT") != null) {
+            deviceCount = Integer.parseInt(System.getenv("DEVICE_COUNT"));
         }
-        if (args.length >= 2) {
-            sendIntervalMs = Long.parseLong(args[1]);
+        if (System.getenv("SEND_INTERVAL_MS") != null) {
+            sendIntervalMs = Long.parseLong(System.getenv("SEND_INTERVAL_MS"));
         }
-        if (args.length >= 3) {
-            mqttBrokerUrl = args[2];
+        if (System.getenv("MQTT_BROKER_URL") != null) {
+            mqttBrokerUrl = System.getenv("MQTT_BROKER_URL");
         }
-        if (args.length >= 4) {
-            mqttTopic = args[3];
+        if (System.getenv("MQTT_TOPIC") != null) {
+            mqttTopic = System.getenv("MQTT_TOPIC");
+        }
+        if (System.getenv("MQTT_RESET_TOPIC") != null) {
+            mqttResetTopic = System.getenv("MQTT_RESET_TOPIC");
         }
 
         LoggerWrapper.log(Level.INFO,"Starting Data Simulator (MQTT 5)");
@@ -50,6 +53,7 @@ public final class DataSimulatorMqtt {
         LoggerWrapper.log(Level.INFO,"SEND_INTERVAL_MS = {}", sendIntervalMs);
         LoggerWrapper.log(Level.INFO,"MQTT_BROKER_URL  = {}", mqttBrokerUrl);
         LoggerWrapper.log(Level.INFO,"MQTT_TOPIC       = {}", mqttTopic);
+        LoggerWrapper.log(Level.INFO,"MQTT_RESET_TOPIC = {}", mqttResetTopic);
 
         String clientId = "DataSimulator";
         MqttClient client = new MqttClient(mqttBrokerUrl, clientId, new MemoryPersistence());
