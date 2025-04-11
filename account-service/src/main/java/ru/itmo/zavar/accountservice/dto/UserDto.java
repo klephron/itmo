@@ -13,6 +13,7 @@ import java.util.List;
 @Value
 public class UserDto implements Serializable {
     @NotNull
+    @NotEmpty
     String id;
     @NotNull
     @NotEmpty

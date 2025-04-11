@@ -1,5 +1,6 @@
 package ru.itmo.zavar.accountservice.dto;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -13,8 +14,10 @@ import java.io.Serializable;
 @Value
 public class BillDto implements Serializable {
     @NotNull
+    @NotEmpty
     String id;
     @NotNull
+    @NotEmpty
     String userId;
     @NotNull
     @Positive

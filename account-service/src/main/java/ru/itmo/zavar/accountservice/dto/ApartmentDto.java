@@ -12,7 +12,10 @@ import java.io.Serializable;
 @Value
 public class ApartmentDto implements Serializable {
     @NotNull
+    @NotEmpty
     String id;
+    @NotNull
+    @NotEmpty
     String userId;
     @NotNull
     @NotEmpty

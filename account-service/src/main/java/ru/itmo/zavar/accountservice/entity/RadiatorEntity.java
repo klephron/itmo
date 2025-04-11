@@ -1,5 +1,6 @@
 package ru.itmo.zavar.accountservice.entity;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public final class RadiatorEntity {
     @Id
     @NotNull
+    @NotEmpty
     private String id;
     @NotNull
     @PositiveOrZero

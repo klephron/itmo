@@ -6,6 +6,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.accountservice.dto.BillDto;
+import ru.itmo.zavar.accountservice.dto.HeatCostDto;
+import ru.itmo.zavar.accountservice.dto.HeatCostUserDto;
 import ru.itmo.zavar.accountservice.dto.PayHistoryDto;
 import ru.itmo.zavar.accountservice.exception.ObjectNotFoundException;
 import ru.itmo.zavar.accountservice.security.CustomUserDetails;
@@ -57,6 +59,13 @@ public class UserController {
         return ResponseEntity.ok(bills);
     }
 
+    @GetMapping("/bills/heat-cost")
+    public ResponseEntity<List<HeatCostDto>> getHeatCost(@AuthenticationPrincipal CustomUserDetails user) {
+        List<BillDto> bills = this.billService.getAllBillsByUserId(user.getId());
+        List<HeatCostDto> list = bills.stream().map(billDto -> new HeatCostDto(billDto.getTimestamp(), billDto.getHeat(), billDto.getCost())).toList();
+        return ResponseEntity.ok(list);
+    }
+
     @PostMapping("/pay/by-bill/{billId}")
     public ResponseEntity<?> payBill(@PathVariable String billId, @AuthenticationPrincipal CustomUserDetails user) {
         try {
@@ -71,6 +80,12 @@ public class UserController {
     @GetMapping("/pay/history-by-user/{userId}")
     public ResponseEntity<List<PayHistoryDto>> getUserPayHistory(@PathVariable String userId) {
         List<PayHistoryDto> history = this.payService.getPayHistoryByUserId(userId);
+        return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/pay/history")
+    public ResponseEntity<List<PayHistoryDto>> geHistory(@AuthenticationPrincipal CustomUserDetails user) {
+        List<PayHistoryDto> history = this.payService.getPayHistoryByUserId(user.getId());
         return ResponseEntity.ok(history);
     }
 

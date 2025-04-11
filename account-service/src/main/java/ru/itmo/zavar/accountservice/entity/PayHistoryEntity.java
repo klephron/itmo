@@ -1,5 +1,6 @@
 package ru.itmo.zavar.accountservice.entity;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
@@ -13,10 +14,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public final class PayHistoryEntity {
     @Id
     @NotNull
+    @NotEmpty
     private String id;
     @NotNull
+    @NotEmpty
     private String billId;
     @NotNull
+    @NotEmpty
     private String userId;
     @NotNull
     @Positive

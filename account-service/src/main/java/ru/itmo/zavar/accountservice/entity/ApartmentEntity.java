@@ -13,7 +13,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public final class ApartmentEntity {
     @Id
     @NotNull
+    @NotEmpty
     private String id;
+    @NotNull
+    @NotEmpty
     private String userId;
     @NotEmpty
     @NotNull
