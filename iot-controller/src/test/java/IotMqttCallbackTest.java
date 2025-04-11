@@ -51,7 +51,7 @@ public class IotMqttCallbackTest {
         MongoDBConnectTask mongoTask = mock(MongoDBConnectTask.class);
 
         IotMqttCallback callback = new IotMqttCallback(channel, connection, "queue", mongoTask, "iot-db", "rules", () -> {});
-        // invalid radiatorTemp = 200
+
         RadiatorMqttPayload payload = new RadiatorMqttPayload(1L, 200.0, 22.0, System.currentTimeMillis(), 10L);
         String json = new Gson().toJson(payload);
 
