@@ -199,6 +199,16 @@ services:
     depends_on:
       - iot-controller
 
+  account-service:
+    build: ./account-service
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://zavar:zavar@mongodb:27017/iot-db
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+
 volumes:
   mongodb_data:
   redis_data:
