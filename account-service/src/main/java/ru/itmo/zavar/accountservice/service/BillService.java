@@ -7,14 +7,18 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.accountservice.dto.BillDto;
+import ru.itmo.zavar.accountservice.dto.UserDto;
 import ru.itmo.zavar.accountservice.entity.ApartmentEntity;
 import ru.itmo.zavar.accountservice.entity.BillEntity;
 import ru.itmo.zavar.accountservice.exception.ObjectNotFoundException;
 import ru.itmo.zavar.accountservice.mapper.BillMapper;
 import ru.itmo.zavar.accountservice.repository.BillRepository;
+import ru.itmo.zavar.accountservice.repository.UserRepository;
 
 import java.util.*;
 
@@ -26,6 +30,8 @@ public class BillService {
     private final BillRepository billRepository;
     private final BillMapper billMapper;
     private final MongoTemplate mongoTemplate;
+    private final UserService userService;
+    private final JavaMailSender mailSender;
 
     public BillDto getBillById(String id) throws ObjectNotFoundException {
         BillEntity bill = this.billRepository.findById(id).orElseThrow(() -> new ObjectNotFoundException("Bill not found"));
@@ -85,7 +91,15 @@ public class BillService {
     }
 
     public void notifyUsers(List<BillDto> bills) {
-
+        bills.forEach(billDto -> {
+            UserDto userDto = userService.loadUserById(billDto.getUserId());
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(userDto.getEmail());
+            message.setSubject("Bill " + billDto.getId());
+            message.setText("You got a bill, please pay it: " + billDto.getCost() + " BTC");
+            message.setFrom("ahla@noreply.ru");
+            mailSender.send(message);
+        });
     }
 
 

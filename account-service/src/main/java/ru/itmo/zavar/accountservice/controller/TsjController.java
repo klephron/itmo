@@ -30,6 +30,9 @@ public class TsjController {
     @PreAuthorize("hasAuthority(T(ru.itmo.zavar.accountservice.security.Roles).TSJ.toString())")
     @PostMapping("/generateBills")
     public List<BillDto> generateBills(@RequestParam long fromTimestamp, @RequestParam long toTimestamp, @RequestParam(defaultValue = "1800") long tariff) {
-        return this.billService.generateBills(fromTimestamp, toTimestamp, tariff);
+        List<BillDto> billDtos = this.billService.generateBills(fromTimestamp, toTimestamp, tariff);
+        this.billService.notifyUsers(billDtos);
+        this.mqttService.publish("reset");
+        return billDtos;
     }
 }
