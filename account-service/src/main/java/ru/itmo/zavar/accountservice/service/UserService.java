@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice.service;
 
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import ru.itmo.zavar.accountservice.dto.UserDto;
 import ru.itmo.zavar.accountservice.entity.UserEntity;
 import ru.itmo.zavar.accountservice.mapper.UserMapper;
 import ru.itmo.zavar.accountservice.repository.UserRepository;
+import ru.itmo.zavar.accountservice.security.CustomUserDetails;
 import ru.itmo.zavar.accountservice.security.Roles;
 
 import java.util.List;
@@ -22,38 +24,41 @@ public class UserService implements UserDetailsService {
     private final UserMapper userMapper;
 
     public UserDto loadUserById(String id) throws UsernameNotFoundException {
-        UserEntity userEntity = repo.findById(id).orElseThrow(() -> new UsernameNotFoundException(id));
+        UserEntity userEntity = repo.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return userMapper.toDto(userEntity);
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserDetails cached = userCache.getUserFromCache(username);
+    public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        CustomUserDetails cached = (CustomUserDetails) userCache.getUserFromCache(username);
         if (cached != null) {
             return cached;
         }
 
         UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        UserDetails build = User.builder()
-                    .username(userEntity.getUsername())
-                    .password(userEntity.getPassword())
-                    .authorities(userEntity.getAuthorities().toArray(new String[0]))
-                    .build();
+        CustomUserDetails build = new CustomUserDetails(userEntity.getId(),
+                userEntity.getUsername(),
+                userEntity.getPassword(),
+                userEntity.getAuthorities().stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .toList());
         userCache.putUserInCache(build);
         return build;
     }
 
-    public UserDetails setAuthorities(String username, List<String> authorities) throws UsernameNotFoundException, IllegalArgumentException {
+    public CustomUserDetails setAuthorities(String username, List<String> authorities) throws UsernameNotFoundException, IllegalArgumentException {
         UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (!authorities.stream().allMatch(Roles::isValid))
             throw new IllegalArgumentException("Invalid authorities");
         userEntity.setAuthorities(authorities);
+        userCache.removeUserFromCache(username);
         userEntity = repo.save(userEntity);
-        return User.builder()
-                .username(userEntity.getUsername())
-                .password(userEntity.getPassword())
-                .authorities(userEntity.getAuthorities().toArray(new String[0]))
-                .build();
+        return new CustomUserDetails(userEntity.getId(),
+                userEntity.getUsername(),
+                userEntity.getPassword(),
+                userEntity.getAuthorities().stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .toList());
     }
 
     public List<UserDetails> getAllUsers() {

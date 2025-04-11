@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+import ru.itmo.zavar.accountservice.security.CustomUserDetails;
 import ru.itmo.zavar.accountservice.service.UserService;
 
 @Component
@@ -20,7 +21,7 @@ public class UserDetailsJwtConverter implements Converter<Jwt, AbstractAuthentic
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
         String username = jwt.getSubject();
-        UserDetails userDetails = userService.loadUserByUsername(username);
+        CustomUserDetails userDetails = userService.loadUserByUsername(username);
 
         return new UsernamePasswordAuthenticationToken(
                 userDetails,

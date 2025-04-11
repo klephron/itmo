@@ -43,9 +43,9 @@ public class ApartmentService {
         return this.apartmentRepository.findAll().stream().map(this.apartmentMapper::toDto).toList();
     }
 
-    public ApartmentDto getApartmentByUserId(String userId) throws ObjectNotFoundException {
-        ApartmentEntity apartmentEntity = this.apartmentRepository.findByUserId(userId).orElseThrow(() -> new ObjectNotFoundException("Apartment not found"));
-        return this.apartmentMapper.toDto(apartmentEntity);
+    public List<ApartmentDto> getApartmentsByUserId(String userId) {
+        List<ApartmentEntity> allByUserId = this.apartmentRepository.findAllByUserId(userId);
+        return allByUserId.stream().map(apartmentMapper::toDto).collect(Collectors.toList());
     }
 
     public void deleteApartmentById(String apartmentId) {

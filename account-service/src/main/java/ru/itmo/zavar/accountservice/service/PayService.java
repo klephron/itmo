@@ -4,12 +4,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.accountservice.dto.PayHistoryDto;
+import ru.itmo.zavar.accountservice.entity.UserEntity;
 import ru.itmo.zavar.accountservice.mapper.PayHistoryMapper;
 import ru.itmo.zavar.accountservice.entity.BillEntity;
 import ru.itmo.zavar.accountservice.entity.PayHistoryEntity;
 import ru.itmo.zavar.accountservice.exception.ObjectNotFoundException;
 import ru.itmo.zavar.accountservice.repository.BillRepository;
 import ru.itmo.zavar.accountservice.repository.PayHistoryRepository;
+import ru.itmo.zavar.accountservice.repository.UserRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,10 +22,15 @@ public class PayService {
     private final PayHistoryRepository payHistoryRepository;
     private final PayHistoryMapper payHistoryMapper;
     private final BillRepository billRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public PayHistoryDto pay(String billId) throws ObjectNotFoundException {
+    public PayHistoryDto pay(String billId, String userId) throws ObjectNotFoundException, IllegalAccessException {
+        this.userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
         BillEntity bill = this.billRepository.findById(billId).orElseThrow(() -> new ObjectNotFoundException("Bill not found"));
+        if (!bill.getUserId().equals(userId)) {
+            throw new IllegalAccessException("You don't own this bill");
+        }
         bill.setPayed(true);
         this.billRepository.save(bill);
         PayHistoryEntity payHistoryEntity = new PayHistoryEntity();

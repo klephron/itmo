@@ -84,5 +84,9 @@ public class BillService {
         return createdBills;
     }
 
+    public void notifyUsers(List<BillDto> bills) {
+
+    }
+
 
 }

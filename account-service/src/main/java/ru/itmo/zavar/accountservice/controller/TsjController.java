@@ -21,13 +21,13 @@ public class TsjController {
     private final MqttService mqttService;
     private final BillService billService;
 
-    @PreAuthorize("hasAuthority('TSJ')")
-    @GetMapping("/test")
+    @PreAuthorize("hasAuthority(T(ru.itmo.zavar.accountservice.security.Roles).TSJ.toString())")
+    @GetMapping("/reset")
     public void me() {
         this.mqttService.publish("reset");
     }
 
-    @PreAuthorize("hasAuthority('TSJ')")
+    @PreAuthorize("hasAuthority(T(ru.itmo.zavar.accountservice.security.Roles).TSJ.toString())")
     @PostMapping("/generateBills")
     public List<BillDto> generateBills(@RequestParam long fromTimestamp, @RequestParam long toTimestamp, @RequestParam(defaultValue = "1800") long tariff) {
         return this.billService.generateBills(fromTimestamp, toTimestamp, tariff);

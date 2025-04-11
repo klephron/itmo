@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.accountservice.dto.BillDto;
 import ru.itmo.zavar.accountservice.dto.PayHistoryDto;
 import ru.itmo.zavar.accountservice.exception.ObjectNotFoundException;
+import ru.itmo.zavar.accountservice.security.CustomUserDetails;
 import ru.itmo.zavar.accountservice.service.BillService;
 import ru.itmo.zavar.accountservice.service.PayService;
 
@@ -25,7 +26,7 @@ public class UserController {
         this.payService = payService;
     }
 
-    @PreAuthorize("hasAuthority('TSJ')")
+    @PreAuthorize("hasAuthority(T(ru.itmo.zavar.accountservice.security.Roles).TSJ.toString())")
     @GetMapping("/bills/{id}")
     public ResponseEntity<?> getBillById(@PathVariable String id) {
         try {
@@ -36,31 +37,37 @@ public class UserController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TSJ')")
+    @PreAuthorize("hasAuthority(T(ru.itmo.zavar.accountservice.security.Roles).TSJ.toString())")
     @GetMapping("/bills")
     public ResponseEntity<List<BillDto>> getAllBills() {
         List<BillDto> bills = this.billService.getAllBills();
         return ResponseEntity.ok(bills);
     }
 
-    @PreAuthorize("hasAuthority('TSJ')")
+    @PreAuthorize("hasAuthority(T(ru.itmo.zavar.accountservice.security.Roles).TSJ.toString())")
     @GetMapping("/bills/by-user/{userId}")
     public ResponseEntity<List<BillDto>> getAllBillsByUserId(@PathVariable String userId) {
         List<BillDto> bills = this.billService.getAllBillsByUserId(userId);
         return ResponseEntity.ok(bills);
     }
 
+    @GetMapping("/bills/my")
+    public ResponseEntity<List<BillDto>> getAllBillsByUserId(@AuthenticationPrincipal CustomUserDetails user) {
+        List<BillDto> bills = this.billService.getAllBillsByUserId(user.getId());
+        return ResponseEntity.ok(bills);
+    }
+
     @PostMapping("/pay/by-bill/{billId}")
-    public ResponseEntity<?> payBill(@PathVariable String billId) {
+    public ResponseEntity<?> payBill(@PathVariable String billId, @AuthenticationPrincipal CustomUserDetails user) {
         try {
-            PayHistoryDto result = this.payService.pay(billId);
+            PayHistoryDto result = this.payService.pay(billId, user.getId());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @PreAuthorize("hasAuthority('TSJ')")
+    @PreAuthorize("hasAuthority(T(ru.itmo.zavar.accountservice.security.Roles).TSJ.toString())")
     @GetMapping("/pay/history-by-user/{userId}")
     public ResponseEntity<List<PayHistoryDto>> getUserPayHistory(@PathVariable String userId) {
         List<PayHistoryDto> history = this.payService.getPayHistoryByUserId(userId);
@@ -68,7 +75,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public String me(@AuthenticationPrincipal UserDetails user) {
+    public String me(@AuthenticationPrincipal CustomUserDetails user) {
         return user.getUsername();
     }
 }
