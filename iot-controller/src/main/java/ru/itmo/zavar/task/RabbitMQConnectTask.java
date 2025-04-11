@@ -7,6 +7,7 @@ import org.eclipse.paho.mqttv5.client.MqttClient;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.slf4j.event.Level;
 import ru.itmo.zavar.log.LoggerWrapper;
+import ru.itmo.zavar.task.exithandler.ExitHandler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,6 +19,7 @@ public final class RabbitMQConnectTask implements Runnable {
     private final MqttClient client;
     private final String rabbitQueueName;
     private final int maxRetries;
+    private final ExitHandler exitHandler;
     private int attempt = 1;
     @Getter
     private Connection connection;
@@ -64,7 +66,7 @@ public final class RabbitMQConnectTask implements Runnable {
             if (attempt++ >= maxRetries) {
                 LoggerWrapper.log(Level.ERROR, "All retries exhausted. Stopping retries.");
                 executor.shutdown();
-                System.exit(1);
+                exitHandler.exit(1);
             }
         }
     }

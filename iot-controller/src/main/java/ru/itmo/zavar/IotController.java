@@ -1,34 +1,28 @@
 package ru.itmo.zavar;
 
-import ch.qos.logback.classic.LoggerContext;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import net.logstash.logback.appender.LogstashTcpSocketAppender;
-import net.logstash.logback.encoder.LogstashEncoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.eclipse.paho.mqttv5.client.MqttClient;
 import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.eclipse.paho.mqttv5.common.MqttException;
-import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import ru.itmo.zavar.log.LoggerWrapper;
-import ru.itmo.zavar.metrics.MetricsConfig;
 import ru.itmo.zavar.metrics.MetricsServer;
 import ru.itmo.zavar.mqtt.IotMqttCallback;
 import ru.itmo.zavar.task.MongoDBConnectTask;
 import ru.itmo.zavar.task.RabbitMQConnectTask;
+import ru.itmo.zavar.task.exithandler.DefaultExitHandler;
 
 import java.io.IOException;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -116,7 +110,7 @@ public class IotController {
         int delayMs = 3000;
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        RabbitMQConnectTask rabbitMQConnectTask = new RabbitMQConnectTask(factory, executor, client, rabbitQueueName, maxRetries);
+        RabbitMQConnectTask rabbitMQConnectTask = new RabbitMQConnectTask(factory, executor, client, rabbitQueueName, maxRetries, new DefaultExitHandler());
 
         executor.scheduleWithFixedDelay(rabbitMQConnectTask, 0, delayMs, TimeUnit.MILLISECONDS);
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
@@ -134,7 +128,7 @@ public class IotController {
                 .build();
 
         executor = Executors.newSingleThreadScheduledExecutor();
-        MongoDBConnectTask mongoDBConnectTask = new MongoDBConnectTask(settings, executor, maxRetries);
+        MongoDBConnectTask mongoDBConnectTask = new MongoDBConnectTask(settings, executor, maxRetries, new DefaultExitHandler());
         executor.scheduleWithFixedDelay(mongoDBConnectTask, 0, delayMs, TimeUnit.MILLISECONDS);
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         MongoClient mongoClient = mongoDBConnectTask.getMongoClient();

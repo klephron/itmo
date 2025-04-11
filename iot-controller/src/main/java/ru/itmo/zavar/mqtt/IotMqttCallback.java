@@ -99,7 +99,9 @@ public final class IotMqttCallback implements MqttCallback {
                 mongoDBConnectTask.setExecutor(executor);
                 executor.scheduleWithFixedDelay(mongoDBConnectTask, 0, 3000, TimeUnit.MILLISECONDS);
                 try {
-                    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+                    if (!mongoDBConnectTask.isTestingMode()) {
+                        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+                    }
                 } catch (InterruptedException ex) {
                     LoggerWrapper.log(Level.ERROR,"Interrupted while waiting for mongoDB connect task");
                 }
