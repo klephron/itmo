@@ -50,6 +50,7 @@ public class ApartmentService {
 
     public void deleteApartmentById(String apartmentId) {
         this.apartmentRepository.deleteById(apartmentId);
+        this.radiatorToApartmentRepository.deleteByApartmentId(apartmentId);
     }
 
     public RadiatorToApartmentDto attachRadiatorToApartment(String apartmentId, Long deviceId) throws ObjectNotFoundException {

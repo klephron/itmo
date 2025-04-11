@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface RadiatorToApartmentRepository extends MongoRepository<RadiatorToApartmentEntity, String> {
     List<RadiatorToApartmentEntity> findByApartmentId(String apartmentId);
+    void deleteByApartmentId(String apartmentId);
 }
