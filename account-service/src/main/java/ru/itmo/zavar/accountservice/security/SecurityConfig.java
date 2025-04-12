@@ -29,6 +29,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html")
                         .permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(Roles.ADMIN.toString())
                         .requestMatchers("/apartments/**").hasAuthority(Roles.ADMIN.toString())
                         .anyRequest().authenticated()

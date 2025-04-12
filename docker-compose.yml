@@ -188,6 +188,8 @@ services:
     build: ./account-service
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://zavar:zavar@mongodb:27017/iot-db
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
     ports:
       - "${ACCOUNT_PORT:-8226}:8082"
     depends_on:

@@ -36,6 +36,14 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 RUN groupadd --gid 1000 spring-app \
   && useradd --uid 1000 --gid spring-app --shell /bin/bash --create-home spring-app
 
+COPY entrypoint.sh /home/spring-app/entrypoint.sh
+
+RUN chmod 777 /home/spring-app/entrypoint.sh
+
+USER root
+
+RUN microdnf install -y hostname && microdnf clean all
+
 USER spring-app:spring-app
 WORKDIR /home/spring-app
 
@@ -43,4 +51,6 @@ COPY --from=bundler $BUNDLE_PATH/spring-boot-loader/ ./
 COPY --from=bundler $BUNDLE_PATH/dependencies/ ./
 COPY --from=bundler $BUNDLE_PATH/application/ ./
 
-ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["/home/spring-app/entrypoint.sh"]
+
+#ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

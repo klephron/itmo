@@ -58,3 +58,12 @@ scrape_configs:
       - source_labels: []
         target_label: __metrics_path__
         replacement: /metrics
+
+  - job_name: 'account-service'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: ['account-service']
+    relabel_configs:
+      - source_labels: []
+        target_label: __metrics_path__
+        replacement: /actuator/prometheus
