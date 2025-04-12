@@ -17,6 +17,8 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+
+import ru.itmo.zavar.consul.ConsulClient;
 import ru.itmo.zavar.log.LoggerWrapper;
 import ru.itmo.zavar.metrics.MetricsServer;
 import ru.itmo.zavar.redis.RedisFactStorage;
@@ -34,7 +36,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class RuleEngine {
-
+    private static String publicAddress = System.getenv("HOSTNAME");
     private static String rabbitMqHost = "localhost";
     private static int rabbitMqPort = 5672;
     private static String rabbitMqUser = "guest";
@@ -45,7 +47,9 @@ public class RuleEngine {
     private static String mongoDbName = "iot-db";
     private static String mongoUri = "mongodb://zavar:zavar@mongodb:27017/";
     private static String mongoDbCollection = "rules";
-    private static String replicaNumber = String.valueOf(System.currentTimeMillis());
+    private static String replicaId = String.valueOf(System.currentTimeMillis());
+    private static String consulHost = "localhost";
+    private static int consulPort = 8500;
 
     public static void main(String[] args) throws InterruptedException, IOException {
         if (System.getenv("REDIS_HOST") != null) {
@@ -78,7 +82,15 @@ public class RuleEngine {
         if (System.getenv("MONGO_DB_COLLECTION") != null) {
             mongoDbCollection = System.getenv("MONGO_DB_COLLECTION");
         }
-        replicaNumber = args[args.length - 1];
+        if (System.getenv("CONSUL_HOST") != null) {
+            consulHost = System.getenv("CONSUL_HOST");
+        }
+        if (System.getenv("CONSUL_PORT") != null) {
+            consulPort = Integer.parseInt(System.getenv("CONSUL_PORT"));
+        }
+
+        replicaId = args[args.length - 1];
+        publicAddress = args[args.length - 2];
 
         mongoUri = mongoUri + mongoDbName;
 
@@ -99,7 +111,8 @@ public class RuleEngine {
         int delayMs = 3000;
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        RabbitMQConnectTask rabbitMQConnectTask = new RabbitMQConnectTask(factory, executor, rabbitQueueName, maxRetries);
+        RabbitMQConnectTask rabbitMQConnectTask = new RabbitMQConnectTask(factory, executor, rabbitQueueName,
+                maxRetries);
 
         executor.scheduleWithFixedDelay(rabbitMQConnectTask, 0, delayMs, TimeUnit.MILLISECONDS);
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
@@ -108,8 +121,7 @@ public class RuleEngine {
 
         CodecRegistry pojoCodecRegistry = fromRegistries(
                 MongoClientSettings.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build())
-        );
+                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(mongoUri))
                 .codecRegistry(pojoCodecRegistry)
@@ -125,7 +137,7 @@ public class RuleEngine {
         try {
             database.createCollection(mongoDbCollection);
         } catch (Exception exception) {
-            LoggerWrapper.log(Level.DEBUG,"Collection is already exists");
+            LoggerWrapper.log(Level.DEBUG, "Collection is already exists");
         }
 
         RedisClient redisClient = RedisClient.create("redis://" + redisHost + ":" + redisPort);
@@ -134,22 +146,28 @@ public class RuleEngine {
 
         try {
             channel.queueDeclare(rabbitQueueName, false, false, false, null);
-            LoggerWrapper.log(Level.INFO,"Waiting for messages...");
+            LoggerWrapper.log(Level.INFO, "Waiting for messages...");
             channel.basicConsume(rabbitQueueName, true, new RabbitMQConsumeCallback(redisFactStorage, redis,
-                    mongoDBConnectTask, mongoDbName, mongoDbCollection, replicaNumber), consumerTag -> {});
+                    mongoDBConnectTask, mongoDbName, mongoDbCollection, replicaId), consumerTag -> {
+                    });
         } catch (IOException e) {
             LoggerWrapper.log(Level.ERROR, e.getMessage());
         }
 
+        String consulUrl = "http://" + consulHost + ":" + consulPort;
+        ConsulClient consulClient = new ConsulClient(consulUrl, publicAddress, 8087, "rule-engine", replicaId);
+        consulClient.register();
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
+                consulClient.deregister();
                 if (channel.isOpen())
                     channel.close();
                 if (connection.isOpen())
                     connection.close();
-                LoggerWrapper.log(Level.INFO,"RabbitMQ Client disconnected.");
+                LoggerWrapper.log(Level.INFO, "RabbitMQ Client disconnected.");
             } catch (IOException | TimeoutException e) {
-                LoggerWrapper.log(Level.ERROR,"Error while closing RabbitMQ client: {}", e.getMessage());
+                LoggerWrapper.log(Level.ERROR, "Error while closing RabbitMQ client: {}", e.getMessage());
             }
             metricsServer.stop();
             redisClient.shutdown();

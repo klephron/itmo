@@ -1,11 +1,10 @@
 #!/bin/sh
 
-# Извлекаем номер реплики из HOSTNAME
-INSTANCE_NUMBER=$(hostname | awk -F'_' '{print $NF}')
-echo "Replica instance number: $INSTANCE_NUMBER"
+INSTANCE_ID=$(hostname | awk -F'_' '{print $NF}')
+ADDRESS=$(hostname)
 
-# Логируем переданные аргументы
+echo "Replica instance ID: $INSTANCE_ID"
+
 echo "Arguments passed from docker-compose: $@"
 
-# Запускаем приложение с номером реплики и переданными аргументами
-exec java -jar /app/rule-engine.jar "$@" "$INSTANCE_NUMBER"
+exec java -jar /app/rule-engine.jar "$@" "$ADDRESS" "$INSTANCE_ID"

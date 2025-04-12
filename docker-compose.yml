@@ -1,9 +1,4 @@
 services:
-  metrics-service:
-    build: ./metrics-service
-    ports:
-      - "${METRICS_PORT:-8080}:8080"
-
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -48,7 +43,7 @@ services:
     depends_on:
       - elasticsearch
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://kibana:5601/api/status || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://kibana:5601/api/status || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -149,8 +144,12 @@ services:
       MONGO_URI: mongodb://zavar:zavar@mongodb:27017/
       MONGO_DB_NAME: iot-db
       MONGO_DB_COLLECTION: radiator
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      consul:
         condition: service_healthy
 
   data-simulator:
@@ -177,8 +176,13 @@ services:
       MONGO_URI: mongodb://zavar:zavar@mongodb:27017/
       MONGO_DB_NAME: iot-db
       MONGO_DB_COLLECTION: rules
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
     depends_on:
-      - iot-controller
+      iot-controller:
+        condition: service_started
+      consul:
+        condition: service_healthy
 
   account-service:
     build: ./account-service
@@ -190,6 +194,23 @@ services:
       mongodb:
         condition: service_healthy
 
+  consul:
+    build: ./consul
+    environment:
+      CONSUL_BOOTSTRAP_EXPECT: 1
+      CONSUL_CLIENT_LAN_ADDRESS: 0.0.0.0
+      CONSUL_DISABLE_KEYRING_FILE: true
+    volumes:
+      - consul-data:/bitnami
+    ports:
+      - "${CONSUL_PORT_HTTP:-8500}:8500"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8500/v1/status/leader  || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
 volumes:
   mongodb-data:
   redis-data:
+  consul-data:
