@@ -14,6 +14,8 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.slf4j.event.Level;
+
+import ru.itmo.zavar.consul.ConsulClient;
 import ru.itmo.zavar.log.LoggerWrapper;
 import ru.itmo.zavar.metrics.MetricsServer;
 import ru.itmo.zavar.mqtt.IotMqttCallback;
@@ -29,6 +31,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class IotController {
+    private static String publicAddress = System.getenv("HOSTNAME");
     private static String mqttBrokerUrl = "tcp://localhost:1883";
     private static String mqttTopic = "$share/myGroup/radiator/data";
     private static String rabbitMqHost = "localhost";
@@ -39,8 +42,10 @@ public class IotController {
     private static String mongoDbName = "iot-db";
     private static String mongoUri = "mongodb://zavar:zavar@mongodb:27017/";
     private static String mongoDbCollection = "rules";
-    private static String replicaNumber = String.valueOf(System.currentTimeMillis());
+    private static String replicaId = String.valueOf(System.currentTimeMillis());
     private static int qosLevel = 2;
+    private static String consulHost = "localhost";
+    private static int consulPort = 8500;
 
     public static void main(String[] args) throws MqttException, InterruptedException, IOException {
 
@@ -77,24 +82,31 @@ public class IotController {
         if (System.getenv("MONGO_DB_COLLECTION") != null) {
             mongoDbCollection = System.getenv("MONGO_DB_COLLECTION");
         }
-        replicaNumber = args[args.length - 1];
+        if (System.getenv("CONSUL_HOST") != null) {
+            consulHost = System.getenv("CONSUL_HOST");
+        }
+        if (System.getenv("CONSUL_PORT") != null) {
+            consulPort = Integer.parseInt(System.getenv("CONSUL_PORT"));
+        }
+
+        replicaId = args[args.length - 1];
+        publicAddress = args[args.length - 2];
 
         mongoUri = mongoUri + mongoDbName;
 
-        LoggerWrapper.log(Level.INFO, ("=== IotController {}==="), replicaNumber);
+        LoggerWrapper.log(Level.INFO, ("=== IotController {}==="), replicaId);
         LoggerWrapper.log(Level.INFO, "BROKER_URL = {}", mqttBrokerUrl);
         LoggerWrapper.log(Level.INFO, "TOPIC      = {}", mqttTopic);
 
         MetricsServer metricsServer = new MetricsServer(8087);
         metricsServer.start();
 
-        String clientId = "Consumer-" + replicaNumber;
+        String clientId = "Consumer-" + replicaId;
         MqttClient client = new MqttClient(mqttBrokerUrl, clientId, new MemoryPersistence());
         MqttConnectionOptions options = new MqttConnectionOptions();
         options.setCleanStart(true);
-        //options.setSessionExpiryInterval(0L);
+        // options.setSessionExpiryInterval(0L);
         options.setAutomaticReconnect(true);
-
 
         ConnectionFactory factory = new ConnectionFactory();
         factory.setAutomaticRecoveryEnabled(true);
@@ -110,25 +122,25 @@ public class IotController {
         int delayMs = 3000;
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        RabbitMQConnectTask rabbitMQConnectTask = new RabbitMQConnectTask(factory, executor, client, rabbitQueueName, maxRetries, new DefaultExitHandler());
+        RabbitMQConnectTask rabbitMQConnectTask = new RabbitMQConnectTask(factory, executor, client, rabbitQueueName,
+                maxRetries, new DefaultExitHandler());
 
         executor.scheduleWithFixedDelay(rabbitMQConnectTask, 0, delayMs, TimeUnit.MILLISECONDS);
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         Connection connection = rabbitMQConnectTask.getConnection();
         Channel channel = rabbitMQConnectTask.getChannel();
 
-
         CodecRegistry pojoCodecRegistry = fromRegistries(
                 MongoClientSettings.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build())
-        );
+                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(mongoUri))
                 .codecRegistry(pojoCodecRegistry)
                 .build();
 
         executor = Executors.newSingleThreadScheduledExecutor();
-        MongoDBConnectTask mongoDBConnectTask = new MongoDBConnectTask(settings, executor, maxRetries, new DefaultExitHandler());
+        MongoDBConnectTask mongoDBConnectTask = new MongoDBConnectTask(settings, executor, maxRetries,
+                new DefaultExitHandler());
         executor.scheduleWithFixedDelay(mongoDBConnectTask, 0, delayMs, TimeUnit.MILLISECONDS);
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         MongoClient mongoClient = mongoDBConnectTask.getMongoClient();
@@ -147,14 +159,18 @@ public class IotController {
             }
         };
 
-
-        client.setCallback(new IotMqttCallback(channel, connection, rabbitQueueName, mongoDBConnectTask, mongoDbName, mongoDbCollection, subscribeRunnable));
+        client.setCallback(new IotMqttCallback(channel, connection, rabbitQueueName, mongoDBConnectTask, mongoDbName,
+                mongoDbCollection, subscribeRunnable));
         client.connect(options);
 
+        String consulUrl = "http://" + consulHost + ":" + consulPort;
+        ConsulClient consulClient = new ConsulClient(consulUrl, publicAddress, 8087, "iot-controller", replicaId);
+        consulClient.register();
 
         ScheduledExecutorService finalExecutor = executor;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
+                consulClient.deregister();
                 if (client.isConnected()) {
                     client.disconnect();
                 }
