@@ -20,4 +20,4 @@ COPY entrypoint.sh /app/entrypoint.sh
 
 RUN chmod 777 /app/entrypoint.sh
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
