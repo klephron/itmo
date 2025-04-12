@@ -41,7 +41,20 @@ scrape_configs:
     static_configs:
       - targets: ['rabbitmq:15692']
 
-  - job_name: 'metrics-service'
-    scrape_interval: 15s
-    static_configs:
-      - targets: ['metrics-service:8080']
+  - job_name: 'rule-engine'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: ['rule-engine']
+    relabel_configs:
+      - source_labels: []
+        target_label: __metrics_path__
+        replacement: /metrics
+
+  - job_name: 'iot-controller'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: ['iot-controller']
+    relabel_configs:
+      - source_labels: []
+        target_label: __metrics_path__
+        replacement: /metrics
