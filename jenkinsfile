@@ -38,7 +38,7 @@ pipeline {
                 unstash 'workspace'
                 dir("${FRONT_PATH}") {
                   script {
-                      def frontTestImage = docker.build("zubrailx/devops-front-test", "-f test-prepare.dockerfile .")
+                      def frontTestImage = docker.build("zubrailx/devops-front-test", "-f test.dockerfile .")
                       frontTestImage.inside("--user root") {
                         sh '''
                           cd /app
@@ -95,7 +95,7 @@ pipeline {
                 unstash 'workspace'
                 dir("${SERVER_PATH}") {
                   script {
-                    def serverTestImage = docker.build("zubrailx/devops-server-test", "-f test-prepare.dockerfile .")
+                    def serverTestImage = docker.build("zubrailx/devops-server-test", "-f test.dockerfile .")
                     serverTestImage.inside("--user root") {
                       sh '''
                         cd /app
