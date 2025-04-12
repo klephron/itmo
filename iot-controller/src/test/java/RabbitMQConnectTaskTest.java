@@ -1,5 +1,6 @@
 import com.rabbitmq.client.*;
 import org.eclipse.paho.mqttv5.client.MqttClient;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.task.RabbitMQConnectTask;
 import ru.itmo.zavar.task.exithandler.DefaultExitHandler;
@@ -10,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@Tag("unit")
 public class RabbitMQConnectTaskTest {
 
     @Test

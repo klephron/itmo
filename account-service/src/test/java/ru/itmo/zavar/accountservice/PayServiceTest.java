@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.accountservice.dto.PayHistoryDto;
 import ru.itmo.zavar.accountservice.entity.BillEntity;
@@ -18,7 +19,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class PayServiceTest {
+@Tag("unit")
+public class PayServiceTest {
 
     private PayHistoryRepository payHistoryRepository;
     private PayHistoryMapper payHistoryMapper;

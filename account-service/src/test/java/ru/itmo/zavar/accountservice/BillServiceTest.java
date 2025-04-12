@@ -2,6 +2,7 @@ package ru.itmo.zavar.accountservice.service;
 
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -22,7 +23,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class BillServiceTest {
+@Tag("unit")
+public class BillServiceTest {
 
     private BillRepository billRepository;
     private BillMapper billMapper;

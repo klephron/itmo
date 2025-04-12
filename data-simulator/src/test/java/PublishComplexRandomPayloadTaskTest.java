@@ -3,6 +3,7 @@ import org.eclipse.paho.mqttv5.client.MqttClient;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import ru.itmo.zavar.radiator.RadiatorMqttPayload;
@@ -13,7 +14,8 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class PublishComplexRandomPayloadTaskTest {
+@Tag("unit")
+public class PublishComplexRandomPayloadTaskTest {
 
     private MqttClient mockClient;
     private Random mockRandom;

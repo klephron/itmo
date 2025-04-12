@@ -1,5 +1,6 @@
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.sync.RedisCommands;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.payload.RadiatorRabbitPayload;
 import ru.itmo.zavar.redis.RedisFactStorage;
@@ -10,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.Mockito.*;
 
+@Tag("unit")
 public class RedisFactStorageTest {
 
     @Test

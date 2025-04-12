@@ -1,12 +1,14 @@
 package ru.itmo.zavar.accountservice.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.accountservice.mqtt.MqttOutboundConfig;
 
 import static org.mockito.Mockito.*;
 
-class MqttServiceTest {
+@Tag("unit")
+public class MqttServiceTest {
 
     private MqttOutboundConfig.MqttGateway mqttGateway;
     private MqttService mqttService;

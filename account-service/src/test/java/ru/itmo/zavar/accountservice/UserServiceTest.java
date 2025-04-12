@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,7 +21,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class UserServiceTest {
+@Tag("unit")
+public class UserServiceTest {
 
     private UserRepository repo;
     private PasswordEncoder encoder;

@@ -3,6 +3,7 @@ package ru.itmo.zavar;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -140,7 +141,7 @@ public class IotController {
 
         executor = Executors.newSingleThreadScheduledExecutor();
         MongoDBConnectTask mongoDBConnectTask = new MongoDBConnectTask(settings, executor, maxRetries,
-                new DefaultExitHandler());
+                new DefaultExitHandler(), MongoClients::create);
         executor.scheduleWithFixedDelay(mongoDBConnectTask, 0, delayMs, TimeUnit.MILLISECONDS);
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         MongoClient mongoClient = mongoDBConnectTask.getMongoClient();

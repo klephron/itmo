@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import ru.itmo.zavar.accountservice.dto.ApartmentDto;
@@ -21,7 +22,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class ApartmentServiceTest {
+@Tag("unit")
+public class ApartmentServiceTest {
 
     private ApartmentRepository apartmentRepository;
     private RadiatorToApartmentRepository radiatorToApartmentRepository;

@@ -3,6 +3,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.jeasy.rules.api.Facts;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.payload.RuleMongoPayload;
 import ru.itmo.zavar.rules.ComplexRule;
@@ -11,6 +12,7 @@ import ru.itmo.zavar.task.MongoDBConnectTask;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@Tag("unit")
 public class ComplexRuleTest {
 
     @Test

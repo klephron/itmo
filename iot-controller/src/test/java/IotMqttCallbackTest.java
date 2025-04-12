@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import org.bson.Document;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.mqtt.IotMqttCallback;
 import ru.itmo.zavar.payload.RadiatorMongoData;
@@ -16,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 
 import static org.mockito.Mockito.*;
 
+@Tag("unit")
 public class IotMqttCallbackTest {
 
     @Test

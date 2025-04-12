@@ -49,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Testcontainers
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Tag("integration")
 public class IotControllerIntegrationTest {
 
     @Container
@@ -139,7 +140,7 @@ public class IotControllerIntegrationTest {
 
                 executor = Executors.newSingleThreadScheduledExecutor();
                 MongoDBConnectTask mongoDBConnectTask = new MongoDBConnectTask(settings, executor, maxRetries,
-                    new DefaultExitHandler());
+                    new DefaultExitHandler(), MongoClients::create);
                 executor.scheduleWithFixedDelay(mongoDBConnectTask, 0, delayMs, TimeUnit.MILLISECONDS);
                 executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 

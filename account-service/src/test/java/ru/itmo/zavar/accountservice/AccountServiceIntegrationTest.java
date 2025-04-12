@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @Testcontainers
+@Tag("integration")
 class AccountServiceIntegrationTest {
 
     @Container

@@ -1,6 +1,7 @@
 import com.google.gson.Gson;
 import com.rabbitmq.client.Delivery;
 import io.lettuce.core.api.sync.RedisCommands;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.payload.RadiatorRabbitPayload;
 import ru.itmo.zavar.redis.RedisFactStorage;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.util.List;
 
+@Tag("unit")
 public class RabbitMQConsumeCallbackTest {
 
     @Test

@@ -20,23 +20,25 @@ public final class MongoDBConnectTask implements Runnable {
     private ExecutorService executor;
     private final int maxRetries;
     private final ExitHandler exitHandler;
+    private final MongoClientFactory clientFactory;
     private int attempt = 1;
     @Getter
     @Setter
     private boolean testingMode = false;
 
-    public MongoDBConnectTask(MongoClientSettings settings, ExecutorService executor, int maxRetries, ExitHandler exitHandler) {
+    public MongoDBConnectTask(MongoClientSettings settings, ExecutorService executor, int maxRetries, ExitHandler exitHandler, MongoClientFactory clientFactory) {
         this.settings = settings;
         this.executor = executor;
         this.maxRetries = maxRetries;
         this.exitHandler = exitHandler;
+        this.clientFactory = clientFactory;
     }
 
     @Override
     public void run() {
         try {
             LoggerWrapper.log(Level.INFO, "Connecting to MongoDB...");
-            mongoClient = MongoClients.create(settings);
+            mongoClient = clientFactory.create(settings);
 
             mongoClient.getDatabase("admin").runCommand(new Document("ping", 1));
             LoggerWrapper.log(Level.INFO, "MongoDB is available");

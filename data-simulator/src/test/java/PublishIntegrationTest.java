@@ -6,6 +6,7 @@ import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.MountableFile;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 public class PublishIntegrationTest {
 
     private GenericContainer<?> mosquitto;
@@ -97,7 +99,7 @@ public class PublishIntegrationTest {
     @Test
     void testMessagePublishedAndReceived() throws Exception {
         String message = receivedMessages.poll(5, TimeUnit.SECONDS);
-        assertNotNull(message, "Message was not received in time!");
+        assertNotNull(message, "Message was not received in time");
         assertTrue(message.contains("\"deviceId\":1"), "Payload should contain deviceId=1");
     }
 }

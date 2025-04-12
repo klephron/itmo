@@ -1,5 +1,6 @@
 import jakarta.validation.*;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.payload.RadiatorRabbitPayload;
 
@@ -7,6 +8,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("unit")
 public class RadiatorRabbitPayloadTest {
 
     private static Validator validator;
