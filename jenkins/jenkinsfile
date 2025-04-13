@@ -77,6 +77,14 @@ pipeline {
                       cd /app
                       mvn test -Dgroups=unit
                     '''
+                    // junit('target/surefire-reports/*.xml')
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                    // recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    //   id: 'account-service-jacoco-unit',
+                    //   name: 'Account Service JaCoCo Unit Coverage',
+                    //   sourceCodeRetention: 'EVERY_BUILD',
+                    //   sourcePatterns: 'src/main/java/**/*.java')
                   }
                 }
               }
