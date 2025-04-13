@@ -26,12 +26,17 @@ def setPipelineStatus(String message, String state) {
 }
 
 pipeline {
+  options {
+    skipDefaultCheckout(true)
+  }
+
   agent {
     label 'jenkins-agent-1'
   }
 
-  options {
-    skipDefaultCheckout(true)
+  environment {
+    REGISTRY_URL = 'https://index.docker.io/v1/'
+    REGISTRY_CRED_ID = 'zubrailx-registry'
   }
 
   stages {
@@ -40,6 +45,36 @@ pipeline {
         checkout scm
         setPipelineStatus("Pipeline started", "PENDING");
         stash name: 'workspace', includes: '**'
+      }
+    }
+    stage('Account Service') {
+      steps {
+        unstash 'workspace'
+      }
+    }
+    stage('Consul') {
+      steps {
+        unstash 'workspace'
+      }
+    }
+    stage('Data Simulator') {
+      steps {
+        unstash 'workspace'
+      }
+    }
+    stage('IoT Controller') {
+      steps {
+        unstash 'workspace'
+      }
+    }
+    stage('Logstash') {
+      steps {
+        unstash 'workspace'
+      }
+    }
+    stage('Rule Engine') {
+      steps {
+        unstash 'workspace'
       }
     }
   }
