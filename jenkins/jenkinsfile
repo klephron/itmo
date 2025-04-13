@@ -56,7 +56,8 @@ pipeline {
       parallel {
         stage('Account Service') {
           environment {
-            SERVICE_PATH = "${WORKSPACE}/account-service"
+            SERVICE_DIR = "account-service"
+            SERVICE_PATH = "${WORKSPACE}/${SERVICE_DIR}"
             SERVICE_IMAGE = "zubrailx/ahla-account-service"
             SERVICE_IMAGE_TAG = getCommitSha()
             SERVICE_TEST_IMAGE = "zubrailx/ahla-account-service-test"
@@ -82,15 +83,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'account-service-jacoco-unit',
-                    name: 'Account Service JaCoCo Unit Coverage')
-                }
-
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'account-service-jacoco-unit',
+                  name: 'Account Service JaCoCo Unit Coverage')
               }
             }
             stage('Test Integration') {
@@ -106,14 +104,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'account-service-jacoco-integration',
-                    name: 'Account Service JaCoCo Integration Coverage')
-                }
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'account-service-jacoco-integration',
+                  name: 'Account Service JaCoCo Integration Coverage')
               }
             }
             stage('Build') {
