@@ -1,0 +1,26 @@
+pipeline {
+  agent {
+    label 'jenkins-agent-1'
+  }
+
+  options {
+    skipDefaultCheckout(true)
+  }
+
+  stages {
+    stage('Preparation') {
+      steps {
+        checkout scm
+        sh '''#!/bin/bash
+            git log -n 1 | grep "commit " | sed 's/commit //g' | tee currentVersion
+        '''
+        stash name: 'workspace', includes: '**' // maybe use it more reasonably?
+      }
+    }
+  }
+  post {
+    always {
+      cleanWs()
+    }
+  }
+}
