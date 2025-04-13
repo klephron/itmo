@@ -114,9 +114,7 @@ pipeline {
                   junit('target/surefire-reports/*.xml')
                   recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
                     id: 'account-service-jacoco-integration',
-                    name: 'Account Service JaCoCo Integration Coverage',
-                    sourceCodeRetention: 'EVERY_BUILD',
-                    sourcePatterns: 'src/main/java/**/*.java')
+                    name: 'Account Service JaCoCo Integration Coverage')
                 }
               }
             }
