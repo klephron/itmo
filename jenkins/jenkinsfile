@@ -73,34 +73,46 @@ pipeline {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=unit
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
-
-                    // junit('target/surefire-reports/*.xml')
-                    // recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    //   id: 'account-service-jacoco-unit',
-                    //   name: 'Account Service JaCoCo Unit Coverage',
-                    //   sourceCodeRetention: 'EVERY_BUILD',
-                    //   sourcePatterns: 'src/main/java/**/*.java')
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
                 }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'account-service-jacoco-unit',
+                    name: 'Account Service JaCoCo Unit Coverage')
+                }
+
               }
             }
             stage('Test Integration') {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=integration
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
+                }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'account-service-jacoco-integration',
+                    name: 'Account Service JaCoCo Integration Coverage')
                 }
               }
             }
@@ -168,27 +180,46 @@ pipeline {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=unit
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
                 }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'data-simulator-jacoco-unit',
+                    name: 'Data Simulator JaCoCo Unit Coverage')
+                }
+
               }
             }
             stage('Test Integration') {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=integration
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
+                }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'data-simulator-jacoco-integration',
+                    name: 'Data Simulator JaCoCo Integration Coverage')
                 }
               }
             }
@@ -230,27 +261,46 @@ pipeline {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=unit
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
                 }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'iot-controller-jacoco-unit',
+                    name: 'IoT Controller JaCoCo Unit Coverage')
+                }
+
               }
             }
             stage('Test Integration') {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=integration
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
+                }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'iot-controller-jacoco-integration',
+                    name: 'IoT Controller JaCoCo Integration Coverage')
                 }
               }
             }
@@ -318,27 +368,46 @@ pipeline {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=unit
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
                 }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'rule-engine-jacoco-unit',
+                    name: 'Rule Engine JaCoCo Unit Coverage')
+                }
+
               }
             }
             stage('Test Integration') {
               steps {
                 script {
                   docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
-                    sh '''
+                    sh """
                       cd /app
                       mvn test -Dgroups=integration
-                    '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                      cp -r /app/target ${SERVICE_PATH}/target
+                      chown 1000:1000 -R ${SERVICE_PATH}/target
+                    """
                   }
+                }
+
+                dir("${SERVICE_PATH}") {
+                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
+                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                  junit('target/surefire-reports/*.xml')
+                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                    id: 'rule-engine-jacoco-integration',
+                    name: 'Rule Engine JaCoCo Integration Coverage')
                 }
               }
             }
