@@ -72,14 +72,15 @@ pipeline {
             stage('Test Unit') {
               steps {
                 script {
-                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
                     sh '''
                       cd /app
                       mvn test -Dgroups=unit
                     '''
-                    // junit('target/surefire-reports/*.xml')
                     archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
                     archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+
+                    // junit('target/surefire-reports/*.xml')
                     // recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
                     //   id: 'account-service-jacoco-unit',
                     //   name: 'Account Service JaCoCo Unit Coverage',
@@ -91,17 +92,33 @@ pipeline {
             }
             stage('Test Integration') {
               steps {
-                echo "Account Service Test Integration"
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=integration
+                    '''
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                  }
+                }
               }
             }
             stage('Build') {
               steps {
-                echo "Account Service Build"
+                script {
+                  docker.build("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}", "${SERVICE_PATH}")
+                }
               }
             }
             stage('Push') {
               steps {
-                echo "Account Service Push"
+                script {
+                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push()
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push("latest")
+                  }
+                }
               }
             }
           }
@@ -133,13 +150,127 @@ pipeline {
           }
         }
         stage('Data Simulator') {
-          steps {
-            echo "Data Simulator"
+          environment {
+            SERVICE_PATH = "${WORKSPACE}/data-simulator"
+            SERVICE_IMAGE = "zubrailx/ahla-data-simulator"
+            SERVICE_IMAGE_TAG = getCommitSha()
+            SERVICE_TEST_IMAGE = "zubrailx/ahla-data-simulator-test"
+          }
+          stages {
+            stage('Build Test Image') {
+              steps {
+                script {
+                  docker.build("${SERVICE_TEST_IMAGE}", "${SERVICE_PATH} -f ${SERVICE_PATH}/test.Dockerfile")
+                }
+              }
+            }
+            stage('Test Unit') {
+              steps {
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=unit
+                    '''
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                  }
+                }
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=integration
+                    '''
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                  }
+                }
+              }
+            }
+            stage('Build') {
+              steps {
+                script {
+                  docker.build("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}", "${SERVICE_PATH}")
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push()
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push("latest")
+                  }
+                }
+              }
+            }
           }
         }
         stage('IoT Controller') {
-          steps {
-            echo "IoT Controller"
+          environment {
+            SERVICE_PATH = "${WORKSPACE}/iot-controller"
+            SERVICE_IMAGE = "zubrailx/ahla-iot-controller"
+            SERVICE_IMAGE_TAG = getCommitSha()
+            SERVICE_TEST_IMAGE = "zubrailx/ahla-iot-controller-test"
+          }
+          stages {
+            stage('Build Test Image') {
+              steps {
+                script {
+                  docker.build("${SERVICE_TEST_IMAGE}", "${SERVICE_PATH} -f ${SERVICE_PATH}/test.Dockerfile")
+                }
+              }
+            }
+            stage('Test Unit') {
+              steps {
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=unit
+                    '''
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                  }
+                }
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=integration
+                    '''
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                  }
+                }
+              }
+            }
+            stage('Build') {
+              steps {
+                script {
+                  docker.build("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}", "${SERVICE_PATH}")
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push()
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push("latest")
+                  }
+                }
+              }
+            }
           }
         }
         stage('Logstash') {
@@ -169,8 +300,65 @@ pipeline {
           }
         }
         stage('Rule Engine') {
-          steps {
-            echo "Rule Engine"
+          environment {
+            SERVICE_PATH = "${WORKSPACE}/rule-engine"
+            SERVICE_IMAGE = "zubrailx/ahla-rule-engine"
+            SERVICE_IMAGE_TAG = getCommitSha()
+            SERVICE_TEST_IMAGE = "zubrailx/ahla-rule-engine-test"
+          }
+          stages {
+            stage('Build Test Image') {
+              steps {
+                script {
+                  docker.build("${SERVICE_TEST_IMAGE}", "${SERVICE_PATH} -f ${SERVICE_PATH}/test.Dockerfile")
+                }
+              }
+            }
+            stage('Test Unit') {
+              steps {
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=unit
+                    '''
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                  }
+                }
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=integration
+                    '''
+                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                  }
+                }
+              }
+            }
+            stage('Build') {
+              steps {
+                script {
+                  docker.build("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}", "${SERVICE_PATH}")
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push()
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push("latest")
+                  }
+                }
+              }
+            }
           }
         }
       }
