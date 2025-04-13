@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.accountservice.dto.PayHistoryDto;
@@ -16,6 +17,7 @@ import ru.itmo.zavar.accountservice.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j(topic = "AS-PayService")
 @AllArgsConstructor
 @Service
 public class PayService {
@@ -38,6 +40,7 @@ public class PayService {
         payHistoryEntity.setUserId(bill.getUserId());
         payHistoryEntity.setTimestamp(System.currentTimeMillis());
         PayHistoryEntity saved = this.payHistoryRepository.save(payHistoryEntity);
+        log.info("Payed {} bill", saved.getBillId());
         return this.payHistoryMapper.toDto(saved);
     }
 

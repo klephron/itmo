@@ -193,7 +193,11 @@ services:
     ports:
       - "${ACCOUNT_PORT:-8226}:8082"
     depends_on:
+      kibana:
+        condition: service_healthy
       mongodb:
+        condition: service_healthy
+      consul:
         condition: service_healthy
 
   consul:

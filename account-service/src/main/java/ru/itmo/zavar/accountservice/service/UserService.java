@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +15,7 @@ import ru.itmo.zavar.accountservice.security.Roles;
 
 import java.util.List;
 
+@Slf4j(topic = "AS-UserService")
 @AllArgsConstructor
 @Service
 public class UserService implements UserDetailsService {
@@ -24,7 +26,11 @@ public class UserService implements UserDetailsService {
     private final UserMapper userMapper;
 
     public UserDto loadUserById(String id) throws UsernameNotFoundException {
-        UserEntity userEntity = repo.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        UserEntity userEntity = repo.findById(id).orElseThrow(() -> {
+            log.debug("User not found by id: {}", id);
+            return new UsernameNotFoundException("User not found");
+        });
+        log.info("Loaded user by id: {}", userEntity);
         return userMapper.toDto(userEntity);
     }
 
@@ -32,10 +38,15 @@ public class UserService implements UserDetailsService {
     public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         CustomUserDetails cached = (CustomUserDetails) userCache.getUserFromCache(username);
         if (cached != null) {
+            log.info("Loaded user by name from cache: {}", cached);
             return cached;
         }
 
-        UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> {
+            log.debug("User not found by name: {}", username);
+            return new UsernameNotFoundException("User not found");
+        });
+        log.info("Loaded user by name: {}", userEntity);
         CustomUserDetails build = new CustomUserDetails(userEntity.getId(),
                 userEntity.getUsername(),
                 userEntity.getPassword(),
@@ -47,12 +58,16 @@ public class UserService implements UserDetailsService {
     }
 
     public CustomUserDetails setAuthorities(String username, List<String> authorities) throws UsernameNotFoundException, IllegalArgumentException {
-        UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> {
+            log.debug("User not found by name: {}", username);
+            return new UsernameNotFoundException("User not found");
+        });
         if (!authorities.stream().allMatch(Roles::isValid))
             throw new IllegalArgumentException("Invalid authorities");
         userEntity.setAuthorities(authorities);
         userCache.removeUserFromCache(username);
         userEntity = repo.save(userEntity);
+        log.info("Saved user: {}", userEntity);
         return new CustomUserDetails(userEntity.getId(),
                 userEntity.getUsername(),
                 userEntity.getPassword(),
@@ -63,6 +78,7 @@ public class UserService implements UserDetailsService {
 
     public List<UserDetails> getAllUsers() {
         List<UserEntity> all = repo.findAll();
+        log.info("Found {} users", all.size());
         return all.stream().map(userEntity ->
                 User.builder()
                 .username(userEntity.getUsername())
@@ -72,19 +88,25 @@ public class UserService implements UserDetailsService {
     }
 
     public void register(String username, String password, String email, List<String> roles) throws RuntimeException {
-        if (repo.findByUsername(username).isPresent())
+        if (repo.findByUsername(username).isPresent()) {
+            log.info("Username already in use: {}", username);
             throw new RuntimeException("User exists");
+        }
         UserEntity userEntity = new UserEntity();
         userEntity.setUsername(username);
         userEntity.setPassword(encoder.encode(password));
         userEntity.setAuthorities(roles);
         userEntity.setEmail(email);
         repo.save(userEntity);
+        log.info("Saved user: {}", userEntity);
         userCache.removeUserFromCache(username);
     }
 
-    public boolean checkPassword(String username, String rawPassword) {
-        UserEntity userEntity = repo.findByUsername(username).orElseThrow();
+    public boolean checkPassword(String username, String rawPassword) throws UsernameNotFoundException {
+        UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> {
+            log.debug("User not found by name: {}", username);
+            return new UsernameNotFoundException("User not found");
+        });
         return encoder.matches(rawPassword, userEntity.getPassword());
     }
 }

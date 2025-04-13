@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -24,6 +25,7 @@ import java.util.*;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
+@Slf4j(topic = "AS-BillService")
 @AllArgsConstructor
 @Service
 public class BillService {
@@ -34,7 +36,11 @@ public class BillService {
     private final JavaMailSender mailSender;
 
     public BillDto getBillById(String id) throws ObjectNotFoundException {
-        BillEntity bill = this.billRepository.findById(id).orElseThrow(() -> new ObjectNotFoundException("Bill not found"));
+        BillEntity bill = this.billRepository.findById(id).orElseThrow(() -> {
+            log.info("Bill not found for id {}", id);
+            return new ObjectNotFoundException("Bill not found");
+        });
+        log.info("Bill found for id {}", bill.getId());
         return this.billMapper.toDto(bill);
     }
 
@@ -56,6 +62,7 @@ public class BillService {
         bill.setPayed(false);
         bill.setTimestamp(System.currentTimeMillis());
         BillEntity save = this.billRepository.save(bill);
+        log.info("Bill created {}", save);
         return this.billMapper.toDto(save);
     }
 
@@ -84,6 +91,7 @@ public class BillService {
             if (apartment == null || apartment.getUserId() == null) continue;
 
             BillDto bill = this.createBill(apartment.getUserId(), heat, cost);
+            log.info("Bill generated {}", bill);
             createdBills.add(bill);
         }
 
@@ -99,6 +107,7 @@ public class BillService {
             message.setText("You got a bill, please pay it: " + billDto.getCost() + " BTC");
             message.setFrom("ahla@noreply.ru");
             mailSender.send(message);
+            log.info("User {} notifyed", userDto.getId());
         });
     }
 

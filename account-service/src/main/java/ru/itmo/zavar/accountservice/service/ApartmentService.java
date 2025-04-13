@@ -1,6 +1,7 @@
 package ru.itmo.zavar.accountservice.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.itmo.zavar.accountservice.dto.ApartmentDto;
@@ -16,6 +17,7 @@ import ru.itmo.zavar.accountservice.repository.RadiatorToApartmentRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j(topic = "AS-ApartmentService")
 @AllArgsConstructor
 @Service
 public class ApartmentService {
@@ -31,11 +33,15 @@ public class ApartmentService {
         apartmentEntity.setUserId(userId);
         apartmentEntity.setName(apartmentName);
         ApartmentEntity saved = this.apartmentRepository.save(apartmentEntity);
+        log.info("Created new apartment {}", saved);
         return this.apartmentMapper.toDto(saved);
     }
 
     public ApartmentDto getApartmentById(String apartmentId) throws ObjectNotFoundException {
-        ApartmentEntity apartmentEntity = this.apartmentRepository.findById(apartmentId).orElseThrow(() -> new ObjectNotFoundException("Apartment not found"));
+        ApartmentEntity apartmentEntity = this.apartmentRepository.findById(apartmentId).orElseThrow(() -> {
+            log.info("Apartment with id {} not found", apartmentId);
+            return new ObjectNotFoundException("Apartment not found");
+        });
         return this.apartmentMapper.toDto(apartmentEntity);
     }
 
@@ -45,6 +51,7 @@ public class ApartmentService {
 
     public List<ApartmentDto> getApartmentsByUserId(String userId) {
         List<ApartmentEntity> allByUserId = this.apartmentRepository.findAllByUserId(userId);
+        log.info("Found {} apartment by user id {}", allByUserId.size(), userId);
         return allByUserId.stream().map(apartmentMapper::toDto).collect(Collectors.toList());
     }
 
@@ -59,6 +66,7 @@ public class ApartmentService {
         radiatorToApartmentEntity.setApartmentId(apartmentId);
         radiatorToApartmentEntity.setDeviceId(deviceId);
         RadiatorToApartmentEntity saved = this.radiatorToApartmentRepository.save(radiatorToApartmentEntity);
+        log.info("Attached radiator to apartment {}", saved.getApartmentId());
         return this.radiatorToApartmentMapper.toDto(saved);
     }
 

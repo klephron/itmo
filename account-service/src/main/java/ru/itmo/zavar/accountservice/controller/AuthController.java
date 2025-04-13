@@ -66,11 +66,15 @@ public class AuthController {
             required = true,
             content = @Content(schema = @Schema(implementation = AuthRequest.class))
     ) @RequestBody AuthRequest req) {
-        if (!this.userService.checkPassword(req.getUsername(), req.getPassword())) {
+        try {
+            if (!this.userService.checkPassword(req.getUsername(), req.getPassword())) {
+                return ResponseEntity.status(401).body("Invalid credentials");
+            }
+            UserDetails user = this.userService.loadUserByUsername(req.getUsername());
+            String token = this.jwtUtil.generateToken(user);
+            return ResponseEntity.ok(new AuthResponse(token));
+        } catch (RuntimeException e) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
-        UserDetails user = this.userService.loadUserByUsername(req.getUsername());
-        String token = this.jwtUtil.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token));
     }
 }
