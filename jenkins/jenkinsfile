@@ -159,7 +159,8 @@ pipeline {
         }
         stage('Data Simulator') {
           environment {
-            SERVICE_PATH = "${WORKSPACE}/data-simulator"
+            SERVICE_DIR = "data-simulator"
+            SERVICE_PATH = "${WORKSPACE}/${SERVICE_DIR}"
             SERVICE_IMAGE = "zubrailx/ahla-data-simulator"
             SERVICE_IMAGE_TAG = getCommitSha()
             SERVICE_TEST_IMAGE = "zubrailx/ahla-data-simulator-test"
@@ -185,15 +186,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'data-simulator-jacoco-unit',
-                    name: 'Data Simulator JaCoCo Unit Coverage')
-                }
-
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'data-simulator-jacoco-unit',
+                  name: 'Data Simulator JaCoCo Unit Coverage')
               }
             }
             stage('Test Integration') {
@@ -209,14 +207,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'data-simulator-jacoco-integration',
-                    name: 'Data Simulator JaCoCo Integration Coverage')
-                }
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'data-simulator-jacoco-integration',
+                  name: 'Data Simulator JaCoCo Integration Coverage')
               }
             }
             stage('Build') {
@@ -240,7 +236,8 @@ pipeline {
         }
         stage('IoT Controller') {
           environment {
-            SERVICE_PATH = "${WORKSPACE}/iot-controller"
+            SERVICE_DIR = "iot-controller"
+            SERVICE_PATH = "${WORKSPACE}/${SERVICE_DIR}"
             SERVICE_IMAGE = "zubrailx/ahla-iot-controller"
             SERVICE_IMAGE_TAG = getCommitSha()
             SERVICE_TEST_IMAGE = "zubrailx/ahla-iot-controller-test"
@@ -266,15 +263,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'iot-controller-jacoco-unit',
-                    name: 'IoT Controller JaCoCo Unit Coverage')
-                }
-
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'iot-controller-jacoco-unit',
+                  name: 'IoT Controller JaCoCo Unit Coverage')
               }
             }
             stage('Test Integration') {
@@ -290,14 +284,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'iot-controller-jacoco-integration',
-                    name: 'IoT Controller JaCoCo Integration Coverage')
-                }
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'iot-controller-jacoco-integration',
+                  name: 'IoT Controller JaCoCo Integration Coverage')
               }
             }
             stage('Build') {
@@ -347,7 +339,8 @@ pipeline {
         }
         stage('Rule Engine') {
           environment {
-            SERVICE_PATH = "${WORKSPACE}/rule-engine"
+            SERVICE_DIR = "rule-engine"
+            SERVICE_PATH = "${WORKSPACE}/${SERVICE_DIR}"
             SERVICE_IMAGE = "zubrailx/ahla-rule-engine"
             SERVICE_IMAGE_TAG = getCommitSha()
             SERVICE_TEST_IMAGE = "zubrailx/ahla-rule-engine-test"
@@ -373,15 +366,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'rule-engine-jacoco-unit',
-                    name: 'Rule Engine JaCoCo Unit Coverage')
-                }
-
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'rule-engine-jacoco-unit',
+                  name: 'Rule Engine JaCoCo Unit Coverage')
               }
             }
             stage('Test Integration') {
@@ -397,14 +387,12 @@ pipeline {
                   }
                 }
 
-                dir("${SERVICE_PATH}") {
-                  archiveArtifacts(artifacts: "target/surefire-reports/*.xml", allowEmptyArchive: true)
-                  archiveArtifacts(artifacts: "target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                  junit('target/surefire-reports/*.xml')
-                  recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
-                    id: 'rule-engine-jacoco-integration',
-                    name: 'Rule Engine JaCoCo Integration Coverage')
-                }
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
+                archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
+                  id: 'rule-engine-jacoco-integration',
+                  name: 'Rule Engine JaCoCo Integration Coverage')
               }
             }
             stage('Build') {
