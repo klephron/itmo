@@ -57,16 +57,28 @@ pipeline {
         stage('Account Service') {
           environment {
             SERVICE_PATH = "${WORKSPACE}/account-service"
+            SERVICE_IMAGE = "zubrailx/ahla-account-service"
+            SERVICE_IMAGE_TAG = getCommitSha()
+            SERVICE_TEST_IMAGE = "zubrailx/ahla-account-service-test"
           }
           stages {
             stage('Build Test Image') {
               steps {
-                echo "Account Service Build Test Image"
+                script {
+                  docker.build("${SERVICE_TEST_IMAGE}", "${SERVICE_PATH} -f ${SERVICE_PATH}/test.Dockerfile")
+                }
               }
             }
             stage('Test Unit') {
               steps {
-                echo "Account Service Test Unit"
+                script {
+                  docker.image("${SERVICE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
+                    sh '''
+                      cd /app
+                      mvn test -Dgroups=unit
+                    '''
+                  }
+                }
               }
             }
             stage('Test Integration') {
