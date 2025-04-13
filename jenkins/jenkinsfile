@@ -76,9 +76,10 @@ pipeline {
                     sh '''
                       cd /app
                       mvn test -Dgroups=unit
+                      chown 1000:1000 -R /app/target
                     '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: '/app/target/surefire-reports/*.xml', allowEmptyArchive: true)
+                    archiveArtifacts(artifacts: '/app/target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
 
                     // junit('target/surefire-reports/*.xml')
                     // recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
@@ -172,8 +173,6 @@ pipeline {
                       cd /app
                       mvn test -Dgroups=unit
                     '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
                   }
                 }
               }
@@ -186,8 +185,6 @@ pipeline {
                       cd /app
                       mvn test -Dgroups=integration
                     '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
                   }
                 }
               }
@@ -234,8 +231,6 @@ pipeline {
                       cd /app
                       mvn test -Dgroups=unit
                     '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
                   }
                 }
               }
@@ -248,8 +243,6 @@ pipeline {
                       cd /app
                       mvn test -Dgroups=integration
                     '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
                   }
                 }
               }
@@ -322,8 +315,6 @@ pipeline {
                       cd /app
                       mvn test -Dgroups=unit
                     '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
                   }
                 }
               }
@@ -336,8 +327,6 @@ pipeline {
                       cd /app
                       mvn test -Dgroups=integration
                     '''
-                    archiveArtifacts(artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true)
-                    archiveArtifacts(artifacts: 'target/site/jacoco/jacoco.xml', allowEmptyArchive: true)
                   }
                 }
               }
