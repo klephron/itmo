@@ -85,7 +85,7 @@ pipeline {
 
                 archiveArtifacts(artifacts: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
                 archiveArtifacts(artifacts: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
+                junit("${SERVICE_DIR}/target/surefire-reports/*.xml", )
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'account-service-jacoco-unit',
                   name: 'Account Service JaCoCo Unit Coverage')

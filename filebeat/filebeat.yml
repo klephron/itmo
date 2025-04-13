@@ -3,7 +3,9 @@ filebeat.inputs:
     paths:
       - /var/lib/docker/containers/*/*.log
     processors:
-      - add_docker_metadata: ~
+      # - add_docker_metadata: ~
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
     exclude_lines: ['^\\s*$']
 
 output.logstash:
