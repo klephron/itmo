@@ -26,6 +26,8 @@ services:
 
   logstash:
     build: ./logstash
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - ./logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     ports:
