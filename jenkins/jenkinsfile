@@ -42,14 +42,62 @@ pipeline {
   stages {
     stage('Preparation') {
       steps {
-        checkout scm
-        setPipelineStatus("Pipeline started", "PENDING");
-        stash name: 'workspace', includes: '**'
+        script {
+          checkout scm
+          setPipelineStatus('Pipeline started', 'PENDING');
+          stash name: 'workspace', includes: '**'
+        }
       }
     }
     stage('Account Service') {
-      steps {
-        unstash 'workspace'
+      environment {
+        SUCCESS = 'true'
+      }
+      stages {
+        stage('Test Unit') {
+          steps {
+            echo "Account Service Test Unit"
+            script { env.SUCCESS = 'true' }
+          }
+        }
+        stage('Test Integration') {
+          when {
+            expression { env.SUCCESS == 'true' }
+          }
+          steps {
+            script { env.SUCCESS = 'false' }
+            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+              echo "Account Service Test Integration"
+              error("Test Integration throw")
+              script { env.SUCCESS = 'true' }
+              echo "HERE!"
+            }
+          }
+        }
+        stage('Build') {
+          when {
+            expression { env.SUCCESS == 'true' }
+          }
+          steps {
+            script { env.SUCCESS = 'false' }
+            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+              echo "Account Service Build"
+              script { env.SUCCESS = 'true' }
+            }
+          }
+        }
+        stage('Push') {
+          when {
+            expression { env.SUCCESS == 'true' }
+          }
+          steps {
+            script { env.SUCCESS = 'false' }
+            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+              echo "Account Service Push"
+              script { env.SUCCESS = 'true' }
+            }
+          }
+        }
       }
     }
     stage('Consul') {
