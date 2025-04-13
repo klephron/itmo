@@ -3,6 +3,9 @@ global:
   external_labels:
     monitor: 'emqx-monitor'
 
+rule_files:
+  - 'rules.yml'
+
 scrape_configs:
   - job_name: 'emqx_stats'
     static_configs:

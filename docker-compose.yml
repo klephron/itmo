@@ -3,6 +3,7 @@ services:
     image: prom/prometheus:latest
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules.yml:/etc/prometheus/rules.yml
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
 
