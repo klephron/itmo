@@ -28,6 +28,7 @@ def setPipelineStatus(String message, String state) {
 pipeline {
   options {
     skipDefaultCheckout(true)
+    disableConcurrentBuilds()
   }
 
   agent {
@@ -49,80 +50,59 @@ pipeline {
         }
       }
     }
-    stage('Account Service') {
-      environment {
-        SUCCESS = 'true'
-      }
-      stages {
-        stage('Test Unit') {
-          steps {
-            echo "Account Service Test Unit"
-            script { env.SUCCESS = 'true' }
-          }
-        }
-        stage('Test Integration') {
-          when {
-            expression { env.SUCCESS == 'true' }
-          }
-          steps {
-            script { env.SUCCESS = 'false' }
-            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-              echo "Account Service Test Integration"
-              error("Test Integration throw")
-              script { env.SUCCESS = 'true' }
-              echo "HERE!"
+
+    stage('Services') {
+      parallel {
+        stage('Account Service') {
+          stages {
+            stage('Test Unit') {
+              steps {
+                echo "Account Service Test Unit"
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                echo "Account Service Test Integration"
+                error("Test Integration throw")
+              }
+            }
+            stage('Build') {
+              steps {
+                echo "Account Service Build"
+              }
+            }
+            stage('Push') {
+              steps {
+                echo "Account Service Push"
+              }
             }
           }
         }
-        stage('Build') {
-          when {
-            expression { env.SUCCESS == 'true' }
-          }
+        stage('Consul') {
           steps {
-            script { env.SUCCESS = 'false' }
-            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-              echo "Account Service Build"
-              script { env.SUCCESS = 'true' }
-            }
+            unstash 'workspace'
           }
         }
-        stage('Push') {
-          when {
-            expression { env.SUCCESS == 'true' }
-          }
+        stage('Data Simulator') {
           steps {
-            script { env.SUCCESS = 'false' }
-            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-              echo "Account Service Push"
-              script { env.SUCCESS = 'true' }
-            }
+            unstash 'workspace'
           }
         }
-      }
-    }
-    stage('Consul') {
-      steps {
-        unstash 'workspace'
-      }
-    }
-    stage('Data Simulator') {
-      steps {
-        unstash 'workspace'
-      }
-    }
-    stage('IoT Controller') {
-      steps {
-        unstash 'workspace'
-      }
-    }
-    stage('Logstash') {
-      steps {
-        unstash 'workspace'
-      }
-    }
-    stage('Rule Engine') {
-      steps {
-        unstash 'workspace'
+        stage('IoT Controller') {
+          steps {
+            unstash 'workspace'
+          }
+        }
+        stage('Logstash') {
+          steps {
+            unstash 'workspace'
+          }
+        }
+        stage('Rule Engine') {
+          steps {
+            unstash 'workspace'
+          }
+        }
       }
     }
   }
