@@ -123,8 +123,29 @@ pipeline {
           }
         }
         stage('Logstash') {
-          steps {
-            echo "Logstash"
+          environment {
+            SERVICE_PATH = "${WORKSPACE}/logstash"
+            SERVICE_IMAGE = "zubrailx/ahla-logstash"
+            SERVICE_IMAGE_TAG = getCommitSha()
+          }
+          stages {
+            stage("Build") {
+              steps {
+                script {
+                  docker.build("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}", "${SERVICE_PATH}")
+                }
+              }
+            }
+            stage("Push") {
+              steps {
+                script {
+                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push()
+                    docker.image("${SERVICE_IMAGE}:${SERVICE_IMAGE_TAG}").push("latest")
+                  }
+                }
+              }
+            }
           }
         }
         stage('Rule Engine') {
