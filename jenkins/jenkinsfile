@@ -9,7 +9,7 @@ def getCommitSha() {
   return readFile(".git/current-commit").trim()
 }
 
-def setBuildStatus(String message, String state) {
+def setPipelineStatus(String message, String state) {
   def repoUrl = getRepoURL()
   def commitSha = getCommitSha()
 
@@ -38,21 +38,19 @@ pipeline {
     stage('Preparation') {
       steps {
         checkout scm
-        setBuildStatus("Pipeline started", "PENDING");
-        sh '''#!/bin/bash
-            git log -n 1 | grep "commit " | sed 's/commit //g' | tee currentVersion
-        '''
-        stash name: 'workspace', includes: '**' // maybe use it more reasonably?
+        setPipelineStatus("Pipeline started", "PENDING");
+        stash name: 'workspace', includes: '**'
       }
     }
   }
   post {
     success {
-      setBuildStatus("Pipeline succeeded", "SUCCESS");
-      cleanWs()
+      setPipelineStatus("Pipeline succeeded", "SUCCESS");
     }
     failure {
-      setBuildStatus("Pipeline failed", "FAILURE");
+      setPipelineStatus("Pipeline failed", "FAILURE");
+    }
+    cleanup {
       cleanWs()
     }
   }
