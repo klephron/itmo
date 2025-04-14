@@ -1,5 +1,19 @@
 # AHLA
 
+## Diagrams
+
+### Non-UML
+
+![Non-uml](./docs/components.drawio.png)
+
+### Components
+
+![components](./docs/components.drawio.png)
+
+### Deployment
+
+![deployment](./docs/deployment.drawio.png)
+
 ## Deployment
 
 ### Dev
