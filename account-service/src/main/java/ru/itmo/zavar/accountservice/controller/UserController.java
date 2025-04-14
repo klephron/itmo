@@ -96,7 +96,7 @@ public class UserController {
     })
     @PostMapping("/pay/by-bill/{billId}")
     public ResponseEntity<?> payBill(
-            @Parameter(description = "ID пользователя") @PathVariable String billId,
+            @Parameter(description = "ID счёта") @PathVariable String billId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails user) {
         try {
             PayHistoryDto result = this.payService.pay(billId, user.getId());
