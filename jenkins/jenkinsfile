@@ -88,7 +88,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml", )
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'account-service-jacoco-unit',
-                  name: 'Account Service JaCoCo Unit Coverage')
+                  name: 'Account Service JaCoCo Unit Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Test Integration') {
@@ -109,7 +110,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'account-service-jacoco-integration',
-                  name: 'Account Service JaCoCo Integration Coverage')
+                  name: 'Account Service JaCoCo Integration Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Build') {
@@ -191,7 +193,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'data-simulator-jacoco-unit',
-                  name: 'Data Simulator JaCoCo Unit Coverage')
+                  name: 'Data Simulator JaCoCo Unit Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Test Integration') {
@@ -212,7 +215,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'data-simulator-jacoco-integration',
-                  name: 'Data Simulator JaCoCo Integration Coverage')
+                  name: 'Data Simulator JaCoCo Integration Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Build') {
@@ -268,7 +272,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'iot-controller-jacoco-unit',
-                  name: 'IoT Controller JaCoCo Unit Coverage')
+                  name: 'IoT Controller JaCoCo Unit Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Test Integration') {
@@ -289,7 +294,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'iot-controller-jacoco-integration',
-                  name: 'IoT Controller JaCoCo Integration Coverage')
+                  name: 'IoT Controller JaCoCo Integration Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Build') {
@@ -371,7 +377,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'rule-engine-jacoco-unit',
-                  name: 'Rule Engine JaCoCo Unit Coverage')
+                  name: 'Rule Engine JaCoCo Unit Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Test Integration') {
@@ -392,7 +399,8 @@ pipeline {
                 junit("${SERVICE_DIR}/target/surefire-reports/*.xml")
                 recordCoverage(tools: [[parser: 'JACOCO', pattern: "${SERVICE_DIR}/target/site/jacoco/jacoco.xml"]],
                   id: 'rule-engine-jacoco-integration',
-                  name: 'Rule Engine JaCoCo Integration Coverage')
+                  name: 'Rule Engine JaCoCo Integration Coverage',
+                  sourceDirectories: [[path: "${SERVICE_DIR}/src/main/java"]])
               }
             }
             stage('Build') {
