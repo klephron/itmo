@@ -4,7 +4,7 @@ WORKDIR /opt/build
 
 COPY pom.xml .
 
-RUN mvn -T 1C dependency:go-offline
+RUN mvn dependency:go-offline
 
 
 FROM installer AS builder
