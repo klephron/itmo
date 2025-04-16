@@ -8,8 +8,8 @@ services:
 
   jenkins-agent:
     build:
-      context: ./jenkins-agent
-      dockerfile: dockerfile
+      context: ./jenkins
+      dockerfile: agent.dockerfile
     # WARN: unable to set container name with sysbox-runc
     # container_name: devops-jenkins-agent
     runtime: sysbox-runc
