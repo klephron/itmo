@@ -1,0 +1,38 @@
+---
+- name: Fail if repo_root is not defined
+  ansible.builtin.fail:
+    msg: >
+      The variable 'repo_root' is not defined.
+      Please pass it via -e or set it as an environment variable.
+  when: repo_root is not defined
+  tags: deploy
+
+- name: Ensure project directory exists
+  ansible.builtin.file:
+    path: "{{ project_src }}"
+    state: directory
+    mode: "0755"
+  tags: deploy
+
+- name: Synchronize Kubernetes config
+  ansible.posix.synchronize:
+    src: "{{ repo_root }}/kubernetes/"
+    dest: "{{ project_src }}/kubernetes/"
+  tags: deploy
+
+- name: Deploy calico
+  ansible.builtin.command: kubectl apply -f {{ cni_manifest }}
+  register: calico_result
+  tags: deploy
+
+- name: Deploy Nginx app
+  ansible.builtin.command: kubectl apply -f {{ project_src }}/kubernetes/nginx-deployment.yml
+  changed_when: "'created' in nginx_deploy.stdout or 'configured' in nginx_deploy.stdout"
+  register: nginx_deploy
+  tags: deploy
+
+- name: Deploy Nginx service
+  ansible.builtin.command: kubectl apply -f {{ project_src }}/kubernetes/nginx-service.yml
+  register: nginx_service
+  changed_when: "'created' in nginx_service.stdout or 'configured' in nginx_service.stdout"
+  tags: deploy

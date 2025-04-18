@@ -4,4 +4,4 @@
   args:
     creates: /etc/kubernetes/kubelet.conf
   become: true
-  tags: kubernetes_cluster
+  tags: kubernetes_init
