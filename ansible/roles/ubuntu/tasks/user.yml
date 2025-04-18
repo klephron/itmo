@@ -1,6 +1,5 @@
 ---
 - name: Create user {{ bootstrap_user }}
-  tags: always
   ansible.builtin.user:
     name: "{{ bootstrap_user }}"
     shell: /usr/bin/bash
@@ -8,6 +7,7 @@
     append: yes
     create_home: yes
   become: true
+  tags: user
 
 - name: Ensure {{ bootstrap_user }} .ssh directory exists
   ansible.builtin.file:
@@ -17,13 +17,14 @@
     owner: "{{ bootstrap_user }}"
     group: "{{ bootstrap_user }}"
   become: true
+  tags: user
 
 - name: Add SSH key {{ bootstrap_user }}
-  tags: always
   ansible.builtin.authorized_key:
     user: "{{ bootstrap_user }}"
     key: "{{ bootstrap_ssh_public_key }}"
   become: true
+  tags: user
 
 - name: Add {{ bootstrap_user }} to sudoers (passwordless)
   ansible.builtin.copy:
@@ -32,3 +33,4 @@
     mode: 0440
     validate: /usr/sbin/visudo -cf %s
   become: true
+  tags: user

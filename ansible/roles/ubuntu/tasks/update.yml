@@ -1,8 +1,8 @@
 ---
 - name: Update all packages
-  tags: always
   ansible.builtin.apt:
     update_cache: true
     upgrade: dist
     autoremove: yes
   become: true
+  tags: update

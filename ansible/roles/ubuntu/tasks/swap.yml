@@ -4,6 +4,7 @@
   changed_when: false
   ignore_errors: true
   become: true
+  tags: swap
 
 - name: Comment out swap in /etc/fstab
   ansible.builtin.replace:
@@ -11,3 +12,4 @@
     regexp: '^([^#].*?\sswap\s+.*)$'
     replace: '#\1'
   become: true
+  tags: swap

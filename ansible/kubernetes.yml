@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: true
+  pre_tasks:
+    - name: Fail if not Ubuntu
+      fail:
+        msg: "This playbook only supports Ubuntu."
+      when: ansible_distribution not in ["Ubuntu"]
+
+- hosts: kubernetes
+  tasks:
+    - name: Include ip_forward tasks from ubuntu role
+      import_role:
+        name: ubuntu
+        tasks_from: ip_forward.yml
+
+    - name: Include ssh tasks from ubuntu role
+      import_role:
+        name: ubuntu
+        tasks_from: ssh.yml
+
+    - name: Include swap tasks from ubuntu role
+      import_role:
+        name: ubuntu
+        tasks_from: swap.yml
