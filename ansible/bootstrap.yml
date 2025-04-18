@@ -2,65 +2,11 @@
 - hosts: all
   become: true
   pre_tasks:
-    - name: Fail if not Ubuntu and Debian
+    - name: Fail if not Ubuntu
       fail:
-        msg: "This playbook only supports Ubuntu and Debian."
-      when: ansible_distribution not in ["Ubuntu", "Debian"]
-
-    - name: Update all packages
-      tags: always
-      apt:
-        update_cache: true
-        upgrade: dist
-        autoremove: yes
+        msg: "This playbook only supports Ubuntu."
+      when: ansible_distribution not in ["Ubuntu"]
 
 - hosts: all
-  become: true
-
-  vars:
-    bootstrap_user: "ansible"
-    bootstrap_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
-
-  tasks:
-    - name: Create user {{ bootstrap_user }}
-      tags: always
-      user:
-        name: "{{ bootstrap_user }}"
-        shell: /usr/bin/bash
-        groups: sudo
-        append: yes
-        create_home: yes
-
-    - name: Ensure {{ bootstrap_user }} .ssh directory exists
-      file:
-        path: "/home/{{ bootstrap_user }}/.ssh"
-        state: directory
-        mode: 0700
-        owner: "{{ bootstrap_user }}"
-        group: "{{ bootstrap_user }}"
-
-    - name: Add SSH key {{ bootstrap_user }}
-      tags: always
-      authorized_key:
-        user: "{{ bootstrap_user }}"
-        key: "{{ bootstrap_ssh_public_key }}"
-
-    - name: Add {{ bootstrap_user }} to sudoers (passwordless)
-      copy:
-        dest: /etc/sudoers.d/{{ bootstrap_user }}
-        content: "{{ bootstrap_user }} ALL=(ALL) NOPASSWD:ALL"
-        mode: 0440
-        validate: /usr/sbin/visudo -cf %s
-
-    - name: Disable root SSH login
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "^PermitRootLogin"
-        line: "PermitRootLogin no"
-      notify: Restart sshd
-
-  handlers:
-    - name: Restart sshd
-      service:
-        name: sshd
-        state: restarted
+  roles:
+    - ubuntu

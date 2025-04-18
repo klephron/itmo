@@ -3,3 +3,6 @@ timezone: UTC
 dns_servers:
   - 8.8.8.8
   - 1.1.1.1
+
+bootstrap_user: "ansible"
+bootstrap_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
