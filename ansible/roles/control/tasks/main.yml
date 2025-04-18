@@ -45,14 +45,14 @@
   tags: kubernetes_cluster
 
 - name: Run kubeadm init or get join command
-  shell: kubeadm token create --print-join-command
+  ansible.builtin.shell: kubeadm token create --print-join-command
   register: kubeadm_output
   changed_when: false
   become: true
   tags: kubernetes_cluster
 
 - name: Extract kubeadm join command
-  set_fact:
+  ansible.builtin.set_fact:
     kubeadm_join_cmd: "{{ kubeadm_output.stdout | regex_search('kubeadm join\\s+.*$', multiline=True) }}"
   delegate_facts: true
   tags: kubernetes_cluster

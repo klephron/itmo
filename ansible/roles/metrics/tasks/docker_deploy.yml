@@ -1,0 +1,52 @@
+---
+- name: Fail if repo_root is not defined
+  ansible.builtin.fail:
+    msg: >
+      The variable 'repo_root' is not defined.
+      Please pass it via -e or set it as an environment variable.
+  when: repo_root is not defined
+  tags: deploy
+
+- name: Ensure project directory exists
+  ansible.builtin.file:
+    path: "{{ project_src }}"
+    state: directory
+    mode: "0755"
+  tags: deploy
+
+- name: Deploy docker-compose.yml using jinja2
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ project_compose_file }}"
+    mode: "0644"
+  tags: deploy
+
+- name: Synchronize Prometheus config
+  ansible.posix.synchronize:
+    src: "{{ repo_root }}/prometheus/"
+    dest: "{{ project_src }}/prometheus/"
+  tags: deploy
+
+- name: Synchronize Grafana config
+  ansible.posix.synchronize:
+    src: "{{ repo_root }}/grafana/"
+    dest: "{{ project_src }}/grafana/"
+  tags: deploy
+
+- name: Pull docker-compose images
+  ansible.builtin.shell: "docker compose -f {{ project_compose_file }} pull"
+  args:
+    chdir: "{{ project_src }}"
+  tags: deploy
+
+- name: Reload docker-compose
+  ansible.builtin.shell: "docker compose -f {{ project_compose_file }} up -d --remove-orphans"
+  args:
+    chdir: "{{ project_src }}"
+  register: project_compose_result
+  tags: deploy
+
+- name: Debug docker-compose result
+  ansible.builtin.debug:
+    msg: "{{ project_compose_result.stderr_lines }}"
+  tags: deploy

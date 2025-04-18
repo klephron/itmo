@@ -1,0 +1,18 @@
+---
+- hosts: metrics
+  become: true
+  pre_tasks:
+    - name: Fail if not Ubuntu
+      ansible.builtin.fail:
+        msg: "This playbook only supports Ubuntu."
+      when: ansible_distribution not in ["Ubuntu"]
+
+- hosts: metrics
+  tasks:
+    - import_role:
+        name: ubuntu
+        tasks_from: ssh.yml
+
+- hosts: metrics
+  roles:
+    - metrics
