@@ -24,3 +24,11 @@
 - hosts: kubernetes
   roles:
     - kubernetes
+
+- hosts: control
+  roles:
+    - control
+
+- hosts: worker
+  roles:
+    - worker

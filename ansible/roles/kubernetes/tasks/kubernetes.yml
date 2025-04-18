@@ -1,3 +1,4 @@
+---
 - name: Install Kubernetes dependencies
   ansible.builtin.apt:
     name:
@@ -10,9 +11,9 @@
   become: true
   tags: kubernetes
 
-- name: Create /etc/apt/keyrings directory
+- name: Create /etc/apt/keyrings/
   ansible.builtin.file:
-    path: /etc/apt/keyrings
+    path: /etc/apt/keyrings/
     state: directory
     mode: '0755'
   become: true
@@ -37,6 +38,7 @@
   ansible.builtin.apt:
     update_cache: true
   become: true
+  changed_when: false
   tags: kubernetes
 
 - name: Install kubelet and kubeadm

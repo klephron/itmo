@@ -46,7 +46,7 @@
   ansible.builtin.systemd:
     daemon_reload: true
   become: true
-  tags: kubernetes
+  tags: containerd
 
 - name: Enable and start containerd
   ansible.builtin.systemd:
@@ -54,4 +54,4 @@
     enabled: true
     state: started
   become: true
-  tags: kubernetes
+  tags: containerd

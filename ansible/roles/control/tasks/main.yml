@@ -1,0 +1,63 @@
+---
+- name: Install kubectl
+  ansible.builtin.apt:
+    name:
+      - kubectl
+    state: present
+  become: true
+  tags: kubernetes
+
+- name: Hold kubectl versions
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubectl
+  become: true
+  tags: kubernetes
+
+- name: Initialize Kubernetes control plane
+  ansible.builtin.command:
+    cmd: kubeadm init --ignore-preflight-errors=all
+    creates: /etc/kubernetes/admin.conf
+  become: true
+  tags: kubernetes_cluster
+
+- name: Create .kube directory for ansible user
+  ansible.builtin.file:
+    path: "/home/{{ bootstrap_user }}/.kube"
+    state: directory
+    mode: "0700"
+    owner: "{{ bootstrap_user }}"
+    group: "{{ bootstrap_user }}"
+  become: true
+  tags: kubernetes_cluster
+
+- name: Copy admin.conf to .kube/config
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ bootstrap_user }}/.kube/config"
+    mode: "0600"
+    owner: "{{ bootstrap_user }}"
+    group: "{{ bootstrap_user }}"
+    remote_src: yes
+  become: true
+  tags: kubernetes_cluster
+
+- name: Run kubeadm init or get join command
+  shell: kubeadm token create --print-join-command
+  register: kubeadm_output
+  changed_when: false
+  become: true
+  tags: kubernetes_cluster
+
+- name: Extract kubeadm join command
+  set_fact:
+    kubeadm_join_cmd: "{{ kubeadm_output.stdout | regex_search('kubeadm join\\s+.*$', multiline=True) }}"
+  delegate_facts: true
+  tags: kubernetes_cluster
+
+# - name: Display extracted join command
+#   debug:
+#     msg: "Extracted kubeadm join command: {{ kubeadm_join_cmd }}"
+#   tags: kubernetes_cluster
