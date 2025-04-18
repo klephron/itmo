@@ -1,0 +1,18 @@
+---
+- name: Download runc tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/opencontainers/runc/releases/download/v{{ runc_version }}/runc.amd64"
+    dest: "/tmp/runc.amd64"
+  become: true
+  tags: runc
+
+- name: Install runc binary
+  ansible.builtin.copy:
+    src: /tmp/runc.amd64
+    dest: /usr/local/sbin/runc
+    mode: '0755'
+    owner: root
+    group: root
+    remote_src: yes
+  become: true
+  tags: runc

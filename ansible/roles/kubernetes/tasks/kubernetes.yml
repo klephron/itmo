@@ -1,0 +1,67 @@
+- name: Install Kubernetes dependencies
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+    state: present
+    update_cache: true
+  become: true
+  tags: kubernetes
+
+- name: Create /etc/apt/keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+  tags: kubernetes
+
+- name: Download and install Kubernetes apt key
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: true
+  tags: kubernetes
+
+- name: Add Kubernetes apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/ /"
+    state: present
+    filename: kubernetes
+  become: true
+  tags: kubernetes
+
+- name: Update cache
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+  tags: kubernetes
+
+- name: Install kubelet and kubeadm
+  ansible.builtin.apt:
+    name:
+      - kubelet
+      - kubeadm
+    state: present
+  become: true
+  tags: kubernetes
+
+- name: Hold kubelet and kubeadm versions
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+  become: true
+  tags: kubernetes
+
+- name: Enable and start kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+    state: started
+  become: true
+  tags: kubernetes

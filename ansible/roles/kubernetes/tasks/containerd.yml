@@ -1,0 +1,57 @@
+---
+- name: Download containerd tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-linux-amd64.tar.gz"
+    dest: "/tmp/containerd-{{ containerd_version }}-linux-amd64.tar.gz"
+  become: true
+  tags: containerd
+
+- name: Extract containerd to /usr/local/
+  ansible.builtin.unarchive:
+    src: "/tmp/containerd-{{ containerd_version }}-linux-amd64.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+  become: true
+  tags: containerd
+
+- name: Ensure /usr/local/lib/systemd/system/ exists
+  ansible.builtin.file:
+    path: /usr/local/lib/systemd/system/
+    state: directory
+  become: true
+  tags: containerd
+
+- name: Download containerd systemd service file
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+    dest: /usr/local/lib/systemd/system/containerd.service
+  become: true
+  tags: containerd
+
+- name: Ensure /etc/containerd/ exists
+  ansible.builtin.file:
+    path: /etc/containerd/
+    state: directory
+  become: true
+  tags: containerd
+
+- name: Generate and write containerd default config
+  ansible.builtin.shell:
+    cmd: containerd config default | tee /etc/containerd/config.toml
+    creates: /etc/containerd/config.toml
+  become: true
+  tags: containerd
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+  tags: kubernetes
+
+- name: Enable and start containerd
+  ansible.builtin.systemd:
+    name: containerd
+    enabled: true
+    state: started
+  become: true
+  tags: kubernetes
