@@ -17,16 +17,7 @@ config = {
           memory    = 3072
           vcpu      = 4
           disk_size = 30
-          hostfwd = [
-            # {
-            #   from = 8110
-            #   to   = 30110
-            # },
-            # {
-            #   from = 8111
-            #   to   = 30111
-            # }
-          ]
+          hostfwd = []
         }
         "devops-worker-1" = {
           memory    = 2048
