@@ -17,6 +17,10 @@ variable "config" {
           memory    = number
           vcpu      = number
           disk_size = number
+          hostfwd = list(object({
+            from = number
+            to   = number
+          }))
         }))
       })
     })

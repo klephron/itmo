@@ -60,4 +60,10 @@ resource "libvirt_domain" "vm" {
     type        = "vnc"
     listen_type = "address"
   }
+
+  xml {
+    xslt = templatefile("${path.module}/hostfwd.xsl.tftpl", {
+      hostfwd = each.value.hostfwd
+    })
+  }
 }
