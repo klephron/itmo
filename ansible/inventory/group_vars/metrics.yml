@@ -1,5 +1,5 @@
-grafana_port: 8113
-prometheus_port: 8114
+prometheus_port: 8113
+grafana_port: 8114
 
 project_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}"
 project_compose_file: "{{ project_src }}/docker-compose.yml"
