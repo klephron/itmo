@@ -12,8 +12,8 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus/rules.yml:/etc/prometheus/rules.yml
+      - {{ project_prometheus_file }}:/etc/prometheus/prometheus.yml
+      - {{ project_kubernetes_bearer_token_file }}:/etc/prometheus/bearer-token
       - prometheus-data:/prometheus
     ports:
       - "{{ prometheus_port }}:9090"

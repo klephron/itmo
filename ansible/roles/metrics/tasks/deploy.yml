@@ -7,6 +7,14 @@
   when: repo_root is not defined
   tags: deploy
 
+- name: Fail if kubernetes_namespace is not defined
+  ansible.builtin.fail:
+    msg: >
+      The variable 'kubernetes_namespace' is not defined.
+      Please pass it via -e or set it as an environment variable.
+  when: kubernetes_namespace is not defined
+  tags: deploy
+
 - name: Ensure project directory exists
   ansible.builtin.file:
     path: "{{ project_src }}"
@@ -21,10 +29,11 @@
     mode: "0644"
   tags: deploy
 
-- name: Synchronize Prometheus config
-  ansible.posix.synchronize:
-    src: "{{ repo_root }}/prometheus/"
-    dest: "{{ project_src }}/prometheus/"
+- name: Deploy prometheus.yml using jinja2
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ project_prometheus_file }}"
+    mode: "0644"
   tags: deploy
 
 - name: Synchronize Grafana config

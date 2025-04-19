@@ -1,0 +1,3 @@
+project_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}"
+
+kubernetes_prometheus_token_duration: "24h"

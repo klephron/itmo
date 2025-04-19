@@ -7,6 +7,12 @@
         msg: "This playbook only supports Ubuntu."
       when: ansible_distribution not in ["Ubuntu"]
 
+- hosts: control
+  tasks:
+    - import_role:
+        name: control
+        tasks_from: token.yml
+
 - hosts: metrics
   tasks:
     - import_role:

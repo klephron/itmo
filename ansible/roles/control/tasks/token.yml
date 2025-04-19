@@ -1,0 +1,20 @@
+---
+- name: Fail if kubernetes_namespace is not defined
+  ansible.builtin.fail:
+    msg: >
+      The variable 'kubernetes_namespace' is not defined.
+      Please pass it via -e or set it as an environment variable.
+  when: kubernetes_namespace is not defined
+  tags: token
+
+- name: Get Kubernetes prometheus token
+  ansible.builtin.shell: kubectl -n {{ kubernetes_namespace }} create token prometheus --duration={{ kubernetes_prometheus_token_duration }}
+  register: prometheus_token_output
+  changed_when: false
+  tags: token
+
+- name: Extract Kubernetes prometheus token
+  ansible.builtin.set_fact:
+    kubernetes_prometheus_token: "{{ prometheus_token_output.stdout }}"
+  delegate_facts: true
+  tags: token

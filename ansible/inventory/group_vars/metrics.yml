@@ -1,2 +1,10 @@
 grafana_port: 3000
 prometheus_port: 9090
+
+project_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}"
+project_compose_file: "{{ project_src }}/docker-compose.yml"
+project_prometheus_file: "{{ project_src }}/prometheus.yml"
+project_kubernetes_bearer_token_file: "{{ project_src }}/kubernetes-bearer-token.txt"
+
+kubernetes_api_server_host: "{{ hostvars['devops-control-1'].ansible_host }}"
+kubernetes_api_server_port: 6443

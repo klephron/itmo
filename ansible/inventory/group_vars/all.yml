@@ -6,6 +6,3 @@ dns_servers:
 
 bootstrap_user: "ansible"
 bootstrap_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
-
-project_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}"
-project_compose_file: "{{ project_src }}/docker-compose.yml"

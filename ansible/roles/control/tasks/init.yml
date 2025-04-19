@@ -44,7 +44,7 @@
   become: true
   tags: kubernetes_init
 
-- name: Run kubeadm init or get join command
+- name: Get Kubernetes join command
   ansible.builtin.shell: kubeadm token create --print-join-command
   register: kubeadm_output
   changed_when: false
