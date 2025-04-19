@@ -1,0 +1,65 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  namespace: devops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+        - name: server
+          image: zubrailx/devops-server:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/me_db"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "me"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "me"
+            - name: SERVER_PORT
+              value: "8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+  namespace: devops
+spec:
+  selector:
+    app: server
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30082
+  type: NodePort
+  sessionAffinity: None
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: server
+  namespace: devops
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: server
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: AverageValue
+          averageValue: 150m
