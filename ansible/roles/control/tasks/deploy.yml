@@ -25,6 +25,15 @@
   register: calico_result
   tags: deploy
 
+- name: Deploy metrics server
+  ansible.builtin.command: kubectl apply -f {{ metrics_manifest }}
+  register: metrics_result
+  tags: deploy
+
+- name: Patch metrics-server deployment to add insecure TLS flag
+  ansible.builtin.command: kubectl patch -n kube-system deployments.apps/metrics-server --type strategic --patch-file {{ project_src }}/kubernetes/metrics-server-patch.yml
+  tags: deploy
+
 - name: Kubernetes apply namespace
   ansible.builtin.command: kubectl apply -f {{ project_src }}/kubernetes/namespace.yml
   changed_when: "'created' in apply_namespace.stdout or 'configured' in apply_namespace.stdout"
