@@ -11,8 +11,8 @@ module "pools" {
   }
 }
 
-module "ubuntu_20_04" {
-  source = "./ubuntu_20_04"
+module "ubuntu" {
+  source = "./ubuntu"
 
   images = {
     name = module.pools.images.name
@@ -21,7 +21,7 @@ module "ubuntu_20_04" {
     name = module.pools.disks.name
   }
   base = {
-    source = var.config.vms.ubuntu_20_04.base
+    source = var.config.vms.ubuntu.base
   }
-  settings = var.config.vms.ubuntu_20_04.settings
+  settings = var.config.vms.ubuntu.settings
 }

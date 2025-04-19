@@ -11,7 +11,7 @@ variable "config" {
       })
     })
     vms = object({
-      ubuntu_20_04 = object({
+      ubuntu = object({
         base = string
         settings = map(object({
           memory    = number

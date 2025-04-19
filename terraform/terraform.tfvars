@@ -10,8 +10,8 @@ config = {
     }
   }
   vms = {
-    ubuntu_20_04 = {
-      base = "/home/nikit/vms/images/focal-server-cloudimg-amd64-disk-kvm.img"
+    ubuntu = {
+      base = "/home/nikit/vms/images/noble-server-cloudimg-amd64.img"
       settings = {
         "devops-control-1" = {
           memory    = 3072
