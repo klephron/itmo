@@ -61,9 +61,12 @@ resource "libvirt_domain" "vm" {
     listen_type = "address"
   }
 
-  xml {
-    xslt = templatefile("${path.module}/hostfwd.xsl.tftpl", {
-      hostfwd = each.value.hostfwd
-    })
+  dynamic "xml" {
+    for_each = length(each.value.hostfwd) > 0 ? [1] : []
+    content {
+      xslt = templatefile("${path.module}/hostfwd.xsl.tftpl", {
+        hostfwd = each.value.hostfwd
+      })
+    }
   }
 }

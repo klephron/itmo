@@ -57,6 +57,11 @@
   delegate_facts: true
   tags: kubernetes_init
 
+# - name: Replace IP address in kubeadm join command
+#   ansible.builtin.set_fact:
+#     kubeadm_join_cmd: "{{ kubeadm_join_cmd | regex_replace('kubeadm join\\s+\\d+\\.\\d+\\.\\d+\\.\\d+', 'kubeadm join ' + ansible_host) }}"
+#   tags: kubernetes_init
+
 # - name: Display extracted join command
 #   debug:
 #     msg: "Extracted kubeadm join command: {{ kubeadm_join_cmd }}"
