@@ -2,7 +2,12 @@ FROM maven:3.9.4-eclipse-temurin-17 AS installer
 
 WORKDIR /app
 
-COPY pom.xml .
-RUN mvn -T 1C dependency:go-offline
+COPY mvnw .
+COPY .mvn ./.mvn
 
-CMD ["mvn", "test"]
+COPY pom.xml .
+RUN ./mvnw -T 1C dependency:go-offline
+
+COPY src ./src
+
+CMD ["/app/mvnw", "test"]

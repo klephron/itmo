@@ -15,5 +15,8 @@ COPY --from=generator /app/package.json /app/yarn.lock ./
 RUN yarn install
 
 COPY vite.config.ts tsconfig.json ./
+COPY src ./src
+COPY test ./test
+COPY scripts ./scripts
 
 CMD ["yarn", "run", "test"]
