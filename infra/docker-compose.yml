@@ -198,8 +198,8 @@ services:
       consul:
         condition: service_healthy
 
-  account-service:
-    image: zubrailx/ahla-account-service:latest
+  account:
+    image: zubrailx/ahla-account:latest
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://zavar:zavar@mongodb:27017/iot-db
       CONSUL_HOST: consul

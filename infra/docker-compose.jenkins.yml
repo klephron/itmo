@@ -1,6 +1,7 @@
 services:
   jenkins:
     image: jenkins/jenkins:lts-jdk21
+    container_name: ahla-jenkins
     ports:
       - "${JENKINS_PORT:?err}:8080"
     volumes:
@@ -10,6 +11,7 @@ services:
     build:
       context: ./jenkins
       dockerfile: agent.dockerfile
+    container_name: ahla-jenkins-agent
     runtime: sysbox-runc
     environment:
       JENKINS_AGENT_SSH_PUBKEY: ${JENKINS_AGENT_SSH_PUBKEY:?err}
