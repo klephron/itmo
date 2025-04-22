@@ -8,10 +8,10 @@
 
 Done by terraform.
 
-Go to terraform directory:
+Go to terraform environment directory:
 
 ```sh
-cd ./terraform
+cd ./terraform/environments/prod/
 ```
 
 Create VMS:
@@ -54,16 +54,18 @@ Deploy Kubernetes cluster:
 > Before deployment configure ip addresses in `inventory/hosts.ini`.
 
 ```sh
-ansible-playbook kubernetes.yml -e repo_root=<repo_root>
+ansible-playbook kubernetes.yml -e infra_root=<infra_root>
 ```
 
-> By default namespace `devops` is mainly used. See `./kubernetes/` for details.
+> `infra_root` - path to instrastructure root. Currently is `<repo_root>/infra`.
 
 Deploy metrics services:
 
 ```sh
-ansible-playbook metrics.yml -e repo_root=<repo_root> -e kubernetes_namespace=devops
+ansible-playbook metrics.yml -e infra_root=<infra_root> -e kubernetes_namespace=devops
 ```
+
+> By default namespace `devops` is mainly used. See `./kubernetes/` for details.
 
 ## CI/CD
 
