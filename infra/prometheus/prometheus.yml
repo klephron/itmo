@@ -62,10 +62,10 @@ scrape_configs:
         target_label: __metrics_path__
         replacement: /metrics
 
-  - job_name: 'account-service'
+  - job_name: 'account'
     consul_sd_configs:
       - server: 'consul:8500'
-        services: ['account-service']
+        services: ['account']
     relabel_configs:
       - source_labels: []
         target_label: __metrics_path__

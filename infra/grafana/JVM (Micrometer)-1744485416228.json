@@ -3397,8 +3397,8 @@
     "list": [
       {
         "current": {
-          "text": "account-service",
-          "value": "account-service"
+          "text": "account",
+          "value": "account"
         },
         "datasource": "aeiomm9mk7x8ga",
         "includeAll": false,
@@ -3412,8 +3412,8 @@
       },
       {
         "current": {
-          "text": "account-service:8082",
-          "value": "account-service:8082"
+          "text": "account:8082",
+          "value": "account:8082"
         },
         "datasource": "aeiomm9mk7x8ga",
         "includeAll": false,

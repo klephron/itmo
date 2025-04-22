@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ru.itmo.zavar</groupId>
-    <artifactId>account-service</artifactId>
+    <artifactId>account</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>account-service</name>
-    <description>account-service</description>
+    <name>account</name>
+    <description>account</description>
     <url/>
     <licenses>
         <license/>
@@ -254,7 +254,7 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>ru/itmo/zavar/accountservice/service/**</include>
+                                <include>ru/itmo/zavar/account/service/**</include>
                             </includes>
                         </configuration>
                     </execution>

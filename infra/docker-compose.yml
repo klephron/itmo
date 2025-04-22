@@ -206,7 +206,7 @@ services:
       CONSUL_PORT: 8500
       MQTT_URI: tcp://mqtt-broker:1883
       MQTT_TOPIC: radiator/reset
-      MQTT_CLIENT_ID: account-service
+      MQTT_CLIENT_ID: account
     ports:
       - "${ACCOUNT_PORT:-8226}:8082"
     depends_on:
