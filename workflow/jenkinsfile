@@ -122,7 +122,7 @@ pipeline {
       }
     }
 
-    stage('CI') {
+    stage('Integration') {
       parallel {
         stage('Front') {
           agent { label 'jenkins-agent-1' }
@@ -177,7 +177,7 @@ pipeline {
         }
       }
     }
-    stage('CD') {
+    stage('Delivery') {
       parallel {
         stage('Front') {
           agent { label 'jenkins-agent-1'}
@@ -268,7 +268,7 @@ pipeline {
         }
       }
     }
-    stage('Deploy') {
+    stage('Deployment') {
       agent { label 'jenkins-agent-1' }
       stages {
         stage('Prepare') {
