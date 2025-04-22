@@ -1,4 +1,4 @@
-variable "config" {
+variable "vms" {
   type = object({
     pools = object({
       images = object({

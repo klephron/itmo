@@ -1,10 +1,10 @@
 ---
-- name: Fail if repo_root is not defined
+- name: Fail if infra_root is not defined
   ansible.builtin.fail:
     msg: >
-      The variable 'repo_root' is not defined.
+      The variable 'infra_root' is not defined.
       Please pass it via -e or set it as an environment variable.
-  when: repo_root is not defined
+  when: infra_root is not defined
   tags: deploy
 
 - name: Fail if kubernetes_namespace is not defined
@@ -38,7 +38,7 @@
 
 - name: Synchronize Grafana config
   ansible.posix.synchronize:
-    src: "{{ repo_root }}/grafana/"
+    src: "{{ infra_root }}/grafana/"
     dest: "{{ project_src }}/grafana/"
   tags: deploy
 

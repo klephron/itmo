@@ -1,10 +1,10 @@
 ---
-- name: Fail if repo_root is not defined
+- name: Fail if infra_root is not defined
   ansible.builtin.fail:
     msg: >
-      The variable 'repo_root' is not defined.
+      The variable 'infra_root' is not defined.
       Please pass it via -e or set it as an environment variable.
-  when: repo_root is not defined
+  when: infra_root is not defined
   tags: deploy
 
 - name: Ensure project directory exists
@@ -16,7 +16,7 @@
 
 - name: Synchronize Kubernetes config
   ansible.posix.synchronize:
-    src: "{{ repo_root }}/kubernetes/"
+    src: "{{ infra_root }}/kubernetes/"
     dest: "{{ project_src }}/kubernetes/"
   tags: deploy
 
