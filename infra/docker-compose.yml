@@ -25,7 +25,7 @@ services:
       - "${ELASTICSEARCH_PORT:-9200}:9200"
 
   logstash:
-    build: ./logstash
+    image: zubrailx/ahla-logstash:latest
     environment:
       - LS_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
@@ -146,7 +146,7 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
 
   iot-controller:
-    build: ./iot-controller
+    image: zubrailx/ahla-iot-controller:latest
     environment:
       MQTT_BROKER_URL: tcp://mqtt-broker:1883
       MQTT_TOPIC: $$share/myGroup/radiator/data
@@ -167,7 +167,7 @@ services:
         condition: service_healthy
 
   data-simulator:
-    build: ./data-simulator
+    image: zubrailx/ahla-data-simulator:latest
     environment:
       DEVICE_COUNT: 5
       SEND_INTERVAL_MS: 1000
@@ -178,7 +178,7 @@ services:
       - iot-controller
 
   rule-engine:
-    build: ./rule-engine
+    image: zubrailx/ahla-rule-engine:latest
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -199,7 +199,7 @@ services:
         condition: service_healthy
 
   account-service:
-    build: ./account-service
+    image: zubrailx/ahla-account-service:latest
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://zavar:zavar@mongodb:27017/iot-db
       CONSUL_HOST: consul
@@ -218,7 +218,7 @@ services:
         condition: service_healthy
 
   consul:
-    build: ./consul
+    image: zubrailx/ahla-consul:latest
     environment:
       CONSUL_BOOTSTRAP_EXPECT: 1
       CONSUL_CLIENT_LAN_ADDRESS: 0.0.0.0
