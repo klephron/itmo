@@ -36,29 +36,29 @@ def gitTagName() {
 }
 
 def getBranchName() {
-  if (fileExists("jenkins_branch-name")) {
-    return readFile("jenkins_branch-name").trim()
+  if (fileExists("jenkins-branch-name")) {
+    return readFile("jenkins-branch-name").trim()
   }
   return null
 }
 
 def getCommitSha() {
-  if (fileExists("jenkins_commit-sha")) {
-    return readFile("jenkins_commit-sha").trim()
+  if (fileExists("jenkins-commit-sha")) {
+    return readFile("jenkins-commit-sha").trim()
   }
   return null
 }
 
 def getRepoURL() {
-  if (fileExists("jenkins_repository-url")) {
-    return readFile("jenkins_repository-url").trim()
+  if (fileExists("jenkins-repository-url")) {
+    return readFile("jenkins-repository-url").trim()
   }
   return null
 }
 
 def getTagName() {
-  if (fileExists("jenkins_tag-name")) {
-    return readFile("jenkins_tag-name").trim()
+  if (fileExists("jenkins-tag-name")) {
+    return readFile("jenkins-tag-name").trim()
   }
   return null
 }
@@ -103,16 +103,16 @@ pipeline {
           def tagName = gitTagName()
 
           if (branchName) {
-            sh "echo ${branchName} > jenkins_branch-name"
+            sh "echo ${branchName} > jenkins-branch-name"
           }
           if (commitSha) {
-            sh "echo ${commitSha} > jenkins_commit-sha"
+            sh "echo ${commitSha} > jenkins-commit-sha"
           }
           if (repoURL) {
-            sh "echo ${repoURL} > jenkins_repository-url"
+            sh "echo ${repoURL} > jenkins-repository-url"
           }
           if (tagName) {
-            sh "echo ${tagName} > jenkins_tag-name"
+            sh "echo ${tagName} > jenkins-tag-name"
           }
         }
 
