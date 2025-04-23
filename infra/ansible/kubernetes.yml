@@ -8,20 +8,6 @@
       when: ansible_distribution not in ["Ubuntu"]
 
 - hosts: kubernetes
-  tasks:
-    - import_role:
-        name: ubuntu
-        tasks_from: ip_forward.yml
-
-    - import_role:
-        name: ubuntu
-        tasks_from: ssh.yml
-
-    - import_role:
-        name: ubuntu
-        tasks_from: swap.yml
-
-- hosts: kubernetes
   roles:
     - kubernetes
 

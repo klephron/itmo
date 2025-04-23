@@ -1,7 +1,43 @@
 ---
-- name: Enable ipv4 forwarding
+- name: Add ipv4 forwarding = 1
   ansible.posix.sysctl:
     name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    state: present
+  tags: ip_forward
+  become: true
+
+- name: Add ipv6 forwarding = 1
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: '1'
+    sysctl_set: true
+    state: present
+  tags: ip_forward
+  become: true
+
+- name: Add ipv6 accept RA = 2
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.accept_ra
+    value: '2'
+    sysctl_set: true
+    state: present
+  tags: ip_forward
+  become: true
+
+- name: Add ipv6 accept redirects = 1
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.accept_redirects
+    value: '1'
+    sysctl_set: true
+    state: present
+  tags: ip_forward
+  become: true
+
+- name: Add ipv6 accept source route and reload = 1
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.accept_source_route
     value: '1'
     sysctl_set: true
     state: present
