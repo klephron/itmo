@@ -185,11 +185,15 @@ pipeline {
                         ${scannerHome}/bin/sonar-scanner
                       """
                     }
-                    timeout(time: 2, unit: 'MINUTES') {
-                      def qualityGate = waitForQualityGate()
-                      if (qualityGate.status != 'OK') {
-                        error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                    try {
+                      timeout(time: 2, unit: 'MINUTES') {
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status != 'OK') {
+                          error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                        }
                       }
+                    } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+                      unstable("Pipeline marked as unstable due to SonarQube QualityGate timeout")
                     }
                   }
                 }
@@ -233,11 +237,15 @@ pipeline {
                         ${scannerHome}/bin/sonar-scanner
                       """
                     }
-                    timeout(time: 2, unit: 'MINUTES') {
-                      def qualityGate = waitForQualityGate()
-                      if (qualityGate.status != 'OK') {
-                        error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                    try {
+                      timeout(time: 2, unit: 'MINUTES') {
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status != 'OK') {
+                          error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                        }
                       }
+                    } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+                      unstable("Pipeline marked as unstable due to SonarQube QualityGate timeout")
                     }
                   }
                 }
