@@ -38,18 +38,19 @@ module "vm" {
             vcpu      = 2
             disk_size = 30
             hostfwd = [
-              {
-                from = 8113
-                to   = 8113
-              },
-              {
-                from = 8114
-                to   = 8114
-              },
-              {
-                from = 8115
-                to   = 8115
-              }
+              # WARN: risky thing =) sometimes doesn't work, just use proxy not to fix routing and qemu
+              # {
+              #   from = 8113
+              #   to   = 8113
+              # },
+              # {
+              #   from = 8114
+              #   to   = 8114
+              # },
+              # {
+              #   from = 8115
+              #   to   = 8115
+              # }
             ]
           }
         }

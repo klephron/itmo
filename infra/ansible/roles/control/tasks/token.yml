@@ -3,10 +3,14 @@
   ansible.builtin.shell: kubectl -n {{ kubernetes_namespace }} create token prometheus --duration={{ kubernetes_prometheus_token_duration }}
   register: prometheus_token_output
   changed_when: false
-  tags: token
+  tags:
+    - token
+    - deploy
 
 - name: Extract Kubernetes prometheus token
   ansible.builtin.set_fact:
     kubernetes_prometheus_token: "{{ prometheus_token_output.stdout }}"
   delegate_facts: true
-  tags: token
+  tags:
+    - token
+    - deploy
