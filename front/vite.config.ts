@@ -7,6 +7,13 @@ export default defineConfig({
   plugins: [solid()],
   test: {
     environment: "jsdom",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      reportsDirectory: "./coverage",
+      include: ["src/**/*.{js,jsx,ts,tsx}"],
+      exclude: ["src/**/*.test.{js,jsx,ts,tsx}", "node_modules/**"],
+    },
   },
   resolve: {
     conditions: ["development", "browser"],
