@@ -16,7 +16,7 @@ module "vm" {
         base = "/home/nikit/vms/images/noble-server-cloudimg-amd64.img"
         settings = {
           "devops-control-1" = {
-            memory    = 3072
+            memory    = 2048
             vcpu      = 4
             disk_size = 30
             hostfwd   = []
@@ -34,7 +34,7 @@ module "vm" {
             hostfwd   = []
           }
           "devops-metrics-1" = {
-            memory    = 1024
+            memory    = 3072
             vcpu      = 2
             disk_size = 30
             hostfwd = [
@@ -45,6 +45,10 @@ module "vm" {
               {
                 from = 8114
                 to   = 8114
+              },
+              {
+                from = 8115
+                to   = 8115
               }
             ]
           }

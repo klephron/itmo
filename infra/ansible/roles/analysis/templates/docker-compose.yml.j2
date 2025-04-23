@@ -1,10 +1,32 @@
 services:
   sonarqube:
     image: sonarqube:community
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/bitnami_sonarqube
+      SONAR_JDBC_USERNAME: bn_sonarqube
+      SONAR_JDBC_PASSWORD: bitnami
+      SONAR_JAVA_OPTS: -Xmx2g -Xms512m
     volumes:
       - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
     ports:
       - "{{ sonarqube_port }}:9000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17.4
+    environment:
+      POSTGRES_USER: bn_sonarqube
+      POSTGRES_PASSWORD: bitnami
+      POSTGRES_DB: bitnami_sonarqube
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/pgdata
 
 volumes:
+  postgres-data:
   sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:

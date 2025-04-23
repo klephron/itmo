@@ -14,14 +14,14 @@
     mode: "0755"
   tags: deploy
 
-- name: Deploy docker-compose using jinja2
+- name: Install docker-compose using jinja2
   ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ metrics_compose_file }}"
     mode: "0644"
   tags: deploy
 
-- name: Deploy prometheus.yml using jinja2
+- name: Install prometheus.yml using jinja2
   ansible.builtin.template:
     src: prometheus.yml.j2
     dest: "{{ metrics_prometheus_file }}"
