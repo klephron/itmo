@@ -73,6 +73,10 @@ ansible-playbook analysis.yml -e infra_root=<infra_root>
 
 ## CI/CD
 
+### Jenkins
+
+#### Docker Compose
+
 Create external volume for `jenkins`:
 
 ```sh
@@ -92,6 +96,8 @@ Before deployment add environment variables:
 - `JENKINS_PORT` - port for jenkins controller
 - `JENKINS_AGENT_SSH_PUBKEY` - public key for jenkins agent
 
+#### Github Plugin
+
 Pipeline is located at `jenkins/jenkinsfile`.
 
 > Note: The `GitHubCommitStatusSetter` requires that the Git Server is defined under _Manage Jenkins > Configure System > GitHub > GitHub Servers_. Otherwise the `GitHubCommitStatusSetter` is not able to resolve the repository name properly and you would see an empty list of repos:
@@ -101,6 +107,20 @@ Pipeline is located at `jenkins/jenkinsfile`.
 [Set GitHub commit status (universal)] PENDING on repos [] (sha:xxxxxxx) with context:test/mycontext
 [...]
 ```
+
+#### SonarQube Plugin
+
+Configure SonarQube Servers in `Manage Jenkins` > `System`.
+
+- Name: `sonarqube_devops_server`.
+
+- Also for pipeline create and install Server Authentication Token (name doesn't matter).
+
+In `Manage Jenkins` > `Tools` configure SonarQube Scanner:
+
+- Name: `sonarqube_scanner`.
+
+## Jenkins Plugins
 
 Installed `jenkins` plugins:
 

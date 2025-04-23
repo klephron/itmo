@@ -223,6 +223,7 @@ pipeline {
                   dir("${WORKSPACE}/${SERVER_DIR}") {
                     withSonarQubeEnv("sonarqube_devops_server") {
                       sh """
+                        ls -la .
                         ${scannerHome}/bin/sonar-scanner
                       """
                     }
