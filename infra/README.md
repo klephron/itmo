@@ -59,10 +59,16 @@ ansible-playbook kubernetes.yml -e infra_root=<infra_root>
 
 > `infra_root` - path to instrastructure root. Currently is `<repo_root>/infra`.
 
-Deploy metrics services:
+Deploy metrics services (prometheus, grafana):
 
 ```sh
 ansible-playbook metrics.yml -e infra_root=<infra_root>
+```
+
+Deploy analysis services (sonarqube):
+
+```sh
+ansible-playbook analysis.yml -e infra_root=<infra_root>
 ```
 
 ## CI/CD

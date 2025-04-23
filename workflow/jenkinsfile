@@ -28,7 +28,6 @@ def gitTagName() {
   try {
     return "${TAG_NAME}"
   } catch (Exception e) {
-    sh "echo getting tag name!"
     def commit = gitCommitSha()
     if (commit) {
       try {
