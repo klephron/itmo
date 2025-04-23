@@ -1,36 +1,57 @@
-def gitBranchName() {
-  def branch = sh(script: 'git symbolic-ref HEAD || git name-rev --name-only HEAD', returnStdout: true).trim()
+def gitRepoURL() {
+  return sh(script: 'git config --get remote.origin.url', returnStdout: true)?.trim()
+}
 
-  if (branch.contains('remotes/origin/')) {
-    return branch.replaceAll('^remotes/origin/', '')
-  } else if (branch.contains('refs/heads/')) {
-    return branch.replaceAll('^refs/heads/', '')
+def gitBranchName() {
+  try {
+    return "${BRANCH_NAME}"
+  } catch (Exception e) {
+    def branch = sh(script: 'git symbolic-ref --short HEAD || git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+
+    if (branch.contains('remotes/origin/')) {
+      return branch.replaceAll('^remotes/origin/', '')
+    } else if (branch.contains('refs/heads/')) {
+      return branch.replaceAll('^refs/heads/', '')
+    }
+    return branch
   }
-  return branch
+}
+
+def isTag(String desc) {
+  def match = desc =~ /.+-[0-9]+-g[0-9A-Fa-f]{6,}$/
+  def result = !match
+  match = null // prevent serialization
+  return result
+}
+
+def gitTagName() {
+  try {
+    return "${TAG_NAME}"
+  } catch (Exception e) {
+    sh "echo getting tag name!"
+    def commit = gitCommitSha()
+    if (commit) {
+      try {
+        def desc = sh(script: "git describe --tags ${commit}", returnStdout: true)?.trim()
+        if (isTag(desc)) {
+          return desc
+        }
+      } catch (Exception ee) {
+        return null
+      }
+    }
+    return null
+  }
 }
 
 def gitCommitSha() {
   return sh(script: 'git rev-parse HEAD', returnStdout: true)?.trim()
 }
 
-def gitRepoURL() {
-  return sh(script: 'git config --get remote.origin.url', returnStdout: true)?.trim()
-}
 
-def isTag(String desc) {
-    def match = desc =~ /.+-[0-9]+-g[0-9A-Fa-f]{6,}$/
-    def result = !match
-    match = null // prevent serialization
-    return result
-}
-
-def gitTagName() {
-  def commit = gitCommitSha()
-  if (commit) {
-      def desc = sh(script: "git describe --tags ${commit}", returnStdout: true)?.trim()
-      if (isTag(desc)) {
-          return desc
-      }
+def getRepoURL() {
+  if (fileExists("jenkins-repository-url")) {
+    return readFile("jenkins-repository-url").trim()
   }
   return null
 }
@@ -42,6 +63,13 @@ def getBranchName() {
   return null
 }
 
+def getTagName() {
+  if (fileExists("jenkins-tag-name")) {
+    return readFile("jenkins-tag-name").trim()
+  }
+  return null
+}
+
 def getCommitSha() {
   if (fileExists("jenkins-commit-sha")) {
     return readFile("jenkins-commit-sha").trim()
@@ -49,19 +77,6 @@ def getCommitSha() {
   return null
 }
 
-def getRepoURL() {
-  if (fileExists("jenkins-repository-url")) {
-    return readFile("jenkins-repository-url").trim()
-  }
-  return null
-}
-
-def getTagName() {
-  if (fileExists("jenkins-tag-name")) {
-    return readFile("jenkins-tag-name").trim()
-  }
-  return null
-}
 
 def setPipelineStatus(String message, String state) {
   def repoURL = getRepoURL()
@@ -74,6 +89,17 @@ def setPipelineStatus(String message, String state) {
     statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]]]
   ])
 }
+
+
+def formatDockerTag(String branchName) {
+  if (!branchName) {
+    return null
+  }
+  def sanitized = branchName.replaceAll('/', '-').toLowerCase()
+  sanitized = sanitized.replaceAll('[^a-z0-9._-]', '')
+  return sanitized
+}
+
 
 pipeline {
   agent none
@@ -99,8 +125,8 @@ pipeline {
         script {
           def repoURL = gitRepoURL()
           def branchName = gitBranchName()
-          def commitSha = gitCommitSha()
           def tagName = gitTagName()
+          def commitSha = gitCommitSha()
 
           if (repoURL) {
             sh "echo ${repoURL} > jenkins-repository-url"
@@ -205,10 +231,10 @@ pipeline {
                     if (getBranchName() == "master") {
                       docker.image("${FRONT_IMAGE}:" + getCommitSha()).push("latest")
                     } else {
-                      docker.image("${FRONT_IMAGE}:" + getCommitSha()).push(getBranchName())
+                      docker.image("${FRONT_IMAGE}:" + getCommitSha()).push(formatDockerTag(getBranchName()))
                     }
                     if (getTagName()) {
-                      docker.image("${FRONT_IMAGE}:" + getCommitSha()).push(getTagName())
+                      docker.image("${FRONT_IMAGE}:" + getCommitSha()).push(formatDockerTag(getTagName()))
                     }
                   }
                 }
@@ -239,10 +265,10 @@ pipeline {
                     if (getBranchName() == "master") {
                       docker.image("${SERVER_IMAGE}:" + getCommitSha()).push("latest")
                     } else {
-                      docker.image("${SERVER_IMAGE}:" + getCommitSha()).push(getBranchName())
+                      docker.image("${SERVER_IMAGE}:" + getCommitSha()).push(formatDockerTag(getBranchName()))
                     }
                     if (getTagName()) {
-                      docker.image("${SERVER_IMAGE}:" + getCommitSha()).push(getTagName())
+                      docker.image("${SERVER_IMAGE}:" + getCommitSha()).push(formatDockerTag(getTagName()))
                     }
                   }
                 }
