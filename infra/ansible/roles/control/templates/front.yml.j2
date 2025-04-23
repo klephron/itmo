@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: front
-  namespace: devops
+  namespace: {{ kubernetes_namespace }}
 spec:
   replicas: 1
   selector:
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: front
-          image: zubrailx/devops-front:latest
+          image: {{ kubernetes_front_image }}
           ports:
             - containerPort: 80
 ---
@@ -24,7 +24,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: front
-  namespace: devops
+  namespace: {{ kubernetes_namespace }}
 spec:
   selector:
     app: front

@@ -1,6 +1,10 @@
-project_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}"
-
 kubernetes_prometheus_token_duration: "24h"
 
 cni_manifest: https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
 metrics_manifest: https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+kubernetes_namespace: "devops"
+kubernetes_server_image: "zubrailx/devops-server:latest"
+kubernetes_front_image: "zubrailx/devops-front:latest"
+
+control_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}/kubernetes"

@@ -1,0 +1,10 @@
+services:
+  sonarqube:
+    image: sonarqube:community
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+    ports:
+      - "{{ sonarqube_port }}:9000"
+
+volumes:
+  sonarqube-data:

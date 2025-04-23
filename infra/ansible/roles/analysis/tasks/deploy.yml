@@ -1,0 +1,32 @@
+---
+- name: Ensure analysis directory exists
+  ansible.builtin.file:
+    path: "{{ analysis_src }}"
+    state: directory
+    mode: "0755"
+  tags: deploy
+
+- name: Deploy docker-compose using jinja2
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ analysis_compose_file }}"
+    mode: "0644"
+  tags: deploy
+
+- name: Pull docker-compose images
+  ansible.builtin.shell: "docker compose -f {{ analysis_compose_file }} pull"
+  args:
+    chdir: "{{ analysis_src }}"
+  tags: deploy
+
+- name: Reload docker-compose
+  ansible.builtin.shell: "docker compose -f {{ analysis_compose_file }} up -d --remove-orphans"
+  args:
+    chdir: "{{ analysis_src }}"
+  register: analysis_compose_result
+  tags: deploy
+
+- name: Debug docker-compose result
+  ansible.builtin.debug:
+    msg: "{{ analysis_compose_result.stderr_lines }}"
+  tags: deploy

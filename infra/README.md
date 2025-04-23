@@ -62,10 +62,8 @@ ansible-playbook kubernetes.yml -e infra_root=<infra_root>
 Deploy metrics services:
 
 ```sh
-ansible-playbook metrics.yml -e infra_root=<infra_root> -e kubernetes_namespace=devops
+ansible-playbook metrics.yml -e infra_root=<infra_root>
 ```
-
-> By default namespace `devops` is mainly used. See `./kubernetes/` for details.
 
 ## CI/CD
 

@@ -7,55 +7,47 @@
   when: infra_root is not defined
   tags: deploy
 
-- name: Fail if kubernetes_namespace is not defined
-  ansible.builtin.fail:
-    msg: >
-      The variable 'kubernetes_namespace' is not defined.
-      Please pass it via -e or set it as an environment variable.
-  when: kubernetes_namespace is not defined
-  tags: deploy
-
-- name: Ensure project directory exists
+- name: Ensure metrics directory exists
   ansible.builtin.file:
-    path: "{{ project_src }}"
+    path: "{{ metrics_src }}"
     state: directory
     mode: "0755"
   tags: deploy
 
-- name: Deploy docker-compose.yml using jinja2
+- name: Deploy docker-compose using jinja2
   ansible.builtin.template:
     src: docker-compose.yml.j2
-    dest: "{{ project_compose_file }}"
+    dest: "{{ metrics_compose_file }}"
     mode: "0644"
   tags: deploy
 
 - name: Deploy prometheus.yml using jinja2
   ansible.builtin.template:
     src: prometheus.yml.j2
-    dest: "{{ project_prometheus_file }}"
+    dest: "{{ metrics_prometheus_file }}"
     mode: "0644"
   tags: deploy
 
 - name: Synchronize Grafana config
   ansible.posix.synchronize:
     src: "{{ infra_root }}/grafana/"
-    dest: "{{ project_src }}/grafana/"
+    dest: "{{ metrics_src }}/grafana/"
   tags: deploy
 
 - name: Pull docker-compose images
-  ansible.builtin.shell: "docker compose -f {{ project_compose_file }} pull"
+  ansible.builtin.shell: "docker compose -f {{ metrics_compose_file }} pull"
   args:
-    chdir: "{{ project_src }}"
+    chdir: "{{ metrics_src }}"
   tags: deploy
 
 - name: Reload docker-compose
-  ansible.builtin.shell: "docker compose -f {{ project_compose_file }} up -d --remove-orphans"
+  ansible.builtin.shell: "docker compose -f {{ metrics_compose_file }} up -d --remove-orphans"
   args:
-    chdir: "{{ project_src }}"
-  register: project_compose_result
+    chdir: "{{ metrics_src }}"
+  register: metrics_compose_result
   tags: deploy
 
 - name: Debug docker-compose result
   ansible.builtin.debug:
-    msg: "{{ project_compose_result.stderr_lines }}"
+    msg: "{{ metrics_compose_result.stderr_lines }}"
   tags: deploy

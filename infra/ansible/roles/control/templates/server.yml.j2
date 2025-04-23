@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: server
-  namespace: devops
+  namespace: {{ kubernetes_namespace }}
 spec:
   replicas: 1
   selector:
@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: zubrailx/devops-server:latest
+          image: {{ kubernetes_server_image }}
           ports:
             - containerPort: 8080
           env:
@@ -44,7 +44,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: server
-  namespace: devops
+  namespace: {{ kubernetes_namespace }}
 spec:
   selector:
     app: server
@@ -59,7 +59,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: server
-  namespace: devops
+  namespace: {{ kubernetes_namespace }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

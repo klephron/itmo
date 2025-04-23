@@ -14,11 +14,6 @@
         tasks_from: token.yml
 
 - hosts: metrics
-  tasks:
-    - import_role:
-        name: ubuntu
-        tasks_from: ssh.yml
-
-- hosts: metrics
   roles:
+    - docker
     - metrics
