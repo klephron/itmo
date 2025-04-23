@@ -226,7 +226,7 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${FRONT_IMAGE}:" + getCommitSha()).push()
+                    // docker.image("${FRONT_IMAGE}:" + getCommitSha()).push()
                     if (getBranchName() == "master") {
                       docker.image("${FRONT_IMAGE}:" + getCommitSha()).push("latest")
                     } else {
@@ -260,7 +260,7 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${SERVER_IMAGE}:" + getCommitSha()).push()
+                    // docker.image("${SERVER_IMAGE}:" + getCommitSha()).push()
                     if (getBranchName() == "master") {
                       docker.image("${SERVER_IMAGE}:" + getCommitSha()).push("latest")
                     } else {
