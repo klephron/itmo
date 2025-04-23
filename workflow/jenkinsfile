@@ -164,11 +164,27 @@ pipeline {
               steps {
                 script {
                   docker.image("${FRONT_TEST_IMAGE}").inside("--user root") {
-                    sh '''
+                    sh """
                       cd /app
                       yarn run test
                       yarn run coverage
-                    '''
+                      cp -r /app/coverage ${WORKSPACE}/${FRONT_DIR}/coverage
+                      chown 1000:1000 -R ${WORKSPACE}/${FRONT_DIR}/coverage
+                    """
+                  }
+                }
+              }
+            }
+            stage('SonarQube Analysis') {
+              steps {
+                script {
+                  def scannerHome = tool('sonarqube_scanner')
+                  dir("${WORKSPACE}/${FRONT_DIR}") {
+                    withSonarQubeEnv("sonarqube_devops_server") {
+                      sh """
+                        ${scannerHome}/bin/sonar-scanner
+                      """
+                    }
                   }
                 }
               }
@@ -190,10 +206,26 @@ pipeline {
               steps {
                 script {
                   docker.image("${SERVER_TEST_IMAGE}").inside("--user root") {
-                    sh '''
+                    sh """
                       cd /app
                       ./mvnw test
-                    '''
+                      cp -r /app/target ${WORKSPACE}/${SERVER_DIR}/target
+                      chown 1000:1000 -R ${WORKSPACE}/${SERVER_DIR}/target
+                    """
+                  }
+                }
+              }
+            }
+            stage('SonarQube Analysis') {
+              steps {
+                script {
+                  def scannerHome = tool('sonarqube_scanner')
+                  dir("${WORKSPACE}/${SERVER_DIR}") {
+                    withSonarQubeEnv("sonarqube_devops_server") {
+                      sh """
+                        ${scannerHome}/bin/sonar-scanner
+                      """
+                    }
                   }
                 }
               }
