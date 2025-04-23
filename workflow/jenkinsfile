@@ -168,7 +168,7 @@ pipeline {
                       cd /app
                       yarn run test
                       yarn run coverage
-                      cp -r /app/coverage ${WORKSPACE}/${FRONT_DIR}/coverage
+                      cp -r /app/coverage ${WORKSPACE}/${FRONT_DIR}/.
                       chown 1000:1000 -R ${WORKSPACE}/${FRONT_DIR}/coverage
                     """
                   }
@@ -184,6 +184,12 @@ pipeline {
                       sh """
                         ${scannerHome}/bin/sonar-scanner
                       """
+                    }
+                    timeout(time: 2, unit: 'MINUTES') {
+                      def qualityGate = waitForQualityGate()
+                      if (qualityGate.status != 'OK') {
+                        error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                      }
                     }
                   }
                 }
@@ -209,7 +215,7 @@ pipeline {
                     sh """
                       cd /app
                       ./mvnw test
-                      cp -r /app/target ${WORKSPACE}/${SERVER_DIR}/target
+                      cp -r /app/target ${WORKSPACE}/${SERVER_DIR}/.
                       chown 1000:1000 -R ${WORKSPACE}/${SERVER_DIR}/target
                     """
                   }
@@ -223,9 +229,15 @@ pipeline {
                   dir("${WORKSPACE}/${SERVER_DIR}") {
                     withSonarQubeEnv("sonarqube_devops_server") {
                       sh """
-                        ls -la .
+                        ls -la target
                         ${scannerHome}/bin/sonar-scanner
                       """
+                    }
+                    timeout(time: 2, unit: 'MINUTES') {
+                      def qualityGate = waitForQualityGate()
+                      if (qualityGate.status != 'OK') {
+                        error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                      }
                     }
                   }
                 }
