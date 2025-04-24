@@ -101,6 +101,10 @@ def formatDockerTag(String branchName) {
 
 
 pipeline {
+  options {
+    skipDefaultCheckout(true)
+  }
+
   agent none
 
   environment {
@@ -125,6 +129,7 @@ pipeline {
     stage('Preparation') {
     agent { label 'jenkins-agent-1' }
       steps {
+        checkout scm
         script {
           def repoURL = gitRepoURL()
           def branchName = gitBranchName()
