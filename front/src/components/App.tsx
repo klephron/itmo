@@ -119,6 +119,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.CellItems,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.CellItems);
               fetchSection(Section.CellItems);
@@ -131,6 +132,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.Drives,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.Drives);
               fetchSection(Section.Drives);
@@ -143,6 +145,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.ExportBuses,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.ExportBuses);
               fetchSection(Section.ExportBuses);
@@ -155,6 +158,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.ImportBuses,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.ImportBuses);
               fetchSection(Section.ImportBuses);
@@ -167,6 +171,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.Interfaces,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.Interfaces);
               fetchSection(Section.Interfaces);
@@ -179,6 +184,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.Networks,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.Networks);
               fetchSection(Section.Networks);
@@ -191,6 +197,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.Patterns,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.Patterns);
               fetchSection(Section.Patterns);
@@ -203,6 +210,7 @@ export const App = () => {
             classList={{
               [styles.active]: sectionGet() === Section.StorageCells,
             }}
+            role="button"
             onClick={() => {
               sectionSet(Section.StorageCells);
               fetchSection(Section.StorageCells);
@@ -251,13 +259,13 @@ export const App = () => {
           <Match when={sectionGet() === Section.ExportBuses}>
             <ExportBusOperations
               onUpdate={() => fetchSection(Section.ExportBuses)}
-              onExport={() => {}}
+              onExport={() => { }}
             />
           </Match>
           <Match when={sectionGet() === Section.ImportBuses}>
             <ImportBusOperations
               onUpdate={() => fetchSection(Section.ImportBuses)}
-              onImport={() => {}}
+              onImport={() => { }}
             />
           </Match>
           <Match when={sectionGet() === Section.Interfaces}>
@@ -273,7 +281,7 @@ export const App = () => {
           <Match when={sectionGet() === Section.Patterns}>
             <PatternOperations
               onUpdate={() => fetchSection(Section.Patterns)}
-              onCraft={() => {}}
+              onCraft={() => { }}
             />
           </Match>
           <Match when={sectionGet() === Section.StorageCells}>
