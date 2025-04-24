@@ -77,6 +77,28 @@ ansible-playbook analysis.yml -e infra_root=<infra_root>
 
 #### Docker Compose
 
+Create network to directly communicate with VMs if they are isolated:
+
+```sh
+docker network create -d macvlan \
+  --subnet=<vm_subnet> \
+  --gateway=<vm_gateway> \
+  --ip-range=<ip_range> \
+  -o parent=<vm_bridge> \
+  macvlan-virbr0
+```
+
+> Example: `vm_bridge=virbr0`, `vm_subnet=192.168.122.0/24`, `vm_gateway=192.168.122.1`, `ip_range=192.168.122.16/28` (Only allows `192.168.122.16`-`192.168.122.31`).
+>
+> ```sh
+> docker network create -d macvlan \
+>   --subnet=192.168.122.0/24 \
+>   --gateway=192.168.122.1 \
+>   --ip-range=192.168.122.16/28 \
+>   -o parent=virbr0 \
+>   macvlan-virbr0
+> ```
+
 Create external volume for `jenkins`:
 
 ```sh

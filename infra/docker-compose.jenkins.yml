@@ -6,18 +6,30 @@ services:
       - "${JENKINS_PORT:?err}:8080"
     volumes:
       - jenkins-home:/var/jenkins_home
+    networks:
+      - default
+      - macvlan-virbr0
 
   jenkins-agent:
     build:
       context: ./jenkins
       dockerfile: agent.dockerfile
-    # WARN: errors with container name can occur with sysbox-runc
     container_name: devops-jenkins-agent
     runtime: sysbox-runc
     environment:
       JENKINS_AGENT_SSH_PUBKEY: ${JENKINS_AGENT_SSH_PUBKEY:?err}
     volumes:
       - jenkins-agent-docker:/var/lib/docker
+    networks:
+      - default
+      - macvlan-virbr0
+
+  busybox:
+    image: busybox:latest
+    entrypoint: tail -f /dev/null
+    networks:
+      - default
+      - macvlan-virbr0
 
 volumes:
   jenkins-home:
@@ -25,3 +37,9 @@ volumes:
     external: true
   jenkins-agent-docker:
     name: "devops-jenkins-agent-docker"
+
+networks:
+  default:
+    driver: bridge
+  macvlan-virbr0:
+    external: true
