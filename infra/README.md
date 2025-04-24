@@ -73,9 +73,17 @@ ansible-playbook analysis.yml -e infra_root=<infra_root>
 
 ### Prometheus Kubernetes Token Refresh
 
+If Prometheus token invalidates (401 in target page), then by current implementation token needs to be refreshed:
+
 ```sh
 ansible-playbook metrics.yml -e infra_root=<infra_root> --tags=token
 ```
+
+> Default token duration can be changed. Format is same as by kubernetes.
+>
+> ```yml
+> kubernetes_prometheus_token_duration: "24h"
+> ```
 
 ## CI/CD
 
