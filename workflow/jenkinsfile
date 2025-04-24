@@ -107,6 +107,8 @@ pipeline {
     REGISTRY_URL = 'https://index.docker.io/v1/'
     REGISTRY_CRED_ID = 'zubrailx-registry'
 
+    ANSIBLE_IMAGE = "zubrailx/devops-ansible:2.18.5"
+
     FRONT_DIR = "front"
     FRONT_IMAGE = "zubrailx/devops-front"
     FRONT_TEST_IMAGE = "zubrailx/devops-front-test"
@@ -335,6 +337,22 @@ pipeline {
         stage('Prepare') {
           steps {
             unstash 'workspace'
+          }
+        }
+        stage('Kubernetes') {
+          when {
+            expression { return getBranchName() == "master" }
+            expression { getTagName() }
+          }
+          steps {
+            script {
+              docker.image("${ANSIBLE_IMAGE}").inside("--user root") {
+                sh """
+                  pwd
+                  ping -c 10 192.168.122.164
+                """
+              }
+            }
           }
         }
       }
