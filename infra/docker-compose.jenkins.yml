@@ -24,13 +24,6 @@ services:
       - default
       - macvlan-virbr0
 
-  busybox:
-    image: busybox:latest
-    entrypoint: tail -f /dev/null
-    networks:
-      - default
-      - macvlan-virbr0
-
 volumes:
   jenkins-home:
     name: "devops-jenkins-home"
