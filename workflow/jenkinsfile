@@ -108,6 +108,8 @@ pipeline {
     REGISTRY_CRED_ID = 'zubrailx-registry'
 
     ANSIBLE_IMAGE = "zubrailx/devops-ansible:2.18.5"
+    ANSIBLE_SSH_FILE_ID = "ssh_ansible_file"
+    ANSIBLE_SSH_PUB_ID = "ssh_ansible_pub"
 
     FRONT_DIR = "front"
     FRONT_IMAGE = "zubrailx/devops-front"
@@ -342,14 +344,17 @@ pipeline {
         stage('Kubernetes') {
           when {
             expression { return getBranchName() == "master" }
-            expression { getTagName() }
+            // expression { getTagName() }
           }
           steps {
             script {
-              docker.image("${ANSIBLE_IMAGE}").inside("--user root") {
+              withCredentials([file(credentialsId: ANSIBLE_SSH_FILE_ID, variable: 'ANSIBLE_SSH_FILE_PATH')]) {
+                  sh 'cp "$ANSIBLE_SSH_FILE_PATH" "$WORKSPACE/ansible-ssh-private-key"'
+              }
+              docker.image("${ANSIBLE_IMAGE}").inside("--user root --network host") {
                 sh """
-                  pwd
-                  ping -c 10 192.168.122.164
+                  cd ${WORKSPACE}/infra/ansible
+                  ansible-playbook kubernetes.yml -e private_key_file=${WORKSPACE}/ansible-ssh-private-key -e infra_root=${WORKSPACE}/infra --tags=deploy
                 """
               }
             }
