@@ -8,11 +8,10 @@
     - deploy
     - token
 
-- name: Copy kubernetes bearer token
-  ansible.builtin.copy:
-    content: "{{ hostvars['devops-control-1']['kubernetes_prometheus_token'] }}"
-    dest: "{{ metrics_kubernetes_bearer_token_file }}"
-    mode: "0644"
+- name: Update kubernetes-bearer-token.txt without changing inode
+  ansible.builtin.shell:
+    cmd: echo "{{ hostvars['devops-control-1']['kubernetes_prometheus_token'] }}" > "{{ metrics_kubernetes_bearer_token_file }}"
+  changed_when: true
   tags:
     - deploy
     - token
