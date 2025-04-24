@@ -344,18 +344,24 @@ pipeline {
         stage('Kubernetes') {
           when {
             expression { return getBranchName() == "master" }
-            // expression { getTagName() }
+            expression { getTagName() }
           }
           steps {
             script {
               withCredentials([file(credentialsId: ANSIBLE_SSH_FILE_ID, variable: 'ANSIBLE_SSH_FILE_PATH')]) {
                   sh 'cp "$ANSIBLE_SSH_FILE_PATH" "$WORKSPACE/ansible-ssh-private-key"'
               }
+
+              def tagName = getTagName()
+
               docker.image("${ANSIBLE_IMAGE}").inside("--user root --network host") {
                 sh """
                   cd ${WORKSPACE}/infra/ansible
                   ansible-playbook --private-key=${WORKSPACE}/ansible-ssh-private-key \
-                    kubernetes.yml -e infra_root=${WORKSPACE}/infra --tags=deploy
+                    kubernetes.yml --tags=deploy \
+                    -e infra_root=${WORKSPACE}/infra \
+                    -e kubernetes_server_image=${SERVER_IMAGE}:${tagName} \
+                    -e kubernetes_front_image=${FRONT_IMAGE}:${tagName}
                 """
               }
             }
