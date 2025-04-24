@@ -1,5 +1,5 @@
 [tools]
-ansible = "11.4.0"
+ansible-core = "2.18.5"
 bun = "1.2.8"
 helm = "3.17.3"
 node = "23.11.0"
