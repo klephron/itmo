@@ -354,7 +354,8 @@ pipeline {
               docker.image("${ANSIBLE_IMAGE}").inside("--user root --network host") {
                 sh """
                   cd ${WORKSPACE}/infra/ansible
-                  ansible-playbook kubernetes.yml -e private_key_file=${WORKSPACE}/ansible-ssh-private-key -e infra_root=${WORKSPACE}/infra --tags=deploy
+                  ansible-playbook --private-key=${WORKSPACE}/ansible-ssh-private-key \
+                    kubernetes.yml -e infra_root=${WORKSPACE}/infra --tags=deploy
                 """
               }
             }
