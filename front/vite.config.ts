@@ -16,6 +16,7 @@ export default defineConfig({
         "src/**/*.test.{js,jsx,ts,tsx}",
         "node_modules/**",
         "src/api/generated/**",
+        "src/index.tsx",
       ],
     },
   },
