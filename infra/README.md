@@ -4,8 +4,6 @@
 
 ### VM Creation and Destruction
 
-Done by terraform.
-
 Go to terraform environment directory:
 
 ```sh
