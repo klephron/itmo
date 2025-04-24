@@ -114,110 +114,102 @@ export const App = () => {
     <div class={styles.app}>
       <div class={styles.layout}>
         <nav class={styles.sidebar}>
-          <div
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.CellItems,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.CellItems);
               fetchSection(Section.CellItems);
             }}
           >
             Cell Items
-          </div>
-          <div
+          </button>
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.Drives,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.Drives);
               fetchSection(Section.Drives);
             }}
           >
             Drives
-          </div>
-          <div
+          </button>
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.ExportBuses,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.ExportBuses);
               fetchSection(Section.ExportBuses);
             }}
           >
             Export Buses
-          </div>
-          <div
+          </button>
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.ImportBuses,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.ImportBuses);
               fetchSection(Section.ImportBuses);
             }}
           >
             Import Buses
-          </div>
-          <div
+          </button>
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.Interfaces,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.Interfaces);
               fetchSection(Section.Interfaces);
             }}
           >
             ME Interfaces
-          </div>
-          <div
+          </button>
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.Networks,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.Networks);
               fetchSection(Section.Networks);
             }}
           >
             Networks
-          </div>
-          <div
+          </button>
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.Patterns,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.Patterns);
               fetchSection(Section.Patterns);
             }}
           >
             Patterns
-          </div>
-          <div
+          </button>
+          <button
             class={styles.navItem}
             classList={{
               [styles.active]: sectionGet() === Section.StorageCells,
             }}
-            role="button"
             onClick={() => {
               sectionSet(Section.StorageCells);
               fetchSection(Section.StorageCells);
             }}
           >
             Storage Cells
-          </div>
+          </button>
         </nav>
         <div class={styles.tableContent}>
           <Switch>
