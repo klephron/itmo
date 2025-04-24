@@ -22,13 +22,13 @@ module "vm" {
             hostfwd   = []
           }
           "devops-worker-1" = {
-            memory    = 2048
+            memory    = 2560
             vcpu      = 2
             disk_size = 30
             hostfwd   = []
           }
           "devops-worker-2" = {
-            memory    = 2048
+            memory    = 2560
             vcpu      = 2
             disk_size = 30
             hostfwd   = []
