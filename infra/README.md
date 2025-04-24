@@ -1,7 +1,5 @@
 # Infrastructure
 
-## Build and Deploy
-
 ## Application
 
 ### VM Creation and Destruction
@@ -33,7 +31,7 @@ Destroy VMs:
 terraform destroy
 ```
 
-### VM Configuration and Deployment
+### VM Configuration
 
 Go to ansible directory:
 
@@ -48,6 +46,8 @@ ansible-playbook bootstrap.yml --user ubuntu --ask-pass
 ```
 
 > Default password is `ubuntu`. Can be configured in `cloudinit` in `terraform` `ubuntu` module.
+
+### Deployment
 
 Deploy Kubernetes cluster:
 
@@ -69,6 +69,12 @@ Deploy analysis services (sonarqube):
 
 ```sh
 ansible-playbook analysis.yml -e infra_root=<infra_root>
+```
+
+### Prometheus Kubernetes Token Refresh
+
+```sh
+ansible-playbook metrics.yml -e infra_root=<infra_root> --tags=token
 ```
 
 ## CI/CD
