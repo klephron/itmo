@@ -15,12 +15,14 @@ public class DriveService {
 
     private final DriveRepository driveRepository;
     private final NetworkService networkService;
+    private final NotifyService notifyService;
 
     @Autowired
     public DriveService(DriveRepository driveRepository,
-                        NetworkService networkService) {
+                        NetworkService networkService, NotifyService notifyService) {
         this.driveRepository = driveRepository;
         this.networkService = networkService;
+        this.notifyService = notifyService;
     }
 
     public List<DriveEntity> findAll() {
@@ -38,7 +40,9 @@ public class DriveService {
         this.networkService.occupyChannels(network, drive.getChannelsUsed());
         drive.setNetwork(network);
 
-        return this.driveRepository.save(drive);
+        DriveEntity save = this.driveRepository.save(drive);
+        this.notifyService.sendMessage("Create drive entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public DriveEntity update(Long id, DriveEntity updated) throws NoSuchElementException, NetworkOutOfCapacityException {
@@ -54,12 +58,15 @@ public class DriveService {
             existing.setChannelsUsed(newChannels);
         }
 
-        return this.driveRepository.save(existing);
+        DriveEntity save = this.driveRepository.save(existing);
+        this.notifyService.sendMessage("Update drive entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) throws NoSuchElementException {
         DriveEntity drive = this.findById(id);
         this.networkService.freeChannels(drive.getNetwork(), drive.getChannelsUsed());
         this.driveRepository.delete(drive);
+        this.notifyService.sendMessage("Delete drive entity with id %s successfully".formatted(id));
     }
 }

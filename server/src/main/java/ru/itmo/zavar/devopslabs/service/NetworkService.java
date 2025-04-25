@@ -13,10 +13,12 @@ import java.util.NoSuchElementException;
 public class NetworkService {
 
     private final NetworkRepository networkRepository;
+    private final NotifyService notifyService;
 
     @Autowired
-    public NetworkService(NetworkRepository networkRepository) {
+    public NetworkService(NetworkRepository networkRepository, NotifyService notifyService) {
         this.networkRepository = networkRepository;
+        this.notifyService = notifyService;
     }
 
     public List<NetworkEntity> findAll() {
@@ -29,7 +31,9 @@ public class NetworkService {
     }
 
     public NetworkEntity create(NetworkEntity network) {
-        return this.networkRepository.save(network);
+        NetworkEntity save = this.networkRepository.save(network);
+        notifyService.sendMessage("Create network entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public NetworkEntity update(Long id, NetworkEntity updated) {
@@ -37,11 +41,14 @@ public class NetworkService {
         existing.setName(updated.getName());
         existing.setChannelCapacity(updated.getChannelCapacity());
         existing.setUsedChannels(updated.getUsedChannels());
-        return this.networkRepository.save(existing);
+        NetworkEntity save = this.networkRepository.save(existing);
+        notifyService.sendMessage("Update network entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) {
         this.networkRepository.deleteById(id);
+        notifyService.sendMessage("Delete network entity with id %s successfully".formatted(id));
     }
 
     public void occupyChannels(NetworkEntity network, int channelsCount) throws NetworkOutOfCapacityException {
