@@ -21,11 +21,14 @@
 
   .navItem {
     padding: 12px 16px;
+    border: 0;
     border-radius: 9999px;
     cursor: pointer;
     font-size: 20px;
     font-weight: 400;
+    text-align: left;
     color: #0f1419;
+    background-color: #fff;
 
     &:hover {
       background-color: #f5f5f5;
