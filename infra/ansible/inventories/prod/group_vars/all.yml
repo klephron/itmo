@@ -6,3 +6,5 @@ dns_servers:
 
 bootstrap_user: "ansible"
 bootstrap_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
+
+api_bot_endpoint: https://188.134.71.123:80/api/notify

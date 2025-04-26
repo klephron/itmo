@@ -32,6 +32,8 @@ spec:
               value: "me"
             - name: SERVER_PORT
               value: "8080"
+            - name: NOTIFY_SERVICE_ENDPOINT
+              value: "{{ api_bot_endpoint }}"
           resources:
             requests:
               cpu: "200m"
