@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: {{ kubernetes_server_image }}
+          image: {{ server_image }}
           ports:
             - containerPort: 8080
           env:
@@ -33,7 +33,7 @@ spec:
             - name: SERVER_PORT
               value: "8080"
             - name: NOTIFY_SERVICE_ENDPOINT
-              value: "{{ api_bot_endpoint }}"
+              value: "{{ bot_endpoint }}"
           resources:
             requests:
               cpu: "200m"
@@ -53,7 +53,7 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
-      nodePort: 30111
+      nodePort: {{ server_port }}
   type: NodePort
   sessionAffinity: None
 ---

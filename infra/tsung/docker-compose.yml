@@ -1,17 +1,22 @@
-version: '3.9'
-
 services:
   tsung:
     build:
       context: .
-    container_name: tsung
+      dockerfile: dockerfile
+    container_name: devops-tsung
     volumes:
       - ./scenarios:/tsung
-      - ./log:/root/.tsung/log
+      - tsung-logs:/root/.tsung/log
     entrypoint: ["tsung", "-f", "/tsung/scenario.xml", "start"]
     networks:
-      - test-net
+      - default
+      - macvlan-virbr0
+
+volumes:
+  tsung-logs:
 
 networks:
-  test-net:
+  default:
     driver: bridge
+  macvlan-virbr0:
+    external: true

@@ -5,7 +5,7 @@ global:
 scrape_configs:
   - job_name: "kubernetes-services"
     kubernetes_sd_configs:
-      - api_server: "https://{{ kubernetes_api_server_host }}:{{ kubernetes_api_server_port }}"
+      - api_server: "https://{{ kubernetes_api_host }}:{{ kubernetes_api_port }}"
         role: pod
         namespaces:
           names:
@@ -38,7 +38,7 @@ scrape_configs:
 
       - action: replace
         target_label: __address__
-        replacement: {{ kubernetes_api_server_host }}:{{ kubernetes_api_server_port }}
+        replacement: {{ kubernetes_api_host }}:{{ kubernetes_api_port }}
 
       - source_labels: [__meta_kubernetes_namespace]
         action: replace

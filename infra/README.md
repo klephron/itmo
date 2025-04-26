@@ -85,10 +85,6 @@ ansible-playbook metrics.yml -e infra_root=<infra_root> --tags=token
 
 ## CI/CD
 
-### Jenkins
-
-#### Docker Compose
-
 Create network to directly communicate with VMs if they are isolated:
 
 ```sh
@@ -111,6 +107,10 @@ docker network create -d macvlan \
 >   macvlan-virbr0
 > ```
 
+### Jenkins
+
+#### Deploy
+
 Create external volume for `jenkins`:
 
 ```sh
@@ -122,7 +122,8 @@ By default `jenkins-agent` uses `sysbox` container runtime. Can be changed to do
 Deploy:
 
 ```sh
-docker compose -f docker-compose.jenkins.yml up -d
+cd ./jenkins
+docker compose up -d
 ```
 
 Before deployment add environment variables:

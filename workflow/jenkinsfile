@@ -402,8 +402,8 @@ pipeline {
                   ansible-playbook --private-key=${WORKSPACE}/ansible-ssh-private-key \
                     kubernetes.yml --tags=deploy \
                     -e infra_root=${WORKSPACE}/infra \
-                    -e kubernetes_server_image=${SERVER_IMAGE}:${tagName} \
-                    -e kubernetes_front_image=${FRONT_IMAGE}:${tagName}
+                    -e server_image=${SERVER_IMAGE}:${tagName} \
+                    -e front_image=${FRONT_IMAGE}:${tagName}
                 """
               }
             }

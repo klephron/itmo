@@ -7,4 +7,19 @@ dns_servers:
 bootstrap_user: "ansible"
 bootstrap_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
 
-api_bot_endpoint: https://188.134.71.123:80/api/notify
+bot_endpoint: https://188.134.71.123:80/api/notify
+
+kubernetes_namespace: "devops"
+kubernetes_prometheus_token_duration: "24h"
+
+front_image: "zubrailx/devops-front:latest"
+front_port: 30110
+
+server_image: "zubrailx/devops-server:latest"
+server_port: 30111
+
+prometheus_port: 8113
+
+grafana_port: 8114
+
+sonarqube_port: 8115

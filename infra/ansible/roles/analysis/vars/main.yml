@@ -1,4 +1,2 @@
-sonarqube_port: 8115
-
 analysis_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}/analysis"
 analysis_compose_file: "{{ analysis_src }}/docker-compose.analysis.yml"
