@@ -14,12 +14,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.http.client.HttpClientAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 
 @SpringBootApplication(exclude = HttpClientAutoConfiguration.class)
+@EnableAsync
 public class DevOpsLabsApplication {
     public static void main(String[] args) {
         SpringApplication.run(DevOpsLabsApplication.class, args);
