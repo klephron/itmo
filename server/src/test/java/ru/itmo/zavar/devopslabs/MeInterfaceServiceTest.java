@@ -11,6 +11,7 @@ import ru.itmo.zavar.devopslabs.exception.NetworkOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.repository.MeInterfaceRepository;
 import ru.itmo.zavar.devopslabs.service.MeInterfaceService;
 import ru.itmo.zavar.devopslabs.service.NetworkService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +28,9 @@ public class MeInterfaceServiceTest {
 
     @Mock
     private MeInterfaceRepository meInterfaceRepository;
+
+    @Mock
+    private NotifyService notifyService;
 
     @Mock
     private NetworkService networkService;

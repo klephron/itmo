@@ -13,6 +13,7 @@ import ru.itmo.zavar.devopslabs.repository.ExportBusRepository;
 import ru.itmo.zavar.devopslabs.repository.StorageCellRepository;
 import ru.itmo.zavar.devopslabs.service.ExportBusService;
 import ru.itmo.zavar.devopslabs.service.NetworkService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +28,9 @@ public class ExportBusServiceTest {
 
     @Mock
     private ExportBusRepository exportBusRepository;
+
+    @Mock
+    private NotifyService notifyService;
 
     @Mock
     private NetworkService networkService;

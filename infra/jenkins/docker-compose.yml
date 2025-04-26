@@ -12,7 +12,7 @@ services:
 
   jenkins-agent:
     build:
-      context: ./jenkins
+      context: .
       dockerfile: agent.dockerfile
     container_name: devops-jenkins-agent
     runtime: sysbox-runc

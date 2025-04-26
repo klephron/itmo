@@ -1,10 +1,12 @@
-package ru.itmo.zavar.devopslabs.service;
+package ru.itmo.zavar.devopslabs;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import jakarta.validation.constraints.Min;
 import ru.itmo.zavar.devopslabs.entity.*;
 import ru.itmo.zavar.devopslabs.exception.NetworkOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.exception.StorageCellOutOfCapacityException;
@@ -12,6 +14,9 @@ import ru.itmo.zavar.devopslabs.repository.CellItemRepository;
 import ru.itmo.zavar.devopslabs.repository.DriveRepository;
 import ru.itmo.zavar.devopslabs.repository.ImportBusRepository;
 import ru.itmo.zavar.devopslabs.repository.StorageCellRepository;
+import ru.itmo.zavar.devopslabs.service.ImportBusService;
+import ru.itmo.zavar.devopslabs.service.NetworkService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -26,6 +31,9 @@ public class ImportBusServiceTest {
 
     @Mock
     private ImportBusRepository importBusRepository;
+
+    @Mock
+    private NotifyService notifyService;
 
     @Mock
     private NetworkService networkService;

@@ -10,6 +10,7 @@ import ru.itmo.zavar.devopslabs.entity.StorageCellEntity;
 import ru.itmo.zavar.devopslabs.exception.StorageCellOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.repository.CellItemRepository;
 import ru.itmo.zavar.devopslabs.service.CellItemService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 import ru.itmo.zavar.devopslabs.service.StorageCellService;
 
 import java.util.Arrays;
@@ -25,6 +26,9 @@ public class CellItemServiceTest {
 
     @Mock
     private CellItemRepository cellItemRepository;
+
+    @Mock
+    private NotifyService notifyService;
 
     @Mock
     private StorageCellService storageCellService;
