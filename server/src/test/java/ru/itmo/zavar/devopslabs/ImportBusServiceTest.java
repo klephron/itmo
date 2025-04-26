@@ -1,4 +1,4 @@
-package ru.itmo.zavar.devopslabs.service;
+package ru.itmo.zavar.devopslabs;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +12,8 @@ import ru.itmo.zavar.devopslabs.repository.CellItemRepository;
 import ru.itmo.zavar.devopslabs.repository.DriveRepository;
 import ru.itmo.zavar.devopslabs.repository.ImportBusRepository;
 import ru.itmo.zavar.devopslabs.repository.StorageCellRepository;
+import ru.itmo.zavar.devopslabs.service.ImportBusService;
+import ru.itmo.zavar.devopslabs.service.NetworkService;
 
 import java.util.List;
 import java.util.NoSuchElementException;
