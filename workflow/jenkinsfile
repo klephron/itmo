@@ -409,27 +409,6 @@ pipeline {
             }
           }
         }
-        stage('Bot') {
-          when {
-            expression { return getBranchName() == "master" }
-            expression { getTagName() }
-          }
-          steps {
-            script {
-              def tagName = getTagName()
-
-              // docker.image("${ANSIBLE_IMAGE}").inside("--user root --network host") {
-              //   sh """
-              //     cd ${WORKSPACE}/infra/ansible
-              //     ansible-playbook --private-key=${WORKSPACE}/ansible-ssh-private-key \
-              //       bot.yml --tags=deploy \
-              //       -e infra_root=${WORKSPACE}/infra \
-              //       -e bot_image=${BOT_IMAGE}:${tagName}
-              //   """
-              // }
-            }
-          }
-        }
       }
     }
   }
