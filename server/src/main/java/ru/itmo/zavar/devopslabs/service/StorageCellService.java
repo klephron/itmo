@@ -14,12 +14,14 @@ public class StorageCellService {
 
     private final StorageCellRepository storageCellRepository;
     private final DriveService driveService;
+    private final NotifyService notifyService;
 
     @Autowired
     public StorageCellService(StorageCellRepository storageCellRepository,
-                              DriveService driveService) {
+                              DriveService driveService, NotifyService notifyService) {
         this.storageCellRepository = storageCellRepository;
         this.driveService = driveService;
+        this.notifyService = notifyService;
     }
 
     public List<StorageCellEntity> findAll() {
@@ -34,16 +36,21 @@ public class StorageCellService {
     public StorageCellEntity create(StorageCellEntity cell, Long driveId) throws NoSuchElementException {
         DriveEntity drive = this.driveService.findById(driveId);
         cell.setDrive(drive);
-        return this.storageCellRepository.save(cell);
+        StorageCellEntity save = this.storageCellRepository.save(cell);
+        notifyService.sendMessage("Create storage cell entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public StorageCellEntity update(Long id, StorageCellEntity updated) throws NoSuchElementException {
         StorageCellEntity existing = this.findById(id);
         existing.setCapacity(updated.getCapacity());
-        return this.storageCellRepository.save(existing);
+        StorageCellEntity save = this.storageCellRepository.save(existing);
+        notifyService.sendMessage("Update storage cell entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) {
         storageCellRepository.deleteById(id);
+        notifyService.sendMessage("Delete storage cell entity with id %s successfully".formatted(id));
     }
 }

@@ -15,12 +15,14 @@ public class CellItemService {
 
     private final CellItemRepository cellItemRepository;
     private final StorageCellService storageCellService;
+    private final NotifyService notifyService;
 
     @Autowired
     public CellItemService(CellItemRepository cellItemRepository,
-                           StorageCellService storageCellService) {
+                           StorageCellService storageCellService, NotifyService notifyService) {
         this.cellItemRepository = cellItemRepository;
         this.storageCellService = storageCellService;
+        this.notifyService = notifyService;
     }
 
     public List<CellItemEntity> findAll() {
@@ -43,7 +45,9 @@ public class CellItemService {
         }
 
         cellItem.setStorageCell(cell);
-        return this.cellItemRepository.save(cellItem);
+        CellItemEntity save = this.cellItemRepository.save(cellItem);
+        this.notifyService.sendMessage("Create storage cell entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public CellItemEntity update(Long id, CellItemEntity updated) throws NoSuchElementException, StorageCellOutOfCapacityException {
@@ -60,11 +64,14 @@ public class CellItemService {
 
         existing.setItemName(updated.getItemName());
         existing.setQuantity(updated.getQuantity());
-        return this.cellItemRepository.save(existing);
+        CellItemEntity save = this.cellItemRepository.save(existing);
+        this.notifyService.sendMessage("Update storage cell entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) {
         this.cellItemRepository.deleteById(id);
+        this.notifyService.sendMessage("Delete storage cell entity with id %s successfully".formatted(id));
     }
 
     //better to move it to database?

@@ -15,12 +15,14 @@ public class MeInterfaceService {
 
     private final MeInterfaceRepository meInterfaceRepository;
     private final NetworkService networkService;
+    private final NotifyService notifyService;
 
     @Autowired
     public MeInterfaceService(MeInterfaceRepository meInterfaceRepository,
-                              NetworkService networkService) {
+                              NetworkService networkService, NotifyService notifyService) {
         this.meInterfaceRepository = meInterfaceRepository;
         this.networkService = networkService;
+        this.notifyService = notifyService;
     }
 
     public List<MeInterfaceEntity> findAll() {
@@ -38,7 +40,9 @@ public class MeInterfaceService {
         this.networkService.occupyChannels(network, meInterface.getChannelsUsed());
 
         meInterface.setNetwork(network);
-        return this.meInterfaceRepository.save(meInterface);
+        MeInterfaceEntity save = this.meInterfaceRepository.save(meInterface);
+        notifyService.sendMessage("Create pattern entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public MeInterfaceEntity update(Long id, MeInterfaceEntity updated) throws NoSuchElementException, NetworkOutOfCapacityException {
@@ -52,7 +56,9 @@ public class MeInterfaceService {
 
         existing.setInterfaceName(updated.getInterfaceName());
         existing.setChannelsUsed(updated.getChannelsUsed());
-        return this.meInterfaceRepository.save(existing);
+        MeInterfaceEntity save = this.meInterfaceRepository.save(existing);
+        notifyService.sendMessage("Update pattern entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) throws NoSuchElementException {
@@ -60,5 +66,6 @@ public class MeInterfaceService {
         NetworkEntity network = meInterface.getNetwork();
         this.networkService.freeChannels(network, meInterface.getChannelsUsed());
         this.meInterfaceRepository.delete(meInterface);
+        notifyService.sendMessage("Delete pattern entity with id %s successfully".formatted(id));
     }
 }

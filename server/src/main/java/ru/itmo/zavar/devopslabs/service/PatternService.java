@@ -21,14 +21,16 @@ public class PatternService {
     private final CellItemRepository cellItemRepository;
     private final MeInterfaceService meInterfaceService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final NotifyService notifyService;
 
     @Autowired
     public PatternService(PatternRepository patternRepository, ImportBusService importBusService, CellItemRepository cellItemRepository,
-                          MeInterfaceService meInterfaceService) {
+                          MeInterfaceService meInterfaceService, NotifyService notifyService) {
         this.patternRepository = patternRepository;
         this.importBusService = importBusService;
         this.cellItemRepository = cellItemRepository;
         this.meInterfaceService = meInterfaceService;
+        this.notifyService = notifyService;
     }
 
     public List<PatternEntity> findAll() {
@@ -44,7 +46,9 @@ public class PatternService {
         MeInterfaceEntity meInterface = this.meInterfaceService.findById(meInterfaceId);
 
         pattern.setMeInterface(meInterface);
-        return this.patternRepository.save(pattern);
+        PatternEntity save = this.patternRepository.save(pattern);
+        notifyService.sendMessage("Create pattern entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public PatternEntity update(Long id, PatternEntity updated) throws NoSuchElementException {
@@ -53,11 +57,14 @@ public class PatternService {
         existing.setInputItems(updated.getInputItems());
         existing.setOutputItem(updated.getOutputItem());
         existing.setOutputQuantity(updated.getOutputQuantity());
-        return this.patternRepository.save(existing);
+        PatternEntity save = this.patternRepository.save(existing);
+        notifyService.sendMessage("Update pattern entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) {
         this.patternRepository.deleteById(id);
+        notifyService.sendMessage("Delete pattern entity with id %s successfully".formatted(id));
     }
 
     public void craftItem(Long patternId, int times) {
@@ -83,6 +90,7 @@ public class PatternService {
 
         int totalOutput = pattern.getOutputQuantity() * times;
         this.storeItemsInCells(cells, pattern.getOutputItem(), totalOutput);
+        notifyService.sendMessage("Item %s crafted %d times".formatted(pattern.getOutputItem(), times));
     }
 
     private List<Ingredient> parseInputItems(String inputItemsJson) {

@@ -23,16 +23,19 @@ public class ImportBusService {
     private final StorageCellRepository storageCellRepository;
     private final CellItemRepository cellItemRepository;
 
+    private final NotifyService notifyService;
+
     public ImportBusService(ImportBusRepository importBusRepository,
                             NetworkService networkService,
                             DriveRepository driveRepository,
                             StorageCellRepository storageCellRepository,
-                            CellItemRepository cellItemRepository) {
+                            CellItemRepository cellItemRepository, NotifyService notifyService) {
         this.importBusRepository = importBusRepository;
         this.networkService = networkService;
         this.driveRepository = driveRepository;
         this.storageCellRepository = storageCellRepository;
         this.cellItemRepository = cellItemRepository;
+        this.notifyService = notifyService;
     }
 
     public List<ImportBusEntity> findAll() {
@@ -48,7 +51,9 @@ public class ImportBusService {
         NetworkEntity network = this.networkService.findById(networkId);
         this.networkService.occupyChannels(network, importBus.getChannelsUsed());
         importBus.setNetwork(network);
-        return this.importBusRepository.save(importBus);
+        ImportBusEntity save = this.importBusRepository.save(importBus);
+        notifyService.sendMessage("Create import bus entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public ImportBusEntity update(Long id, ImportBusEntity updated) throws NoSuchElementException, NetworkOutOfCapacityException {
@@ -60,13 +65,16 @@ public class ImportBusService {
         }
         existing.setBusName(updated.getBusName());
         existing.setChannelsUsed(updated.getChannelsUsed());
-        return this.importBusRepository.save(existing);
+        ImportBusEntity save = this.importBusRepository.save(existing);
+        notifyService.sendMessage("Update import bus entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) throws NoSuchElementException {
         ImportBusEntity bus = this.findById(id);
         this.networkService.freeChannels(bus.getNetwork(), bus.getChannelsUsed());
         this.importBusRepository.delete(bus);
+        notifyService.sendMessage("Delete import bus entity with id %s successfully".formatted(id));
     }
 
 
@@ -107,6 +115,7 @@ public class ImportBusService {
             throw new StorageCellOutOfCapacityException("Not enough space in the network's StorageCells. "
                     + (quantity - remaining) + " stored, " + remaining + " leftover.");
         }
+        notifyService.sendMessage("Import items %s (%d) successfully".formatted(itemName, quantity));
     }
 
     public List<StorageCellEntity> findAllCellsInNetwork(Long networkId) {

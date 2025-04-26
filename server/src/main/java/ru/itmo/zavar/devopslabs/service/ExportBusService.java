@@ -22,16 +22,19 @@ public class ExportBusService {
     private final StorageCellRepository storageCellRepository;
     private final CellItemRepository cellItemRepository;
 
+    private final NotifyService notifyService;
+
     public ExportBusService(ExportBusRepository exportBusRepository,
                             NetworkService networkService,
                             DriveRepository driveRepository,
                             StorageCellRepository storageCellRepository,
-                            CellItemRepository cellItemRepository) {
+                            CellItemRepository cellItemRepository, NotifyService notifyService) {
         this.exportBusRepository = exportBusRepository;
         this.networkService = networkService;
         this.driveRepository = driveRepository;
         this.storageCellRepository = storageCellRepository;
         this.cellItemRepository = cellItemRepository;
+        this.notifyService = notifyService;
     }
 
     public List<ExportBusEntity> findAll() {
@@ -47,7 +50,9 @@ public class ExportBusService {
         NetworkEntity network = this.networkService.findById(networkId);
         this.networkService.occupyChannels(network, exportBus.getChannelsUsed());
         exportBus.setNetwork(network);
-        return this.exportBusRepository.save(exportBus);
+        ExportBusEntity save = this.exportBusRepository.save(exportBus);
+        notifyService.sendMessage("Create export bus entity with id %s successfully".formatted(save.getId()));
+        return save;
     }
 
     public ExportBusEntity update(Long id, ExportBusEntity updated) throws NoSuchElementException, NetworkOutOfCapacityException {
@@ -59,13 +64,16 @@ public class ExportBusService {
         }
         existing.setBusName(updated.getBusName());
         existing.setChannelsUsed(updated.getChannelsUsed());
-        return this.exportBusRepository.save(existing);
+        ExportBusEntity save = this.exportBusRepository.save(existing);
+        notifyService.sendMessage("Update export bus entity with id %s successfully".formatted(id));
+        return save;
     }
 
     public void delete(Long id) throws NoSuchElementException {
         ExportBusEntity bus = findById(id);
         this.networkService.freeChannels(bus.getNetwork(), bus.getChannelsUsed());
         this.exportBusRepository.delete(bus);
+        notifyService.sendMessage("Delete export bus entity with id %s successfully".formatted(id));
     }
 
     //P.S. return count can be less than quantity
@@ -93,6 +101,8 @@ public class ExportBusService {
 
             remaining -= toRemove;
         }
+
+        notifyService.sendMessage("Export items %s (%d) successfully".formatted(itemName, quantity));
 
         return quantity - remaining;
     }

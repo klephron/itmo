@@ -18,6 +18,19 @@ services:
     ports:
       - "${SERVER_PORT:-8080}:8080"
 
+  bot:
+    build: ./bot
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-me_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-me}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-me}
+      KEYSTORE: ${KEYSTORE:-classpath:keystore.p12}
+    ports:
+      - "${SERVER_PORT:-80}:80"
+
   postgres:
     image: postgres:17.4
     restart: unless-stopped
@@ -26,6 +39,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-me}
       POSTGRES_DB: ${POSTGRES_DB:-me_db}
       PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres-data:/var/lib/postgresql/data/pgdata
     ports:
