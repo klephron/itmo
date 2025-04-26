@@ -9,6 +9,7 @@ import ru.itmo.zavar.devopslabs.entity.NetworkEntity;
 import ru.itmo.zavar.devopslabs.exception.NetworkOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.repository.NetworkRepository;
 import ru.itmo.zavar.devopslabs.service.NetworkService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +25,9 @@ public class NetworkServiceTest {
 
     @Mock
     private NetworkRepository networkRepository;
+
+    @Mock
+    private NotifyService notifyService;
 
     @InjectMocks
     private NetworkService networkService;

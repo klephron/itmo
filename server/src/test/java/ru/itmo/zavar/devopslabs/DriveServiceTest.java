@@ -11,6 +11,7 @@ import ru.itmo.zavar.devopslabs.exception.NetworkOutOfCapacityException;
 import ru.itmo.zavar.devopslabs.repository.DriveRepository;
 import ru.itmo.zavar.devopslabs.service.DriveService;
 import ru.itmo.zavar.devopslabs.service.NetworkService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +26,9 @@ public class DriveServiceTest {
 
     @Mock
     private DriveRepository driveRepository;
+
+    @Mock
+    private NotifyService notifyService;
 
     @Mock
     private NetworkService networkService;

@@ -14,6 +14,7 @@ import ru.itmo.zavar.devopslabs.repository.CellItemRepository;
 import ru.itmo.zavar.devopslabs.repository.PatternRepository;
 import ru.itmo.zavar.devopslabs.service.ImportBusService;
 import ru.itmo.zavar.devopslabs.service.MeInterfaceService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 import ru.itmo.zavar.devopslabs.service.PatternService;
 
 import java.util.List;
@@ -29,6 +30,8 @@ public class PatternServiceTest {
 
     @Mock
     private PatternRepository patternRepository;
+    @Mock
+    private NotifyService notifyService;
     @Mock
     private ImportBusService importBusService;
     @Mock

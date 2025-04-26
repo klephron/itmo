@@ -9,6 +9,7 @@ import ru.itmo.zavar.devopslabs.entity.DriveEntity;
 import ru.itmo.zavar.devopslabs.entity.StorageCellEntity;
 import ru.itmo.zavar.devopslabs.repository.StorageCellRepository;
 import ru.itmo.zavar.devopslabs.service.DriveService;
+import ru.itmo.zavar.devopslabs.service.NotifyService;
 import ru.itmo.zavar.devopslabs.service.StorageCellService;
 
 import java.util.Arrays;
@@ -24,6 +25,9 @@ public class StorageCellServiceTest {
 
     @Mock
     private StorageCellRepository storageCellRepository;
+
+    @Mock
+    private NotifyService notifyService;
 
     @Mock
     private DriveService driveService;
