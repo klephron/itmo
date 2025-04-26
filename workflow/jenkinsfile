@@ -123,6 +123,9 @@ pipeline {
     SERVER_DIR = "server"
     SERVER_IMAGE = "zubrailx/devops-server"
     SERVER_TEST_IMAGE = "zubrailx/devops-server-test"
+
+    BOT_DIR = "bot"
+    BOT_IMAGE = "zubrailx/devops-bot"
   }
 
   stages {
@@ -336,6 +339,40 @@ pipeline {
             }
           }
         }
+        stage('Bot') {
+          agent { label 'jenkins-agent-1'}
+          stages {
+            stage('Prepare') {
+              steps {
+                unstash 'workspace'
+              }
+            }
+            stage('Build') {
+              steps {
+                script {
+                  docker.build("${BOT_IMAGE}:" + getCommitSha(), "${WORKSPACE}/${BOT_DIR}")
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
+                    // docker.image("${SERVER_IMAGE}:" + getCommitSha()).push()
+                    if (getTagName()) {
+                      docker.image("${BOT_IMAGE}:" + getCommitSha()).push(formatDockerTag(getTagName()))
+                    }
+                    if (getBranchName() == "master") {
+                      docker.image("${BOT_IMAGE}:" + getCommitSha()).push("latest")
+                    } else {
+                      docker.image("${BOT_IMAGE}:" + getCommitSha()).push(formatDockerTag(getBranchName()))
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
     stage('Deployment') {
@@ -344,6 +381,10 @@ pipeline {
         stage('Prepare') {
           steps {
             unstash 'workspace'
+
+            withCredentials([file(credentialsId: ANSIBLE_SSH_FILE_ID, variable: 'ANSIBLE_SSH_FILE_PATH')]) {
+                sh 'cp "$ANSIBLE_SSH_FILE_PATH" "$WORKSPACE/ansible-ssh-private-key"'
+            }
           }
         }
         stage('Kubernetes') {
@@ -353,10 +394,6 @@ pipeline {
           }
           steps {
             script {
-              withCredentials([file(credentialsId: ANSIBLE_SSH_FILE_ID, variable: 'ANSIBLE_SSH_FILE_PATH')]) {
-                  sh 'cp "$ANSIBLE_SSH_FILE_PATH" "$WORKSPACE/ansible-ssh-private-key"'
-              }
-
               def tagName = getTagName()
 
               docker.image("${ANSIBLE_IMAGE}").inside("--user root --network host") {
@@ -369,6 +406,27 @@ pipeline {
                     -e kubernetes_front_image=${FRONT_IMAGE}:${tagName}
                 """
               }
+            }
+          }
+        }
+        stage('Bot') {
+          when {
+            expression { return getBranchName() == "master" }
+            expression { getTagName() }
+          }
+          steps {
+            script {
+              def tagName = getTagName()
+
+              // docker.image("${ANSIBLE_IMAGE}").inside("--user root --network host") {
+              //   sh """
+              //     cd ${WORKSPACE}/infra/ansible
+              //     ansible-playbook --private-key=${WORKSPACE}/ansible-ssh-private-key \
+              //       bot.yml --tags=deploy \
+              //       -e infra_root=${WORKSPACE}/infra \
+              //       -e bot_image=${BOT_IMAGE}:${tagName}
+              //   """
+              // }
             }
           }
         }
