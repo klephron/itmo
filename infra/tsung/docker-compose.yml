@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  tsung:
+    build:
+      context: .
+    container_name: tsung
+    volumes:
+      - ./scenarios:/tsung
+      - ./log:/root/.tsung/log
+    entrypoint: ["tsung", "-f", "/tsung/scenario.xml", "start"]
+    networks:
+      - test-net
+
+networks:
+  test-net:
+    driver: bridge
