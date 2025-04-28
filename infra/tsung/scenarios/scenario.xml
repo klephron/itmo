@@ -1,0 +1,268 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/local/share/tsung/tsung-1.0.dtd">
+<tsung loglevel="info">
+  <clients>
+    <client host="localhost" use_controller_vm="true" maxusers="10000000"/>
+  </clients>
+
+  <servers>
+    <server host="192.168.0.200" port="8226" type="tcp"/>
+  </servers>
+
+  <load>
+    <!-- Фаза 1: Много пользователей с низкой частотой запросов (10 минут) -->
+    <arrivalphase phase="1" duration="10" unit="minute">
+      <users interarrival="0.1" unit="second"/> <!-- 10 новых пользователей в секунду -->
+    </arrivalphase>
+
+    <!-- Фаза 2: Мало пользователей с высокой частотой запросов (5 минут) -->
+    <arrivalphase phase="2" duration="5" unit="minute">
+      <users interarrival="2" unit="second"/> <!-- 1 новый пользователь каждые 2 секунды -->
+    </arrivalphase>
+
+    <!-- Фаза 3: Пиковая нагрузка (5 минут) -->
+    <arrivalphase phase="3" duration="5" unit="minute">
+      <users interarrival="0.05" unit="second"/> <!-- 20 новых пользователей в секунду -->
+    </arrivalphase>
+  </load>
+
+  <sessions>
+    <session name="low_frequency" probability="33" type="ts_http">
+      <!-- POST /auth/register -->
+      <request>
+        <http url="/auth/register" method="POST" version="1.1" content_type="application/json"
+              contents='{"username":"testuser","password":"testpass","email":"test@example.com"}'/>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- POST /auth/login -->
+      <request>
+        <http url="/auth/login" method="POST" version="1.1" content_type="application/json"
+              contents='{"username":"testuser","password":"testpass"}'/>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- GET /user/me with Authorization header -->
+      <request>
+        <http url="/user/me" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- GET /apartments with Authorization header -->
+      <request>
+        <http url="/apartments" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- POST /apartments?userId=1&name=TestApartment with Authorization header -->
+      <request>
+        <http url="/apartments?userId=1&amp;name=TestApartment" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- POST /user/pay/by-bill/{billId} with Authorization header -->
+      <request>
+        <http url="/user/pay/by-bill/1" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- GET /user/bills with Authorization header -->
+      <request>
+        <http url="/user/bills" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- GET /user/pay/history with Authorization header -->
+      <request>
+        <http url="/user/pay/history" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- POST /tsj/generateBills?fromTimestamp=1714320000&toTimestamp=1716912000&tariff=1800 with Authorization header -->
+      <request>
+        <http url="/tsj/generateBills?fromTimestamp=1714320000&amp;toTimestamp=1716912000&amp;tariff=1800" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- PUT /admin/user/{username}/authorities with Authorization header -->
+      <request>
+        <http url="/admin/user/testuser/authorities" method="PUT" version="1.1" content_type="application/json"
+              contents='{"authorities":["ROLE_USER"]}'>
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+      <!-- POST /apartments/{apartmentId}/radiators/{deviceId} with Authorization header -->
+      <request>
+        <http url="/apartments/1/radiators/1" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="30" random="true"/>
+    </session>
+	
+	<session name="high_frequency" probability="33" type="ts_http">
+      <!-- POST /auth/register -->
+      <request>
+        <http url="/auth/register" method="POST" version="1.1" content_type="application/json"
+              contents='{"username":"testuser","password":"testpass","email":"test@example.com"}'/>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- POST /auth/login -->
+      <request>
+        <http url="/auth/login" method="POST" version="1.1" content_type="application/json"
+              contents='{"username":"testuser","password":"testpass"}'/>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- GET /user/me with Authorization header -->
+      <request>
+        <http url="/user/me" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- GET /apartments with Authorization header -->
+      <request>
+        <http url="/apartments" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- POST /apartments?userId=1&name=TestApartment with Authorization header -->
+      <request>
+        <http url="/apartments?userId=1&amp;name=TestApartment" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- POST /user/pay/by-bill/{billId} with Authorization header -->
+      <request>
+        <http url="/user/pay/by-bill/1" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- GET /user/bills with Authorization header -->
+      <request>
+        <http url="/user/bills" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- GET /user/pay/history with Authorization header -->
+      <request>
+        <http url="/user/pay/history" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- POST /tsj/generateBills?fromTimestamp=1714320000&toTimestamp=1716912000&tariff=1800 with Authorization header -->
+      <request>
+        <http url="/tsj/generateBills?fromTimestamp=1714320000&amp;toTimestamp=1716912000&amp;tariff=1800" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- PUT /admin/user/{username}/authorities with Authorization header -->
+      <request>
+        <http url="/admin/user/testuser/authorities" method="PUT" version="1.1" content_type="application/json"
+              contents='{"authorities":["ROLE_USER"]}'>
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+      <!-- POST /apartments/{apartmentId}/radiators/{deviceId} with Authorization header -->
+      <request>
+        <http url="/apartments/1/radiators/1" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="1" random="true"/>
+    </session>
+	
+	<session name="peak_load" probability="34" type="ts_http">
+      <!-- POST /auth/register -->
+      <request>
+        <http url="/auth/register" method="POST" version="1.1" content_type="application/json"
+              contents='{"username":"testuser","password":"testpass","email":"test@example.com"}'/>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- POST /auth/login -->
+      <request>
+        <http url="/auth/login" method="POST" version="1.1" content_type="application/json"
+              contents='{"username":"testuser","password":"testpass"}'/>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- GET /user/me with Authorization header -->
+      <request>
+        <http url="/user/me" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- GET /apartments with Authorization header -->
+      <request>
+        <http url="/apartments" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- POST /apartments?userId=1&name=TestApartment with Authorization header -->
+      <request>
+        <http url="/apartments?userId=1&amp;name=TestApartment" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- POST /user/pay/by-bill/{billId} with Authorization header -->
+      <request>
+        <http url="/user/pay/by-bill/1" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- GET /user/bills with Authorization header -->
+      <request>
+        <http url="/user/bills" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- GET /user/pay/history with Authorization header -->
+      <request>
+        <http url="/user/pay/history" method="GET" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- POST /tsj/generateBills?fromTimestamp=1714320000&toTimestamp=1716912000&tariff=1800 with Authorization header -->
+      <request>
+        <http url="/tsj/generateBills?fromTimestamp=1714320000&amp;toTimestamp=1716912000&amp;tariff=1800" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- PUT /admin/user/{username}/authorities with Authorization header -->
+      <request>
+        <http url="/admin/user/testuser/authorities" method="PUT" version="1.1" content_type="application/json"
+              contents='{"authorities":["ROLE_USER"]}'>
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+      <!-- POST /apartments/{apartmentId}/radiators/{deviceId} with Authorization header -->
+      <request>
+        <http url="/apartments/1/radiators/1" method="POST" version="1.1">
+          <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+        </http>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+    </session>
+	
+  </sessions>
+</tsung>

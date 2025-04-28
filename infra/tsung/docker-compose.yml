@@ -1,0 +1,33 @@
+ services:
+   tsung1:
+     build:
+       context: .
+     container_name: tsung1
+     ports:
+       - 8091:8091
+     volumes:
+       - ./scenarios:/tsung
+       - ./log:/root/.tsung/log
+     entrypoint: ["tsung", "-f", "/tsung/phase1.xml", "start"]
+   
+   tsung2:
+     build:
+       context: .
+     container_name: tsung2
+     ports:
+       - 8091:8091
+     volumes:
+       - ./scenarios:/tsung
+       - ./log:/root/.tsung/log
+     entrypoint: ["tsung", "-f", "/tsung/phase2.xml", "start"]
+     
+   tsung3:
+     build:
+       context: .
+     container_name: tsung3
+     ports:
+       - 8091:8091
+     volumes:
+       - ./scenarios:/tsung
+       - ./log:/root/.tsung/log
+     entrypoint: ["tsung", "-f", "/tsung/phase3.xml", "start"]

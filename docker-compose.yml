@@ -218,7 +218,7 @@ services:
         condition: service_healthy
 
   consul:
-    image: ./consul/
+    build: ./consul/
     environment:
       CONSUL_BOOTSTRAP_EXPECT: 1
       CONSUL_CLIENT_LAN_ADDRESS: 0.0.0.0
