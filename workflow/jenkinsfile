@@ -41,7 +41,7 @@ pipeline {
         checkout scm
 
         script {
-          util = load('util.groovy')
+          util = load('workflow/util.groovy')
 
           def branchName = util.gitBranchName()
           def commitSha = util.gitCommitSha()
