@@ -90,8 +90,9 @@ pipeline {
       }
     }
 
-    stage('Integration and Delivery') {
+    stage('Service Integration') {
       parallel {
+
         stage('Account') {
           agent { label 'jenkins-agent-1' }
           stages {
@@ -117,42 +118,9 @@ pipeline {
                 }
               }
             }
-            stage('Build') {
-              steps {
-                script {
-                  ctx.services.account.build(env.ACCOUNT_DIR, env.ACCOUNT_IMAGE, ctx.git.getCommitSha())
-                }
-              }
-            }
-            stage('Push') {
-              steps {
-                script {
-                  ctx.services.account.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.ACCOUNT_IMAGE, ctx.git.getCommitSha(), ["latest"])
-                }
-              }
-            }
           }
         }
-        stage('Consul') {
-          agent { label 'jenkins-agent-1' }
-          stages {
-            stage("Build") {
-              steps {
-                unstash 'workspace'
-                script {
-                  ctx.services.consul.build(env.CONSUL_DIR, env.CONSUL_IMAGE, ctx.git.getCommitSha())
-                }
-              }
-            }
-            stage("Push") {
-              steps {
-                script {
-                  ctx.services.consul.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.CONSUL_IMAGE, ctx.git.getCommitSha(), ["latest"])
-                }
-              }
-            }
-          }
-        }
+
         stage('Data Simulator') {
           agent { label 'jenkins-agent-1' }
           stages {
@@ -178,22 +146,9 @@ pipeline {
                 }
               }
             }
-            stage('Build') {
-              steps {
-                script {
-                  ctx.services.dataSimulator.build(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha())
-                }
-              }
-            }
-            stage('Push') {
-              steps {
-                script {
-                  ctx.services.dataSimulator.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha(), ["latest"])
-                }
-              }
-            }
           }
         }
+
         stage('IoT Controller') {
           agent { label 'jenkins-agent-1' }
           stages {
@@ -219,42 +174,9 @@ pipeline {
                 }
               }
             }
-            stage('Build') {
-              steps {
-                script {
-                  ctx.services.iotController.build(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha())
-                }
-              }
-            }
-            stage('Push') {
-              steps {
-                script {
-                  ctx.services.iotController.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha(), ["latest"])
-                }
-              }
-            }
           }
         }
-        stage('Logstash') {
-          agent { label 'jenkins-agent-1' }
-          stages {
-            stage("Build") {
-              steps {
-                unstash 'workspace'
-                script {
-                  ctx.services.logstash.build(env.LOGSTASH_DIR, env.LOGSTASH_IMAGE, ctx.git.getCommitSha())
-                }
-              }
-            }
-            stage("Push") {
-              steps {
-                script {
-                  ctx.services.logstash.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.LOGSTASH_IMAGE, ctx.git.getCommitSha(), ["latest"])
-                }
-              }
-            }
-          }
-        }
+
         stage('Rule Engine') {
           agent { label 'jenkins-agent-1' }
           stages {
@@ -280,6 +202,127 @@ pipeline {
                 }
               }
             }
+          }
+        }
+      }
+    }
+
+    stage('System Integration') {
+      steps {
+        script {
+          sh 'echo "load testing..."'
+        }
+      }
+    }
+
+    stage('Delivery') {
+      parallel {
+
+        stage('Account') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build') {
+              steps {
+                script {
+                  ctx.services.account.build(env.ACCOUNT_DIR, env.ACCOUNT_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  ctx.services.account.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.ACCOUNT_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Consul') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage("Build") {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.consul.build(env.CONSUL_DIR, env.CONSUL_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage("Push") {
+              steps {
+                script {
+                  ctx.services.consul.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.CONSUL_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Data Simulator') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build') {
+              steps {
+                script {
+                  ctx.services.dataSimulator.build(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  ctx.services.dataSimulator.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('IoT Controller') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build') {
+              steps {
+                script {
+                  ctx.services.iotController.build(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  ctx.services.iotController.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Logstash') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage("Build") {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.logstash.build(env.LOGSTASH_DIR, env.LOGSTASH_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage("Push") {
+              steps {
+                script {
+                  ctx.services.logstash.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.LOGSTASH_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Rule Engine') {
+          agent { label 'jenkins-agent-1' }
+          stages {
             stage('Build') {
               steps {
                 script {
