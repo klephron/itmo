@@ -34,5 +34,6 @@ volumes:
 networks:
   default:
     driver: bridge
+    name: "devops-jenkins-network"
   macvlan-virbr0:
     external: true
