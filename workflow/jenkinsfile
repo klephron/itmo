@@ -7,6 +7,9 @@ def ctx = [
     iotController: null,
     logstash: null,
     ruleEngine: null
+  ],
+  system: [
+    loadTest: null
   ]
 ];
 
@@ -58,6 +61,7 @@ pipeline {
           ctx.services.iotController = load('workflow/services/iot-controller.groovy')
           ctx.services.logstash = load('workflow/services/logstash.groovy')
           ctx.services.ruleEngine = load('workflow/services/rule-engine.groovy')
+          ctx.system.loadTest = load('workflow/system/load-test.groovy')
         }
 
         script {
