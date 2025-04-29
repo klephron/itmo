@@ -156,68 +156,35 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  docker.build("${DATA_SIMULATOR_TEST_IMAGE}",
-                    "${WORKSPACE}/${DATA_SIMULATOR_DIR} -f ${WORKSPACE}/${DATA_SIMULATOR_DIR}/test.dockerfile")
+                  ctx.services.dataSimulator.testBuild(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_TEST_IMAGE, "test.dockerfile")
                 }
               }
             }
             stage('Test Unit') {
               steps {
                 script {
-                  docker.image("${DATA_SIMULATOR_TEST_IMAGE}").inside("--user root") {
-                    sh """
-                      cd /app
-                      mvn test -Dgroups=unit
-                      cp -r /app/target ${WORKSPACE}/${DATA_SIMULATOR_DIR}/target
-                      chown 1000:1000 -R ${WORKSPACE}/${DATA_SIMULATOR_DIR}/target
-                    """
-                  }
+                  ctx.services.dataSimulator.testUnit(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_TEST_IMAGE)
                 }
-
-                archiveArtifacts(artifacts: "${DATA_SIMULATOR_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
-                archiveArtifacts(artifacts: "${DATA_SIMULATOR_DIR}target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                junit("${DATA_SIMULATOR_DIR}/target/surefire-reports/*.xml")
-                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${DATA_SIMULATOR_DIR}/target/site/jacoco/jacoco.xml"]],
-                  id: 'data-simulator-jacoco-unit',
-                  name: 'Data Simulator JaCoCo Unit Coverage',
-                  sourceDirectories: [[path: "${DATA_SIMULATOR_DIR}/src/main/java"]])
               }
             }
             stage('Test Integration') {
               steps {
                 script {
-                  docker.image("${DATA_SIMULATOR_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
-                    sh """
-                      cd /app
-                      mvn test -Dgroups=integration
-                      cp -r /app/target ${WORKSPACE}/${DATA_SIMULATOR_DIR}/target
-                      chown 1000:1000 -R ${WORKSPACE}/${DATA_SIMULATOR_DIR}/target
-                    """
-                  }
+                  ctx.services.dataSimulator.testIntegration(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_TEST_IMAGE)
                 }
-
-                archiveArtifacts(artifacts: "${DATA_SIMULATOR_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
-                archiveArtifacts(artifacts: "${DATA_SIMULATOR_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                junit("${DATA_SIMULATOR_DIR}/target/surefire-reports/*.xml")
-                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${DATA_SIMULATOR_DIR}/target/site/jacoco/jacoco.xml"]],
-                  id: 'data-simulator-jacoco-integration',
-                  name: 'Data Simulator JaCoCo Integration Coverage',
-                  sourceDirectories: [[path: "${DATA_SIMULATOR_DIR}/src/main/java"]])
               }
             }
             stage('Build') {
               steps {
                 script {
-                  docker.build("${DATA_SIMULATOR_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${DATA_SIMULATOR_DIR}")
+                  ctx.services.dataSimulator.build(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha())
                 }
               }
             }
             stage('Push') {
               steps {
                 script {
-                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${DATA_SIMULATOR_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
-                  }
+                  ctx.services.dataSimulator.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha(), ["latest"])
                 }
               }
             }
@@ -230,68 +197,35 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  docker.build("${IOT_CONTROLLER_TEST_IMAGE}",
-                    "${WORKSPACE}/${IOT_CONTROLLER_DIR} -f ${WORKSPACE}/${IOT_CONTROLLER_DIR}/test.dockerfile")
+                  ctx.services.iotController.testBuild(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_TEST_IMAGE, "test.dockerfile")
                 }
               }
             }
             stage('Test Unit') {
               steps {
                 script {
-                  docker.image("${IOT_CONTROLLER_TEST_IMAGE}").inside("--user root") {
-                    sh """
-                      cd /app
-                      mvn test -Dgroups=unit
-                      cp -r /app/target ${WORKSPACE}/${IOT_CONTROLLER_DIR}/target
-                      chown 1000:1000 -R ${WORKSPACE}/${IOT_CONTROLLER_DIR}/target
-                    """
-                  }
+                  ctx.services.iotController.testUnit(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_TEST_IMAGE)
                 }
-
-                archiveArtifacts(artifacts: "${IOT_CONTROLLER_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
-                archiveArtifacts(artifacts: "${IOT_CONTROLLER_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                junit("${IOT_CONTROLLER_DIR}/target/surefire-reports/*.xml")
-                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${IOT_CONTROLLER_DIR}/target/site/jacoco/jacoco.xml"]],
-                  id: 'iot-controller-jacoco-unit',
-                  name: 'IoT Controller JaCoCo Unit Coverage',
-                  sourceDirectories: [[path: "${IOT_CONTROLLER_DIR}/src/main/java"]])
               }
             }
             stage('Test Integration') {
               steps {
                 script {
-                  docker.image("${IOT_CONTROLLER_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
-                    sh """
-                      cd /app
-                      mvn test -Dgroups=integration
-                      cp -r /app/target ${WORKSPACE}/${IOT_CONTROLLER_DIR}/target
-                      chown 1000:1000 -R ${WORKSPACE}/${IOT_CONTROLLER_DIR}/target
-                    """
-                  }
+                  ctx.services.iotController.testIntegration(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_TEST_IMAGE)
                 }
-
-                archiveArtifacts(artifacts: "${IOT_CONTROLLER_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
-                archiveArtifacts(artifacts: "${IOT_CONTROLLER_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                junit("${IOT_CONTROLLER_DIR}/target/surefire-reports/*.xml")
-                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${IOT_CONTROLLER_DIR}/target/site/jacoco/jacoco.xml"]],
-                  id: 'iot-controller-jacoco-integration',
-                  name: 'IoT Controller JaCoCo Integration Coverage',
-                  sourceDirectories: [[path: "${IOT_CONTROLLER_DIR}/src/main/java"]])
               }
             }
             stage('Build') {
               steps {
                 script {
-                  docker.build("${IOT_CONTROLLER_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${IOT_CONTROLLER_DIR}")
+                  ctx.services.iotController.build(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha())
                 }
               }
             }
             stage('Push') {
               steps {
                 script {
-                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${IOT_CONTROLLER_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
-                  }
+                  ctx.services.iotController.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha(), ["latest"])
                 }
               }
             }
@@ -324,68 +258,35 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  docker.build("${RULE_ENGINE_TEST_IMAGE}",
-                    "${WORKSPACE}/${RULE_ENGINE_DIR} -f ${WORKSPACE}/${RULE_ENGINE_DIR}/test.dockerfile")
+                  ctx.services.ruleEngine.testBuild(env.RULE_ENGINE_DIR, env.RULE_ENGINE_TEST_IMAGE, "test.dockerfile")
                 }
               }
             }
             stage('Test Unit') {
               steps {
                 script {
-                  docker.image("${RULE_ENGINE_TEST_IMAGE}").inside("--user root") {
-                    sh """
-                      cd /app
-                      mvn test -Dgroups=unit
-                      cp -r /app/target ${WORKSPACE}/${RULE_ENGINE_DIR}/target
-                      chown 1000:1000 -R ${WORKSPACE}/${RULE_ENGINE_DIR}/target
-                    """
-                  }
+                  ctx.services.ruleEngine.testUnit(env.RULE_ENGINE_DIR, env.ACCOUNT_TEST_IMAGE)
                 }
-
-                archiveArtifacts(artifacts: "${RULE_ENGINE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
-                archiveArtifacts(artifacts: "${RULE_ENGINE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                junit("${RULE_ENGINE_DIR}/target/surefire-reports/*.xml")
-                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${RULE_ENGINE_DIR}/target/site/jacoco/jacoco.xml"]],
-                  id: 'rule-engine-jacoco-unit',
-                  name: 'Rule Engine JaCoCo Unit Coverage',
-                  sourceDirectories: [[path: "${RULE_ENGINE_DIR}/src/main/java"]])
               }
             }
             stage('Test Integration') {
               steps {
                 script {
-                  docker.image("${RULE_ENGINE_TEST_IMAGE}").inside("--user root -v /var/run/docker.sock:/var/run/docker.sock") {
-                    sh """
-                      cd /app
-                      mvn test -Dgroups=integration
-                      cp -r /app/target ${WORKSPACE}/${RULE_ENGINE_DIR}/target
-                      chown 1000:1000 -R ${WORKSPACE}/${RULE_ENGINE_DIR}/target
-                    """
-                  }
+                  ctx.services.ruleEngine.testIntegration(env.RULE_ENGINE_DIR, env.RULE_ENGINE_TEST_IMAGE)
                 }
-
-                archiveArtifacts(artifacts: "${RULE_ENGINE_DIR}/target/surefire-reports/*.xml", allowEmptyArchive: true)
-                archiveArtifacts(artifacts: "${RULE_ENGINE_DIR}/target/site/jacoco/jacoco.xml", allowEmptyArchive: true)
-                junit("${RULE_ENGINE_DIR}/target/surefire-reports/*.xml")
-                recordCoverage(tools: [[parser: 'JACOCO', pattern: "${RULE_ENGINE_DIR}/target/site/jacoco/jacoco.xml"]],
-                  id: 'rule-engine-jacoco-integration',
-                  name: 'Rule Engine JaCoCo Integration Coverage',
-                  sourceDirectories: [[path: "${RULE_ENGINE_DIR}/src/main/java"]])
               }
             }
             stage('Build') {
               steps {
                 script {
-                  docker.build("${RULE_ENGINE_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${RULE_ENGINE_DIR}")
+                  ctx.services.ruleEngine.build(env.RULE_ENGINE_DIR, env.RULE_ENGINE_IMAGE, ctx.git.getCommitSha())
                 }
               }
             }
             stage('Push') {
               steps {
                 script {
-                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${RULE_ENGINE_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
-                  }
+                  ctx.services.ruleEngine.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.RULE_ENGINE_IMAGE, ctx.git.getCommitSha(), ["latest"])
                 }
               }
             }
