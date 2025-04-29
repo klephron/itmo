@@ -1,3 +1,7 @@
+def gitRepoURL() {
+  return sh(script: 'git config --get remote.origin.url', returnStdout: true)?.trim()
+}
+
 def gitBranchName() {
   def branch = sh(script: 'git symbolic-ref HEAD || git name-rev --name-only HEAD', returnStdout: true).trim()
 
@@ -11,10 +15,6 @@ def gitBranchName() {
 
 def gitCommitSha() {
   return sh(script: 'git rev-parse HEAD', returnStdout: true)?.trim()
-}
-
-def gitRepoURL() {
-  return sh(script: 'git config --get remote.origin.url', returnStdout: true)?.trim()
 }
 
 def isTag(String desc) {
@@ -42,11 +42,19 @@ def getBranchName() {
   return null
 }
 
+def setBranchName(String data) {
+  return writeFile(file: "jenkins-branch-name", text: data)
+}
+
 def getCommitSha() {
   if (fileExists("jenkins-commit-sha")) {
     return readFile("jenkins-commit-sha").trim()
   }
   return null
+}
+
+def setCommitSha(String data) {
+  return writeFile(file: "jenkins-commit-sha", text: data)
 }
 
 def getRepoURL() {
@@ -56,11 +64,19 @@ def getRepoURL() {
   return null
 }
 
+def setRepoURL(String data) {
+  return writeFile(file: "jenkins-repository-url", text: data)
+}
+
 def getTagName() {
   if (fileExists("jenkins-tag-name")) {
     return readFile("jenkins-tag-name").trim()
   }
   return null
+}
+
+def setTagName(String data) {
+  return writeFile(file: "jenkins-tag-name", text: data)
 }
 
 def setPipelineStatus(String message, String state) {
