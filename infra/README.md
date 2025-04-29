@@ -3,7 +3,7 @@
 ## Application
 
 ```sh
-docker compose up -d
+docker compose -p ahla up -d
 ```
 
 Default values for environment variables are present in `docker-compose.yml`. Can be overridden.
@@ -14,7 +14,33 @@ See services configuration files for additional modifications.
 
 Grafana dashboard JSONs are located at `grafana/`. They require `prometheus` data source to be configured. Default `prometheus` URL is `http://prometheus:9090` when in the same docker network. Manually update dashboard JSONs with generated dashboard `datasource` `uid`.
 
-## Jenkins
+## CI/CD
+
+Create network to directly communicate with VMs if they are isolated:
+
+```sh
+docker network create -d macvlan \
+  --subnet=<vm_subnet> \
+  --gateway=<vm_gateway> \
+  --ip-range=<ip_range> \
+  -o parent=<vm_bridge> \
+  macvlan-virbr0
+```
+
+> Example: `vm_bridge=virbr0`, `vm_subnet=192.168.122.0/24`, `vm_gateway=192.168.122.1`, `ip_range=192.168.122.16/28` (Only allows `192.168.122.16`-`192.168.122.31`).
+>
+> ```sh
+> docker network create -d macvlan \
+>   --subnet=192.168.122.0/24 \
+>   --gateway=192.168.122.1 \
+>   --ip-range=192.168.122.16/28 \
+>   -o parent=virbr0 \
+>   macvlan-virbr0
+> ```
+
+### Jenkins
+
+#### Deployment
 
 Create external volume for `jenkins`:
 
@@ -27,13 +53,16 @@ By default `jenkins-agent` uses `sysbox` container runtime. Can be changed to do
 Deploy:
 
 ```sh
-docker compose -f docker-compose.jenkins.yml up -d
+cd ./jenkins
+docker compose -p devops up -d
 ```
 
 Before deployment add environment variables:
 
 - `JENKINS_PORT` - port for jenkins controller
 - `JENKINS_AGENT_SSH_PUBKEY` - public key for jenkins agent
+
+#### Github Plugin
 
 Pipeline is located at `jenkins/jenkinsfile`.
 
@@ -44,6 +73,8 @@ Pipeline is located at `jenkins/jenkinsfile`.
 [Set GitHub commit status (universal)] PENDING on repos [] (sha:xxxxxxx) with context:test/mycontext
 [...]
 ```
+
+#### Installed Plugins
 
 Installed `jenkins` plugins:
 

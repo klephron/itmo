@@ -2,7 +2,7 @@ def git;
 
 pipeline {
   options {
-    skipDefaultCheckout(false)
+    skipDefaultCheckout(true)
   }
 
   agent none
