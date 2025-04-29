@@ -136,16 +136,14 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  docker.build("${CONSUL_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${CONSUL_DIR}")
+                  ctx.services.consul.build(env.CONSUL_DIR, env.CONSUL_IMAGE, ctx.git.getCommitSha())
                 }
               }
             }
             stage("Push") {
               steps {
                 script {
-                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${CONSUL_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
-                  }
+                  ctx.services.consul.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.CONSUL_IMAGE, ctx.git.getCommitSha(), ["latest"])
                 }
               }
             }
@@ -306,16 +304,14 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  docker.build("${LOGSTASH_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${LOGSTASH_DIR}")
+                  ctx.services.logstash.build(env.LOGSTASH_DIR, env.LOGSTASH_IMAGE, ctx.git.getCommitSha())
                 }
               }
             }
             stage("Push") {
               steps {
                 script {
-                  docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${LOGSTASH_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
-                  }
+                  ctx.services.logstash.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.LOGSTASH_IMAGE, ctx.git.getCommitSha(), ["latest"])
                 }
               }
             }
