@@ -2,7 +2,7 @@
 <!DOCTYPE tsung SYSTEM "/usr/local/share/tsung/tsung-1.0.dtd">
 <tsung loglevel="info">
 <clients>
-  <client host="localhost" use_controller_vm="true" maxusers="10000000"/>
+  <client host="localhost" use_controller_vm="true" maxusers="100000"/>
 </clients>
 
   <servers>
@@ -10,44 +10,21 @@
   </servers>
 
   <load>
-    <arrivalphase phase="1" duration="2" unit="minute">
-      <users arrivalrate="100" unit="second"/>
+    <arrivalphase phase="1" duration="10" unit="minute">
+      <users maxnumber="400" arrivalrate="400" unit="second"/>
     </arrivalphase>
   </load>
 
 
   <sessions>
     <session name="api_test" probability="100" type="ts_http">
+	<for from="1" to="580" incr="1" var="iteration">
       <!-- GET /networks -->
       <request>
         <http url="/networks" method="GET"/>
       </request>
-
-      <!-- GET /patterns/1 -->
-      <request>
-        <http url="/patterns/1" method="GET"/>
-      </request>
-
-      <!-- POST /storageCells?driveId=1 -->
-	<request>
-	  <http url="/storageCells?driveId=1"
-			method="POST" version="1.1"
-			content_type="application/json"
-			contents='{"capacity":100,"driveId":1}'/>
-	</request>
-
-      <!-- PUT /networks/1 -->
-	<request>
-	  <http url="/networks/1"
-			method="PUT" version="1.1"
-			content_type="application/json"
-			contents='{"name":"Updated Network","channelCapacity":200,"usedChannels":50}'/>
-	</request>
-
-      <!-- DELETE /interfaces/1 -->
-      <request>
-        <http url="/interfaces/1" method="DELETE"/>
-      </request>
+	  <thinktime value="0.5" random="true"/>
+	  </for>
     </session>
   </sessions>
 </tsung>
