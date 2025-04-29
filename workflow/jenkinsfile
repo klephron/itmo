@@ -191,7 +191,7 @@ pipeline {
             stage('Test Unit') {
               steps {
                 script {
-                  ctx.services.ruleEngine.testUnit(env.RULE_ENGINE_DIR, env.ACCOUNT_TEST_IMAGE)
+                  ctx.services.ruleEngine.testUnit(env.RULE_ENGINE_DIR, env.RULE_ENGINE_TEST_IMAGE)
                 }
               }
             }
