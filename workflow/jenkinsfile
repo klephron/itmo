@@ -207,17 +207,6 @@ pipeline {
       }
     }
 
-    stage('System Integration') {
-      agent { label 'jenkins-agent-2' }
-      steps {
-        script {
-          sh 'echo load testing...'
-          def branchName = ctx.git.gitBranchName()
-          sh "echo of branch ${branchName}"
-        }
-      }
-    }
-
     stage('Delivery') {
       parallel {
 
@@ -344,7 +333,19 @@ pipeline {
         }
       }
     }
+
+    stage('System Integration') {
+      agent { label 'jenkins-agent-2' }
+      steps {
+        script {
+          sh 'echo load testing on delivered packages...'
+          def branchName = ctx.git.gitBranchName()
+          sh "echo of branch ${branchName}"
+        }
+      }
+    }
   }
+
   post {
     always {
       script {
