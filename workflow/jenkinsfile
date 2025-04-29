@@ -136,7 +136,6 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${ACCOUNT_IMAGE}:" + git.getCommitSha()).push()
                     docker.image("${ACCOUNT_IMAGE}:" + git.getCommitSha()).push("latest")
                   }
                 }
@@ -159,7 +158,6 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${CONSUL_IMAGE}:" + git.getCommitSha()).push()
                     docker.image("${CONSUL_IMAGE}:" + git.getCommitSha()).push("latest")
                   }
                 }
@@ -234,7 +232,6 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${DATA_SIMULATOR_IMAGE}:" + git.getCommitSha()).push()
                     docker.image("${DATA_SIMULATOR_IMAGE}:" + git.getCommitSha()).push("latest")
                   }
                 }
@@ -309,7 +306,6 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${IOT_CONTROLLER_IMAGE}:" + git.getCommitSha()).push()
                     docker.image("${IOT_CONTROLLER_IMAGE}:" + git.getCommitSha()).push("latest")
                   }
                 }
@@ -332,7 +328,6 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${LOGSTASH_IMAGE}:" + git.getCommitSha()).push()
                     docker.image("${LOGSTASH_IMAGE}:" + git.getCommitSha()).push("latest")
                   }
                 }
@@ -407,7 +402,6 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${RULE_ENGINE_IMAGE}:" + git.getCommitSha()).push()
                     docker.image("${RULE_ENGINE_IMAGE}:" + git.getCommitSha()).push("latest")
                   }
                 }
