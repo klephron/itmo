@@ -3,14 +3,18 @@ def gitRepoURL() {
 }
 
 def gitBranchName() {
-  def branch = sh(script: 'git symbolic-ref HEAD || git name-rev --name-only HEAD', returnStdout: true).trim()
+  try {
+    return "${BRANCH_NAME}"
+  } catch (Exception e) {
+    def branch = sh(script: 'git symbolic-ref --short HEAD || git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
 
-  if (branch.contains('remotes/origin/')) {
-    return branch.replaceAll('^remotes/origin/', '')
-  } else if (branch.contains('refs/heads/')) {
-    return branch.replaceAll('^refs/heads/', '')
+    if (branch.contains('remotes/origin/')) {
+      return branch.replaceAll('^remotes/origin/', '')
+    } else if (branch.contains('refs/heads/')) {
+      return branch.replaceAll('^refs/heads/', '')
+    }
+    return branch
   }
-  return branch
 }
 
 def gitCommitSha() {
@@ -18,21 +22,29 @@ def gitCommitSha() {
 }
 
 def isTag(String desc) {
-    def match = desc =~ /.+-[0-9]+-g[0-9A-Fa-f]{6,}$/
-    def result = !match
-    match = null // prevent serialization
-    return result
+  def match = desc =~ /.+-[0-9]+-g[0-9A-Fa-f]{6,}$/
+  def result = !match
+  match = null // prevent serialization
+  return result
 }
 
 def gitTagName() {
-  def commit = gitCommitSha()
-  if (commit) {
-      def desc = sh(script: "git describe --tags ${commit}", returnStdout: true)?.trim()
-      if (isTag(desc)) {
+  try {
+    return "${TAG_NAME}"
+  } catch (Exception e) {
+    def commit = gitCommitSha()
+    if (commit) {
+      try {
+        def desc = sh(script: "git describe --tags ${commit}", returnStdout: true)?.trim()
+        if (isTag(desc)) {
           return desc
+        }
+      } catch (Exception ee) {
+        return null
       }
+    }
+    return null
   }
-  return null
 }
 
 def getBranchName() {
