@@ -1,11 +1,14 @@
-def git;
-
-def account;
-def consul;
-def dataSimulator;
-def iotController;
-def logstash;
-def ruleEngine;
+def ctx = [
+  git: null,
+  services: [
+    account: null,
+    consul: null,
+    dataSimulator: null,
+    iotController: null,
+    logstash: null,
+    ruleEngine: null
+  ]
+];
 
 pipeline {
   options {
@@ -43,38 +46,40 @@ pipeline {
 
   stages {
     stage('Preparation') {
-    agent { label 'jenkins-agent-1' }
+      agent { label 'jenkins-agent-1' }
       steps {
         checkout scm
 
         script {
-          git = load('workflow/git.groovy')
-          account = load('workflow/services/account.groovy')
-          consul = load('workflow/services/consul.groovy')
-          dataSimulator = load('workflow/services/data-simulator.groovy')
-          iotController = load('workflow/services/iot-controller.groovy')
-          logstash = load('workflow/services/logstash.groovy')
-          ruleEngine = load('workflow/services/rule-engine.groovy')
+          ctx.git = load('workflow/git.groovy')
+          ctx.services.account = load('workflow/services/account.groovy')
+          ctx.services.consul = load('workflow/services/consul.groovy')
+          ctx.services.dataSimulator = load('workflow/services/data-simulator.groovy')
+          ctx.services.iotController = load('workflow/services/iot-controller.groovy')
+          ctx.services.logstash = load('workflow/services/logstash.groovy')
+          ctx.services.ruleEngine = load('workflow/services/rule-engine.groovy')
+        }
 
-          def branchName = git.gitBranchName()
-          def commitSha = git.gitCommitSha()
-          def repoURL = git.gitRepoURL()
-          def tagName = git.gitTagName()
+        script {
+          def branchName = ctx.git.gitBranchName()
+          def commitSha = ctx.git.gitCommitSha()
+          def repoURL = ctx.git.gitRepoURL()
+          def tagName = ctx.git.gitTagName()
 
           if (branchName) {
-            git.setBranchName(branchName)
+            ctx.git.setBranchName(branchName)
           }
           if (commitSha) {
-            git.setCommitSha(commitSha)
+            ctx.git.setCommitSha(commitSha)
           }
           if (repoURL) {
-            git.setRepoURL(repoURL)
+            ctx.git.setRepoURL(repoURL)
           }
           if (tagName) {
-            git.setTagName(tagName)
+            ctx.git.setTagName(tagName)
           }
 
-          git.setPipelineStatus('Pipeline started', 'PENDING')
+          ctx.git.setPipelineStatus('Pipeline started', 'PENDING')
         }
 
         stash name: 'workspace', includes: '**'
@@ -90,35 +95,35 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  account.testBuild(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE,"test.dockerfile")
+                  ctx.services.account.testBuild(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE, "test.dockerfile")
                 }
               }
             }
             stage('Test Unit') {
               steps {
                 script {
-                  account.testUnit(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE)
+                  ctx.services.account.testUnit(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE)
                 }
               }
             }
             stage('Test Integration') {
               steps {
                 script {
-                  account.testIntegration(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE)
+                  ctx.services.account.testIntegration(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE)
                 }
               }
             }
             stage('Build') {
               steps {
                 script {
-                  account.build(env.ACCOUNT_DIR, env.ACCOUNT_IMAGE, git.getCommitSha())
+                  ctx.services.account.build(env.ACCOUNT_DIR, env.ACCOUNT_IMAGE, ctx.git.getCommitSha())
                 }
               }
             }
             stage('Push') {
               steps {
                 script {
-                  account.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.ACCOUNT_IMAGE, git.getCommitSha, ["latest"])
+                  ctx.services.account.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.ACCOUNT_IMAGE, ctx.git.getCommitSha(), ["latest"])
                 }
               }
             }
@@ -131,7 +136,7 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  docker.build("${CONSUL_IMAGE}:" + git.getCommitSha(), "${WORKSPACE}/${CONSUL_DIR}")
+                  docker.build("${CONSUL_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${CONSUL_DIR}")
                 }
               }
             }
@@ -139,7 +144,7 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${CONSUL_IMAGE}:" + git.getCommitSha()).push("latest")
+                    docker.image("${CONSUL_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
                   }
                 }
               }
@@ -205,7 +210,7 @@ pipeline {
             stage('Build') {
               steps {
                 script {
-                  docker.build("${DATA_SIMULATOR_IMAGE}:" + git.getCommitSha(), "${WORKSPACE}/${DATA_SIMULATOR_DIR}")
+                  docker.build("${DATA_SIMULATOR_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${DATA_SIMULATOR_DIR}")
                 }
               }
             }
@@ -213,7 +218,7 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${DATA_SIMULATOR_IMAGE}:" + git.getCommitSha()).push("latest")
+                    docker.image("${DATA_SIMULATOR_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
                   }
                 }
               }
@@ -279,7 +284,7 @@ pipeline {
             stage('Build') {
               steps {
                 script {
-                  docker.build("${IOT_CONTROLLER_IMAGE}:" + git.getCommitSha(), "${WORKSPACE}/${IOT_CONTROLLER_DIR}")
+                  docker.build("${IOT_CONTROLLER_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${IOT_CONTROLLER_DIR}")
                 }
               }
             }
@@ -287,7 +292,7 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${IOT_CONTROLLER_IMAGE}:" + git.getCommitSha()).push("latest")
+                    docker.image("${IOT_CONTROLLER_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
                   }
                 }
               }
@@ -301,7 +306,7 @@ pipeline {
               steps {
                 unstash 'workspace'
                 script {
-                  docker.build("${LOGSTASH_IMAGE}:" + git.getCommitSha(), "${WORKSPACE}/${LOGSTASH_DIR}")
+                  docker.build("${LOGSTASH_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${LOGSTASH_DIR}")
                 }
               }
             }
@@ -309,7 +314,7 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${LOGSTASH_IMAGE}:" + git.getCommitSha()).push("latest")
+                    docker.image("${LOGSTASH_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
                   }
                 }
               }
@@ -375,7 +380,7 @@ pipeline {
             stage('Build') {
               steps {
                 script {
-                  docker.build("${RULE_ENGINE_IMAGE}:" + git.getCommitSha(), "${WORKSPACE}/${RULE_ENGINE_DIR}")
+                  docker.build("${RULE_ENGINE_IMAGE}:" + ctx.git.getCommitSha(), "${WORKSPACE}/${RULE_ENGINE_DIR}")
                 }
               }
             }
@@ -383,7 +388,7 @@ pipeline {
               steps {
                 script {
                   docker.withRegistry(REGISTRY_URL, REGISTRY_CRED_ID) {
-                    docker.image("${RULE_ENGINE_IMAGE}:" + git.getCommitSha()).push("latest")
+                    docker.image("${RULE_ENGINE_IMAGE}:" + ctx.git.getCommitSha()).push("latest")
                   }
                 }
               }
@@ -400,9 +405,9 @@ pipeline {
           unstash 'workspace'
           try {
             if (currentBuild.currentResult == 'SUCCESS') {
-                git.setPipelineStatus("Pipeline succeeded", "SUCCESS")
+                ctx.git.setPipelineStatus("Pipeline succeeded", "SUCCESS")
             } else if (currentBuild.currentResult == 'FAILURE') {
-                git.setPipelineStatus("Pipeline failed", "FAILURE")
+                ctx.git.setPipelineStatus("Pipeline failed", "FAILURE")
             }
           } finally {
             cleanWs()
