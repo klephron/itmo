@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: dockerfile
-    container_name: devops-tsung
     volumes:
       - ./scenarios:/tsung
       - tsung-logs:/root/.tsung/log

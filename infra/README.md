@@ -123,7 +123,7 @@ Deploy:
 
 ```sh
 cd ./jenkins
-docker compose up -d
+docker compose -p devops up -d
 ```
 
 Before deployment add environment variables:
