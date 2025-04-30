@@ -166,7 +166,7 @@ pipeline {
           stages {
             stage('Test Build') {
               steps {
-                unstash 'workspace'
+                checkout scm
                 script {
                   docker.build("${FRONT_TEST_IMAGE}", "${WORKSPACE}/${FRONT_DIR} -f ${WORKSPACE}/${FRONT_DIR}/test.dockerfile")
                 }
@@ -218,7 +218,7 @@ pipeline {
           stages {
             stage('Test Build') {
               steps {
-                unstash 'workspace'
+                checkout scm
                 script {
                   docker.build("${SERVER_TEST_IMAGE}", "${WORKSPACE}/${SERVER_DIR} -f ${WORKSPACE}/${SERVER_DIR}/test.dockerfile")
                 }
