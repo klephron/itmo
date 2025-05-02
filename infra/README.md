@@ -2,6 +2,41 @@
 
 ## Application
 
+### VM Creation and Destruction
+
+Go to terraform environment directory:
+
+```sh
+cd ./terraform/environments/local/
+```
+
+Create VMS:
+
+```sh
+terraform init
+terraform apply -auto-approve -var-file=<vms_tfvars>
+```
+
+> `vms_tfvars` - file with VM configuration
+>
+> Implemented VM deployment configurations:
+> * `vms/single.tfvars` - 1 VM
+> * `vms/cluster.tfvars` - 1 Manager and 3 Worker VMs
+
+Get ip addresses of VMs for ansible:
+
+```sh
+terraform output
+```
+
+Destroy VMs:
+
+```sh
+terraform destroy -auto-approve -var-file=<vms_tfvars>
+```
+
+### Deployment
+
 ```sh
 docker compose -p ahla up -d
 ```
