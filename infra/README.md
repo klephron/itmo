@@ -45,19 +45,49 @@ Destroy VMs:
 terraform destroy -auto-approve -var-file=<vms_tfvars>
 ```
 
-### Deployment
+### VM Configuration
+
+Go to ansible directory:
 
 ```sh
-docker compose -p ahla up -d
+cd ./ansible
 ```
 
-Default values for environment variables are present in `docker-compose.yml`. Can be overridden.
+> Recommended to use ansible `dockerfile` with network `host` to run playbooks.
 
-Deployment attributes are present in `docker-compose.override.yml`.
+Use ansible for VM bootstrapping:
 
-See services configuration files for additional modifications.
+```sh
+ansible-playbook bootstrap.yml --user ubuntu --ask-pass
+```
 
-Grafana dashboard JSONs are located at `grafana/`. They require `prometheus` data source to be configured. Default `prometheus` URL is `http://prometheus:9090` when in the same docker network. Manually update dashboard JSONs with generated dashboard `datasource` `uid`.
+> Default password is `ubuntu`. Can be configured in `cloudinit` in `terraform` `ubuntu` module.
+
+See `ansible.cfg` `private_key_file` and specify `bootstrap_ssh_public_key` to use different token.
+
+### Deployment
+
+Deploy Docker Swarm cluster:
+
+```sh
+ansible-playbook swarm.yml
+```
+
+Or deploy Docker as single node:
+
+```sh
+ansible-playbook single.yml
+```
+
+See ansible role `manager` and `single` `templates/` and `group_vars/all.yml` for further configuration.
+
+### Client
+
+```sh
+ansible-playbook client.yml
+```
+
+This playbook is also used in CI/CD. See pipeline for additional info.
 
 ## CI/CD
 
