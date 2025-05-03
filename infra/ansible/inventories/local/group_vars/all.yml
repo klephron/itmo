@@ -1,0 +1,15 @@
+timezone: UTC
+
+dns_servers:
+  - 8.8.8.8
+  - 1.1.1.1
+
+bootstrap_user: "ansible"
+bootstrap_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
+
+account_image: "zubrailx/ahla-account:latest"
+account_port: 8226
+
+prometheus_port: 8211
+
+grafana_port: 8212
