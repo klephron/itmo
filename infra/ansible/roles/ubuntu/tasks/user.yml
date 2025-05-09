@@ -22,7 +22,7 @@
 - name: Add SSH key {{ bootstrap_user }}
   ansible.builtin.authorized_key:
     user: "{{ bootstrap_user }}"
-    key: "{{ bootstrap_ssh_public_key }}"
+    key: "{{ bootstrap_ssh_pubkey }}"
   become: true
   tags: user
 

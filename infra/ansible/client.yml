@@ -10,3 +10,4 @@
 - hosts: client
   roles:
     - docker
+    - jenkins_agent

@@ -63,7 +63,7 @@ ansible-playbook bootstrap.yml --user ubuntu --ask-pass
 
 > Default password is `ubuntu`. Can be configured in `cloudinit` in `terraform` `ubuntu` module.
 
-See `ansible.cfg` `private_key_file` and specify `bootstrap_ssh_public_key` to use different token.
+See `ansible.cfg` `private_key_file` and specify `bootstrap_ssh_pubkey` to use different token.
 
 ### Deployment
 
@@ -83,11 +83,11 @@ See ansible role `manager` and `single` `templates/` and `group_vars/all.yml` fo
 
 ### Client
 
-```sh
-ansible-playbook client.yml
-```
+Setup testing environment:
 
-This playbook is also used in CI/CD. See pipeline for additional info.
+```sh
+ansible-playbook client.yml -e '{"jenkins_agent_ssh_pubkey": "<jenkins_agent_ssh_pubkey>"}'
+```
 
 ## CI/CD
 
