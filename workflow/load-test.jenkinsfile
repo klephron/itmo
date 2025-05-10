@@ -9,8 +9,11 @@ pipeline {
 
   agent { label 'jenkins-agent-2' }
 
-  // environment {
-  // }
+  environment {
+    TSUNG_DIR = "tsung"
+    TSUNG_IMAGE = "zubrailx/ahla-tsung"
+    TSUNG_IMAGE_TAG = "latest"
+  }
 
   stages {
     stage('Preparation') {
@@ -46,19 +49,43 @@ pipeline {
         stash name: 'workspace', includes: '**'
       }
     }
-    stage('Load Test Tsung') {
+    stage('Build Tsung Image') {
       steps {
         script {
-          def branchName = ctx.git.getBranchName()
-          def commitSha = ctx.git.getCommitSha()
-          def repoURL = ctx.git.getRepoURL()
-          def tagName = ctx.git.getTagName()
+          docker.build("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}", "${WORKSPACE}/${TSUNG_DIR} -f ${WORKSPACE}/${TSUNG_DIR}/dockerfile")
+        }
+      }
+    }
+    stage('Run Tsung Tests') {
+      steps {
+        script {
+          sh "mkdir -p ${WORKSPACE}/workflow/tsung/logs/"
 
-          sh "echo load testing..."
-          sh "echo ${branchName}"
-          sh "echo ${commitSha}"
-          sh "echo ${repoURL}"
-          sh "echo ${tagName}"
+          docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+            sh """
+              cd ${WORKSPACE}
+              tsung -f ${WORKSPACE}/workflow/tsung/phase1.xml
+              cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase1
+            """
+          }
+
+          // docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+          //   sh """
+          //     cd ${WORKSPACE}
+          //     tsung -f ${WORKSPACE}/workflow/tsung/phase2.xml
+          //     cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase2
+          //   """
+          // }
+
+          // docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+          //   sh """
+          //     cd ${WORKSPACE}
+          //     tsung -f ${WORKSPACE}/workflow/tsung/phase3.xml
+          //     cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase3
+          //   """
+          // }
+
+          archiveArtifacts(artifacts: "${WORKSPACE}/workflow/tsung/logs/**", allowEmptyArchive: true)
         }
       }
     }

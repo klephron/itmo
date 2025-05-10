@@ -6,7 +6,7 @@
   </clients>
 
   <servers>
-    <server host="192.168.0.200" port="8226" type="tcp"/>
+    <server host="192.168.122.141" port="8226" type="tcp"/>
   </servers>
 
   <load>
