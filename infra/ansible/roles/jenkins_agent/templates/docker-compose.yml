@@ -1,0 +1,21 @@
+services:
+  jenkins-agent:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM {{ jenkins_agent_image }}
+        RUN groupadd -g {{ docker_gid }} dockersock && \
+            usermod -aG dockersock jenkins
+        RUN echo '#!/bin/bash' > /entrypoint.sh && \
+            echo 'exec /usr/local/bin/setup-sshd "$@"' >> /entrypoint.sh && \
+            chmod +x /entrypoint.sh
+    environment:
+      JENKINS_AGENT_SSH_PUBKEY: "{{ jenkins_agent_ssh_pubkey }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins-agent-docker:/var/lib/docker
+    ports:
+      - "{{ jenkins_agent_ssh_port }}:22"
+
+volumes:
+  jenkins-agent-docker:

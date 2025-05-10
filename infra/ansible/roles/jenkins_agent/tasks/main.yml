@@ -14,9 +14,20 @@
     mode: "0755"
   tags: deploy
 
+- name: Get Docker socket GID
+  ansible.builtin.stat:
+    path: /var/run/docker.sock
+  register: docker_sock_stat
+  tags: deploy
+
+- name: Set Docker GID fact
+  ansible.builtin.set_fact:
+    docker_gid: "{{ docker_sock_stat.stat.gid }}"
+  tags: deploy
+
 - name: Install docker-compose.yml using jinja2
   ansible.builtin.template:
-    src: docker-compose.yml.j2
+    src: docker-compose.yml
     dest: "{{ jenkins_agent_compose_file }}"
     mode: "0644"
   tags: deploy
