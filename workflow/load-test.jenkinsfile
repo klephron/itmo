@@ -69,23 +69,23 @@ pipeline {
             """
           }
 
-          // docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
-          //   sh """
-          //     cd ${WORKSPACE}
-          //     tsung -f ${WORKSPACE}/workflow/tsung/phase2.xml
-          //     cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase2
-          //   """
-          // }
+          docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+            sh """
+              cd ${WORKSPACE}
+              tsung -f ${WORKSPACE}/workflow/tsung/phase2.xml start
+              cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase2
+            """
+          }
 
-          // docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
-          //   sh """
-          //     cd ${WORKSPACE}
-          //     tsung -f ${WORKSPACE}/workflow/tsung/phase3.xml
-          //     cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase3
-          //   """
-          // }
+          docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+            sh """
+              cd ${WORKSPACE}
+              tsung -f ${WORKSPACE}/workflow/tsung/phase3.xml start
+              cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase3
+            """
+          }
 
-          archiveArtifacts(artifacts: "${WORKSPACE}/workflow/tsung/logs/**", allowEmptyArchive: true)
+          archiveArtifacts(artifacts: "workflow/tsung/logs/**", allowEmptyArchive: true)
         }
       }
     }
