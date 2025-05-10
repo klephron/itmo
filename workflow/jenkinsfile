@@ -348,7 +348,7 @@ pipeline {
         stage('Deploy Single') {
           when {
             expression { return ctx.git.getBranchName() == "master" }
-            expression { getTagName() } // trigger only on new tag (just not to trigger on every build)
+            expression { ctx.git.getTagName() } // trigger only on new tag (just not to trigger on every build)
           }
           steps {
             script {
