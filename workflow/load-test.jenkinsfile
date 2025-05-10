@@ -64,7 +64,7 @@ pipeline {
           docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
             sh """
               cd ${WORKSPACE}
-              tsung -f ${WORKSPACE}/workflow/tsung/phase1.xml
+              tsung -f ${WORKSPACE}/workflow/tsung/phase1.xml start
               cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase1
             """
           }
