@@ -7,9 +7,26 @@ dns_servers:
 bootstrap_user: "ansible"
 bootstrap_ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
 
-# account_image: "zubrailx/ahla-account:latest"
-# account_port: 8226
+prometheus_port: 8211
 
-# prometheus_port: 8211
+grafana_port: 8212
 
-# grafana_port: 8212
+logstash_image: "zubrailx/ahla-logstash:latest"
+
+kibana_port: 8216
+
+mqtt_broker_dashboard_port: 8218
+
+rabbitmq_dashboard_port: 8220
+
+mongo_express_port: 8224
+
+iot_controller_image: "zubrailx/ahla-iot-controller:latest"
+
+rule_engine_image: "zubrailx/ahla-rule-engine:latest"
+
+account_image: "zubrailx/ahla-account:latest"
+account_port: 8226
+
+consul_image: "zubrailx/ahla-consul:latest"
+consul_port: 8227

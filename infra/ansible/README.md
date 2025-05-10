@@ -39,11 +39,13 @@ ansible-playbook playbooks/setup_client.yml -e '{"jenkins_agent_ssh_pubkey": "<j
 Deploy Docker Swarm cluster:
 
 ```sh
-ansible-playbook playbooks/deploy_swarm.yml
+ansible-playbook playbooks/deploy_swarm.yml -e infra_root=<infra_root>
 ```
 
 Or deploy Docker as single node:
 
 ```sh
-ansible-playbook playbooks/deploy_single.yml
+ansible-playbook playbooks/deploy_single.yml -e infra_root=<infra_root>
 ```
+
+> * `infra_root` - absolute path to `<repo_root>/infra/`. For example: `-e infra_root="$(realpath $(pwd)/..)"`

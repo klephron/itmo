@@ -1,6 +1,5 @@
 ---
 - hosts: client
-  become: true
   pre_tasks:
     - name: Fail if not Ubuntu
       ansible.builtin.fail:

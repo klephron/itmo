@@ -1,8 +1,11 @@
 ---
 - hosts: single
-  become: true
   pre_tasks:
     - name: Fail if not Ubuntu
       ansible.builtin.fail:
         msg: "This playbook only supports Ubuntu."
       when: ansible_distribution not in ["Ubuntu"]
+
+- hosts: single
+  roles:
+    - deployment_single
