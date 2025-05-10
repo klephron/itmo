@@ -1,0 +1,66 @@
+def ctx = [
+  git: null,
+];
+
+pipeline {
+  options {
+    skipDefaultCheckout(true)
+  }
+
+  agent { label 'jenkins-agent-2' }
+
+  // environment {
+  // }
+
+  stages {
+    stage('Preparation') {
+      steps {
+        checkout scm
+
+        script {
+          ctx.git = load('workflow/git.groovy')
+        }
+
+        script {
+          def branchName = ctx.git.gitBranchName()
+          def commitSha = ctx.git.gitCommitSha()
+          def repoURL = ctx.git.gitRepoURL()
+          def tagName = ctx.git.gitTagName()
+
+          if (branchName) {
+            ctx.git.setBranchName(branchName)
+          }
+          if (commitSha) {
+            ctx.git.setCommitSha(commitSha)
+          }
+          if (repoURL) {
+            ctx.git.setRepoURL(repoURL)
+          }
+          if (tagName) {
+            ctx.git.setTagName(tagName)
+          }
+
+          ctx.git.setPipelineStatus('Pipeline started', 'PENDING')
+        }
+
+        stash name: 'workspace', includes: '**'
+      }
+    }
+    stage('Load Test Tsung') {
+      steps {
+        script {
+          def branchName = ctx.git.getBranchName()
+          def commitSha = ctx.git.getCommitSha()
+          def repoURL = ctx.git.getRepoURL()
+          def tagName = ctx.git.getTagName()
+
+          sh "echo load testing..."
+          sh "echo ${branchName}"
+          sh "echo ${commitSha}"
+          sh "echo ${repoURL}"
+          sh "echo ${tagName}"
+        }
+      }
+    }
+  }
+}
