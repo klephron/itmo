@@ -13,8 +13,8 @@
 
 - hosts: manager
   roles:
-    - manager
+    - swarm_manager
 
 - hosts: worker
   roles:
-    - worker
+    - swarm_worker

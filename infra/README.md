@@ -4,90 +4,11 @@
 
 ### VM Creation and Destruction
 
-Go to terraform environment directory:
+See [`terraform/` configuration](./terraform)
 
-```sh
-cd ./terraform/environments/local/
-```
+### VM Configuration and Deployment
 
-Create workspaces:
-
-```sh
-terraform workspace new cluster
-terraform workspace new single
-terraform workspace new client
-```
-
-> Workspaces with relevant VM deployment configurations:
-> * `single` - `vms/single.tfvars` - 1 VM for deployment
-> * `cluster` - `vms/cluster.tfvars` - 1 Manager and 3 Worker VMs for deployment
-> * `client` - `vms/client.tfvars` - 1 VM for client testing
-
-Create VMS:
-
-```sh
-terraform init
-terraform workspace select <workspace>
-terraform apply -auto-approve -var-file=<vms_tfvars>
-```
-
-> `vms_tfvars` - file with VM configuration, described above
-
-Get ip addresses of VMs for ansible:
-
-```sh
-terraform output
-```
-
-Destroy VMs:
-
-```sh
-terraform destroy -auto-approve -var-file=<vms_tfvars>
-```
-
-### VM Configuration
-
-Go to ansible directory:
-
-```sh
-cd ./ansible
-```
-
-> Recommended to use ansible `dockerfile` with network `host` to run playbooks.
-
-Use ansible for VM bootstrapping:
-
-```sh
-ansible-playbook bootstrap.yml --user ubuntu --ask-pass
-```
-
-> Default password is `ubuntu`. Can be configured in `cloudinit` in `terraform` `ubuntu` module.
-
-See `ansible.cfg` `private_key_file` and specify `bootstrap_ssh_pubkey` to use different token.
-
-### Deployment
-
-Deploy Docker Swarm cluster:
-
-```sh
-ansible-playbook swarm.yml
-```
-
-Or deploy Docker as single node:
-
-```sh
-ansible-playbook single.yml
-```
-
-See ansible role `manager` and `single` `templates/` and `group_vars/all.yml` for further configuration.
-
-### Client
-
-Setup testing environment:
-
-```sh
-ansible-playbook client.yml -e '{"jenkins_agent_ssh_pubkey": "<jenkins_agent_ssh_pubkey>"}'
-```
+See [`ansible/` configuration](./ansible).
 
 ## CI/CD
 
