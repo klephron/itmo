@@ -11,7 +11,7 @@ RUN apt update && \
 RUN pipx install ansible-core==${ANSIBLE_VERSION}
 
 RUN apt update && \
-  apt install -y ssh iputils-ping iproute2 && \
+  apt install -y ssh iputils-ping iproute2 rsync && \
   apt clean && \
   rm -rf /var/lib/apt/lists/*
 
