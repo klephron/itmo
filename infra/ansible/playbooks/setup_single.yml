@@ -10,4 +10,3 @@
 - hosts: single
   roles:
     - docker
-    - single
