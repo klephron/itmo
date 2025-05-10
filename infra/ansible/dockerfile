@@ -15,5 +15,8 @@ RUN apt update && \
   apt clean && \
   rm -rf /var/lib/apt/lists/*
 
+RUN ansible-galaxy collection install ansible.posix
+
 WORKDIR /ansible
+
 CMD ["/bin/bash"]
