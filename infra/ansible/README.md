@@ -29,12 +29,14 @@ ansible-playbook playbooks/setup_single.yml
 Setup testing environment:
 
 ```sh
-ansible-playbook playbooks/setup_client.yml -e '{"jenkins_agent_ssh_pubkey": "<jenkins_agent_ssh_pubkey>"}'
+ansible-playbook playbooks/setup_client.yml
 ```
 
 > See ansible role `manager` and `single` `templates/` and `group_vars/all.yml` for further configuration.
 
 ## Deployment
+
+### Application
 
 Deploy Docker Swarm cluster:
 
@@ -49,3 +51,12 @@ ansible-playbook playbooks/deploy_single.yml -e infra_root=<infra_root>
 ```
 
 > * `infra_root` - absolute path to `<repo_root>/infra/`. For example: `-e infra_root="$(realpath $(pwd)/..)"`
+
+
+### Client
+
+Deploy client jenkins agent for testing purposes:
+
+```sh
+ansible-playbook playbooks/deploy_client.yml -e '{"jenkins_agent_ssh_pubkey": "<jenkins_agent_ssh_pubkey>"}'
+```

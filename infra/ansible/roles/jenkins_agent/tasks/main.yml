@@ -32,6 +32,16 @@
     mode: "0644"
   tags: deploy
 
+- name: Ensure jenkins_agent directory exists
+  ansible.builtin.file:
+    path: "/home/jenkins/workspace"
+    state: directory
+    mode: "0755"
+    owner: 1000
+    group: 1000
+  become: true
+  tags: deploy
+
 - name: Reload docker-compose
   ansible.builtin.shell: "docker compose -f {{ jenkins_agent_compose_file }} up -d --remove-orphans"
   args:

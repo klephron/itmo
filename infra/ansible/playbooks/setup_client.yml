@@ -9,4 +9,9 @@
 - hosts: client
   roles:
     - docker
-    - jenkins_agent
+
+- hosts: client
+  tasks:
+    - import_role:
+        name: docker
+        tasks_from: sysbox.yml

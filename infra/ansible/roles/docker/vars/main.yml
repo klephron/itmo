@@ -1,0 +1,3 @@
+sysbox_version: 0.6.7
+sysbox_deb: "sysbox-ce_{{ sysbox_version }}-0.linux_amd64.deb"
+sysbox_url: "https://downloads.nestybox.com/sysbox/releases/v{{ sysbox_version }}/{{ sysbox_deb }}"
