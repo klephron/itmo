@@ -1,0 +1,1 @@
+deployment_swarm_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}/deployment-swarm"
