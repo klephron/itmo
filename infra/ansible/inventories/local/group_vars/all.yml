@@ -27,6 +27,8 @@ rule_engine_image: "zubrailx/ahla-rule-engine:latest"
 
 account_image: "zubrailx/ahla-account:latest"
 account_port: 8226
+account_balancer: least_conn # least_conn, random, else -> round_robin
+account_replicas: 1
 
 consul_image: "zubrailx/ahla-consul:latest"
 consul_port: 8227

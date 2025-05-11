@@ -1,1 +1,4 @@
 deployment_swarm_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}/deployment-swarm"
+
+gateway_host: "{{ hostvars['ahla-cluster-manager-1'].ansible_host }}"
+consul_address: "{{ gateway_host }}:{{ consul_port }}"

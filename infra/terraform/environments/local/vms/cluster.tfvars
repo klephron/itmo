@@ -20,13 +20,13 @@ vms = {
           hostfwd   = []
         }
         "ahla-cluster-worker-1" = {
-          memory    = 1024 * 1
+          memory    = 1024 * 2
           vcpu      = 2
           disk_size = 30
           hostfwd   = []
         }
         "ahla-cluster-worker-2" = {
-          memory    = 1024 * 1
+          memory    = 1024 * 2
           vcpu      = 2
           disk_size = 30
           hostfwd   = []

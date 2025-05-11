@@ -1,0 +1,20 @@
+services:
+  nginx:
+    image: nginx:1.27
+    environment:
+      REDEPLOY_TIMESTAMP: "{{ ansible_date_time.iso8601 }}" # force redeployment
+    volumes:
+      - "{{ deployment_swarm_src }}/nginx/conf.d:/etc/nginx/conf.d"
+    ports:
+      - "{{ account_port }}:80"
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+networks:
+  ahla-net:
+    external: true

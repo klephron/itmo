@@ -133,12 +133,20 @@ services:
       MQTT_URI: tcp://mqtt-broker:1883
       MQTT_TOPIC: radiator/reset
       MQTT_CLIENT_ID: account
-    ports:
-      - "{{ account_port }}:8082"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -f http://localhost:8082/actuator/health | grep ''{"status":"UP"}'' || exit 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     depends_on:
       - mongodb
     deploy:
-      replicas: 1
+      replicas: {{ account_replicas }}
       placement:
         constraints:
           - node.role == worker
