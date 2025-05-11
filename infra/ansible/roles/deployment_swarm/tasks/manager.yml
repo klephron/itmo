@@ -37,6 +37,7 @@
     - docker-compose.monitoring.yml
     - docker-compose.consul.yml
     - docker-compose.elk.yml
+    - docker-compose.app.yml
 
 - name: Create ahla-net overlay network
   community.docker.docker_network:
@@ -59,5 +60,11 @@
 - name: Deploy ahla-elk stack
   ansible.builtin.command:
     cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.elk.yml ahla-elk
+  args:
+    chdir: "{{ deployment_swarm_src }}"
+
+- name: Deploy ahla-app stack
+  ansible.builtin.command:
+    cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.app.yml ahla-app
   args:
     chdir: "{{ deployment_swarm_src }}"

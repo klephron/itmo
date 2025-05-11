@@ -14,8 +14,8 @@ vms = {
       base = "/home/nikit/vms/images/noble-server-cloudimg-amd64.img"
       settings = {
         "ahla-cluster-manager-1" = {
-          memory    = 1024 * 3
-          vcpu      = 2
+          memory    = 1024 * 4
+          vcpu      = 4
           disk_size = 30
           hostfwd   = []
         }
@@ -26,12 +26,6 @@ vms = {
           hostfwd   = []
         }
         "ahla-cluster-worker-2" = {
-          memory    = 1024 * 1
-          vcpu      = 2
-          disk_size = 30
-          hostfwd   = []
-        }
-        "ahla-cluster-worker-3" = {
           memory    = 1024 * 1
           vcpu      = 2
           disk_size = 30

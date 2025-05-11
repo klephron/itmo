@@ -32,6 +32,37 @@ services:
     networks:
       - ahla-net
 
+  mongodb-exporter:
+    image: bitnami/mongodb-exporter:latest
+    environment:
+      MONGODB_URI: "mongodb://root:root@mongodb:27017/admin"
+    command: ["--collect-all", "--compatible-mode", "--discovering-mode"]
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: root
+      ME_CONFIG_BASICAUTH_PASSWORD: root
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongodb:27017/
+    ports:
+      - "{{ mongo_express_port }}:8081"
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
 networks:
   ahla-net:
     external: true
