@@ -90,4 +90,21 @@ pipeline {
       }
     }
   }
+
+  post {
+    always {
+      script {
+        unstash 'workspace'
+        try {
+          if (currentBuild.currentResult == 'SUCCESS') {
+              ctx.git.setPipelineStatus("Pipeline succeeded", "SUCCESS")
+          } else if (currentBuild.currentResult == 'FAILURE') {
+              ctx.git.setPipelineStatus("Pipeline failed", "FAILURE")
+          }
+        } finally {
+          cleanWs()
+        }
+      }
+    }
+  }
 }
