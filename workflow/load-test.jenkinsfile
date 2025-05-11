@@ -66,6 +66,7 @@ pipeline {
               cd ${WORKSPACE}
               tsung -f ${WORKSPACE}/workflow/tsung/phase1.xml start
               cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase1
+              chown 1000:1000 -R ${WORKSPACE}/workflow/tsung/logs/phase1
             """
           }
 
@@ -74,6 +75,7 @@ pipeline {
               cd ${WORKSPACE}
               tsung -f ${WORKSPACE}/workflow/tsung/phase2.xml start
               cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase2
+              chown 1000:1000 -R ${WORKSPACE}/workflow/tsung/logs/phase2
             """
           }
 
@@ -82,6 +84,7 @@ pipeline {
               cd ${WORKSPACE}
               tsung -f ${WORKSPACE}/workflow/tsung/phase3.xml start
               cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase3
+              chown 1000:1000 -R ${WORKSPACE}/workflow/tsung/logs/phase3
             """
           }
 
