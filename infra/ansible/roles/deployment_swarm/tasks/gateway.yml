@@ -17,7 +17,7 @@
     return_content: yes
   register: consul_services_response
   until: consul_services_response.json | length == account_replicas
-  retries: 10
+  retries: 20
   delay: 5
   tags:
     - gateway
