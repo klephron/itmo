@@ -1,0 +1,17 @@
+---
+- name: Ensure metrics directory exists
+  ansible.builtin.file:
+    path: "{{ metrics_src }}"
+    state: directory
+    mode: "0755"
+  tags:
+    - deploy
+    - token
+
+- name: Update kubernetes-bearer-token.txt without changing inode
+  ansible.builtin.shell:
+    cmd: echo "{{ hostvars['devops-control-1']['kubernetes_prometheus_token'] }}" > "{{ metrics_kubernetes_bearer_token_file }}"
+  changed_when: true
+  tags:
+    - deploy
+    - token

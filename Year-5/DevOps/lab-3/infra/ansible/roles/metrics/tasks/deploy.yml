@@ -1,0 +1,53 @@
+---
+- name: Fail if infra_root is not defined
+  ansible.builtin.fail:
+    msg: >
+      The variable 'infra_root' is not defined.
+      Please pass it via -e or set it as an environment variable.
+  when: infra_root is not defined
+  tags: deploy
+
+- name: Ensure metrics directory exists
+  ansible.builtin.file:
+    path: "{{ metrics_src }}"
+    state: directory
+    mode: "0755"
+  tags: deploy
+
+- name: Install docker-compose using jinja2
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ metrics_compose_file }}"
+    mode: "0644"
+  tags: deploy
+
+- name: Install prometheus.yml using jinja2
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ metrics_prometheus_file }}"
+    mode: "0644"
+  tags: deploy
+
+- name: Synchronize Grafana config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/grafana/"
+    dest: "{{ metrics_src }}/grafana/"
+  tags: deploy
+
+- name: Pull docker-compose images
+  ansible.builtin.shell: "docker compose -f {{ metrics_compose_file }} pull"
+  args:
+    chdir: "{{ metrics_src }}"
+  tags: deploy
+
+- name: Reload docker-compose
+  ansible.builtin.shell: "docker compose -f {{ metrics_compose_file }} up -d --remove-orphans"
+  args:
+    chdir: "{{ metrics_src }}"
+  register: metrics_compose_result
+  tags: deploy
+
+- name: Debug docker-compose result
+  ansible.builtin.debug:
+    msg: "{{ metrics_compose_result.stderr_lines }}"
+  tags: deploy

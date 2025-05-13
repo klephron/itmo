@@ -1,0 +1,73 @@
+---
+- name: Fail if infra_root is not defined
+  ansible.builtin.fail:
+    msg: >
+      The variable 'infra_root' is not defined.
+      Please pass it via -e or set it as an environment variable.
+  when: infra_root is not defined
+  tags: deploy
+
+- name: Ensure project control exists
+  ansible.builtin.file:
+    path: "{{ control_src }}"
+    state: directory
+    mode: "0755"
+  tags: deploy
+
+- name: Install Kubernetes config using jinja2
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ control_src }}/{{ item }}"
+    mode: "0644"
+  loop:
+    - front.yml
+    - metrics-server-patch.yml
+    - namespace.yml
+    - postgres.yml
+    - prometheus-account.yml
+    - server.yml
+  tags: deploy
+
+- name: Deploy calico
+  ansible.builtin.command: kubectl apply -f {{ cni_manifest }}
+  register: calico_result
+  tags: deploy
+
+- name: Deploy metrics server
+  ansible.builtin.command: kubectl apply -f {{ metrics_manifest }}
+  register: metrics_result
+  tags: deploy
+
+- name: Patch metrics-server deployment to add insecure TLS flag
+  ansible.builtin.command: kubectl patch -n kube-system deployments.apps/metrics-server --type strategic --patch-file {{ control_src }}/metrics-server-patch.yml
+  tags: deploy
+
+- name: Kubernetes apply namespace
+  ansible.builtin.command: kubectl apply -f {{ control_src }}/namespace.yml
+  changed_when: "'created' in apply_namespace.stdout or 'configured' in apply_namespace.stdout"
+  register: apply_namespace
+  tags: deploy
+
+- name: Kubernetes apply front
+  ansible.builtin.command: kubectl apply -f {{ control_src }}/front.yml
+  changed_when: "'created' in apply_front.stdout or 'configured' in apply_front.stdout"
+  register: apply_front
+  tags: deploy
+
+- name: Kubernetes apply postgres
+  ansible.builtin.command: kubectl apply -f {{ control_src }}/postgres.yml
+  changed_when: "'created' in apply_postgres.stdout or 'configured' in apply_postgres.stdout"
+  register: apply_postgres
+  tags: deploy
+
+- name: Kubernetes apply server
+  ansible.builtin.command: kubectl apply -f {{ control_src }}/server.yml
+  changed_when: "'created' in apply_server.stdout or 'configured' in apply_server.stdout"
+  register: apply_server
+  tags: deploy
+
+- name: Kubernetes apply prometheus account
+  ansible.builtin.command: kubectl apply -f {{ control_src }}/prometheus-account.yml
+  changed_when: "'created' in apply_prometheus.stdout or 'configured' in apply_prometheus.stdout"
+  register: apply_prometheus
+  tags: deploy

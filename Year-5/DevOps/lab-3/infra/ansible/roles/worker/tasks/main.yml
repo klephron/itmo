@@ -1,0 +1,7 @@
+---
+- name: Join Kubernetes cluster using extracted join command
+  ansible.builtin.shell: "{{ hostvars['devops-control-1']['kubeadm_join_cmd'] }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf
+  become: true
+  tags: kubernetes_init
