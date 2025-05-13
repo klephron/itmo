@@ -1,0 +1,19 @@
+---
+- name: Initialize Docker Swarm
+  ansible.builtin.command:
+    cmd: docker swarm init --advertise-addr {{ ansible_host }}
+    creates: /var/lib/docker/swarm/docker-state.json
+  become: true
+  tags: swarm_init
+
+- name: Get Docker Swarm join worker command
+  ansible.builtin.shell: docker swarm join-token worker
+  register: swarm_output
+  changed_when: false
+  tags: swarm_init
+
+- name: Extract Docker Swarm join worker command
+  ansible.builtin.set_fact:
+    swarm_join_cmd: "{{ swarm_output.stdout | regex_search('docker swarm join --token\\s+.*$', multiline=True) }}"
+  delegate_facts: true
+  tags: swarm_init

@@ -1,0 +1,396 @@
+def ctx = [
+  git: null,
+  services: [
+    account: null,
+    consul: null,
+    dataSimulator: null,
+    iotController: null,
+    logstash: null,
+    ruleEngine: null
+  ],
+];
+
+pipeline {
+  options {
+    skipDefaultCheckout(true)
+  }
+
+  agent none
+
+  environment {
+    REGISTRY_URL = 'https://index.docker.io/v1/'
+    REGISTRY_CRED_ID = 'dockerhub-zubrailx-password'
+
+    ANSIBLE_IMAGE = "zubrailx/ahla-ansible:latest"
+    ANSIBLE_SSH_FILE_ID = 'ssh-ansible-file'
+
+    ACCOUNT_DIR = "account"
+    ACCOUNT_IMAGE = "zubrailx/ahla-account"
+    ACCOUNT_TEST_IMAGE = "zubrailx/ahla-account-test"
+
+    CONSUL_DIR = "consul"
+    CONSUL_IMAGE = "zubrailx/ahla-consul"
+
+    DATA_SIMULATOR_DIR = "data-simulator"
+    DATA_SIMULATOR_IMAGE = "zubrailx/ahla-data-simulator"
+    DATA_SIMULATOR_TEST_IMAGE = "zubrailx/ahla-data-simulator-test"
+
+    IOT_CONTROLLER_DIR = "iot-controller"
+    IOT_CONTROLLER_IMAGE = "zubrailx/ahla-iot-controller"
+    IOT_CONTROLLER_TEST_IMAGE = "zubrailx/ahla-iot-controller-test"
+
+    LOGSTASH_DIR = "logstash"
+    LOGSTASH_IMAGE = "zubrailx/ahla-logstash"
+
+    RULE_ENGINE_DIR = "rule-engine"
+    RULE_ENGINE_IMAGE = "zubrailx/ahla-rule-engine"
+    RULE_ENGINE_TEST_IMAGE = "zubrailx/ahla-rule-engine-test"
+  }
+
+  stages {
+    stage('Preparation') {
+      agent { label 'jenkins-agent-1' }
+      steps {
+        checkout scm
+
+        script {
+          ctx.git = load('workflow/git.groovy')
+          ctx.services.account = load('workflow/services/account.groovy')
+          ctx.services.consul = load('workflow/services/consul.groovy')
+          ctx.services.dataSimulator = load('workflow/services/data-simulator.groovy')
+          ctx.services.iotController = load('workflow/services/iot-controller.groovy')
+          ctx.services.logstash = load('workflow/services/logstash.groovy')
+          ctx.services.ruleEngine = load('workflow/services/rule-engine.groovy')
+        }
+
+        script {
+          def branchName = ctx.git.gitBranchName()
+          def commitSha = ctx.git.gitCommitSha()
+          def repoURL = ctx.git.gitRepoURL()
+          def tagName = ctx.git.gitTagName()
+
+          if (branchName) {
+            ctx.git.setBranchName(branchName)
+          }
+          if (commitSha) {
+            ctx.git.setCommitSha(commitSha)
+          }
+          if (repoURL) {
+            ctx.git.setRepoURL(repoURL)
+          }
+          if (tagName) {
+            ctx.git.setTagName(tagName)
+          }
+
+          ctx.git.setPipelineStatus('Pipeline started', 'PENDING')
+        }
+
+        stash name: 'workspace', includes: '**'
+      }
+    }
+
+    stage('Service Integration') {
+      parallel {
+
+        stage('Account') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build Test Image') {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.account.testBuild(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE, "test.dockerfile")
+                }
+              }
+            }
+            stage('Test Unit') {
+              steps {
+                script {
+                  ctx.services.account.testUnit(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE)
+                }
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                script {
+                  ctx.services.account.testIntegration(env.ACCOUNT_DIR, env.ACCOUNT_TEST_IMAGE)
+                }
+              }
+            }
+          }
+        }
+
+        stage('Data Simulator') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build Test Image') {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.dataSimulator.testBuild(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_TEST_IMAGE, "test.dockerfile")
+                }
+              }
+            }
+            stage('Test Unit') {
+              steps {
+                script {
+                  ctx.services.dataSimulator.testUnit(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_TEST_IMAGE)
+                }
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                script {
+                  ctx.services.dataSimulator.testIntegration(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_TEST_IMAGE)
+                }
+              }
+            }
+          }
+        }
+
+        stage('IoT Controller') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build Test Image') {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.iotController.testBuild(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_TEST_IMAGE, "test.dockerfile")
+                }
+              }
+            }
+            stage('Test Unit') {
+              steps {
+                script {
+                  ctx.services.iotController.testUnit(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_TEST_IMAGE)
+                }
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                script {
+                  ctx.services.iotController.testIntegration(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_TEST_IMAGE)
+                }
+              }
+            }
+          }
+        }
+
+        stage('Rule Engine') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build Test Image') {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.ruleEngine.testBuild(env.RULE_ENGINE_DIR, env.RULE_ENGINE_TEST_IMAGE, "test.dockerfile")
+                }
+              }
+            }
+            stage('Test Unit') {
+              steps {
+                script {
+                  ctx.services.ruleEngine.testUnit(env.RULE_ENGINE_DIR, env.RULE_ENGINE_TEST_IMAGE)
+                }
+              }
+            }
+            stage('Test Integration') {
+              steps {
+                script {
+                  ctx.services.ruleEngine.testIntegration(env.RULE_ENGINE_DIR, env.RULE_ENGINE_TEST_IMAGE)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    stage('Delivery') {
+      parallel {
+
+        stage('Account') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build') {
+              steps {
+                script {
+                  ctx.services.account.build(env.ACCOUNT_DIR, env.ACCOUNT_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  ctx.services.account.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.ACCOUNT_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Consul') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage("Build") {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.consul.build(env.CONSUL_DIR, env.CONSUL_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage("Push") {
+              steps {
+                script {
+                  ctx.services.consul.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.CONSUL_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Data Simulator') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build') {
+              steps {
+                script {
+                  ctx.services.dataSimulator.build(env.DATA_SIMULATOR_DIR, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  ctx.services.dataSimulator.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.DATA_SIMULATOR_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('IoT Controller') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build') {
+              steps {
+                script {
+                  ctx.services.iotController.build(env.IOT_CONTROLLER_DIR, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  ctx.services.iotController.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.IOT_CONTROLLER_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Logstash') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage("Build") {
+              steps {
+                unstash 'workspace'
+                script {
+                  ctx.services.logstash.build(env.LOGSTASH_DIR, env.LOGSTASH_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage("Push") {
+              steps {
+                script {
+                  ctx.services.logstash.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.LOGSTASH_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+
+        stage('Rule Engine') {
+          agent { label 'jenkins-agent-1' }
+          stages {
+            stage('Build') {
+              steps {
+                script {
+                  ctx.services.ruleEngine.build(env.RULE_ENGINE_DIR, env.RULE_ENGINE_IMAGE, ctx.git.getCommitSha())
+                }
+              }
+            }
+            stage('Push') {
+              steps {
+                script {
+                  ctx.services.ruleEngine.registryPush(env.REGISTRY_URL, env.REGISTRY_CRED_ID, env.RULE_ENGINE_IMAGE, ctx.git.getCommitSha(), ["latest"])
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    stage('Deployment') {
+      agent { label 'jenkins-agent-1' }
+      stages {
+        stage('Prepare') {
+          steps {
+            unstash 'workspace'
+
+            withCredentials([file(credentialsId: ANSIBLE_SSH_FILE_ID, variable: 'ANSIBLE_SSH_FILE_PATH')]) {
+                sh 'cp "$ANSIBLE_SSH_FILE_PATH" "$WORKSPACE/ansible-ssh-private-key"'
+            }
+          }
+        }
+        stage('Deploy Single') {
+          when {
+            expression { return ctx.git.getBranchName() == "master" }
+            expression { ctx.git.getTagName() } // trigger only on new tag (just not to trigger on every build)
+          }
+          steps {
+            script {
+              def tagName = "latest"
+
+              docker.image("${ANSIBLE_IMAGE}").inside("--user root --network host") {
+                sh """
+                  cd ${WORKSPACE}/infra/ansible
+                  ansible-playbook --private-key=${WORKSPACE}/ansible-ssh-private-key \
+                    playbooks/deploy_single.yml \
+                    -e infra_root=${WORKSPACE}/infra \
+                    -e logstash_image=${LOGSTASH_IMAGE}:${tagName} \
+                    -e iot_controller_image=${IOT_CONTROLLER_IMAGE}:${tagName} \
+                    -e rule_engine_image=${RULE_ENGINE_IMAGE}:${tagName} \
+                    -e account_image=${ACCOUNT_IMAGE}:${tagName} \
+                    -e consul_image=${CONSUL_IMAGE}:${tagName} \
+
+                """
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      script {
+        node('jenkins-agent-1') {
+          unstash 'workspace'
+          try {
+            if (currentBuild.currentResult == 'SUCCESS') {
+                ctx.git.setPipelineStatus("Pipeline succeeded", "SUCCESS")
+            } else if (currentBuild.currentResult == 'FAILURE') {
+                ctx.git.setPipelineStatus("Pipeline failed", "FAILURE")
+            }
+          } finally {
+            cleanWs()
+          }
+        }
+      }
+    }
+  }
+}

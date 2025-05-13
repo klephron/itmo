@@ -1,0 +1,25 @@
+---
+- name: Fail if required variables are not defined
+  ansible.builtin.fail:
+    msg: 'variable {{item}} not defined'
+  when: item is not defined
+  with_items:
+    - infra_root
+
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ deployment_swarm_src }}"
+    state: directory
+    mode: "0755"
+
+# TODO: use NFS instead
+- name: Synchronize Filebeat config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/filebeat/"
+    dest: "{{ deployment_swarm_src }}/filebeat/"
+
+# TODO: use NFS instead
+- name: Synchronize MongoDB config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/mongodb/"
+    dest: "{{ deployment_swarm_src }}/mongodb/"

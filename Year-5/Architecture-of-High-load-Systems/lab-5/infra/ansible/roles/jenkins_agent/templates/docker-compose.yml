@@ -1,0 +1,23 @@
+services:
+  jenkins-agent:
+    # NOTE: use when sysbox runc is not available
+    # build:
+    #   context: .
+    #   dockerfile_inline: |
+    #     FROM {{ jenkins_agent_image }}
+    #     RUN groupadd -g {{ docker_gid }} dockersock && \
+    #         usermod -aG dockersock jenkins
+    #     RUN echo '#!/bin/bash' > /entrypoint.sh && \
+    #         echo 'exec /usr/local/bin/setup-sshd "$@"' >> /entrypoint.sh && \
+    #         chmod +x /entrypoint.sh
+    image: "{{ jenkins_agent_image }}"
+    runtime: sysbox-runc
+    environment:
+      JENKINS_AGENT_SSH_PUBKEY: "{{ jenkins_agent_ssh_pubkey }}"
+    volumes:
+      - jenkins-agent-docker:/var/lib/docker
+    ports:
+      - "{{ jenkins_agent_ssh_port }}:22"
+
+volumes:
+  jenkins-agent-docker:

@@ -1,0 +1,15 @@
+---
+- name: Check if node is already in Docker Swarm
+  ansible.builtin.command: docker info --format '{{ '{{' }}.Swarm.LocalNodeState{{ '}}' }}'
+  register: swarm_state
+  changed_when: false
+  failed_when: false
+  tags: swarm_init
+
+- name: Join Docker Swarm cluster using extracted join command
+  ansible.builtin.shell: "{{ hostvars['ahla-cluster-manager-1']['swarm_join_cmd'] }}"
+  args:
+    creates: /var/lib/docker/swarm/docker-state.json
+  when: swarm_state.stdout != 'active'
+  become: true
+  tags: swarm_init

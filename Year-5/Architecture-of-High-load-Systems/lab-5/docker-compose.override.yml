@@ -1,0 +1,7 @@
+services:
+  iot-controller:
+    deploy:
+      replicas: 1
+  rule-engine:
+    deploy:
+      replicas: 1
