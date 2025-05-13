@@ -1,0 +1,4 @@
+FROM bitnami/consul:1.20.5
+USER root
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+USER 1001

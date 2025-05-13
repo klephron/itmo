@@ -1,0 +1,20 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk21
+    ports:
+      - "${JENKINS_PORT}:8080"
+    volumes:
+      - jenkins-home:/var/jenkins_home
+
+  jenkins-agent:
+    build:
+      context: ./jenkins
+      dockerfile: agent.dockerfile
+    runtime: sysbox-runc
+    environment:
+      JENKINS_AGENT_SSH_PUBKEY: ${JENKINS_AGENT_SSH_PUBKEY}
+
+volumes:
+  jenkins-home:
+    name: "ahla-jenkins-home"
+    external: true
