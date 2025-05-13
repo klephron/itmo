@@ -1,0 +1,79 @@
+---
+- hosts: all
+  become: true
+  pre_tasks:
+    - name: Fail if not Ubuntu
+      fail:
+        msg: "This playbook only supports Ubuntu."
+      when: ansible_distribution not in ["Ubuntu"]
+
+    - name: Update cache
+      tags: always
+      apt:
+        update_cache: true
+      changed_when: false
+
+- hosts: all
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - ca-certificates
+        - curl
+
+    - name: Add GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add docker repository to apt
+      apt_repository:
+        repo: "deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+
+    - name: Install docker
+      apt:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+
+    - name: Ensure docker service is running and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Ensure group docker exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add {{ ansible_user }} to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+      register: user_update
+
+- hosts: all
+  become: false
+  tasks:
+    - name: Reset SSH connection to apply group changes
+      meta: reset_connection
+
+    - name: Test docker access
+      command: docker ps
+      register: docker_test
+
+    - name: Debug docker test result
+      debug:
+        var: docker_test.stdout_lines

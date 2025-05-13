@@ -1,0 +1,7 @@
+nodes_front_port: 8110
+
+nodes_postgres_db: me_db
+nodes_postgres_user: me
+nodes_postgres_password: me
+
+nodes_server_port: 8111
