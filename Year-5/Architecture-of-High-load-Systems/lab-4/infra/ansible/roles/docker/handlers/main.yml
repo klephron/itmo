@@ -1,0 +1,14 @@
+---
+- name: Restart Docker
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+    enabled: true
+  become: true
+
+- name: Start Sysbox
+  ansible.builtin.systemd:
+    name: sysbox
+    state: started
+    enabled: true
+  become: true

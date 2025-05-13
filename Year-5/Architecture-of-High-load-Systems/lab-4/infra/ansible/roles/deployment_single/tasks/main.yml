@@ -1,0 +1,54 @@
+---
+- name: Fail if required variables are not defined
+  ansible.builtin.fail:
+    msg: 'variable {{item}} not defined'
+  when: item is not defined
+  with_items:
+    - infra_root
+
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ deployment_single_src }}"
+    state: directory
+    mode: "0755"
+
+- name: Synchronize Prometheus config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/prometheus/"
+    dest: "{{ deployment_single_src }}/prometheus/"
+
+- name: Synchronize Logstash config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/logstash/"
+    dest: "{{ deployment_single_src }}/logstash/"
+
+- name: Synchronize MongoDB config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/mongodb/"
+    dest: "{{ deployment_single_src }}/mongodb/"
+
+- name: Synchronize Filebeat config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/filebeat/"
+    dest: "{{ deployment_single_src }}/filebeat/"
+
+- name: Install docker-compose.yml using jinja2
+  ansible.builtin.template:
+    src: docker-compose.yml
+    dest: "{{ deployment_single_compose_file }}"
+    mode: "0644"
+
+- name: Pull docker-compose images
+  ansible.builtin.shell: "docker compose -f {{ deployment_single_compose_file }} pull"
+  args:
+    chdir: "{{ deployment_single_src }}"
+
+- name: Reload docker-compose
+  ansible.builtin.shell: "docker compose -f {{ deployment_single_compose_file }} up -d --remove-orphans"
+  args:
+    chdir: "{{ deployment_single_src }}"
+  register: deployment_single_compose_result
+
+- name: Debug docker-compose result
+  ansible.builtin.debug:
+    msg: "{{ deployment_single_compose_result.stderr_lines }}"

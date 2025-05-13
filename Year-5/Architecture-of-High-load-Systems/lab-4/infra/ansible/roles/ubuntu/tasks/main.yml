@@ -1,0 +1,8 @@
+---
+- import_tasks: ip_forward.yml
+- import_tasks: ipv6.yml
+- import_tasks: hostname.yml
+- import_tasks: update.yml
+- import_tasks: user.yml
+- import_tasks: ssh.yml
+- import_tasks: swap.yml

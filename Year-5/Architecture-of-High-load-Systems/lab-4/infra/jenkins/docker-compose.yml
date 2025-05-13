@@ -1,0 +1,35 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk21
+    ports:
+      - "${JENKINS_PORT:?err}:8080"
+    volumes:
+      - jenkins-home:/var/jenkins_home
+    networks:
+      - macvlan-virbr0
+      - default
+
+  jenkins-agent-1:
+    build:
+      context: .
+      dockerfile: agent.dockerfile
+    runtime: sysbox-runc
+    environment:
+      JENKINS_AGENT_SSH_PUBKEY: ${JENKINS_AGENT_SSH_PUBKEY:?err}
+    volumes:
+      - jenkins-agent-docker-1:/var/lib/docker
+    networks:
+      - macvlan-virbr0
+      - default
+
+volumes:
+  jenkins-home:
+    name: "ahla-jenkins-home"
+    external: true
+  jenkins-agent-docker-1:
+
+networks:
+  macvlan-virbr0:
+    external: true
+  default:
+    driver: bridge

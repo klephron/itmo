@@ -1,0 +1,76 @@
+---
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: yes
+  become: true
+  tags: docker
+
+- name: Add GPG key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  become: true
+  tags: docker
+
+- name: Add docker repository to apt
+  ansible.builtin.apt_repository:
+    repo: "deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+  become: true
+  tags: docker
+
+- name: Install docker
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: latest
+    update_cache: yes
+  become: true
+  tags: docker
+
+- name: Ensure docker service is running and enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes
+  become: true
+  tags: docker
+
+- name: Ensure group docker exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+  become: true
+  tags: docker
+
+- name: Add {{ ansible_user }} to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  register: user_update
+  become: true
+  tags: docker
+
+- name: Reset SSH connection to apply group changes
+  ansible.builtin.meta: reset_connection
+  tags: docker
+
+- name: Test docker access
+  ansible.builtin.command: docker ps
+  register: docker_test
+  changed_when: false
+  tags: docker
+
+- name: Debug docker test result
+  ansible.builtin.debug:
+    var: docker_test.stdout_lines
+  changed_when: false
+  tags: docker

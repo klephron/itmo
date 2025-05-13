@@ -1,0 +1,2 @@
+deployment_single_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}/deployment-single"
+deployment_single_compose_file: "{{ deployment_single_src }}/docker-compose.yml"
