@@ -1,8 +1,8 @@
 rs.initiate() // initiate primary node
 
 use admin
-db.createUser({user: 'admin', pwd: 'admin', roles: [{role: 'root', db: 'admin' }]})
-db.auth('admin', 'admin')
+db.createUser({user: 'shard-admin', pwd: 'shard-admin', roles: [{role: 'root', db: 'admin' }]})
+db.auth('shard-admin', 'shard-admin')
 // db.runCommand({ connectionStatus: 1 })
 
 rs.reconfig({
