@@ -1,0 +1,32 @@
+---
+- name: Synchronize MongoDB config
+  ansible.posix.synchronize:
+    src: "{{ role_path }}/templates/mongodb/"
+    dest: "{{ deployment_swarm_src }}/mongodb/"
+  tags:
+   - mongo
+
+- name: Install Docker app-mongo stacks using jinja2
+  ansible.builtin.template:
+    src: "stacks/{{ item }}"
+    dest: "{{ deployment_swarm_src }}/stacks/{{ item }}"
+    mode: "0644"
+  loop:
+    - docker-compose.app-mongo.yml
+  tags:
+    - mongo
+
+- name: Store MongoDB Key
+  ansible.builtin.copy:
+    content: "{{ mongo_key }}"
+    dest: "{{ deployment_swarm_src }}/mongodb/common/keyfile.key"
+  tags:
+    - mongo
+
+- name: Deploy ahla-app-mongo stack
+  ansible.builtin.command:
+    cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.app-mongo.yml ahla-app-mongo
+  args:
+    chdir: "{{ deployment_swarm_src }}"
+  tags:
+    - mongo

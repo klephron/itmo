@@ -41,28 +41,6 @@ services:
     networks:
       - ahla-net
 
-  mongodb:
-    image: mongo:6.0
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
-    volumes:
-      - mongodb-data:/data/db
-      - "{{ deployment_swarm_src }}//mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro"
-    command: mongod
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 5s
-      timeout: 10s
-      retries: 10
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == worker
-    networks:
-      - ahla-net
-
   redis:
     image: redis:latest
     volumes:
@@ -143,8 +121,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
-    depends_on:
-      - mongodb
     deploy:
       replicas: {{ account_replicas }}
       placement:
@@ -158,5 +134,4 @@ networks:
     external: true
 
 volumes:
-  mongodb-data:
   redis-data:

@@ -1,11 +1,4 @@
 ---
-- name: Fail if required variables are not defined
-  ansible.builtin.fail:
-    msg: 'variable {{item}} not defined'
-  when: item is not defined
-  with_items:
-    - infra_root
-
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ deployment_swarm_src }}"
@@ -18,8 +11,16 @@
     src: "{{ infra_root }}/filebeat/"
     dest: "{{ deployment_swarm_src }}/filebeat/"
 
-# TODO: use NFS instead
 - name: Synchronize MongoDB config
   ansible.posix.synchronize:
-    src: "{{ infra_root }}/mongodb/"
+    src: "{{ role_path }}/templates/mongodb/"
     dest: "{{ deployment_swarm_src }}/mongodb/"
+  tags:
+   - mongo
+
+- name: Store MongoDB Keyfile
+  ansible.builtin.copy:
+    content: "{{ mongo_key }}"
+    dest: "{{ deployment_swarm_src }}/mongodb/common/keyfile.key"
+  tags:
+    - mongo

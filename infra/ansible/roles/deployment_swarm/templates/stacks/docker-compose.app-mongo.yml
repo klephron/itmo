@@ -1,0 +1,108 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    volumes:
+      - "{{ deployment_swarm_src }}/mongodb/common:/etc/mongo-common"
+      - "{{ deployment_swarm_src }}/mongodb/router:/etc/mongo"
+      - mongodb-data:/var/lib/mongo
+    command: --config /etc/mongo/mongos.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  mongodb-config:
+    image: mongo:8.0
+    volumes:
+      - "{{ deployment_swarm_src }}/mongodb/common:/etc/mongo-common"
+      - "{{ deployment_swarm_src }}/mongodb/config:/etc/mongo"
+      - mongodb-config-data:/var/lib/mongo
+    command: --config /etc/mongo/mongod.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - ahla-net
+
+  mongodb-shard-1-1:
+    image: mongo:8.0
+    volumes:
+      - "{{ deployment_swarm_src }}/mongodb/common:/etc/mongo-common"
+      - "{{ deployment_swarm_src }}/mongodb/shards:/etc/mongo"
+      - mongodb-shard-1-1-data:/var/lib/mongo
+    command: --config /etc/mongo/mongod-1-1.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - ahla-net
+
+  mongodb-shard-1-2:
+    image: mongo:8.0
+    volumes:
+      - "{{ deployment_swarm_src }}/mongodb/common:/etc/mongo-common"
+      - "{{ deployment_swarm_src }}/mongodb/shards:/etc/mongo"
+      - mongodb-shard-1-2-data:/var/lib/mongo
+    command: --config /etc/mongo/mongod-1-2.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - ahla-net
+
+  mongodb-shard-2-1:
+    image: mongo:8.0
+    volumes:
+      - "{{ deployment_swarm_src }}/mongodb/common:/etc/mongo-common"
+      - "{{ deployment_swarm_src }}/mongodb/shards:/etc/mongo"
+      - mongodb-shard-2-1-data:/var/lib/mongo
+    command: --config /etc/mongo/mongod-2-1.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - ahla-net
+
+  mongodb-shard-2-2:
+    image: mongo:8.0
+    volumes:
+      - "{{ deployment_swarm_src }}/mongodb/common:/etc/mongo-common"
+      - "{{ deployment_swarm_src }}/mongodb/shards:/etc/mongo"
+      - mongodb-shard-2-2-data:/var/lib/mongo
+    command: --config /etc/mongo/mongod-2-2.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - ahla-net
+
+networks:
+  ahla-net:
+    external: true
+
+volumes:
+  mongodb-data:
+  mongodb-config-data:
+  mongodb-shard-1-1-data:
+  mongodb-shard-1-2-data:
+  mongodb-shard-2-1-data:
+  mongodb-shard-2-2-data:

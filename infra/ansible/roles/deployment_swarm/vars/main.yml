@@ -2,3 +2,5 @@ deployment_swarm_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansi
 
 gateway_host: "{{ hostvars['ahla-cluster-manager-1'].ansible_host }}"
 consul_address: "{{ gateway_host }}:{{ consul_port }}"
+
+mongo_key: "{{ lookup('file', mongo_keyfile_abspath )}}"

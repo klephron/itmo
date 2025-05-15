@@ -1,13 +1,4 @@
 ---
-- name: Fail if required variables are not defined
-  ansible.builtin.fail:
-    msg: 'variable {{item}} not defined'
-  when: item is not defined
-  with_items:
-    - infra_root
-  tags:
-    - app
-
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ deployment_swarm_src }}"
@@ -73,6 +64,8 @@
   args:
     chdir: "{{ deployment_swarm_src }}"
 
+- import_tasks: manager-app-mongo.yml
+
 - name: Deploy ahla-app stack
   ansible.builtin.command:
     cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.app.yml ahla-app
@@ -80,3 +73,5 @@
     chdir: "{{ deployment_swarm_src }}"
   tags:
     - app
+
+- import_tasks: manager-gateway.yml
