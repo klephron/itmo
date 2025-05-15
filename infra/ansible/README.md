@@ -56,7 +56,7 @@ ansible-playbook playbooks/deploy_single.yml -e infra_root=<infra_root>
 
 ### Application Mongo Cluster Configuration
 
-After mongo cluster is deployed currently it need to be configured manually.
+After mongo cluster is deployed currently it is needed to be configured manually.
 
 1. Open bash console in `mongodb-config`.
 
@@ -122,6 +122,7 @@ mongosh -u admin -p admin
 ```js
 use admin
 sh.addShard( "rsh-1/mongodb-shard-1-1:27017")
+sh.addShard( "rsh-1/mongodb-shard-2-1:27017")
 ...
 ```
 
@@ -144,7 +145,7 @@ use iot-db
 db.createCollection("data")
 db.data.createIndex({ userId: 1 })
 
-sh.shardCollection("iot-db.data", { userId: 1 })
+sh.shardCollection("iot-db.data", { userId: 1 }) // or hash
 ```
 
 ### Client
