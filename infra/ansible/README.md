@@ -54,7 +54,7 @@ ansible-playbook playbooks/deploy_single.yml -e infra_root=<infra_root>
 > * `mongo_keyfile_abspath` - absolute path to base64 generated keyfile (generated with `openssl rand -base64 756`). For example: `-e mongo_keyfile_abspath="$(realpath $(pwd)/../../examples/mongo-shard-repl-auth/common/keyfile.key)"`
 
 
-### Application Mongo Cluster Configuration
+### Application Mongo Cluster
 
 After mongo cluster is deployed currently it is needed to be configured manually.
 
