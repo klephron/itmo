@@ -72,7 +72,20 @@ rs.initiate()
 
 use admin
 db.createUser({user: 'admin', pwd: 'admin', roles: [{role: 'root', db: 'admin' }]})
+
+rs.reconfig({
+  _id: "rsc",
+  configsvr: true,
+  members: [
+    {
+      _id: 0,
+      host: "mongodb-config:27017",
+    },
+  ]
+})
 ```
+
+> `rsc` - config server replica
 
 3. Open bash console for each mongo shard primary node (ex. `mongodb-shard-1-1`, `mongodb-shard-2-1`, etc.):
 
