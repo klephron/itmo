@@ -38,16 +38,35 @@ ansible-playbook playbooks/setup_client.yml
 
 ### Application
 
-Deploy Docker Swarm cluster:
-
-```sh
-ansible-playbook playbooks/deploy_swarm.yml -e infra_root=<infra_root> -e mongo_keyfile_abspath=<mongo_keyfile_abspath>
-```
-
-Or deploy Docker as single node:
+Deploy Docker as single node:
 
 ```sh
 ansible-playbook playbooks/deploy_single.yml -e infra_root=<infra_root>
+```
+
+Deploy Docker Swarm cluster.
+
+First generate mongodb config using script:
+
+```sh
+python mongo_config.py <template_stack_file> <template_mongo_dir> <shards_count> <replicas_each_count>...
+```
+
+> * `template_stack_file` -  use `./roles/deployment_swarm/templates/stacks/docker-compose.app-mongo.yml`
+> * `template_mongo_dir` - use `./roles/deployment_swarm/templates/mongodb`
+> * `shards_count` - number of shards to generated
+> * `replicas_count` - number of replicas in each shard (array)
+>
+> Example:
+> ```sh
+> python mongo_config.py ./roles/deployment_swarm/templates/stacks/docker-compose.app-mongo.yml ./roles/deployment_swarm/templates/mongodb 2 1 2
+> ```
+>
+
+And deploy:
+
+```sh
+ansible-playbook playbooks/deploy_swarm.yml -e infra_root=<infra_root> -e mongo_keyfile_abspath=<mongo_keyfile_abspath>
 ```
 
 > * `infra_root` - absolute path to `<repo_root>/infra/`. For example: `-e infra_root="$(realpath $(pwd)/..)"`
