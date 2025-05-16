@@ -3,8 +3,12 @@ package ru.itmo.zavar.account;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import ru.itmo.zavar.account.consul.ConsulClient;
 
+@EnableAsync
+@Configuration
 @SpringBootApplication
 public class AccountApplication {
 

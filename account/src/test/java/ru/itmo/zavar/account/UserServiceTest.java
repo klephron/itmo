@@ -26,7 +26,6 @@ public class UserServiceTest {
 
     private UserRepository repo;
     private PasswordEncoder encoder;
-    private UserCache userCache;
     private UserMapper userMapper;
     private UserService userService;
 
@@ -34,10 +33,9 @@ public class UserServiceTest {
     void setUp() {
         repo = mock(UserRepository.class);
         encoder = mock(PasswordEncoder.class);
-        userCache = mock(UserCache.class);
         userMapper = mock(UserMapper.class);
 
-        userService = new UserService(repo, encoder, userCache, userMapper);
+        userService = new UserService(repo, encoder, userMapper);
     }
 
     @Test
@@ -56,41 +54,9 @@ public class UserServiceTest {
     }
 
     @Test
-    void testLoadUserByUsernameCached() {
-        CustomUserDetails cached = new CustomUserDetails(
-                "user-1", "john", "pass", List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        when(userCache.getUserFromCache("john")).thenReturn(cached);
-
-        CustomUserDetails result = userService.loadUserByUsername("john");
-        assertEquals("john", result.getUsername());
-        verify(repo, never()).findByUsername(anyString());
-    }
-
-    @Test
-    void testLoadUserByUsernameNoCache() {
-        when(userCache.getUserFromCache("john")).thenReturn(null);
-
-        UserEntity entity = new UserEntity();
-        entity.setId("user-1");
-        entity.setUsername("john");
-        entity.setPassword("encoded");
-        entity.setAuthorities(List.of("ROLE_ADMIN"));
-
-        when(repo.findByUsername("john")).thenReturn(Optional.of(entity));
-
-        CustomUserDetails result = userService.loadUserByUsername("john");
-        assertEquals("john", result.getUsername());
-        assertTrue(result.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
-
-        verify(userCache).putUserInCache(any(CustomUserDetails.class));
-    }
-
-    @Test
     void testRegisterSuccess() {
         when(repo.findByUsername("john")).thenReturn(Optional.empty());
         when(encoder.encode("pwd")).thenReturn("encoded");
-        doNothing().when(userCache).removeUserFromCache("john");
 
         userService.register("john", "pwd", "john@exampl.com", List.of("ROLE_USER"));
 
@@ -112,7 +78,6 @@ public class UserServiceTest {
         when(repo.save(entity)).thenReturn(entity);
 
         userService.setAuthorities("john", List.of(Roles.ADMIN.toString()));
-        verify(userCache).removeUserFromCache("john");
         verify(repo).save(entity);
         assertEquals(List.of(Roles.ADMIN.toString()), entity.getAuthorities());
     }

@@ -22,7 +22,6 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository repo;
     private final PasswordEncoder encoder;
-    private final UserCache userCache;
     private final UserMapper userMapper;
 
     public UserDto loadUserById(String id) throws UsernameNotFoundException {
@@ -36,12 +35,6 @@ public class UserService implements UserDetailsService {
 
     @Override
     public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        CustomUserDetails cached = (CustomUserDetails) userCache.getUserFromCache(username);
-        if (cached != null) {
-            log.info("Loaded user by name from cache: {}", cached);
-            return cached;
-        }
-
         UserEntity userEntity = repo.findByUsername(username).orElseThrow(() -> {
             log.debug("User not found by name: {}", username);
             return new UsernameNotFoundException("User not found");
@@ -53,7 +46,6 @@ public class UserService implements UserDetailsService {
                 userEntity.getAuthorities().stream()
                         .map(SimpleGrantedAuthority::new)
                         .toList());
-        userCache.putUserInCache(build);
         return build;
     }
 
@@ -65,7 +57,6 @@ public class UserService implements UserDetailsService {
         if (!authorities.stream().allMatch(Roles::isValid))
             throw new IllegalArgumentException("Invalid authorities");
         userEntity.setAuthorities(authorities);
-        userCache.removeUserFromCache(username);
         userEntity = repo.save(userEntity);
         log.info("Saved user: {}", userEntity);
         return new CustomUserDetails(userEntity.getId(),
@@ -99,7 +90,6 @@ public class UserService implements UserDetailsService {
         userEntity.setEmail(email);
         repo.save(userEntity);
         log.info("Saved user: {}", userEntity);
-        userCache.removeUserFromCache(username);
     }
 
     public boolean checkPassword(String username, String rawPassword) throws UsernameNotFoundException {

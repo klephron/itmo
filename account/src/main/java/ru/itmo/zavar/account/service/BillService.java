@@ -3,6 +3,7 @@ package ru.itmo.zavar.account.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
@@ -10,6 +11,7 @@ import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.account.dto.BillDto;
@@ -66,6 +68,7 @@ public class BillService {
         return this.billMapper.toDto(save);
     }
 
+    @Cacheable(value = "bills", key = "'bills:' + #fromTs + ':' + #toTs + ':' + #tariff")
     @Transactional
     public List<BillDto> generateBills(long fromTs, long toTs, long tariff) {
         Aggregation aggregation = newAggregation(
@@ -98,6 +101,7 @@ public class BillService {
         return createdBills;
     }
 
+    @Async
     public void notifyUsers(List<BillDto> bills) {
         bills.forEach(billDto -> {
             UserDto userDto = userService.loadUserById(billDto.getUserId());
