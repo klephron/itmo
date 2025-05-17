@@ -80,7 +80,7 @@ def router_init(args: Args, host_containers: dict[str, str]):
         args,
         host,
         container,
-        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").createUser({{user: "zavar", pwd: "zawar", roles: [{{role: "readWrite", db: "iot-db"}}]}})'""",
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").createUser({{user: "zavar", pwd: "zavar", roles: [{{role: "readWrite", db: "iot-db"}}]}})'""",
     )
     logging.info(result.stdout.strip())
 
