@@ -15,6 +15,7 @@ logstash_image: "zubrailx/ahla-logstash:latest"
 
 kibana_port: 8216
 
+mqtt_broker_clients_port: 8217
 mqtt_broker_dashboard_port: 8218
 
 rabbitmq_dashboard_port: 8220

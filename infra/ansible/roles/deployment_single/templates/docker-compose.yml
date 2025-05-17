@@ -57,6 +57,7 @@ services:
       - EMQX_MQTT__MAX_MQUEUE_LEN=1000
       - EMQX_MQTT__MESSAGE_EXPIRY_INTERVAL=3600
     ports:
+      - "{{ mqtt_broker_clients_port }}:1883"
       - "{{ mqtt_broker_dashboard_port }}:18083"
     healthcheck:
       test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
