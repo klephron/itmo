@@ -186,7 +186,6 @@ wait $MAIN_PID
     for i in range(args.shards_count):
         shard_i = i + 1
         replicas = args.replicas_each_count[i]
-
         for j in range(replicas):
             replica_i = j + 1
             with open(
@@ -292,7 +291,6 @@ volumes:
     for i in range(args.shards_count):
         shard_i = i + 1
         replicas = args.replicas_each_count[i]
-
         for j in range(replicas):
             replica_i = j + 1
 
@@ -320,14 +318,14 @@ if __name__ == "__main__":
     assert len(REPLICAS_EACH_COUNT) == SHARDS_COUNT
 
     if len(sys.argv) < 4:
-        raise ValueError("invalid arguments, see main")
+        raise ValueError("invalid arguments")
 
     deployment_stack_file = sys.argv[1]
     dir_path = sys.argv[2]
     shards_count = int(sys.argv[3])
 
     if len(sys.argv) != 4 + shards_count:
-        raise ValueError("invalid arguments, see main")
+        raise ValueError("invalid arguments")
 
     replicas_each_count = [int(r) for r in sys.argv[4:]]
 
