@@ -128,6 +128,14 @@ def router_init(args: Args, host_containers: dict[str, str]):
         args,
         host,
         container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.settings.update({{ _id: "chunksize" }}, {{ $set: {{ value: 1 }} }}, {{ upsert: true }})'""",
+    )
+    logging.info(result.stdout.strip())
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
         f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'sh.status()'""",
     )
     logging.info(result.stdout.strip())
