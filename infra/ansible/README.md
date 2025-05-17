@@ -83,6 +83,12 @@ python mongo_setup.py <shards_count> <replicas_each_count>
 > * `shards_count` - number of shards
 > * `replicas_count` - list of number of replicas in each shard
 
+Init mongo cluster:
+
+```sh
+python mongo_init.py
+```
+
 ### Client
 
 Deploy client jenkins agent for testing purposes:
