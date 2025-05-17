@@ -220,7 +220,8 @@ def main(args: Args):
             .split()
         )
         host_containers[host] = containers
-        logging.info(containers)
+
+    logging.info(host_containers)
 
     setup_config(args, host_containers)
     setup_shards(args, host_containers)

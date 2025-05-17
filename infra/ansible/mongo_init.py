@@ -46,13 +46,27 @@ def ssh_run(args: Args, host: str, cmd: str):
 
 
 def ssh_run_docker(args: Args, host: str, container: str, container_cmd: str):
-    return ssh_run(
+    result = ssh_run(
         args, host, f"docker exec -i {container} {shlex.quote(container_cmd)}"
     )
 
+    if result.returncode != 0:
+        logging.warning(result.stderr.strip())
+
+    return result
+
 
 def main(args: Args):
-    pass
+    host_containers = {}
+
+    containers = (
+        ssh_run(args, args.host, "docker ps --format '{{.Names}}'")
+        .stdout.strip()
+        .split()
+    )
+    host_containers[args.host] = containers
+
+    logging.info(host_containers)
 
 
 if __name__ == "__main__":
