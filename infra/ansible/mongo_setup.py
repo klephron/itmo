@@ -18,6 +18,10 @@ Args = namedtuple(
         "ssh_user",
         "shards_count",
         "replicas_each_count",
+        "root_username",
+        "root_password",
+        "shard_root_username",
+        "shard_root_password",
     ],
 )
 
@@ -33,6 +37,12 @@ SSH_USER = "ansible"
 
 SHARDS_COUNT = 2
 REPLICAS_EACH_COUNT = [2, 2]  # for each shard count of replicas
+
+ROOT_USERNAME = "admin"
+ROOT_PASSWORD = "admin"
+
+SHARD_ROOT_USERNAME = "shard-admin"
+SHARD_ROOT_PASSWORD = "shard-admin"
 
 
 def ssh_get_cmd(args: Args, host: str):
@@ -90,7 +100,7 @@ def setup_config(args: Args, host_containers: dict[str, str]):
             args,
             host,
             container,
-            """mongosh admin --eval 'db.createUser({user: "admin", pwd: "admin", roles: [{role: "root", db: "admin" }]})'""",
+            f"""mongosh admin --eval 'db.createUser({{user: "{args.root_username}", pwd: "{args.root_password}", roles: [{{role: "root", db: "admin" }}]}})'""",
         )
         logging.debug(result.stdout.strip())
 
@@ -98,12 +108,15 @@ def setup_config(args: Args, host_containers: dict[str, str]):
         args,
         host,
         container,
-        f"""mongosh -u admin -p admin --eval 'rs.reconfig({{ _id: "rsc", configsvr: true, members: [ {{ _id: 0, host: "{args.deployment_service_config}:27017", }}, ]}})'""",
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' --eval 'rs.reconfig({{ _id: "rsc", configsvr: true, members: [ {{ _id: 0, host: "{args.deployment_service_config}:27017", }}, ]}})'""",
     )
     logging.debug(result.stdout.strip())
 
     result = ssh_run_docker(
-        args, host, container, f"""mongosh -u admin -p admin --eval 'rs.status()'"""
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' --eval 'rs.status()'""",
     )
     logging.info(result.stdout.strip())
 
@@ -141,7 +154,7 @@ def setup_shard(
             args,
             host,
             container,
-            """mongosh admin --eval 'db.createUser({user: "shard-admin", pwd: "shard-admin", roles: [{role: "root", db: "admin" }]})'""",
+            f"""mongosh admin --eval 'db.createUser({{user: "{args.shard_root_username}", pwd: "{args.shard_root_password}", roles: [{{role: "root", db: "admin" }}]}})'""",
         )
         logging.debug(result.stdout.strip())
 
@@ -156,7 +169,7 @@ def setup_shard(
         args,
         host,
         container,
-        f"""mongosh -u shard-admin -p shard-admin --eval 'rs.reconfig({{ _id: "rsh-{shard_i}", members: [{members}]}})'""",
+        f"""mongosh -u '{args.shard_root_username}' -p '{args.shard_root_password}' --eval 'rs.reconfig({{ _id: "rsh-{shard_i}", members: [{members}]}})'""",
     )
     logging.debug(result.stdout.strip())
 
@@ -164,7 +177,7 @@ def setup_shard(
         args,
         host,
         container,
-        f"""mongosh -u shard-admin -p shard-admin --eval 'rs.status()'""",
+        f"""mongosh -u '{args.shard_root_username}' -p '{args.shard_root_password}' --eval 'rs.status()'""",
     )
     logging.info(result.stdout.strip())
 
@@ -200,12 +213,15 @@ def add_shards(args: Args, host_containers: dict[str, str]):
             args,
             host,
             container,
-            f"""mongosh -u admin -p admin --eval 'sh.addShard("rsh-{shard_i}/{args.deployment_service_shard_prefix}-{shard_i}-1:27017")'""",
+            f"""mongosh -u '{args.root_username}' -p '{args.root_password}' --eval 'sh.addShard("rsh-{shard_i}/{args.deployment_service_shard_prefix}-{shard_i}-1:27017")'""",
         )
         logging.debug(result.stdout.strip())
 
     result = ssh_run_docker(
-        args, host, container, f"""mongosh -u admin -p admin --eval 'sh.status()'"""
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' --eval 'sh.status()'""",
     )
     logging.info(result.stdout.strip())
 
@@ -255,5 +271,9 @@ if __name__ == "__main__":
         ssh_user=SSH_USER,
         shards_count=shards_count,
         replicas_each_count=replicas_each_count,
+        root_username=ROOT_USERNAME,
+        root_password=ROOT_PASSWORD,
+        shard_root_username=SHARD_ROOT_USERNAME,
+        shard_root_password=SHARD_ROOT_PASSWORD,
     )
     main(args)

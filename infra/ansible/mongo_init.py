@@ -14,6 +14,8 @@ Args = namedtuple(
         "ssh_cmd",
         "ssh_identity_file",
         "ssh_user",
+        "root_username",
+        "root_password",
     ],
 )
 
@@ -24,6 +26,9 @@ DEPLOYMENT_SERVICE_ROUTER = "mongodb"
 SSH_CMD = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null"
 SSH_IDENTITY_FILE = os.path.expanduser("~/.ssh/id_ansible")
 SSH_USER = "ansible"
+
+ROOT_USERNAME = "admin"
+ROOT_PASSWORD = "admin"
 
 
 def ssh_get_cmd(args: Args, host: str):
@@ -56,6 +61,78 @@ def ssh_run_docker(args: Args, host: str, container: str, container_cmd: str):
     return result
 
 
+def router_find(args: Args, host_containers: dict[str, str]):
+    for host, containers in host_containers.items():
+        for container in containers:
+            if container.count(f"{args.deployment_service_router}."):
+                return (host, container)
+    return (None, None)
+
+
+def router_init(args: Args, host_containers: dict[str, str]):
+    host, container = router_find(args, host_containers)
+
+    if host is None or container is None:
+        logging.error("router is not found")
+        return
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").createUser({{user: "zavar", pwd: "zawar", roles: [{{role: "readWrite", db: "iot-db"}}]}})'""",
+    )
+    logging.info(result.stdout.strip())
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'sh.enableSharding("iot-db")'""",
+    )
+    logging.info(result.stdout.strip())
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").createCollection("bills")'""",
+    )
+    logging.info(result.stdout.strip())
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").bills.createIndex({{ userId: 1 }})'""",
+    )
+    logging.info(result.stdout.strip())
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'sh.shardCollection("iot-db.bills", {{ userId: 1 }})'""",
+    )
+    logging.info(result.stdout.strip())
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").getUsers()'""",
+    )
+    logging.info(result.stdout.strip())
+
+    result = ssh_run_docker(
+        args,
+        host,
+        container,
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'sh.status()'""",
+    )
+    logging.info(result.stdout.strip())
+
+
 def main(args: Args):
     host_containers = {}
 
@@ -67,6 +144,8 @@ def main(args: Args):
     host_containers[args.host] = containers
 
     logging.info(host_containers)
+
+    router_init(args, host_containers)
 
 
 if __name__ == "__main__":
@@ -80,6 +159,8 @@ if __name__ == "__main__":
         ssh_cmd=SSH_CMD,
         ssh_identity_file=SSH_IDENTITY_FILE,
         ssh_user=SSH_USER,
+        root_username=ROOT_USERNAME,
+        root_password=ROOT_PASSWORD,
     )
 
     main(args)
