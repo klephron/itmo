@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -30,6 +31,7 @@ public class BillServiceTest {
     private BillMapper billMapper;
     private MongoTemplate mongoTemplate;
     private UserService userService;
+    private CacheManager cacheManager;
     private JavaMailSender mailSender;
     private BillService billService;
 
@@ -40,12 +42,14 @@ public class BillServiceTest {
         mongoTemplate = mock(MongoTemplate.class);
         userService = mock(UserService.class);
         mailSender = mock(JavaMailSender.class);
+        cacheManager = mock(CacheManager.class);
 
         billService = new BillService(
                 billRepository,
                 billMapper,
                 mongoTemplate,
                 userService,
+                cacheManager,
                 mailSender);
     }
 

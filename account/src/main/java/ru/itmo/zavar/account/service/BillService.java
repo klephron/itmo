@@ -3,6 +3,8 @@ package ru.itmo.zavar.account.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -35,6 +37,7 @@ public class BillService {
     private final BillMapper billMapper;
     private final MongoTemplate mongoTemplate;
     private final UserService userService;
+    private final CacheManager cacheManager;
     private final JavaMailSender mailSender;
 
     public BillDto getBillById(String id) throws ObjectNotFoundException {
@@ -68,9 +71,20 @@ public class BillService {
         return this.billMapper.toDto(save);
     }
 
-    @Cacheable(value = "bills", key = "'bills:' + #fromTs + ':' + #toTs + ':' + #tariff")
+    //@Cacheable(value = "bills", key = "'bills:' + #fromTs + ':' + #toTs + ':' + #tariff")
     @Transactional
-    public List<BillDto> generateBills(long fromTs, long toTs, long tariff) {
+    public List<BillDto> generateBills(long fromTs, long toTs, long tariff, boolean useCache) {
+        String cacheKey = String.format("bills:%d:%d:%d", fromTs, toTs, tariff);
+        Cache cache = cacheManager.getCache("bills");
+
+        if (useCache) {
+            List<BillDto> cached = cache.get(cacheKey, List.class);
+            if (cached != null) {
+                log.info("Returning cached bills for key {}", cacheKey);
+                return cached;
+            }
+        }
+
         Aggregation aggregation = newAggregation(
                 match(Criteria.where("timestamp").gte(fromTs).lt(toTs)),
                 sort(Sort.Direction.DESC, "timestamp"),
@@ -96,6 +110,11 @@ public class BillService {
             BillDto bill = this.createBill(apartment.getUserId(), heat, cost);
             log.info("Bill generated {}", bill);
             createdBills.add(bill);
+        }
+
+        if (useCache) {
+            cache.put(cacheKey, createdBills);
+            log.info("Put bills to cache with key {}", cacheKey);
         }
 
         return createdBills;

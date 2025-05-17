@@ -49,8 +49,9 @@ public class TsjController {
     @PostMapping("/generateBills")
     public ResponseEntity<List<BillDto>> generateBills(@Parameter(description = "Начальное время (timestamp)") @RequestParam long fromTimestamp,
                                                        @Parameter(description = "Конечное время (timestamp)") @RequestParam long toTimestamp,
-                                                       @Parameter(description = "Тариф (по умолчанию 1800)") @RequestParam(defaultValue = "1800") long tariff) {
-        List<BillDto> billDtos = this.billService.generateBills(fromTimestamp, toTimestamp, tariff);
+                                                       @Parameter(description = "Тариф (по умолчанию 1800)") @RequestParam(defaultValue = "1800") long tariff,
+                                                       @Parameter(description = "Использовать кэш") @RequestParam(defaultValue = "true") boolean cache) {
+        List<BillDto> billDtos = this.billService.generateBills(fromTimestamp, toTimestamp, tariff, cache);
         this.billService.notifyUsers(billDtos);
         this.mqttService.publish("reset");
         return ResponseEntity.ok(billDtos);
