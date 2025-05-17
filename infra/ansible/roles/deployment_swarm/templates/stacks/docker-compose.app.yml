@@ -111,6 +111,8 @@ services:
       MQTT_URI: tcp://mqtt-broker:1883
       MQTT_TOPIC: radiator/reset
       MQTT_CLIENT_ID: account
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     healthcheck:
       test:
         [
