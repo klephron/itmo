@@ -38,7 +38,7 @@ public class BillService {
     private final MongoTemplate mongoTemplate;
     private final UserService userService;
     private final CacheManager cacheManager;
-    private final JavaMailSender mailSender;
+    //private final JavaMailSender mailSender;
 
     public BillDto getBillById(String id) throws ObjectNotFoundException {
         BillEntity bill = this.billRepository.findById(id).orElseThrow(() -> {
@@ -122,16 +122,16 @@ public class BillService {
 
     @Async
     public void notifyUsers(List<BillDto> bills) {
-        bills.forEach(billDto -> {
-            UserDto userDto = userService.loadUserById(billDto.getUserId());
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(userDto.getEmail());
-            message.setSubject("Bill " + billDto.getId());
-            message.setText("You got a bill, please pay it: " + billDto.getCost() + " BTC");
-            message.setFrom("ahla@noreply.ru");
-            mailSender.send(message);
-            log.info("User {} notifyed", userDto.getId());
-        });
+//        bills.forEach(billDto -> {
+//            UserDto userDto = userService.loadUserById(billDto.getUserId());
+//            SimpleMailMessage message = new SimpleMailMessage();
+//            message.setTo(userDto.getEmail());
+//            message.setSubject("Bill " + billDto.getId());
+//            message.setText("You got a bill, please pay it: " + billDto.getCost() + " BTC");
+//            message.setFrom("ahla@noreply.ru");
+//            mailSender.send(message);
+//            log.info("User {} notifyed", userDto.getId());
+//        });
     }
 
 

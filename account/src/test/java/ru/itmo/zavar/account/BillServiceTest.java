@@ -32,7 +32,6 @@ public class BillServiceTest {
     private MongoTemplate mongoTemplate;
     private UserService userService;
     private CacheManager cacheManager;
-    private JavaMailSender mailSender;
     private BillService billService;
 
     @BeforeEach
@@ -41,7 +40,6 @@ public class BillServiceTest {
         billMapper = mock(BillMapper.class);
         mongoTemplate = mock(MongoTemplate.class);
         userService = mock(UserService.class);
-        mailSender = mock(JavaMailSender.class);
         cacheManager = mock(CacheManager.class);
 
         billService = new BillService(
@@ -49,8 +47,7 @@ public class BillServiceTest {
                 billMapper,
                 mongoTemplate,
                 userService,
-                cacheManager,
-                mailSender);
+                cacheManager);
     }
 
     @Test
@@ -92,20 +89,20 @@ public class BillServiceTest {
         verify(billRepository).save(any(BillEntity.class));
     }
 
-    @Test
-    void testNotifyUsers() {
-        BillDto billDto = new BillDto("bill-3", "user-99", 10L, 100L, 123L, false);
-        UserDto userDto = new UserDto("user-99", "username99", "user@exampl.com", List.of());
-
-        when(userService.loadUserById("user-99")).thenReturn(userDto);
-
-        billService.notifyUsers(List.of(billDto));
-
-        ArgumentCaptor<SimpleMailMessage> msgCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender).send(msgCaptor.capture());
-        SimpleMailMessage msg = msgCaptor.getValue();
-        assertEquals("user@exampl.com", Objects.requireNonNull(msg.getTo())[0]);
-        assertEquals("Bill bill-3", msg.getSubject());
-        assertTrue(Objects.requireNonNull(msg.getText()).contains("please pay it: 123 BTC"));
-    }
+//    @Test
+//    void testNotifyUsers() {
+//        BillDto billDto = new BillDto("bill-3", "user-99", 10L, 100L, 123L, false);
+//        UserDto userDto = new UserDto("user-99", "username99", "user@exampl.com", List.of());
+//
+//        when(userService.loadUserById("user-99")).thenReturn(userDto);
+//
+//        billService.notifyUsers(List.of(billDto));
+//
+//        ArgumentCaptor<SimpleMailMessage> msgCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+//        verify(mailSender).send(msgCaptor.capture());
+//        SimpleMailMessage msg = msgCaptor.getValue();
+//        assertEquals("user@exampl.com", Objects.requireNonNull(msg.getTo())[0]);
+//        assertEquals("Bill bill-3", msg.getSubject());
+//        assertTrue(Objects.requireNonNull(msg.getText()).contains("please pay it: 123 BTC"));
+//    }
 }
