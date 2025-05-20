@@ -25,7 +25,7 @@ Args = namedtuple(
     ],
 )
 
-HOSTS = ["192.168.122.193", "192.168.122.230", "192.168.122.132"]
+HOSTS = ["192.168.0.104", "192.168.0.105", "192.168.0.106"]
 
 DEPLOYMENT_SERVICE_ROUTER = "mongodb"
 DEPLOYMENT_SERVICE_CONFIG = "mongodb-config"

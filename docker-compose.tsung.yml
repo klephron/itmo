@@ -3,6 +3,8 @@
      build:
        context: ./tsung
        dockerfile: dockerfile
+     ports:
+       - 8091:8091
      volumes:
        - ./workflow/tsung:/tsung
        - ./log:/root/.tsung/log
@@ -12,6 +14,8 @@
      build:
        context: ./tsung
        dockerfile: dockerfile
+     ports:
+       - 8091:8091
      volumes:
        - ./workflow/tsung:/tsung
        - ./log:/root/.tsung/log
@@ -21,6 +25,8 @@
      build:
        context: ./tsung
        dockerfile: dockerfile
+     ports:
+       - 8091:8091
      volumes:
        - ./workflow/tsung:/tsung
        - ./log:/root/.tsung/log

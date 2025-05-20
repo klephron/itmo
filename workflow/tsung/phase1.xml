@@ -6,7 +6,7 @@
   </clients>
 
   <servers>
-    <server host="192.168.122.141" port="8226" type="tcp"/>
+    <server host="192.168.0.104" port="8226" type="tcp"/>
   </servers>
 
   <load>
@@ -20,8 +20,8 @@
       <for from="1" to="30" incr="1" var="iteration">
 		  <!-- POST /tsj/generateBills?fromTimestamp=1714320000&toTimestamp=1716912000&tariff=1800 with Authorization header -->
 		  <request>
-			<http url="/tsj/generateBills?fromTimestamp=1714320000&amp;toTimestamp=1716912000&amp;tariff=1800" method="POST" version="1.1">
-			  <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIkFETUlOIiwiVFNKIl0sImlhdCI6MTc0NTgzODMzMiwiZXhwIjoxNzQ1OTI0NzMyfQ.ANOuJE9CIX0rP-0ftx2A_HYBmD66Rl1oABdAKtIH5TM"/>
+			<http url="/tsj/generateBills?fromTimestamp=1747573937068&amp;toTimestamp=1747573955119&amp;tariff=1800&amp;cache=false" method="POST" version="1.1">
+			  <http_header name="Authorization" value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6YXZhciIsImF1dGhvcml0aWVzIjpbIlVTRVIiLCJBRE1JTiIsIlRTSiJdLCJpYXQiOjE3NDc1MTYxMzAsImV4cCI6MTc0NzYwMjUzMH0.PJ_JN60j0gZMgAlJ6HTzeTgyANjINqRHqnNEsTu5MsM"/>
 			</http>
 		  </request>
 		  <thinktime value="5" random="true"/>

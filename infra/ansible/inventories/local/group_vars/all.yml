@@ -5,7 +5,7 @@ dns_servers:
   - 1.1.1.1
 
 bootstrap_user: "ansible"
-bootstrap_ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILEze2KAYj0dUxnW2cIdBgYxeKaWEaf3i6T/R9LOpUr6 ansible"
+bootstrap_ssh_pubkey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCQVC2sQ2O8280DsYzPYuGKNwk3X8QUSU684b29Ff4rUq5WMpF64zu7MqVQDjcWqzVrXGonnkMTbg8hT1bAW1XIJXfmlDEjv/QEYoQHAifY0oBZIO9vN5iWlxxUVwj3JJg6b656tmeAcesyQTI9C+SPw+zsY9KiEVBB3SxbO7p/Ggv4osNdexDgrBz5QadTksOqeSMcM/zxONF9pnCv5J4hG5f1fJ/8NmbNUgCOlyek08y1PdAr7dpx6XX7O3MUaqw7m7OFSmUQH/w2MhLvOFTfwuu5c1Gh9e0K1hnLqjEoVSlg3egp08FPEHVLRyTp9+82Shd6fRq5Bjpt03w5Bl5DYPPhwrkBAI2UhUFQGZekewmGr1IPumKvqgAL/SukIdkYhZipKSOKw2zQC415lLadfaJzdXplXa08SuDlmF8pU7R0SroOdCPd0k7hWr+u3vRJfmNqeBtoyXuU53II1IRA17Oxcfl2RoaXmU2v3+cPQ0nUu+/hN24cUR/nJnff/8E= ansible"
 
 prometheus_port: 8211
 
@@ -29,7 +29,7 @@ rule_engine_image: "zubrailx/ahla-rule-engine:latest"
 account_image: "zubrailx/ahla-account:latest"
 account_port: 8226
 account_balancer: least_conn # least_conn, random, else -> round_robin
-account_replicas: 1
+account_replicas: 3
 
 consul_image: "zubrailx/ahla-consul:latest"
 consul_port: 8227

@@ -19,7 +19,7 @@ Args = namedtuple(
     ],
 )
 
-HOST = "192.168.122.193"
+HOST = "192.168.0.104"
 
 DEPLOYMENT_SERVICE_ROUTER = "mongodb"
 

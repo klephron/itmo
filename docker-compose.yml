@@ -169,9 +169,9 @@ services:
   data-simulator:
     build: ./data-simulator/
     environment:
-      DEVICE_COUNT: 5
-      SEND_INTERVAL_MS: 1000
-      MQTT_BROKER_URL: tcp://mqtt-broker:1883
+      DEVICE_COUNT: 10
+      SEND_INTERVAL_MS: 1
+      MQTT_BROKER_URL: tcp://192.168.0.104:8217
       MQTT_TOPIC: radiator/data
       MQTT_RESET_TOPIC: radiator/reset
     depends_on:
