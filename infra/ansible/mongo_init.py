@@ -96,7 +96,7 @@ def router_init(args: Args, host_containers: dict[str, str]):
         args,
         host,
         container,
-        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").createCollection("bills")'""",
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").createCollection("radiator")'""",
     )
     logging.info(result.stdout.strip())
 
@@ -104,7 +104,7 @@ def router_init(args: Args, host_containers: dict[str, str]):
         args,
         host,
         container,
-        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").bills.createIndex({{ userId: 1 }})'""",
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'db.getSiblingDB("iot-db").radiator.createIndex({{ device_id: 1 }})'""",
     )
     logging.info(result.stdout.strip())
 
@@ -112,7 +112,7 @@ def router_init(args: Args, host_containers: dict[str, str]):
         args,
         host,
         container,
-        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'sh.shardCollection("iot-db.bills", {{ userId: 1 }})'""",
+        f"""mongosh -u '{args.root_username}' -p '{args.root_password}' 'admin' --eval 'sh.shardCollection("iot-db.radiator", {{ device_id: "hashed" }})'""",
     )
     logging.info(result.stdout.strip())
 
