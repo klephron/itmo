@@ -1,0 +1,7 @@
+kubernetes_api_host: "{{ hostvars['devops-control-1'].ansible_host }}"
+kubernetes_api_port: 6443
+
+metrics_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}/metrics"
+metrics_compose_file: "{{ metrics_src }}/docker-compose.metrics.yml"
+metrics_prometheus_file: "{{ metrics_src }}/prometheus.yml"
+metrics_kubernetes_bearer_token_file: "{{ metrics_src }}/kubernetes-bearer-token.txt"

@@ -1,0 +1,53 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "kubernetes-services"
+    kubernetes_sd_configs:
+      - api_server: "https://{{ kubernetes_api_host }}:{{ kubernetes_api_port }}"
+        role: pod
+        namespaces:
+          names:
+            - {{ kubernetes_namespace }}
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /etc/prometheus/bearer-token
+
+    scheme: https
+    bearer_token_file: /etc/prometheus/bearer-token
+    tls_config:
+      insecure_skip_verify: true
+
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+
+      - source_labels:
+          [
+            __meta_kubernetes_namespace,
+            __meta_kubernetes_pod_name,
+            __meta_kubernetes_pod_annotation_prometheus_io_port,
+            __meta_kubernetes_pod_annotation_prometheus_io_path,
+          ]
+        action: replace
+        regex: (.+);(.+);(.+);(.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/namespaces/$1/pods/$2:$3/proxy$4
+
+      - action: replace
+        target_label: __address__
+        replacement: {{ kubernetes_api_host }}:{{ kubernetes_api_port }}
+
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod
+
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: replace
+        target_label: service

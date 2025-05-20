@@ -1,0 +1,5 @@
+---
+- import_tasks: runc.yml
+- import_tasks: cni.yml
+- import_tasks: containerd.yml
+- import_tasks: kubernetes.yml

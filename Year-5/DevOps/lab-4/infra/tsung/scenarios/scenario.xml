@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/local/share/tsung/tsung-1.0.dtd">
+<tsung loglevel="info">
+<clients>
+  <client host="localhost" use_controller_vm="true" maxusers="100000"/>
+</clients>
+
+  <servers>
+    <server host="192.168.122.164" port="30111" type="tcp"/>
+  </servers>
+
+  <load>
+    <arrivalphase phase="1" duration="10" unit="minute">
+      <users maxnumber="400" arrivalrate="400" unit="second"/>
+    </arrivalphase>
+  </load>
+
+
+  <sessions>
+    <session name="api_test" probability="100" type="ts_http">
+	<for from="1" to="580" incr="1" var="iteration">
+      <!-- GET /networks -->
+      <request>
+        <http url="/networks" method="GET"/>
+      </request>
+	  <thinktime value="0.5" random="true"/>
+	  </for>
+    </session>
+  </sessions>
+</tsung>

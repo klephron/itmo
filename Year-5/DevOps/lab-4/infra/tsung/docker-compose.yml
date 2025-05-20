@@ -1,0 +1,21 @@
+services:
+  tsung:
+    build:
+      context: .
+      dockerfile: dockerfile
+    volumes:
+      - ./scenarios:/tsung
+      - tsung-logs:/root/.tsung/log
+    entrypoint: ["tsung", "-f", "/tsung/scenario.xml", "start"]
+    networks:
+      - default
+      - macvlan-virbr0
+
+volumes:
+  tsung-logs:
+
+networks:
+  default:
+    driver: bridge
+  macvlan-virbr0:
+    external: true

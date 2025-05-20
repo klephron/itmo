@@ -1,0 +1,3 @@
+---
+- import_tasks: token.yml
+- import_tasks: deploy.yml
