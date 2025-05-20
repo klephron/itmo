@@ -1,0 +1,32 @@
+services:
+  consul:
+    image: "{{ consul_image }}"
+    environment:
+      CONSUL_BOOTSTRAP_EXPECT: "1"
+      CONSUL_CLIENT_LAN_ADDRESS: "0.0.0.0"
+      CONSUL_DISABLE_KEYRING_FILE: "true"
+      CONSUL_BIND_ADDRESS: "0.0.0.0"
+      CONSUL_LOCAL_CONFIG: {{ "'" '{ "advertise_addr": \"{{"{{"}} GetInterfaceIP \\\"eth1\\\"{{"}}"}}" }' "'" }}
+    volumes:
+      - consul-data:/bitnami
+    ports:
+      - "{{ consul_port }}:8500"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8500/v1/status/leader  || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+networks:
+  ahla-net:
+    external: true
+
+volumes:
+  consul-data:

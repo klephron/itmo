@@ -1,0 +1,17 @@
+filebeat.inputs:
+  - type: container
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    exclude_lines: ['^\\s*$']
+    processors:
+      # - add_docker_metadata: ~
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+      - drop_event:
+          when:
+            not:
+              regexp:
+                container.name: ".*mongodb.*"
+
+output.logstash:
+  hosts: ["logstash:5044"]

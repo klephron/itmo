@@ -1,0 +1,55 @@
+---
+- name: Fail if required variables are not defined
+  ansible.builtin.fail:
+    msg: 'variable {{item}} not defined'
+  when: item is not defined
+  with_items:
+    - jenkins_agent_ssh_pubkey
+  tags: deploy
+
+- name: Ensure jenkins_agent directory exists
+  ansible.builtin.file:
+    path: "{{ jenkins_agent_src }}"
+    state: directory
+    mode: "0755"
+  tags: deploy
+
+- name: Get Docker socket GID
+  ansible.builtin.stat:
+    path: /var/run/docker.sock
+  register: docker_sock_stat
+  tags: deploy
+
+- name: Set Docker GID fact
+  ansible.builtin.set_fact:
+    docker_gid: "{{ docker_sock_stat.stat.gid }}"
+  tags: deploy
+
+- name: Install docker-compose.yml using jinja2
+  ansible.builtin.template:
+    src: docker-compose.yml
+    dest: "{{ jenkins_agent_compose_file }}"
+    mode: "0644"
+  tags: deploy
+
+- name: Ensure jenkins_agent directory exists
+  ansible.builtin.file:
+    path: "/home/jenkins/workspace"
+    state: directory
+    mode: "0755"
+    owner: 1000
+    group: 1000
+  become: true
+  tags: deploy
+
+- name: Reload docker-compose
+  ansible.builtin.shell: "docker compose -f {{ jenkins_agent_compose_file }} up -d --remove-orphans"
+  args:
+    chdir: "{{ jenkins_agent_src }}"
+  register: jenkins_agent_compose_result
+  tags: deploy
+
+- name: Debug docker-compose result
+  ansible.builtin.debug:
+    msg: "{{ jenkins_agent_compose_result.stderr_lines }}"
+  tags: deploy

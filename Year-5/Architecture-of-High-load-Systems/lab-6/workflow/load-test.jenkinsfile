@@ -1,0 +1,113 @@
+def ctx = [
+  git: null,
+];
+
+pipeline {
+  options {
+    skipDefaultCheckout(true)
+  }
+
+  agent { label 'jenkins-agent-2' }
+
+  environment {
+    TSUNG_DIR = "tsung"
+    TSUNG_IMAGE = "zubrailx/ahla-tsung"
+    TSUNG_IMAGE_TAG = "latest"
+  }
+
+  stages {
+    stage('Preparation') {
+      steps {
+        checkout scm
+
+        script {
+          ctx.git = load('workflow/git.groovy')
+        }
+
+        script {
+          def branchName = ctx.git.gitBranchName()
+          def commitSha = ctx.git.gitCommitSha()
+          def repoURL = ctx.git.gitRepoURL()
+          def tagName = ctx.git.gitTagName()
+
+          if (branchName) {
+            ctx.git.setBranchName(branchName)
+          }
+          if (commitSha) {
+            ctx.git.setCommitSha(commitSha)
+          }
+          if (repoURL) {
+            ctx.git.setRepoURL(repoURL)
+          }
+          if (tagName) {
+            ctx.git.setTagName(tagName)
+          }
+
+          ctx.git.setPipelineStatus('Pipeline started', 'PENDING')
+        }
+
+        stash name: 'workspace', includes: '**'
+      }
+    }
+    stage('Build Tsung Image') {
+      steps {
+        script {
+          docker.build("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}", "${WORKSPACE}/${TSUNG_DIR} -f ${WORKSPACE}/${TSUNG_DIR}/dockerfile")
+        }
+      }
+    }
+    stage('Run Tsung Tests') {
+      steps {
+        script {
+          sh "mkdir -p ${WORKSPACE}/workflow/tsung/logs/"
+
+          docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+            sh """
+              cd ${WORKSPACE}
+              tsung -f ${WORKSPACE}/workflow/tsung/phase1.xml start
+              cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase1
+              chown 1000:1000 -R ${WORKSPACE}/workflow/tsung/logs/phase1
+            """
+          }
+
+          docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+            sh """
+              cd ${WORKSPACE}
+              tsung -f ${WORKSPACE}/workflow/tsung/phase2.xml start
+              cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase2
+              chown 1000:1000 -R ${WORKSPACE}/workflow/tsung/logs/phase2
+            """
+          }
+
+          docker.image("${TSUNG_IMAGE}:${TSUNG_IMAGE_TAG}").inside("--user root --network host") {
+            sh """
+              cd ${WORKSPACE}
+              tsung -f ${WORKSPACE}/workflow/tsung/phase3.xml start
+              cp -r /root/.tsung/log ${WORKSPACE}/workflow/tsung/logs/phase3
+              chown 1000:1000 -R ${WORKSPACE}/workflow/tsung/logs/phase3
+            """
+          }
+
+          archiveArtifacts(artifacts: "workflow/tsung/logs/**", allowEmptyArchive: true)
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      script {
+        unstash 'workspace'
+        try {
+          if (currentBuild.currentResult == 'SUCCESS') {
+              ctx.git.setPipelineStatus("Pipeline succeeded", "SUCCESS")
+          } else if (currentBuild.currentResult == 'FAILURE') {
+              ctx.git.setPipelineStatus("Pipeline failed", "FAILURE")
+          }
+        } finally {
+          cleanWs()
+        }
+      }
+    }
+  }
+}

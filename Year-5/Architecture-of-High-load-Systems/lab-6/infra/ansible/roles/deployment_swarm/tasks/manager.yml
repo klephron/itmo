@@ -1,0 +1,77 @@
+---
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ deployment_swarm_src }}"
+    state: directory
+    mode: "0755"
+  tags:
+    - app
+
+- name: Synchronize Prometheus config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/prometheus/"
+    dest: "{{ deployment_swarm_src }}/prometheus/"
+
+- name: Synchronize Logstash config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/logstash/"
+    dest: "{{ deployment_swarm_src }}/logstash/"
+
+- name: Ensure deploy stacks directory exists
+  ansible.builtin.file:
+    path: "{{ deployment_swarm_src }}/stacks"
+    state: directory
+    mode: "0755"
+  tags:
+    - app
+
+- name: Install Docker stacks using jinja2
+  ansible.builtin.template:
+    src: "stacks/{{ item }}"
+    dest: "{{ deployment_swarm_src }}/stacks/{{ item }}"
+    mode: "0644"
+  loop:
+    - docker-compose.monitoring.yml
+    - docker-compose.consul.yml
+    - docker-compose.elk.yml
+    - docker-compose.app.yml
+  tags:
+    - app
+
+- name: Create ahla-net overlay network
+  community.docker.docker_network:
+    name: ahla-net
+    driver: overlay
+    attachable: true
+  tags:
+    - app
+
+- name: Deploy ahla-monitoring stack
+  ansible.builtin.command:
+    cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.monitoring.yml ahla-monitoring
+  args:
+    chdir: "{{ deployment_swarm_src }}"
+
+- name: Deploy ahla-consul stack
+  ansible.builtin.command:
+    cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.consul.yml ahla-consul
+  args:
+    chdir: "{{ deployment_swarm_src }}"
+
+- name: Deploy ahla-elk stack
+  ansible.builtin.command:
+    cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.elk.yml ahla-elk
+  args:
+    chdir: "{{ deployment_swarm_src }}"
+
+- import_tasks: manager-app-mongo.yml
+
+- name: Deploy ahla-app stack
+  ansible.builtin.command:
+    cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.app.yml ahla-app
+  args:
+    chdir: "{{ deployment_swarm_src }}"
+  tags:
+    - app
+
+- import_tasks: manager-gateway.yml

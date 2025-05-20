@@ -1,0 +1,73 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - "{{ deployment_swarm_src }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "{{ deployment_swarm_src }}/prometheus/rules.yml:/etc/prometheus/rules.yml"
+      - prometheus-data:/prometheus
+    ports:
+      - "{{ prometheus_port }}:9090"
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "{{ grafana_port }}:3000"
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  mongodb-exporter:
+    image: bitnami/mongodb-exporter:latest
+    environment:
+      MONGODB_URI: "mongodb://root:root@mongodb:27017/admin"
+    command: ["--collect-all", "--compatible-mode", "--discovering-mode"]
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    ports:
+      - "{{ mongo_express_port }}:8081"
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+networks:
+  ahla-net:
+    external: true
+
+volumes:
+  prometheus-data:
+  grafana-data:

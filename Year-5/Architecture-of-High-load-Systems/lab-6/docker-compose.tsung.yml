@@ -1,0 +1,33 @@
+ services:
+   tsung1:
+     build:
+       context: ./tsung
+       dockerfile: dockerfile
+     ports:
+       - 8091:8091
+     volumes:
+       - ./workflow/tsung:/tsung
+       - ./log:/root/.tsung/log
+     entrypoint: ["tsung", "-f", "/tsung/phase1.xml", "start"]
+
+   tsung2:
+     build:
+       context: ./tsung
+       dockerfile: dockerfile
+     ports:
+       - 8091:8091
+     volumes:
+       - ./workflow/tsung:/tsung
+       - ./log:/root/.tsung/log
+     entrypoint: ["tsung", "-f", "/tsung/phase2.xml", "start"]
+
+   tsung3:
+     build:
+       context: ./tsung
+       dockerfile: dockerfile
+     ports:
+       - 8091:8091
+     volumes:
+       - ./workflow/tsung:/tsung
+       - ./log:/root/.tsung/log
+     entrypoint: ["tsung", "-f", "/tsung/phase3.xml", "start"]

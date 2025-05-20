@@ -1,0 +1,26 @@
+---
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ deployment_swarm_src }}"
+    state: directory
+    mode: "0755"
+
+# TODO: use NFS instead
+- name: Synchronize Filebeat config
+  ansible.posix.synchronize:
+    src: "{{ infra_root }}/filebeat/"
+    dest: "{{ deployment_swarm_src }}/filebeat/"
+
+- name: Synchronize MongoDB config
+  ansible.posix.synchronize:
+    src: "{{ role_path }}/templates/mongodb/"
+    dest: "{{ deployment_swarm_src }}/mongodb/"
+  tags:
+   - mongo
+
+- name: Store MongoDB Keyfile
+  ansible.builtin.copy:
+    content: "{{ mongo_key }}"
+    dest: "{{ deployment_swarm_src }}/mongodb/common/keyfile.key"
+  tags:
+    - mongo

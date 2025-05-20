@@ -1,0 +1,4 @@
+jenkins_agent_src: "{{ '/root' if ansible_user == 'root' else '/home/' + ansible_user }}/jenkins-agent"
+jenkins_agent_compose_file: "{{ jenkins_agent_src }}/docker-compose.yml"
+jenkins_agent_image: zubrailx/ahla-jenkins-agent:latest
+jenkins_agent_ssh_port: 2222

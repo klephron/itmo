@@ -1,0 +1,63 @@
+---
+- name: Wait for Consul to be ready
+  ansible.builtin.uri:
+    url: "http://{{ consul_address }}/v1/status/leader"
+    status_code: 200
+  register: consul_ready
+  until: consul_ready.status == 200
+  retries: 10
+  delay: 5
+  tags:
+    - gateway
+
+- name: Fetch account service instances from Consul
+  ansible.builtin.uri:
+    url: "http://{{ consul_address }}/v1/health/service/account?passing=true"
+    method: GET
+    return_content: yes
+  register: consul_services_response
+  until: consul_services_response.json | length == account_replicas
+  retries: 20
+  delay: 5
+  tags:
+    - gateway
+
+- name: Parse Consul services
+  ansible.builtin.set_fact:
+    consul_account_services: "{{ consul_services_response.json }}"
+  tags:
+    - gateway
+
+- name: Ensure Nginx conf.d directory exists
+  ansible.builtin.file:
+    path: "{{ deployment_swarm_src }}/nginx/conf.d"
+    state: directory
+    mode: "0755"
+  tags:
+    - gateway
+
+- name: Generate Nginx account configuration
+  ansible.builtin.template:
+    src: "nginx/conf.d/account.conf.j2"
+    dest: "{{ deployment_swarm_src }}/nginx/conf.d/account.conf"
+  register: nginx_config
+  tags:
+    - gateway
+
+- name: Install Docker gateway stacks using jinja2
+  ansible.builtin.template:
+    src: "stacks/{{ item }}"
+    dest: "{{ deployment_swarm_src }}/stacks/{{ item }}"
+    mode: "0644"
+  loop:
+    - docker-compose.gateway.yml
+  tags:
+    - gateway
+
+- name: Deploy ahla-gateway stack
+  ansible.builtin.command:
+    cmd: docker stack deploy -c {{ deployment_swarm_src }}/stacks/docker-compose.gateway.yml ahla-gateway
+  args:
+    chdir: "{{ deployment_swarm_src }}"
+  tags:
+    - gateway

@@ -1,0 +1,74 @@
+services:
+  mongodb-config:
+    image: mongo:8.0
+    volumes:
+      - ./common:/etc/mongo-common
+      - ./config:/etc/mongo
+      - mongodb-config-data:/var/lib/mongo
+    command: --config /etc/mongo/mongod.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+
+  mongodb-router:
+    image: mongo:8.0
+    volumes:
+      - ./common:/etc/mongo-common
+      - ./router:/etc/mongo
+      - mongodb-router-data:/var/lib/mongo
+    command: --config /etc/mongo/mongos.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+
+  mongodb-shard-1-1:
+    image: mongo:8.0
+    volumes:
+      - ./common:/etc/mongo-common
+      - ./shards:/etc/mongo
+      - mongodb-shard-1-1-data:/var/lib/mongo
+    command: --config /etc/mongo/1-1/mongod.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+
+  mongodb-shard-1-2:
+    image: mongo:8.0
+    volumes:
+      - ./common:/etc/mongo-common
+      - ./shards:/etc/mongo
+      - mongodb-shard-1-2-data:/var/lib/mongo
+    command: --config /etc/mongo/1-2/mongod.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+
+  mongodb-shard-2-1:
+    image: mongo:8.0
+    volumes:
+      - ./common:/etc/mongo-common
+      - ./shards:/etc/mongo
+      - mongodb-shard-2-1-data:/var/lib/mongo
+    command: --config /etc/mongo/2-1/mongod.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+
+  mongodb-shard-2-2:
+    image: mongo:8.0
+    volumes:
+      - ./common:/etc/mongo-common
+      - ./shards:/etc/mongo
+      - mongodb-shard-2-2-data:/var/lib/mongo
+    command: --config /etc/mongo/2-2/mongod.conf
+    entrypoint: ["bash", "/etc/mongo/entrypoint.sh"]
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb-router
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    ports:
+      - 8081:8081
+
+volumes:
+  mongodb-router-data:
+  mongodb-config-data:
+  mongodb-shard-1-1-data:
+  mongodb-shard-1-2-data:
+  mongodb-shard-2-1-data:
+  mongodb-shard-2-2-data:

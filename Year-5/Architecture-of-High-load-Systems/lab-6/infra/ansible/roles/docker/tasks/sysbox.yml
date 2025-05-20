@@ -1,0 +1,42 @@
+---
+- name: Ensure dependencies are installed
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+      - lsb-release
+    update_cache: yes
+  become: true
+  tags: docker sysbox
+
+- name: Download Sysbox package
+  ansible.builtin.get_url:
+    url: "{{ sysbox_url }}"
+    dest: "/tmp/{{ sysbox_deb }}"
+    mode: '0644'
+  become: true
+  tags: docker sysbox
+
+- name: Install Sysbox package
+  ansible.builtin.apt:
+    deb: "/tmp/{{ sysbox_deb }}"
+  become: true
+  tags: docker sysbox
+
+- name: Create /etc/docker/daemon.json if missing
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "runtimes": {
+          "sysbox-runc": {
+            "path": "/usr/bin/sysbox-runc"
+          }
+        },
+        "default-runtime": "sysbox-runc"
+      }
+  become: true
+  tags: docker sysbox
+  notify:
+    - Restart Docker
+    - Start Sysbox

@@ -1,0 +1,17 @@
+---
+- hosts: manager
+  pre_tasks:
+    - name: Fail if not Ubuntu
+      ansible.builtin.fail:
+        msg: "This playbook only supports Ubuntu."
+      when: ansible_distribution not in ["Ubuntu"]
+
+- hosts: worker
+  tasks:
+  - import_role:
+      name: deployment_swarm
+      tasks_from: worker.yml
+
+- hosts: manager
+  roles:
+    - deployment_swarm

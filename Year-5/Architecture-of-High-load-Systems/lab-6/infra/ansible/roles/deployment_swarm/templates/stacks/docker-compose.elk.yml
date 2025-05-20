@@ -1,0 +1,79 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.2
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data/
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  logstash:
+    image: "{{ logstash_image }}"
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - "{{ deployment_swarm_src }}/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro"
+    depends_on:
+      - elasticsearch
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.2
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "{{ kibana_port }}:5601"
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - ahla-net
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.13.0
+    user: root
+    command: ["filebeat", "-e", "--strict.perms=false"]
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "{{ deployment_swarm_src }}/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
+    depends_on:
+      - logstash
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - ahla-net
+
+networks:
+  ahla-net:
+    external: true
+
+volumes:
+  elasticsearch-data:
