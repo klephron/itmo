@@ -2,6 +2,7 @@ plugins {
   id("io.micronaut.application") version "4.5.3"
   id("com.gradleup.shadow") version "8.3.6"
   id("io.micronaut.aot") version "4.5.3"
+  id("com.diffplug.spotless") version '7.0.3'
 }
 
 version = "0.1"
@@ -55,4 +56,13 @@ micronaut {
 
 tasks.named("dockerfileNative") {
   jdkVersion = "21"
+}
+
+spotless {
+  java {
+    target "src/main/java/**/*.java", "src/test/java/**/*.java"
+    googleJavaFormat()
+    removeUnusedImports()
+    trimTrailingWhitespace()
+  }
 }
