@@ -1,5 +1,69 @@
 micronaut:
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+      swagger-ui:
+        paths: classpath:META-INF/swagger/views/swagger-ui
+        mapping: /swagger-ui/**
+  security:
+    enabled: true
+    intercept-url-map:
+      - pattern: /auth/register
+        http-method: POST
+        access:
+          - isAnonymous()
+      - pattern: /swagger/**
+        http-method: GET
+        access:
+          - isAnonymous()
+      - pattern: /swagger-ui/**
+        http-method: GET
+        access:
+          - isAnonymous()
+      - pattern: /swagger-ui
+        http-method: GET
+        access:
+          - isAnonymous()
+    token:
+      jwt:
+        enabled: true
+        signatures:
+          secret:
+            generator:
+              secret: "zavar-zubrailx-mpi-labs-jwt-spring-account-password-key"
+    endpoints:
+      login:
+        enabled: true
+    authentication: bearer
   application:
     name: backend
   server:
+    netty:
+      access-logger:
+        enabled: true
+        log-format: common
     port: 8081
+
+logger:
+  levels:
+    io.netty.handler.logging.LoggingHandler: DEBUG
+
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: me
+    password: me
+    driverClassName: org.postgresql.Driver
+
+jpa:
+  default:
+    entity-scan:
+      packages:
+        - ru.itmopai.backend.entity
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        show_sql: true

@@ -1,4 +1,4 @@
-package ru.itmopai.backend;
+package ru.itmopai.backend.controller;
 
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
