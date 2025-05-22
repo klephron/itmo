@@ -48,6 +48,7 @@ micronaut:
 
 logger:
   levels:
+    io.micronaut.security: TRACE
     io.netty.handler.logging.LoggingHandler: DEBUG
 
 datasources:

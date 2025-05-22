@@ -12,8 +12,7 @@ import io.micronaut.openapi.annotation.OpenAPIInclude;
 
 @OpenAPIInclude(
   classes = {
-    io.micronaut.security.endpoints.LoginController.class,
-    io.micronaut.security.endpoints.LogoutController.class
+    io.micronaut.security.endpoints.LoginController.class
   },
   tags = @Tag(name = "Security")
 )
