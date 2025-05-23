@@ -3,7 +3,7 @@ package ru.itmopai.backend.service;
 import io.micronaut.security.authentication.Authentication;
 import jakarta.inject.Singleton;
 import ru.itmopai.backend.entity.UserEntity;
-import ru.itmopai.backend.exception.PermissionDenied;
+import ru.itmopai.backend.exception.PermissionDeniedException;
 import ru.itmopai.backend.repository.UserPermissionRepository;
 import ru.itmopai.backend.repository.UserRepository;
 
@@ -23,7 +23,7 @@ public class PermissionService {
   public boolean hasPermission(Authentication auth, String key) {
     String username = auth.getName();
     UserEntity userEntity = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-    List<String> permissions = repository.getPermissionsForUser(userEntity.getId());
+    List<String> permissions = repository.findById_UserId(userEntity.getId()).stream().map(userPermissionEntity -> userPermissionEntity.getId().getPrivilege()).toList();
     return permissions.stream().anyMatch(p -> matchObjectIdWildcard(p, key));
   }
 
@@ -33,7 +33,7 @@ public class PermissionService {
 
   public void checkOrThrow(Authentication auth, String scope, Object objectId, String priv) {
     if (!hasPermission(auth, scope, objectId, priv)) {
-      throw new PermissionDenied("Permission denied: " + scope + ":" + objectId + ":" + priv);
+      throw new PermissionDeniedException("Permission denied: " + scope + ":" + objectId + ":" + priv);
     }
   }
 

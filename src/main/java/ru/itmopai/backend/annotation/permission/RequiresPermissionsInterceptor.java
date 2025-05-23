@@ -6,7 +6,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.security.authentication.Authentication;
 import jakarta.inject.Singleton;
-import ru.itmopai.backend.exception.PermissionDenied;
+import ru.itmopai.backend.exception.PermissionDeniedException;
 import ru.itmopai.backend.service.PermissionService;
 
 import java.util.Arrays;
@@ -40,7 +40,7 @@ public class RequiresPermissionsInterceptor implements MethodInterceptor<Object,
       }
     }
     if (!permitted) {
-      throw new PermissionDenied("Permission denied for any of: " + String.join(", ", requiredArray));
+      throw new PermissionDeniedException("Permission denied for any of: " + String.join(", ", requiredArray));
     }
 
     return context.proceed();

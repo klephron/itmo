@@ -6,16 +6,16 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import jakarta.inject.Singleton;
-import ru.itmopai.backend.exception.PermissionDenied;
+import ru.itmopai.backend.exception.PermissionDeniedException;
 
 import java.util.Map;
 
 @Produces
 @Singleton
-public class PermissionDeniedExceptionHandler implements ExceptionHandler<PermissionDenied, HttpResponse<?>> {
+public class PermissionDeniedExceptionHandler implements ExceptionHandler<PermissionDeniedException, HttpResponse<?>> {
 
   @Override
-  public HttpResponse<?> handle(HttpRequest request, PermissionDenied exception) {
+  public HttpResponse<?> handle(HttpRequest request, PermissionDeniedException exception) {
     return HttpResponse.status(HttpStatus.UNAUTHORIZED)
       .body(Map.of(
         "error", "permission_denied",

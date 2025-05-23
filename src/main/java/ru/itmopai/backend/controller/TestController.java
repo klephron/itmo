@@ -1,6 +1,7 @@
 package ru.itmopai.backend.controller;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.RegisterRequest;
+import ru.itmopai.backend.exception.UserExistsException;
 import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.service.PermissionService;
 import ru.itmopai.backend.service.UserService;
@@ -24,8 +26,12 @@ public class TestController {
   @Post("/register")
   @Secured(SecurityRule.IS_ANONYMOUS)
   public HttpResponse<UserDto> register(@Body RegisterRequest req) {
-    UserDto user = userMapper.toDto(service.register(req.username(), req.password()));
-    return HttpResponse.created(user);
+    try {
+      UserDto user = userMapper.toDto(service.register(req.username(), req.password()));
+      return HttpResponse.created(user);
+    } catch (UserExistsException e) {
+      return HttpResponse.status(HttpStatus.CONFLICT);
+    }
   }
 
   @Get("/hello")

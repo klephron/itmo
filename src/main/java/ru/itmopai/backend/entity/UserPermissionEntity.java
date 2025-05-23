@@ -22,6 +22,7 @@ public class UserPermissionEntity {
 
   @Embeddable
   @EqualsAndHashCode
+  @Getter
   public static class UserPermissionId {
     private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
         name = "user_id") UserEntity user;

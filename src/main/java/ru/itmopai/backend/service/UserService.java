@@ -2,6 +2,7 @@ package ru.itmopai.backend.service;
 
 import jakarta.inject.Singleton;
 import ru.itmopai.backend.entity.UserEntity;
+import ru.itmopai.backend.exception.UserExistsException;
 import ru.itmopai.backend.repository.UserRepository;
 
 @Singleton
@@ -14,7 +15,8 @@ public class UserService {
     this.encoder = encoder;
   }
 
-  public UserEntity register(String username, String rawPassword) {
+  public UserEntity register(String username, String rawPassword) throws UserExistsException {
+    repo.findByUsername(username).ifPresent(userEntity -> { throw new UserExistsException("User already exists"); });
     UserEntity user = new UserEntity();
     user.setUsername(username);
     user.setPassword(encoder.encode(rawPassword));
