@@ -24,6 +24,8 @@ public class UserPermissionEntity {
   @Embeddable
   @EqualsAndHashCode
   @Getter
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class UserPermissionId {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

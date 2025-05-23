@@ -27,7 +27,9 @@ public class TestController {
   @Secured(SecurityRule.IS_ANONYMOUS)
   public HttpResponse<UserDto> register(@Body RegisterRequest req) {
     try {
-      UserDto user = userMapper.toDto(service.register(req.username(), req.password()));
+      UserDto user =
+          userMapper.toDto(service.register(req.username(), req.password(),
+              req.name(), req.surname(), req.patronymic()));
       return HttpResponse.created(user);
     } catch (UserExistsException e) {
       return HttpResponse.status(HttpStatus.CONFLICT);

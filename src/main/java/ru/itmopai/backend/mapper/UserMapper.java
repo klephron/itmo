@@ -4,8 +4,9 @@ import org.mapstruct.*;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.entity.UserEntity;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,
-    componentModel = MappingConstants.ComponentModel.JAKARTA)
+import java.util.List;
+
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.JAKARTA)
 public interface UserMapper {
   UserEntity toEntity(UserDto userDto);
 
@@ -13,4 +14,8 @@ public interface UserMapper {
 
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   UserEntity partialUpdate(UserDto userDto, @MappingTarget UserEntity userEntity);
+
+  List<UserEntity> toEntity(List<UserDto> userDto);
+
+  List<UserDto> toDto(List<UserEntity> userEntity);
 }

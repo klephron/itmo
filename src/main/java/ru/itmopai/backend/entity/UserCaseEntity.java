@@ -31,7 +31,7 @@ import lombok.Setter;
     })
 public class UserCaseEntity {
   @EmbeddedId
-  private UserPermissionId id;
+  private UserCaseId id;
 
   @NotNull
   @NotEmpty
@@ -47,7 +47,7 @@ public class UserCaseEntity {
   @EqualsAndHashCode
   @Embeddable
   @Getter
-  public static class UserPermissionId {
+  public static class UserCaseId {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
