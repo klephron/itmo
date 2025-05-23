@@ -30,7 +30,7 @@ public class UserPrivilegeEntity {
   public static class UserPrivilegeId {
     // TODO: do we actually need eager?
     private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
-        name = "user_id") UserEntity userId;
+        name = "user_id") UserEntity user;
 
     private @NotNull @NotEmpty String privilege;
   }
