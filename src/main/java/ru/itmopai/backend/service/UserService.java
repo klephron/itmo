@@ -1,21 +1,21 @@
 package ru.itmopai.backend.service;
 
 import jakarta.inject.Singleton;
-import ru.itmopai.backend.entity.TestEntity;
-import ru.itmopai.backend.repository.TestRepository;
+import ru.itmopai.backend.entity.UserEntity;
+import ru.itmopai.backend.repository.UserRepository;
 
 @Singleton
 public class UserService {
-  private final TestRepository repo;
+  private final UserRepository repo;
   private final BCryptPasswordEncoderService encoder;
 
-  public UserService(TestRepository repo, BCryptPasswordEncoderService encoder) {
+  public UserService(UserRepository repo, BCryptPasswordEncoderService encoder) {
     this.repo = repo;
     this.encoder = encoder;
   }
 
-  public TestEntity register(String username, String rawPassword) {
-    TestEntity user = new TestEntity();
+  public UserEntity register(String username, String rawPassword) {
+    UserEntity user = new UserEntity();
     user.setUsername(username);
     user.setPassword(encoder.encode(rawPassword));
     user.setLocationLatitude(0D);

@@ -10,24 +10,22 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user_privileges",
+@Table(name = "user_permissions",
     indexes = {@Index(columnList = "user_id")})
-public class UserPrivilegeEntity {
+public class UserPermissionEntity {
 
-  private @EmbeddedId UserPrivilegeId id;
+  private @EmbeddedId UserPermissionId id;
 
   @Embeddable
-  public static class UserPrivilegeId {
+  @EqualsAndHashCode
+  public static class UserPermissionId {
     // TODO: do we actually need eager?
     private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
         name = "user_id") UserEntity user;

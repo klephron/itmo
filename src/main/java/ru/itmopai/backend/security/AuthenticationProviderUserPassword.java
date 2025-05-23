@@ -11,16 +11,16 @@ import io.micronaut.security.authentication.provider.AuthenticationProvider;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import ru.itmopai.backend.entity.TestEntity;
-import ru.itmopai.backend.repository.TestRepository;
+import ru.itmopai.backend.entity.UserEntity;
+import ru.itmopai.backend.repository.UserRepository;
 
 @Singleton
 public class AuthenticationProviderUserPassword
     implements AuthenticationProvider<HttpRequest<?>, String, String> {
-  private final TestRepository repo;
+  private final UserRepository repo;
   private final PasswordEncoder encoder;
 
-  public AuthenticationProviderUserPassword(TestRepository repo, PasswordEncoder encoder) {
+  public AuthenticationProviderUserPassword(UserRepository repo, PasswordEncoder encoder) {
     this.repo = repo;
     this.encoder = encoder;
   }
@@ -32,7 +32,7 @@ public class AuthenticationProviderUserPassword
     String username = authRequest.getIdentity();
     String password = authRequest.getSecret();
 
-    Optional<TestEntity> userOpt = repo.findByUsername(username);
+    Optional<UserEntity> userOpt = repo.findByUsername(username);
 
     if (userOpt.isPresent() && encoder.matches(password, userOpt.get().getPassword())) {
       return AuthenticationResponse.success(username);

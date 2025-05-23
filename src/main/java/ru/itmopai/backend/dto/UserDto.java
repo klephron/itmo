@@ -10,7 +10,7 @@ import lombok.Value;
 @Value
 @Introspected
 @Serdeable
-public class TestDTO implements Serializable {
+public class UserDto implements Serializable {
   private @NotNull Long id;
 
   private @NotNull @NotEmpty String username;
