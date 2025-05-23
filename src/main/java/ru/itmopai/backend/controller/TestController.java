@@ -9,20 +9,17 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
+import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.RegisterRequest;
 import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.service.UserService;
 
 @Controller("/test")
+@RequiredArgsConstructor
 public class TestController {
   private final UserService service;
   private final UserMapper userMapper;
-
-  public TestController(UserService service, UserMapper userMapper) {
-    this.service = service;
-    this.userMapper = userMapper;
-  }
 
   @Post("/register")
   @Secured(SecurityRule.IS_ANONYMOUS)
