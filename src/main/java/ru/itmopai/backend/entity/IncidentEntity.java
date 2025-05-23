@@ -29,12 +29,12 @@ import lombok.Setter;
 public class IncidentEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "incident_id") Long id;
 
-  private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "creator_user_id") UserEntity creator;
 
   private @NotNull LocalDateTime createdAt;
 
-  private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "updator_user_id") UserEntity updator;
 
   private @NotNull LocalDateTime updatedAt;
@@ -54,5 +54,5 @@ public class IncidentEntity {
   private @NotNull LocalDateTime estimatedTime;
 
   private @Nullable @OneToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id") CaseEntity incidentCase;
+      name = "case_id") CaseEntity relatedCase;
 }

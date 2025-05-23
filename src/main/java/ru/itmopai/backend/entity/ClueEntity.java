@@ -27,7 +27,7 @@ import lombok.Setter;
 public class ClueEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "clue_id") Long id;
 
-  private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "creator_user_id") UserEntity creator;
 
   private @NotNull LocalDateTime createdAt;
@@ -41,7 +41,7 @@ public class ClueEntity {
    */
   private String status;
 
-  private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "status_updator_user_id") UserEntity statusUpdator;
 
   /**
@@ -50,5 +50,5 @@ public class ClueEntity {
   private String metadata;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id") CaseEntity clueCase;
+      name = "case_id") CaseEntity relatedCase;
 }

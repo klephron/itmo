@@ -32,12 +32,12 @@ public class CaseEntity {
 
   private String description;
 
-  private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "creator_user_id") UserEntity creator;
 
   private @NotNull LocalDateTime createdAt;
 
-  private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "updator_user_id") UserEntity updator;
 
   private @NotNull LocalDateTime updatedAt;

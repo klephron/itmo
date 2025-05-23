@@ -27,7 +27,7 @@ public class UserPermissionEntity {
   @EqualsAndHashCode
   public static class UserPermissionId {
     // TODO: do we actually need eager?
-    private @NotNull @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(
+    private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
         name = "user_id") UserEntity user;
 
     private @NotNull @NotEmpty String privilege;
