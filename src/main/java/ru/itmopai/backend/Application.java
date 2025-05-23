@@ -14,7 +14,13 @@ import io.micronaut.openapi.annotation.OpenAPIInclude;
   classes = {
     io.micronaut.security.endpoints.LoginController.class
   },
-  tags = @Tag(name = "Security")
+  tags = @Tag(name = "Auth")
+)
+@OpenAPIInclude(
+  classes = {
+    ru.itmopai.backend.controller.TestController.class
+  },
+  tags = @Tag(name = "Test")
 )
 @OpenAPIDefinition(
   info = @Info(
