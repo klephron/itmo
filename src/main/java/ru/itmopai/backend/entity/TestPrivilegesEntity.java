@@ -13,7 +13,7 @@ import lombok.Setter;
 public class TestPrivilegesEntity {
   private @Id @NotNull @GeneratedValue(strategy = GenerationType.AUTO) Long id;
 
-  private @NotNull @OneToOne(fetch = FetchType.EAGER) TestEntity testId;
+  private @NotNull @OneToOne(fetch = FetchType.LAZY) TestEntity testId;
 
   private @NotNull @NotEmpty String privilege;
 }

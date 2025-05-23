@@ -41,6 +41,8 @@ public class IncidentEntity {
 
   private String applicant;
 
+  private @NotNull @NotEmpty String type;
+
   private @NotNull @NotEmpty String reason;
 
   private @NotNull Double locationLatitude;
@@ -51,5 +53,6 @@ public class IncidentEntity {
 
   private @NotNull LocalDateTime estimatedTime;
 
-  private @OneToOne @Nullable @JoinColumn(name = "case_id") CaseEntity incidentCase;
+  private @Nullable @OneToOne(fetch = FetchType.LAZY) @JoinColumn(
+      name = "case_id") CaseEntity incidentCase;
 }
