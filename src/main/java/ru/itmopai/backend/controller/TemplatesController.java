@@ -25,7 +25,8 @@ public class TemplatesController {
    * Update template (generic)
    */
   @Put("/{id}")
-  public HttpResponse<Object> updateTemplate(@PathVariable @NotNull Long id, @Body Object template) {
+  public HttpResponse<Object> updateTemplate(@PathVariable @NotNull Long id,
+      @Body Object template) {
     return HttpResponse.ok();
   }
 

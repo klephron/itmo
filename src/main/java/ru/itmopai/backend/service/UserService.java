@@ -16,7 +16,9 @@ public class UserService {
   }
 
   public UserEntity register(String username, String rawPassword) throws UserExistsException {
-    repo.findByUsername(username).ifPresent(userEntity -> { throw new UserExistsException("User already exists"); });
+    repo.findByUsername(username).ifPresent(userEntity -> {
+      throw new UserExistsException("User already exists");
+    });
     UserEntity user = new UserEntity();
     user.setUsername(username);
     user.setPassword(encoder.encode(rawPassword));

@@ -22,7 +22,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "case_suspects", indexes = {@Index(columnList = "case_id")})
+@Table(name = "case_suspects", indexes = { @Index(columnList = "case_id") })
 public class CaseSuspectEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) Long id;
 

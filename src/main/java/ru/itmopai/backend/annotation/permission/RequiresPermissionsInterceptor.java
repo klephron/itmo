@@ -23,13 +23,16 @@ public class RequiresPermissionsInterceptor implements MethodInterceptor<Object,
 
   @Override
   public Object intercept(MethodInvocationContext<Object, Object> context) {
-    AnnotationValue<RequiresPermissions> annotation = context.getAnnotation(RequiresPermissions.class);
-    String[] requiredArray = annotation != null
-      ? annotation.stringValues("value")
-      : new String[0];
+    AnnotationValue<RequiresPermissions> annotation =
+        context.getAnnotation(RequiresPermissions.class);
+    String[] requiredArray =
+        annotation != null
+            ? annotation.stringValues("value")
+            : new String[0];
 
-    Authentication auth = resolveAuth(context)
-      .orElseThrow(() -> new RuntimeException("Authentication not found"));
+    Authentication auth =
+        resolveAuth(context)
+            .orElseThrow(() -> new RuntimeException("Authentication not found"));
 
     boolean permitted = false;
     for (String required : requiredArray) {
@@ -40,7 +43,8 @@ public class RequiresPermissionsInterceptor implements MethodInterceptor<Object,
       }
     }
     if (!permitted) {
-      throw new PermissionDeniedException("Permission denied for any of: " + String.join(", ", requiredArray));
+      throw new PermissionDeniedException(
+          "Permission denied for any of: " + String.join(", ", requiredArray));
     }
 
     return context.proceed();
@@ -48,15 +52,17 @@ public class RequiresPermissionsInterceptor implements MethodInterceptor<Object,
 
   private Optional<Authentication> resolveAuth(MethodInvocationContext<?, ?> context) {
     return Arrays.stream(context.getParameterValues())
-      .filter(Authentication.class::isInstance)
-      .map(Authentication.class::cast)
-      .findFirst();
+        .filter(Authentication.class::isInstance)
+        .map(Authentication.class::cast)
+        .findFirst();
   }
 
   private String resolveDynamicObjectId(String key, MethodInvocationContext<?, ?> context) {
-    if (!key.contains(":")) return key;
+    if (!key.contains(":"))
+      return key;
     String[] parts = key.split(":");
-    if (parts.length != 3) return key;
+    if (parts.length != 3)
+      return key;
 
     String scope = parts[0];
     String objectIdTemplate = parts[1];

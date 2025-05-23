@@ -20,7 +20,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users",
-    indexes = {@Index(columnList = "locationLatitude,locationLongitude,locationAltitude")})
+    indexes = { @Index(columnList = "locationLatitude,locationLongitude,locationAltitude") })
 public class UserEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "user_id") Long id;
 

@@ -41,7 +41,7 @@ public class TestController {
     return "Hello world!";
   }
 
-  @RequiresPermissions({"document:{id}:read"})
+  @RequiresPermissions({ "document:{id}:read" })
   @Get("/check/{id}")
   @Produces(MediaType.TEXT_PLAIN)
   @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -49,7 +49,7 @@ public class TestController {
     return "Access granted for user: " + auth.getName();
   }
 
-  @RequiresPermissions({"device:10:edit"})
+  @RequiresPermissions({ "device:10:edit" })
   @Get("/check2/{id}")
   @Produces(MediaType.TEXT_PLAIN)
   @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -57,7 +57,7 @@ public class TestController {
     return "Access granted for user: " + auth.getName();
   }
 
-  @RequiresPermissions({"document:*:delete"})
+  @RequiresPermissions({ "document:*:delete" })
   @Get("/check3/{id}")
   @Produces(MediaType.TEXT_PLAIN)
   @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -65,7 +65,7 @@ public class TestController {
     return "Access granted for user: " + auth.getName();
   }
 
-  @RequiresPermissions({"document:*:delete", "document:{id}:view"})
+  @RequiresPermissions({ "document:*:delete", "document:{id}:view" })
   @Get("/check4/{id}")
   @Produces(MediaType.TEXT_PLAIN)
   @Secured(SecurityRule.IS_AUTHENTICATED)

@@ -22,8 +22,12 @@ public class PermissionService {
 
   public boolean hasPermission(Authentication auth, String key) {
     String username = auth.getName();
-    UserEntity userEntity = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-    List<String> permissions = repository.findById_UserId(userEntity.getId()).stream().map(userPermissionEntity -> userPermissionEntity.getId().getPrivilege()).toList();
+    UserEntity userEntity =
+        userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+    List<String> permissions =
+        repository.findById_UserId(userEntity.getId()).stream()
+            .map(userPermissionEntity -> userPermissionEntity.getId().getPrivilege()).toList();
     return permissions.stream().anyMatch(p -> matchObjectIdWildcard(p, key));
   }
 
@@ -33,14 +37,16 @@ public class PermissionService {
 
   public void checkOrThrow(Authentication auth, String scope, Object objectId, String priv) {
     if (!hasPermission(auth, scope, objectId, priv)) {
-      throw new PermissionDeniedException("Permission denied: " + scope + ":" + objectId + ":" + priv);
+      throw new PermissionDeniedException(
+          "Permission denied: " + scope + ":" + objectId + ":" + priv);
     }
   }
 
   private boolean matchObjectIdWildcard(String pattern, String actual) {
     String[] patParts = pattern.split(":");
     String[] actParts = actual.split(":");
-    if (patParts.length != 3 || actParts.length != 3) return false;
+    if (patParts.length != 3 || actParts.length != 3)
+      return false;
 
     boolean scopeMatches = patParts[0].equals(actParts[0]);
     boolean privMatches = patParts[2].equals(actParts[2]);

@@ -24,7 +24,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "clues", indexes = {@Index(columnList = "case_id")})
+@Table(name = "clues", indexes = { @Index(columnList = "case_id") })
 public class ClueEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "clue_id") Long id;
 

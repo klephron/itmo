@@ -49,7 +49,8 @@ public class UsersController {
    * Update user location
    */
   @Put("{id}/location")
-  public HttpResponse<Object> updateUserLocation(@PathVariable @NotNull Long id, @Body Object location) {
+  public HttpResponse<Object> updateUserLocation(@PathVariable @NotNull Long id,
+      @Body Object location) {
     return HttpResponse.ok();
   }
 
@@ -73,7 +74,8 @@ public class UsersController {
    * Update user privileges
    */
   @Put("{id}/privileges")
-  public HttpResponse<Object> updateUserPrivileges(@PathVariable @NotNull Long id, @Body Object privileges) {
+  public HttpResponse<Object> updateUserPrivileges(@PathVariable @NotNull Long id,
+      @Body Object privileges) {
     return HttpResponse.ok();
   }
 

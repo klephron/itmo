@@ -24,7 +24,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "templates", indexes = {@Index(columnList = "case_id")})
+@Table(name = "templates", indexes = { @Index(columnList = "case_id") })
 public class TemplateEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "template_id") Long id;
 

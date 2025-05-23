@@ -12,14 +12,14 @@ import java.util.Map;
 
 @Produces
 @Singleton
-public class PermissionDeniedExceptionHandler implements ExceptionHandler<PermissionDeniedException, HttpResponse<?>> {
+public class PermissionDeniedExceptionHandler
+    implements ExceptionHandler<PermissionDeniedException, HttpResponse<?>> {
 
   @Override
   public HttpResponse<?> handle(HttpRequest request, PermissionDeniedException exception) {
     return HttpResponse.status(HttpStatus.UNAUTHORIZED)
-      .body(Map.of(
-        "error", "permission_denied",
-        "message", exception.getMessage()
-      ));
+        .body(Map.of(
+            "error", "permission_denied",
+            "message", exception.getMessage()));
   }
 }
