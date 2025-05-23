@@ -4,6 +4,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.RegisterRequest;
@@ -20,6 +22,7 @@ public class AuthController {
   }
 
   @Post("/register")
+  @Secured(SecurityRule.IS_ANONYMOUS)
   public HttpResponse<UserDto> register(@Body RegisterRequest req) {
     UserDto user = userMapper.toDto(service.register(req.username(), req.password()));
     return HttpResponse.created(user);

@@ -10,10 +10,6 @@ micronaut:
   security:
     enabled: true
     intercept-url-map:
-      - pattern: /auth/register
-        http-method: POST
-        access:
-          - isAnonymous()
       - pattern: /swagger/**
         http-method: GET
         access:
