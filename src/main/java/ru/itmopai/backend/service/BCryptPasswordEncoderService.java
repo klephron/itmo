@@ -18,7 +18,7 @@ public class BCryptPasswordEncoderService implements PasswordEncoder {
 
   @Override
   public boolean matches(@NotBlank @NonNull CharSequence rawPassword,
-                         @NotBlank @NonNull String encodedPassword) {
+      @NotBlank @NonNull String encodedPassword) {
     return delegate.matches(rawPassword, encodedPassword);
   }
 }

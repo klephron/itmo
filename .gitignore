@@ -10,7 +10,7 @@ out/
 *.ipr
 *.iws
 .project
-.settings
+.settings/org.eclipse.buildship.core.prefs
 .classpath
 .factorypath
 bin/

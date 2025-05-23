@@ -9,15 +9,14 @@ import io.micronaut.security.authentication.AuthenticationRequest;
 import io.micronaut.security.authentication.AuthenticationResponse;
 import io.micronaut.security.authentication.provider.AuthenticationProvider;
 import jakarta.inject.Singleton;
+import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.repository.UserRepository;
 
-import java.util.List;
-import java.util.Optional;
-
 @Singleton
-public class AuthenticationProviderUserPassword implements AuthenticationProvider<HttpRequest<?>, String, String> {
+public class AuthenticationProviderUserPassword
+    implements AuthenticationProvider<HttpRequest<?>, String, String> {
   private final UserRepository repo;
   private final PasswordEncoder encoder;
 
@@ -29,7 +28,7 @@ public class AuthenticationProviderUserPassword implements AuthenticationProvide
   @Override
   @NonNull
   public AuthenticationResponse authenticate(@Nullable HttpRequest<?> requestContext,
-                                             @NonNull AuthenticationRequest<String, String> authRequest) {
+      @NonNull AuthenticationRequest<String, String> authRequest) {
     String username = authRequest.getIdentity();
     String password = authRequest.getSecret();
 
@@ -42,4 +41,3 @@ public class AuthenticationProviderUserPassword implements AuthenticationProvide
     }
   }
 }
-

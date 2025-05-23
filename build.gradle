@@ -99,8 +99,13 @@ tasks.named("dockerfileNative") {
 spotless {
   java {
     target "src/main/java/**/*.java", "src/test/java/**/*.java"
-    googleJavaFormat()
+    eclipse().configFile('.settings/org.eclipse.jdt.core.prefs')
     removeUnusedImports()
     trimTrailingWhitespace()
+  }
+
+  yaml {
+    target "src/**/*.yaml", "src/**/*.yml"
+    prettier().configFile(".prettierrc.yaml")
   }
 }

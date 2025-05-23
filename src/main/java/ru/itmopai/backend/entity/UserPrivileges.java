@@ -13,14 +13,11 @@ import lombok.Setter;
 public class UserPrivileges {
   @Id
   @NotNull
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private Long id;
+  @GeneratedValue(strategy = GenerationType.AUTO) private Long id;
 
   @NotNull
-  @OneToOne(fetch = FetchType.EAGER)
-  private UserEntity userId;
+  @OneToOne(fetch = FetchType.EAGER) private UserEntity userId;
 
   @NotNull
-  @NotEmpty
-  private String privilege;
+  @NotEmpty private String privilege;
 }

@@ -9,7 +9,7 @@ public class UserService {
   private final UserRepository repo;
   private final BCryptPasswordEncoderService encoder;
 
-  public UserService(UserRepository repo, BCryptPasswordEncoderService  encoder) {
+  public UserService(UserRepository repo, BCryptPasswordEncoderService encoder) {
     this.repo = repo;
     this.encoder = encoder;
   }

@@ -4,7 +4,8 @@ import org.mapstruct.*;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.entity.UserEntity;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.JAKARTA)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,
+    componentModel = MappingConstants.ComponentModel.JAKARTA)
 public interface UserMapper {
   UserEntity toEntity(UserDto userDto);
 
