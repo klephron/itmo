@@ -17,16 +17,13 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user_permissions",
-    indexes = {@Index(columnList = "user_id")})
+@Table(name = "user_permissions")
 public class UserPermissionEntity {
-
   private @EmbeddedId UserPermissionId id;
 
   @Embeddable
   @EqualsAndHashCode
   public static class UserPermissionId {
-    // TODO: do we actually need eager?
     private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
         name = "user_id") UserEntity user;
 
