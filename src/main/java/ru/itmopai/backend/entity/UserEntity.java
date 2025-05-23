@@ -17,18 +17,15 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserEntity {
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO) private Long id;
+  private @Id @GeneratedValue(strategy = GenerationType.AUTO) Long id;
 
-  @NotNull
-  @NotEmpty private String username;
+  private @NotNull @NotEmpty String username;
 
-  @NotNull
-  @NotEmpty private String password;
+  private @NotNull @NotEmpty String password;
 
-  @NotNull private Double locationLatitude;
+  private @NotNull Double locationLatitude;
 
-  @NotNull private Double locationLongitude;
+  private @NotNull Double locationLongitude;
 
-  @NotNull private Double locationAltitude;
+  private @NotNull Double locationAltitude;
 }

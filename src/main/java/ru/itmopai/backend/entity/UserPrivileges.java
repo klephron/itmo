@@ -11,13 +11,9 @@ import lombok.Setter;
 @Entity
 @Table(name = "user_privileges")
 public class UserPrivileges {
-  @Id
-  @NotNull
-  @GeneratedValue(strategy = GenerationType.AUTO) private Long id;
+  private @Id @NotNull @GeneratedValue(strategy = GenerationType.AUTO) Long id;
 
-  @NotNull
-  @OneToOne(fetch = FetchType.EAGER) private UserEntity userId;
+  private @NotNull @OneToOne(fetch = FetchType.EAGER) UserEntity userId;
 
-  @NotNull
-  @NotEmpty private String privilege;
+  private @NotNull @NotEmpty String privilege;
 }

@@ -8,8 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Singleton
 public class BCryptPasswordEncoderService implements PasswordEncoder {
-
-  PasswordEncoder delegate = new BCryptPasswordEncoder();
+  private PasswordEncoder delegate = new BCryptPasswordEncoder();
 
   @Override
   public String encode(@NotBlank @NonNull CharSequence rawPassword) {
