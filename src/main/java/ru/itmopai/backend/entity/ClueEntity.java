@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,10 +39,7 @@ public class ClueEntity {
 
   private String description;
 
-  /**
-   * ACCEPTED, REJECTED, etc.
-   */
-  private String status;
+  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "status_updator_user_id") UserEntity statusUpdator;
@@ -52,4 +51,8 @@ public class ClueEntity {
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "case_id") CaseEntity relatedCase;
+
+  public static enum Status {
+    ACCEPTED, REJECTED, PENDING
+  }
 }

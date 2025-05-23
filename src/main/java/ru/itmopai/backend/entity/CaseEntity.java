@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -42,8 +44,12 @@ public class CaseEntity {
 
   private @NotNull LocalDateTime updatedAt;
 
-  private @NotNull @NotEmpty String status;
+  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
 
   private @NotNull @OneToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "incident_id") IncidentEntity incident;
+
+  public static enum Status {
+    OPENED, FROZEN, CLOSED, REJECTED,
+  }
 }

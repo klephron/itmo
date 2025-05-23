@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,7 +42,7 @@ public class TemplateEntity {
 
   private @NotNull @NotEmpty String title;
 
-  private @NotNull @NotEmpty String status;
+  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
 
   /**
    * E.g. ids of clues, suspects, employees, Central Database Links. TODO: specify format
@@ -51,4 +53,8 @@ public class TemplateEntity {
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "case_id") CaseEntity relatedCase;
+
+  public static enum Status {
+    PENDING, CREATED, CDB_ADDED
+  }
 }

@@ -2,6 +2,8 @@ package ru.itmopai.backend.entity;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -29,10 +31,7 @@ public class UserCaseEntity {
 
   private @NotNull @NotEmpty String position;
 
-  /**
-   * Current status of worker in case: whether WORKING, VACATION, TRANSFERED (переданы полномочия)
-   */
-  private @NotNull @NotEmpty String status;
+  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
 
   public static class UserPermissionId {
     private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
@@ -40,5 +39,9 @@ public class UserCaseEntity {
 
     private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
         name = "case_id") CaseEntity relatedCase;
+  }
+
+  public static enum Status {
+    WORKING, VACATION, TRANSFERED // переданы полномочия
   }
 }

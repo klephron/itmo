@@ -2,6 +2,8 @@ package ru.itmopai.backend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,11 +37,12 @@ public class CaseSuspectEntity {
    */
   private @Column(unique = true, nullable = false) @NotNull @NotEmpty String identifier;
 
-  /**
-   * E.g. SUSPECT (под подозрением), JUSTIFIED, ACCUSED
-   */
-  private @NotNull @NotEmpty String status;
+  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "case_id") CaseEntity relatedCase;
+
+  public static enum Status {
+    SUSPECTED, JUSTIFIED, ACCUSED
+  }
 }
