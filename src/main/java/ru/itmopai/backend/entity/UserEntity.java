@@ -24,13 +24,17 @@ import lombok.Setter;
 public class UserEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "user_id") Long id;
 
-  private @NotNull @NotEmpty String username;
+  private @NotNull @NotEmpty @Column(nullable = false) String username;
 
-  private @NotNull @NotEmpty String password;
+  private @NotNull @NotEmpty @Column(nullable = false) String name;
+  private @NotNull @NotEmpty @Column(nullable = false) String surname;
+  private String patronymic;
 
-  private @NotNull Double locationLatitude;
+  private @NotNull @NotEmpty @Column(nullable = false) String password;
 
-  private @NotNull Double locationLongitude;
+  private @NotNull @Column(nullable = false) Double locationLatitude;
 
-  private @NotNull Double locationAltitude;
+  private @NotNull @Column(nullable = false) Double locationLongitude;
+
+  private @NotNull @Column(nullable = false) Double locationAltitude;
 }

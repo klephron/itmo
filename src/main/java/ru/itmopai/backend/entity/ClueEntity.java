@@ -33,16 +33,18 @@ public class ClueEntity {
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
       name = "creator_user_id") UserEntity creator;
 
-  private @NotNull LocalDateTime createdAt;
+  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
 
-  private @NotNull @NotEmpty String title;
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
+      name = "updator_user_id", nullable = false) UserEntity updator;
+
+  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
+
+  private @NotNull @Column(nullable = false) @NotEmpty String title;
 
   private String description;
 
-  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
-
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "status_updator_user_id") UserEntity statusUpdator;
+  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
 
   /**
    * E.g. JSON to store uris for attached images, videos, reports, location. TODO: specify format
@@ -50,7 +52,7 @@ public class ClueEntity {
   private String metadata;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id") CaseEntity relatedCase;
+      name = "case_id", nullable = false) CaseEntity relatedCase;
 
   public static enum Status {
     ACCEPTED, REJECTED, PENDING

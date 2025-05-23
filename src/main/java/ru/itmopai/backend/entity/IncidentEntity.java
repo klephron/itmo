@@ -30,29 +30,29 @@ public class IncidentEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "incident_id") Long id;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "creator_user_id") UserEntity creator;
+      name = "creator_user_id", nullable = false) UserEntity creator;
 
-  private @NotNull LocalDateTime createdAt;
+  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "updator_user_id") UserEntity updator;
+      name = "updator_user_id", nullable = false) UserEntity updator;
 
-  private @NotNull LocalDateTime updatedAt;
+  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
 
   private String applicant;
 
-  private @NotNull @NotEmpty String type;
+  private @NotNull @NotEmpty @Column(nullable = false) String type;
 
-  private @NotNull @NotEmpty String reason;
+  private @NotNull @NotEmpty @Column(nullable = false) String reason;
 
-  private @NotNull Double locationLatitude;
+  private @NotNull @Column(nullable = false) Double locationLatitude;
 
-  private @NotNull Double locationLongitude;
+  private @NotNull @Column(nullable = false) Double locationLongitude;
 
-  private @NotNull Double locationAltitude;
+  private @NotNull @Column(nullable = false) Double locationAltitude;
 
-  private @NotNull LocalDateTime estimatedTime;
+  private @NotNull @Column(nullable = false) LocalDateTime estimatedTime;
 
   private @Nullable @OneToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id") CaseEntity relatedCase;
+      name = "case_id", nullable = true) CaseEntity relatedCase;
 }

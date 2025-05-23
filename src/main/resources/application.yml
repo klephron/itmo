@@ -53,7 +53,6 @@ datasources:
     username: me
     password: me
     driverClassName: org.postgresql.Driver
-
 jpa:
   default:
     entity-scan:
@@ -64,3 +63,5 @@ jpa:
         hbm2ddl:
           auto: update
         show_sql: true
+        # id:
+        #   db_structure_naming_strategy: standard

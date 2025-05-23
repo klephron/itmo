@@ -1,5 +1,6 @@
 package ru.itmopai.backend.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -25,8 +26,8 @@ public class UserPermissionEntity {
   @Getter
   public static class UserPermissionId {
     private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-        name = "user_id") UserEntity user;
+        name = "user_id", nullable = false) UserEntity user;
 
-    private @NotNull @NotEmpty String privilege;
+    private @NotNull @NotEmpty @Column(nullable = false) String privilege;
   }
 }

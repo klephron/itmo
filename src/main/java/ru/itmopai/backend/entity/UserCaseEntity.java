@@ -1,5 +1,7 @@
 package ru.itmopai.backend.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +14,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,10 +32,13 @@ import lombok.Setter;
 public class UserCaseEntity {
   private @EmbeddedId UserPermissionId id;
 
-  private @NotNull @NotEmpty String position;
+  private @NotNull @NotEmpty @Column(nullable = false) String position;
 
-  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
+  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
 
+  @EqualsAndHashCode
+  @Embeddable
+  @Getter
   public static class UserPermissionId {
     private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
         name = "user_id") UserEntity user;

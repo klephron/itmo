@@ -30,24 +30,24 @@ import lombok.Setter;
 public class CaseEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "case_id") Long id;
 
-  private @NotNull @NotEmpty String title;
+  private @NotNull @NotEmpty @Column(nullable = false) String title;
 
   private String description;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "creator_user_id") UserEntity creator;
+      name = "creator_user_id", nullable = false) UserEntity creator;
 
-  private @NotNull LocalDateTime createdAt;
+  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "updator_user_id") UserEntity updator;
+      name = "updator_user_id", nullable = false) UserEntity updator;
 
-  private @NotNull LocalDateTime updatedAt;
+  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
 
-  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
+  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
 
   private @NotNull @OneToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "incident_id") IncidentEntity incident;
+      name = "incident_id", nullable = false) IncidentEntity incident;
 
   public static enum Status {
     OPENED, FROZEN, CLOSED, REJECTED,

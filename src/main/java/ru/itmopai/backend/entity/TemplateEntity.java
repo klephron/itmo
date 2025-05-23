@@ -31,28 +31,28 @@ public class TemplateEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "template_id") Long id;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "creator_user_id") UserEntity creator;
+      name = "creator_user_id", nullable = false) UserEntity creator;
 
-  private @NotNull LocalDateTime createdAt;
+  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "updator_user_id") UserEntity updator;
+      name = "updator_user_id", nullable = false) UserEntity updator;
 
-  private @NotNull LocalDateTime updatedAt;
+  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
 
-  private @NotNull @NotEmpty String title;
+  private @NotNull @NotEmpty @Column(nullable = false) String title;
 
-  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
+  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
 
   /**
    * E.g. ids of clues, suspects, employees, Central Database Links. TODO: specify format
    */
-  private @NotNull @NotEmpty String metadata;
+  private @NotNull String metadata;
 
   private String description;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id") CaseEntity relatedCase;
+      name = "case_id", nullable = false) CaseEntity relatedCase;
 
   public static enum Status {
     PENDING, CREATED, CDB_ADDED

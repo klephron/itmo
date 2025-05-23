@@ -1,5 +1,7 @@
 package ru.itmopai.backend.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -28,19 +30,29 @@ import lombok.Setter;
 public class CaseSuspectEntity {
   private @Id @GeneratedValue(strategy = GenerationType.AUTO) Long id;
 
-  private @NotNull @NotEmpty String name;
-  private @NotNull @NotEmpty String surname;
-  private @NotNull @NotEmpty String patronymic;
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
+      name = "creator_user_id", nullable = false) UserEntity creator;
+
+  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
+
+  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
+      name = "updator_user_id", nullable = false) UserEntity updator;
+
+  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
+
+  private @NotNull @NotEmpty @Column(nullable = false) String name;
+  private @NotNull @NotEmpty @Column(nullable = false) String surname;
+  private String patronymic;
 
   /**
    * E.g. Passport, Russian Federation, 0419 845176
    */
-  private @Column(unique = true, nullable = false) @NotNull @NotEmpty String identifier;
+  private @NotNull @NotEmpty @Column(unique = true, nullable = false) String identifier;
 
-  private @NotNull @NotEmpty @Enumerated(EnumType.STRING) Status status;
+  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
 
   private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id") CaseEntity relatedCase;
+      name = "case_id", nullable = false) CaseEntity relatedCase;
 
   public static enum Status {
     SUSPECTED, JUSTIFIED, ACCUSED
