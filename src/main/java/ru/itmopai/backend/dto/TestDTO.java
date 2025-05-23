@@ -7,11 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import lombok.Value;
 
-/** DTO for {@link ru.itmopai.backend.entity.UserEntity} */
 @Value
 @Introspected
 @Serdeable
-public class UserDto implements Serializable {
+public class TestDTO implements Serializable {
   private @NotNull Long id;
 
   private @NotNull @NotEmpty String username;

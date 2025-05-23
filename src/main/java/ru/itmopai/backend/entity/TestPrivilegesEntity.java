@@ -9,11 +9,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "user_privileges")
-public class UserPrivileges {
+@Table(name = "test_privileges")
+public class TestPrivilegesEntity {
   private @Id @NotNull @GeneratedValue(strategy = GenerationType.AUTO) Long id;
 
-  private @NotNull @OneToOne(fetch = FetchType.EAGER) UserEntity userId;
+  private @NotNull @OneToOne(fetch = FetchType.EAGER) TestEntity testId;
 
   private @NotNull @NotEmpty String privilege;
 }
