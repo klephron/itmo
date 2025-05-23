@@ -11,13 +11,19 @@ import lombok.Value;
 @Introspected
 @Serdeable
 public class UserDto implements Serializable {
-  private @NotNull Long id;
+  @NotNull
+  private Long id;
 
-  private @NotNull @NotEmpty String username;
+  @NotNull
+  @NotEmpty
+  private String username;
 
-  private @NotNull Double locationLatitude;
+  @NotNull
+  private Double locationLatitude;
 
-  private @NotNull Double locationLongitude;
+  @NotNull
+  private Double locationLongitude;
 
-  private @NotNull Double locationAltitude;
+  @NotNull
+  private Double locationAltitude;
 }
