@@ -33,6 +33,7 @@ public class TestController {
 
   @Get("/hello")
   @Produces(MediaType.TEXT_PLAIN)
+  @Secured(SecurityRule.IS_AUTHENTICATED)
   public String index() {
     return "Hello world!";
   }
