@@ -30,21 +30,33 @@ import lombok.Setter;
         @Index(columnList = "user_id,status")
     })
 public class UserCaseEntity {
-  private @EmbeddedId UserPermissionId id;
+  @EmbeddedId
+  private UserPermissionId id;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String position;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String position;
 
-  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private Status status;
 
   @EqualsAndHashCode
   @Embeddable
   @Getter
   public static class UserPermissionId {
-    private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-        name = "user_id") UserEntity user;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 
-    private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-        name = "case_id") CaseEntity relatedCase;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "case_id")
+    private CaseEntity relatedCase;
   }
 
   public static enum Status {

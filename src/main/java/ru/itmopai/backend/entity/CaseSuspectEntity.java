@@ -28,31 +28,58 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "case_suspects", indexes = { @Index(columnList = "case_id") })
 public class CaseSuspectEntity {
-  private @Id @GeneratedValue(strategy = GenerationType.AUTO) Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private Long id;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "creator_user_id", nullable = false) UserEntity creator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "creator_user_id", nullable = false)
+  private UserEntity creator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "updator_user_id", nullable = false) UserEntity updator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "updator_user_id", nullable = false)
+  private UserEntity updator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String name;
-  private @NotNull @NotEmpty @Column(nullable = false) String surname;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String name;
+
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String surname;
+
   private String patronymic;
 
   /**
    * E.g. Passport, Russian Federation, 0419 845176
    */
-  private @NotNull @NotEmpty @Column(unique = true, nullable = false) String identifier;
+  @NotNull
+  @NotEmpty
+  @Column(unique = true, nullable = false)
+  private String identifier;
 
-  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private Status status;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id", nullable = false) CaseEntity relatedCase;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "case_id", nullable = false)
+  private CaseEntity relatedCase;
 
   public static enum Status {
     SUSPECTED, JUSTIFIED, ACCUSED

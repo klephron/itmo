@@ -28,31 +28,51 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "clues", indexes = { @Index(columnList = "case_id") })
 public class ClueEntity {
-  private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "clue_id") Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "clue_id")
+  private Long id;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "creator_user_id") UserEntity creator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "creator_user_id")
+  private UserEntity creator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "updator_user_id", nullable = false) UserEntity updator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "updator_user_id", nullable = false)
+  private UserEntity updator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
 
-  private @NotNull @Column(nullable = false) @NotEmpty String title;
+  @NotNull
+  @Column(nullable = false)
+  @NotEmpty
+  private String title;
 
   private String description;
 
-  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private Status status;
 
   /**
    * E.g. JSON to store uris for attached images, videos, reports, location. TODO: specify format
    */
   private String metadata;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id", nullable = false) CaseEntity relatedCase;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "case_id", nullable = false)
+  private CaseEntity relatedCase;
 
   public static enum Status {
     ACCEPTED, REJECTED, PENDING

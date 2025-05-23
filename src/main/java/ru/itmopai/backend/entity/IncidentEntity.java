@@ -27,32 +27,59 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "incidents")
 public class IncidentEntity {
-  private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "incident_id") Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "incident_id")
+  private Long id;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "creator_user_id", nullable = false) UserEntity creator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "creator_user_id", nullable = false)
+  private UserEntity creator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "updator_user_id", nullable = false) UserEntity updator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "updator_user_id", nullable = false)
+  private UserEntity updator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
 
   private String applicant;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String type;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String type;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String reason;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String reason;
 
-  private @NotNull @Column(nullable = false) Double locationLatitude;
+  @NotNull
+  @Column(nullable = false)
+  private Double locationLatitude;
 
-  private @NotNull @Column(nullable = false) Double locationLongitude;
+  @NotNull
+  @Column(nullable = false)
+  private Double locationLongitude;
 
-  private @NotNull @Column(nullable = false) Double locationAltitude;
+  @NotNull
+  @Column(nullable = false)
+  private Double locationAltitude;
 
-  private @NotNull @Column(nullable = false) LocalDateTime estimatedTime;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime estimatedTime;
 
-  private @Nullable @OneToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "case_id", nullable = true) CaseEntity relatedCase;
+  @Nullable
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "case_id", nullable = true)
+  private CaseEntity relatedCase;
 }

@@ -25,9 +25,14 @@ public class UserPermissionEntity {
   @EqualsAndHashCode
   @Getter
   public static class UserPermissionId {
-    private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-        name = "user_id", nullable = false) UserEntity user;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
-    private @NotNull @NotEmpty @Column(nullable = false) String privilege;
+    @NotNull
+    @NotEmpty
+    @Column(nullable = false)
+    private String privilege;
   }
 }

@@ -22,19 +22,42 @@ import lombok.Setter;
 @Table(name = "users",
     indexes = { @Index(columnList = "locationLatitude,locationLongitude,locationAltitude") })
 public class UserEntity {
-  private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "user_id") Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "user_id")
+  private Long id;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String username;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String username;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String name;
-  private @NotNull @NotEmpty @Column(nullable = false) String surname;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String name;
+
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String surname;
+
   private String patronymic;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String password;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String password;
 
-  private @NotNull @Column(nullable = false) Double locationLatitude;
+  @NotNull
+  @Column(nullable = false)
+  private Double locationLatitude;
 
-  private @NotNull @Column(nullable = false) Double locationLongitude;
+  @NotNull
+  @Column(nullable = false)
+  private Double locationLongitude;
 
-  private @NotNull @Column(nullable = false) Double locationAltitude;
+  @NotNull
+  @Column(nullable = false)
+  private Double locationAltitude;
 }

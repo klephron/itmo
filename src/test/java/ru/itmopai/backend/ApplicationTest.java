@@ -9,7 +9,8 @@ import org.junit.jupiter.api.Test;
 @MicronautTest
 class ApplicationTest {
 
-  @Inject EmbeddedApplication<?> application;
+  @Inject
+  EmbeddedApplication<?> application;
 
   @Test
   void testItWorks() {

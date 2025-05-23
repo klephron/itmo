@@ -28,26 +28,45 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "cases")
 public class CaseEntity {
-  private @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(name = "case_id") Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private @Column(name = "case_id") Long id;
 
-  private @NotNull @NotEmpty @Column(nullable = false) String title;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  private String title;
 
   private String description;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "creator_user_id", nullable = false) UserEntity creator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "creator_user_id", nullable = false)
+  private UserEntity creator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime createdAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-  private @NotNull @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "updator_user_id", nullable = false) UserEntity updator;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "updator_user_id", nullable = false)
+  private UserEntity updator;
 
-  private @NotNull @Column(nullable = false) LocalDateTime updatedAt;
+  @NotNull
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
 
-  private @NotNull @NotEmpty @Column(nullable = false) @Enumerated(EnumType.STRING) Status status;
+  @NotNull
+  @NotEmpty
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private Status status;
 
-  private @NotNull @OneToOne(fetch = FetchType.LAZY) @JoinColumn(
-      name = "incident_id", nullable = false) IncidentEntity incident;
+  @NotNull
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "incident_id", nullable = false)
+  private IncidentEntity incident;
 
   public static enum Status {
     OPENED, FROZEN, CLOSED, REJECTED,
