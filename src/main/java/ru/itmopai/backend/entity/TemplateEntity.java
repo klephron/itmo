@@ -1,6 +1,9 @@
 package ru.itmopai.backend.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +20,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -63,12 +67,25 @@ public class TemplateEntity {
   private Status status;
 
   /**
-   * E.g. ids of clues, suspects, employees, Central Database Links. TODO: specify format
+   * {@link} {@link Metadata}
    */
   @NotNull
+  @NotEmpty
+  @Column(nullable = false)
   private String metadata;
 
   private String description;
+
+  /**
+   * URI to access generated template, when status == CREATED should not be null
+   */
+  private String uri;
+
+  /**
+   * URI to access template from Central Database, when status == CDB_ADDED should not be null
+   */
+  @Column(name = "cdb_uri")
+  private String cdbURI;
 
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)
@@ -77,5 +94,17 @@ public class TemplateEntity {
 
   public static enum Status {
     PENDING, CREATED, CDB_ADDED
+  }
+
+  @EqualsAndHashCode
+  public static class Metadata {
+    @JsonProperty("clue_ids")
+    public List<Long> clueIds;
+
+    @JsonProperty("suspect_ids")
+    public List<Long> suspectIds;
+
+    @JsonProperty("employee_ids")
+    public List<Long> employeeIds;
   }
 }

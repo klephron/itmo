@@ -1,6 +1,9 @@
 package ru.itmopai.backend.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +20,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -65,7 +69,7 @@ public class ClueEntity {
   private Status status;
 
   /**
-   * E.g. JSON to store uris for attached images, videos, reports, location. TODO: specify format
+   * {@link} {@link Metadata}
    */
   private String metadata;
 
@@ -76,5 +80,32 @@ public class ClueEntity {
 
   public static enum Status {
     ACCEPTED, REJECTED, PENDING
+  }
+
+  @EqualsAndHashCode
+  public static class Metadata {
+    @JsonProperty("image_uris")
+    public List<String> imagesURIs;
+
+    @JsonProperty("video_uris")
+    public List<String> videoURIs;
+
+    @JsonProperty("report_uris")
+    public List<String> reportURIs;
+
+    @JsonProperty("location")
+    public Location location;
+
+    @EqualsAndHashCode
+    public static class Location {
+      @JsonProperty("latitude")
+      public Double latitude;
+
+      @JsonProperty("longitude")
+      public Double longitude;
+
+      @JsonProperty("altitude")
+      public Double altitude;
+    }
   }
 }
