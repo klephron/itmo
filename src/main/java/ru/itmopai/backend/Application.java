@@ -21,6 +21,8 @@ import io.micronaut.openapi.annotation.OpenAPIInclude;
     tags = @Tag(name = "templates"))
 @OpenAPIInclude(classes = { ru.itmopai.backend.controller.UsersController.class },
     tags = @Tag(name = "users"))
+@OpenAPIInclude(classes = { ru.itmopai.backend.controller.NotificationsController.class },
+    tags = @Tag(name = "notifications"))
 @OpenAPIInclude(classes = { ru.itmopai.backend.controller.TestController.class },
     tags = @Tag(name = "test"))
 @OpenAPIDefinition(info = @Info(title = "PAI API", version = "1.0"),
