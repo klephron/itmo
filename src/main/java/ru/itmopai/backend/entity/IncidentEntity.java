@@ -78,7 +78,6 @@ public class IncidentEntity {
   @Column(nullable = false)
   private LocalDateTime estimatedTime;
 
-  @Nullable
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "case_id", nullable = true)
   private CaseEntity relatedCase;

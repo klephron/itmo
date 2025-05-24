@@ -1,11 +1,11 @@
 package ru.itmopai.backend.dto.response;
 
-import java.util.List;
-
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 
+import java.util.List;
+
 @Introspected
 @Serdeable
-public record UserPermissionsRequest(List<String> permissions) {
+public record UserPermissionsResponse(List<String> permissions) {
 }

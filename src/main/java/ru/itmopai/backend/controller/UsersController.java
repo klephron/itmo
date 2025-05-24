@@ -16,9 +16,9 @@ import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.LocationUpdateRequest;
 import ru.itmopai.backend.dto.request.RegisterRequest;
-import ru.itmopai.backend.dto.request.UserPermissionsResponse;
+import ru.itmopai.backend.dto.response.UserPermissionsResponse;
 import ru.itmopai.backend.dto.response.UserInfoResponse;
-import ru.itmopai.backend.dto.response.UserPermissionsRequest;
+import ru.itmopai.backend.dto.request.UserPermissionsRequest;
 import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.exception.UserExistsException;
 import ru.itmopai.backend.mapper.UserInfoMapper;
@@ -64,7 +64,7 @@ public class UsersController {
   @Delete("{id}")
   public HttpResponse<Void> deleteUser(@PathVariable @NotNull Long id) {
     userService.removeUser(id);
-    return HttpResponse.ok();
+    return HttpResponse.noContent();
   }
 
   /**

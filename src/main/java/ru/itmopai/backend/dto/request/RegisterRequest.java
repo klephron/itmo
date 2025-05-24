@@ -2,9 +2,13 @@ package ru.itmopai.backend.dto.request;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 @Introspected
 @Serdeable
-public record RegisterRequest(String username, String password, String name, String surname,
+public record RegisterRequest(@NotNull @NotEmpty String username,
+    @NotNull @NotEmpty String password, @NotNull @NotEmpty String name,
+    @NotNull @NotEmpty String surname,
     String patronymic) {
 }

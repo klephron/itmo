@@ -9,6 +9,8 @@ import io.micronaut.security.authentication.AuthenticationRequest;
 import io.micronaut.security.authentication.AuthenticationResponse;
 import io.micronaut.security.authentication.provider.AuthenticationProvider;
 import jakarta.inject.Singleton;
+
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.itmopai.backend.entity.UserEntity;
@@ -35,7 +37,7 @@ public class AuthenticationProviderUserPassword
     Optional<UserEntity> userOpt = repo.findByUsername(username);
 
     if (userOpt.isPresent() && encoder.matches(password, userOpt.get().getPassword())) {
-      return AuthenticationResponse.success(username);
+      return AuthenticationResponse.success(username, Map.of("id", userOpt.get().getId()));
     } else {
       throw new AuthenticationException(new AuthenticationFailed());
     }

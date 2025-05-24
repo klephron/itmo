@@ -58,7 +58,6 @@ public class CaseEntity {
   private LocalDateTime updatedAt;
 
   @NotNull
-  @NotEmpty
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private Status status;
@@ -69,6 +68,6 @@ public class CaseEntity {
   private IncidentEntity incident;
 
   public static enum Status {
-    OPENED, FROZEN, CLOSED, REJECTED,
+    OPENED, FROZEN, CLOSED, REJECTED;
   }
 }
