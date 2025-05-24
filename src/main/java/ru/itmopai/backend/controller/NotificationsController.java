@@ -3,6 +3,7 @@ package ru.itmopai.backend.controller;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.format.Format;
@@ -50,10 +51,9 @@ public class NotificationsController {
    */
   @Get
   public HttpResponse<Object> getNotifications(
-      @QueryValue(value = "status", defaultValue = "all") Status status,
-      @QueryValue @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime createdAfter,
-      @QueryValue @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime createdBefore) {
-
+      @QueryValue @Nullable Status status,
+      @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime before,
+      @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime after) {
     return HttpResponse.ok();
   }
 
