@@ -20,8 +20,11 @@ public class UserService {
   private final UserPermissionRepository userPermissionRepo;
   private final BCryptPasswordEncoderService encoder;
 
-  public UserEntity register(String username, String rawPassword, String name, String surname, String patronymic) throws UserExistsException {
-    userRepository.findByUsername(username).ifPresent(userEntity -> { throw new UserExistsException("User already exists"); });
+  public UserEntity register(String username, String rawPassword, String name, String surname,
+      String patronymic) throws UserExistsException {
+    userRepository.findByUsername(username).ifPresent(userEntity -> {
+      throw new UserExistsException("User already exists");
+    });
     UserEntity user = new UserEntity();
     user.setUsername(username);
     user.setPassword(encoder.encode(rawPassword));
@@ -46,7 +49,8 @@ public class UserService {
     userRepository.deleteById(id);
   }
 
-  public UserEntity updateLocation(Long id, Double latitude, Double longitude, Double altitude) throws NoSuchElementException {
+  public UserEntity updateLocation(Long id, Double latitude, Double longitude, Double altitude)
+      throws NoSuchElementException {
     UserEntity user = userRepository.findById(id).orElseThrow();
     user.setLocationLatitude(latitude);
     user.setLocationLongitude(longitude);
@@ -56,15 +60,18 @@ public class UserService {
 
   public List<String> getUserPermissions(Long userId) throws NoSuchElementException {
     userRepository.findById(userId).orElseThrow();
-    return userPermissionRepo.findById_UserId(userId).stream().map(userPermissionEntity -> userPermissionEntity.getId().getPrivilege()).toList();
+    return userPermissionRepo.findById_UserId(userId).stream()
+        .map(userPermissionEntity -> userPermissionEntity.getId().getPrivilege()).toList();
   }
 
   @Transactional
-  public void setUserPermissions(Long userId, List<String> privileges) throws NoSuchElementException {
+  public void setUserPermissions(Long userId, List<String> privileges)
+      throws NoSuchElementException {
     UserEntity userEntity = userRepository.findById(userId).orElseThrow();
     userPermissionRepo.deleteAll(userPermissionRepo.findById_UserId(userId));
     for (String privilege : privileges) {
-      UserPermissionEntity.UserPermissionId userPermissionId = new UserPermissionEntity.UserPermissionId(userEntity, privilege);
+      UserPermissionEntity.UserPermissionId userPermissionId =
+          new UserPermissionEntity.UserPermissionId(userEntity, privilege);
       userPermissionRepo.save(new UserPermissionEntity(userPermissionId));
     }
   }

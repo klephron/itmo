@@ -6,7 +6,8 @@ import ru.itmopai.backend.entity.UserEntity;
 
 import java.util.List;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.JAKARTA)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,
+    componentModel = MappingConstants.ComponentModel.JAKARTA)
 public interface UserMapper {
   UserEntity toEntity(UserDto userDto);
 

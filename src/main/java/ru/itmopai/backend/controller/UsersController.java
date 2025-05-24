@@ -23,7 +23,6 @@ import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.exception.UserExistsException;
 import ru.itmopai.backend.mapper.UserInfoMapper;
 import ru.itmopai.backend.mapper.UserMapper;
-import ru.itmopai.backend.repository.UserRepository;
 import ru.itmopai.backend.service.UserService;
 
 import java.util.List;

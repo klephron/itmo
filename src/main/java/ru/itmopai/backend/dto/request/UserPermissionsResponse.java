@@ -7,4 +7,5 @@ import java.util.List;
 
 @Introspected
 @Serdeable
-public record UserPermissionsResponse(List<String> permissions) {}
+public record UserPermissionsResponse(List<String> permissions) {
+}

@@ -7,4 +7,5 @@ import io.micronaut.serde.annotation.Serdeable;
 
 @Introspected
 @Serdeable
-public record UserPermissionsRequest(List<String> permissions) {}
+public record UserPermissionsRequest(List<String> permissions) {
+}
