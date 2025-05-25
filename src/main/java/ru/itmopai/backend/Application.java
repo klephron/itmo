@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.micronaut.openapi.annotation.OpenAPIInclude;
 
-@OpenAPIInclude(classes = { io.micronaut.security.endpoints.LoginController.class },
+@OpenAPIInclude(classes = { ru.itmopai.backend.controller.CustomLoginController.class },
     tags = @Tag(name = "auth"))
 @OpenAPIInclude(classes = { ru.itmopai.backend.controller.CasesController.class },
     tags = @Tag(name = "cases"))

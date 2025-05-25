@@ -34,7 +34,7 @@ micronaut:
               secret: "zavar-zubrailx-mpi-labs-jwt-spring-account-password-key"
     endpoints:
       login:
-        enabled: true
+        enabled: false
     authentication: bearer
   application:
     name: backend
