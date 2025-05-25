@@ -84,13 +84,13 @@ public class ClueEntity {
 
   @EqualsAndHashCode
   public static class Metadata {
-    @JsonProperty("image_uris")
+    @JsonProperty("imageUris")
     public List<String> imagesURIs;
 
-    @JsonProperty("video_uris")
+    @JsonProperty("videoUris")
     public List<String> videoURIs;
 
-    @JsonProperty("report_uris")
+    @JsonProperty("reportUris")
     public List<String> reportURIs;
 
     @JsonProperty("location")

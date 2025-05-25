@@ -98,13 +98,13 @@ public class TemplateEntity {
 
   @EqualsAndHashCode
   public static class Metadata {
-    @JsonProperty("clue_ids")
+    @JsonProperty("clueIds")
     public List<Long> clueIds;
 
-    @JsonProperty("suspect_ids")
+    @JsonProperty("suspectIds")
     public List<Long> suspectIds;
 
-    @JsonProperty("employee_ids")
+    @JsonProperty("employeeIds")
     public List<Long> employeeIds;
   }
 }

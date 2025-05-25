@@ -84,7 +84,9 @@ public class IncidentsController {
       @Body AddCaseRequest addCaseRequest, Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
-      CaseEntity caseEntity = caseService.addCase(userId, addCaseRequest.title(), addCaseRequest.description(), id);
+      CaseEntity caseEntity =
+          caseService.addCase(userId, addCaseRequest.title(), addCaseRequest.description(), id,
+              addCaseRequest.users());
       return HttpResponse.ok(caseMapper.toDto(caseEntity));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound().body(e.getMessage());
@@ -99,7 +101,11 @@ public class IncidentsController {
       @Body UpdateCaseRequest updateCaseRequest, Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
-      CaseEntity caseEntity = caseService.updateCase(userId, id, updateCaseRequest.title(), updateCaseRequest.description(), CaseEntity.Status.valueOf(updateCaseRequest.status()));
+      CaseEntity caseEntity =
+          caseService.updateCase(userId, id, updateCaseRequest.title(),
+              updateCaseRequest.description(),
+              CaseEntity.Status.valueOf(updateCaseRequest.status()),
+              updateCaseRequest.users());
       return HttpResponse.ok(caseMapper.toDto(caseEntity));
     } catch (NoSuchElementException | IllegalArgumentException e) {
       return HttpResponse.notFound().body(e.getMessage());
@@ -130,8 +136,7 @@ public class IncidentsController {
   @Get("/{id}")
   public HttpResponse<?> getIncident(@PathVariable @NotNull Long id) {
     try {
-      IncidentDto dto = incidentMapper.toDto(incidentService.getIncident(id));
-      return HttpResponse.ok(dto);
+      return HttpResponse.ok(incidentMapper.toDto(incidentService.getIncident(id)));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound().body(e.getMessage());
     }

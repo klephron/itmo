@@ -39,7 +39,6 @@ public class UserCaseEntity {
   private String position;
 
   @NotNull
-  @NotEmpty
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private Status status;
@@ -47,6 +46,7 @@ public class UserCaseEntity {
   @EqualsAndHashCode
   @Embeddable
   @Getter
+  @Setter
   public static class UserCaseId {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
