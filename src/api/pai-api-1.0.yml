@@ -1,0 +1,982 @@
+openapi: 3.0.1
+info:
+  title: PAI API
+  version: "1.0"
+security:
+- bearerAuth: []
+paths:
+  /cases/{id}:
+    get:
+      tags:
+      - cases
+      summary: Get case
+      description: Get case
+      operationId: getCase
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getCase 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /cases/{id}/clues:
+    get:
+      tags:
+      - cases
+      summary: Get case clues
+      description: Get case clues
+      operationId: getCaseClues
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getCaseClues 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      tags:
+      - cases
+      summary: Add case clue
+      description: Add case clue
+      operationId: addCaseClue
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: addCaseClue 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /cases/{id}/templates:
+    get:
+      tags:
+      - cases
+      summary: Get case templates
+      description: Get case templates
+      operationId: getCaseTemplates
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getCaseTemplates 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      tags:
+      - cases
+      summary: Add case template
+      description: Add case template
+      operationId: addCaseTemplate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: addCaseTemplate 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /clues/{id}:
+    get:
+      tags:
+      - clues
+      summary: Get clue
+      description: Get clue
+      operationId: getClue
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getClue 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      tags:
+      - clues
+      summary: Update clue (for example approve)
+      description: Update clue (for example approve)
+      operationId: updateClue
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: updateClue 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      tags:
+      - clues
+      summary: Delete clue
+      description: Delete clue
+      operationId: deleteClue
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: deleteClue 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /incidents:
+    get:
+      tags:
+      - incidents
+      summary: Get incidents
+      description: Get incidents
+      operationId: getIncidents
+      responses:
+        "200":
+          description: getIncidents 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      tags:
+      - incidents
+      summary: Create incident
+      description: Create incident
+      operationId: addIncident
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: addIncident 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /incidents/{id}:
+    get:
+      tags:
+      - incidents
+      summary: Get incident
+      description: Get incident
+      operationId: getIncident
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getIncident 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      tags:
+      - incidents
+      summary: Update incident
+      description: Update incident
+      operationId: updateIncident
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: updateIncident 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      tags:
+      - incidents
+      summary: Delete incident
+      description: Delete incident
+      operationId: deleteIncident
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: deleteIncident 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /incidents/{id}/case:
+    put:
+      tags:
+      - incidents
+      summary: Update case for incident
+      description: Update case for incident
+      operationId: updateCaseForIncident
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: updateCaseForIncident 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      tags:
+      - incidents
+      summary: Create case for incident
+      description: Create case for incident
+      operationId: addCaseForIncident
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: addCaseForIncident 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /login:
+    post:
+      tags:
+      - auth
+      operationId: login
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/UsernamePasswordCredentials"
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsernamePasswordCredentials"
+        required: true
+      responses:
+        "200":
+          description: login 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /notifications:
+    get:
+      tags:
+      - notifications
+      summary: Get notifications
+      description: Get notifications
+      operationId: getNotifications
+      parameters:
+      - name: after
+        in: query
+        schema:
+          type: string
+          format: date-time
+          nullable: true
+      - name: status
+        in: query
+        schema:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/NotificationsController.Status"
+      - name: before
+        in: query
+        schema:
+          type: string
+          format: date-time
+          nullable: true
+      responses:
+        "200":
+          description: getNotifications 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /notifications/{id}:
+    get:
+      tags:
+      - notifications
+      summary: Get notification
+      description: Get notification
+      operationId: getNotification
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getNotification 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      tags:
+      - notifications
+      summary: Update notification (for example set date when read)
+      description: Update notification (for example set date when read)
+      operationId: updateNotification
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: updateNotification 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      tags:
+      - notifications
+      summary: Delete notification
+      description: Delete notification
+      operationId: deleteNotification
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: deleteNotification 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /templates/{id}:
+    get:
+      tags:
+      - templates
+      summary: Get template
+      description: Get template
+      operationId: getTemplate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getTemplate 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      tags:
+      - templates
+      summary: Update template (generic)
+      description: Update template (generic)
+      operationId: updateTemplate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: updateTemplate 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      tags:
+      - templates
+      summary: Delete template
+      description: Delete template
+      operationId: deleteTemplate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: deleteTemplate 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /templates/{id}/cdb:
+    post:
+      tags:
+      - templates
+      summary: Publish template in Central Database
+      description: Publish template in Central Database
+      operationId: addTemplateToCDB
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: addTemplateToCDB 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+  /test/check/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /test/check2/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions2 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /test/check3/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions3 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /test/check4/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions4
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions4 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /test/hello:
+    get:
+      tags:
+      - test
+      operationId: index
+      responses:
+        "200":
+          description: index 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /test/manual/{id}:
+    get:
+      tags:
+      - test
+      operationId: manualCheck
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: manualCheck 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /test/register:
+    post:
+      tags:
+      - test
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: register 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+  /users:
+    get:
+      tags:
+      - users
+      summary: Get users
+      description: Get users
+      operationId: getUsers
+      responses:
+        "200":
+          description: getUsers 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserInfoResponse"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - users
+      summary: Add user
+      description: Add user
+      operationId: addUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: addUser 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+      security:
+      - bearerAuth: []
+  /users/{id}:
+    get:
+      tags:
+      - users
+      summary: Get user
+      description: Get user
+      operationId: getUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getUser 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - users
+      summary: Delete user
+      description: Delete user
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: deleteUser 200 response
+      security:
+      - bearerAuth: []
+  /users/{id}/cases:
+    get:
+      tags:
+      - users
+      summary: Get user cases
+      description: Get user cases
+      operationId: getUserCases
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getUserCases 200 response
+      security:
+      - bearerAuth: []
+  /users/{id}/location:
+    put:
+      tags:
+      - users
+      summary: Update user location
+      description: Update user location
+      operationId: updateUserLocation
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: updateUserLocation 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+      security:
+      - bearerAuth: []
+  /users/{id}/privileges:
+    get:
+      tags:
+      - users
+      summary: Get user privileges
+      description: Get user privileges
+      operationId: getUserPrivileges
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getUserPrivileges 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPermissionsResponse"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - users
+      summary: Update user privileges
+      description: Update user privileges
+      operationId: updateUserPrivileges
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPermissionsRequest"
+        required: true
+      responses:
+        "200":
+          description: updateUserPrivileges 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    LocationUpdateRequest:
+      required:
+      - altitude
+      - latitude
+      - longitude
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        altitude:
+          type: number
+          format: double
+    NotificationsController.Status:
+      type: string
+      enum:
+      - READ
+      - UNREAD
+      - ALL
+    RegisterRequest:
+      required:
+      - name
+      - password
+      - patronymic
+      - surname
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        patronymic:
+          type: string
+    UserDto:
+      required:
+      - id
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - username
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          minLength: 1
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+    UserInfoResponse:
+      required:
+      - id
+      - username
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+    UserPermissionsRequest:
+      required:
+      - permissions
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+    UserPermissionsResponse:
+      required:
+      - permissions
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+    UsernamePasswordCredentials:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          minLength: 1
+          type: string
+          nullable: true
+        password:
+          minLength: 1
+          type: string
+          nullable: true
+        identity:
+          type: string
+          nullable: true
+        secret:
+          type: string
+          nullable: true
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

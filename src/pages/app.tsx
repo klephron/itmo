@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "@assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./app.scss";
+import { useClient } from "@state/client";
 
 function App() {
   const [count, setCount] = useState(0);
+  const client = useClient((state) => state.client);
+
+  // useEffect(() => {
+  //   client.test.register({
+  //     username: "string",
+  //     password: "string",
+  //     name: "string",
+  //     surname: "string",
+  //     patronymic: "string",
+  //   });
+  // });
 
   return (
     <>
@@ -22,6 +34,7 @@ function App() {
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
+        <p>SERVER_URL: {import.meta.env.VITE_SERVER_URL}</p>
       </div>
       <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
     </>
