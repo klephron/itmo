@@ -39,6 +39,8 @@ micronaut:
   application:
     name: backend
   server:
+    cors:
+      enabled: false
     netty:
       access-logger:
         enabled: true
