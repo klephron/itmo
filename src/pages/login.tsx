@@ -11,9 +11,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const client = useClient((state) => state.client);
-
   const setUser = useUser((state) => state.update);
-
   const setToken = useToken((state) => state.update);
 
   const [username, setUsername] = useState("");
