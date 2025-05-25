@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import reactLogo from "@assets/react.svg";
 import viteLogo from "/vite.svg";
-import "./app.scss";
+import "./login.scss";
 import { useClient } from "@state/client";
 
-function App() {
+export default function LoginPage() {
   const [count, setCount] = useState(0);
   const client = useClient((state) => state.client);
 
@@ -40,5 +40,3 @@ function App() {
     </>
   );
 }
-
-export default App;
