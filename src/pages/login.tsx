@@ -21,10 +21,13 @@ export default function LoginPage() {
     e.preventDefault();
 
     client.auth
-      .login({
-        username: username,
-        password: password,
-      })
+      .login(
+        {
+          username: username,
+          password: password,
+        },
+        { secure: false }
+      )
       .then((r) =>
         r.json().then((data) => {
           try {

@@ -30,6 +30,10 @@ export class Client {
     this.baseUrl = baseUrl;
     this.authorization = authorization;
 
+    // NOTE: securityWorker is called if secure=true, otherwise not
+    // e.g. client.auth .login( { username: username, password: password, }, { secure: false })
+    // to set security data use setSecurityData
+    // e.g. this.auth.setSecurityData()
     const config = {
       baseUrl: baseUrl,
       securityWorker: (securityData) => {
