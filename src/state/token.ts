@@ -39,7 +39,6 @@ function localStorageGet() {
 }
 
 function localStorageSet(token: Token) {
-  console.log("before Token set", token);
   localStorage.setItem(
     LocalStorageKeys.USER,
     JSON.stringify({
@@ -50,19 +49,13 @@ function localStorageSet(token: Token) {
       expiresInMS: token.expiresInMS,
     } as Token)
   );
-  console.log("after Token set", token);
 }
 
 export const useToken = create(
   subscribeWithSelector(
-    combine(
-      {
-        token: localStorageGet(),
-      },
-      (set) => ({
-        update: (token: Token) => set({ token: token }),
-      })
-    )
+    combine({ token: localStorageGet() }, (set) => ({
+      update: (token: Token) => set({ token: token }),
+    }))
   )
 );
 
@@ -70,5 +63,12 @@ useToken.subscribe(
   (state) => state.token,
   (token) => {
     localStorageSet(token);
+  }
+);
+
+useToken.subscribe(
+  (state) => state.token,
+  (token) => {
+    console.log("token updated: ", token);
   }
 );

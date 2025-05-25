@@ -27,21 +27,25 @@ export default function LoginPage() {
       })
       .then((r) =>
         r.json().then((data) => {
-          setUser({
-            id: Number(data["id"]),
-            username: data["username"],
-            permissions: new Set<string>(),
-          });
+          try {
+            setUser({
+              id: Number(data["id"]),
+              username: data["username"],
+              permissions: new Set<string>(),
+            });
 
-          setToken({
-            accessToken: data["accessToken"],
-            refreshToken: data["refreshToken"],
-            tokenType: "Bearer",
-            issueAtMS: Number(data["iat"]),
-            expiresInMS: Number(data["expiresIn"]) * 1000,
-          });
+            setToken({
+              accessToken: data["accessToken"],
+              refreshToken: data["refreshToken"],
+              tokenType: "Bearer",
+              issueAtMS: Number(data["iat"]),
+              expiresInMS: Number(data["expiresIn"]) * 1000,
+            });
 
-          navigate("/");
+            navigate("/");
+          } catch (e) {
+            console.error(e);
+          }
         })
       )
       .catch(async (e) => {

@@ -31,7 +31,6 @@ function localStorageGet() {
 }
 
 function localStorageSet(user: User) {
-  console.log("before User set", user);
   localStorage.setItem(
     LocalStorageKeys.USER,
     JSON.stringify({
@@ -40,19 +39,13 @@ function localStorageSet(user: User) {
       permissions: Array.from(user.permissions),
     })
   );
-  console.log("after User set", user);
 }
 
 export const useUser = create(
   subscribeWithSelector(
-    combine(
-      {
-        user: localStorageGet(),
-      },
-      (set) => ({
-        update: (user: User) => set({ user: user }),
-      })
-    )
+    combine({ user: localStorageGet() }, (set) => ({
+      update: (user: User) => set({ user: user }),
+    }))
   )
 );
 
@@ -60,5 +53,12 @@ useUser.subscribe(
   (state) => state.user,
   (user) => {
     localStorageSet(user);
+  }
+);
+
+useUser.subscribe(
+  (state) => state.user,
+  (user) => {
+    console.log("user updated: ", user);
   }
 );

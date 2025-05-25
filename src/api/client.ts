@@ -6,25 +6,61 @@ import { Notifications } from "./gen/Notifications";
 import { Templates } from "./gen/Templates";
 import { Test } from "./gen/Test";
 import { Users } from "./gen/Users";
+import { ApiConfig } from "./gen/http-client";
+
+interface SecurityData {
+  anonymous?: boolean;
+  authorization?: string;
+}
 
 export class Client {
-  auth: Login;
-  cases: Cases;
-  clues: Clues;
-  incidents: Incidents;
-  notifications: Notifications;
-  templates: Templates;
-  users: Users;
-  test: Test;
+  authorization?: string;
+  baseUrl?: string;
 
-  constructor(baseUrl?: string) {
-    this.auth = new Login({ baseUrl: baseUrl });
-    this.cases = new Cases({ baseUrl: baseUrl });
-    this.clues = new Clues({ baseUrl: baseUrl });
-    this.incidents = new Incidents({ baseUrl: baseUrl });
-    this.notifications = new Notifications({ baseUrl: baseUrl });
-    this.templates = new Templates({ baseUrl: baseUrl });
-    this.users = new Users({ baseUrl: baseUrl });
-    this.test = new Test({ baseUrl: baseUrl });
+  auth: Login<SecurityData>;
+  cases: Cases<SecurityData>;
+  clues: Clues<SecurityData>;
+  incidents: Incidents<SecurityData>;
+  notifications: Notifications<SecurityData>;
+  templates: Templates<SecurityData>;
+  users: Users<SecurityData>;
+  test: Test<SecurityData>;
+
+  constructor(baseUrl?: string, authorization?: string) {
+    this.baseUrl = baseUrl;
+    this.authorization = authorization;
+
+    const config = {
+      baseUrl: baseUrl,
+      securityWorker: (securityData) => {
+        if (securityData?.anonymous) {
+          return {};
+        }
+        if (securityData?.authorization) {
+          return {
+            headers: {
+              Authorization: securityData?.authorization,
+            },
+          };
+        }
+        if (this.authorization) {
+          return {
+            headers: {
+              Authorization: this.authorization,
+            },
+          };
+        }
+        return {};
+      },
+    } as ApiConfig<SecurityData>;
+
+    this.auth = new Login(config);
+    this.cases = new Cases(config);
+    this.clues = new Clues(config);
+    this.incidents = new Incidents(config);
+    this.notifications = new Notifications(config);
+    this.templates = new Templates(config);
+    this.users = new Users(config);
+    this.test = new Test(config);
   }
 }
