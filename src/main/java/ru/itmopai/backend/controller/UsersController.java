@@ -13,6 +13,7 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import ru.itmopai.backend.dto.CaseMainInfoDto;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.LocationUpdateRequest;
 import ru.itmopai.backend.dto.request.RegisterRequest;
@@ -21,8 +22,10 @@ import ru.itmopai.backend.dto.response.UserInfoResponse;
 import ru.itmopai.backend.dto.request.UserPermissionsRequest;
 import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.exception.UserExistsException;
+import ru.itmopai.backend.mapper.CaseMainInfoMapper;
 import ru.itmopai.backend.mapper.UserInfoMapper;
 import ru.itmopai.backend.mapper.UserMapper;
+import ru.itmopai.backend.service.CaseService;
 import ru.itmopai.backend.service.UserService;
 
 import java.util.List;
@@ -36,6 +39,8 @@ public class UsersController {
   private final UserService userService;
   private final UserMapper userMapper;
   private final UserInfoMapper userInfoMapper;
+  private final CaseService caseService;
+  private final CaseMainInfoMapper caseMainInfoMapper;
 
   /**
    * Get users
@@ -102,10 +107,9 @@ public class UsersController {
   /**
    * Get user cases
    */
-  // TODO
   @Get("{id}/cases")
-  public HttpResponse<Void> getUserCases(@PathVariable @NotNull Long id) {
-    return HttpResponse.ok();
+  public HttpResponse<List<CaseMainInfoDto>> getUserCases(@PathVariable @NotNull Long id) {
+    return HttpResponse.ok(caseMainInfoMapper.toDto(caseService.getAllCasesByUserId(id)));
   }
 
   /**

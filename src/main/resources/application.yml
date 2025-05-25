@@ -1,4 +1,7 @@
 micronaut:
+  serde:
+    serialization:
+      inclusion: ALWAYS
   router:
     static-resources:
       swagger:

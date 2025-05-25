@@ -2,6 +2,7 @@ package ru.itmopai.backend.dto;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -12,18 +13,28 @@ import lombok.Value;
 @Serdeable
 public class UserDto implements Serializable {
   @NotNull
-  private Long id;
+  Long id;
 
   @NotNull
   @NotEmpty
-  private String username;
+  String username;
 
   @NotNull
-  private Double locationLatitude;
+  @NotEmpty
+  String name;
 
   @NotNull
-  private Double locationLongitude;
+  @NotEmpty
+  String surname;
+
+  String patronymic;
 
   @NotNull
-  private Double locationAltitude;
+  Double locationLatitude;
+
+  @NotNull
+  Double locationLongitude;
+
+  @NotNull
+  Double locationAltitude;
 }

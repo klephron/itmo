@@ -15,11 +15,8 @@ import java.time.LocalDateTime;
 @Introspected
 @Serdeable
 public record IncidentDto(Long id, Long creatorId, @NotNull LocalDateTime createdAt, Long updatorId,
-                          @NotNull LocalDateTime updatedAt, String applicant, @NotNull @NotEmpty String type,
-                          @NotNull @NotEmpty String reason, @NotNull Double locationLatitude,
-                          @NotNull Double locationLongitude, @NotNull Double locationAltitude,
-                          @NotNull LocalDateTime estimatedTime, Long relatedCaseId, String relatedCaseTitle,
-                          String relatedCaseDescription, Long relatedCaseCreatorId, LocalDateTime relatedCaseCreatedAt,
-                          Long relatedCaseUpdatorId, LocalDateTime relatedCaseUpdatedAt,
-                          CaseEntity.Status relatedCaseStatus, Long relatedCaseIncidentId) implements Serializable {
+    @NotNull LocalDateTime updatedAt, String applicant, @NotNull @NotEmpty String type,
+    @NotNull @NotEmpty String reason, @NotNull Double locationLatitude,
+    @NotNull Double locationLongitude, @NotNull Double locationAltitude,
+    @NotNull LocalDateTime estimatedTime, Long relatedCaseId) implements Serializable {
 }

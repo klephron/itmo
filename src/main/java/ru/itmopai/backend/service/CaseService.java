@@ -14,6 +14,7 @@ import ru.itmopai.backend.repository.IncidentRepository;
 import ru.itmopai.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Singleton
@@ -63,6 +64,10 @@ public class CaseService {
     partialUpdate.setUpdatedAt(LocalDateTime.now());
     partialUpdate.setUpdator(userEntity);
     return caseRepository.update(partialUpdate);
+  }
+
+  public List<CaseEntity> getAllCasesByUserId(Long userId) {
+    return caseRepository.findAllByCreatorId(userId);
   }
 
 }

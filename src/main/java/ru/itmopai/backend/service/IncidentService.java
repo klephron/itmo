@@ -70,10 +70,9 @@ public class IncidentService {
     return incidentRepository.findAll();
   }
 
-  @Transactional(readOnly = true)
-  public IncidentDto getIncident(Long id) throws NoSuchElementException {
-    IncidentEntity incidentEntity = incidentRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Incident Not Found"));
-    return incidentMapper.toDto(incidentEntity);
+  public IncidentEntity getIncident(Long id) throws NoSuchElementException {
+    return incidentRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("Incident Not Found"));
   }
 
   public void deleteIncident(Long id) {

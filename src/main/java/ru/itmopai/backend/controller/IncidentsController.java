@@ -130,7 +130,8 @@ public class IncidentsController {
   @Get("/{id}")
   public HttpResponse<?> getIncident(@PathVariable @NotNull Long id) {
     try {
-      return HttpResponse.ok(incidentService.getIncident(id));
+      IncidentDto dto = incidentMapper.toDto(incidentService.getIncident(id));
+      return HttpResponse.ok(dto);
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound().body(e.getMessage());
     }
