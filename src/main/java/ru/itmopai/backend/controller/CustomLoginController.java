@@ -50,7 +50,7 @@ public class CustomLoginController {
       SignedJWT jwt = SignedJWT.parse(token.getAccessToken());
       Date issued = jwt.getJWTClaimsSet().getIssueTime();
       if (issued != null) {
-        iat = issued.toInstant().getEpochSecond();
+        iat = issued.toInstant().toEpochMilli();
       }
     } catch (Exception ignored) {}
 
