@@ -116,9 +116,13 @@ public class IncidentsController {
    * Delete incident
    */
   @Delete("/{id}")
-  public HttpResponse<Void> deleteIncident(@PathVariable @NotNull Long id) {
-    incidentService.deleteIncident(id);
-    return HttpResponse.noContent();
+  public HttpResponse<?> deleteIncident(@PathVariable @NotNull Long id) {
+    try {
+      incidentService.deleteIncident(id);
+      return HttpResponse.noContent();
+    } catch (NoSuchElementException | IllegalStateException e) {
+      return HttpResponse.badRequest().body(e.getMessage());
+    }
   }
 
   /**

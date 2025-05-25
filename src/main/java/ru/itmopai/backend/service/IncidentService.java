@@ -75,8 +75,15 @@ public class IncidentService {
         .orElseThrow(() -> new NoSuchElementException("Incident Not Found"));
   }
 
-  public void deleteIncident(Long id) {
-    incidentRepository.deleteById(id);
+  public void deleteIncident(Long id) throws NoSuchElementException, IllegalStateException {
+    IncidentEntity incidentEntity =
+        incidentRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Incident Not Found"));
+    if (incidentEntity.getRelatedCase() == null) {
+      incidentRepository.delete(incidentEntity);
+    } else {
+      throw new IllegalStateException("Incident has related case");
+    }
   }
 
 }
