@@ -39,7 +39,9 @@ useToken.subscribe(
 useClient.subscribe(
   (state) => state.client,
   (client) => {
-    console.log("client updated: ", client);
+    if (import.meta.env.DEV) {
+      console.log("client updated: ", client);
+    }
   }
 );
 

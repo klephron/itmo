@@ -59,6 +59,8 @@ useUser.subscribe(
 useUser.subscribe(
   (state) => state.user,
   (user) => {
-    console.log("user updated: ", user);
+    if (import.meta.env.DEV) {
+      console.log("user updated: ", user);
+    }
   }
 );

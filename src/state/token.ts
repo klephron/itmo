@@ -69,6 +69,8 @@ useToken.subscribe(
 useToken.subscribe(
   (state) => state.token,
   (token) => {
-    console.log("token updated: ", token);
+    if (import.meta.env.DEV) {
+      console.log("token updated: ", token);
+    }
   }
 );
