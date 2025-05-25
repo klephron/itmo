@@ -107,10 +107,11 @@ export class Incidents<
    * @secure
    */
   deleteIncident = (id: number, params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<object, any>({
       path: `/incidents/${id}`,
       method: "DELETE",
       secure: true,
+      format: "json",
       ...params,
     });
   /**

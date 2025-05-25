@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { UsernamePasswordCredentials } from "./data-contracts";
+import { LoginRequest, LoginResponse } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Login<
@@ -24,8 +24,8 @@ export class Login<
    * @request POST:/login
    * @secure
    */
-  login = (data: UsernamePasswordCredentials, params: RequestParams = {}) =>
-    this.request<object, any>({
+  login = (data: LoginRequest, params: RequestParams = {}) =>
+    this.request<LoginResponse, any>({
       path: `/login`,
       method: "POST",
       body: data,

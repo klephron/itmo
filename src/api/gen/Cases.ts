@@ -10,6 +10,7 @@
  * ---------------------------------------------------------------
  */
 
+import { CaseDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Cases<
@@ -25,7 +26,7 @@ export class Cases<
    * @secure
    */
   getCase = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<CaseDto, any>({
       path: `/cases/${id}`,
       method: "GET",
       secure: true,

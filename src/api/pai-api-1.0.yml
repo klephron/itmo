@@ -25,7 +25,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/CaseDto"
+      security:
+      - bearerAuth: []
   /cases/{id}/clues:
     get:
       tags:
@@ -47,6 +49,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
     post:
       tags:
       - cases
@@ -73,6 +77,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
   /cases/{id}/templates:
     get:
       tags:
@@ -94,6 +100,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
     post:
       tags:
       - cases
@@ -120,6 +128,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
   /clues/{id}:
     get:
       tags:
@@ -293,6 +303,10 @@ paths:
       responses:
         "200":
           description: deleteIncident 200 response
+          content:
+            application/json:
+              schema:
+                type: object
       security:
       - bearerAuth: []
   /incidents/{id}/case:
@@ -359,12 +373,9 @@ paths:
       operationId: login
       requestBody:
         content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: "#/components/schemas/UsernamePasswordCredentials"
           application/json:
             schema:
-              $ref: "#/components/schemas/UsernamePasswordCredentials"
+              $ref: "#/components/schemas/LoginRequest"
         required: true
       responses:
         "200":
@@ -372,7 +383,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/LoginResponse"
   /notifications:
     get:
       tags:
@@ -789,6 +800,12 @@ paths:
       responses:
         "200":
           description: getUserCases 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseMainInfoDto"
       security:
       - bearerAuth: []
   /users/{id}/location:
@@ -877,6 +894,7 @@ components:
       required:
       - description
       - title
+      - users
       type: object
       properties:
         title:
@@ -884,6 +902,11 @@ components:
           type: string
         description:
           type: string
+        users:
+          type: object
+          additionalProperties:
+            minLength: 1
+            type: string
     AddUpdateIncidentRequest:
       required:
       - applicant
@@ -915,6 +938,72 @@ components:
         estimatedTime:
           type: string
           format: date-time
+    CaseDto:
+      required:
+      - createdAt
+      - status
+      - title
+      - updatedAt
+      - users
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/CaseEntity.Status"
+        incidentId:
+          type: integer
+          format: int64
+        users:
+          type: object
+          additionalProperties:
+            minLength: 1
+            type: string
+      description: DTO for ru.itmopai.backend.entity.CaseEntity
+    CaseEntity.Status:
+      type: string
+      enum:
+      - OPENED
+      - FROZEN
+      - CLOSED
+      - REJECTED
+    CaseMainInfoDto:
+      required:
+      - description
+      - id
+      - status
+      - title
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseEntity.Status"
+      description: DTO for ru.itmopai.backend.entity.CaseEntity
     IncidentMainInfoDto:
       required:
       - applicant
@@ -967,6 +1056,41 @@ components:
         altitude:
           type: number
           format: double
+    LoginRequest:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginResponse:
+      required:
+      - accessToken
+      - expiresIn
+      - iat
+      - id
+      - refreshToken
+      - username
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          format: int32
+        username:
+          type: string
+        id:
+          type: integer
+          format: int64
+        iat:
+          type: integer
+          format: int64
     NotificationsController.Status:
       type: string
       enum:
@@ -1001,6 +1125,7 @@ components:
       - description
       - status
       - title
+      - users
       type: object
       properties:
         title:
@@ -1011,12 +1136,20 @@ components:
         status:
           minLength: 1
           type: string
+        users:
+          type: object
+          additionalProperties:
+            minLength: 1
+            type: string
     UserDto:
       required:
       - id
       - locationAltitude
       - locationLatitude
       - locationLongitude
+      - name
+      - patronymic
+      - surname
       - username
       type: object
       properties:
@@ -1025,6 +1158,14 @@ components:
           format: int64
         username:
           minLength: 1
+          type: string
+        name:
+          minLength: 1
+          type: string
+        surname:
+          minLength: 1
+          type: string
+        patronymic:
           type: string
         locationLatitude:
           type: number
@@ -1064,26 +1205,6 @@ components:
           type: array
           items:
             type: string
-    UsernamePasswordCredentials:
-      required:
-      - password
-      - username
-      type: object
-      properties:
-        username:
-          minLength: 1
-          type: string
-          nullable: true
-        password:
-          minLength: 1
-          type: string
-          nullable: true
-        identity:
-          type: string
-          nullable: true
-        secret:
-          type: string
-          nullable: true
   securitySchemes:
     bearerAuth:
       type: http

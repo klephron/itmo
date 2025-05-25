@@ -1,11 +1,11 @@
-import { Link } from "react-router";
-import LoginPage from "./login";
+import { useUser } from "@state/user";
 
 export default function IndexPage() {
+  const user = useUser((state) => state.user);
   return (
     <>
       <p>
-        You've been logged out. <Link to="/login">Login again</Link>
+        Index page for user: {user.username} with permissions: {JSON.stringify(user.permissions)}
       </p>
     </>
   );

@@ -11,6 +11,7 @@
  */
 
 import {
+  CaseMainInfoDto,
   LocationUpdateRequest,
   RegisterRequest,
   UserDto,
@@ -102,10 +103,11 @@ export class Users<
    * @secure
    */
   getUserCases = (id: number, params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<CaseMainInfoDto[], any>({
       path: `/users/${id}/cases`,
       method: "GET",
       secure: true,
+      format: "json",
       ...params,
     });
   /**

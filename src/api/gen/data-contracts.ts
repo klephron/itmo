@@ -16,10 +16,18 @@ export enum NotificationsControllerStatus {
   ALL = "ALL",
 }
 
+export enum CaseEntityStatus {
+  OPENED = "OPENED",
+  FROZEN = "FROZEN",
+  CLOSED = "CLOSED",
+  REJECTED = "REJECTED",
+}
+
 export interface AddCaseRequest {
   /** @minLength 1 */
   title: string;
   description: string;
+  users: Record<string, string>;
 }
 
 export interface AddUpdateIncidentRequest {
@@ -36,6 +44,37 @@ export interface AddUpdateIncidentRequest {
   locationAltitude: number;
   /** @format date-time */
   estimatedTime: string;
+}
+
+/** DTO for ru.itmopai.backend.entity.CaseEntity */
+export interface CaseDto {
+  /** @format int64 */
+  id?: number;
+  /** @minLength 1 */
+  title: string;
+  description?: string;
+  /** @format int64 */
+  creatorId?: number;
+  /** @format date-time */
+  createdAt: string;
+  /** @format int64 */
+  updatorId?: number;
+  /** @format date-time */
+  updatedAt: string;
+  status: CaseEntityStatus;
+  /** @format int64 */
+  incidentId?: number;
+  users: Record<string, string>;
+}
+
+/** DTO for ru.itmopai.backend.entity.CaseEntity */
+export interface CaseMainInfoDto {
+  /** @format int64 */
+  id: number;
+  /** @minLength 1 */
+  title: string;
+  description: string;
+  status: CaseEntityStatus;
 }
 
 /** DTO for ru.itmopai.backend.entity.IncidentEntity */
@@ -66,6 +105,23 @@ export interface LocationUpdateRequest {
   altitude: number;
 }
 
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  /** @format int32 */
+  expiresIn: number;
+  username: string;
+  /** @format int64 */
+  id: number;
+  /** @format int64 */
+  iat: number;
+}
+
 export interface RegisterRequest {
   /** @minLength 1 */
   username: string;
@@ -84,6 +140,7 @@ export interface UpdateCaseRequest {
   description: string;
   /** @minLength 1 */
   status: string;
+  users: Record<string, string>;
 }
 
 export interface UserDto {
@@ -91,6 +148,11 @@ export interface UserDto {
   id: number;
   /** @minLength 1 */
   username: string;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  surname: string;
+  patronymic: string;
   /** @format double */
   locationLatitude: number;
   /** @format double */
@@ -111,13 +173,4 @@ export interface UserPermissionsRequest {
 
 export interface UserPermissionsResponse {
   permissions: string[];
-}
-
-export interface UsernamePasswordCredentials {
-  /** @minLength 1 */
-  username: string | null;
-  /** @minLength 1 */
-  password: string | null;
-  identity?: string | null;
-  secret?: string | null;
 }

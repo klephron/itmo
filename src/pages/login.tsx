@@ -1,42 +1,78 @@
-import { useEffect, useState } from "react";
-import reactLogo from "@assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./login.scss";
+import { useState } from "react";
 import { useClient } from "@state/client";
+import { useUser } from "@state/user";
+import { useNavigate } from "react-router";
+
+import { useToken } from "@state/token";
+
+import styles from "./login.module.scss";
 
 export default function LoginPage() {
-  const [count, setCount] = useState(0);
+  const navigate = useNavigate();
+
   const client = useClient((state) => state.client);
 
-  // useEffect(() => {
-  //   client.test.register({
-  //     username: "string",
-  //     password: "string",
-  //     name: "string",
-  //     surname: "string",
-  //     patronymic: "string",
-  //   });
-  // });
+  const setUser = useUser((state) => state.update);
+
+  const setToken = useToken((state) => state.update);
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  function login(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    e.preventDefault();
+
+    client.auth
+      .login({
+        username: username,
+        password: password,
+      })
+      .then((r) =>
+        r.json().then((data) => {
+          setUser({
+            id: Number(data["id"]),
+            username: data["username"],
+            permissions: new Set<string>(),
+          });
+
+          setToken({
+            accessToken: data["accessToken"],
+            refreshToken: data["refreshToken"],
+            tokenType: "Bearer",
+            issueAtMS: Number(data["iat"]),
+            expiresInMS: Number(data["expiresIn"]) * 1000,
+          });
+
+          navigate("/");
+        })
+      )
+      .catch(async (e) => {
+        switch (e.status) {
+          case 401:
+            alert("Login failed");
+            break;
+          default:
+            alert(await e.json());
+        }
+      });
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className={styles.root}>
+        <div>ITMO PAI</div>
+        <form>
+          <div>
+            <label>Username:</label>
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+          </div>
+          <div>
+            <label>Password:</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <button onClick={login}>Login</button>
+        </form>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-        <p>SERVER_URL: {import.meta.env.VITE_SERVER_URL}</p>
-      </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
     </>
   );
 }
