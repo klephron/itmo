@@ -104,7 +104,8 @@ public class IncidentsController {
       CaseEntity caseEntity =
           caseService.updateCase(userId, id, updateCaseRequest.title(),
               updateCaseRequest.description(),
-              CaseEntity.Status.valueOf(updateCaseRequest.status()),
+              updateCaseRequest.status() == null ? null
+                  : CaseEntity.Status.valueOf(updateCaseRequest.status()),
               updateCaseRequest.users());
       return HttpResponse.ok(caseMapper.toDto(caseEntity));
     } catch (NoSuchElementException | IllegalArgumentException e) {
