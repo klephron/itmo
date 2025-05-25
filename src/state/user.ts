@@ -31,7 +31,7 @@ function localStorageGet() {
 }
 
 function localStorageSet(user: User) {
-  console.log("before User set", user)
+  console.log("before User set", user);
   localStorage.setItem(
     LocalStorageKeys.USER,
     JSON.stringify({
@@ -40,7 +40,7 @@ function localStorageSet(user: User) {
       permissions: Array.from(user.permissions),
     })
   );
-  console.log("after User set", user)
+  console.log("after User set", user);
 }
 
 export const useUser = create(
