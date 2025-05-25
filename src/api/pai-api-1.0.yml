@@ -200,7 +200,11 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  $ref: "#/components/schemas/IncidentMainInfoDto"
+      security:
+      - bearerAuth: []
     post:
       tags:
       - incidents
@@ -211,7 +215,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/AddUpdateIncidentRequest"
         required: true
       responses:
         "200":
@@ -220,6 +224,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
   /incidents/{id}:
     get:
       tags:
@@ -241,6 +247,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
     put:
       tags:
       - incidents
@@ -258,7 +266,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/AddUpdateIncidentRequest"
         required: true
       responses:
         "200":
@@ -267,6 +275,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - incidents
@@ -283,10 +293,8 @@ paths:
       responses:
         "200":
           description: deleteIncident 200 response
-          content:
-            application/json:
-              schema:
-                type: object
+      security:
+      - bearerAuth: []
   /incidents/{id}/case:
     put:
       tags:
@@ -305,7 +313,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/UpdateCaseRequest"
         required: true
       responses:
         "200":
@@ -314,6 +322,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
     post:
       tags:
       - incidents
@@ -331,7 +341,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/AddCaseRequest"
         required: true
       responses:
         "200":
@@ -340,6 +350,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
   /login:
     post:
       tags:
@@ -861,6 +873,84 @@ paths:
       - bearerAuth: []
 components:
   schemas:
+    AddCaseRequest:
+      required:
+      - description
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+    AddUpdateIncidentRequest:
+      required:
+      - applicant
+      - estimatedTime
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - reason
+      - type
+      type: object
+      properties:
+        applicant:
+          type: string
+        type:
+          minLength: 1
+          type: string
+        reason:
+          minLength: 1
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+        estimatedTime:
+          type: string
+          format: date-time
+    IncidentMainInfoDto:
+      required:
+      - applicant
+      - estimatedTime
+      - id
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - reason
+      - type
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        applicant:
+          type: string
+        type:
+          minLength: 1
+          type: string
+        reason:
+          minLength: 1
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+        estimatedTime:
+          type: string
+          format: date-time
+      description: DTO for ru.itmopai.backend.entity.IncidentEntity
     LocationUpdateRequest:
       required:
       - altitude
@@ -893,14 +983,33 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
         password:
+          minLength: 1
           type: string
         name:
+          minLength: 1
           type: string
         surname:
+          minLength: 1
           type: string
         patronymic:
+          type: string
+    UpdateCaseRequest:
+      required:
+      - description
+      - status
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        status:
+          minLength: 1
           type: string
     UserDto:
       required:

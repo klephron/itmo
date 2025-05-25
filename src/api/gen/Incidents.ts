@@ -10,6 +10,12 @@
  * ---------------------------------------------------------------
  */
 
+import {
+  AddCaseRequest,
+  AddUpdateIncidentRequest,
+  IncidentMainInfoDto,
+  UpdateCaseRequest,
+} from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Incidents<
@@ -25,7 +31,7 @@ export class Incidents<
    * @secure
    */
   getIncidents = (params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<IncidentMainInfoDto[], any>({
       path: `/incidents`,
       method: "GET",
       secure: true,
@@ -41,7 +47,7 @@ export class Incidents<
    * @request POST:/incidents
    * @secure
    */
-  addIncident = (data: object, params: RequestParams = {}) =>
+  addIncident = (data: AddUpdateIncidentRequest, params: RequestParams = {}) =>
     this.request<object, any>({
       path: `/incidents`,
       method: "POST",
@@ -77,7 +83,11 @@ export class Incidents<
    * @request PUT:/incidents/{id}
    * @secure
    */
-  updateIncident = (id: number, data: object, params: RequestParams = {}) =>
+  updateIncident = (
+    id: number,
+    data: AddUpdateIncidentRequest,
+    params: RequestParams = {},
+  ) =>
     this.request<object, any>({
       path: `/incidents/${id}`,
       method: "PUT",
@@ -97,11 +107,10 @@ export class Incidents<
    * @secure
    */
   deleteIncident = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<void, any>({
       path: `/incidents/${id}`,
       method: "DELETE",
       secure: true,
-      format: "json",
       ...params,
     });
   /**
@@ -115,7 +124,7 @@ export class Incidents<
    */
   updateCaseForIncident = (
     id: number,
-    data: object,
+    data: UpdateCaseRequest,
     params: RequestParams = {},
   ) =>
     this.request<object, any>({
@@ -136,7 +145,11 @@ export class Incidents<
    * @request POST:/incidents/{id}/case
    * @secure
    */
-  addCaseForIncident = (id: number, data: object, params: RequestParams = {}) =>
+  addCaseForIncident = (
+    id: number,
+    data: AddCaseRequest,
+    params: RequestParams = {},
+  ) =>
     this.request<object, any>({
       path: `/incidents/${id}/case`,
       method: "POST",
