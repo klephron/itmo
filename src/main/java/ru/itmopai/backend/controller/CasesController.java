@@ -1,21 +1,24 @@
 package ru.itmopai.backend.controller;
 
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.dto.CaseDto;
+import ru.itmopai.backend.dto.ClueMainInfoDto;
+import ru.itmopai.backend.dto.request.AddUpdateClueRequest;
 import ru.itmopai.backend.entity.CaseEntity;
+import ru.itmopai.backend.entity.ClueEntity;
 import ru.itmopai.backend.mapper.CaseMapper;
+import ru.itmopai.backend.mapper.ClueMainInfoMapper;
 import ru.itmopai.backend.service.CaseService;
-
-import java.util.NoSuchElementException;
+import ru.itmopai.backend.service.ClueService;
 
 @Controller("/cases")
 @RequiredArgsConstructor
@@ -23,6 +26,8 @@ import java.util.NoSuchElementException;
 public class CasesController {
   private final CaseService caseService;
   private final CaseMapper caseMapper;
+  private final ClueService clueService;
+  private final ClueMainInfoMapper clueMainInfoMapper;
 
   /**
    * Get case
@@ -50,8 +55,8 @@ public class CasesController {
    * Get case clues
    */
   @Get("/{id}/clues")
-  public HttpResponse<Object> getCaseClues(@PathVariable @NotNull Long id) {
-    return HttpResponse.ok();
+  public HttpResponse<List<ClueMainInfoDto>> getCaseClues(@PathVariable @NotNull Long id) {
+    return HttpResponse.ok(clueMainInfoMapper.toDto(clueService.getAllClueByCase(id)));
   }
 
   /**
@@ -67,7 +72,20 @@ public class CasesController {
    * Add case clue
    */
   @Post("/{id}/clues")
-  public HttpResponse<Object> addCaseClue(@PathVariable @NotNull Long id, @Body Object caseClue) {
-    return HttpResponse.ok();
+  public HttpResponse<?> addCaseClue(@PathVariable @NotNull Long id,
+      @Body AddUpdateClueRequest addUpdateClueRequest, Authentication authentication) {
+    Long userId = (Long) authentication.getAttributes().get("id");
+    try {
+      ClueEntity clueEntity =
+          clueService.addClue(userId,
+              addUpdateClueRequest.title(),
+              addUpdateClueRequest.description(),
+              addUpdateClueRequest.status() == null ? null
+                  : ClueEntity.Status.valueOf(addUpdateClueRequest.status()),
+              id);
+      return HttpResponse.ok(clueMainInfoMapper.toDto(clueEntity));
+    } catch (NoSuchElementException | IllegalArgumentException e) {
+      return HttpResponse.notFound().body(e.getMessage());
+    }
   }
 }
