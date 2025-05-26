@@ -9,7 +9,7 @@ mpi/
 └── nginx/
     ├── access.log
     ├── error.log
-    ├── html/
+    ├── html/ <- here goes static application
     ├── mime.types
     ├── nginx.conf
     ├── nginx.log
@@ -29,12 +29,45 @@ Start Nginx after installing frontend application in html directory:
 nginx -c $(pwd)/nginx.conf -e $(pwd)/nginx.log
 ```
 
+Update config paths if needed.
+
 ## Backend
 
 Start application:
 
 ```sh
-java -jar backend-0.1-all-optimized.jar
+DATASOURCES_DEFAULT_URL="jdbc:postgresql://localhost:5432/studs" DATASOURCES_DEFAULT_USERNAME="<username>" DATASOURCES_DEFAULT_PASSWORD="<password>" MICRONAUT_SERVER_PORT=7622 java -jar backend-0.1-all-optimized.jar
 ```
 
-Native builds currently are not supported.
+Native builds are currently not supported.
+
+## Tunneling
+
+```sh
+ssh -p 443 -R0:localhost:762 a.pinggy.io
+```
+
+> - `ngrok` ip is in blacklist
+> - `vk-tunnel` doesn't work
+> - `localtunnel` is not supported by FreeBSD
+
+No installation required. Use server url to build frontend application. For example:
+
+```
+https://rnvlk-77-234-196-15.a.free.pinggy.link
+```
+
+```sh
+sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://rnvlk-77-234-196-15.a.free.pinggy.link/api|' .env.production
+pnpm run build
+tar cvf frontend.tar -C build/client .
+scp -P 2222 frontend.tar s312563@helios:/home/studs/s312563/works/mpi
+```
+
+And on helios:
+
+```sh
+pwd
+/home/studs/s312563/works/mpi
+[s312563@helios ~/works/mpi]$ tar xvf frontend.tar -C nginx/html/
+```
