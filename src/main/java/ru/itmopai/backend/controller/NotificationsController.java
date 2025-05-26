@@ -5,15 +5,15 @@ import java.time.LocalDateTime;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Delete;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.Put;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.*;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 
 @Controller("/notifications")
+@AllArgsConstructor
+@Secured(SecurityRule.IS_AUTHENTICATED)
 public class NotificationsController {
 
   /**

@@ -12,13 +12,19 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.dto.CaseDto;
 import ru.itmopai.backend.dto.ClueMainInfoDto;
+import ru.itmopai.backend.dto.TemplateMainInfoDto;
+import ru.itmopai.backend.dto.request.AddTemplateRequest;
 import ru.itmopai.backend.dto.request.AddUpdateClueRequest;
 import ru.itmopai.backend.entity.CaseEntity;
 import ru.itmopai.backend.entity.ClueEntity;
+import ru.itmopai.backend.entity.TemplateEntity;
 import ru.itmopai.backend.mapper.CaseMapper;
 import ru.itmopai.backend.mapper.ClueMainInfoMapper;
+import ru.itmopai.backend.mapper.TemplateMainInfoMapper;
+import ru.itmopai.backend.mapper.TemplateMapper;
 import ru.itmopai.backend.service.CaseService;
 import ru.itmopai.backend.service.ClueService;
+import ru.itmopai.backend.service.TemplateService;
 
 @Controller("/cases")
 @RequiredArgsConstructor
@@ -28,6 +34,9 @@ public class CasesController {
   private final CaseMapper caseMapper;
   private final ClueService clueService;
   private final ClueMainInfoMapper clueMainInfoMapper;
+  private final TemplateService templateService;
+  private final TemplateMapper templateMapper;
+  private final TemplateMainInfoMapper templateMainInfoMapper;
 
   /**
    * Get case
@@ -47,8 +56,8 @@ public class CasesController {
    * Get case templates
    */
   @Get("/{id}/templates")
-  public HttpResponse<Object> getCaseTemplates(@PathVariable @NotNull Long id) {
-    return HttpResponse.ok();
+  public HttpResponse<List<TemplateMainInfoDto>> getCaseTemplates(@PathVariable @NotNull Long id) {
+    return HttpResponse.ok(templateMainInfoMapper.toDto(templateService.getTemplatesByCaseId(id)));
   }
 
   /**
@@ -63,9 +72,17 @@ public class CasesController {
    * Add case template
    */
   @Post("/{id}/templates")
-  public HttpResponse<Object> addCaseTemplate(@PathVariable @NotNull Long id,
-      @Body Object caseTemplate) {
-    return HttpResponse.ok();
+  public HttpResponse<?> addCaseTemplate(@PathVariable @NotNull Long id,
+      @Body AddTemplateRequest addTemplateRequest, Authentication authentication) {
+    Long userId = (Long) authentication.getAttributes().get("id");
+    try {
+      TemplateEntity templateEntity =
+          templateService.addTemplate(userId, id, addTemplateRequest.title(),
+              addTemplateRequest.metadata(), addTemplateRequest.description());
+      return HttpResponse.ok(templateMapper.toDto(templateEntity));
+    } catch (NoSuchElementException | IllegalArgumentException e) {
+      return HttpResponse.notFound().body(e.getMessage());
+    }
   }
 
   /**

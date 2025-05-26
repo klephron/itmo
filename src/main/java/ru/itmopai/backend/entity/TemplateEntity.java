@@ -3,27 +3,12 @@ package ru.itmopai.backend.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.serde.annotation.Serdeable;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
@@ -61,7 +46,6 @@ public class TemplateEntity {
   private String title;
 
   @NotNull
-  @NotEmpty
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private Status status;
@@ -97,14 +81,13 @@ public class TemplateEntity {
   }
 
   @EqualsAndHashCode
+  @Introspected
+  @Serdeable
+  @Getter
+  @Setter
   public static class Metadata {
-    @JsonProperty("clueIds")
-    public List<Long> clueIds;
-
-    @JsonProperty("suspectIds")
-    public List<Long> suspectIds;
-
-    @JsonProperty("employeeIds")
-    public List<Long> employeeIds;
+    private List<Long> clueIds;
+    private List<Long> suspectIds;
+    private List<Long> employeeIds;
   }
 }

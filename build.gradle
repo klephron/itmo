@@ -28,6 +28,7 @@ dependencies {
   runtimeOnly("io.jsonwebtoken:jjwt-api")
   runtimeOnly("io.jsonwebtoken:jjwt-impl")
   runtimeOnly("io.jsonwebtoken:jjwt-jackson")
+  implementation("io.micronaut:micronaut-jackson-databind")
   implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
   implementation("io.micronaut.sql:micronaut-jdbc-hikari")
   runtimeOnly("org.postgresql:postgresql")
