@@ -21,7 +21,7 @@ mpi/
         └── uwsgi_temp/
 ```
 
-## Frontend
+## Nginx
 
 Start Nginx after installing frontend application in html directory:
 
@@ -32,16 +32,6 @@ nginx -c $(pwd)/nginx.conf -e $(pwd)/nginx.log
 > IMPORTANT!
 > 1. Update `nginx.conf` paths if needed. Current project prefix is `/home/studs/s312563/works/mpi`.
 > 2. Ensure `nginx/temp` directory exists.
-
-## Backend
-
-Start application:
-
-```sh
-DATASOURCES_DEFAULT_URL="jdbc:postgresql://localhost:5432/studs" DATASOURCES_DEFAULT_USERNAME="<username>" DATASOURCES_DEFAULT_PASSWORD="<password>" MICRONAUT_SERVER_PORT=7622 java -jar backend-0.1-all-optimized.jar
-```
-
-Native builds are currently not supported.
 
 ## Tunneling
 
@@ -58,6 +48,34 @@ No installation required. Use server url to build frontend application. For exam
 ```
 https://rnvlk-77-234-196-15.a.free.pinggy.link
 ```
+
+> See Backend and Frontend for additional details.
+
+## Backend
+
+Build application:
+
+```sh
+./gradlew build
+```
+
+Install application:
+
+```sh
+scp -P 2222 build/libs/backend-0.1-all-optimized.jar s312563@helios:/home/studs/s312563/works/mpi
+```
+
+Start application on helios:
+
+```sh
+DATASOURCES_DEFAULT_URL="jdbc:postgresql://localhost:5432/studs" DATASOURCES_DEFAULT_USERNAME="<username>" DATASOURCES_DEFAULT_PASSWORD="<password>" MICRONAUT_SERVER_PORT=7622 java -jar backend-0.1-all-optimized.jar
+```
+
+Native builds are currently not supported.
+
+## Frontend
+
+Use earlier received URL to configure `VITE_SERVER_URL`:
 
 ```sh
 sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://rnvlk-77-234-196-15.a.free.pinggy.link/api|' .env.production
