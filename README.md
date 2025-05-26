@@ -3,14 +3,10 @@
 Project structure:
 
 ```
-/home/studs/s312563/works/mpi/
-├── backend/
-│   ├── backend-0.1-all-optimized.jar
-│   ├── backend-0.1-all.jar
-│   ├── backend-0.1-native.jar
-│   ├── backend-0.1-optimized-runner.jar
-│   └── backend-0.1.jar
-└── frontend/
+mpi/
+├── backend-0.1-all-optimized.jar
+├── frontend.tar
+└── nginx/
     ├── access.log
     ├── error.log
     ├── html/
@@ -18,6 +14,11 @@ Project structure:
     ├── nginx.conf
     ├── nginx.log
     └── temp/
+        ├── client_body_temp/
+        ├── fastcgi_temp/
+        ├── proxy_temp/
+        ├── scgi_temp/
+        └── uwsgi_temp/
 ```
 
 ## Frontend
