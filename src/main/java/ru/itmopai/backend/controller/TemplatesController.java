@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.request.UpdateTemplateRequest;
 import ru.itmopai.backend.entity.TemplateEntity;
 import ru.itmopai.backend.mapper.TemplateMapper;
+import ru.itmopai.backend.service.NotificationService;
 import ru.itmopai.backend.service.TemplateService;
 
 @Controller("/templates")
@@ -20,6 +21,7 @@ import ru.itmopai.backend.service.TemplateService;
 public class TemplatesController {
   private final TemplateService templateService;
   private final TemplateMapper templateMapper;
+  private final NotificationService notificationService;
 
   /**
    * Get template
@@ -46,6 +48,9 @@ public class TemplatesController {
               updateTemplateRequest.status() == null ? null
                   : TemplateEntity.Status.valueOf(updateTemplateRequest.status()),
               updateTemplateRequest.metadata(), updateTemplateRequest.description());
+      notificationService.addNotification(userId, "PAI Notification",
+          "Template %s updated in #%d case".formatted(updateTemplateRequest.title(),
+              templateEntity.getRelatedCase().getId()));
       return HttpResponse.ok(templateMapper.toDto(templateEntity));
     } catch (NoSuchElementException | IllegalArgumentException e) {
       return HttpResponse.notFound().body(e.getMessage());
@@ -56,8 +61,12 @@ public class TemplatesController {
    * Delete template
    */
   @Delete("/{id}")
-  public HttpResponse<Void> deleteTemplate(@PathVariable @NotNull Long id) {
+  public HttpResponse<Void> deleteTemplate(@PathVariable @NotNull Long id,
+      Authentication authentication) {
+    Long userId = (Long) authentication.getAttributes().get("id");
     templateService.deleteTemplate(id);
+    notificationService.addNotification(userId, "PAI Notification",
+        "Template #%d deleted".formatted(id));
     return HttpResponse.ok();
   }
 
@@ -65,8 +74,15 @@ public class TemplatesController {
    * Publish template in Central Database
    */
   @Post("/{id}/cdb")
-  public HttpResponse<Object> addTemplateToCDB(@PathVariable @NotNull Long id) {
-    return HttpResponse.ok();
+  public HttpResponse<Object> addTemplateToCDB(@PathVariable @NotNull Long id,
+      Authentication authentication) {
+    Long userId = (Long) authentication.getAttributes().get("id");
+    try {
+      TemplateEntity template = templateService.getTemplate(id);
+      return HttpResponse.ok(templateService.updateTemplate(userId, id, template.getTitle(),
+          TemplateEntity.Status.CDB_ADDED, template.getMetadata(), template.getDescription()));
+    } catch (NoSuchElementException e) {
+      return HttpResponse.notFound().body(e.getMessage());
+    }
   }
-
 }

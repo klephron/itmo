@@ -24,6 +24,7 @@ import ru.itmopai.backend.mapper.TemplateMainInfoMapper;
 import ru.itmopai.backend.mapper.TemplateMapper;
 import ru.itmopai.backend.service.CaseService;
 import ru.itmopai.backend.service.ClueService;
+import ru.itmopai.backend.service.NotificationService;
 import ru.itmopai.backend.service.TemplateService;
 
 @Controller("/cases")
@@ -37,6 +38,7 @@ public class CasesController {
   private final TemplateService templateService;
   private final TemplateMapper templateMapper;
   private final TemplateMainInfoMapper templateMainInfoMapper;
+  private final NotificationService notificationService;
 
   /**
    * Get case
@@ -79,6 +81,9 @@ public class CasesController {
       TemplateEntity templateEntity =
           templateService.addTemplate(userId, id, addTemplateRequest.title(),
               addTemplateRequest.metadata(), addTemplateRequest.description());
+      notificationService.addNotification(userId, "PAI Notification",
+          "Template %s added to #%d case".formatted(addTemplateRequest.title(),
+              templateEntity.getRelatedCase().getId()));
       return HttpResponse.ok(templateMapper.toDto(templateEntity));
     } catch (NoSuchElementException | IllegalArgumentException e) {
       return HttpResponse.notFound().body(e.getMessage());
@@ -100,6 +105,9 @@ public class CasesController {
               addUpdateClueRequest.status() == null ? null
                   : ClueEntity.Status.valueOf(addUpdateClueRequest.status()),
               id);
+      notificationService.addNotification(userId, "PAI Notification",
+          "Clue %s added to #%d case".formatted(addUpdateClueRequest.title(),
+              clueEntity.getRelatedCase().getId()));
       return HttpResponse.ok(clueMainInfoMapper.toDto(clueEntity));
     } catch (NoSuchElementException | IllegalArgumentException e) {
       return HttpResponse.notFound().body(e.getMessage());

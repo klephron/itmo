@@ -15,6 +15,7 @@ import ru.itmopai.backend.entity.ClueEntity;
 import ru.itmopai.backend.mapper.ClueMainInfoMapper;
 import ru.itmopai.backend.mapper.ClueMapper;
 import ru.itmopai.backend.service.ClueService;
+import ru.itmopai.backend.service.NotificationService;
 
 @Controller("/clues")
 @AllArgsConstructor
@@ -23,6 +24,7 @@ public class CluesController {
   private final ClueService clueService;
   private final ClueMainInfoMapper clueMainInfoMapper;
   private final ClueMapper clueMapper;
+  private final NotificationService notificationService;
 
   /**
    * Get clue
@@ -48,6 +50,9 @@ public class CluesController {
           clueService.updateClue(userId, id, addUpdateClueRequest.title(),
               addUpdateClueRequest.description(), addUpdateClueRequest.status() == null ? null
                   : ClueEntity.Status.valueOf(addUpdateClueRequest.status()));
+      notificationService.addNotification(userId, "PAI Notification",
+          "Clue %s updated in #%d case".formatted(addUpdateClueRequest.title(),
+              clueEntity.getRelatedCase().getId()));
       return HttpResponse.ok(clueMapper.toDto(clueEntity));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound();
@@ -58,8 +63,12 @@ public class CluesController {
    * Delete clue
    */
   @Delete("/{id}")
-  public HttpResponse<Object> deleteClue(@PathVariable @NotNull Long id) {
+  public HttpResponse<Object> deleteClue(@PathVariable @NotNull Long id,
+      Authentication authentication) {
+    Long userId = (Long) authentication.getAttributes().get("id");
     clueService.deleteClue(id);
+    notificationService.addNotification(userId, "PAI Notification",
+        "Clue #%d deleted".formatted(id));
     return HttpResponse.noContent();
   }
 
