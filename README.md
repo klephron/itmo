@@ -29,7 +29,9 @@ Start Nginx after installing frontend application in html directory:
 nginx -c $(pwd)/nginx.conf -e $(pwd)/nginx.log
 ```
 
-Update config paths if needed.
+> IMPORTANT!
+> 1. Update `nginx.conf` paths if needed. Current project prefix is `/home/studs/s312563/works/mpi`.
+> 2. Ensure `nginx/temp` directory exists.
 
 ## Backend
 
