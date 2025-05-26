@@ -16,6 +16,12 @@ export enum NotificationsControllerStatus {
   ALL = "ALL",
 }
 
+export enum ClueEntityStatus {
+  ACCEPTED = "ACCEPTED",
+  REJECTED = "REJECTED",
+  PENDING = "PENDING",
+}
+
 export enum CaseEntityStatus {
   OPENED = "OPENED",
   FROZEN = "FROZEN",
@@ -28,6 +34,15 @@ export interface AddCaseRequest {
   title: string;
   description: string;
   users: Record<string, string>;
+}
+
+export interface AddUpdateClueRequest {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  description: string;
+  /** @minLength 1 */
+  status: string;
 }
 
 export interface AddUpdateIncidentRequest {
@@ -77,6 +92,37 @@ export interface CaseMainInfoDto {
   status: CaseEntityStatus;
 }
 
+/** DTO for ru.itmopai.backend.entity.ClueEntity */
+export interface ClueDto {
+  /** @format int64 */
+  id: number;
+  /** @format int64 */
+  creatorId: number;
+  /** @format date-time */
+  createdAt: string;
+  /** @format int64 */
+  updatorId: number;
+  /** @format date-time */
+  updatedAt: string;
+  /** @minLength 1 */
+  title: string;
+  description: string;
+  status: ClueEntityStatus;
+  metadata: string;
+  /** @format int64 */
+  relatedCaseId: number;
+}
+
+/** DTO for ru.itmopai.backend.entity.ClueEntity */
+export interface ClueMainInfoDto {
+  /** @format int64 */
+  id: number;
+  /** @minLength 1 */
+  title: string;
+  description: string;
+  status: ClueEntityStatus;
+}
+
 /** DTO for ru.itmopai.backend.entity.IncidentEntity */
 export interface IncidentMainInfoDto {
   /** @format int64 */
@@ -106,7 +152,9 @@ export interface LocationUpdateRequest {
 }
 
 export interface LoginRequest {
+  /** @minLength 1 */
   username: string;
+  /** @minLength 1 */
   password: string;
 }
 

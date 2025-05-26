@@ -48,7 +48,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClueMainInfoDto"
       security:
       - bearerAuth: []
     post:
@@ -68,7 +70,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/AddUpdateClueRequest"
         required: true
       responses:
         "200":
@@ -150,7 +152,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/ClueDto"
+      security:
+      - bearerAuth: []
     put:
       tags:
       - clues
@@ -168,7 +172,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/AddUpdateClueRequest"
         required: true
       responses:
         "200":
@@ -176,7 +180,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/ClueDto"
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - clues
@@ -197,6 +203,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
   /incidents:
     get:
       tags:
@@ -907,6 +915,22 @@ components:
           additionalProperties:
             minLength: 1
             type: string
+    AddUpdateClueRequest:
+      required:
+      - description
+      - status
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        description:
+          minLength: 1
+          type: string
+        status:
+          minLength: 1
+          type: string
     AddUpdateIncidentRequest:
       required:
       - applicant
@@ -1004,6 +1028,73 @@ components:
         status:
           $ref: "#/components/schemas/CaseEntity.Status"
       description: DTO for ru.itmopai.backend.entity.CaseEntity
+    ClueDto:
+      required:
+      - createdAt
+      - creatorId
+      - description
+      - id
+      - metadata
+      - relatedCaseId
+      - status
+      - title
+      - updatedAt
+      - updatorId
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/ClueEntity.Status"
+        metadata:
+          type: string
+        relatedCaseId:
+          type: integer
+          format: int64
+      description: DTO for ru.itmopai.backend.entity.ClueEntity
+    ClueEntity.Status:
+      type: string
+      enum:
+      - ACCEPTED
+      - REJECTED
+      - PENDING
+    ClueMainInfoDto:
+      required:
+      - description
+      - id
+      - status
+      - title
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/ClueEntity.Status"
+      description: DTO for ru.itmopai.backend.entity.ClueEntity
     IncidentMainInfoDto:
       required:
       - applicant
@@ -1063,8 +1154,10 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
         password:
+          minLength: 1
           type: string
     LoginResponse:
       required:

@@ -10,6 +10,7 @@
  * ---------------------------------------------------------------
  */
 
+import { AddUpdateClueRequest, ClueDto } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Clues<
@@ -25,7 +26,7 @@ export class Clues<
    * @secure
    */
   getClue = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<ClueDto, any>({
       path: `/clues/${id}`,
       method: "GET",
       secure: true,
@@ -41,8 +42,12 @@ export class Clues<
    * @request PUT:/clues/{id}
    * @secure
    */
-  updateClue = (id: number, data: object, params: RequestParams = {}) =>
-    this.request<object, any>({
+  updateClue = (
+    id: number,
+    data: AddUpdateClueRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<ClueDto, any>({
       path: `/clues/${id}`,
       method: "PUT",
       body: data,

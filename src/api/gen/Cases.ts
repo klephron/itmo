@@ -10,7 +10,11 @@
  * ---------------------------------------------------------------
  */
 
-import { CaseDto } from "./data-contracts";
+import {
+  AddUpdateClueRequest,
+  CaseDto,
+  ClueMainInfoDto,
+} from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Cases<
@@ -43,7 +47,7 @@ export class Cases<
    * @secure
    */
   getCaseClues = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<ClueMainInfoDto[], any>({
       path: `/cases/${id}/clues`,
       method: "GET",
       secure: true,
@@ -59,7 +63,11 @@ export class Cases<
    * @request POST:/cases/{id}/clues
    * @secure
    */
-  addCaseClue = (id: number, data: object, params: RequestParams = {}) =>
+  addCaseClue = (
+    id: number,
+    data: AddUpdateClueRequest,
+    params: RequestParams = {},
+  ) =>
     this.request<object, any>({
       path: `/cases/${id}/clues`,
       method: "POST",
