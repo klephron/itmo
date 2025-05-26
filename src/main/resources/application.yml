@@ -61,6 +61,7 @@ micronaut:
         enabled: true
         log-format: common
     port: 8081
+    context-path: /api
 
 logger:
   levels:
