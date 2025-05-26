@@ -10,11 +10,11 @@ export default function DashboardLayout() {
   return (
     <>
       <div className={styles.dashboard}>
-        <Logo className={styles.topleft}/>
-        <Header className={styles.topright}/>
-        <Sidebar className={styles.bottomleft}/>
+        <Logo className={styles.topleft} />
+        <Header className={styles.topright} />
+        <Sidebar className={styles.bottomleft} />
         <div className={styles.bottomright}>
-          <Outlet/>
+          <Outlet />
         </div>
       </div>
     </>
