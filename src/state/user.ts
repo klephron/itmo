@@ -45,6 +45,7 @@ export const useUser = create(
   subscribeWithSelector(
     combine({ user: localStorageGet() }, (set) => ({
       update: (user: User) => set({ user: user }),
+      reset: () => set({ user: defaultUser }),
     }))
   )
 );

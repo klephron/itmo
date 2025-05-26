@@ -22,6 +22,9 @@ export default function Sidebar({ className }: { className?: string }) {
         <Link to="/profile" className={styles.element}>
           Profile
         </Link>
+        <Link to="/logout" className={styles.element}>
+          Logout
+        </Link>
       </div>
     </>
   );

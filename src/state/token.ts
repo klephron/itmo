@@ -55,6 +55,7 @@ export const useToken = create(
   subscribeWithSelector(
     combine({ token: localStorageGet() }, (set) => ({
       update: (token: Token) => set({ token: token }),
+      reset: () => set({ token: defaultToken }),
     }))
   )
 );

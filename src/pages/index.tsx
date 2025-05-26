@@ -1,16 +1,10 @@
-import { useUser } from "@state/user";
-
-import styles from "./index.module.scss";
+import { useNavigate } from "react-router";
 
 export default function IndexPage() {
-  const user = useUser((state) => state.user);
-  return (
-    <>
-      <div className={styles.root}>
-        <span>
-          Index page for user: {user.username} with permissions: {JSON.stringify(user.permissions)}
-        </span>
-      </div>
-    </>
-  );
+  const navigate = useNavigate();
+
+  // TODO: handle smarter
+  navigate("/incidents");
+
+  return <></>;
 }
