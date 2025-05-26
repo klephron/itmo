@@ -45,7 +45,7 @@ micronaut:
         all:
           # allowed-origins:
           #   - "http://localhost:5173"
-          allowed-origins-regex: '^.*$'
+          allowed-origins-regex: "^.*$"
           allowed-methods:
             - GET
             - POST

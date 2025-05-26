@@ -3,9 +3,7 @@ package ru.itmopai.backend.mapper;
 import jakarta.inject.Inject;
 import org.mapstruct.*;
 import ru.itmopai.backend.dto.CaseDto;
-import ru.itmopai.backend.dto.IncidentDto;
 import ru.itmopai.backend.entity.CaseEntity;
-import ru.itmopai.backend.entity.IncidentEntity;
 import ru.itmopai.backend.entity.UserCaseEntity;
 
 import java.util.HashMap;

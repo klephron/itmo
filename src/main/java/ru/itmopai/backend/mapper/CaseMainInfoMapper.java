@@ -6,7 +6,8 @@ import ru.itmopai.backend.entity.CaseEntity;
 
 import java.util.List;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.JAKARTA)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,
+    componentModel = MappingConstants.ComponentModel.JAKARTA)
 public interface CaseMainInfoMapper {
   CaseEntity toEntity(CaseMainInfoDto caseMainInfoDto);
 

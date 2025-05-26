@@ -1,10 +1,7 @@
 package ru.itmopai.backend.service;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
-import ru.itmopai.backend.dto.IncidentDto;
 import ru.itmopai.backend.dto.IncidentMainInfoDto;
 import ru.itmopai.backend.entity.IncidentEntity;
 import ru.itmopai.backend.entity.UserEntity;
@@ -15,7 +12,6 @@ import ru.itmopai.backend.repository.IncidentRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Singleton
 @AllArgsConstructor
@@ -60,7 +56,8 @@ public class IncidentService {
         incidentRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Incident Not Found"));
 
-    IncidentEntity partialUpdate = incidentMainInfoMapper.partialUpdate(incidentMainInfoDto, incidentEntity);
+    IncidentEntity partialUpdate =
+        incidentMainInfoMapper.partialUpdate(incidentMainInfoDto, incidentEntity);
     partialUpdate.setUpdator(userEntity);
     partialUpdate.setUpdatedAt(LocalDateTime.now());
     return incidentRepository.update(partialUpdate);

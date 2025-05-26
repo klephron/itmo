@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.HashMap;
-import java.util.List;
 
 @Introspected
 @Serdeable

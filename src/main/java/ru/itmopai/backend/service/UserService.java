@@ -7,7 +7,6 @@ import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.entity.UserPermissionEntity;
 import ru.itmopai.backend.exception.UserExistsException;
 import ru.itmopai.backend.mapper.UserMapper;
-import ru.itmopai.backend.mapper.UserMapperImpl;
 import ru.itmopai.backend.repository.UserPermissionRepository;
 import ru.itmopai.backend.repository.UserRepository;
 

@@ -10,7 +10,6 @@ import ru.itmopai.backend.entity.UserCaseEntity;
 import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.mapper.CaseMainInfoMapper;
 import ru.itmopai.backend.mapper.CaseMapper;
-import ru.itmopai.backend.mapper.IncidentMapper;
 import ru.itmopai.backend.mapper.UserCaseRepository;
 import ru.itmopai.backend.repository.CaseRepository;
 import ru.itmopai.backend.repository.IncidentRepository;

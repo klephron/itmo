@@ -5,5 +5,4 @@ import io.micronaut.data.repository.CrudRepository;
 import ru.itmopai.backend.entity.IncidentEntity;
 
 @Repository
-public interface IncidentRepository extends CrudRepository<IncidentEntity, Long> {
-}
+public interface IncidentRepository extends CrudRepository<IncidentEntity, Long> {}

@@ -1,11 +1,8 @@
 package ru.itmopai.backend.controller;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -14,9 +11,6 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
-import io.micronaut.security.annotation.Secured;
-import io.micronaut.security.rules.SecurityRule;
-import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 
 @Controller("/notifications")

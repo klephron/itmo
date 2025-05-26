@@ -6,5 +6,6 @@ import jakarta.validation.constraints.NotNull;
 
 @Introspected
 @Serdeable
-public record LocationUpdateRequest(@NotNull Double latitude, @NotNull Double longitude, @NotNull Double altitude) {
+public record LocationUpdateRequest(@NotNull Double latitude, @NotNull Double longitude,
+    @NotNull Double altitude) {
 }
