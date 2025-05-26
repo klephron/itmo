@@ -1,0 +1,26 @@
+.root {
+  display: grid;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-items: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+  padding: 5px;
+  border: 1px solid black;
+}
+
+.content {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: auto auto;
+}
+
+.title {
+  padding: 5px;
+}
