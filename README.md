@@ -75,7 +75,7 @@ Native builds are currently not supported.
 
 ## Frontend
 
-Use earlier received URL to configure `VITE_SERVER_URL`:
+Use earlier received URL to configure `VITE_SERVER_URL`. Don't forget `/api`:
 
 ```sh
 sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://rnvlk-77-234-196-15.a.free.pinggy.link/api|' .env.production
