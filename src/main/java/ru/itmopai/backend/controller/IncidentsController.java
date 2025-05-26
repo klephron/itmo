@@ -10,6 +10,7 @@ import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.IncidentMainInfoDto;
 import ru.itmopai.backend.dto.request.AddCaseRequest;
 import ru.itmopai.backend.dto.request.AddUpdateIncidentRequest;
@@ -37,6 +38,7 @@ public class IncidentsController {
   /**
    * Create incident
    */
+  @RequiresPermissions({ "INCIDENTS:*:ADD" })
   @Post
   public HttpResponse<?> addIncident(@Body AddUpdateIncidentRequest request,
       Authentication auth) {
@@ -56,6 +58,7 @@ public class IncidentsController {
   /**
    * Update incident
    */
+  @RequiresPermissions({ "INCIDENTS:*:UPDATE" })
   @Put("/{id}")
   public HttpResponse<?> updateIncident(@PathVariable @NotNull Long id,
       @Body AddUpdateIncidentRequest request, Authentication auth) {
@@ -76,6 +79,7 @@ public class IncidentsController {
   /**
    * Create case for incident
    */
+  @RequiresPermissions({ "INCIDENTS:*:UPDATE" })
   @Post("/{id}/case")
   public HttpResponse<?> addCaseForIncident(@PathVariable @NotNull Long id,
       @Body AddCaseRequest addCaseRequest, Authentication authentication) {
@@ -95,6 +99,7 @@ public class IncidentsController {
   /**
    * Update case for incident
    */
+  @RequiresPermissions({ "INCIDENTS:*:UPDATE" })
   @Put("/{id}/case")
   public HttpResponse<?> updateCaseForIncident(@PathVariable @NotNull Long id,
       @Body UpdateCaseRequest updateCaseRequest, Authentication authentication) {
@@ -117,6 +122,7 @@ public class IncidentsController {
   /**
    * Delete incident
    */
+  @RequiresPermissions({ "INCIDENTS:*:DELETE" })
   @Delete("/{id}")
   public HttpResponse<?> deleteIncident(@PathVariable @NotNull Long id,
       Authentication authentication) {
@@ -134,8 +140,9 @@ public class IncidentsController {
   /**
    * Get incidents
    */
+  @RequiresPermissions({ "INCIDENTS:*:READ" })
   @Get
-  public HttpResponse<List<IncidentMainInfoDto>> getIncidents() {
+  public HttpResponse<List<IncidentMainInfoDto>> getIncidents(Authentication authentication) {
     List<IncidentEntity> allIncidents = incidentService.getAllIncidents();
     return HttpResponse.ok(incidentMainInfoMapper.toDto(allIncidents));
   }
@@ -143,8 +150,10 @@ public class IncidentsController {
   /**
    * Get incident
    */
+  @RequiresPermissions({ "INCIDENTS:*:READ", "INCIDENTS:{id}:READ" })
   @Get("/{id}")
-  public HttpResponse<?> getIncident(@PathVariable @NotNull Long id) {
+  public HttpResponse<?> getIncident(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     try {
       return HttpResponse.ok(incidentMapper.toDto(incidentService.getIncident(id)));
     } catch (NoSuchElementException e) {

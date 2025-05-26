@@ -13,6 +13,7 @@ import ru.itmopai.backend.dto.request.UpdateTemplateRequest;
 import ru.itmopai.backend.entity.TemplateEntity;
 import ru.itmopai.backend.mapper.TemplateMapper;
 import ru.itmopai.backend.service.NotificationService;
+import ru.itmopai.backend.service.PermissionService;
 import ru.itmopai.backend.service.TemplateService;
 
 @Controller("/templates")
@@ -22,14 +23,19 @@ public class TemplatesController {
   private final TemplateService templateService;
   private final TemplateMapper templateMapper;
   private final NotificationService notificationService;
+  private final PermissionService permissionService;
 
   /**
    * Get template
    */
   @Get("/{id}")
-  public HttpResponse<?> getTemplate(@PathVariable @NotNull Long id) {
+  public HttpResponse<?> getTemplate(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     try {
-      return HttpResponse.ok(templateMapper.toDto(templateService.getTemplate(id)));
+      TemplateEntity templateEntity = templateService.getTemplate(id);
+      permissionService.checkOrThrow(authentication, "CASES",
+          templateEntity.getRelatedCase().getId(), "READ");
+      return HttpResponse.ok(templateMapper.toDto(templateEntity));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound().body(e.getMessage());
     }
@@ -39,11 +45,15 @@ public class TemplatesController {
    * Update template (generic)
    */
   @Put("/{id}")
-  public HttpResponse<Object> updateTemplate(@PathVariable @NotNull Long id,
+  public HttpResponse<?> updateTemplate(@PathVariable @NotNull Long id,
       @Body UpdateTemplateRequest updateTemplateRequest, Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
-      TemplateEntity templateEntity =
+      TemplateEntity templateEntity = templateService.getTemplate(id);
+      permissionService.checkOrThrow(authentication, "CASES",
+          templateEntity.getRelatedCase().getId(), "TEMPLATES_UPDATE");
+
+      templateEntity =
           templateService.updateTemplate(userId, id, updateTemplateRequest.title(),
               updateTemplateRequest.status() == null ? null
                   : TemplateEntity.Status.valueOf(updateTemplateRequest.status()),
@@ -61,13 +71,22 @@ public class TemplatesController {
    * Delete template
    */
   @Delete("/{id}")
-  public HttpResponse<Void> deleteTemplate(@PathVariable @NotNull Long id,
+  public HttpResponse<?> deleteTemplate(@PathVariable @NotNull Long id,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
-    templateService.deleteTemplate(id);
-    notificationService.addNotification(userId, "PAI Notification",
+    try {
+      TemplateEntity templateEntity = templateService.getTemplate(id);
+      permissionService.checkOrThrow(authentication, "CASES",
+          templateEntity.getRelatedCase().getId(), "TEMPLATES_DELETE");
+
+      templateService.deleteTemplate(id);
+      notificationService.addNotification(userId, "PAI Notification",
         "Template #%d deleted".formatted(id));
-    return HttpResponse.ok();
+      return HttpResponse.ok();
+    } catch (NoSuchElementException e) {
+      return HttpResponse.notFound().body(e.getMessage());
+    }
+
   }
 
   /**
@@ -78,9 +97,13 @@ public class TemplatesController {
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
-      TemplateEntity template = templateService.getTemplate(id);
-      return HttpResponse.ok(templateService.updateTemplate(userId, id, template.getTitle(),
-          TemplateEntity.Status.CDB_ADDED, template.getMetadata(), template.getDescription()));
+      TemplateEntity templateEntity = templateService.getTemplate(id);
+      permissionService.checkOrThrow(authentication, "CASES",
+          templateEntity.getRelatedCase().getId(), "CDB_TEMPLATES_ADD");
+
+      return HttpResponse.ok(templateService.updateTemplate(userId, id, templateEntity.getTitle(),
+          TemplateEntity.Status.CDB_ADDED, templateEntity.getMetadata(),
+          templateEntity.getDescription()));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound().body(e.getMessage());
     }

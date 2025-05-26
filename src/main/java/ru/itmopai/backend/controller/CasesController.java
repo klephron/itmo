@@ -10,6 +10,7 @@ import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseDto;
 import ru.itmopai.backend.dto.ClueMainInfoDto;
 import ru.itmopai.backend.dto.TemplateMainInfoDto;
@@ -43,8 +44,10 @@ public class CasesController {
   /**
    * Get case
    */
+  @RequiresPermissions({ "CASES:{id}:READ" })
   @Get("/{id}")
-  public HttpResponse<CaseDto> getCase(@PathVariable @NotNull Long id) {
+  public HttpResponse<CaseDto> getCase(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     try {
       CaseEntity caseById = caseService.getCaseById(id);
       CaseDto dto = caseMapper.toDto(caseById);
@@ -57,22 +60,27 @@ public class CasesController {
   /**
    * Get case templates
    */
+  @RequiresPermissions({ "CASES:{id}:READ" })
   @Get("/{id}/templates")
-  public HttpResponse<List<TemplateMainInfoDto>> getCaseTemplates(@PathVariable @NotNull Long id) {
+  public HttpResponse<List<TemplateMainInfoDto>> getCaseTemplates(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     return HttpResponse.ok(templateMainInfoMapper.toDto(templateService.getTemplatesByCaseId(id)));
   }
 
   /**
    * Get case clues
    */
+  @RequiresPermissions({ "CASES:{id}:READ" })
   @Get("/{id}/clues")
-  public HttpResponse<List<ClueMainInfoDto>> getCaseClues(@PathVariable @NotNull Long id) {
+  public HttpResponse<List<ClueMainInfoDto>> getCaseClues(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     return HttpResponse.ok(clueMainInfoMapper.toDto(clueService.getAllClueByCase(id)));
   }
 
   /**
    * Add case template
    */
+  @RequiresPermissions({ "CASES:{id}:TEMPLATES_ADD" })
   @Post("/{id}/templates")
   public HttpResponse<?> addCaseTemplate(@PathVariable @NotNull Long id,
       @Body AddTemplateRequest addTemplateRequest, Authentication authentication) {
@@ -93,6 +101,7 @@ public class CasesController {
   /**
    * Add case clue
    */
+  @RequiresPermissions({ "CASES:{id}:CLUES_ADD" })
   @Post("/{id}/clues")
   public HttpResponse<?> addCaseClue(@PathVariable @NotNull Long id,
       @Body AddUpdateClueRequest addUpdateClueRequest, Authentication authentication) {

@@ -16,6 +16,7 @@ import ru.itmopai.backend.mapper.ClueMainInfoMapper;
 import ru.itmopai.backend.mapper.ClueMapper;
 import ru.itmopai.backend.service.ClueService;
 import ru.itmopai.backend.service.NotificationService;
+import ru.itmopai.backend.service.PermissionService;
 
 @Controller("/clues")
 @AllArgsConstructor
@@ -25,14 +26,19 @@ public class CluesController {
   private final ClueMainInfoMapper clueMainInfoMapper;
   private final ClueMapper clueMapper;
   private final NotificationService notificationService;
+  private final PermissionService permissionService;
 
   /**
    * Get clue
    */
   @Get("/{id}")
-  public HttpResponse<ClueDto> getClue(@PathVariable @NotNull Long id) {
+  public HttpResponse<ClueDto> getClue(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     try {
-      return HttpResponse.ok(clueMapper.toDto(clueService.getClue(id)));
+      ClueEntity clueEntity = clueService.getClue(id);
+      permissionService.checkOrThrow(authentication, "CASES", clueEntity.getRelatedCase().getId(),
+          "READ");
+      return HttpResponse.ok(clueMapper.toDto(clueEntity));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound();
     }
@@ -46,7 +52,11 @@ public class CluesController {
       @Body AddUpdateClueRequest addUpdateClueRequest, Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
-      ClueEntity clueEntity =
+      ClueEntity clueEntity = clueService.getClue(id);
+      permissionService.checkOrThrow(authentication, "CASES", clueEntity.getRelatedCase().getId(),
+          "CLUES_UPDATE");
+
+      clueEntity =
           clueService.updateClue(userId, id, addUpdateClueRequest.title(),
               addUpdateClueRequest.description(), addUpdateClueRequest.status() == null ? null
                   : ClueEntity.Status.valueOf(addUpdateClueRequest.status()));
@@ -66,10 +76,18 @@ public class CluesController {
   public HttpResponse<Object> deleteClue(@PathVariable @NotNull Long id,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
-    clueService.deleteClue(id);
-    notificationService.addNotification(userId, "PAI Notification",
-        "Clue #%d deleted".formatted(id));
-    return HttpResponse.noContent();
+    try {
+      ClueEntity clueEntity = clueService.getClue(id);
+      permissionService.checkOrThrow(authentication, "CASES", clueEntity.getRelatedCase().getId(),
+          "CLUES_DELETE");
+
+      clueService.deleteClue(id);
+      notificationService.addNotification(userId, "PAI Notification",
+          "Clue #%d deleted".formatted(id));
+      return HttpResponse.noContent();
+    } catch (NoSuchElementException e) {
+      return HttpResponse.notFound().body(e.getMessage());
+    }
   }
 
 }

@@ -1,6 +1,11 @@
 package ru.itmopai.backend.service;
 
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import io.micronaut.transaction.annotation.Transactional;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.entity.UserEntity;
@@ -10,10 +15,6 @@ import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.repository.UserPermissionRepository;
 import ru.itmopai.backend.repository.UserRepository;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
 @Singleton
 @AllArgsConstructor
 public class UserService {
@@ -21,6 +22,16 @@ public class UserService {
   private final UserPermissionRepository userPermissionRepo;
   private final BCryptPasswordEncoderService encoder;
   private final UserMapper userMapper;
+
+  @PostConstruct
+  public void init() {
+    try {
+      UserEntity registered = register("root", "root", "root", "root", "root");
+      setUserPermissions(registered.getId(), "*:*:*".lines().toList());
+    } catch (UserExistsException ignored) {
+
+    }
+  }
 
   public UserEntity register(String username, String rawPassword, String name, String surname,
       String patronymic) throws UserExistsException {

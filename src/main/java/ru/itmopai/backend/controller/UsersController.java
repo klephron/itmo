@@ -1,25 +1,25 @@
 package ru.itmopai.backend.controller;
 
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Delete;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.Put;
+import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseMainInfoDto;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.LocationUpdateRequest;
 import ru.itmopai.backend.dto.request.RegisterRequest;
-import ru.itmopai.backend.dto.response.UserPermissionsResponse;
-import ru.itmopai.backend.dto.response.UserInfoResponse;
 import ru.itmopai.backend.dto.request.UserPermissionsRequest;
+import ru.itmopai.backend.dto.response.UserInfoResponse;
+import ru.itmopai.backend.dto.response.UserPermissionsResponse;
 import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.exception.UserExistsException;
 import ru.itmopai.backend.mapper.CaseMainInfoMapper;
@@ -27,10 +27,6 @@ import ru.itmopai.backend.mapper.UserInfoMapper;
 import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.service.CaseService;
 import ru.itmopai.backend.service.UserService;
-
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Controller("/users")
 @AllArgsConstructor
@@ -45,16 +41,19 @@ public class UsersController {
   /**
    * Get users
    */
+  @RequiresPermissions({ "USERS:*:READ" })
   @Get
-  public HttpResponse<List<UserInfoResponse>> getUsers() {
+  public HttpResponse<List<UserInfoResponse>> getUsers(Authentication authentication) {
     return HttpResponse.ok(userInfoMapper.toDto(userService.getAllUsers()));
   }
 
   /**
    * Get user
    */
+  @RequiresPermissions({ "USERS:*:READ" })
   @Get("{id}")
-  public HttpResponse<UserDto> getUser(@PathVariable @NotNull Long id) {
+  public HttpResponse<UserDto> getUser(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     Optional<UserEntity> user = userService.getUser(id);
     if (user.isPresent()) {
       return HttpResponse.ok(userMapper.toDto(user.get()));
@@ -66,8 +65,10 @@ public class UsersController {
   /**
    * Delete user
    */
+  @RequiresPermissions({ "USERS:*:DELETE" })
   @Delete("{id}")
-  public HttpResponse<Void> deleteUser(@PathVariable @NotNull Long id) {
+  public HttpResponse<Void> deleteUser(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     userService.removeUser(id);
     return HttpResponse.noContent();
   }
@@ -75,8 +76,10 @@ public class UsersController {
   /**
    * Add user
    */
+  @RequiresPermissions({ "USERS:*:ADD" })
   @Post
-  public HttpResponse<UserDto> addUser(@Body RegisterRequest registerRequest) {
+  public HttpResponse<UserDto> addUser(@Body RegisterRequest registerRequest,
+      Authentication authentication) {
     try {
       UserDto user =
           userMapper
@@ -91,9 +94,10 @@ public class UsersController {
   /**
    * Update user location
    */
+  @RequiresPermissions({ "USERS:*:UPDATE", "USERS:{id}:UPDATE" })
   @Put("{id}/location")
   public HttpResponse<UserDto> updateUserLocation(@PathVariable @NotNull Long id,
-      @Body LocationUpdateRequest locationUpdateRequest) {
+      @Body LocationUpdateRequest locationUpdateRequest, Authentication authentication) {
     try {
       UserEntity userEntity =
           userService.updateLocation(id, locationUpdateRequest.latitude(),
@@ -107,16 +111,20 @@ public class UsersController {
   /**
    * Get user cases
    */
+  @RequiresPermissions({ "USERS:*:READ" })
   @Get("{id}/cases")
-  public HttpResponse<List<CaseMainInfoDto>> getUserCases(@PathVariable @NotNull Long id) {
+  public HttpResponse<List<CaseMainInfoDto>> getUserCases(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     return HttpResponse.ok(caseMainInfoMapper.toDto(caseService.getAllCasesByUserId(id)));
   }
 
   /**
    * Get user privileges
    */
+  @RequiresPermissions({ "USERS:*:READ" })
   @Get("{id}/privileges")
-  public HttpResponse<UserPermissionsResponse> getUserPrivileges(@PathVariable @NotNull Long id) {
+  public HttpResponse<UserPermissionsResponse> getUserPrivileges(@PathVariable @NotNull Long id,
+      Authentication authentication) {
     try {
       List<String> userPermissions = userService.getUserPermissions(id);
       return HttpResponse.ok(new UserPermissionsResponse(userPermissions));
@@ -128,9 +136,10 @@ public class UsersController {
   /**
    * Update user privileges
    */
+  @RequiresPermissions({ "USERS:*:UPDATE" })
   @Put("{id}/privileges")
   public HttpResponse<Object> updateUserPrivileges(@PathVariable @NotNull Long id,
-      @Body UserPermissionsRequest userPermissionsRequest) {
+      @Body UserPermissionsRequest userPermissionsRequest, Authentication authentication) {
     try {
       userService.setUserPermissions(id, userPermissionsRequest.permissions());
       return HttpResponse.ok(new UserPermissionsResponse(userService.getUserPermissions(id)));
