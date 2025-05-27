@@ -55,8 +55,7 @@ public class TemplatesController {
 
       templateEntity =
           templateService.updateTemplate(userId, id, updateTemplateRequest.title(),
-              updateTemplateRequest.status() == null ? null
-                  : TemplateEntity.Status.valueOf(updateTemplateRequest.status()),
+              updateTemplateRequest.status(),
               updateTemplateRequest.metadata(), updateTemplateRequest.description());
       notificationService.addNotification(userId, "PAI Notification",
           "Template %s updated in #%d case".formatted(updateTemplateRequest.title(),
@@ -81,7 +80,7 @@ public class TemplatesController {
 
       templateService.deleteTemplate(id);
       notificationService.addNotification(userId, "PAI Notification",
-        "Template #%d deleted".formatted(id));
+          "Template #%d deleted".formatted(id));
       return HttpResponse.ok();
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound().body(e.getMessage());

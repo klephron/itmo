@@ -58,8 +58,7 @@ public class CluesController {
 
       clueEntity =
           clueService.updateClue(userId, id, addUpdateClueRequest.title(),
-              addUpdateClueRequest.description(), addUpdateClueRequest.status() == null ? null
-                  : ClueEntity.Status.valueOf(addUpdateClueRequest.status()));
+              addUpdateClueRequest.description(), addUpdateClueRequest.status());
       notificationService.addNotification(userId, "PAI Notification",
           "Clue %s updated in #%d case".formatted(addUpdateClueRequest.title(),
               clueEntity.getRelatedCase().getId()));

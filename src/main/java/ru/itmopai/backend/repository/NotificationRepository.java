@@ -18,4 +18,21 @@ public interface NotificationRepository extends CrudRepository<NotificationEntit
 
   List<NotificationEntity> findAllByCreatedAtBetween(@NotNull LocalDateTime from,
       @NotNull LocalDateTime to);
+
+  List<NotificationEntity> findAllByReadAtIsNotNullAndCreatedAtGreaterThanEquals(
+      @NotNull LocalDateTime from);
+
+  List<NotificationEntity> findAllByReadAtIsNotNullAndCreatedAtLessThanEquals(
+      @NotNull LocalDateTime to);
+
+  List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtGreaterThanEquals(
+      @NotNull LocalDateTime from);
+
+  List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtLessThanEquals(
+      @NotNull LocalDateTime to);
+
+  List<NotificationEntity> findAllByCreatedAtGreaterThanEquals(@NotNull LocalDateTime from);
+
+  List<NotificationEntity> findAllByCreatedAtLessThanEquals(@NotNull LocalDateTime to);
+
 }

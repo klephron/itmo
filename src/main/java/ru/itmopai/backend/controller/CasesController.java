@@ -111,8 +111,7 @@ public class CasesController {
           clueService.addClue(userId,
               addUpdateClueRequest.title(),
               addUpdateClueRequest.description(),
-              addUpdateClueRequest.status() == null ? null
-                  : ClueEntity.Status.valueOf(addUpdateClueRequest.status()),
+              addUpdateClueRequest.status(),
               id);
       notificationService.addNotification(userId, "PAI Notification",
           "Clue %s added to #%d case".formatted(addUpdateClueRequest.title(),

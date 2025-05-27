@@ -9,6 +9,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.NotificationDto;
@@ -67,13 +68,14 @@ public class NotificationsController {
    */
   @Get
   public HttpResponse<List<NotificationDto>> getNotifications(
-      @QueryValue Status status,
-      @QueryValue @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime from,
-      @QueryValue @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime to) {
+      @QueryValue @Nullable Status status,
+      @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime from,
+      @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime to) {
     List<NotificationDto> list = notificationMapper.toDto(switch (status) {
       case READ -> notificationService.getReadNotifications(from, to);
       case UNREAD -> notificationService.getUnreadNotifications(from, to);
       case ALL -> notificationService.getAllNotifications(from, to);
+      case null -> notificationService.getAllNotifications(from, to);
     });
     return HttpResponse.ok(list);
   }

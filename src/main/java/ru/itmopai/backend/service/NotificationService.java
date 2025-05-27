@@ -58,15 +58,39 @@ public class NotificationService {
   }
 
   public List<NotificationEntity> getReadNotifications(LocalDateTime from, LocalDateTime to) {
-    return notificationRepository.findAllByReadAtIsNotNullAndCreatedAtBetween(from, to);
+    if (from == null && to != null) {
+      return notificationRepository.findAllByReadAtIsNotNullAndCreatedAtLessThanEquals(to);
+    } else if (to == null && from != null) {
+      return notificationRepository.findAllByReadAtIsNotNullAndCreatedAtGreaterThanEquals(from);
+    } else if (from != null) {
+      return notificationRepository.findAllByReadAtIsNotNullAndCreatedAtBetween(from, to);
+    } else {
+      return List.of();
+    }
   }
 
   public List<NotificationEntity> getUnreadNotifications(LocalDateTime from, LocalDateTime to) {
-    return notificationRepository.findAllByReadAtIsNullAndCreatedAtBetween(from, to);
+    if (from == null && to != null) {
+      return notificationRepository.findAllByReadAtIsNullAndCreatedAtLessThanEquals(to);
+    } else if (to == null && from != null) {
+      return notificationRepository.findAllByReadAtIsNullAndCreatedAtGreaterThanEquals(from);
+    } else if (from != null) {
+      return notificationRepository.findAllByReadAtIsNullAndCreatedAtBetween(from, to);
+    } else {
+      return List.of();
+    }
   }
 
   public List<NotificationEntity> getAllNotifications(LocalDateTime from, LocalDateTime to) {
-    return notificationRepository.findAllByCreatedAtBetween(from, to);
+    if (from == null && to != null) {
+      return notificationRepository.findAllByCreatedAtLessThanEquals(to);
+    } else if (to == null && from != null) {
+      return notificationRepository.findAllByCreatedAtGreaterThanEquals(from);
+    } else if (from != null) {
+      return notificationRepository.findAllByCreatedAtBetween(from, to);
+    } else {
+      return List.of();
+    }
   }
 
   public NotificationEntity getNotification(Long notificationId) throws NoSuchElementException {
