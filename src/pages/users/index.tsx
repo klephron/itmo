@@ -92,7 +92,7 @@ function UsersTable() {
   );
 }
 
-function UsersSearch({ }: {}) {
+function UsersSearch({}: {}) {
   return <></>;
 }
 
