@@ -1,9 +1,19 @@
 import { Link } from "react-router";
-
-import styles from "./sidebar.module.scss";
 import clsx from "clsx";
+import { useNotifications } from "@state/notifications";
+import { useEffect, useState } from "react";
+import styles from "./index.module.scss";
 
 export default function Sidebar({ className }: { className?: string }) {
+  const notifications = useNotifications((state) => state.notifications);
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (notifications) {
+      setUnread(notifications.length);
+    }
+  }, [notifications]);
+
   return (
     <>
       <div className={clsx(styles.sidebar, className)}>
@@ -17,7 +27,7 @@ export default function Sidebar({ className }: { className?: string }) {
           Users
         </Link>
         <Link to="/notifications" className={styles.element}>
-          Notifications
+          Notifications {unread ? ` (${unread})` : ""}
         </Link>
         <Link to="/profile" className={styles.element}>
           Profile

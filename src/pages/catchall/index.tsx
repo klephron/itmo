@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router";
-
-import styles from "./catchall.module.scss";
+import styles from "./index.module.scss";
 
 export default function NotFound() {
   const navigate = useNavigate();

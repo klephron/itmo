@@ -25,11 +25,11 @@ export class Users<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
   /**
-   * @description Get users
+   * @description Возвращает список всех пользователей
    *
    * @tags users
    * @name GetUsers
-   * @summary Get users
+   * @summary Получить список пользователей
    * @request GET:/api/users
    * @secure
    */
@@ -42,16 +42,16 @@ export class Users<
       ...params,
     });
   /**
-   * @description Add user
+   * @description Регистрирует нового пользователя
    *
    * @tags users
    * @name AddUser
-   * @summary Add user
+   * @summary Добавить пользователя
    * @request POST:/api/users
    * @secure
    */
   addUser = (data: RegisterRequest, params: RequestParams = {}) =>
-    this.request<UserDto, any>({
+    this.request<UserDto, void>({
       path: `/api/users`,
       method: "POST",
       body: data,
@@ -61,16 +61,16 @@ export class Users<
       ...params,
     });
   /**
-   * @description Get user
+   * @description Возвращает информацию о пользователе по идентификатору
    *
    * @tags users
    * @name GetUser
-   * @summary Get user
+   * @summary Получить пользователя по ID
    * @request GET:/api/users/{id}
    * @secure
    */
   getUser = (id: number, params: RequestParams = {}) =>
-    this.request<UserDto, any>({
+    this.request<UserDto, void>({
       path: `/api/users/${id}`,
       method: "GET",
       secure: true,
@@ -78,27 +78,27 @@ export class Users<
       ...params,
     });
   /**
-   * @description Delete user
+   * @description Удаляет пользователя по идентификатору
    *
    * @tags users
    * @name DeleteUser
-   * @summary Delete user
+   * @summary Удалить пользователя
    * @request DELETE:/api/users/{id}
    * @secure
    */
   deleteUser = (id: number, params: RequestParams = {}) =>
-    this.request<void, any>({
+    this.request<void, void>({
       path: `/api/users/${id}`,
       method: "DELETE",
       secure: true,
       ...params,
     });
   /**
-   * @description Get user cases
+   * @description Возвращает список дел, связанных с пользователем
    *
    * @tags users
    * @name GetUserCases
-   * @summary Get user cases
+   * @summary Получить дела пользователя
    * @request GET:/api/users/{id}/cases
    * @secure
    */
@@ -111,11 +111,11 @@ export class Users<
       ...params,
     });
   /**
-   * @description Update user location
+   * @description Обновляет координаты пользователя по идентификатору
    *
    * @tags users
    * @name UpdateUserLocation
-   * @summary Update user location
+   * @summary Обновить местоположение пользователя
    * @request PUT:/api/users/{id}/location
    * @secure
    */
@@ -124,7 +124,7 @@ export class Users<
     data: LocationUpdateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<UserDto, any>({
+    this.request<UserDto, void>({
       path: `/api/users/${id}/location`,
       method: "PUT",
       body: data,
@@ -134,16 +134,16 @@ export class Users<
       ...params,
     });
   /**
-   * @description Get user privileges
+   * @description Возвращает список привилегий пользователя
    *
    * @tags users
    * @name GetUserPermissions
-   * @summary Get user privileges
+   * @summary Получить права пользователя
    * @request GET:/api/users/{id}/privileges
    * @secure
    */
   getUserPermissions = (id: number, params: RequestParams = {}) =>
-    this.request<UserPermissionsResponse, any>({
+    this.request<UserPermissionsResponse, void>({
       path: `/api/users/${id}/privileges`,
       method: "GET",
       secure: true,
@@ -151,11 +151,11 @@ export class Users<
       ...params,
     });
   /**
-   * @description Update user privileges
+   * @description Изменяет список прав пользователя
    *
    * @tags users
    * @name UpdateUserPermissions
-   * @summary Update user privileges
+   * @summary Обновить права пользователя
    * @request PUT:/api/users/{id}/privileges
    * @secure
    */
@@ -164,7 +164,7 @@ export class Users<
     data: UserPermissionsRequest,
     params: RequestParams = {},
   ) =>
-    this.request<UserPermissionsResponse, any>({
+    this.request<UserPermissionsResponse, void>({
       path: `/api/users/${id}/privileges`,
       method: "PUT",
       body: data,

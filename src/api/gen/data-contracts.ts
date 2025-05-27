@@ -55,8 +55,7 @@ export interface AddUpdateClueRequest {
   title: string;
   /** @minLength 1 */
   description: string;
-  /** @minLength 1 */
-  status: string;
+  status: ClueEntityStatus;
 }
 
 export interface AddUpdateIncidentRequest {
@@ -212,6 +211,30 @@ export interface RegisterRequest {
 }
 
 /** DTO for ru.itmopai.backend.entity.TemplateEntity */
+export interface TemplateDto {
+  /** @format int64 */
+  id: number;
+  /** @format int64 */
+  creatorId: number;
+  /** @format date-time */
+  createdAt: string;
+  /** @format int64 */
+  updatorId: number;
+  /** @format date-time */
+  updatedAt: string;
+  /** @minLength 1 */
+  title: string;
+  status: TemplateEntityStatus;
+  /** @minLength 1 */
+  metadata: string;
+  description: string;
+  uri: string;
+  cdbURI: string;
+  /** @format int64 */
+  relatedCaseId: number;
+}
+
+/** DTO for ru.itmopai.backend.entity.TemplateEntity */
 export interface TemplateMainInfoDto {
   /** @format int64 */
   id: number;
@@ -242,8 +265,7 @@ export interface UpdateNotificationRequest {
 export interface UpdateTemplateRequest {
   /** @minLength 1 */
   title: string;
-  /** @minLength 1 */
-  status: string;
+  status: TemplateEntityStatus;
   /** @minLength 1 */
   metadata: string;
   description: string;

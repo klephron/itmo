@@ -1,10 +1,8 @@
 import { Outlet } from "react-router";
-
 import Header from "@components/header";
 import Sidebar from "@components/sidebar";
-
-import styles from "./dashboard.module.scss";
 import Logo from "@components/logo";
+import styles from "./index.module.scss";
 
 export default function DashboardLayout() {
   return (

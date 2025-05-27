@@ -23,11 +23,11 @@ export class Incidents<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
   /**
-   * @description Get incidents
+   * @description Возвращает все инциденты
    *
    * @tags incidents
    * @name GetIncidents
-   * @summary Get incidents
+   * @summary Получить список инцидентов
    * @request GET:/api/incidents
    * @secure
    */
@@ -40,11 +40,11 @@ export class Incidents<
       ...params,
     });
   /**
-   * @description Create incident
+   * @description Создаёт новый инцидент с заданными параметрами
    *
    * @tags incidents
    * @name AddIncident
-   * @summary Create incident
+   * @summary Создать инцидент
    * @request POST:/api/incidents
    * @secure
    */
@@ -59,11 +59,11 @@ export class Incidents<
       ...params,
     });
   /**
-   * @description Get incident
+   * @description Возвращает подробную информацию об инциденте
    *
    * @tags incidents
    * @name GetIncident
-   * @summary Get incident
+   * @summary Получить инцидент по ID
    * @request GET:/api/incidents/{id}
    * @secure
    */
@@ -76,11 +76,11 @@ export class Incidents<
       ...params,
     });
   /**
-   * @description Update incident
+   * @description Обновляет данные существующего инцидента по идентификатору
    *
    * @tags incidents
    * @name UpdateIncident
-   * @summary Update incident
+   * @summary Обновить инцидент
    * @request PUT:/api/incidents/{id}
    * @secure
    */
@@ -99,11 +99,11 @@ export class Incidents<
       ...params,
     });
   /**
-   * @description Delete incident
+   * @description Удаляет инцидент по идентификатору
    *
    * @tags incidents
    * @name DeleteIncident
-   * @summary Delete incident
+   * @summary Удалить инцидент
    * @request DELETE:/api/incidents/{id}
    * @secure
    */
@@ -116,11 +116,11 @@ export class Incidents<
       ...params,
     });
   /**
-   * @description Update case for incident
+   * @description Обновляет существующее дело, связанное с инцидентом
    *
    * @tags incidents
    * @name UpdateCaseForIncident
-   * @summary Update case for incident
+   * @summary Обновить дело по инциденту
    * @request PUT:/api/incidents/{id}/case
    * @secure
    */
@@ -139,11 +139,11 @@ export class Incidents<
       ...params,
     });
   /**
-   * @description Create case for incident
+   * @description Добавляет новое дело к указанному инциденту
    *
    * @tags incidents
    * @name AddCaseForIncident
-   * @summary Create case for incident
+   * @summary Создать дело по инциденту
    * @request POST:/api/incidents/{id}/case
    * @secure
    */

@@ -15,6 +15,7 @@ import {
   AddUpdateClueRequest,
   CaseDto,
   ClueMainInfoDto,
+  TemplateDto,
   TemplateMainInfoDto,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
@@ -23,16 +24,16 @@ export class Cases<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
   /**
-   * @description Get case
+   * @description Возвращает дело по его идентификатору
    *
    * @tags cases
    * @name GetCase
-   * @summary Get case
+   * @summary Получить дело
    * @request GET:/api/cases/{id}
    * @secure
    */
   getCase = (id: number, params: RequestParams = {}) =>
-    this.request<CaseDto, any>({
+    this.request<CaseDto, void>({
       path: `/api/cases/${id}`,
       method: "GET",
       secure: true,
@@ -40,11 +41,11 @@ export class Cases<
       ...params,
     });
   /**
-   * @description Get case clues
+   * @description Возвращает список улик, связанных с делом
    *
    * @tags cases
    * @name GetCaseClues
-   * @summary Get case clues
+   * @summary Получить улики дела
    * @request GET:/api/cases/{id}/clues
    * @secure
    */
@@ -57,11 +58,11 @@ export class Cases<
       ...params,
     });
   /**
-   * @description Add case clue
+   * @description Создаёт новую улику, связанную с делом
    *
    * @tags cases
    * @name AddCaseClue
-   * @summary Add case clue
+   * @summary Добавить улику к делу
    * @request POST:/api/cases/{id}/clues
    * @secure
    */
@@ -70,7 +71,7 @@ export class Cases<
     data: AddUpdateClueRequest,
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
+    this.request<ClueMainInfoDto, string>({
       path: `/api/cases/${id}/clues`,
       method: "POST",
       body: data,
@@ -80,11 +81,11 @@ export class Cases<
       ...params,
     });
   /**
-   * @description Get case templates
+   * @description Возвращает список шаблонов, связанных с делом
    *
    * @tags cases
    * @name GetCaseTemplates
-   * @summary Get case templates
+   * @summary Получить шаблоны дела
    * @request GET:/api/cases/{id}/templates
    * @secure
    */
@@ -97,11 +98,11 @@ export class Cases<
       ...params,
     });
   /**
-   * @description Add case template
+   * @description Создаёт новый шаблон, связанный с делом
    *
    * @tags cases
    * @name AddCaseTemplate
-   * @summary Add case template
+   * @summary Добавить шаблон к делу
    * @request POST:/api/cases/{id}/templates
    * @secure
    */
@@ -110,7 +111,7 @@ export class Cases<
     data: AddTemplateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
+    this.request<TemplateDto, string>({
       path: `/api/cases/${id}/templates`,
       method: "POST",
       body: data,

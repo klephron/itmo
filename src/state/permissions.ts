@@ -11,7 +11,7 @@ export const usePermissions = create(
   subscribeWithSelector(
     combine({ permissions: null as Permissions }, (set) => ({
       update: (permissions: Set<string>) => set({ permissions: permissions }),
-      reset: () => set({ permissions: new Set<string>() }),
+      reset: () => set({ permissions: null }),
     }))
   )
 );

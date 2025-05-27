@@ -32,7 +32,7 @@ function localStorageGet() {
       accessToken: String(obj["accessToken"]),
       refreshToken: String(obj["refreshToken"]),
       tokenType: String(obj["tokenType"]),
-      issueAtMS: Number(obj["startTimeMS"]),
+      issueAtMS: Number(obj["issueAtMS"]),
       expiresInMS: Number(obj["expiresInMS"]),
       present: true,
     } as Token;

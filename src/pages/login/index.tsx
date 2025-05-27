@@ -2,10 +2,8 @@ import { useState } from "react";
 import { useClient } from "@state/client";
 import { useUser } from "@state/user";
 import { useNavigate } from "react-router";
-
 import { useToken } from "@state/token";
-
-import styles from "./login.module.scss";
+import styles from "./index.module.scss";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -29,29 +27,24 @@ export default function LoginPage() {
         },
         { secure: false }
       )
-      .then((r) =>
-        r.json().then((data) => {
-          try {
-            setUser({
-              id: Number(data["id"]),
-              username: data["username"],
-              present: true,
-            });
+      .then((r) => {
+        setUser({
+          id: r.data.id,
+          username: r.data.username,
+          present: true,
+        });
 
-            setToken({
-              accessToken: data["accessToken"],
-              refreshToken: data["refreshToken"],
-              tokenType: "Bearer",
-              issueAtMS: Number(data["iat"]),
-              expiresInMS: Number(data["expiresIn"]) * 1000,
-              present: true,
-            });
-            navigate("/");
-          } catch (e) {
-            console.error(e);
-          }
-        })
-      )
+        setToken({
+          accessToken: r.data.accessToken,
+          refreshToken: "",
+          tokenType: "Bearer",
+          issueAtMS: r.data.iat,
+          expiresInMS: r.data.expiresIn * 1000,
+          present: true,
+        });
+
+        navigate("/");
+      })
       .catch(async (e) => {
         switch (e.status) {
           case 401:

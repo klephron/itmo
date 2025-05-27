@@ -10,23 +10,23 @@
  * ---------------------------------------------------------------
  */
 
-import { UpdateTemplateRequest } from "./data-contracts";
+import { TemplateDto, UpdateTemplateRequest } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Templates<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
   /**
-   * @description Get template
+   * @description Возвращает шаблон по идентификатору
    *
    * @tags templates
    * @name GetTemplate
-   * @summary Get template
+   * @summary Получить шаблон
    * @request GET:/api/templates/{id}
    * @secure
    */
   getTemplate = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<TemplateDto, string>({
       path: `/api/templates/${id}`,
       method: "GET",
       secure: true,
@@ -34,11 +34,11 @@ export class Templates<
       ...params,
     });
   /**
-   * @description Update template (generic)
+   * @description Обновляет шаблон по идентификатору
    *
    * @tags templates
    * @name UpdateTemplate
-   * @summary Update template (generic)
+   * @summary Обновить шаблон
    * @request PUT:/api/templates/{id}
    * @secure
    */
@@ -47,7 +47,7 @@ export class Templates<
     data: UpdateTemplateRequest,
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
+    this.request<TemplateDto, string>({
       path: `/api/templates/${id}`,
       method: "PUT",
       body: data,
@@ -57,16 +57,16 @@ export class Templates<
       ...params,
     });
   /**
-   * @description Delete template
+   * @description Удаляет шаблон по идентификатору
    *
    * @tags templates
    * @name DeleteTemplate
-   * @summary Delete template
+   * @summary Удалить шаблон
    * @request DELETE:/api/templates/{id}
    * @secure
    */
   deleteTemplate = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<object, string>({
       path: `/api/templates/${id}`,
       method: "DELETE",
       secure: true,
@@ -74,16 +74,16 @@ export class Templates<
       ...params,
     });
   /**
-   * @description Publish template in Central Database
+   * @description Переводит шаблон в статус 'добавлен в CDB' (Центральную Базу Данных)
    *
    * @tags templates
    * @name AddTemplateToCdb
-   * @summary Publish template in Central Database
+   * @summary Опубликовать шаблон в Центральной БД
    * @request POST:/api/templates/{id}/cdb
    * @secure
    */
   addTemplateToCdb = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<TemplateDto, string>({
       path: `/api/templates/${id}/cdb`,
       method: "POST",
       secure: true,

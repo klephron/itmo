@@ -1,7 +1,6 @@
 import { Link } from "react-router";
-
-import styles from "./logo.module.scss";
 import clsx from "clsx";
+import styles from "./index.module.scss";
 
 export default function Logo({ className }: { className: string }) {
   return (

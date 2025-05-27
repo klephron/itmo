@@ -21,21 +21,33 @@ export class Notifications<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
   /**
-   * @description Get notifications
+   * @description Возвращает список всех уведомлений. Можно фильтровать по статусу (прочитано/непрочитано/все) и диапазону дат.
    *
    * @tags notifications
    * @name GetNotifications
-   * @summary Get notifications
+   * @summary Получить список уведомлений
    * @request GET:/api/notifications
    * @secure
    */
   getNotifications = (
-    query: {
-      /** @format date-time */
-      from: string;
-      status: NotificationsControllerStatus;
-      /** @format date-time */
-      to: string;
+    query?: {
+      /**
+       * Дата и время начала интервала (например, 2025-05-26T17:28:43)
+       * @format date-time
+       * @example "2025-05-26T17:28:43.000Z"
+       */
+      from?: string | null;
+      /**
+       * Дата и время конца интервала (например, 2025-05-26T17:48:43)
+       * @format date-time
+       * @example "2025-05-26T17:48:43.000Z"
+       */
+      to?: string | null;
+      /**
+       * Статус уведомлений для фильтрации
+       * @example "ALL"
+       */
+      status?: NotificationsControllerStatus | null;
     },
     params: RequestParams = {},
   ) =>
@@ -48,16 +60,16 @@ export class Notifications<
       ...params,
     });
   /**
-   * @description Get notification
+   * @description Возвращает уведомление по его идентификатору
    *
    * @tags notifications
    * @name GetNotification
-   * @summary Get notification
+   * @summary Получить уведомление
    * @request GET:/api/notifications/{id}
    * @secure
    */
   getNotification = (id: number, params: RequestParams = {}) =>
-    this.request<NotificationDto, any>({
+    this.request<NotificationDto, void>({
       path: `/api/notifications/${id}`,
       method: "GET",
       secure: true,
@@ -65,11 +77,11 @@ export class Notifications<
       ...params,
     });
   /**
-   * @description Update notification (for example set date when read)
+   * @description Обновляет уведомление, например, устанавливает дату прочтения
    *
    * @tags notifications
    * @name UpdateNotification
-   * @summary Update notification (for example set date when read)
+   * @summary Обновить уведомление
    * @request PUT:/api/notifications/{id}
    * @secure
    */
@@ -78,7 +90,7 @@ export class Notifications<
     data: UpdateNotificationRequest,
     params: RequestParams = {},
   ) =>
-    this.request<NotificationDto, any>({
+    this.request<NotificationDto, void>({
       path: `/api/notifications/${id}`,
       method: "PUT",
       body: data,
@@ -88,20 +100,19 @@ export class Notifications<
       ...params,
     });
   /**
-   * @description Delete notification
+   * @description Удаляет уведомление по идентификатору
    *
    * @tags notifications
    * @name DeleteNotification
-   * @summary Delete notification
+   * @summary Удалить уведомление
    * @request DELETE:/api/notifications/{id}
    * @secure
    */
   deleteNotification = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<void, void>({
       path: `/api/notifications/${id}`,
       method: "DELETE",
       secure: true,
-      format: "json",
       ...params,
     });
 }

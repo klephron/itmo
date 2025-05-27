@@ -17,16 +17,16 @@ export class Clues<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
   /**
-   * @description Get clue
+   * @description Возвращает информацию об улике по её идентификатору
    *
    * @tags clues
    * @name GetClue
-   * @summary Get clue
+   * @summary Получить улику
    * @request GET:/api/clues/{id}
    * @secure
    */
   getClue = (id: number, params: RequestParams = {}) =>
-    this.request<ClueDto, any>({
+    this.request<ClueDto, void>({
       path: `/api/clues/${id}`,
       method: "GET",
       secure: true,
@@ -34,11 +34,11 @@ export class Clues<
       ...params,
     });
   /**
-   * @description Update clue (for example approve)
+   * @description Обновляет параметры улики по идентификатору
    *
    * @tags clues
    * @name UpdateClue
-   * @summary Update clue (for example approve)
+   * @summary Обновить улику
    * @request PUT:/api/clues/{id}
    * @secure
    */
@@ -47,7 +47,7 @@ export class Clues<
     data: AddUpdateClueRequest,
     params: RequestParams = {},
   ) =>
-    this.request<ClueDto, any>({
+    this.request<ClueDto, void>({
       path: `/api/clues/${id}`,
       method: "PUT",
       body: data,
@@ -57,20 +57,19 @@ export class Clues<
       ...params,
     });
   /**
-   * @description Delete clue
+   * @description Удаляет улику по идентификатору
    *
    * @tags clues
    * @name DeleteClue
-   * @summary Delete clue
+   * @summary Удалить улику
    * @request DELETE:/api/clues/{id}
    * @secure
    */
   deleteClue = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
+    this.request<void, void>({
       path: `/api/clues/${id}`,
       method: "DELETE",
       secure: true,
-      format: "json",
       ...params,
     });
 }

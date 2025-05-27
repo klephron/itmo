@@ -1,6 +1,5 @@
 import { Link } from "react-router";
-
-import styles from "./refresh.module.scss";
+import styles from "./index.module.scss";
 
 export default function RefreshPage() {
   return (

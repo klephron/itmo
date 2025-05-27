@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import styles from "./header.module.scss";
+import styles from "./index.module.scss";
 
 export default function Header({ className }: { className?: string }) {
   return (

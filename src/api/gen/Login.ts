@@ -17,15 +17,16 @@ export class Login<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
   /**
-   * No description
+   * @description Проверяет логин и пароль, возвращает access и refresh токены, а также информацию о пользователе
    *
    * @tags auth
    * @name Login
+   * @summary Авторизация пользователя
    * @request POST:/api/login
    * @secure
    */
   login = (data: LoginRequest, params: RequestParams = {}) =>
-    this.request<LoginResponse, any>({
+    this.request<LoginResponse, void>({
       path: `/api/login`,
       method: "POST",
       body: data,

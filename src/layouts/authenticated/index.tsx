@@ -9,7 +9,7 @@ export default function AuthenticatedLayout() {
   const [isAuth, setIsAuth] = useState(false);
 
   useEffect(() => {
-    if (token) {
+    if (token && token.present) {
       let tokenExpTime = token.issueAtMS + token.expiresInMS;
       let nowTime = Date.now();
 
