@@ -5,47 +5,48 @@ import { LocalStorageKeys } from "./localstorage";
 export interface User {
   id: number;
   username: string;
-  permissions: Set<string>;
+  present: boolean;
 }
 
-const defaultUser = { id: 0, username: "anonymous", permissions: new Set<string>() } as User;
+const loaded = { id: 0, username: "", present: false } as User;
 
 function localStorageGet() {
   let str = localStorage.getItem(LocalStorageKeys.USER);
   if (!str) {
-    return defaultUser;
+    return loaded;
   }
 
   try {
     const obj = JSON.parse(str);
     return {
-      id: Number(obj["id"]) ?? defaultUser.id,
-      username: String(obj["username"]) || defaultUser.username,
-      permissions: new Set<string>(
-        Array.isArray(obj.permissions) ? obj.permissions : defaultUser.permissions
-      ),
+      id: Number(obj["id"]),
+      username: String(obj["username"]),
+      present: true,
     } as User;
   } catch {
-    return defaultUser;
+    return loaded;
   }
 }
 
-function localStorageSet(user: User) {
-  localStorage.setItem(
-    LocalStorageKeys.USER,
-    JSON.stringify({
-      id: user.id,
-      username: user.username,
-      permissions: Array.from(user.permissions),
-    })
-  );
+function localStorageSet(user: User | null) {
+  if (user) {
+    localStorage.setItem(
+      LocalStorageKeys.USER,
+      JSON.stringify({
+        id: user.id,
+        username: user.username,
+      })
+    );
+  } else {
+    localStorage.removeItem(LocalStorageKeys.USER);
+  }
 }
 
 export const useUser = create(
   subscribeWithSelector(
     combine({ user: localStorageGet() }, (set) => ({
       update: (user: User) => set({ user: user }),
-      reset: () => set({ user: defaultUser }),
+      reset: () => set({ user: loaded }),
     }))
   )
 );
@@ -61,7 +62,8 @@ useUser.subscribe(
   (state) => state.user,
   (user) => {
     if (import.meta.env.DEV) {
-      console.log("user updated: ", user);
+      console.log("[state.user]: ", user);
     }
-  }
+  },
+  { fireImmediately: true }
 );

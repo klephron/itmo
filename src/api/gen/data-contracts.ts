@@ -227,8 +227,7 @@ export interface UpdateCaseRequest {
   /** @minLength 1 */
   title: string;
   description: string;
-  /** @minLength 1 */
-  status: string;
+  status: CaseEntityStatus;
   users: Record<string, string>;
 }
 

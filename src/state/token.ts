@@ -8,54 +8,61 @@ export interface Token {
   tokenType: string;
   issueAtMS: number;
   expiresInMS: number;
+  present: boolean;
 }
 
-const defaultToken = {
+const loaded = {
   accessToken: "",
   refreshToken: "",
   tokenType: "",
-  issueAtMS: Date.now(),
+  issueAtMS: 0,
   expiresInMS: 0,
+  present: false,
 } as Token;
 
 function localStorageGet() {
-  let str = localStorage.getItem(LocalStorageKeys.USER);
+  let str = localStorage.getItem(LocalStorageKeys.TOKEN);
   if (!str) {
-    return defaultToken;
+    return loaded;
   }
 
   try {
     const obj = JSON.parse(str);
     return {
-      accessToken: String(obj["accessToken"]) || defaultToken.accessToken,
-      refreshToken: String(obj["refreshToken"]) || defaultToken.refreshToken,
-      tokenType: String(obj["tokenType"]) || defaultToken.tokenType,
-      issueAtMS: Number(obj["startTimeMS"]) || defaultToken.issueAtMS,
-      expiresInMS: Number(obj["expiresInMS"]) || defaultToken.expiresInMS,
+      accessToken: String(obj["accessToken"]),
+      refreshToken: String(obj["refreshToken"]),
+      tokenType: String(obj["tokenType"]),
+      issueAtMS: Number(obj["startTimeMS"]),
+      expiresInMS: Number(obj["expiresInMS"]),
+      present: true,
     } as Token;
   } catch {
-    return defaultToken;
+    return loaded;
   }
 }
 
-function localStorageSet(token: Token) {
-  localStorage.setItem(
-    LocalStorageKeys.USER,
-    JSON.stringify({
-      accessToken: token.accessToken,
-      refreshToken: token.refreshToken,
-      tokenType: token.tokenType,
-      issueAtMS: token.issueAtMS,
-      expiresInMS: token.expiresInMS,
-    } as Token)
-  );
+function localStorageSet(token: Token | null) {
+  if (token) {
+    localStorage.setItem(
+      LocalStorageKeys.TOKEN,
+      JSON.stringify({
+        accessToken: token.accessToken,
+        refreshToken: token.refreshToken,
+        tokenType: token.tokenType,
+        issueAtMS: token.issueAtMS,
+        expiresInMS: token.expiresInMS,
+      } as Token)
+    );
+  } else {
+    localStorage.removeItem(LocalStorageKeys.TOKEN);
+  }
 }
 
 export const useToken = create(
   subscribeWithSelector(
     combine({ token: localStorageGet() }, (set) => ({
       update: (token: Token) => set({ token: token }),
-      reset: () => set({ token: defaultToken }),
+      reset: () => set({ token: loaded }),
     }))
   )
 );
@@ -71,7 +78,8 @@ useToken.subscribe(
   (state) => state.token,
   (token) => {
     if (import.meta.env.DEV) {
-      console.log("token updated: ", token);
+      console.log("[state.token]: ", token);
     }
-  }
+  },
+  { fireImmediately: true }
 );

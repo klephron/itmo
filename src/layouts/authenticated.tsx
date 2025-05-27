@@ -9,15 +9,17 @@ export default function AuthenticatedLayout() {
   const [isAuth, setIsAuth] = useState(false);
 
   useEffect(() => {
-    let tokenExpTime = token.issueAtMS + token.expiresInMS;
-    let nowTime = Date.now();
+    if (token) {
+      let tokenExpTime = token.issueAtMS + token.expiresInMS;
+      let nowTime = Date.now();
 
-    if (!token.accessToken) {
-      navigate("/login");
-    } else if (nowTime > tokenExpTime) {
-      navigate("/refresh");
+      if (nowTime > tokenExpTime) {
+        navigate("/refresh");
+      } else {
+        setIsAuth(true);
+      }
     } else {
-      setIsAuth(true);
+      navigate("/login");
     }
   }, [token]);
 

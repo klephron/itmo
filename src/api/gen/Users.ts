@@ -137,12 +137,12 @@ export class Users<
    * @description Get user privileges
    *
    * @tags users
-   * @name GetUserPrivileges
+   * @name GetUserPermissions
    * @summary Get user privileges
    * @request GET:/api/users/{id}/privileges
    * @secure
    */
-  getUserPrivileges = (id: number, params: RequestParams = {}) =>
+  getUserPermissions = (id: number, params: RequestParams = {}) =>
     this.request<UserPermissionsResponse, any>({
       path: `/api/users/${id}/privileges`,
       method: "GET",
@@ -154,17 +154,17 @@ export class Users<
    * @description Update user privileges
    *
    * @tags users
-   * @name UpdateUserPrivileges
+   * @name UpdateUserPermissions
    * @summary Update user privileges
    * @request PUT:/api/users/{id}/privileges
    * @secure
    */
-  updateUserPrivileges = (
+  updateUserPermissions = (
     id: number,
     data: UserPermissionsRequest,
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
+    this.request<UserPermissionsResponse, any>({
       path: `/api/users/${id}/privileges`,
       method: "PUT",
       body: data,

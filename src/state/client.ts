@@ -4,7 +4,7 @@ import { combine, subscribeWithSelector } from "zustand/middleware";
 import { Token, useToken } from "./token";
 
 function getAuthorization(token: Token) {
-  if (token.tokenType && token.accessToken) {
+  if (token.present) {
     return `${token.tokenType} ${token.accessToken}`;
   }
   return undefined;
@@ -40,9 +40,10 @@ useClient.subscribe(
   (state) => state.client,
   (client) => {
     if (import.meta.env.DEV) {
-      console.log("client updated: ", client);
+      console.log("[state.client]: ", client);
     }
-  }
+  },
+  { fireImmediately: true }
 );
 
 export { useClient };

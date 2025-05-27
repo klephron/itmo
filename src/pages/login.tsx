@@ -11,6 +11,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const client = useClient((state) => state.client);
+
   const setUser = useUser((state) => state.update);
   const setToken = useToken((state) => state.update);
 
@@ -34,7 +35,7 @@ export default function LoginPage() {
             setUser({
               id: Number(data["id"]),
               username: data["username"],
-              permissions: new Set<string>(),
+              present: true,
             });
 
             setToken({
@@ -43,8 +44,8 @@ export default function LoginPage() {
               tokenType: "Bearer",
               issueAtMS: Number(data["iat"]),
               expiresInMS: Number(data["expiresIn"]) * 1000,
+              present: true,
             });
-
             navigate("/");
           } catch (e) {
             console.error(e);

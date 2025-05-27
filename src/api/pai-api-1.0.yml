@@ -912,7 +912,7 @@ paths:
       - users
       summary: Get user privileges
       description: Get user privileges
-      operationId: getUserPrivileges
+      operationId: getUserPermissions
       parameters:
       - name: id
         in: path
@@ -922,7 +922,7 @@ paths:
           format: int64
       responses:
         "200":
-          description: getUserPrivileges 200 response
+          description: getUserPermissions 200 response
           content:
             application/json:
               schema:
@@ -934,7 +934,7 @@ paths:
       - users
       summary: Update user privileges
       description: Update user privileges
-      operationId: updateUserPrivileges
+      operationId: updateUserPermissions
       parameters:
       - name: id
         in: path
@@ -950,11 +950,11 @@ paths:
         required: true
       responses:
         "200":
-          description: updateUserPrivileges 200 response
+          description: updateUserPermissions 200 response
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/UserPermissionsResponse"
       security:
       - bearerAuth: []
 components:
@@ -1360,8 +1360,7 @@ components:
         description:
           type: string
         status:
-          minLength: 1
-          type: string
+          $ref: "#/components/schemas/CaseEntity.Status"
         users:
           type: object
           additionalProperties:
