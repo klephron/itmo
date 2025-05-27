@@ -5,6 +5,7 @@ import java.time.Instant;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,7 +14,8 @@ import jakarta.validation.constraints.NotNull;
  */
 @Introspected
 @Serdeable
-public record NotificationDto(Long id, Long userId, @NotNull @NotEmpty String title,
-    String description,
+public record NotificationDto(@Nullable Long id, @Nullable Long userId,
+    @NotNull @NotEmpty String title,
+    @Nullable String description,
     @NotNull Instant createdAt, @NotNull Instant readAt) implements Serializable {
 }

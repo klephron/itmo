@@ -4,12 +4,13 @@ import java.time.Instant;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 @Introspected
 @Serdeable
-public record AddIncidentRequest(String applicant, @NotNull @NotEmpty String type,
+public record AddIncidentRequest(@Nullable String applicant, @NotNull @NotEmpty String type,
     @NotNull @NotEmpty String reason, @NotNull Double locationLatitude,
     @NotNull Double locationLongitude, @NotNull Double locationAltitude,
     @NotNull Instant estimatedTime) {

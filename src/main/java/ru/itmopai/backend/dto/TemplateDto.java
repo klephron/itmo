@@ -5,6 +5,7 @@ import java.time.Instant;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import ru.itmopai.backend.entity.TemplateEntity;
@@ -14,8 +15,11 @@ import ru.itmopai.backend.entity.TemplateEntity;
  */
 @Introspected
 @Serdeable
-public record TemplateDto(Long id, Long creatorId, @NotNull Instant createdAt, Long updatorId,
+public record TemplateDto(@Nullable Long id, @Nullable Long creatorId, @NotNull Instant createdAt,
+    @Nullable Long updatorId,
     @NotNull Instant updatedAt, @NotNull @NotEmpty String title,
-    @NotNull TemplateEntity.Status status, @NotNull @NotEmpty String metadata, String description,
-    String uri, String cdbURI, Long relatedCaseId) implements Serializable {
+    @NotNull TemplateEntity.Status status, @NotNull @NotEmpty String metadata,
+    @Nullable String description,
+    @Nullable String uri, @Nullable String cdbURI,
+    @Nullable Long relatedCaseId) implements Serializable {
 }

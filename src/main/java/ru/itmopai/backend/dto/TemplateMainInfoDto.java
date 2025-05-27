@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import ru.itmopai.backend.entity.TemplateEntity;
@@ -13,7 +14,7 @@ import ru.itmopai.backend.entity.TemplateEntity;
  */
 @Introspected
 @Serdeable
-public record TemplateMainInfoDto(Long id, @NotNull @NotEmpty String title,
+public record TemplateMainInfoDto(@Nullable Long id, @NotNull @NotEmpty String title,
     @NotNull TemplateEntity.Status status,
-    @NotNull @NotEmpty String metadata, String description) implements Serializable {
+    @NotNull @NotEmpty String metadata, @Nullable String description) implements Serializable {
 }
