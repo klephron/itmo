@@ -14,8 +14,8 @@ import jakarta.validation.constraints.NotNull;
  */
 @Introspected
 @Serdeable
-public record NotificationDto(@Nullable Long id, @Nullable Long userId,
+public record NotificationDto(Long id, Long userId,
     @NotNull @NotEmpty String title,
     @Nullable String description,
-    @NotNull Instant createdAt, @NotNull Instant readAt) implements Serializable {
+    @NotNull Instant createdAt, @Nullable Instant readAt) implements Serializable {
 }
