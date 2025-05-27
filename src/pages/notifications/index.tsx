@@ -33,7 +33,6 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
         <table className={styles.table}>
           <thead>
             <tr className={styles.row}>
-              <th>ID</th>
               <th>Title</th>
               <th>Description</th>
               <th>Created Time (UTC)</th>
@@ -44,9 +43,8 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
             {Array.from(unread.values()).map((notification) => (
               <tr className={styles.row} key={notification.id}>
                 <td>
-                  <Link to={`/notifications/${notification.id}`}>{notification.id}</Link>
+                  <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
                 </td>
-                <td>{notification.title}</td>
                 <td>{sliceRemaining(notification.description)}</td>
                 <td>{new Date(notification.createdAt).toLocaleString()}</td>
                 <td>
@@ -132,7 +130,6 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
       <table className={styles.table}>
         <thead>
           <tr className={styles.row}>
-            <th>ID</th>
             <th>Title</th>
             <th>Description</th>
             <th>Created Time (UTC)</th>
@@ -143,9 +140,8 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
           {searchNotifications.map((notification) => (
             <tr className={styles.row} key={notification.id}>
               <td>
-                <Link to={`/notifications/${notification.id}`}>{notification.id}</Link>
+                <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
               </td>
-              <td>{notification.title}</td>
               <td>{sliceRemaining(notification.description)}</td>
               <td>{new Date(notification.createdAt).toLocaleString()}</td>
               <td>{notification.readAt ? new Date(notification.readAt).toLocaleString() : "-"}</td>
