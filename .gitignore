@@ -25,3 +25,5 @@ dist-ssr
 
 .react-router/
 build/
+*.tar
+*.tar.gz
