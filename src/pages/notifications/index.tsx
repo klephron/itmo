@@ -155,11 +155,11 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
   return (
     <div className={styles.root}>
       <div className={styles.unread}>
-        <h2>Unread Notifications:</h2>
+        <h2>Unread Notifications</h2>
         {UnreadTable()}
       </div>
       <div className={styles.search}>
-        <h2>Search Notifications:</h2>
+        <h2>Search Notifications</h2>
         {SearchPanel()}
         {SearchTable()}
       </div>

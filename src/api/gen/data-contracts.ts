@@ -296,7 +296,7 @@ export interface UserDto {
   name: string;
   /** @minLength 1 */
   surname: string;
-  patronymic: string;
+  patronymic?: string | null;
   /** @format double */
   locationLatitude: number;
   /** @format double */
