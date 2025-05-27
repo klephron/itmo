@@ -17,6 +17,7 @@ import io.micronaut.security.authentication.UsernamePasswordCredentials;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.security.token.generator.AccessRefreshTokenGenerator;
 import io.micronaut.security.token.render.AccessRefreshToken;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,10 +25,12 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import ru.itmopai.backend.dto.request.LoginRequest;
 import ru.itmopai.backend.dto.response.LoginResponse;
 import ru.itmopai.backend.security.AuthenticationProviderUserPassword;
 
+@Validated
 @Controller("/login")
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class CustomLoginController {
@@ -56,7 +59,8 @@ public class CustomLoginController {
           description = "Данные для входа (логин и пароль)",
           required = true,
           content = @Content(
-              schema = @Schema(implementation = LoginRequest.class))) @Body LoginRequest creds,
+              schema = @Schema(
+                  implementation = LoginRequest.class))) @Body @Valid LoginRequest creds,
       HttpRequest<?> request) {
     UsernamePasswordCredentials upc =
         new UsernamePasswordCredentials(creds.username(), creds.password());

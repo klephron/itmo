@@ -22,6 +22,7 @@ dependencies {
   runtimeOnly("ch.qos.logback:logback-classic")
   testImplementation("io.micronaut:micronaut-http-client")
   runtimeOnly("org.yaml:snakeyaml")
+  implementation("io.micronaut.validation:micronaut-validation")
   implementation("io.micronaut.security:micronaut-security-jwt")
   implementation("io.micronaut.security:micronaut-security-annotations")
   implementation("io.micronaut.security:micronaut-security")

@@ -9,6 +9,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -18,6 +19,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.NotificationDto;
@@ -26,6 +28,7 @@ import ru.itmopai.backend.entity.NotificationEntity;
 import ru.itmopai.backend.mapper.NotificationMapper;
 import ru.itmopai.backend.service.NotificationService;
 
+@Validated
 @Controller("/notifications")
 @AllArgsConstructor
 @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -77,7 +80,7 @@ public class NotificationsController {
           description = "Данные для обновления уведомления",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = UpdateNotificationRequest.class))) @Body UpdateNotificationRequest request) {
+              implementation = UpdateNotificationRequest.class))) @Body @Valid UpdateNotificationRequest request) {
     try {
       NotificationEntity notificationEntity =
           notificationService.updateNotification(id, request.title(), request.description(),

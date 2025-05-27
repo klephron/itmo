@@ -7,6 +7,8 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.validation.Validated;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.UserDto;
@@ -16,6 +18,7 @@ import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.service.PermissionService;
 import ru.itmopai.backend.service.UserService;
 
+@Validated
 @Controller("/test")
 @RequiredArgsConstructor
 public class TestController {
@@ -25,7 +28,7 @@ public class TestController {
 
   @Post("/register")
   @Secured(SecurityRule.IS_ANONYMOUS)
-  public HttpResponse<UserDto> register(@Body RegisterRequest req) {
+  public HttpResponse<UserDto> register(@Body @Valid RegisterRequest req) {
     try {
       UserDto user =
           userMapper.toDto(service.register(req.username(), req.password(),

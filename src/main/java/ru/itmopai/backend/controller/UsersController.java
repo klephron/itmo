@@ -10,6 +10,7 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -18,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
@@ -36,6 +38,7 @@ import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.service.CaseService;
 import ru.itmopai.backend.service.UserService;
 
+@Validated
 @Controller("/users")
 @AllArgsConstructor
 @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -131,7 +134,7 @@ public class UsersController {
           description = "Данные для регистрации пользователя",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = RegisterRequest.class))) @Body RegisterRequest registerRequest,
+              implementation = RegisterRequest.class))) @Body @Valid RegisterRequest registerRequest,
       Authentication authentication) {
     try {
       UserDto user =
@@ -165,7 +168,7 @@ public class UsersController {
           description = "Новые координаты пользователя",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = LocationUpdateRequest.class))) @Body LocationUpdateRequest locationUpdateRequest,
+              implementation = LocationUpdateRequest.class))) @Body @Valid LocationUpdateRequest locationUpdateRequest,
       Authentication authentication) {
     try {
       UserEntity userEntity =

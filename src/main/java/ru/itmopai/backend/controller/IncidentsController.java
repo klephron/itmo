@@ -8,6 +8,7 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -16,14 +17,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseDto;
 import ru.itmopai.backend.dto.IncidentMainInfoDto;
 import ru.itmopai.backend.dto.request.AddCaseRequest;
-import ru.itmopai.backend.dto.request.AddUpdateIncidentRequest;
+import ru.itmopai.backend.dto.request.AddIncidentRequest;
 import ru.itmopai.backend.dto.request.UpdateCaseRequest;
+import ru.itmopai.backend.dto.request.UpdateIncidentRequest;
 import ru.itmopai.backend.entity.CaseEntity;
 import ru.itmopai.backend.entity.IncidentEntity;
 import ru.itmopai.backend.mapper.CaseMapper;
@@ -33,6 +36,7 @@ import ru.itmopai.backend.service.CaseService;
 import ru.itmopai.backend.service.IncidentService;
 import ru.itmopai.backend.service.NotificationService;
 
+@Validated
 @AllArgsConstructor
 @Controller("/incidents")
 @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -65,7 +69,7 @@ public class IncidentsController {
           description = "Параметры нового инцидента",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = AddUpdateIncidentRequest.class))) @Body AddUpdateIncidentRequest request,
+              implementation = AddIncidentRequest.class))) @Body @Valid AddIncidentRequest request,
       Authentication auth) {
     Long userId = (Long) auth.getAttributes().get("id");
     try {
@@ -103,7 +107,7 @@ public class IncidentsController {
           description = "Новые параметры инцидента",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = AddUpdateIncidentRequest.class))) @Body AddUpdateIncidentRequest request,
+              implementation = UpdateIncidentRequest.class))) @Body @Valid UpdateIncidentRequest request,
       Authentication auth) {
     Long userId = (Long) auth.getAttributes().get("id");
     try {
@@ -142,7 +146,7 @@ public class IncidentsController {
           description = "Параметры нового дела",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = AddCaseRequest.class))) @Body AddCaseRequest addCaseRequest,
+              implementation = AddCaseRequest.class))) @Body @Valid AddCaseRequest addCaseRequest,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
@@ -180,7 +184,7 @@ public class IncidentsController {
           description = "Новые параметры дела",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = UpdateCaseRequest.class))) @Body UpdateCaseRequest updateCaseRequest,
+              implementation = UpdateCaseRequest.class))) @Body @Valid UpdateCaseRequest updateCaseRequest,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {

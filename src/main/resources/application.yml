@@ -60,6 +60,7 @@ micronaut:
       access-logger:
         enabled: true
         log-format: common
+    default-charset: UTF-8
     port: 8081
     context-path: /api
 

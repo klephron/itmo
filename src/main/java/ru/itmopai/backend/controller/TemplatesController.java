@@ -7,6 +7,7 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.request.UpdateTemplateRequest;
@@ -23,6 +25,7 @@ import ru.itmopai.backend.service.NotificationService;
 import ru.itmopai.backend.service.PermissionService;
 import ru.itmopai.backend.service.TemplateService;
 
+@Validated
 @Controller("/templates")
 @AllArgsConstructor
 @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -83,7 +86,7 @@ public class TemplatesController {
           description = "Данные для обновления шаблона",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = UpdateTemplateRequest.class))) @Body UpdateTemplateRequest updateTemplateRequest,
+              implementation = UpdateTemplateRequest.class))) @Body @Valid UpdateTemplateRequest updateTemplateRequest,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {

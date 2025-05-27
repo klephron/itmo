@@ -7,6 +7,7 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,10 +15,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.ClueDto;
-import ru.itmopai.backend.dto.request.AddUpdateClueRequest;
+import ru.itmopai.backend.dto.request.UpdateClueRequest;
 import ru.itmopai.backend.entity.ClueEntity;
 import ru.itmopai.backend.mapper.ClueMainInfoMapper;
 import ru.itmopai.backend.mapper.ClueMapper;
@@ -25,6 +27,7 @@ import ru.itmopai.backend.service.ClueService;
 import ru.itmopai.backend.service.NotificationService;
 import ru.itmopai.backend.service.PermissionService;
 
+@Validated
 @Controller("/clues")
 @AllArgsConstructor
 @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -82,7 +85,7 @@ public class CluesController {
           description = "Параметры для обновления улики",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = AddUpdateClueRequest.class))) @Body AddUpdateClueRequest addUpdateClueRequest,
+              implementation = UpdateClueRequest.class))) @Body @Valid UpdateClueRequest updateClueRequest,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
@@ -91,10 +94,10 @@ public class CluesController {
           "CLUES_UPDATE");
 
       clueEntity =
-          clueService.updateClue(userId, id, addUpdateClueRequest.title(),
-              addUpdateClueRequest.description(), addUpdateClueRequest.status());
+          clueService.updateClue(userId, id, updateClueRequest.title(),
+              updateClueRequest.description(), updateClueRequest.status());
       notificationService.addNotification(userId, "PAI Notification",
-          "Clue %s updated in #%d case".formatted(addUpdateClueRequest.title(),
+          "Clue %s updated in #%d case".formatted(updateClueRequest.title(),
               clueEntity.getRelatedCase().getId()));
       return HttpResponse.ok(clueMapper.toDto(clueEntity));
     } catch (NoSuchElementException e) {

@@ -8,6 +8,7 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -16,14 +17,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseDto;
 import ru.itmopai.backend.dto.ClueMainInfoDto;
 import ru.itmopai.backend.dto.TemplateMainInfoDto;
+import ru.itmopai.backend.dto.request.AddClueRequest;
 import ru.itmopai.backend.dto.request.AddTemplateRequest;
-import ru.itmopai.backend.dto.request.AddUpdateClueRequest;
 import ru.itmopai.backend.entity.CaseEntity;
 import ru.itmopai.backend.entity.ClueEntity;
 import ru.itmopai.backend.entity.TemplateEntity;
@@ -36,6 +38,7 @@ import ru.itmopai.backend.service.ClueService;
 import ru.itmopai.backend.service.NotificationService;
 import ru.itmopai.backend.service.TemplateService;
 
+@Validated
 @Controller("/cases")
 @RequiredArgsConstructor
 @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -139,7 +142,7 @@ public class CasesController {
           description = "Данные для создания шаблона",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = AddTemplateRequest.class))) @Body AddTemplateRequest addTemplateRequest,
+              implementation = AddTemplateRequest.class))) @Body @Valid AddTemplateRequest addTemplateRequest,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
@@ -177,18 +180,18 @@ public class CasesController {
           description = "Данные для создания улики",
           required = true,
           content = @Content(schema = @Schema(
-              implementation = AddUpdateClueRequest.class))) @Body AddUpdateClueRequest addUpdateClueRequest,
+              implementation = AddClueRequest.class))) @Body @Valid AddClueRequest updateClueRequest,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
       ClueEntity clueEntity =
           clueService.addClue(userId,
-              addUpdateClueRequest.title(),
-              addUpdateClueRequest.description(),
-              addUpdateClueRequest.status(),
+              updateClueRequest.title(),
+              updateClueRequest.description(),
+              updateClueRequest.status(),
               id);
       notificationService.addNotification(userId, "PAI Notification",
-          "Clue %s added to #%d case".formatted(addUpdateClueRequest.title(),
+          "Clue %s added to #%d case".formatted(updateClueRequest.title(),
               clueEntity.getRelatedCase().getId()));
       return HttpResponse.ok(clueMainInfoMapper.toDto(clueEntity));
     } catch (NoSuchElementException | IllegalArgumentException e) {
