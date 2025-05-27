@@ -5,12 +5,13 @@ import { useEffect, useState } from "react";
 import styles from "./index.module.scss";
 
 export default function Sidebar({ className }: { className?: string }) {
-  const notifications = useNotifications((state) => state.notifications);
+  const notifications = useNotifications((state) => state.unread);
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     if (notifications) {
-      setUnread(notifications.length);
+      notifications.values().filter((e) => e.readAt === null)
+      setUnread(notifications.size);
     }
   }, [notifications]);
 

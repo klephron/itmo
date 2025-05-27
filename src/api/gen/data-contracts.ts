@@ -191,11 +191,11 @@ export interface NotificationDto {
   userId: number;
   /** @minLength 1 */
   title: string;
-  description: string;
+  description?: string;
   /** @format date-time */
   createdAt: string;
   /** @format date-time */
-  readAt: string;
+  readAt?: string;
 }
 
 export interface RegisterRequest {
@@ -255,11 +255,10 @@ export interface UpdateCaseRequest {
 }
 
 export interface UpdateNotificationRequest {
-  /** @minLength 1 */
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   /** @format date-time */
-  readAt: string;
+  readAt?: string;
 }
 
 export interface UpdateTemplateRequest {

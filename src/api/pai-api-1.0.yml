@@ -1394,9 +1394,7 @@ components:
     NotificationDto:
       required:
       - createdAt
-      - description
       - id
-      - readAt
       - title
       - userId
       type: object
@@ -1547,14 +1545,9 @@ components:
             minLength: 1
             type: string
     UpdateNotificationRequest:
-      required:
-      - description
-      - readAt
-      - title
       type: object
       properties:
         title:
-          minLength: 1
           type: string
         description:
           type: string

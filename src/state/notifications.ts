@@ -5,13 +5,36 @@ import { usePermissions } from "./permissions";
 import { useUser } from "./user";
 import { useClient } from "./client";
 
-export type Notifications = NotificationDto[] | null;
+export type Notifications = Map<number, NotificationDto> | null;
+
+function toMap(notifications: NotificationDto[]) {
+  return new Map(
+    notifications.map((notification) => [notification.id, notification as NotificationDto])
+  );
+}
+
+function updateById(notification: NotificationDto) {
+  const unread = useNotifications.getState().unread;
+  if (!unread) {
+    return {};
+  }
+
+  const unread1 = new Map(unread);
+
+  if (notification.readAt) {
+    unread1.delete(notification.id);
+  } else {
+    unread1.set(notification.id, notification);
+  }
+  return { unread: unread1 };
+}
 
 export const useNotifications = create(
   subscribeWithSelector(
-    combine({ notifications: null as Notifications }, (set) => ({
-      update: (notifications: NotificationDto[]) => set({ notifications: notifications }),
-      reset: () => set({ notifications: null }),
+    combine({ unread: null as Notifications }, (set) => ({
+      update: (notifications: NotificationDto[]) => set({ unread: toMap(notifications) }),
+      updateById: (notification: NotificationDto) => set(updateById(notification)),
+      reset: () => set({ unread: null }),
     }))
   )
 );
@@ -44,7 +67,7 @@ usePermissions.subscribe(
 );
 
 useNotifications.subscribe(
-  (state) => state.notifications,
+  (state) => state.unread,
   (notifications) => {
     if (import.meta.env.DEV) {
       console.log("[state.notifications]: ", notifications);

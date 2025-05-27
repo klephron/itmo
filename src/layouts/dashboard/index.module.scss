@@ -17,4 +17,9 @@
 
 .bottomleft {
   border-right: 1px solid black;
+  overflow: auto;
+}
+
+.bottomright {
+  overflow: auto;
 }

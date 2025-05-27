@@ -1,0 +1,36 @@
+.root {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.unread, .search {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.table {
+  border: 1px solid black;
+  border-collapse: collapse;
+
+  tr {
+    border: 1px solid black;
+
+    td,
+    th {
+      padding: 5px;
+      border: 1px solid black;
+    }
+  }
+}
+
+.panel {
+  display: flex;
+  gap: 10px;
+  padding: 5px;
+  label {
+    padding-right: 5px;
+  }
+}
