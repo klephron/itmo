@@ -28,6 +28,9 @@ micronaut:
     token:
       jwt:
         enabled: true
+        generator:
+          access-token:
+            expiration: 604800
         signatures:
           secret:
             generator:

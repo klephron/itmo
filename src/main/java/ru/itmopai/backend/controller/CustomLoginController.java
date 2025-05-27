@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.nimbusds.jwt.SignedJWT;
 
+import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
@@ -41,6 +42,9 @@ public class CustomLoginController {
   @Inject
   private AccessRefreshTokenGenerator tokenGenerator;
 
+  @Value("${micronaut.security.token.jwt.generator.access-token.expiration}")
+  private Integer expiresIn;
+
   @Post
   @Operation(
       summary = "Авторизация пользователя",
@@ -72,6 +76,7 @@ public class CustomLoginController {
     }
 
     AccessRefreshToken token = tokenGenerator.generate(optional.get()).get();
+    token.setExpiresIn(expiresIn);
 
     Long iat = null;
     try {
