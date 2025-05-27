@@ -65,7 +65,7 @@ public class NotificationService {
     } else if (from != null) {
       return notificationRepository.findAllByReadAtIsNotNullAndCreatedAtBetween(from, to);
     } else {
-      return List.of();
+      return notificationRepository.findAllByReadAtIsNotNull();
     }
   }
 
@@ -77,7 +77,7 @@ public class NotificationService {
     } else if (from != null) {
       return notificationRepository.findAllByReadAtIsNullAndCreatedAtBetween(from, to);
     } else {
-      return List.of();
+      return notificationRepository.findAllByReadAtIsNull();
     }
   }
 
@@ -89,7 +89,7 @@ public class NotificationService {
     } else if (from != null) {
       return notificationRepository.findAllByCreatedAtBetween(from, to);
     } else {
-      return List.of();
+      return notificationRepository.findAll();
     }
   }
 

@@ -25,11 +25,15 @@ public interface NotificationRepository extends CrudRepository<NotificationEntit
   List<NotificationEntity> findAllByReadAtIsNotNullAndCreatedAtLessThanEquals(
       @NotNull LocalDateTime to);
 
+  List<NotificationEntity> findAllByReadAtIsNotNull();
+
   List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtGreaterThanEquals(
       @NotNull LocalDateTime from);
 
   List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtLessThanEquals(
       @NotNull LocalDateTime to);
+
+  List<NotificationEntity> findAllByReadAtIsNull();
 
   List<NotificationEntity> findAllByCreatedAtGreaterThanEquals(@NotNull LocalDateTime from);
 
