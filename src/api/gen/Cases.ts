@@ -11,8 +11,8 @@
  */
 
 import {
+  AddClueRequest,
   AddTemplateRequest,
-  AddUpdateClueRequest,
   CaseDto,
   ClueMainInfoDto,
   TemplateDto,
@@ -68,7 +68,7 @@ export class Cases<
    */
   addCaseClue = (
     id: number,
-    data: AddUpdateClueRequest,
+    data: AddClueRequest,
     params: RequestParams = {},
   ) =>
     this.request<ClueMainInfoDto, string>({

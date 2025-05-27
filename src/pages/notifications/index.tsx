@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useClient } from "@state/client";
 import { useNotifications } from "@state/notifications";
 import styles from "./index.module.scss";
@@ -5,7 +6,9 @@ import Checkbox from "@components/checkbox";
 import { useEffect, useState } from "react";
 import { NotificationDto, NotificationsControllerStatus } from "@api/gen/data-contracts";
 
-export default function NotificationsPage() {
+export default function NotificationsPage(props: { descriptionMaxLen?: number }) {
+  const descriptionMaxLen = props.descriptionMaxLen ?? 20;
+
   const client = useClient((state) => state.client);
 
   const unread = useNotifications((state) => state.unread);
@@ -13,8 +16,8 @@ export default function NotificationsPage() {
 
   const [searchNotifications, searchNotificationsSet] = useState([] as NotificationDto[]);
   const [searchStatus, searchStatusSet] = useState(NotificationsControllerStatus.ALL);
-  const [searchFrom, searchFromSet] = useState(new Date(0).toISOString().split(".")[0]);
-  const [searchTo, searchToSet] = useState(new Date().toISOString().split(".")[0]);
+  const [searchFrom, searchFromSet] = useState(new Date(0).toISOString());
+  const [searchTo, searchToSet] = useState(new Date().toISOString());
 
   useEffect(() => {
     search();
@@ -30,15 +33,22 @@ export default function NotificationsPage() {
         <table className={styles.table}>
           <thead>
             <tr className={styles.row}>
-              <th>Read</th>
-              <th>Time (UTC)</th>
+              <th>ID</th>
               <th>Title</th>
               <th>Description</th>
+              <th>Created Time (UTC)</th>
+              <th>Read</th>
             </tr>
           </thead>
           <tbody>
             {Array.from(unread.values()).map((notification) => (
               <tr className={styles.row} key={notification.id}>
+                <td>
+                  <Link to={`/notifications/${notification.id}`}>{notification.id}</Link>
+                </td>
+                <td>{notification.title}</td>
+                <td>{sliceRemaining(notification.description)}</td>
+                <td>{new Date(notification.createdAt).toLocaleString()}</td>
                 <td>
                   <Checkbox
                     isChecked={!!notification.readAt}
@@ -54,9 +64,6 @@ export default function NotificationsPage() {
                     }}
                   />
                 </td>
-                <td>{new Date(notification.createdAt).toLocaleString()}</td>
-                <td>{notification.title}</td>
-                <td>{notification.description}</td>
               </tr>
             ))}
           </tbody>
@@ -76,6 +83,16 @@ export default function NotificationsPage() {
         searchNotificationsSet(r.data);
       })
       .catch((e) => console.error(e));
+  }
+
+  function sliceRemaining(text: string | null | undefined) {
+    if (text) {
+      const len = text.length;
+      if (len > descriptionMaxLen) {
+        return text.slice(0, descriptionMaxLen).trim() + " ...";
+      }
+      return text.slice(0, descriptionMaxLen).trim();
+    }
   }
 
   function SearchPanel() {
@@ -125,9 +142,11 @@ export default function NotificationsPage() {
         <tbody>
           {searchNotifications.map((notification) => (
             <tr className={styles.row} key={notification.id}>
-              <td>{notification.id}</td>
+              <td>
+                <Link to={`/notifications/${notification.id}`}>{notification.id}</Link>
+              </td>
               <td>{notification.title}</td>
-              <td>{notification.description}</td>
+              <td>{sliceRemaining(notification.description)}</td>
               <td>{new Date(notification.createdAt).toLocaleString()}</td>
               <td>{notification.readAt ? new Date(notification.readAt).toLocaleString() : "-"}</td>
             </tr>

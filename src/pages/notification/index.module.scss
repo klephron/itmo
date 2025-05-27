@@ -1,0 +1,9 @@
+.root {
+  display: flex;
+  flex-direction: column;
+
+  div {
+    padding: 10px;
+    border-bottom: 1px solid black;
+  }
+}

@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
  */
 
-import { AddUpdateClueRequest, ClueDto } from "./data-contracts";
+import { ClueDto, UpdateClueRequest } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Clues<
@@ -44,7 +44,7 @@ export class Clues<
    */
   updateClue = (
     id: number,
-    data: AddUpdateClueRequest,
+    data: UpdateClueRequest,
     params: RequestParams = {},
   ) =>
     this.request<ClueDto, void>({

@@ -79,7 +79,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddUpdateClueRequest"
+              $ref: "#/components/schemas/AddClueRequest"
         required: true
       responses:
         "200":
@@ -207,7 +207,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddUpdateClueRequest"
+              $ref: "#/components/schemas/UpdateClueRequest"
         required: true
       responses:
         "200":
@@ -271,7 +271,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddUpdateIncidentRequest"
+              $ref: "#/components/schemas/AddIncidentRequest"
         required: true
       responses:
         "200":
@@ -339,7 +339,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddUpdateIncidentRequest"
+              $ref: "#/components/schemas/UpdateIncidentRequest"
         required: true
       responses:
         "200":
@@ -494,22 +494,22 @@ paths:
         (прочитано/непрочитано/все) и диапазону дат.
       operationId: getNotifications
       parameters:
-      - name: from
-        in: query
-        description: "Дата и время начала интервала (например, 2025-05-26T17:28:43)"
-        schema:
-          type: string
-          format: date-time
-          nullable: true
-        example: 2025-05-26T17:28:43
       - name: to
         in: query
-        description: "Дата и время конца интервала (например, 2025-05-26T17:48:43)"
+        description: "Дата и время конца интервала (например, 2025-05-26T17:48:43.000Z)"
         schema:
           type: string
           format: date-time
           nullable: true
-        example: 2025-05-26T17:48:43
+        example: 2025-05-26T17:48:43.000Z
+      - name: from
+        in: query
+        description: "Дата и время начала интервала (например, 2025-05-26T17:28:43.000Z)"
+        schema:
+          type: string
+          format: date-time
+          nullable: true
+        example: 2025-05-26T17:28:43.000Z
       - name: status
         in: query
         description: Статус уведомлений для фильтрации
@@ -1093,7 +1093,6 @@ components:
   schemas:
     AddCaseRequest:
       required:
-      - description
       - title
       - users
       type: object
@@ -1103,30 +1102,15 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         users:
           type: object
           additionalProperties:
             minLength: 1
             type: string
-    AddTemplateRequest:
+    AddClueRequest:
       required:
       - description
-      - metadata
-      - title
-      type: object
-      properties:
-        title:
-          minLength: 1
-          type: string
-        metadata:
-          minLength: 1
-          type: string
-        description:
-          type: string
-    AddUpdateClueRequest:
-      required:
-      - description
-      - status
       - title
       type: object
       properties:
@@ -1137,10 +1121,11 @@ components:
           minLength: 1
           type: string
         status:
-          $ref: "#/components/schemas/ClueEntity.Status"
-    AddUpdateIncidentRequest:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ClueEntity.Status"
+    AddIncidentRequest:
       required:
-      - applicant
       - estimatedTime
       - locationAltitude
       - locationLatitude
@@ -1151,6 +1136,7 @@ components:
       properties:
         applicant:
           type: string
+          nullable: true
         type:
           minLength: 1
           type: string
@@ -1169,6 +1155,21 @@ components:
         estimatedTime:
           type: string
           format: date-time
+    AddTemplateRequest:
+      required:
+      - metadata
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        metadata:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
     CaseDto:
       required:
       - createdAt
@@ -1218,8 +1219,6 @@ components:
       - REJECTED
     CaseMainInfoDto:
       required:
-      - description
-      - id
       - status
       - title
       type: object
@@ -1227,40 +1226,39 @@ components:
         id:
           type: integer
           format: int64
+          nullable: true
         title:
           minLength: 1
           type: string
         description:
           type: string
+          nullable: true
         status:
           $ref: "#/components/schemas/CaseEntity.Status"
       description: DTO for ru.itmopai.backend.entity.CaseEntity
     ClueDto:
       required:
       - createdAt
-      - creatorId
-      - description
-      - id
-      - metadata
-      - relatedCaseId
       - status
       - title
       - updatedAt
-      - updatorId
       type: object
       properties:
         id:
           type: integer
           format: int64
+          nullable: true
         creatorId:
           type: integer
           format: int64
+          nullable: true
         createdAt:
           type: string
           format: date-time
         updatorId:
           type: integer
           format: int64
+          nullable: true
         updatedAt:
           type: string
           format: date-time
@@ -1269,13 +1267,16 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         status:
           $ref: "#/components/schemas/ClueEntity.Status"
         metadata:
           type: string
+          nullable: true
         relatedCaseId:
           type: integer
           format: int64
+          nullable: true
       description: DTO for ru.itmopai.backend.entity.ClueEntity
     ClueEntity.Status:
       type: string
@@ -1285,8 +1286,6 @@ components:
       - PENDING
     ClueMainInfoDto:
       required:
-      - description
-      - id
       - status
       - title
       type: object
@@ -1294,19 +1293,19 @@ components:
         id:
           type: integer
           format: int64
+          nullable: true
         title:
           minLength: 1
           type: string
         description:
           type: string
+          nullable: true
         status:
           $ref: "#/components/schemas/ClueEntity.Status"
       description: DTO for ru.itmopai.backend.entity.ClueEntity
     IncidentMainInfoDto:
       required:
-      - applicant
       - estimatedTime
-      - id
       - locationAltitude
       - locationLatitude
       - locationLongitude
@@ -1317,8 +1316,10 @@ components:
         id:
           type: integer
           format: int64
+          nullable: true
         applicant:
           type: string
+          nullable: true
         type:
           minLength: 1
           type: string
@@ -1339,21 +1340,20 @@ components:
           format: date-time
       description: DTO for ru.itmopai.backend.entity.IncidentEntity
     LocationUpdateRequest:
-      required:
-      - altitude
-      - latitude
-      - longitude
       type: object
       properties:
         latitude:
           type: number
           format: double
+          nullable: true
         longitude:
           type: number
           format: double
+          nullable: true
         altitude:
           type: number
           format: double
+          nullable: true
     LoginRequest:
       required:
       - password
@@ -1410,12 +1410,14 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
         readAt:
           type: string
           format: date-time
+          nullable: true
       description: DTO for ru.itmopai.backend.entity.NotificationEntity
     NotificationsController.Status:
       type: string
@@ -1427,7 +1429,6 @@ components:
       required:
       - name
       - password
-      - patronymic
       - surname
       - username
       type: object
@@ -1446,34 +1447,31 @@ components:
           type: string
         patronymic:
           type: string
+          nullable: true
     TemplateDto:
       required:
-      - cdbURI
       - createdAt
-      - creatorId
-      - description
-      - id
       - metadata
-      - relatedCaseId
       - status
       - title
       - updatedAt
-      - updatorId
-      - uri
       type: object
       properties:
         id:
           type: integer
           format: int64
+          nullable: true
         creatorId:
           type: integer
           format: int64
+          nullable: true
         createdAt:
           type: string
           format: date-time
         updatorId:
           type: integer
           format: int64
+          nullable: true
         updatedAt:
           type: string
           format: date-time
@@ -1487,13 +1485,17 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         uri:
           type: string
+          nullable: true
         cdbURI:
           type: string
+          nullable: true
         relatedCaseId:
           type: integer
           format: int64
+          nullable: true
       description: DTO for ru.itmopai.backend.entity.TemplateEntity
     TemplateEntity.Status:
       type: string
@@ -1503,8 +1505,6 @@ components:
       - CDB_ADDED
     TemplateMainInfoDto:
       required:
-      - description
-      - id
       - metadata
       - status
       - title
@@ -1513,6 +1513,7 @@ components:
         id:
           type: integer
           format: int64
+          nullable: true
         title:
           minLength: 1
           type: string
@@ -1523,55 +1524,97 @@ components:
           type: string
         description:
           type: string
+          nullable: true
       description: DTO for ru.itmopai.backend.entity.TemplateEntity
     UpdateCaseRequest:
-      required:
-      - description
-      - status
-      - title
-      - users
       type: object
       properties:
         title:
-          minLength: 1
           type: string
+          nullable: true
         description:
           type: string
+          nullable: true
         status:
-          $ref: "#/components/schemas/CaseEntity.Status"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/CaseEntity.Status"
         users:
           type: object
           additionalProperties:
             minLength: 1
             type: string
+          nullable: true
+    UpdateClueRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ClueEntity.Status"
+    UpdateIncidentRequest:
+      type: object
+      properties:
+        applicant:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        locationLatitude:
+          type: number
+          format: double
+          nullable: true
+        locationLongitude:
+          type: number
+          format: double
+          nullable: true
+        locationAltitude:
+          type: number
+          format: double
+          nullable: true
+        estimatedTime:
+          type: string
+          format: date-time
+          nullable: true
     UpdateNotificationRequest:
       type: object
       properties:
         title:
           type: string
+          nullable: true
         description:
           type: string
+          nullable: true
         readAt:
           type: string
           format: date-time
+          nullable: true
     UpdateTemplateRequest:
-      required:
-      - description
-      - metadata
-      - status
-      - title
       type: object
       properties:
         title:
-          minLength: 1
           type: string
+          nullable: true
         status:
-          $ref: "#/components/schemas/TemplateEntity.Status"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/TemplateEntity.Status"
         metadata:
-          minLength: 1
           type: string
+          nullable: true
         description:
           type: string
+          nullable: true
     UserDto:
       required:
       - id
@@ -1619,12 +1662,11 @@ components:
         username:
           type: string
     UserPermissionsRequest:
-      required:
-      - permissions
       type: object
       properties:
         permissions:
           type: array
+          nullable: true
           items:
             type: string
     UserPermissionsResponse:

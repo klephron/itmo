@@ -38,28 +38,20 @@ export enum CaseEntityStatus {
 export interface AddCaseRequest {
   /** @minLength 1 */
   title: string;
-  description: string;
+  description?: string | null;
   users: Record<string, string>;
 }
 
-export interface AddTemplateRequest {
-  /** @minLength 1 */
-  title: string;
-  /** @minLength 1 */
-  metadata: string;
-  description: string;
-}
-
-export interface AddUpdateClueRequest {
+export interface AddClueRequest {
   /** @minLength 1 */
   title: string;
   /** @minLength 1 */
   description: string;
-  status: ClueEntityStatus;
+  status?: ClueEntityStatus | null;
 }
 
-export interface AddUpdateIncidentRequest {
-  applicant: string;
+export interface AddIncidentRequest {
+  applicant?: string | null;
   /** @minLength 1 */
   type: string;
   /** @minLength 1 */
@@ -72,6 +64,14 @@ export interface AddUpdateIncidentRequest {
   locationAltitude: number;
   /** @format date-time */
   estimatedTime: string;
+}
+
+export interface AddTemplateRequest {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  metadata: string;
+  description?: string | null;
 }
 
 /** DTO for ru.itmopai.backend.entity.CaseEntity */
@@ -98,49 +98,49 @@ export interface CaseDto {
 /** DTO for ru.itmopai.backend.entity.CaseEntity */
 export interface CaseMainInfoDto {
   /** @format int64 */
-  id: number;
+  id?: number | null;
   /** @minLength 1 */
   title: string;
-  description: string;
+  description?: string | null;
   status: CaseEntityStatus;
 }
 
 /** DTO for ru.itmopai.backend.entity.ClueEntity */
 export interface ClueDto {
   /** @format int64 */
-  id: number;
+  id?: number | null;
   /** @format int64 */
-  creatorId: number;
+  creatorId?: number | null;
   /** @format date-time */
   createdAt: string;
   /** @format int64 */
-  updatorId: number;
+  updatorId?: number | null;
   /** @format date-time */
   updatedAt: string;
   /** @minLength 1 */
   title: string;
-  description: string;
+  description?: string | null;
   status: ClueEntityStatus;
-  metadata: string;
+  metadata?: string | null;
   /** @format int64 */
-  relatedCaseId: number;
+  relatedCaseId?: number | null;
 }
 
 /** DTO for ru.itmopai.backend.entity.ClueEntity */
 export interface ClueMainInfoDto {
   /** @format int64 */
-  id: number;
+  id?: number | null;
   /** @minLength 1 */
   title: string;
-  description: string;
+  description?: string | null;
   status: ClueEntityStatus;
 }
 
 /** DTO for ru.itmopai.backend.entity.IncidentEntity */
 export interface IncidentMainInfoDto {
   /** @format int64 */
-  id: number;
-  applicant: string;
+  id?: number | null;
+  applicant?: string | null;
   /** @minLength 1 */
   type: string;
   /** @minLength 1 */
@@ -157,11 +157,11 @@ export interface IncidentMainInfoDto {
 
 export interface LocationUpdateRequest {
   /** @format double */
-  latitude: number;
+  latitude?: number | null;
   /** @format double */
-  longitude: number;
+  longitude?: number | null;
   /** @format double */
-  altitude: number;
+  altitude?: number | null;
 }
 
 export interface LoginRequest {
@@ -191,11 +191,11 @@ export interface NotificationDto {
   userId: number;
   /** @minLength 1 */
   title: string;
-  description?: string;
+  description?: string | null;
   /** @format date-time */
   createdAt: string;
   /** @format date-time */
-  readAt?: string;
+  readAt?: string | null;
 }
 
 export interface RegisterRequest {
@@ -207,19 +207,19 @@ export interface RegisterRequest {
   name: string;
   /** @minLength 1 */
   surname: string;
-  patronymic: string;
+  patronymic?: string | null;
 }
 
 /** DTO for ru.itmopai.backend.entity.TemplateEntity */
 export interface TemplateDto {
   /** @format int64 */
-  id: number;
+  id?: number | null;
   /** @format int64 */
-  creatorId: number;
+  creatorId?: number | null;
   /** @format date-time */
   createdAt: string;
   /** @format int64 */
-  updatorId: number;
+  updatorId?: number | null;
   /** @format date-time */
   updatedAt: string;
   /** @minLength 1 */
@@ -227,47 +227,64 @@ export interface TemplateDto {
   status: TemplateEntityStatus;
   /** @minLength 1 */
   metadata: string;
-  description: string;
-  uri: string;
-  cdbURI: string;
+  description?: string | null;
+  uri?: string | null;
+  cdbURI?: string | null;
   /** @format int64 */
-  relatedCaseId: number;
+  relatedCaseId?: number | null;
 }
 
 /** DTO for ru.itmopai.backend.entity.TemplateEntity */
 export interface TemplateMainInfoDto {
   /** @format int64 */
-  id: number;
+  id?: number | null;
   /** @minLength 1 */
   title: string;
   status: TemplateEntityStatus;
   /** @minLength 1 */
   metadata: string;
-  description: string;
+  description?: string | null;
 }
 
 export interface UpdateCaseRequest {
-  /** @minLength 1 */
-  title: string;
-  description: string;
-  status: CaseEntityStatus;
-  users: Record<string, string>;
+  title?: string | null;
+  description?: string | null;
+  status?: CaseEntityStatus | null;
+  users?: Record<string, string>;
+}
+
+export interface UpdateClueRequest {
+  title?: string | null;
+  description?: string | null;
+  status?: ClueEntityStatus | null;
+}
+
+export interface UpdateIncidentRequest {
+  applicant?: string | null;
+  type?: string | null;
+  reason?: string | null;
+  /** @format double */
+  locationLatitude?: number | null;
+  /** @format double */
+  locationLongitude?: number | null;
+  /** @format double */
+  locationAltitude?: number | null;
+  /** @format date-time */
+  estimatedTime?: string | null;
 }
 
 export interface UpdateNotificationRequest {
-  title?: string;
-  description?: string;
+  title?: string | null;
+  description?: string | null;
   /** @format date-time */
-  readAt?: string;
+  readAt?: string | null;
 }
 
 export interface UpdateTemplateRequest {
-  /** @minLength 1 */
-  title: string;
-  status: TemplateEntityStatus;
-  /** @minLength 1 */
-  metadata: string;
-  description: string;
+  title?: string | null;
+  status?: TemplateEntityStatus | null;
+  metadata?: string | null;
+  description?: string | null;
 }
 
 export interface UserDto {
@@ -295,7 +312,7 @@ export interface UserInfoResponse {
 }
 
 export interface UserPermissionsRequest {
-  permissions: string[];
+  permissions?: string[] | null;
 }
 
 export interface UserPermissionsResponse {

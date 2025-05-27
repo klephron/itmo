@@ -12,10 +12,11 @@
 
 import {
   AddCaseRequest,
-  AddUpdateIncidentRequest,
+  AddIncidentRequest,
   CaseDto,
   IncidentMainInfoDto,
   UpdateCaseRequest,
+  UpdateIncidentRequest,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -48,7 +49,7 @@ export class Incidents<
    * @request POST:/api/incidents
    * @secure
    */
-  addIncident = (data: AddUpdateIncidentRequest, params: RequestParams = {}) =>
+  addIncident = (data: AddIncidentRequest, params: RequestParams = {}) =>
     this.request<IncidentMainInfoDto, string>({
       path: `/api/incidents`,
       method: "POST",
@@ -86,7 +87,7 @@ export class Incidents<
    */
   updateIncident = (
     id: number,
-    data: AddUpdateIncidentRequest,
+    data: UpdateIncidentRequest,
     params: RequestParams = {},
   ) =>
     this.request<IncidentMainInfoDto, string>({

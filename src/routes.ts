@@ -10,6 +10,7 @@ export default [
       route("cases", "./pages/cases/index.tsx"),
       route("users", "./pages/users/index.tsx"),
       route("notifications", "./pages/notifications/index.tsx"),
+      route("notifications/:id", "./pages/notification/index.tsx"),
       route("profile", "./pages/profile/index.tsx"),
 
       route("logout", "./pages/logout/index.tsx"),
