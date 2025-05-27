@@ -123,7 +123,7 @@ public class UsersController {
    */
   @RequiresPermissions({ "USERS:*:READ" })
   @Get("{id}/privileges")
-  public HttpResponse<UserPermissionsResponse> getUserPrivileges(@PathVariable @NotNull Long id,
+  public HttpResponse<UserPermissionsResponse> getUserPermissions(@PathVariable @NotNull Long id,
       Authentication authentication) {
     try {
       List<String> userPermissions = userService.getUserPermissions(id);
@@ -138,7 +138,7 @@ public class UsersController {
    */
   @RequiresPermissions({ "USERS:*:UPDATE" })
   @Put("{id}/privileges")
-  public HttpResponse<Object> updateUserPrivileges(@PathVariable @NotNull Long id,
+  public HttpResponse<UserPermissionsResponse> updateUserPermissions(@PathVariable @NotNull Long id,
       @Body UserPermissionsRequest userPermissionsRequest, Authentication authentication) {
     try {
       userService.setUserPermissions(id, userPermissionsRequest.permissions());

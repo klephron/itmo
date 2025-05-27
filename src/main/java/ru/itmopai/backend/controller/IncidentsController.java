@@ -138,8 +138,7 @@ public class IncidentsController {
       CaseEntity caseEntity =
           caseService.updateCase(userId, id, updateCaseRequest.title(),
               updateCaseRequest.description(),
-              updateCaseRequest.status() == null ? null
-                  : CaseEntity.Status.valueOf(updateCaseRequest.status()),
+              updateCaseRequest.status(),
               updateCaseRequest.users());
       notificationService.addNotification(userId, "PAI Notification",
           "Case %s updated for incident #%d".formatted(caseEntity.getTitle(), id));
