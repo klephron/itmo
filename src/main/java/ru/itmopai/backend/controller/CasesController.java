@@ -8,6 +8,14 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
@@ -42,11 +50,22 @@ public class CasesController {
   private final NotificationService notificationService;
 
   /**
-   * Get case
+   * Получить дело по ID
    */
   @RequiresPermissions({ "CASES:{id}:READ" })
   @Get("/{id}")
-  public HttpResponse<CaseDto> getCase(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Получить дело",
+      description = "Возвращает дело по его идентификатору")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Дело найдено",
+          content = @Content(schema = @Schema(implementation = CaseDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Дело не найдено")
+  })
+  public HttpResponse<CaseDto> getCase(
+      @Parameter(description = "ID дела", example = "101") @PathVariable @NotNull Long id,
       Authentication authentication) {
     try {
       CaseEntity caseById = caseService.getCaseById(id);
@@ -58,32 +77,70 @@ public class CasesController {
   }
 
   /**
-   * Get case templates
+   * Получить шаблоны дела
    */
   @RequiresPermissions({ "CASES:{id}:READ" })
   @Get("/{id}/templates")
-  public HttpResponse<List<TemplateMainInfoDto>> getCaseTemplates(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Получить шаблоны дела",
+      description = "Возвращает список шаблонов, связанных с делом")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Список шаблонов",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = TemplateMainInfoDto.class))))
+  })
+  public HttpResponse<List<TemplateMainInfoDto>> getCaseTemplates(
+      @Parameter(description = "ID дела", example = "101") @PathVariable @NotNull Long id,
       Authentication authentication) {
     return HttpResponse.ok(templateMainInfoMapper.toDto(templateService.getTemplatesByCaseId(id)));
   }
 
   /**
-   * Get case clues
+   * Получить улики дела
    */
   @RequiresPermissions({ "CASES:{id}:READ" })
   @Get("/{id}/clues")
-  public HttpResponse<List<ClueMainInfoDto>> getCaseClues(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Получить улики дела",
+      description = "Возвращает список улик, связанных с делом")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Список улик",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = ClueMainInfoDto.class))))
+  })
+  public HttpResponse<List<ClueMainInfoDto>> getCaseClues(
+      @Parameter(description = "ID дела", example = "101") @PathVariable @NotNull Long id,
       Authentication authentication) {
     return HttpResponse.ok(clueMainInfoMapper.toDto(clueService.getAllClueByCase(id)));
   }
 
   /**
-   * Add case template
+   * Добавить шаблон к делу
    */
   @RequiresPermissions({ "CASES:{id}:TEMPLATES_ADD" })
   @Post("/{id}/templates")
-  public HttpResponse<?> addCaseTemplate(@PathVariable @NotNull Long id,
-      @Body AddTemplateRequest addTemplateRequest, Authentication authentication) {
+  @Operation(
+      summary = "Добавить шаблон к делу",
+      description = "Создаёт новый шаблон, связанный с делом")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Шаблон успешно добавлен",
+          content = @Content(
+              schema = @Schema(implementation = ru.itmopai.backend.dto.TemplateDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Ошибка создания шаблона (дело не найдено или параметры некорректны)",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
+  public HttpResponse<?> addCaseTemplate(
+      @Parameter(description = "ID дела", example = "101") @PathVariable @NotNull Long id,
+      @RequestBody(
+          description = "Данные для создания шаблона",
+          required = true,
+          content = @Content(schema = @Schema(
+              implementation = AddTemplateRequest.class))) @Body AddTemplateRequest addTemplateRequest,
+      Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
       TemplateEntity templateEntity =
@@ -99,12 +156,29 @@ public class CasesController {
   }
 
   /**
-   * Add case clue
+   * Добавить улику к делу
    */
   @RequiresPermissions({ "CASES:{id}:CLUES_ADD" })
   @Post("/{id}/clues")
-  public HttpResponse<?> addCaseClue(@PathVariable @NotNull Long id,
-      @Body AddUpdateClueRequest addUpdateClueRequest, Authentication authentication) {
+  @Operation(
+      summary = "Добавить улику к делу",
+      description = "Создаёт новую улику, связанную с делом")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Улика успешно добавлена",
+          content = @Content(schema = @Schema(implementation = ClueMainInfoDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Ошибка создания улики (дело не найдено или параметры некорректны)",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
+  public HttpResponse<?> addCaseClue(
+      @Parameter(description = "ID дела", example = "101") @PathVariable @NotNull Long id,
+      @RequestBody(
+          description = "Данные для создания улики",
+          required = true,
+          content = @Content(schema = @Schema(
+              implementation = AddUpdateClueRequest.class))) @Body AddUpdateClueRequest addUpdateClueRequest,
+      Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
       ClueEntity clueEntity =

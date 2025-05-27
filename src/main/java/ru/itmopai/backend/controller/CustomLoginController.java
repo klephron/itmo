@@ -17,6 +17,12 @@ import io.micronaut.security.authentication.UsernamePasswordCredentials;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.security.token.generator.AccessRefreshTokenGenerator;
 import io.micronaut.security.token.render.AccessRefreshToken;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 import ru.itmopai.backend.dto.request.LoginRequest;
 import ru.itmopai.backend.dto.response.LoginResponse;
@@ -33,7 +39,25 @@ public class CustomLoginController {
   private AccessRefreshTokenGenerator tokenGenerator;
 
   @Post
-  public HttpResponse<LoginResponse> login(@Body LoginRequest creds, HttpRequest<?> request) {
+  @Operation(
+      summary = "Авторизация пользователя",
+      description = "Проверяет логин и пароль, возвращает access и refresh токены, а также информацию о пользователе")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "Аутентификация успешна",
+          content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+      @ApiResponse(
+          responseCode = "401",
+          description = "Неверный логин или пароль")
+  })
+  public HttpResponse<LoginResponse> login(
+      @RequestBody(
+          description = "Данные для входа (логин и пароль)",
+          required = true,
+          content = @Content(
+              schema = @Schema(implementation = LoginRequest.class))) @Body LoginRequest creds,
+      HttpRequest<?> request) {
     UsernamePasswordCredentials upc =
         new UsernamePasswordCredentials(creds.username(), creds.password());
     AuthenticationResponse authResp = authProvider.authenticate(request, upc);

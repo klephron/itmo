@@ -10,6 +10,14 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
@@ -39,20 +47,40 @@ public class UsersController {
   private final CaseMainInfoMapper caseMainInfoMapper;
 
   /**
-   * Get users
+   * Получить всех пользователей
    */
   @RequiresPermissions({ "USERS:*:READ" })
   @Get
+  @Operation(
+      summary = "Получить список пользователей",
+      description = "Возвращает список всех пользователей")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Список пользователей",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = UserInfoResponse.class))))
+  })
   public HttpResponse<List<UserInfoResponse>> getUsers(Authentication authentication) {
     return HttpResponse.ok(userInfoMapper.toDto(userService.getAllUsers()));
   }
 
   /**
-   * Get user
+   * Получить пользователя по ID
    */
   @RequiresPermissions({ "USERS:*:READ" })
   @Get("{id}")
-  public HttpResponse<UserDto> getUser(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Получить пользователя по ID",
+      description = "Возвращает информацию о пользователе по идентификатору")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Пользователь найден",
+          content = @Content(schema = @Schema(implementation = UserDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Пользователь не найден")
+  })
+  public HttpResponse<UserDto> getUser(
+      @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
       Authentication authentication) {
     Optional<UserEntity> user = userService.getUser(id);
     if (user.isPresent()) {
@@ -63,22 +91,47 @@ public class UsersController {
   }
 
   /**
-   * Delete user
+   * Удалить пользователя
    */
   @RequiresPermissions({ "USERS:*:DELETE" })
   @Delete("{id}")
-  public HttpResponse<Void> deleteUser(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Удалить пользователя",
+      description = "Удаляет пользователя по идентификатору")
+  @ApiResponses({
+      @ApiResponse(responseCode = "204",
+          description = "Пользователь успешно удалён"),
+      @ApiResponse(responseCode = "404",
+          description = "Пользователь не найден")
+  })
+  public HttpResponse<Void> deleteUser(
+      @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
       Authentication authentication) {
     userService.removeUser(id);
     return HttpResponse.noContent();
   }
 
   /**
-   * Add user
+   * Добавить пользователя
    */
   @RequiresPermissions({ "USERS:*:ADD" })
   @Post
-  public HttpResponse<UserDto> addUser(@Body RegisterRequest registerRequest,
+  @Operation(
+      summary = "Добавить пользователя",
+      description = "Регистрирует нового пользователя")
+  @ApiResponses({
+      @ApiResponse(responseCode = "201",
+          description = "Пользователь успешно создан",
+          content = @Content(schema = @Schema(implementation = UserDto.class))),
+      @ApiResponse(responseCode = "409",
+          description = "Пользователь с таким логином уже существует")
+  })
+  public HttpResponse<UserDto> addUser(
+      @RequestBody(
+          description = "Данные для регистрации пользователя",
+          required = true,
+          content = @Content(schema = @Schema(
+              implementation = RegisterRequest.class))) @Body RegisterRequest registerRequest,
       Authentication authentication) {
     try {
       UserDto user =
@@ -92,12 +145,28 @@ public class UsersController {
   }
 
   /**
-   * Update user location
+   * Обновить местоположение пользователя
    */
   @RequiresPermissions({ "USERS:*:UPDATE", "USERS:{id}:UPDATE" })
   @Put("{id}/location")
-  public HttpResponse<UserDto> updateUserLocation(@PathVariable @NotNull Long id,
-      @Body LocationUpdateRequest locationUpdateRequest, Authentication authentication) {
+  @Operation(
+      summary = "Обновить местоположение пользователя",
+      description = "Обновляет координаты пользователя по идентификатору")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Местоположение успешно обновлено",
+          content = @Content(schema = @Schema(implementation = UserDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Пользователь не найден")
+  })
+  public HttpResponse<UserDto> updateUserLocation(
+      @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
+      @RequestBody(
+          description = "Новые координаты пользователя",
+          required = true,
+          content = @Content(schema = @Schema(
+              implementation = LocationUpdateRequest.class))) @Body LocationUpdateRequest locationUpdateRequest,
+      Authentication authentication) {
     try {
       UserEntity userEntity =
           userService.updateLocation(id, locationUpdateRequest.latitude(),
@@ -109,21 +178,42 @@ public class UsersController {
   }
 
   /**
-   * Get user cases
+   * Получить дела пользователя
    */
   @RequiresPermissions({ "USERS:*:READ" })
   @Get("{id}/cases")
-  public HttpResponse<List<CaseMainInfoDto>> getUserCases(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Получить дела пользователя",
+      description = "Возвращает список дел, связанных с пользователем")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Список дел пользователя",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = CaseMainInfoDto.class))))
+  })
+  public HttpResponse<List<CaseMainInfoDto>> getUserCases(
+      @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
       Authentication authentication) {
     return HttpResponse.ok(caseMainInfoMapper.toDto(caseService.getAllCasesByUserId(id)));
   }
 
   /**
-   * Get user privileges
+   * Получить права пользователя
    */
   @RequiresPermissions({ "USERS:*:READ" })
   @Get("{id}/privileges")
-  public HttpResponse<UserPermissionsResponse> getUserPermissions(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Получить права пользователя",
+      description = "Возвращает список привилегий пользователя")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Права пользователя",
+          content = @Content(schema = @Schema(implementation = UserPermissionsResponse.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Пользователь не найден")
+  })
+  public HttpResponse<UserPermissionsResponse> getUserPermissions(
+      @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
       Authentication authentication) {
     try {
       List<String> userPermissions = userService.getUserPermissions(id);
@@ -134,12 +224,28 @@ public class UsersController {
   }
 
   /**
-   * Update user privileges
+   * Обновить права пользователя
    */
   @RequiresPermissions({ "USERS:*:UPDATE" })
   @Put("{id}/privileges")
-  public HttpResponse<UserPermissionsResponse> updateUserPermissions(@PathVariable @NotNull Long id,
-      @Body UserPermissionsRequest userPermissionsRequest, Authentication authentication) {
+  @Operation(
+      summary = "Обновить права пользователя",
+      description = "Изменяет список прав пользователя")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Права пользователя обновлены",
+          content = @Content(schema = @Schema(implementation = UserPermissionsResponse.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Пользователь не найден")
+  })
+  public HttpResponse<UserPermissionsResponse> updateUserPermissions(
+      @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
+      @RequestBody(
+          description = "Новый список прав пользователя",
+          required = true,
+          content = @Content(schema = @Schema(
+              implementation = UserPermissionsRequest.class))) @Body UserPermissionsRequest userPermissionsRequest,
+      Authentication authentication) {
     try {
       userService.setUserPermissions(id, userPermissionsRequest.permissions());
       return HttpResponse.ok(new UserPermissionsResponse(userService.getUserPermissions(id)));

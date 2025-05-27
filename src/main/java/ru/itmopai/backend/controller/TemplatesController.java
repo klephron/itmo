@@ -7,6 +7,13 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.request.UpdateTemplateRequest;
@@ -26,10 +33,23 @@ public class TemplatesController {
   private final PermissionService permissionService;
 
   /**
-   * Get template
+   * Получить шаблон по ID
    */
   @Get("/{id}")
-  public HttpResponse<?> getTemplate(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Получить шаблон",
+      description = "Возвращает шаблон по идентификатору")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Шаблон найден",
+          content = @Content(
+              schema = @Schema(implementation = ru.itmopai.backend.dto.TemplateDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Шаблон не найден",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
+  public HttpResponse<?> getTemplate(
+      @Parameter(description = "ID шаблона", example = "42") @PathVariable @NotNull Long id,
       Authentication authentication) {
     try {
       TemplateEntity templateEntity = templateService.getTemplate(id);
@@ -42,11 +62,29 @@ public class TemplatesController {
   }
 
   /**
-   * Update template (generic)
+   * Обновить шаблон (универсальное обновление)
    */
   @Put("/{id}")
-  public HttpResponse<?> updateTemplate(@PathVariable @NotNull Long id,
-      @Body UpdateTemplateRequest updateTemplateRequest, Authentication authentication) {
+  @Operation(
+      summary = "Обновить шаблон",
+      description = "Обновляет шаблон по идентификатору")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Шаблон успешно обновлён",
+          content = @Content(
+              schema = @Schema(implementation = ru.itmopai.backend.dto.TemplateDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Шаблон не найден",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
+  public HttpResponse<?> updateTemplate(
+      @Parameter(description = "ID шаблона", example = "42") @PathVariable @NotNull Long id,
+      @RequestBody(
+          description = "Данные для обновления шаблона",
+          required = true,
+          content = @Content(schema = @Schema(
+              implementation = UpdateTemplateRequest.class))) @Body UpdateTemplateRequest updateTemplateRequest,
+      Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
       TemplateEntity templateEntity = templateService.getTemplate(id);
@@ -67,10 +105,21 @@ public class TemplatesController {
   }
 
   /**
-   * Delete template
+   * Удалить шаблон
    */
   @Delete("/{id}")
-  public HttpResponse<?> deleteTemplate(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Удалить шаблон",
+      description = "Удаляет шаблон по идентификатору")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Шаблон успешно удалён"),
+      @ApiResponse(responseCode = "404",
+          description = "Шаблон не найден",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
+  public HttpResponse<?> deleteTemplate(
+      @Parameter(description = "ID шаблона", example = "42") @PathVariable @NotNull Long id,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
@@ -89,10 +138,23 @@ public class TemplatesController {
   }
 
   /**
-   * Publish template in Central Database
+   * Опубликовать шаблон в Центральной Базе Данных
    */
   @Post("/{id}/cdb")
-  public HttpResponse<Object> addTemplateToCDB(@PathVariable @NotNull Long id,
+  @Operation(
+      summary = "Опубликовать шаблон в Центральной БД",
+      description = "Переводит шаблон в статус 'добавлен в CDB' (Центральную Базу Данных)")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Шаблон успешно опубликован",
+          content = @Content(
+              schema = @Schema(implementation = ru.itmopai.backend.dto.TemplateDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Шаблон не найден",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
+  public HttpResponse<Object> addTemplateToCDB(
+      @Parameter(description = "ID шаблона", example = "42") @PathVariable @NotNull Long id,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
