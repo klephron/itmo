@@ -31,11 +31,10 @@ export default function NotificationPage({ params }: Route.ComponentProps) {
 
   function getUserString(user: UserDto) {
     let str = "";
-    str = " (" + user.name + " " + user.surname;
+    str = user.name + " " + user.surname;
     if (user.patronymic) {
       str += " " + user.patronymic;
     }
-    str += ")";
     return str;
   }
 
@@ -46,18 +45,8 @@ export default function NotificationPage({ params }: Route.ComponentProps) {
       return (
         <>
           <div>
-            <h3>ID</h3>
-            <span>{notification.id}</span>
-          </div>
-          <div>
             <h3>User</h3>
-            {user ? (
-              <Link to={`/users/${user.id}`}>
-                {notification.userId} {getUserString(user)}
-              </Link>
-            ) : (
-              <></>
-            )}
+            {user ? <Link to={`/users/${user.id}`}>{getUserString(user)}</Link> : <></>}
           </div>
           <div>
             <h3>Title</h3>
