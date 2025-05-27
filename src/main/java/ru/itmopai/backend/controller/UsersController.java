@@ -23,7 +23,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
-import ru.itmopai.backend.dto.CaseMainInfoDto;
 import ru.itmopai.backend.dto.UserCaseDto;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.LocationUpdateRequest;
@@ -196,7 +195,7 @@ public class UsersController {
       @ApiResponse(responseCode = "200",
           description = "Список дел пользователя",
           content = @Content(
-              array = @ArraySchema(schema = @Schema(implementation = CaseMainInfoDto.class))))
+              array = @ArraySchema(schema = @Schema(implementation = UserCaseDto.class))))
   })
   public HttpResponse<List<UserCaseDto>> getUserCases(
       @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
