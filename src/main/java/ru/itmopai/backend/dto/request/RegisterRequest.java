@@ -11,5 +11,5 @@ import jakarta.validation.constraints.NotNull;
 public record RegisterRequest(@NotNull @NotEmpty String username,
     @NotNull @NotEmpty String password, @NotNull @NotEmpty String name,
     @NotNull @NotEmpty String surname,
-    @Nullable String patronymic) {
+    @Nullable String patronymic, @Nullable String primaryPosition) {
 }

@@ -26,7 +26,7 @@ public class UserService {
   @PostConstruct
   public void init() {
     try {
-      UserEntity registered = register("root", "root", "root", "root", "root");
+      UserEntity registered = register("root", "root", "root", "root", "root", "root");
       setUserPermissions(registered.getId(), "*:*:*".lines().toList());
     } catch (UserExistsException ignored) {
 
@@ -34,7 +34,7 @@ public class UserService {
   }
 
   public UserEntity register(String username, String rawPassword, String name, String surname,
-      String patronymic) throws UserExistsException {
+      String patronymic, String primaryPosition) throws UserExistsException {
     userRepository.findByUsername(username).ifPresent(userEntity -> {
       throw new UserExistsException("User already exists");
     });
@@ -47,6 +47,7 @@ public class UserService {
     user.setName(name);
     user.setSurname(surname);
     user.setPatronymic(patronymic);
+    user.setPrimaryPosition(primaryPosition);
     return userRepository.save(user);
   }
 

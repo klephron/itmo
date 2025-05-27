@@ -140,7 +140,8 @@ public class UsersController {
       UserDto user =
           userMapper
               .toDto(userService.register(registerRequest.username(), registerRequest.password(),
-                  registerRequest.name(), registerRequest.surname(), registerRequest.patronymic()));
+                  registerRequest.name(), registerRequest.surname(), registerRequest.patronymic(),
+                  registerRequest.primaryPosition()));
       return HttpResponse.created(user);
     } catch (UserExistsException e) {
       return HttpResponse.status(HttpStatus.CONFLICT);

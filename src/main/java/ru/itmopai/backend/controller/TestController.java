@@ -32,7 +32,7 @@ public class TestController {
     try {
       UserDto user =
           userMapper.toDto(service.register(req.username(), req.password(),
-              req.name(), req.surname(), req.patronymic()));
+              req.name(), req.surname(), req.patronymic(), req.primaryPosition()));
       return HttpResponse.created(user);
     } catch (UserExistsException e) {
       return HttpResponse.status(HttpStatus.CONFLICT);
