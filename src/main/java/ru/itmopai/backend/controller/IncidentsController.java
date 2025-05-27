@@ -8,10 +8,16 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.IncidentMainInfoDto;
+import ru.itmopai.backend.dto.CaseDto;
 import ru.itmopai.backend.dto.request.AddCaseRequest;
 import ru.itmopai.backend.dto.request.AddUpdateIncidentRequest;
 import ru.itmopai.backend.dto.request.UpdateCaseRequest;
@@ -40,6 +46,12 @@ public class IncidentsController {
    */
   @RequiresPermissions({ "INCIDENTS:*:ADD" })
   @Post
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = IncidentMainInfoDto.class))),
+      @ApiResponse(responseCode = "404",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
   public HttpResponse<?> addIncident(@Body AddUpdateIncidentRequest request,
       Authentication auth) {
     Long userId = (Long) auth.getAttributes().get("id");
@@ -60,6 +72,12 @@ public class IncidentsController {
    */
   @RequiresPermissions({ "INCIDENTS:*:UPDATE" })
   @Put("/{id}")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = IncidentMainInfoDto.class))),
+      @ApiResponse(responseCode = "404",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
   public HttpResponse<?> updateIncident(@PathVariable @NotNull Long id,
       @Body AddUpdateIncidentRequest request, Authentication auth) {
     Long userId = (Long) auth.getAttributes().get("id");
@@ -81,6 +99,12 @@ public class IncidentsController {
    */
   @RequiresPermissions({ "INCIDENTS:*:UPDATE" })
   @Post("/{id}/case")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = CaseDto.class))),
+      @ApiResponse(responseCode = "404",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
   public HttpResponse<?> addCaseForIncident(@PathVariable @NotNull Long id,
       @Body AddCaseRequest addCaseRequest, Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
@@ -101,6 +125,12 @@ public class IncidentsController {
    */
   @RequiresPermissions({ "INCIDENTS:*:UPDATE" })
   @Put("/{id}/case")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = CaseDto.class))),
+      @ApiResponse(responseCode = "404",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
   public HttpResponse<?> updateCaseForIncident(@PathVariable @NotNull Long id,
       @Body UpdateCaseRequest updateCaseRequest, Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
@@ -124,6 +154,12 @@ public class IncidentsController {
    */
   @RequiresPermissions({ "INCIDENTS:*:DELETE" })
   @Delete("/{id}")
+  @ApiResponses({
+      @ApiResponse(responseCode = "204",
+          content = @Content(schema = @Schema(implementation = Object.class))),
+      @ApiResponse(responseCode = "400",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
   public HttpResponse<?> deleteIncident(@PathVariable @NotNull Long id,
       Authentication authentication) {
     Long userId = (Long) authentication.getAttributes().get("id");
@@ -142,6 +178,10 @@ public class IncidentsController {
    */
   @RequiresPermissions({ "INCIDENTS:*:READ" })
   @Get
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", content = @Content(
+          array = @ArraySchema(schema = @Schema(implementation = IncidentMainInfoDto.class))))
+  })
   public HttpResponse<List<IncidentMainInfoDto>> getIncidents(Authentication authentication) {
     List<IncidentEntity> allIncidents = incidentService.getAllIncidents();
     return HttpResponse.ok(incidentMainInfoMapper.toDto(allIncidents));
@@ -152,6 +192,12 @@ public class IncidentsController {
    */
   @RequiresPermissions({ "INCIDENTS:*:READ", "INCIDENTS:{id}:READ" })
   @Get("/{id}")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          content = @Content(schema = @Schema(implementation = IncidentMainInfoDto.class))),
+      @ApiResponse(responseCode = "404",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
   public HttpResponse<?> getIncident(@PathVariable @NotNull Long id,
       Authentication authentication) {
     try {
