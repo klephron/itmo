@@ -75,10 +75,10 @@ Native builds are currently not supported.
 
 ## Frontend
 
-Use earlier received URL to configure `VITE_SERVER_URL`. Don't forget `/api`:
+Use earlier received URL to configure `VITE_SERVER_URL`:
 
 ```sh
-sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://rnvlk-77-234-196-15.a.free.pinggy.link/api|' .env.production
+sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://rnvlk-77-234-196-15.a.free.pinggy.link|' .env.production
 pnpm run build
 tar cvf frontend.tar -C build/client .
 scp -P 2222 frontend.tar s312563@helios:/home/studs/s312563/works/mpi
