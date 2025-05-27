@@ -57,7 +57,7 @@ export default function LoginPage() {
             alert("Login failed");
             break;
           default:
-            alert(await e.json());
+            alert(await e);
         }
       });
   }

@@ -13,6 +13,7 @@
 import {
   AddCaseRequest,
   AddUpdateIncidentRequest,
+  CaseDto,
   IncidentMainInfoDto,
   UpdateCaseRequest,
 } from "./data-contracts";
@@ -27,12 +28,12 @@ export class Incidents<
    * @tags incidents
    * @name GetIncidents
    * @summary Get incidents
-   * @request GET:/incidents
+   * @request GET:/api/incidents
    * @secure
    */
   getIncidents = (params: RequestParams = {}) =>
     this.request<IncidentMainInfoDto[], any>({
-      path: `/incidents`,
+      path: `/api/incidents`,
       method: "GET",
       secure: true,
       format: "json",
@@ -44,12 +45,12 @@ export class Incidents<
    * @tags incidents
    * @name AddIncident
    * @summary Create incident
-   * @request POST:/incidents
+   * @request POST:/api/incidents
    * @secure
    */
   addIncident = (data: AddUpdateIncidentRequest, params: RequestParams = {}) =>
-    this.request<object, any>({
-      path: `/incidents`,
+    this.request<IncidentMainInfoDto, string>({
+      path: `/api/incidents`,
       method: "POST",
       body: data,
       secure: true,
@@ -63,12 +64,12 @@ export class Incidents<
    * @tags incidents
    * @name GetIncident
    * @summary Get incident
-   * @request GET:/incidents/{id}
+   * @request GET:/api/incidents/{id}
    * @secure
    */
   getIncident = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
-      path: `/incidents/${id}`,
+    this.request<IncidentMainInfoDto, string>({
+      path: `/api/incidents/${id}`,
       method: "GET",
       secure: true,
       format: "json",
@@ -80,7 +81,7 @@ export class Incidents<
    * @tags incidents
    * @name UpdateIncident
    * @summary Update incident
-   * @request PUT:/incidents/{id}
+   * @request PUT:/api/incidents/{id}
    * @secure
    */
   updateIncident = (
@@ -88,8 +89,8 @@ export class Incidents<
     data: AddUpdateIncidentRequest,
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
-      path: `/incidents/${id}`,
+    this.request<IncidentMainInfoDto, string>({
+      path: `/api/incidents/${id}`,
       method: "PUT",
       body: data,
       secure: true,
@@ -103,12 +104,12 @@ export class Incidents<
    * @tags incidents
    * @name DeleteIncident
    * @summary Delete incident
-   * @request DELETE:/incidents/{id}
+   * @request DELETE:/api/incidents/{id}
    * @secure
    */
   deleteIncident = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
-      path: `/incidents/${id}`,
+    this.request<object, string>({
+      path: `/api/incidents/${id}`,
       method: "DELETE",
       secure: true,
       format: "json",
@@ -120,7 +121,7 @@ export class Incidents<
    * @tags incidents
    * @name UpdateCaseForIncident
    * @summary Update case for incident
-   * @request PUT:/incidents/{id}/case
+   * @request PUT:/api/incidents/{id}/case
    * @secure
    */
   updateCaseForIncident = (
@@ -128,8 +129,8 @@ export class Incidents<
     data: UpdateCaseRequest,
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
-      path: `/incidents/${id}/case`,
+    this.request<CaseDto, string>({
+      path: `/api/incidents/${id}/case`,
       method: "PUT",
       body: data,
       secure: true,
@@ -143,7 +144,7 @@ export class Incidents<
    * @tags incidents
    * @name AddCaseForIncident
    * @summary Create case for incident
-   * @request POST:/incidents/{id}/case
+   * @request POST:/api/incidents/{id}/case
    * @secure
    */
   addCaseForIncident = (
@@ -151,8 +152,8 @@ export class Incidents<
     data: AddCaseRequest,
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
-      path: `/incidents/${id}/case`,
+    this.request<CaseDto, string>({
+      path: `/api/incidents/${id}/case`,
       method: "POST",
       body: data,
       secure: true,

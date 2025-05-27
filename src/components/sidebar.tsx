@@ -23,7 +23,7 @@ export default function Sidebar({ className }: { className?: string }) {
           Profile
         </Link>
         <Link to="/logout" className={styles.element}>
-          Logout
+          Log Out
         </Link>
       </div>
     </>

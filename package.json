@@ -10,7 +10,7 @@
     "stylelint": "stylelint '**/*.css' '**/*.scss'",
     "format": "prettier -w .",
     "preview": "vite preview",
-    "api": "swagger-typescript-api generate --modular --output=./src/api/gen --path=./src/api/pai-api-1.0.yml"
+    "api": "swagger-typescript-api generate --modular --module-name-index=1 --output=./src/api/gen --path=./src/api/pai-api-1.0.yml"
   },
   "dependencies": {
     "@react-router/node": "^7.6.0",

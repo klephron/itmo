@@ -21,12 +21,12 @@ export class Test<
    *
    * @tags test
    * @name CheckPermissions
-   * @request GET:/test/check/{id}
+   * @request GET:/api/test/check/{id}
    * @secure
    */
   checkPermissions = (id: number, params: RequestParams = {}) =>
     this.request<string, any>({
-      path: `/test/check/${id}`,
+      path: `/api/test/check/${id}`,
       method: "GET",
       secure: true,
       ...params,
@@ -36,12 +36,12 @@ export class Test<
    *
    * @tags test
    * @name CheckPermissions2
-   * @request GET:/test/check2/{id}
+   * @request GET:/api/test/check2/{id}
    * @secure
    */
   checkPermissions2 = (id: number, params: RequestParams = {}) =>
     this.request<string, any>({
-      path: `/test/check2/${id}`,
+      path: `/api/test/check2/${id}`,
       method: "GET",
       secure: true,
       ...params,
@@ -51,12 +51,12 @@ export class Test<
    *
    * @tags test
    * @name CheckPermissions3
-   * @request GET:/test/check3/{id}
+   * @request GET:/api/test/check3/{id}
    * @secure
    */
   checkPermissions3 = (id: number, params: RequestParams = {}) =>
     this.request<string, any>({
-      path: `/test/check3/${id}`,
+      path: `/api/test/check3/${id}`,
       method: "GET",
       secure: true,
       ...params,
@@ -66,12 +66,12 @@ export class Test<
    *
    * @tags test
    * @name CheckPermissions4
-   * @request GET:/test/check4/{id}
+   * @request GET:/api/test/check4/{id}
    * @secure
    */
   checkPermissions4 = (id: number, params: RequestParams = {}) =>
     this.request<string, any>({
-      path: `/test/check4/${id}`,
+      path: `/api/test/check4/${id}`,
       method: "GET",
       secure: true,
       ...params,
@@ -81,12 +81,12 @@ export class Test<
    *
    * @tags test
    * @name Index
-   * @request GET:/test/hello
+   * @request GET:/api/test/hello
    * @secure
    */
   index = (params: RequestParams = {}) =>
     this.request<string, any>({
-      path: `/test/hello`,
+      path: `/api/test/hello`,
       method: "GET",
       secure: true,
       ...params,
@@ -96,12 +96,12 @@ export class Test<
    *
    * @tags test
    * @name ManualCheck
-   * @request GET:/test/manual/{id}
+   * @request GET:/api/test/manual/{id}
    * @secure
    */
   manualCheck = (id: number, params: RequestParams = {}) =>
     this.request<string, any>({
-      path: `/test/manual/${id}`,
+      path: `/api/test/manual/${id}`,
       method: "GET",
       secure: true,
       ...params,
@@ -111,12 +111,12 @@ export class Test<
    *
    * @tags test
    * @name Register
-   * @request POST:/test/register
+   * @request POST:/api/test/register
    * @secure
    */
   register = (data: RegisterRequest, params: RequestParams = {}) =>
     this.request<UserDto, any>({
-      path: `/test/register`,
+      path: `/api/test/register`,
       method: "POST",
       body: data,
       secure: true,

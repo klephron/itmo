@@ -5,7 +5,7 @@ info:
 security:
 - bearerAuth: []
 paths:
-  /cases/{id}:
+  /api/cases/{id}:
     get:
       tags:
       - cases
@@ -28,7 +28,7 @@ paths:
                 $ref: "#/components/schemas/CaseDto"
       security:
       - bearerAuth: []
-  /cases/{id}/clues:
+  /api/cases/{id}/clues:
     get:
       tags:
       - cases
@@ -81,7 +81,7 @@ paths:
                 type: object
       security:
       - bearerAuth: []
-  /cases/{id}/templates:
+  /api/cases/{id}/templates:
     get:
       tags:
       - cases
@@ -101,7 +101,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateMainInfoDto"
       security:
       - bearerAuth: []
     post:
@@ -121,7 +123,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/AddTemplateRequest"
         required: true
       responses:
         "200":
@@ -132,7 +134,7 @@ paths:
                 type: object
       security:
       - bearerAuth: []
-  /clues/{id}:
+  /api/clues/{id}:
     get:
       tags:
       - clues
@@ -205,7 +207,7 @@ paths:
                 type: object
       security:
       - bearerAuth: []
-  /incidents:
+  /api/incidents:
     get:
       tags:
       - incidents
@@ -214,7 +216,7 @@ paths:
       operationId: getIncidents
       responses:
         "200":
-          description: getIncidents 200 response
+          description: Ok
           content:
             application/json:
               schema:
@@ -237,14 +239,20 @@ paths:
         required: true
       responses:
         "200":
-          description: addIncident 200 response
+          description: Ok
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/IncidentMainInfoDto"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
       security:
       - bearerAuth: []
-  /incidents/{id}:
+  /api/incidents/{id}:
     get:
       tags:
       - incidents
@@ -260,11 +268,17 @@ paths:
           format: int64
       responses:
         "200":
-          description: getIncident 200 response
+          description: Ok
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/IncidentMainInfoDto"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
       security:
       - bearerAuth: []
     put:
@@ -288,11 +302,17 @@ paths:
         required: true
       responses:
         "200":
-          description: updateIncident 200 response
+          description: Ok
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/IncidentMainInfoDto"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
       security:
       - bearerAuth: []
     delete:
@@ -309,15 +329,21 @@ paths:
           type: integer
           format: int64
       responses:
-        "200":
-          description: deleteIncident 200 response
+        "204":
+          description: No Content
           content:
             application/json:
               schema:
                 type: object
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
       security:
       - bearerAuth: []
-  /incidents/{id}/case:
+  /api/incidents/{id}/case:
     put:
       tags:
       - incidents
@@ -339,11 +365,17 @@ paths:
         required: true
       responses:
         "200":
-          description: updateCaseForIncident 200 response
+          description: Ok
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/CaseDto"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
       security:
       - bearerAuth: []
     post:
@@ -367,14 +399,20 @@ paths:
         required: true
       responses:
         "200":
-          description: addCaseForIncident 200 response
+          description: Ok
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/CaseDto"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
       security:
       - bearerAuth: []
-  /login:
+  /api/login:
     post:
       tags:
       - auth
@@ -392,7 +430,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
-  /notifications:
+  /api/notifications:
     get:
       tags:
       - notifications
@@ -400,32 +438,35 @@ paths:
       description: Get notifications
       operationId: getNotifications
       parameters:
-      - name: after
+      - name: from
         in: query
+        required: true
         schema:
           type: string
           format: date-time
-          nullable: true
       - name: status
         in: query
+        required: true
         schema:
-          nullable: true
-          allOf:
-          - $ref: "#/components/schemas/NotificationsController.Status"
-      - name: before
+          $ref: "#/components/schemas/NotificationsController.Status"
+      - name: to
         in: query
+        required: true
         schema:
           type: string
           format: date-time
-          nullable: true
       responses:
         "200":
           description: getNotifications 200 response
           content:
             application/json:
               schema:
-                type: object
-  /notifications/{id}:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationDto"
+      security:
+      - bearerAuth: []
+  /api/notifications/{id}:
     get:
       tags:
       - notifications
@@ -445,7 +486,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/NotificationDto"
+      security:
+      - bearerAuth: []
     put:
       tags:
       - notifications
@@ -459,13 +502,21 @@ paths:
         schema:
           type: integer
           format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationRequest"
+        required: true
       responses:
         "200":
           description: updateNotification 200 response
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/NotificationDto"
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - notifications
@@ -486,7 +537,9 @@ paths:
             application/json:
               schema:
                 type: object
-  /templates/{id}:
+      security:
+      - bearerAuth: []
+  /api/templates/{id}:
     get:
       tags:
       - templates
@@ -507,6 +560,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
     put:
       tags:
       - templates
@@ -524,7 +579,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/UpdateTemplateRequest"
         required: true
       responses:
         "200":
@@ -533,6 +588,8 @@ paths:
             application/json:
               schema:
                 type: object
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - templates
@@ -553,7 +610,9 @@ paths:
             application/json:
               schema:
                 type: object
-  /templates/{id}/cdb:
+      security:
+      - bearerAuth: []
+  /api/templates/{id}/cdb:
     post:
       tags:
       - templates
@@ -574,7 +633,9 @@ paths:
             application/json:
               schema:
                 type: object
-  /test/check/{id}:
+      security:
+      - bearerAuth: []
+  /api/test/check/{id}:
     get:
       tags:
       - test
@@ -595,7 +656,7 @@ paths:
                 type: string
       security:
       - bearerAuth: []
-  /test/check2/{id}:
+  /api/test/check2/{id}:
     get:
       tags:
       - test
@@ -616,7 +677,7 @@ paths:
                 type: string
       security:
       - bearerAuth: []
-  /test/check3/{id}:
+  /api/test/check3/{id}:
     get:
       tags:
       - test
@@ -637,7 +698,7 @@ paths:
                 type: string
       security:
       - bearerAuth: []
-  /test/check4/{id}:
+  /api/test/check4/{id}:
     get:
       tags:
       - test
@@ -658,7 +719,7 @@ paths:
                 type: string
       security:
       - bearerAuth: []
-  /test/hello:
+  /api/test/hello:
     get:
       tags:
       - test
@@ -672,7 +733,7 @@ paths:
                 type: string
       security:
       - bearerAuth: []
-  /test/manual/{id}:
+  /api/test/manual/{id}:
     get:
       tags:
       - test
@@ -693,7 +754,7 @@ paths:
                 type: string
       security:
       - bearerAuth: []
-  /test/register:
+  /api/test/register:
     post:
       tags:
       - test
@@ -711,7 +772,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserDto"
-  /users:
+  /api/users:
     get:
       tags:
       - users
@@ -750,7 +811,7 @@ paths:
                 $ref: "#/components/schemas/UserDto"
       security:
       - bearerAuth: []
-  /users/{id}:
+  /api/users/{id}:
     get:
       tags:
       - users
@@ -791,7 +852,7 @@ paths:
           description: deleteUser 200 response
       security:
       - bearerAuth: []
-  /users/{id}/cases:
+  /api/users/{id}/cases:
     get:
       tags:
       - users
@@ -816,7 +877,7 @@ paths:
                   $ref: "#/components/schemas/CaseMainInfoDto"
       security:
       - bearerAuth: []
-  /users/{id}/location:
+  /api/users/{id}/location:
     put:
       tags:
       - users
@@ -845,7 +906,7 @@ paths:
                 $ref: "#/components/schemas/UserDto"
       security:
       - bearerAuth: []
-  /users/{id}/privileges:
+  /api/users/{id}/privileges:
     get:
       tags:
       - users
@@ -915,6 +976,21 @@ components:
           additionalProperties:
             minLength: 1
             type: string
+    AddTemplateRequest:
+      required:
+      - description
+      - metadata
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        metadata:
+          minLength: 1
+          type: string
+        description:
+          type: string
     AddUpdateClueRequest:
       required:
       - description
@@ -1184,6 +1260,34 @@ components:
         iat:
           type: integer
           format: int64
+    NotificationDto:
+      required:
+      - createdAt
+      - description
+      - id
+      - readAt
+      - title
+      - userId
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+      description: DTO for ru.itmopai.backend.entity.NotificationEntity
     NotificationsController.Status:
       type: string
       enum:
@@ -1213,6 +1317,35 @@ components:
           type: string
         patronymic:
           type: string
+    TemplateEntity.Status:
+      type: string
+      enum:
+      - PENDING
+      - CREATED
+      - CDB_ADDED
+    TemplateMainInfoDto:
+      required:
+      - description
+      - id
+      - metadata
+      - status
+      - title
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        status:
+          $ref: "#/components/schemas/TemplateEntity.Status"
+        metadata:
+          minLength: 1
+          type: string
+        description:
+          type: string
+      description: DTO for ru.itmopai.backend.entity.TemplateEntity
     UpdateCaseRequest:
       required:
       - description
@@ -1234,6 +1367,40 @@ components:
           additionalProperties:
             minLength: 1
             type: string
+    UpdateNotificationRequest:
+      required:
+      - description
+      - readAt
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        readAt:
+          type: string
+          format: date-time
+    UpdateTemplateRequest:
+      required:
+      - description
+      - metadata
+      - status
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        status:
+          minLength: 1
+          type: string
+        metadata:
+          minLength: 1
+          type: string
+        description:
+          type: string
     UserDto:
       required:
       - id

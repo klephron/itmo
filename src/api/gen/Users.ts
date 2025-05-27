@@ -30,12 +30,12 @@ export class Users<
    * @tags users
    * @name GetUsers
    * @summary Get users
-   * @request GET:/users
+   * @request GET:/api/users
    * @secure
    */
   getUsers = (params: RequestParams = {}) =>
     this.request<UserInfoResponse[], any>({
-      path: `/users`,
+      path: `/api/users`,
       method: "GET",
       secure: true,
       format: "json",
@@ -47,12 +47,12 @@ export class Users<
    * @tags users
    * @name AddUser
    * @summary Add user
-   * @request POST:/users
+   * @request POST:/api/users
    * @secure
    */
   addUser = (data: RegisterRequest, params: RequestParams = {}) =>
     this.request<UserDto, any>({
-      path: `/users`,
+      path: `/api/users`,
       method: "POST",
       body: data,
       secure: true,
@@ -66,12 +66,12 @@ export class Users<
    * @tags users
    * @name GetUser
    * @summary Get user
-   * @request GET:/users/{id}
+   * @request GET:/api/users/{id}
    * @secure
    */
   getUser = (id: number, params: RequestParams = {}) =>
     this.request<UserDto, any>({
-      path: `/users/${id}`,
+      path: `/api/users/${id}`,
       method: "GET",
       secure: true,
       format: "json",
@@ -83,12 +83,12 @@ export class Users<
    * @tags users
    * @name DeleteUser
    * @summary Delete user
-   * @request DELETE:/users/{id}
+   * @request DELETE:/api/users/{id}
    * @secure
    */
   deleteUser = (id: number, params: RequestParams = {}) =>
     this.request<void, any>({
-      path: `/users/${id}`,
+      path: `/api/users/${id}`,
       method: "DELETE",
       secure: true,
       ...params,
@@ -99,12 +99,12 @@ export class Users<
    * @tags users
    * @name GetUserCases
    * @summary Get user cases
-   * @request GET:/users/{id}/cases
+   * @request GET:/api/users/{id}/cases
    * @secure
    */
   getUserCases = (id: number, params: RequestParams = {}) =>
     this.request<CaseMainInfoDto[], any>({
-      path: `/users/${id}/cases`,
+      path: `/api/users/${id}/cases`,
       method: "GET",
       secure: true,
       format: "json",
@@ -116,7 +116,7 @@ export class Users<
    * @tags users
    * @name UpdateUserLocation
    * @summary Update user location
-   * @request PUT:/users/{id}/location
+   * @request PUT:/api/users/{id}/location
    * @secure
    */
   updateUserLocation = (
@@ -125,7 +125,7 @@ export class Users<
     params: RequestParams = {},
   ) =>
     this.request<UserDto, any>({
-      path: `/users/${id}/location`,
+      path: `/api/users/${id}/location`,
       method: "PUT",
       body: data,
       secure: true,
@@ -139,12 +139,12 @@ export class Users<
    * @tags users
    * @name GetUserPrivileges
    * @summary Get user privileges
-   * @request GET:/users/{id}/privileges
+   * @request GET:/api/users/{id}/privileges
    * @secure
    */
   getUserPrivileges = (id: number, params: RequestParams = {}) =>
     this.request<UserPermissionsResponse, any>({
-      path: `/users/${id}/privileges`,
+      path: `/api/users/${id}/privileges`,
       method: "GET",
       secure: true,
       format: "json",
@@ -156,7 +156,7 @@ export class Users<
    * @tags users
    * @name UpdateUserPrivileges
    * @summary Update user privileges
-   * @request PUT:/users/{id}/privileges
+   * @request PUT:/api/users/{id}/privileges
    * @secure
    */
   updateUserPrivileges = (
@@ -165,7 +165,7 @@ export class Users<
     params: RequestParams = {},
   ) =>
     this.request<object, any>({
-      path: `/users/${id}/privileges`,
+      path: `/api/users/${id}/privileges`,
       method: "PUT",
       body: data,
       secure: true,

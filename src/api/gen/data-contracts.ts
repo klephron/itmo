@@ -10,6 +10,12 @@
  * ---------------------------------------------------------------
  */
 
+export enum TemplateEntityStatus {
+  PENDING = "PENDING",
+  CREATED = "CREATED",
+  CDB_ADDED = "CDB_ADDED",
+}
+
 export enum NotificationsControllerStatus {
   READ = "READ",
   UNREAD = "UNREAD",
@@ -34,6 +40,14 @@ export interface AddCaseRequest {
   title: string;
   description: string;
   users: Record<string, string>;
+}
+
+export interface AddTemplateRequest {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  metadata: string;
+  description: string;
 }
 
 export interface AddUpdateClueRequest {
@@ -170,6 +184,21 @@ export interface LoginResponse {
   iat: number;
 }
 
+/** DTO for ru.itmopai.backend.entity.NotificationEntity */
+export interface NotificationDto {
+  /** @format int64 */
+  id: number;
+  /** @format int64 */
+  userId: number;
+  /** @minLength 1 */
+  title: string;
+  description: string;
+  /** @format date-time */
+  createdAt: string;
+  /** @format date-time */
+  readAt: string;
+}
+
 export interface RegisterRequest {
   /** @minLength 1 */
   username: string;
@@ -182,6 +211,18 @@ export interface RegisterRequest {
   patronymic: string;
 }
 
+/** DTO for ru.itmopai.backend.entity.TemplateEntity */
+export interface TemplateMainInfoDto {
+  /** @format int64 */
+  id: number;
+  /** @minLength 1 */
+  title: string;
+  status: TemplateEntityStatus;
+  /** @minLength 1 */
+  metadata: string;
+  description: string;
+}
+
 export interface UpdateCaseRequest {
   /** @minLength 1 */
   title: string;
@@ -189,6 +230,24 @@ export interface UpdateCaseRequest {
   /** @minLength 1 */
   status: string;
   users: Record<string, string>;
+}
+
+export interface UpdateNotificationRequest {
+  /** @minLength 1 */
+  title: string;
+  description: string;
+  /** @format date-time */
+  readAt: string;
+}
+
+export interface UpdateTemplateRequest {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  status: string;
+  /** @minLength 1 */
+  metadata: string;
+  description: string;
 }
 
 export interface UserDto {

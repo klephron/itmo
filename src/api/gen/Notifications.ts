@@ -10,8 +10,12 @@
  * ---------------------------------------------------------------
  */
 
-import { NotificationsControllerStatus } from "./data-contracts";
-import { HttpClient, RequestParams } from "./http-client";
+import {
+  NotificationDto,
+  NotificationsControllerStatus,
+  UpdateNotificationRequest,
+} from "./data-contracts";
+import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Notifications<
   SecurityDataType = unknown,
@@ -22,21 +26,21 @@ export class Notifications<
    * @tags notifications
    * @name GetNotifications
    * @summary Get notifications
-   * @request GET:/notifications
+   * @request GET:/api/notifications
    * @secure
    */
   getNotifications = (
-    query?: {
+    query: {
       /** @format date-time */
-      after?: string | null;
-      status?: NotificationsControllerStatus | null;
+      from: string;
+      status: NotificationsControllerStatus;
       /** @format date-time */
-      before?: string | null;
+      to: string;
     },
     params: RequestParams = {},
   ) =>
-    this.request<object, any>({
-      path: `/notifications`,
+    this.request<NotificationDto[], any>({
+      path: `/api/notifications`,
       method: "GET",
       query: query,
       secure: true,
@@ -49,12 +53,12 @@ export class Notifications<
    * @tags notifications
    * @name GetNotification
    * @summary Get notification
-   * @request GET:/notifications/{id}
+   * @request GET:/api/notifications/{id}
    * @secure
    */
   getNotification = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
-      path: `/notifications/${id}`,
+    this.request<NotificationDto, any>({
+      path: `/api/notifications/${id}`,
       method: "GET",
       secure: true,
       format: "json",
@@ -66,14 +70,20 @@ export class Notifications<
    * @tags notifications
    * @name UpdateNotification
    * @summary Update notification (for example set date when read)
-   * @request PUT:/notifications/{id}
+   * @request PUT:/api/notifications/{id}
    * @secure
    */
-  updateNotification = (id: number, params: RequestParams = {}) =>
-    this.request<object, any>({
-      path: `/notifications/${id}`,
+  updateNotification = (
+    id: number,
+    data: UpdateNotificationRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<NotificationDto, any>({
+      path: `/api/notifications/${id}`,
       method: "PUT",
+      body: data,
       secure: true,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });
@@ -83,12 +93,12 @@ export class Notifications<
    * @tags notifications
    * @name DeleteNotification
    * @summary Delete notification
-   * @request DELETE:/notifications/{id}
+   * @request DELETE:/api/notifications/{id}
    * @secure
    */
   deleteNotification = (id: number, params: RequestParams = {}) =>
     this.request<object, any>({
-      path: `/notifications/${id}`,
+      path: `/api/notifications/${id}`,
       method: "DELETE",
       secure: true,
       format: "json",

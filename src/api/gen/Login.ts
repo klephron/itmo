@@ -21,12 +21,12 @@ export class Login<
    *
    * @tags auth
    * @name Login
-   * @request POST:/login
+   * @request POST:/api/login
    * @secure
    */
   login = (data: LoginRequest, params: RequestParams = {}) =>
     this.request<LoginResponse, any>({
-      path: `/login`,
+      path: `/api/login`,
       method: "POST",
       body: data,
       secure: true,

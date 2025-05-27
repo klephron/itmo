@@ -22,12 +22,12 @@ export class Clues<
    * @tags clues
    * @name GetClue
    * @summary Get clue
-   * @request GET:/clues/{id}
+   * @request GET:/api/clues/{id}
    * @secure
    */
   getClue = (id: number, params: RequestParams = {}) =>
     this.request<ClueDto, any>({
-      path: `/clues/${id}`,
+      path: `/api/clues/${id}`,
       method: "GET",
       secure: true,
       format: "json",
@@ -39,7 +39,7 @@ export class Clues<
    * @tags clues
    * @name UpdateClue
    * @summary Update clue (for example approve)
-   * @request PUT:/clues/{id}
+   * @request PUT:/api/clues/{id}
    * @secure
    */
   updateClue = (
@@ -48,7 +48,7 @@ export class Clues<
     params: RequestParams = {},
   ) =>
     this.request<ClueDto, any>({
-      path: `/clues/${id}`,
+      path: `/api/clues/${id}`,
       method: "PUT",
       body: data,
       secure: true,
@@ -62,12 +62,12 @@ export class Clues<
    * @tags clues
    * @name DeleteClue
    * @summary Delete clue
-   * @request DELETE:/clues/{id}
+   * @request DELETE:/api/clues/{id}
    * @secure
    */
   deleteClue = (id: number, params: RequestParams = {}) =>
     this.request<object, any>({
-      path: `/clues/${id}`,
+      path: `/api/clues/${id}`,
       method: "DELETE",
       secure: true,
       format: "json",

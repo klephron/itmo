@@ -10,6 +10,7 @@
  * ---------------------------------------------------------------
  */
 
+import { UpdateTemplateRequest } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
 export class Templates<
@@ -21,12 +22,12 @@ export class Templates<
    * @tags templates
    * @name GetTemplate
    * @summary Get template
-   * @request GET:/templates/{id}
+   * @request GET:/api/templates/{id}
    * @secure
    */
   getTemplate = (id: number, params: RequestParams = {}) =>
     this.request<object, any>({
-      path: `/templates/${id}`,
+      path: `/api/templates/${id}`,
       method: "GET",
       secure: true,
       format: "json",
@@ -38,12 +39,16 @@ export class Templates<
    * @tags templates
    * @name UpdateTemplate
    * @summary Update template (generic)
-   * @request PUT:/templates/{id}
+   * @request PUT:/api/templates/{id}
    * @secure
    */
-  updateTemplate = (id: number, data: object, params: RequestParams = {}) =>
+  updateTemplate = (
+    id: number,
+    data: UpdateTemplateRequest,
+    params: RequestParams = {},
+  ) =>
     this.request<object, any>({
-      path: `/templates/${id}`,
+      path: `/api/templates/${id}`,
       method: "PUT",
       body: data,
       secure: true,
@@ -57,12 +62,12 @@ export class Templates<
    * @tags templates
    * @name DeleteTemplate
    * @summary Delete template
-   * @request DELETE:/templates/{id}
+   * @request DELETE:/api/templates/{id}
    * @secure
    */
   deleteTemplate = (id: number, params: RequestParams = {}) =>
     this.request<object, any>({
-      path: `/templates/${id}`,
+      path: `/api/templates/${id}`,
       method: "DELETE",
       secure: true,
       format: "json",
@@ -74,12 +79,12 @@ export class Templates<
    * @tags templates
    * @name AddTemplateToCdb
    * @summary Publish template in Central Database
-   * @request POST:/templates/{id}/cdb
+   * @request POST:/api/templates/{id}/cdb
    * @secure
    */
   addTemplateToCdb = (id: number, params: RequestParams = {}) =>
     this.request<object, any>({
-      path: `/templates/${id}/cdb`,
+      path: `/api/templates/${id}/cdb`,
       method: "POST",
       secure: true,
       format: "json",
