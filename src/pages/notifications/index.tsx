@@ -110,7 +110,7 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
           onChange={(e) =>
             searchStatusSet(
               NotificationsControllerStatus[
-              e.target.value as keyof typeof NotificationsControllerStatus
+                e.target.value as keyof typeof NotificationsControllerStatus
               ]
             )
           }

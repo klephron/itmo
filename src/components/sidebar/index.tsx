@@ -3,14 +3,17 @@ import clsx from "clsx";
 import { useNotifications } from "@state/notifications";
 import { useEffect, useState } from "react";
 import styles from "./index.module.scss";
+import { useUser } from "@state/user";
 
 export default function Sidebar({ className }: { className?: string }) {
   const notifications = useNotifications((state) => state.unread);
+  const user = useUser((state) => state.user);
+
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     if (notifications) {
-      notifications.values().filter((e) => e.readAt === null)
+      notifications.values().filter((e) => e.readAt === null);
       setUnread(notifications.size);
     }
   }, [notifications]);
@@ -30,7 +33,7 @@ export default function Sidebar({ className }: { className?: string }) {
         <Link to="/notifications" className={styles.element}>
           Notifications {unread ? ` (${unread})` : ""}
         </Link>
-        <Link to="/profile" className={styles.element}>
+        <Link to={`/users/${user.id}`} className={styles.element}>
           Profile
         </Link>
         <Link to="/logout" className={styles.element}>
