@@ -6,13 +6,69 @@ import Checkbox from "@components/checkbox";
 import { useEffect, useState } from "react";
 import { NotificationDto, NotificationsControllerStatus } from "@api/gen/data-contracts";
 
-export default function NotificationsPage(props: { descriptionMaxLen?: number }) {
-  const descriptionMaxLen = props.descriptionMaxLen ?? 20;
+function sliceRemaining(text: string | null | undefined, max: number) {
+  if (text) {
+    const len = text.length;
+    if (len > max) {
+      return text.slice(0, max).trim() + " ...";
+    }
+    return text.slice(0, max).trim();
+  }
+}
 
+function UnreadTable({ descriptionMax }: { descriptionMax: number }) {
   const client = useClient((state) => state.client);
-
   const unread = useNotifications((state) => state.unread);
   const unreadUpdateById = useNotifications((state) => state.updateById);
+
+  if (unread === null) {
+    return <span>Loading...</span>;
+  } else if (unread.size === 0) {
+    return <span>No notifications to read</span>;
+  } else {
+    return (
+      <table className={styles.table}>
+        <thead>
+          <tr className={styles.row}>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Created Time (UTC)</th>
+            <th>Read</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from(unread.values()).map((notification) => (
+            <tr className={styles.row} key={notification.id}>
+              <td>
+                <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
+              </td>
+              <td>{sliceRemaining(notification.description, descriptionMax)}</td>
+              <td>{new Date(notification.createdAt).toLocaleString()}</td>
+              <td>
+                <Checkbox
+                  isChecked={!!notification.readAt}
+                  onChange={(v) => {
+                    if (v) {
+                      client.notifications
+                        .updateNotification(notification.id, {
+                          readAt: new Date().toISOString(),
+                        })
+                        .then((r) => unreadUpdateById(r.data))
+                        .catch((e) => console.error(e));
+                    }
+                  }}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+}
+
+function Search({ descriptionMax }: { descriptionMax: number }) {
+  const client = useClient((state) => state.client);
 
   const [searchNotifications, searchNotificationsSet] = useState([] as NotificationDto[]);
   const [searchStatus, searchStatusSet] = useState(NotificationsControllerStatus.ALL);
@@ -22,53 +78,6 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
   useEffect(() => {
     search();
   }, []);
-
-  function UnreadTable() {
-    if (unread === null) {
-      return <span>Loading...</span>;
-    } else if (unread.size === 0) {
-      return <span>No notifications to read</span>;
-    } else {
-      return (
-        <table className={styles.table}>
-          <thead>
-            <tr className={styles.row}>
-              <th>Title</th>
-              <th>Description</th>
-              <th>Created Time (UTC)</th>
-              <th>Read</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from(unread.values()).map((notification) => (
-              <tr className={styles.row} key={notification.id}>
-                <td>
-                  <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
-                </td>
-                <td>{sliceRemaining(notification.description)}</td>
-                <td>{new Date(notification.createdAt).toLocaleString()}</td>
-                <td>
-                  <Checkbox
-                    isChecked={!!notification.readAt}
-                    onChange={(v) => {
-                      if (v) {
-                        client.notifications
-                          .updateNotification(notification.id, {
-                            readAt: new Date().toISOString(),
-                          })
-                          .then((r) => unreadUpdateById(r.data))
-                          .catch((e) => console.error(e));
-                      }
-                    }}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      );
-    }
-  }
 
   function search() {
     client.notifications
@@ -83,18 +92,8 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
       .catch((e) => console.error(e));
   }
 
-  function sliceRemaining(text: string | null | undefined) {
-    if (text) {
-      const len = text.length;
-      if (len > descriptionMaxLen) {
-        return text.slice(0, descriptionMaxLen).trim() + " ...";
-      }
-      return text.slice(0, descriptionMaxLen).trim();
-    }
-  }
-
-  function SearchPanel() {
-    return (
+  return (
+    <>
       <div className={styles.panel}>
         <button onClick={search}>Search</button>
         <div>
@@ -122,11 +121,6 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
           ))}
         </select>
       </div>
-    );
-  }
-
-  function SearchTable() {
-    return (
       <table className={styles.table}>
         <thead>
           <tr className={styles.row}>
@@ -142,26 +136,29 @@ export default function NotificationsPage(props: { descriptionMaxLen?: number })
               <td>
                 <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
               </td>
-              <td>{sliceRemaining(notification.description)}</td>
+              <td>{sliceRemaining(notification.description, descriptionMax)}</td>
               <td>{new Date(notification.createdAt).toLocaleString()}</td>
               <td>{notification.readAt ? new Date(notification.readAt).toLocaleString() : "-"}</td>
             </tr>
           ))}
         </tbody>
       </table>
-    );
-  }
+    </>
+  );
+}
+
+export default function NotificationsPage(props: { descriptionMaxLen?: number }) {
+  const descriptionMaxLen = props.descriptionMaxLen ?? 20;
 
   return (
     <div className={styles.root}>
       <div className={styles.unread}>
         <h2>Unread Notifications</h2>
-        {UnreadTable()}
+        <UnreadTable descriptionMax={descriptionMaxLen} />
       </div>
       <div className={styles.search}>
         <h2>Search Notifications</h2>
-        {SearchPanel()}
-        {SearchTable()}
+        <Search descriptionMax={descriptionMaxLen} />
       </div>
     </div>
   );

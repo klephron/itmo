@@ -10,6 +10,12 @@
  * ---------------------------------------------------------------
  */
 
+export enum UserCaseEntityStatus {
+  WORKING = "WORKING",
+  VACATION = "VACATION",
+  TRANSFERED = "TRANSFERED",
+}
+
 export enum TemplateEntityStatus {
   PENDING = "PENDING",
   CREATED = "CREATED",
@@ -93,16 +99,6 @@ export interface CaseDto {
   /** @format int64 */
   incidentId?: number;
   users: Record<string, string>;
-}
-
-/** DTO for ru.itmopai.backend.entity.CaseEntity */
-export interface CaseMainInfoDto {
-  /** @format int64 */
-  id?: number | null;
-  /** @minLength 1 */
-  title: string;
-  description?: string | null;
-  status: CaseEntityStatus;
 }
 
 /** DTO for ru.itmopai.backend.entity.ClueEntity */
@@ -208,6 +204,7 @@ export interface RegisterRequest {
   /** @minLength 1 */
   surname: string;
   patronymic?: string | null;
+  primaryPosition?: string | null;
 }
 
 /** DTO for ru.itmopai.backend.entity.TemplateEntity */
@@ -287,6 +284,18 @@ export interface UpdateTemplateRequest {
   description?: string | null;
 }
 
+/** DTO for ru.itmopai.backend.entity.UserCaseEntity */
+export interface UserCaseDto {
+  /** @format int64 */
+  idUserId: number;
+  /** @format int64 */
+  idRelatedCaseId: number;
+  idRelatedCaseTitle: string;
+  /** @minLength 1 */
+  position: string;
+  status: UserCaseEntityStatus;
+}
+
 export interface UserDto {
   /** @format int64 */
   id: number;
@@ -297,6 +306,7 @@ export interface UserDto {
   /** @minLength 1 */
   surname: string;
   patronymic?: string | null;
+  primaryPosition?: string | null;
   /** @format double */
   locationLatitude: number;
   /** @format double */

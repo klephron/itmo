@@ -5,18 +5,27 @@ import { Route } from "~react-router/src/pages/notification/+types";
 import styles from "./index.module.scss";
 import { Link } from "react-router";
 
-export default function NotificationPage({ params }: Route.ComponentProps) {
+function getUserString(user: UserDto) {
+  let str = "";
+  str = user.name + " " + user.surname;
+  if (user.patronymic) {
+    str += " " + user.patronymic;
+  }
+  return str;
+}
+
+function Info({ id }: { id: number }) {
   const client = useClient((state) => state.client);
   const [notification, notificationSet] = useState(null as NotificationDto | null);
   const [user, userSet] = useState(null as UserDto | null);
 
   useEffect(() => {
     client.notifications
-      .getNotification(Number(params.id))
+      .getNotification(Number(id))
       .then((r) => {
         notificationSet(r.data);
       })
-      .catch((e) => alert(e));
+      .catch((e) => console.error(e));
   }, []);
 
   useEffect(() => {
@@ -29,45 +38,40 @@ export default function NotificationPage({ params }: Route.ComponentProps) {
     console.log(user);
   }, [user]);
 
-  function getUserString(user: UserDto) {
-    let str = "";
-    str = user.name + " " + user.surname;
-    if (user.patronymic) {
-      str += " " + user.patronymic;
-    }
-    return str;
+  if (notification === null) {
+    return <span>Loading...</span>;
+  } else {
+    return (
+      <>
+        <div>
+          <h3>User</h3>
+          {user ? <Link to={`/users/${user.id}`}>{getUserString(user)}</Link> : <></>}
+        </div>
+        <div>
+          <h3>Title</h3>
+          <span>{notification.title}</span>
+        </div>
+        <div>
+          <h3>Description</h3>
+          <span>{notification.description}</span>
+        </div>
+        <div>
+          <h3>Created At</h3>
+          <span>{notification.createdAt}</span>
+        </div>
+        <div>
+          <h3>Read At</h3>
+          <span>{notification.readAt ?? "-"}</span>
+        </div>
+      </>
+    );
   }
+}
 
-  function Info() {
-    if (notification === null) {
-      return <span>Loading...</span>;
-    } else {
-      return (
-        <>
-          <div>
-            <h3>User</h3>
-            {user ? <Link to={`/users/${user.id}`}>{getUserString(user)}</Link> : <></>}
-          </div>
-          <div>
-            <h3>Title</h3>
-            <span>{notification.title}</span>
-          </div>
-          <div>
-            <h3>Description</h3>
-            <span>{notification.description}</span>
-          </div>
-          <div>
-            <h3>Created At</h3>
-            <span>{notification.createdAt}</span>
-          </div>
-          <div>
-            <h3>Read At</h3>
-            <span>{notification.readAt ?? "-"}</span>
-          </div>
-        </>
-      );
-    }
-  }
-
-  return <div className={styles.root}>{Info()}</div>;
+export default function NotificationPage({ params }: Route.ComponentProps) {
+  return (
+    <div className={styles.root}>
+      <Info id={Number(params.id)} />
+    </div>
+  );
 }

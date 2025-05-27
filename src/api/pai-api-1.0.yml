@@ -992,7 +992,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/CaseMainInfoDto"
+                  $ref: "#/components/schemas/UserCaseDto"
       security:
       - bearerAuth: []
   /api/users/{id}/location:
@@ -1217,25 +1217,6 @@ components:
       - FROZEN
       - CLOSED
       - REJECTED
-    CaseMainInfoDto:
-      required:
-      - status
-      - title
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          nullable: true
-        title:
-          minLength: 1
-          type: string
-        description:
-          type: string
-          nullable: true
-        status:
-          $ref: "#/components/schemas/CaseEntity.Status"
-      description: DTO for ru.itmopai.backend.entity.CaseEntity
     ClueDto:
       required:
       - createdAt
@@ -1448,6 +1429,9 @@ components:
         patronymic:
           type: string
           nullable: true
+        primaryPosition:
+          type: string
+          nullable: true
     TemplateDto:
       required:
       - createdAt
@@ -1615,6 +1599,35 @@ components:
         description:
           type: string
           nullable: true
+    UserCaseDto:
+      required:
+      - idRelatedCaseId
+      - idRelatedCaseTitle
+      - idUserId
+      - position
+      - status
+      type: object
+      properties:
+        idUserId:
+          type: integer
+          format: int64
+        idRelatedCaseId:
+          type: integer
+          format: int64
+        idRelatedCaseTitle:
+          type: string
+        position:
+          minLength: 1
+          type: string
+        status:
+          $ref: "#/components/schemas/UserCaseEntity.Status"
+      description: DTO for ru.itmopai.backend.entity.UserCaseEntity
+    UserCaseEntity.Status:
+      type: string
+      enum:
+      - WORKING
+      - VACATION
+      - TRANSFERED
     UserDto:
       required:
       - id
@@ -1639,6 +1652,9 @@ components:
           minLength: 1
           type: string
         patronymic:
+          type: string
+          nullable: true
+        primaryPosition:
           type: string
           nullable: true
         locationLatitude:
