@@ -1,6 +1,6 @@
 package ru.itmopai.backend.dto.request;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
@@ -10,5 +10,5 @@ import io.micronaut.serde.annotation.Serdeable;
 public record UpdateIncidentRequest(String applicant, String type,
     String reason, Double locationLatitude,
     Double locationLongitude, Double locationAltitude,
-    LocalDateTime estimatedTime) {
+    Instant estimatedTime) {
 }

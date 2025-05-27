@@ -1,6 +1,6 @@
 package ru.itmopai.backend.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -36,8 +36,8 @@ public class ClueService {
     clueEntity.setRelatedCase(caseById);
     clueEntity.setCreator(userEntity);
     clueEntity.setUpdator(userEntity);
-    clueEntity.setCreatedAt(LocalDateTime.now());
-    clueEntity.setUpdatedAt(LocalDateTime.now());
+    clueEntity.setCreatedAt(Instant.now());
+    clueEntity.setUpdatedAt(clueEntity.getCreatedAt());
     clueEntity.setMetadata("{}");
     return clueRepository.save(clueEntity);
   }
@@ -47,7 +47,7 @@ public class ClueService {
     ClueEntity clueEntity = getClue(id);
     ClueMainInfoDto clueMainInfoDto = new ClueMainInfoDto(id, title, description, status);
     ClueEntity partialUpdate = clueMainInfoMapper.partialUpdate(clueMainInfoDto, clueEntity);
-    partialUpdate.setUpdatedAt(LocalDateTime.now());
+    partialUpdate.setUpdatedAt(Instant.now());
     partialUpdate.setUpdator(userRepository.findById(userId)
         .orElseThrow(() -> new NoSuchElementException("User not found")));
     return clueRepository.update(partialUpdate);

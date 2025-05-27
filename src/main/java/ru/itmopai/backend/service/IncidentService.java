@@ -1,5 +1,9 @@
 package ru.itmopai.backend.service;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.dto.IncidentMainInfoDto;
@@ -8,10 +12,6 @@ import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.mapper.IncidentMainInfoMapper;
 import ru.itmopai.backend.mapper.IncidentMapper;
 import ru.itmopai.backend.repository.IncidentRepository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.NoSuchElementException;
 
 @Singleton
 @AllArgsConstructor
@@ -23,7 +23,7 @@ public class IncidentService {
 
   public IncidentEntity addIncident(Long userId, String applicant, String type, String reason,
       Double locationLatitude, Double locationLongitude, Double locationAltitude,
-      LocalDateTime estimatedTime) throws NoSuchElementException {
+      Instant estimatedTime) throws NoSuchElementException {
     IncidentEntity incidentEntity = new IncidentEntity();
     incidentEntity.setApplicant(applicant);
     incidentEntity.setType(type);
@@ -35,8 +35,8 @@ public class IncidentService {
     UserEntity userEntity =
         userService.getUser(userId).orElseThrow(() -> new NoSuchElementException("User Not Found"));
     incidentEntity.setCreator(userEntity);
-    incidentEntity.setCreatedAt(LocalDateTime.now());
-    incidentEntity.setUpdatedAt(LocalDateTime.now());
+    incidentEntity.setCreatedAt(Instant.now());
+    incidentEntity.setUpdatedAt(incidentEntity.getCreatedAt());
     incidentEntity.setUpdator(userEntity);
     return incidentRepository.save(incidentEntity);
   }
@@ -44,7 +44,7 @@ public class IncidentService {
   public IncidentEntity updateIncident(Long userUpdatorId, Long id, String applicant, String type,
       String reason,
       Double locationLatitude, Double locationLongitude, Double locationAltitude,
-      LocalDateTime estimatedTime) throws NoSuchElementException {
+      Instant estimatedTime) throws NoSuchElementException {
     IncidentMainInfoDto incidentMainInfoDto =
         new IncidentMainInfoDto(id, applicant, type, reason, locationLatitude, locationLongitude,
             locationAltitude, estimatedTime);
@@ -59,7 +59,7 @@ public class IncidentService {
     IncidentEntity partialUpdate =
         incidentMainInfoMapper.partialUpdate(incidentMainInfoDto, incidentEntity);
     partialUpdate.setUpdator(userEntity);
-    partialUpdate.setUpdatedAt(LocalDateTime.now());
+    partialUpdate.setUpdatedAt(Instant.now());
     return incidentRepository.update(partialUpdate);
   }
 

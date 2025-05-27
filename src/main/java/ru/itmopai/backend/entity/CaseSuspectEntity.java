@@ -1,19 +1,8 @@
 package ru.itmopai.backend.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -39,7 +28,7 @@ public class CaseSuspectEntity {
 
   @NotNull
   @Column(nullable = false)
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)
@@ -48,7 +37,7 @@ public class CaseSuspectEntity {
 
   @NotNull
   @Column(nullable = false)
-  private LocalDateTime updatedAt;
+  private Instant updatedAt;
 
   @NotNull
   @NotEmpty

@@ -1,5 +1,9 @@
 package ru.itmopai.backend.dto;
 
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.HashMap;
+
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.Valid;
@@ -9,10 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.itmopai.backend.entity.CaseEntity;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.HashMap;
 
 /**
  * DTO for {@link ru.itmopai.backend.entity.CaseEntity}
@@ -35,12 +35,12 @@ public class CaseDto implements Serializable {
   private Long creatorId;
 
   @NotNull
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
   private Long updatorId;
 
   @NotNull
-  private LocalDateTime updatedAt;
+  private Instant updatedAt;
 
   @NotNull
   private CaseEntity.Status status;

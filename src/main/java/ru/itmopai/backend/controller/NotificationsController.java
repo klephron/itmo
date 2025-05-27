@@ -1,6 +1,6 @@
 package ru.itmopai.backend.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -129,11 +129,11 @@ public class NotificationsController {
           example = "ALL",
           schema = @Schema(implementation = Status.class)) @QueryValue @Nullable Status status,
       @Parameter(
-          description = "Дата и время начала интервала (например, 2025-05-26T17:28:43)",
-          example = "2025-05-26T17:28:43") @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime from,
+          description = "Дата и время начала интервала (например, 2025-05-26T17:28:43.000Z)",
+          example = "2025-05-26T17:28:43.000Z") @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSX") Instant from,
       @Parameter(
-          description = "Дата и время конца интервала (например, 2025-05-26T17:48:43)",
-          example = "2025-05-26T17:48:43") @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss") LocalDateTime to) {
+          description = "Дата и время конца интервала (например, 2025-05-26T17:48:43.000Z)",
+          example = "2025-05-26T17:48:43.000Z") @QueryValue @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSX") Instant to) {
     List<NotificationDto> list = notificationMapper.toDto(switch (status) {
       case READ -> notificationService.getReadNotifications(from, to);
       case UNREAD -> notificationService.getUnreadNotifications(from, to);

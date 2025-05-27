@@ -1,6 +1,6 @@
 package ru.itmopai.backend.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -35,7 +35,7 @@ public class NotificationEntity {
 
   @NotNull
   @Column(nullable = false)
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
-  private LocalDateTime readAt;
+  private Instant readAt;
 }

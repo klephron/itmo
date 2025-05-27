@@ -1,7 +1,7 @@
 package ru.itmopai.backend.service;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -60,8 +60,8 @@ public class TemplateService {
     templateEntity.setRelatedCase(caseEntity);
     templateEntity.setCreator(userEntity);
     templateEntity.setUpdator(userEntity);
-    templateEntity.setCreatedAt(LocalDateTime.now());
-    templateEntity.setUpdatedAt(LocalDateTime.now());
+    templateEntity.setCreatedAt(Instant.now());
+    templateEntity.setUpdatedAt(templateEntity.getCreatedAt());
     return templateRepository.save(templateEntity);
   }
 
@@ -96,7 +96,7 @@ public class TemplateService {
 
     TemplateEntity partialUpdate =
         templateMainInfoMapper.partialUpdate(templateMainInfoDto, templateEntity);
-    partialUpdate.setUpdatedAt(LocalDateTime.now());
+    partialUpdate.setUpdatedAt(Instant.now());
     partialUpdate.setUpdator(userEntity);
     return templateRepository.update(partialUpdate);
   }

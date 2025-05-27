@@ -1,5 +1,9 @@
 package ru.itmopai.backend.service;
 
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
@@ -14,10 +18,6 @@ import ru.itmopai.backend.mapper.UserCaseRepository;
 import ru.itmopai.backend.repository.CaseRepository;
 import ru.itmopai.backend.repository.IncidentRepository;
 import ru.itmopai.backend.repository.UserRepository;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Singleton
 @AllArgsConstructor
@@ -60,8 +60,8 @@ public class CaseService {
     caseEntity.setCreator(userEntity);
     caseEntity.setIncident(incidentEntity);
     caseEntity.setUpdator(userEntity);
-    caseEntity.setCreatedAt(LocalDateTime.now());
-    caseEntity.setUpdatedAt(LocalDateTime.now());
+    caseEntity.setCreatedAt(Instant.now());
+    caseEntity.setUpdatedAt(caseEntity.getCreatedAt());
     caseEntity.setStatus(CaseEntity.Status.OPENED);
     incidentEntity.setRelatedCase(caseEntity);
     CaseEntity saved = caseRepository.save(caseEntity);
@@ -108,7 +108,7 @@ public class CaseService {
         new CaseMainInfoDto(incidentEntity.getRelatedCase().getId(), title, description, status);
     CaseEntity partialUpdate =
         caseMainInfoMapper.partialUpdate(caseMainInfoDto, incidentEntity.getRelatedCase());
-    partialUpdate.setUpdatedAt(LocalDateTime.now());
+    partialUpdate.setUpdatedAt(Instant.now());
     partialUpdate.setUpdator(userEntity);
 
     CaseEntity updated = caseRepository.update(partialUpdate);

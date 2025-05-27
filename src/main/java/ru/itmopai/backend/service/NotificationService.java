@@ -1,6 +1,6 @@
 package ru.itmopai.backend.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -27,7 +27,7 @@ public class NotificationService {
     notificationEntity.setTitle(title);
     notificationEntity.setDescription(description);
     notificationEntity.setUser(userEntity);
-    notificationEntity.setCreatedAt(LocalDateTime.now());
+    notificationEntity.setCreatedAt(Instant.now());
     return notificationRepository.save(notificationEntity);
   }
 
@@ -41,7 +41,7 @@ public class NotificationService {
 
   @Transactional
   public NotificationEntity updateNotification(Long id, String title, String description,
-      LocalDateTime readAt) throws NoSuchElementException {
+      Instant readAt) throws NoSuchElementException {
     NotificationEntity notificationEntity =
         notificationRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Notification not found"));
@@ -57,7 +57,7 @@ public class NotificationService {
     notificationRepository.deleteById(notificationId);
   }
 
-  public List<NotificationEntity> getReadNotifications(LocalDateTime from, LocalDateTime to) {
+  public List<NotificationEntity> getReadNotifications(Instant from, Instant to) {
     if (from == null && to != null) {
       return notificationRepository.findAllByReadAtIsNotNullAndCreatedAtLessThanEquals(to);
     } else if (to == null && from != null) {
@@ -69,7 +69,7 @@ public class NotificationService {
     }
   }
 
-  public List<NotificationEntity> getUnreadNotifications(LocalDateTime from, LocalDateTime to) {
+  public List<NotificationEntity> getUnreadNotifications(Instant from, Instant to) {
     if (from == null && to != null) {
       return notificationRepository.findAllByReadAtIsNullAndCreatedAtLessThanEquals(to);
     } else if (to == null && from != null) {
@@ -81,7 +81,7 @@ public class NotificationService {
     }
   }
 
-  public List<NotificationEntity> getAllNotifications(LocalDateTime from, LocalDateTime to) {
+  public List<NotificationEntity> getAllNotifications(Instant from, Instant to) {
     if (from == null && to != null) {
       return notificationRepository.findAllByCreatedAtLessThanEquals(to);
     } else if (to == null && from != null) {

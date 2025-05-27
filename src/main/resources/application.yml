@@ -82,6 +82,8 @@ jpa:
         - ru.itmopai.backend.entity
     properties:
       hibernate:
+        jdbc:
+          time_zone: UTC
         hbm2ddl:
           auto: update
         show_sql: true

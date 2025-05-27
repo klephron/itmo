@@ -1,6 +1,6 @@
 package ru.itmopai.backend.repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import io.micronaut.data.annotation.Repository;
@@ -10,33 +10,33 @@ import ru.itmopai.backend.entity.NotificationEntity;
 
 @Repository
 public interface NotificationRepository extends CrudRepository<NotificationEntity, Long> {
-  List<NotificationEntity> findAllByReadAtIsNotNullAndCreatedAtBetween(@NotNull LocalDateTime from,
-      @NotNull LocalDateTime to);
+  List<NotificationEntity> findAllByReadAtIsNotNullAndCreatedAtBetween(@NotNull Instant from,
+      @NotNull Instant to);
 
-  List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtBetween(@NotNull LocalDateTime from,
-      @NotNull LocalDateTime to);
+  List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtBetween(@NotNull Instant from,
+      @NotNull Instant to);
 
-  List<NotificationEntity> findAllByCreatedAtBetween(@NotNull LocalDateTime from,
-      @NotNull LocalDateTime to);
+  List<NotificationEntity> findAllByCreatedAtBetween(@NotNull Instant from,
+      @NotNull Instant to);
 
   List<NotificationEntity> findAllByReadAtIsNotNullAndCreatedAtGreaterThanEquals(
-      @NotNull LocalDateTime from);
+      @NotNull Instant from);
 
   List<NotificationEntity> findAllByReadAtIsNotNullAndCreatedAtLessThanEquals(
-      @NotNull LocalDateTime to);
+      @NotNull Instant to);
 
   List<NotificationEntity> findAllByReadAtIsNotNull();
 
   List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtGreaterThanEquals(
-      @NotNull LocalDateTime from);
+      @NotNull Instant from);
 
   List<NotificationEntity> findAllByReadAtIsNullAndCreatedAtLessThanEquals(
-      @NotNull LocalDateTime to);
+      @NotNull Instant to);
 
   List<NotificationEntity> findAllByReadAtIsNull();
 
-  List<NotificationEntity> findAllByCreatedAtGreaterThanEquals(@NotNull LocalDateTime from);
+  List<NotificationEntity> findAllByCreatedAtGreaterThanEquals(@NotNull Instant from);
 
-  List<NotificationEntity> findAllByCreatedAtLessThanEquals(@NotNull LocalDateTime to);
+  List<NotificationEntity> findAllByCreatedAtLessThanEquals(@NotNull Instant to);
 
 }

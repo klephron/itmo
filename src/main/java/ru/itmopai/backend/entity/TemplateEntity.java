@@ -1,6 +1,6 @@
 package ru.itmopai.backend.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import io.micronaut.core.annotation.Introspected;
@@ -29,7 +29,7 @@ public class TemplateEntity {
 
   @NotNull
   @Column(nullable = false)
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)
@@ -38,7 +38,7 @@ public class TemplateEntity {
 
   @NotNull
   @Column(nullable = false)
-  private LocalDateTime updatedAt;
+  private Instant updatedAt;
 
   @NotNull
   @NotEmpty

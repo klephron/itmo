@@ -1,21 +1,21 @@
 package ru.itmopai.backend.dto;
 
+import java.io.Serializable;
+import java.time.Instant;
+
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * DTO for {@link ru.itmopai.backend.entity.IncidentEntity}
  */
 @Introspected
 @Serdeable
-public record IncidentDto(Long id, Long creatorId, @NotNull LocalDateTime createdAt, Long updatorId,
-    @NotNull LocalDateTime updatedAt, String applicant, @NotNull @NotEmpty String type,
+public record IncidentDto(Long id, Long creatorId, @NotNull Instant createdAt, Long updatorId,
+    @NotNull Instant updatedAt, String applicant, @NotNull @NotEmpty String type,
     @NotNull @NotEmpty String reason, @NotNull Double locationLatitude,
     @NotNull Double locationLongitude, @NotNull Double locationAltitude,
-    @NotNull LocalDateTime estimatedTime, Long relatedCaseId) implements Serializable {
+    @NotNull Instant estimatedTime, Long relatedCaseId) implements Serializable {
 }

@@ -1,7 +1,7 @@
 package ru.itmopai.backend.dto;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
@@ -14,8 +14,8 @@ import ru.itmopai.backend.entity.ClueEntity;
  */
 @Introspected
 @Serdeable
-public record ClueDto(Long id, Long creatorId, @NotNull LocalDateTime createdAt, Long updatorId,
-    @NotNull LocalDateTime updatedAt, @NotNull @NotEmpty String title, String description,
+public record ClueDto(Long id, Long creatorId, @NotNull Instant createdAt, Long updatorId,
+    @NotNull Instant updatedAt, @NotNull @NotEmpty String title, String description,
     @NotNull ClueEntity.Status status, String metadata,
     Long relatedCaseId) implements Serializable {
 }
