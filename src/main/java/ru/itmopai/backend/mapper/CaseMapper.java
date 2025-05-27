@@ -1,13 +1,15 @@
 package ru.itmopai.backend.mapper;
 
-import jakarta.inject.Inject;
+import java.util.HashMap;
+import java.util.List;
+
 import org.mapstruct.*;
+
+import jakarta.inject.Inject;
 import ru.itmopai.backend.dto.CaseDto;
 import ru.itmopai.backend.entity.CaseEntity;
 import ru.itmopai.backend.entity.UserCaseEntity;
-
-import java.util.HashMap;
-import java.util.List;
+import ru.itmopai.backend.repository.UserCaseRepository;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,
     componentModel = MappingConstants.ComponentModel.JAKARTA)

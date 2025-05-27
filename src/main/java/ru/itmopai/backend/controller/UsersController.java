@@ -24,6 +24,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseMainInfoDto;
+import ru.itmopai.backend.dto.UserCaseDto;
 import ru.itmopai.backend.dto.UserDto;
 import ru.itmopai.backend.dto.request.LocationUpdateRequest;
 import ru.itmopai.backend.dto.request.RegisterRequest;
@@ -33,6 +34,7 @@ import ru.itmopai.backend.dto.response.UserPermissionsResponse;
 import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.exception.UserExistsException;
 import ru.itmopai.backend.mapper.CaseMainInfoMapper;
+import ru.itmopai.backend.mapper.UserCaseMapper;
 import ru.itmopai.backend.mapper.UserInfoMapper;
 import ru.itmopai.backend.mapper.UserMapper;
 import ru.itmopai.backend.service.CaseService;
@@ -48,6 +50,7 @@ public class UsersController {
   private final UserInfoMapper userInfoMapper;
   private final CaseService caseService;
   private final CaseMainInfoMapper caseMainInfoMapper;
+  private final UserCaseMapper userCaseMapper;
 
   /**
    * Получить всех пользователей
@@ -195,10 +198,10 @@ public class UsersController {
           content = @Content(
               array = @ArraySchema(schema = @Schema(implementation = CaseMainInfoDto.class))))
   })
-  public HttpResponse<List<CaseMainInfoDto>> getUserCases(
+  public HttpResponse<List<UserCaseDto>> getUserCases(
       @Parameter(description = "ID пользователя", example = "1") @PathVariable @NotNull Long id,
       Authentication authentication) {
-    return HttpResponse.ok(caseMainInfoMapper.toDto(caseService.getAllCasesByUserId(id)));
+    return HttpResponse.ok(userCaseMapper.toDto(caseService.getAllUserCasesByUserId(id)));
   }
 
   /**

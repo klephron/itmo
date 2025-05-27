@@ -14,9 +14,9 @@ import ru.itmopai.backend.entity.UserCaseEntity;
 import ru.itmopai.backend.entity.UserEntity;
 import ru.itmopai.backend.mapper.CaseMainInfoMapper;
 import ru.itmopai.backend.mapper.CaseMapper;
-import ru.itmopai.backend.mapper.UserCaseRepository;
 import ru.itmopai.backend.repository.CaseRepository;
 import ru.itmopai.backend.repository.IncidentRepository;
+import ru.itmopai.backend.repository.UserCaseRepository;
 import ru.itmopai.backend.repository.UserRepository;
 
 @Singleton
@@ -134,6 +134,10 @@ public class CaseService {
 
   public List<CaseEntity> getAllCasesByUserId(Long userId) {
     return caseRepository.findAllByCreatorId(userId);
+  }
+
+  public List<UserCaseEntity> getAllUserCasesByUserId(Long userId) {
+    return userCaseRepository.findAllById_UserId(userId);
   }
 
   public CaseEntity getCaseById(Long id) throws NoSuchElementException {
