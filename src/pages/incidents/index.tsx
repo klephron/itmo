@@ -87,28 +87,31 @@ function Table() {
         </tr>
       </thead>
       <tbody>
-        {(incidents ? incidents.values() : []).map((incident) => (
-          <tr className={styles.row} key={incident.id}>
-            <td>
-              <Link to={`/incidents/${incident.id}`}>{incident.type}</Link>
-            </td>
-            <td>
-              {incident.locationLatitude}, {incident.locationLongitude}, {incident.locationAltitude}
-            </td>
-            <td>{new Date(incident.estimatedTime).toLocaleString()}</td>
-            <td>{incident.createdAt ? new Date(incident.createdAt).toLocaleString() : ""}</td>
-            <td>{incident.updatedAt ? new Date(incident.updatedAt).toLocaleString() : ""}</td>
-            <td>
-              {incident.caseId === null ? (
-                ""
-              ) : incident.caseId ? (
-                <Link to={`/incidents/${incident.caseId}`}>Open</Link>
-              ) : (
-                <Link to={`/cases/create?incident_id=${incident.id}`}>Create</Link>
-              )}
-            </td>
-          </tr>
-        ))}
+        {Array.from(incidents ? incidents.values() : [])
+          .sort((a, b) => b.id - a.id)
+          .map((incident) => (
+            <tr className={styles.row} key={incident.id}>
+              <td>
+                <Link to={`/incidents/${incident.id}`}>{incident.type}</Link>
+              </td>
+              <td>
+                {incident.locationLatitude}, {incident.locationLongitude},{" "}
+                {incident.locationAltitude}
+              </td>
+              <td>{new Date(incident.estimatedTime).toLocaleString()}</td>
+              <td>{incident.createdAt ? new Date(incident.createdAt).toLocaleString() : ""}</td>
+              <td>{incident.updatedAt ? new Date(incident.updatedAt).toLocaleString() : ""}</td>
+              <td>
+                {incident.caseId === null ? (
+                  ""
+                ) : incident.caseId ? (
+                  <Link to={`/incidents/${incident.caseId}`}>Open</Link>
+                ) : (
+                  <Link to={`/cases/create?incident_id=${incident.id}`}>Create</Link>
+                )}
+              </td>
+            </tr>
+          ))}
       </tbody>
     </table>
   );

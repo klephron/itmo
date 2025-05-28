@@ -16,9 +16,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  function login(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-    e.preventDefault();
-
+  function login() {
     client.auth
       .login(
         {
@@ -69,7 +67,14 @@ export default function LoginPage() {
             <label>Password:</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          <button onClick={login}>Login</button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              login();
+            }}
+          >
+            Login
+          </button>
         </form>
       </div>
     </>
