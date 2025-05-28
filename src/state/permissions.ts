@@ -58,7 +58,15 @@ useUserClient.subscribe(
       client.users
         .getUserPermissions(user.id)
         .then((r) => permissionsUpdate(new Set(r.data.permissions)))
-        .catch((e) => console.error(e));
+        .catch((e) => {
+          switch (e.status) {
+            case 401:
+              useUser.getState().reset();
+              break;
+            default:
+              console.error(e);
+          }
+        });
     } else {
       permissionsReset();
     }
