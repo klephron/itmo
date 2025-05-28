@@ -3,6 +3,7 @@ import { combine, subscribeWithSelector } from "zustand/middleware";
 import { useClient } from "./client";
 import { User, useUser } from "./user";
 import { Client } from "@api/client";
+import { useToken } from "./token";
 
 // if is null not loaded
 export type Permissions = Set<string> | null;
@@ -60,8 +61,10 @@ useUserClient.subscribe(
         .then((r) => permissionsUpdate(new Set(r.data.permissions)))
         .catch((e) => {
           switch (e.status) {
+            // TODO: a little bit buggy when token dies
             case 401:
               useUser.getState().reset();
+              useToken.getState().reset();
               break;
             default:
               console.error(e);
