@@ -4,14 +4,17 @@ import { useClient } from "@state/client";
 import { useEffect, useState } from "react";
 import {
   CaseDto,
+  ClueDto,
   ClueEntityStatus,
   ClueMainInfoDto,
   IncidentDto,
+  TemplateDto,
   TemplateEntityStatus,
   TemplateMainInfoDto,
   UserDto,
 } from "@api/gen/data-contracts";
 import { Link, useNavigate } from "react-router";
+import { exportToFile } from "@util";
 
 type UserEntry = {
   id: number;
@@ -19,7 +22,7 @@ type UserEntry = {
   username?: string;
   name?: string;
   surname?: string;
-  patronymic?: string;
+  patronymic?: string | null;
 };
 
 function userToMap(caze: Record<string, string>) {
@@ -191,9 +194,98 @@ function Templates({ caze }: { caze: CaseDto }) {
       .catch(console.error);
   }, [caze]);
 
+  // use server function for that
+  function downloadConstructed(
+    template: TemplateDto,
+    subscriber: UserDto,
+    users: (UserDto & UserEntry)[],
+    suspects: any[],
+    clues: ClueDto[]
+  ) {
+    let content = "";
+    content += `# Отчет №${template.id} о деле №${caze.id} от ${new Date(template.updatedAt).toLocaleDateString()}\n\n`;
+
+    content += "## Участники дела\n\n";
+
+    content += "| ФИО | Должность |\n";
+    content += "|-----|-----------|\n";
+    for (const user of users) {
+      content += `|${user.name} ${user.surname} ${user?.patronymic}|${user.position}|\n`;
+    }
+    content += "\n\n";
+
+    content += "## Улики\n\n";
+
+    content += "|Номер (№)|Название|Описание|\n";
+    content += "|-----|--------|--------|\n";
+    for (const clue of clues) {
+      content += `|${clue.id}|${clue.title}|${clue.description ?? "Отсутствует"}|\n`;
+    }
+    content += "\n\n";
+
+    content += "## Подозреваемые\n\n";
+
+    content += "| ФИО | Идентифицирующие данные | Вердикт | Обвиняется в | Обвинение|\n";
+    content += "|-----|-------------------------|---------|--------------|----------|\n";
+    for (const suspect of suspects) {
+      content += `|-|-|-|-|-|\n`;
+    }
+    content += "\n\n";
+
+    content += `Подписано ${subscriber.name} ${subscriber.surname} ${subscriber.patronymic} ________________`;
+
+    exportToFile(content, "text/markdown", `PAI_report_${template.id}.md`);
+  }
+
   function download(template: TemplateMainInfoDto) {
-    return () => {
-      console.log("downloading...", template);
+    return async () => {
+      const metadata = JSON.parse(template.metadata) as {
+        employeeIds: number[];
+        suspectIds: number[];
+        clueIds: number[];
+      };
+      const caseUsers = await client.cases
+        .getCase(caze.id)
+        .then((r) => r.data.users)
+        .then(userToMap)
+        .catch((e) => {
+          console.error(e);
+          return new Map<number, UserEntry>();
+        });
+
+      const templateFull = await client.templates.getTemplate(template.id).then((r) => r.data);
+      const subscriber = await client.users.getUser(templateFull.updatorId).then((r) => r.data);
+
+      const users = [] as (UserDto & UserEntry)[];
+      const suspects = [] as any[];
+      const clues = [] as ClueDto[];
+
+      for (const userId of metadata.employeeIds) {
+        const user = await client.users
+          .getUser(userId)
+          .then((r) => r.data)
+          .catch(console.error);
+        if (user) {
+          const user1 = {
+            ...user,
+            ...caseUsers.get(userId),
+            position: caseUsers.get(userId)?.position ?? "Unspecified",
+          };
+          users.push(user1);
+        }
+      }
+      // TODO: add suspects
+      for (const clueId of metadata.clueIds) {
+        const clue = await client.clues
+          .getClue(clueId)
+          .then((r) => r.data)
+          .catch(console.error);
+        if (clue) {
+          clues.push(clue);
+        }
+      }
+
+      downloadConstructed(templateFull, subscriber, users, suspects, clues);
     };
   }
 
