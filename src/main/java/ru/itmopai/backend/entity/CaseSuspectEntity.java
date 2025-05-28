@@ -64,7 +64,6 @@ public class CaseSuspectEntity {
   private String identifier;
 
   @NotNull
-  @NotEmpty
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private Status status;
