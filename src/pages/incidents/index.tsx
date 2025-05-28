@@ -105,7 +105,7 @@ function Table() {
                 {incident.caseId === null ? (
                   ""
                 ) : incident.caseId ? (
-                  <Link to={`/incidents/${incident.caseId}`}>Navigate</Link>
+                  <Link to={`/incidents/${incident.caseId}`}>Follow</Link>
                 ) : (
                   <Link to={`/cases/create?incident_id=${incident.id}`}>Create</Link>
                 )}

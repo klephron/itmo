@@ -83,7 +83,7 @@ function Info({ id }: { id: number }) {
       .getUser(Number(id))
       .then((r) => userSet(r.data))
       .catch((e) => console.error(e));
-  }, []);
+  }, [client]);
 
   if (!user) {
     return <span>Loading...</span>;

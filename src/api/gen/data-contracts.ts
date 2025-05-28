@@ -135,13 +135,13 @@ export interface ClueMainInfoDto {
 /** DTO for ru.itmopai.backend.entity.IncidentEntity */
 export interface IncidentDto {
   /** @format int64 */
-  id?: number | null;
+  id: number;
   /** @format int64 */
-  creatorId?: number | null;
+  creatorId: number;
   /** @format date-time */
   createdAt: string;
-  /** @format intIncidentMainInfoDto64 */
-  updatorId?: number | null;
+  /** @format int64 */
+  updatorId: number;
   /** @format date-time */
   updatedAt: string;
   applicant?: string | null;
