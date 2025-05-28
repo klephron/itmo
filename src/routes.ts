@@ -16,6 +16,7 @@ export default [
 
       route("clues/create", "./pages/clue_create/index.tsx"),
       route("templates/create", "./pages/template_create/index.tsx"),
+      route("suspects/create", "./pages/suspect_create/index.tsx"),
 
       route("users", "./pages/users/index.tsx"),
       route("users/:id", "./pages/user/index.tsx"),

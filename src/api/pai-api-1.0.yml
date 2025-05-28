@@ -96,6 +96,55 @@ paths:
                 type: string
       security:
       - bearerAuth: []
+  /api/cases/{id}/suspects:
+    get:
+      tags:
+      - cases
+      operationId: getAllCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getAllCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseSuspectMainInfoDto"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - cases
+      operationId: addCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCaseSuspectRequest"
+        required: true
+      responses:
+        "200":
+          description: addCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
   /api/cases/{id}/templates:
     get:
       tags:
@@ -611,6 +660,73 @@ paths:
           description: Уведомление не найдено
       security:
       - bearerAuth: []
+  /api/suspects/{id}:
+    get:
+      operationId: getCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Шаблон успешно обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseSuspectDto"
+        "404":
+          description: Шаблон не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+    post:
+      operationId: updateCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseSuspectRequest"
+        required: true
+      responses:
+        "200":
+          description: updateCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
+    delete:
+      operationId: deleteCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: deleteCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
   /api/templates/{id}:
     get:
       tags:
@@ -1108,6 +1224,31 @@ components:
           additionalProperties:
             minLength: 1
             type: string
+    AddCaseSuspectRequest:
+      required:
+      - identifier
+      - name
+      - status
+      - surname
+      type: object
+      properties:
+        name:
+          type: string
+        surname:
+          type: string
+        patronymic:
+          type: string
+          nullable: true
+        identifier:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        verdict:
+          type: string
+          nullable: true
+        accusation:
+          type: string
+          nullable: true
     AddClueRequest:
       required:
       - description
@@ -1221,6 +1362,92 @@ components:
       - FROZEN
       - CLOSED
       - REJECTED
+    CaseSuspectDto:
+      required:
+      - accusation
+      - createdAt
+      - creatorId
+      - id
+      - identifier
+      - name
+      - patronymic
+      - relatedCaseId
+      - status
+      - surname
+      - updatedAt
+      - updatorId
+      - verdict
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        name:
+          type: string
+        surname:
+          type: string
+        patronymic:
+          type: string
+        identifier:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        relatedCaseId:
+          type: integer
+          format: int64
+        verdict:
+          type: string
+        accusation:
+          type: string
+      description: DTO for ru.itmopai.backend.entity.CaseSuspectEntity
+    CaseSuspectEntity.Status:
+      type: string
+      enum:
+      - SUSPECTED
+      - JUSTIFIED
+      - ACCUSED
+    CaseSuspectMainInfoDto:
+      required:
+      - accusation
+      - id
+      - identifier
+      - name
+      - patronymic
+      - status
+      - surname
+      - verdict
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        surname:
+          type: string
+        patronymic:
+          type: string
+        identifier:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        verdict:
+          type: string
+        accusation:
+          type: string
+      description: DTO for ru.itmopai.backend.entity.CaseSuspectEntity
     ClueDto:
       required:
       - createdAt
@@ -1588,6 +1815,31 @@ components:
           additionalProperties:
             minLength: 1
             type: string
+          nullable: true
+    UpdateCaseSuspectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        surname:
+          type: string
+          nullable: true
+        patronymic:
+          type: string
+          nullable: true
+        identifier:
+          type: string
+          nullable: true
+        status:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        verdict:
+          type: string
+          nullable: true
+        accusation:
+          type: string
           nullable: true
     UpdateClueRequest:
       type: object

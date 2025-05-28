@@ -11,9 +11,11 @@
  */
 
 import {
+  AddCaseSuspectRequest,
   AddClueRequest,
   AddTemplateRequest,
   CaseDto,
+  CaseSuspectMainInfoDto,
   ClueMainInfoDto,
   TemplateDto,
   TemplateMainInfoDto,
@@ -73,6 +75,44 @@ export class Cases<
   ) =>
     this.request<ClueMainInfoDto, string>({
       path: `/api/cases/${id}/clues`,
+      method: "POST",
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags cases
+   * @name GetAllCaseSuspect
+   * @request GET:/api/cases/{id}/suspects
+   * @secure
+   */
+  getAllCaseSuspect = (id: number, params: RequestParams = {}) =>
+    this.request<CaseSuspectMainInfoDto[], any>({
+      path: `/api/cases/${id}/suspects`,
+      method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags cases
+   * @name AddCaseSuspect
+   * @request POST:/api/cases/{id}/suspects
+   * @secure
+   */
+  addCaseSuspect = (
+    id: number,
+    data: AddCaseSuspectRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<object, any>({
+      path: `/api/cases/${id}/suspects`,
       method: "POST",
       body: data,
       secure: true,

@@ -4,6 +4,8 @@ import { useClient } from "@state/client";
 import { useEffect, useState } from "react";
 import {
   CaseDto,
+  CaseSuspectDto,
+  CaseSuspectMainInfoDto,
   ClueDto,
   ClueEntityStatus,
   ClueMainInfoDto,
@@ -174,11 +176,57 @@ function Clues({ caze }: { caze: CaseDto }) {
 }
 
 function Suspects({ caze }: { caze: CaseDto }) {
-  const [suspects, _suspectsSet] = useState(null as null);
+  const navigate = useNavigate();
+  const client = useClient((state) => state.client);
+  const [suspects, suspectsSet] = useState(null as CaseSuspectMainInfoDto[] | null);
+
+  useEffect(() => {
+    client.cases
+      .getAllCaseSuspect(caze.id)
+      .then((r) => suspectsSet(r.data))
+      .catch(console.error);
+  }, [caze, client]);
+
+  useEffect(() => {
+    console.log(suspects);
+  });
+
   if (!suspects) {
     return <span>Loading...</span>;
   } else {
-    return <table className={styles.table}></table>;
+    return (
+      <>
+        <div className={styles.funcs}>
+          <button onClick={() => navigate(`/suspects/create?case_id=${caze.id}`)}>Create</button>
+        </div>
+        <table className={styles.table}>
+          <thead>
+            <tr className={styles.row}>
+              <th>Name</th>
+              <th>Identifier</th>
+              <th>Verdict</th>
+              <th>Accusation</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(suspects ?? [])
+              .sort((a, b) => b.id - a.id)
+              .map((suspect) => (
+                <tr className={styles.row} key={suspect.id}>
+                  <td>
+                    {suspect.name} {suspect.surname} {suspect.patronymic}
+                  </td>
+                  <td>{suspect.identifier}</td>
+                  <td>{suspect.verdict}</td>
+                  <td>{suspect.accusation}</td>
+                  <td>{suspect.status}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </>
+    );
   }
 }
 
@@ -199,7 +247,7 @@ function Templates({ caze }: { caze: CaseDto }) {
     template: TemplateDto,
     subscriber: UserDto,
     users: (UserDto & UserEntry)[],
-    suspects: any[],
+    suspects: CaseSuspectDto[],
     clues: ClueDto[]
   ) {
     let content = "";
@@ -225,10 +273,10 @@ function Templates({ caze }: { caze: CaseDto }) {
 
     content += "## Подозреваемые\n\n";
 
-    content += "| ФИО | Идентифицирующие данные | Вердикт | Обвиняется в | Обвинение|\n";
+    content += "| ФИО | Идентифицирующие данные | Вердикт | Обвиняется в | Статус |\n";
     content += "|-----|-------------------------|---------|--------------|----------|\n";
     for (const suspect of suspects) {
-      content += `|-|-|-|-|-|\n`;
+      content += `|${suspect.name} ${suspect.surname} ${suspect.patronymic}|${suspect.identifier}|${suspect.verdict}|${suspect.accusation}|${suspect.status}|\n`;
     }
     content += "\n\n";
 
@@ -257,7 +305,7 @@ function Templates({ caze }: { caze: CaseDto }) {
       const subscriber = await client.users.getUser(templateFull.updatorId).then((r) => r.data);
 
       const users = [] as (UserDto & UserEntry)[];
-      const suspects = [] as any[];
+      const suspects = [] as CaseSuspectDto[];
       const clues = [] as ClueDto[];
 
       for (const userId of metadata.employeeIds) {
@@ -274,7 +322,15 @@ function Templates({ caze }: { caze: CaseDto }) {
           users.push(user1);
         }
       }
-      // TODO: add suspects
+      for (const suspectId of metadata.suspectIds) {
+        const suspect = await client.suspects
+          .getCaseSuspect(suspectId)
+          .then((r) => r.data)
+          .catch(console.error);
+        if (suspect) {
+          suspects.push(suspect);
+        }
+      }
       for (const clueId of metadata.clueIds) {
         const clue = await client.clues
           .getClue(clueId)

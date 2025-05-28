@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { catchResponse } from "@util";
 import Checkbox from "@components/checkbox";
+import { CaseSuspectDto, CaseSuspectMainInfoDto } from "@api/gen/data-contracts";
 
 type UserEntry = {
   id: number;
@@ -14,15 +15,7 @@ type UserEntry = {
   selected: boolean;
 };
 
-// TODO: sync when backend is ready
-type SuspectEntry = {
-  id: number;
-  name?: string;
-  surname?: string;
-  patronymic?: string;
-  identifier?: string;
-  status?: string;
-  // anything else...
+type SuspectEntry = CaseSuspectMainInfoDto & {
   selected: boolean;
 };
 
@@ -101,11 +94,22 @@ export default function TemplatesCreatePage() {
       .catch(console.error);
   }, [caseId, client]);
 
-  // TODO: when suspects are ready
   useEffect(() => {
     if (suspects) {
       return;
     }
+    client.cases
+      .getAllCaseSuspect(Number(caseId))
+      .then((r) => r.data)
+      .then((r) => {
+        const map = new Map<number, SuspectEntry>();
+        console.log(r);
+        for (const suspect of r) {
+          map.set(suspect.id, { ...suspect, selected: true });
+        }
+        suspectsSet(map);
+      })
+      .catch(console.error);
   }, [caseId, client]);
 
   function buildMetadata() {
@@ -281,6 +285,39 @@ function Suspects({
   if (!suspects) {
     return <span>Loading...</span>;
   } else {
-    return <table className={styles.table}></table>;
+    return (
+      <table className={styles.table}>
+        <thead>
+          <tr className={styles.row}>
+            <th>Name</th>
+            <th>Identifier</th>
+            <th>Verdict</th>
+            <th>Accusation</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from(suspects ? suspects.values() : []).map((suspect) => (
+            <tr className={styles.row} key={suspect.id}>
+              <td>
+                <Checkbox
+                  isChecked={suspect.selected}
+                  onChange={(_) => {
+                    suspect.selected = !suspect.selected;
+                    suspectsSet(new Map(suspects));
+                  }}
+                />
+              </td>
+              <td>
+                {suspect.name} {suspect.surname} {suspect.patronymic}
+              </td>
+              <td>{suspect.verdict}</td>
+              <td>{suspect.accusation}</td>
+              <td>{suspect.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
   }
 }

@@ -7,6 +7,7 @@ import { Templates } from "./gen/Templates";
 import { Test } from "./gen/Test";
 import { Users } from "./gen/Users";
 import { ApiConfig } from "./gen/http-client";
+import { Suspects } from "./gen/Suspects";
 
 interface SecurityData {
   anonymous?: boolean;
@@ -20,6 +21,7 @@ export class Client {
   auth: Login<SecurityData>;
   cases: Cases<SecurityData>;
   clues: Clues<SecurityData>;
+  suspects: Suspects<SecurityData>;
   incidents: Incidents<SecurityData>;
   notifications: Notifications<SecurityData>;
   templates: Templates<SecurityData>;
@@ -61,6 +63,7 @@ export class Client {
     this.auth = new Login(config);
     this.cases = new Cases(config);
     this.clues = new Clues(config);
+    this.suspects = new Suspects(config);
     this.incidents = new Incidents(config);
     this.notifications = new Notifications(config);
     this.templates = new Templates(config);

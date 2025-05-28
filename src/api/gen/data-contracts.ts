@@ -34,6 +34,12 @@ export enum ClueEntityStatus {
   PENDING = "PENDING",
 }
 
+export enum CaseSuspectEntityStatus {
+  SUSPECTED = "SUSPECTED",
+  JUSTIFIED = "JUSTIFIED",
+  ACCUSED = "ACCUSED",
+}
+
 export enum CaseEntityStatus {
   OPENED = "OPENED",
   FROZEN = "FROZEN",
@@ -46,6 +52,16 @@ export interface AddCaseRequest {
   title: string;
   description?: string | null;
   users: Record<string, string>;
+}
+
+export interface AddCaseSuspectRequest {
+  name: string;
+  surname: string;
+  patronymic?: string | null;
+  identifier: string;
+  status: CaseSuspectEntityStatus;
+  verdict?: string | null;
+  accusation?: string | null;
 }
 
 export interface AddClueRequest {
@@ -99,6 +115,42 @@ export interface CaseDto {
   /** @format int64 */
   incidentId: number;
   users: Record<string, string>;
+}
+
+/** DTO for ru.itmopai.backend.entity.CaseSuspectEntity */
+export interface CaseSuspectDto {
+  /** @format int64 */
+  id: number;
+  /** @format int64 */
+  creatorId: number;
+  /** @format date-time */
+  createdAt: string;
+  /** @format int64 */
+  updatorId: number;
+  /** @format date-time */
+  updatedAt: string;
+  name: string;
+  surname: string;
+  patronymic: string;
+  identifier: string;
+  status: CaseSuspectEntityStatus;
+  /** @format int64 */
+  relatedCaseId: number;
+  verdict: string;
+  accusation: string;
+}
+
+/** DTO for ru.itmopai.backend.entity.CaseSuspectEntity */
+export interface CaseSuspectMainInfoDto {
+  /** @format int64 */
+  id: number;
+  name: string;
+  surname: string;
+  patronymic: string;
+  identifier: string;
+  status: CaseSuspectEntityStatus;
+  verdict: string;
+  accusation: string;
 }
 
 /** DTO for ru.itmopai.backend.entity.ClueEntity */
@@ -277,6 +329,16 @@ export interface UpdateCaseRequest {
   description?: string | null;
   status?: CaseEntityStatus | null;
   users?: Record<string, string>;
+}
+
+export interface UpdateCaseSuspectRequest {
+  name?: string | null;
+  surname?: string | null;
+  patronymic?: string | null;
+  identifier?: string | null;
+  status?: CaseSuspectEntityStatus | null;
+  verdict?: string | null;
+  accusation?: string | null;
 }
 
 export interface UpdateClueRequest {
