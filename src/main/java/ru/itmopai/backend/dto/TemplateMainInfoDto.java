@@ -14,7 +14,7 @@ import ru.itmopai.backend.entity.TemplateEntity;
  */
 @Introspected
 @Serdeable
-public record TemplateMainInfoDto(@Nullable Long id, @NotNull @NotEmpty String title,
+public record TemplateMainInfoDto(@NotNull Long id, @NotNull @NotEmpty String title,
     @NotNull TemplateEntity.Status status,
     @NotNull @NotEmpty String metadata, @Nullable String description) implements Serializable {
 }

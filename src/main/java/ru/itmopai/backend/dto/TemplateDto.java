@@ -15,11 +15,11 @@ import ru.itmopai.backend.entity.TemplateEntity;
  */
 @Introspected
 @Serdeable
-public record TemplateDto(@Nullable Long id, @Nullable Long creatorId, @NotNull Instant createdAt,
-    @Nullable Long updatorId,
+public record TemplateDto(@NotNull Long id, @NotNull Long creatorId, @NotNull Instant createdAt,
+    @NotNull Long updatorId,
     @NotNull Instant updatedAt, @NotNull @NotEmpty String title,
     @NotNull TemplateEntity.Status status, @NotNull @NotEmpty String metadata,
     @Nullable String description,
     @Nullable String uri, @Nullable String cdbURI,
-    @Nullable Long relatedCaseId) implements Serializable {
+    @NotNull Long relatedCaseId) implements Serializable {
 }
