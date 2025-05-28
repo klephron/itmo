@@ -133,9 +133,38 @@ export interface ClueMainInfoDto {
 }
 
 /** DTO for ru.itmopai.backend.entity.IncidentEntity */
-export interface IncidentMainInfoDto {
+export interface IncidentDto {
   /** @format int64 */
   id?: number | null;
+  /** @format int64 */
+  creatorId?: number | null;
+  /** @format date-time */
+  createdAt: string;
+  /** @format intIncidentMainInfoDto64 */
+  updatorId?: number | null;
+  /** @format date-time */
+  updatedAt: string;
+  applicant?: string | null;
+  /** @minLength 1 */
+  type: string;
+  /** @minLength 1 */
+  reason: string;
+  /** @format double */
+  locationLatitude: number;
+  /** @format double */
+  locationLongitude: number;
+  /** @format double */
+  locationAltitude: number;
+  /** @format date-time */
+  estimatedTime: string;
+  /** @format int64 */
+  relatedCaseId?: number | null;
+}
+
+/** DTO for ru.itmopai.backend.entity.IncidentEntity */
+export interface IncidentMainInfoDto {
+  /** @format int64 */
+  id: number;
   applicant?: string | null;
   /** @minLength 1 */
   type: string;

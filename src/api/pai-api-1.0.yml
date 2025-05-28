@@ -310,7 +310,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/IncidentMainInfoDto"
+                $ref: "#/components/schemas/IncidentDto"
         "404":
           description: Инцидент не найден
           content:
@@ -1284,9 +1284,66 @@ components:
         status:
           $ref: "#/components/schemas/ClueEntity.Status"
       description: DTO for ru.itmopai.backend.entity.ClueEntity
+    IncidentDto:
+      required:
+      - createdAt
+      - estimatedTime
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - reason
+      - type
+      - updatedAt
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+        creatorId:
+          type: integer
+          format: int64
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+        applicant:
+          type: string
+          nullable: true
+        type:
+          minLength: 1
+          type: string
+        reason:
+          minLength: 1
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+        estimatedTime:
+          type: string
+          format: date-time
+        relatedCaseId:
+          type: integer
+          format: int64
+          nullable: true
+      description: DTO for ru.itmopai.backend.entity.IncidentEntity
     IncidentMainInfoDto:
       required:
       - estimatedTime
+      - id
       - locationAltitude
       - locationLatitude
       - locationLongitude
@@ -1297,7 +1354,6 @@ components:
         id:
           type: integer
           format: int64
-          nullable: true
         applicant:
           type: string
           nullable: true

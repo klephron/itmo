@@ -7,6 +7,7 @@ export default [
       route("index.html", "./pages/index/index.tsx"),
 
       route("incidents", "./pages/incidents/index.tsx"),
+      route("incidents/create", "./pages/incidents_create/index.tsx"),
       route("incidents/:id", "./pages/incident/index.tsx"),
 
       route("cases", "./pages/cases/index.tsx"),

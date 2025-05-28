@@ -20,7 +20,7 @@ function infoToMap(infos: UserInfoResponse[]) {
   return new Map(infos.map((info) => [info.id, { id: info.id, username: info.username }]));
 }
 
-function UsersTable() {
+function Table() {
   const client = useClient((state) => state.client);
   const [users, usersSet] = useState(null as Map<number, UserEntry> | null);
   const [usersLoaded, usersLoadedSet] = useState(false);
@@ -29,7 +29,7 @@ function UsersTable() {
     client.users
       .getUsers()
       .then((r) => usersSet(infoToMap(r.data)))
-      .catch(alert);
+      .catch(console.error);
   }, [client]);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ function UsersTable() {
     }
     (async () => {
       const users1 = new Map(users);
-      for (let user of users1.values()) {
+      for (const user of users1.values()) {
         await client.users
           .getUser(user.id)
           .then((r) => {
@@ -92,16 +92,11 @@ function UsersTable() {
   );
 }
 
-function UsersSearch({}: {}) {
-  return <></>;
-}
-
 export default function UsersPage() {
   return (
     <div className={styles.root}>
-      <UsersSearch />
       <h2>Users</h2>
-      <UsersTable />
+      <Table />
     </div>
   );
 }

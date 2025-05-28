@@ -14,6 +14,7 @@ import {
   AddCaseRequest,
   AddIncidentRequest,
   CaseDto,
+  IncidentDto,
   IncidentMainInfoDto,
   UpdateCaseRequest,
   UpdateIncidentRequest,
@@ -69,7 +70,7 @@ export class Incidents<
    * @secure
    */
   getIncident = (id: number, params: RequestParams = {}) =>
-    this.request<IncidentMainInfoDto, string>({
+    this.request<IncidentDto, string>({
       path: `/api/incidents/${id}`,
       method: "GET",
       secure: true,
