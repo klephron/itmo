@@ -119,13 +119,13 @@ export interface ClueDto {
   status: ClueEntityStatus;
   metadata?: string | null;
   /** @format int64 */
-  relatedCaseId?: number | null;
+  relatedCaseId: number;
 }
 
 /** DTO for ru.itmopai.backend.entity.ClueEntity */
 export interface ClueMainInfoDto {
   /** @format int64 */
-  id?: number | null;
+  id: number;
   /** @minLength 1 */
   title: string;
   description?: string | null;
@@ -239,13 +239,13 @@ export interface RegisterRequest {
 /** DTO for ru.itmopai.backend.entity.TemplateEntity */
 export interface TemplateDto {
   /** @format int64 */
-  id?: number | null;
+  id: number;
   /** @format int64 */
-  creatorId?: number | null;
+  creatorId: number;
   /** @format date-time */
   createdAt: string;
   /** @format int64 */
-  updatorId?: number | null;
+  updatorId: number;
   /** @format date-time */
   updatedAt: string;
   /** @minLength 1 */
@@ -257,13 +257,13 @@ export interface TemplateDto {
   uri?: string | null;
   cdbURI?: string | null;
   /** @format int64 */
-  relatedCaseId?: number | null;
+  relatedCaseId: number;
 }
 
 /** DTO for ru.itmopai.backend.entity.TemplateEntity */
 export interface TemplateMainInfoDto {
   /** @format int64 */
-  id?: number | null;
+  id: number;
   /** @minLength 1 */
   title: string;
   status: TemplateEntityStatus;

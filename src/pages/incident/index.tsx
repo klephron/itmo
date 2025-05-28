@@ -45,9 +45,7 @@ function Info({ id }: { id: number }) {
   } else {
     return (
       <>
-        <div>
-          <h2>Incident ({incident.reason})</h2>
-        </div>
+        <h2>Incident ({incident.reason})</h2>
         <div>
           <h3>Type</h3>
           <span>{incident.type}</span>

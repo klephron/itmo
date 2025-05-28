@@ -1226,6 +1226,7 @@ components:
       - createdAt
       - creatorId
       - id
+      - relatedCaseId
       - status
       - title
       - updatedAt
@@ -1261,7 +1262,6 @@ components:
         relatedCaseId:
           type: integer
           format: int64
-          nullable: true
       description: DTO for ru.itmopai.backend.entity.ClueEntity
     ClueEntity.Status:
       type: string
@@ -1271,6 +1271,7 @@ components:
       - PENDING
     ClueMainInfoDto:
       required:
+      - id
       - status
       - title
       type: object
@@ -1278,7 +1279,6 @@ components:
         id:
           type: integer
           format: int64
-          nullable: true
         title:
           minLength: 1
           type: string
@@ -1495,27 +1495,28 @@ components:
     TemplateDto:
       required:
       - createdAt
+      - creatorId
+      - id
       - metadata
+      - relatedCaseId
       - status
       - title
       - updatedAt
+      - updatorId
       type: object
       properties:
         id:
           type: integer
           format: int64
-          nullable: true
         creatorId:
           type: integer
           format: int64
-          nullable: true
         createdAt:
           type: string
           format: date-time
         updatorId:
           type: integer
           format: int64
-          nullable: true
         updatedAt:
           type: string
           format: date-time
@@ -1539,7 +1540,6 @@ components:
         relatedCaseId:
           type: integer
           format: int64
-          nullable: true
       description: DTO for ru.itmopai.backend.entity.TemplateEntity
     TemplateEntity.Status:
       type: string
@@ -1549,6 +1549,7 @@ components:
       - CDB_ADDED
     TemplateMainInfoDto:
       required:
+      - id
       - metadata
       - status
       - title
@@ -1557,7 +1558,6 @@ components:
         id:
           type: integer
           format: int64
-          nullable: true
         title:
           minLength: 1
           type: string
