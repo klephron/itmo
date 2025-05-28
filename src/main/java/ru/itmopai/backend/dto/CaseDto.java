@@ -23,7 +23,7 @@ import ru.itmopai.backend.entity.CaseEntity;
 @Introspected
 @Serdeable
 public class CaseDto implements Serializable {
-
+  @NotNull
   private Long id;
 
   @NotNull
@@ -32,11 +32,13 @@ public class CaseDto implements Serializable {
 
   private String description;
 
+  @NotNull
   private Long creatorId;
 
   @NotNull
   private Instant createdAt;
 
+  @NotNull
   private Long updatorId;
 
   @NotNull
@@ -45,6 +47,7 @@ public class CaseDto implements Serializable {
   @NotNull
   private CaseEntity.Status status;
 
+  @NotNull
   private Long incidentId;
 
   @NotNull

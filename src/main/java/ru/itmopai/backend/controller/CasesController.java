@@ -22,6 +22,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseDto;
+import ru.itmopai.backend.dto.CaseMainInfoDto;
 import ru.itmopai.backend.dto.ClueMainInfoDto;
 import ru.itmopai.backend.dto.TemplateMainInfoDto;
 import ru.itmopai.backend.dto.request.AddClueRequest;
@@ -29,6 +30,7 @@ import ru.itmopai.backend.dto.request.AddTemplateRequest;
 import ru.itmopai.backend.entity.CaseEntity;
 import ru.itmopai.backend.entity.ClueEntity;
 import ru.itmopai.backend.entity.TemplateEntity;
+import ru.itmopai.backend.mapper.CaseMainInfoMapper;
 import ru.itmopai.backend.mapper.CaseMapper;
 import ru.itmopai.backend.mapper.ClueMainInfoMapper;
 import ru.itmopai.backend.mapper.TemplateMainInfoMapper;
@@ -51,6 +53,9 @@ public class CasesController {
   private final TemplateMapper templateMapper;
   private final TemplateMainInfoMapper templateMainInfoMapper;
   private final NotificationService notificationService;
+
+  // TODO: also may add handle that checks permissions for each returned element
+  // (to return cases to which user has access) because permissions like INCIDENTS:{id}:READ
 
   /**
    * Получить дело по ID

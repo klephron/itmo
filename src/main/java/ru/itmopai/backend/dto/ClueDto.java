@@ -15,9 +15,9 @@ import ru.itmopai.backend.entity.ClueEntity;
  */
 @Introspected
 @Serdeable
-public record ClueDto(@Nullable Long id, @Nullable Long creatorId, @NotNull Instant createdAt,
-    @Nullable Long updatorId,
-    @NotNull Instant updatedAt, @NotNull @NotEmpty String title, @Nullable String description,
+public record ClueDto(Long id, Long creatorId, @NotNull Instant createdAt,
+    Long updatorId, @NotNull Instant updatedAt, @NotNull @NotEmpty String title,
+    @Nullable String description,
     @NotNull ClueEntity.Status status, @Nullable String metadata,
     @Nullable Long relatedCaseId) implements Serializable {
 }
