@@ -11,7 +11,7 @@ import {
   TemplateMainInfoDto,
   UserDto,
 } from "@api/gen/data-contracts";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 type UserEntry = {
   id: number;
@@ -91,6 +91,7 @@ function Users({ caze }: { caze: CaseDto }) {
 }
 
 function Clues({ caze }: { caze: CaseDto }) {
+  const navigate = useNavigate();
   const client = useClient((state) => state.client);
   const [clues, cluesSet] = useState(null as ClueMainInfoDto[] | null);
 
@@ -105,61 +106,66 @@ function Clues({ caze }: { caze: CaseDto }) {
     return <span>Loading...</span>;
   } else {
     return (
-      <table className={styles.table}>
-        <thead>
-          <tr className={styles.row}>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Options</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from(clues ?? [])
-            .sort((a, b) => b.id - a.id)
-            .map((clue) => (
-              <tr className={styles.row} key={clue.id}>
-                <td>
-                  <Link to={`/clues/${clue.id}`}>{clue.title}</Link>
-                </td>
-                <td>{clue.status}</td>
-                <td>
-                  {clue.status == ClueEntityStatus.PENDING ? (
-                    <>
-                      <button
-                        onClick={(_) => {
-                          client.clues
-                            .updateClue(clue.id, { status: ClueEntityStatus.ACCEPTED })
-                            .then((r) => {
-                              clue.status = r.data.status;
-                              cluesSet([...clues]);
-                            })
-                            .catch(console.error);
-                        }}
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={(_) => {
-                          client.clues
-                            .updateClue(clue.id, { status: ClueEntityStatus.REJECTED })
-                            .then((r) => {
-                              clue.status = r.data.status;
-                              cluesSet([...clues]);
-                            })
-                            .catch(console.error);
-                        }}
-                      >
-                        Reject
-                      </button>
-                    </>
-                  ) : (
-                    <></>
-                  )}
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+      <>
+        <div className={styles.funcs}>
+          <button onClick={() => navigate(`/clues/create?case_id=${caze.id}`)}>Create</button>
+        </div>
+        <table className={styles.table}>
+          <thead>
+            <tr className={styles.row}>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Options</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(clues ?? [])
+              .sort((a, b) => b.id - a.id)
+              .map((clue) => (
+                <tr className={styles.row} key={clue.id}>
+                  <td>
+                    <Link to={`/clues/${clue.id}`}>{clue.title}</Link>
+                  </td>
+                  <td>{clue.status}</td>
+                  <td>
+                    {clue.status == ClueEntityStatus.PENDING ? (
+                      <>
+                        <button
+                          onClick={(_) => {
+                            client.clues
+                              .updateClue(clue.id, { status: ClueEntityStatus.ACCEPTED })
+                              .then((r) => {
+                                clue.status = r.data.status;
+                                cluesSet([...clues]);
+                              })
+                              .catch(console.error);
+                          }}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={(_) => {
+                            client.clues
+                              .updateClue(clue.id, { status: ClueEntityStatus.REJECTED })
+                              .then((r) => {
+                                clue.status = r.data.status;
+                                cluesSet([...clues]);
+                              })
+                              .catch(console.error);
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </>
     );
   }
 }
@@ -392,6 +398,7 @@ function Case({ id }: { id: number }) {
           <span>{new Date(caze.createdAt).toLocaleString()}</span>
         </div>
         <div>
+          к�роче ща буду делать
           <h3>Status</h3>
           <span>{caze.status}</span>
         </div>
