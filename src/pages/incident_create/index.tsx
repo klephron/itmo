@@ -82,7 +82,7 @@ export default function IncidentsCreatePage() {
           <input type="input" value={applicant} onChange={(e) => applicantSet(e.target.value)} />
         </div>
         <div>
-          <h3>Estimated Time</h3>
+          <h3>Estimated Time (UTC)</h3>
           <input
             type="input"
             value={estimatedTime}

@@ -81,8 +81,8 @@ function Table() {
           <th>Type</th>
           <th>Location</th>
           <th>Time</th>
-          <th>Created At</th>
-          <th>Updated At</th>
+          <th>Created At (UTC)</th>
+          <th>Updated At (UTC)</th>
           <th>Case</th>
         </tr>
       </thead>
@@ -105,7 +105,7 @@ function Table() {
                 {incident.caseId === null ? (
                   ""
                 ) : incident.caseId ? (
-                  <Link to={`/incidents/${incident.caseId}`}>Open</Link>
+                  <Link to={`/incidents/${incident.caseId}`}>Navigate</Link>
                 ) : (
                   <Link to={`/cases/create?incident_id=${incident.id}`}>Create</Link>
                 )}
