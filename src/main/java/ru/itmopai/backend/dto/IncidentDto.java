@@ -14,8 +14,8 @@ import jakarta.validation.constraints.NotNull;
  */
 @Introspected
 @Serdeable
-public record IncidentDto(@Nullable Long id, @Nullable Long creatorId, @NotNull Instant createdAt,
-    @Nullable Long updatorId,
+public record IncidentDto(@NotNull Long id, @NotNull Long creatorId, @NotNull Instant createdAt,
+    @NotNull Long updatorId,
     @NotNull Instant updatedAt, @Nullable String applicant, @NotNull @NotEmpty String type,
     @NotNull @NotEmpty String reason, @NotNull Double locationLatitude,
     @NotNull Double locationLongitude, @NotNull Double locationAltitude,

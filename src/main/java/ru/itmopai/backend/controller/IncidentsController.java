@@ -3,6 +3,8 @@ package ru.itmopai.backend.controller;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.hibernate.exception.ConstraintViolationException;
+
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
@@ -160,6 +162,8 @@ public class IncidentsController {
       return HttpResponse.ok(caseMapper.toDto(caseEntity));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound().body(e.getMessage());
+    } catch (ConstraintViolationException e) {
+      return HttpResponse.badRequest().body("Only one case for incident can be created");
     }
   }
 
