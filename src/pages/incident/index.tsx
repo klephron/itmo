@@ -83,7 +83,7 @@ function Info({ id }: { id: number }) {
         <div>
           <h3>Case</h3>
           {incident.relatedCaseId ? (
-            <Link to={`/incidents/${incident.relatedCaseId}`}>Follow</Link>
+            <Link to={`/cases/${incident.relatedCaseId}`}>Follow</Link>
           ) : (
             <Link to={`/cases/create?incident_id=${incident.id}`}>Create</Link>
           )}
