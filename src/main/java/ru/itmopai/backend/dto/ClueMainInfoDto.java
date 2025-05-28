@@ -14,7 +14,7 @@ import ru.itmopai.backend.entity.ClueEntity;
  */
 @Introspected
 @Serdeable
-public record ClueMainInfoDto(@Nullable Long id, @NotNull @NotEmpty String title,
+public record ClueMainInfoDto(@NotNull Long id, @NotNull @NotEmpty String title,
     @Nullable String description,
     @NotNull ClueEntity.Status status) implements Serializable {
 }
