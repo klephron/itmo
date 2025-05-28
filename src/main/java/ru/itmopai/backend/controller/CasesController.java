@@ -22,23 +22,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseDto;
-import ru.itmopai.backend.dto.CaseMainInfoDto;
+import ru.itmopai.backend.dto.CaseSuspectMainInfoDto;
 import ru.itmopai.backend.dto.ClueMainInfoDto;
 import ru.itmopai.backend.dto.TemplateMainInfoDto;
+import ru.itmopai.backend.dto.request.AddCaseSuspectRequest;
 import ru.itmopai.backend.dto.request.AddClueRequest;
 import ru.itmopai.backend.dto.request.AddTemplateRequest;
 import ru.itmopai.backend.entity.CaseEntity;
 import ru.itmopai.backend.entity.ClueEntity;
 import ru.itmopai.backend.entity.TemplateEntity;
-import ru.itmopai.backend.mapper.CaseMainInfoMapper;
-import ru.itmopai.backend.mapper.CaseMapper;
-import ru.itmopai.backend.mapper.ClueMainInfoMapper;
-import ru.itmopai.backend.mapper.TemplateMainInfoMapper;
-import ru.itmopai.backend.mapper.TemplateMapper;
-import ru.itmopai.backend.service.CaseService;
-import ru.itmopai.backend.service.ClueService;
-import ru.itmopai.backend.service.NotificationService;
-import ru.itmopai.backend.service.TemplateService;
+import ru.itmopai.backend.mapper.*;
+import ru.itmopai.backend.service.*;
 
 @Validated
 @Controller("/cases")
@@ -53,6 +47,9 @@ public class CasesController {
   private final TemplateMapper templateMapper;
   private final TemplateMainInfoMapper templateMainInfoMapper;
   private final NotificationService notificationService;
+  private final CaseSuspectService caseSuspectService;
+  private final CaseSuspectMainInfoMapper caseSuspectMainInfoMapper;
+  private final CaseSuspectMapper caseSuspectMapper;
 
   // TODO: also may add handle that checks permissions for each returned element
   // (to return cases to which user has access) because permissions like INCIDENTS:{id}:READ
@@ -203,4 +200,32 @@ public class CasesController {
       return HttpResponse.notFound().body(e.getMessage());
     }
   }
+
+  @RequiresPermissions({ "CASES:{id}:READ" })
+  @Get("/{id}/suspects")
+  public HttpResponse<List<CaseSuspectMainInfoDto>> getAllCaseSuspect(
+      @PathVariable @NotNull Long id,
+      Authentication authentication) {
+    return HttpResponse
+        .ok(caseSuspectMainInfoMapper.toDto(caseSuspectService.getAllCaseSuspectByCaseId(id)));
+  }
+
+  @RequiresPermissions({ "CASES:{id}:SUSPECT_ADD" })
+  @Post("/{id}/suspects")
+  public HttpResponse<?> addCaseSuspect(@PathVariable @NotNull Long id,
+      @Body @Valid AddCaseSuspectRequest addCaseSuspectRequest,
+      Authentication authentication) {
+    Long userId = (Long) authentication.getAttributes().get("id");
+    try {
+      return HttpResponse
+          .ok(caseSuspectMapper
+              .toDto(caseSuspectService.addCaseSuspect(userId, addCaseSuspectRequest.name(),
+                  addCaseSuspectRequest.surname(), addCaseSuspectRequest.patronymic(),
+                  addCaseSuspectRequest.identifier(), addCaseSuspectRequest.status(), id,
+                  addCaseSuspectRequest.verdict(), addCaseSuspectRequest.accusation())));
+    } catch (NoSuchElementException e) {
+      return HttpResponse.notFound(e.getMessage());
+    }
+  }
+
 }

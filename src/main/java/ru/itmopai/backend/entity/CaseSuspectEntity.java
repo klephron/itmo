@@ -51,6 +51,10 @@ public class CaseSuspectEntity {
 
   private String patronymic;
 
+  private String verdict;
+
+  private String accusation;
+
   /**
    * E.g. Passport, Russian Federation, 0419 845176
    */
