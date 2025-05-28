@@ -180,6 +180,7 @@ function Suspects({ caze }: { caze: CaseDto }) {
 }
 
 function Templates({ caze }: { caze: CaseDto }) {
+  const navigate = useNavigate();
   const client = useClient((state) => state.client);
   const [templates, templatesSet] = useState(null as TemplateMainInfoDto[] | null);
 
@@ -200,54 +201,59 @@ function Templates({ caze }: { caze: CaseDto }) {
     return <span>Loading...</span>;
   } else {
     return (
-      <table className={styles.table}>
-        <thead>
-          <tr className={styles.row}>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Options</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from(templates ?? [])
-            .sort((a, b) => b.id - a.id)
-            .map((template) => (
-              <tr className={styles.row} key={template.id}>
-                <td>
-                  <Link to={`/templates/${template.id}`}>{template.title}</Link>
-                </td>
-                <td>{template.status}</td>
-                <td>
-                  {template.status == TemplateEntityStatus.PENDING ? (
-                    <button
-                      onClick={(_) => {
-                        client.templates
-                          .updateTemplate(template.id, {
-                            status: TemplateEntityStatus.CREATED,
-                            metadata: template.metadata,
-                          })
-                          .then((r) => {
-                            template.status = r.data.status;
-                            templatesSet([...templates]);
-                          })
-                          .catch(console.error);
-                      }}
-                    >
-                      Accept
-                    </button>
-                  ) : (
-                    <></>
-                  )}
-                  {template.status == TemplateEntityStatus.CREATED ? (
-                    <button onClick={download(template)}>Download</button>
-                  ) : (
-                    <></>
-                  )}
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+      <>
+        <div className={styles.funcs}>
+          <button onClick={() => navigate(`/templates/create?case_id=${caze.id}`)}>Create</button>
+        </div>
+        <table className={styles.table}>
+          <thead>
+            <tr className={styles.row}>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Options</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(templates ?? [])
+              .sort((a, b) => b.id - a.id)
+              .map((template) => (
+                <tr className={styles.row} key={template.id}>
+                  <td>
+                    <Link to={`/templates/${template.id}`}>{template.title}</Link>
+                  </td>
+                  <td>{template.status}</td>
+                  <td>
+                    {template.status == TemplateEntityStatus.PENDING ? (
+                      <button
+                        onClick={(_) => {
+                          client.templates
+                            .updateTemplate(template.id, {
+                              status: TemplateEntityStatus.CREATED,
+                              metadata: template.metadata,
+                            })
+                            .then((r) => {
+                              template.status = r.data.status;
+                              templatesSet([...templates]);
+                            })
+                            .catch(console.error);
+                        }}
+                      >
+                        Accept
+                      </button>
+                    ) : (
+                      <></>
+                    )}
+                    {template.status == TemplateEntityStatus.CREATED ? (
+                      <button onClick={download(template)}>Download</button>
+                    ) : (
+                      <></>
+                    )}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </>
     );
   }
 }
@@ -398,7 +404,6 @@ function Case({ id }: { id: number }) {
           <span>{new Date(caze.createdAt).toLocaleString()}</span>
         </div>
         <div>
-          к�роче ща буду делать
           <h3>Status</h3>
           <span>{caze.status}</span>
         </div>
