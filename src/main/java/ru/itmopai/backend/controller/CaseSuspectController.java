@@ -8,6 +8,10 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -23,6 +27,15 @@ public class CaseSuspectController {
   private final CaseSuspectService caseSuspectService;
   private final CaseSuspectMapper caseSuspectMapper;
 
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Шаблон успешно обновлён",
+          content = @Content(
+              schema = @Schema(implementation = ru.itmopai.backend.dto.CaseSuspectDto.class))),
+      @ApiResponse(responseCode = "404",
+          description = "Шаблон не найден",
+          content = @Content(schema = @Schema(implementation = String.class)))
+  })
   @Get("/{id}")
   public HttpResponse<?> getCaseSuspect(@PathVariable @NotNull Long id) {
     try {
