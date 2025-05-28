@@ -83,34 +83,34 @@ export interface AddTemplateRequest {
 /** DTO for ru.itmopai.backend.entity.CaseEntity */
 export interface CaseDto {
   /** @format int64 */
-  id?: number;
+  id: number;
   /** @minLength 1 */
   title: string;
   description?: string;
   /** @format int64 */
-  creatorId?: number;
+  creatorId: number;
   /** @format date-time */
   createdAt: string;
   /** @format int64 */
-  updatorId?: number;
+  updatorId: number;
   /** @format date-time */
   updatedAt: string;
   status: CaseEntityStatus;
   /** @format int64 */
-  incidentId?: number;
+  incidentId: number;
   users: Record<string, string>;
 }
 
 /** DTO for ru.itmopai.backend.entity.ClueEntity */
 export interface ClueDto {
   /** @format int64 */
-  id?: number | null;
+  id: number;
   /** @format int64 */
-  creatorId?: number | null;
+  creatorId: number;
   /** @format date-time */
   createdAt: string;
   /** @format int64 */
-  updatorId?: number | null;
+  updatorId: number;
   /** @format date-time */
   updatedAt: string;
   /** @minLength 1 */

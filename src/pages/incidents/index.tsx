@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router";
 type IncidentEntry = {
   id: number;
   type: string;
+  reason: string;
   locationLatitude: number;
   locationLongitude: number;
   locationAltitude: number;
@@ -23,6 +24,7 @@ function infoToMap(infos: IncidentMainInfoDto[]): Map<number, IncidentEntry> {
       {
         id: info.id,
         type: info.type,
+        reason: info.reason,
         locationLatitude: info.locationLatitude,
         locationLongitude: info.locationLongitude,
         locationAltitude: info.locationAltitude,
@@ -58,6 +60,7 @@ function Table() {
             incidents1.set(incident.id, {
               id: incident.id,
               type: incident.type,
+              reason: incident.reason,
               locationLatitude: incident.locationLatitude,
               locationLongitude: incident.locationLongitude,
               locationAltitude: incident.locationAltitude,
@@ -78,6 +81,7 @@ function Table() {
     <table className={styles.table}>
       <thead>
         <tr className={styles.row}>
+          <th>Reason</th>
           <th>Type</th>
           <th>Location</th>
           <th>Time</th>
@@ -92,8 +96,9 @@ function Table() {
           .map((incident) => (
             <tr className={styles.row} key={incident.id}>
               <td>
-                <Link to={`/incidents/${incident.id}`}>{incident.type}</Link>
+                <Link to={`/incidents/${incident.id}`}>{incident.reason}</Link>
               </td>
+              <td>{incident.type}</td>
               <td>
                 {incident.locationLatitude}, {incident.locationLongitude},{" "}
                 {incident.locationAltitude}

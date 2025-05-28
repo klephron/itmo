@@ -28,7 +28,10 @@ function Table() {
   useEffect(() => {
     client.users
       .getUsers()
-      .then((r) => usersSet(infoToMap(r.data)))
+      .then((r) => {
+        usersSet(infoToMap(r.data));
+        usersLoadedSet(false);
+      })
       .catch(console.error);
   }, [client]);
 

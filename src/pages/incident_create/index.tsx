@@ -2,6 +2,7 @@ import { useClient } from "@state/client";
 import styles from "./index.module.scss";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { catchResponse } from "@util";
 
 export default function IncidentsCreatePage() {
   const navigate = useNavigate();
@@ -29,17 +30,7 @@ export default function IncidentsCreatePage() {
         .then((r) => {
           navigate(`/incidents/${r.data.id}`);
         })
-        .catch(async (e) => {
-          switch (e.status) {
-            case 400:
-              alert(
-                "Bad Request\n" + e.error._embedded.errors.map((ev: any) => ev.message).join("\n")
-              );
-              break;
-            default:
-              alert(JSON.stringify(e));
-          }
-        });
+        .catch(catchResponse);
     } catch (e) {
       alert(e);
     }
@@ -49,6 +40,10 @@ export default function IncidentsCreatePage() {
     <div className={styles.root}>
       <h2>Create Incident</h2>
       <form>
+        <div>
+          <h3>Reason</h3>
+          <textarea value={reason} onChange={(e) => reasonSet(e.target.value)} />
+        </div>
         <div>
           <h3>Type</h3>
           <input type="input" value={type} onChange={(e) => typeSet(e.target.value)} />
@@ -88,10 +83,6 @@ export default function IncidentsCreatePage() {
             value={estimatedTime}
             onChange={(e) => estimatedTimeSet(e.target.value)}
           />
-        </div>
-        <div>
-          <h3>Reason</h3>
-          <textarea value={reason} onChange={(e) => reasonSet(e.target.value)} />
         </div>
         <button
           onClick={(e) => {

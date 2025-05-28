@@ -11,6 +11,7 @@ export default [
       route("incidents/:id", "./pages/incident/index.tsx"),
 
       route("cases", "./pages/cases/index.tsx"),
+      route("cases/create", "./pages/case_create/index.tsx"),
       route("cases/:id", "./pages/case/index.tsx"),
 
       route("users", "./pages/users/index.tsx"),

@@ -46,7 +46,11 @@ function Info({ id }: { id: number }) {
     return (
       <>
         <div>
-          <h2>Incident ({incident.type})</h2>
+          <h2>Incident ({incident.reason})</h2>
+        </div>
+        <div>
+          <h3>Type</h3>
+          <span>{incident.type}</span>
         </div>
         <div>
           <h3>Creator</h3>
