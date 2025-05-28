@@ -14,7 +14,7 @@ import ru.itmopai.backend.entity.CaseEntity;
  */
 @Introspected
 @Serdeable
-public record CaseMainInfoDto(@Nullable Long id, @NotNull @NotEmpty String title,
+public record CaseMainInfoDto(@NotNull Long id, @NotNull @NotEmpty String title,
     @Nullable String description,
     @NotNull CaseEntity.Status status) implements Serializable {
 }
