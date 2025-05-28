@@ -22,6 +22,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import ru.itmopai.backend.annotation.permission.RequiresPermissions;
 import ru.itmopai.backend.dto.CaseDto;
+import ru.itmopai.backend.dto.IncidentDto;
 import ru.itmopai.backend.dto.IncidentMainInfoDto;
 import ru.itmopai.backend.dto.request.AddCaseRequest;
 import ru.itmopai.backend.dto.request.AddIncidentRequest;
@@ -260,7 +261,7 @@ public class IncidentsController {
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Инцидент найден",
-          content = @Content(schema = @Schema(implementation = IncidentMainInfoDto.class))),
+          content = @Content(schema = @Schema(implementation = IncidentDto.class))),
       @ApiResponse(responseCode = "404",
           description = "Инцидент не найден",
           content = @Content(schema = @Schema(implementation = String.class)))
