@@ -1,0 +1,124 @@
+name: Common Pipeline Steps
+
+on:
+  workflow_call:
+    inputs:
+      liquibase:
+        type: boolean
+        default: false
+
+jobs:
+  namer:
+    runs-on: ubuntu-latest
+
+    outputs:
+      branch: ${{ steps.branch_name.outputs.branch }}
+      tag: ${{ steps.branch_name.outputs.tag }}
+
+    steps:
+      - name: Print env
+        run: echo "${{ vars.test_environ }}"
+
+      - name: Get Branch & Tag
+        id: branch_name
+        run: |-
+          branch=${{ github.ref_name }}
+          echo "branch=${branch}"
+          echo "branch=${branch}" >> $GITHUB_OUTPUT
+
+          tag="${branch////-}"
+          echo "tag=${tag}"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+
+  build:
+    needs:
+      - namer
+
+    runs-on: ubuntu-latest
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build And Push Liquibase Docker Image
+        if: inputs.liquibase
+        uses: niqzart/ffs-devops/docker-build@main
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: liquibase-${{ github.event.repository.name }}
+          tag: ${{ github.ref_name == 'main' && 'latest' || needs.namer.outputs.tag }}
+          base-tag: latest
+          dockerfile: "./dockerfile.liquibase"
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          java-package: jdk
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build -x test
+
+      - name: Setup Environment
+        run: docker compose up -d
+
+      - name: Environment Logs
+        if: failure()
+        run: docker compose logs -t
+
+      - name: Run Tests & SonarQube
+        if: vars.test_environ
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: test jacocoTestReport sonar --info
+        env: ${{ fromJSON(vars.test_environ || '{}') }}
+
+      - name: Store Test Reports
+        if: always() && vars.test_environ
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: |
+            **/build/reports/
+            **/build/test-results/
+
+      - name: Build & Push Docker Image
+        uses: niqzart/ffs-devops/docker-build@main
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: ${{ github.event.repository.name }}
+          tag: ${{ github.ref_name == 'main' && 'latest' || needs.namer.outputs.tag }}
+          base-tag: latest
+          dockerfile: "./dockerfile"
+
+  deploy:
+    needs:
+      - namer
+      - build
+
+    runs-on: ubuntu-latest
+
+    if: github.ref_name == 'main'
+    environment: deploy
+
+    steps:
+      - name: Run SSH Commands
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          username: art
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: microk8s kubectl rollout restart deployment/${{ github.event.repository.name }}
+          script_stop: true
