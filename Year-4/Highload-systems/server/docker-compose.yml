@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16.0-alpine
+    environment:
+      POSTGRES_USER: ${HS_SERVER_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${HS_SERVER_DATASOURCE_PASSWORD}
+      POSTGRES_DATABASE: ${HS_SERVER_DATASOURCE_DATABASE}
+    ports:
+      - "${HS_SERVER_DATASOURCE_PORT}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/entrypoint/:/docker-entrypoint-initdb.d/
+
+  liquibase:
+    image: liquibase/liquibase:4.24-alpine
+    depends_on:
+      - postgres
+    environment:
+      LIQUIBASE_COMMAND_USERNAME: ${HS_SERVER_DATASOURCE_USERNAME}
+      LIQUIBASE_COMMAND_PASSWORD: ${HS_SERVER_DATASOURCE_PASSWORD}
+      LIQUIBASE_COMMAND_URL : jdbc:postgresql://${HS_SERVER_DATASOURCE_HOST}:5432/${HS_SERVER_DATASOURCE_DATABASE}
+    volumes:
+      - ./liquibase/changelog:/liquibase/changelog
+      - ./liquibase/liquibase.properties:/liquibase/liquibase.properties
+    command: --defaults-file=/liquibase/liquibase.properties update
+
+  app-jar:
+    profiles:
+      - app-jar
+    build:
+      context: .
+      dockerfile: from-jar.dockerfile
+    env_file: .env
+    ports:
+      - "${HS_SERVER_PORT}:${HS_SERVER_PORT}"
+
+  app-gradle:
+    profiles:
+      - app-gradle
+    build:
+      context: .
+      dockerfile: dockerfile
+    env_file: .env
+    ports:
+      - "${HS_SERVER_PORT}:${HS_SERVER_PORT}"
+
+volumes:
+  postgres-data:
