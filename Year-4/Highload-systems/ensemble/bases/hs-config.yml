@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: hs-config
+  name: hs-config
+spec:
+  selector:
+    app: hs-config
+  ports:
+    - port: 8888
+      targetPort: 8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hs-config
+spec:
+  selector:
+    matchLabels:
+      app: hs-config
+  template:
+    metadata:
+      labels:
+        app: hs-config
+    spec:
+      containers:
+        - name: hs-config
+          image: mhws/hs-config:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8888
+          volumeMounts:
+            - name: config-data
+              mountPath: /var/hs/config
+          env:
+            - name: HS_CONFIG_SEARCH_LOCATIONS
+              value: file:/var/hs/config
+          readinessProbe:
+            httpGet:
+              port: 8888
+              path: /actuator/health/readiness
+          livenessProbe:
+            httpGet:
+              port: 8888
+              path: /actuator/health/liveness
+      volumes:
+        - name: config-data
+          configMap:
+            name: config-server-data

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: files-storage
+  labels:
+    app: files-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: files-pv
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  hostPath:
+    path: "/tmp/files"
+  capacity:
+    storage: 256Gi

@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: hs-users
+  name: hs-users
+spec:
+  type: NodePort
+  selector:
+    app: hs-users
+  ports:
+    - nodePort: 30063
+      port: 8763
+      targetPort: 8763
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hs-users
+spec:
+  selector:
+    matchLabels:
+      app: hs-users
+  template:
+    metadata:
+      labels:
+        app: hs-users
+    spec:
+      initContainers:
+        - name: liquibase-users
+          image: mhws/liquibase-hs-users:latest
+          imagePullPolicy: Always
+          args:
+            - --defaults-file=/liquibase/liquibase.properties
+            - update
+          env:
+            - name: LIQUIBASE_COMMAND_URL
+              value: "jdbc:postgresql://postgres:5432/db_users"
+            - name: LIQUIBASE_COMMAND_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: HS_USER_POSTGRES_USERNAME
+            - name: LIQUIBASE_COMMAND_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: HS_USER_POSTGRES_PASSWORD
+      containers:
+        - name: hs-users
+          image: mhws/hs-users:latest
+          imagePullPolicy: Always
+          args:
+            - application.jar
+            - --spring.cloud.config.enabled=true
+            - --spring.profiles.active=
+          ports:
+            - containerPort: 8763
+          env:
+            - name: CONFIGSERVER_URI
+              value: "http://hs-config:8888"
+            - name: HS_USER_EUREKA_URI
+              value: "http://hs-eureka:8761/eureka"
+            - name: HS_USER_KAFKA_URI
+              value: "kafka:29092"
+            - name: HS_USER_DATASOURCE_DATABASE
+              value: "db_users"
+            - name: HS_USER_DATASOURCE_HOST
+              value: "postgres"
+            - name: HS_USER_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: HS_USER_POSTGRES_USERNAME
+            - name: HS_USER_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: HS_USER_POSTGRES_PASSWORD
+            - name: HS_USER_DATASOURCE_PORT
+              value: "5432"
+            - name: HS_USER_JWT_EXPIRATION
+              value: "86400000"
+            - name: HS_USER_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hs-users-secrets
+                  key: HS_USER_JWT_SECRET_KEY
+      restartPolicy: Always

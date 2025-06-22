@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hazelcast-config-data
+data:
+  hazelcast.yml: |
+    hazelcast:
+      cluster-name: donatello
+      network:
+        join:
+          kubernetes:
+            enabled: true
+            namespace: default
+            service-name: hazelcast
+        rest-api:
+          enabled: true
+  hazelcast-client.yml: |-
+    hazelcast-client:
+      cluster-name: donatello
+      network:
+        kubernetes:
+          enabled: true
+          namespace: default
+          service-name: hazelcast
