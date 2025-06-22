@@ -1,0 +1,58 @@
+spring.application.name: event-app
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:6432/db
+    username: postgres
+    password: postgres
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show_sql: true
+  mail:
+    host: ${EMAIL_HOST:smtp.mail.ru}
+    port: ${EMAIL_PORT:465}
+    username: ${EMAIL_USERNAME:username}
+#    password: ${EMAIL_PASSWORD:password}
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: false
+          auth: false
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  port: ${MINIO_PORT:9000}
+  accessKey: ${MINIO_ACCESS_KEY:minio-admin}
+  secretKey: ${MINIO_SECRET_KEY:minio-admin}
+
+springdoc:
+  api-docs:
+    path: /event-app/v3/api-docs
+  swagger-ui:
+    path: /event-app/api
+
+notifications:
+  cron:
+    create-notification-job: '0 1 * * * *' # каждая 15-я минута каждого часа -- для подробностей смотри https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html
+    delete-notification-job: '0 1 * * * *' # каждый понедельник 00:00
+    delete-period-in-days: 7
+  taskUrl: ${TASK_URL:http://localhost:5137/tasks/}
+
+server.ip: ${IP:localhost}
+
+security:
+  secret: ${SECURITY_SECRET:HellMegaSecretKeyForItmoEventAppNoOneShouldKnowItKeepYourMouthShut}
+  jwt-token:
+    lifetime: ${JWT_LIFETIME:60}

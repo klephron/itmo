@@ -1,0 +1,10 @@
+{
+  "eventId": 1,
+  "assigneeId": 1,
+  "title": "CREATED",
+  "description": "created",
+  "taskStatus": "EXPIRED",
+  "placeId": null,
+  "deadline": "2030-04-20T21:00:00",
+  "reminder": "2030-04-20T21:00:00"
+}
