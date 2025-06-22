@@ -1,0 +1,11 @@
+name: Main
+
+on:
+  push:
+
+jobs:
+  all:
+    uses: IoT-MHWS/hs-actions/.github/workflows/common.yml@main
+    with:
+      liquibase: true
+    secrets: inherit
