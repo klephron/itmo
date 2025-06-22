@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package cwspb.subject;
+
+import "cwspb/common.proto";
+import "cwspb/network.proto";
+import "cwspb/physical.proto";
+
+message TempSourceParams {
+  double heat_production = 1;
+};
+
+message LightSourceParams {
+  Illumination raw_illumination = 1;
+};
+
+message Id {
+  int32 type = 1;
+  int32 idx = 2;
+};
+
+message Plain {
+  Physical base = 1;
+  Id id = 10;
+  double surface_area = 11;
+  Obstruction air_obstruction = 12;
+};
+
+message TempEmitter {
+  Plain base = 1;
+  TempSourceParams temp_params = 10;
+};
+
+message TurnableTempEmitter {
+  TempEmitter base = 1;
+  int32 turnable_status = 10;
+  TempSourceParams off_temp_params = 11;
+};
+
+message LightEmitter {
+  Plain base = 1;
+  TempSourceParams temp_params = 10;
+  LightSourceParams light_params = 11;
+};
+
+message TurnableLightEmitter {
+  LightEmitter base = 1;  
+  int32 turnable_status = 10;
+  LightSourceParams off_light_params = 11;
+  TempSourceParams off_temp_params = 12;
+};
+
+message WirelessNetworkDevice {
+  Plain base = 1;
+  repeated cwspb.network.Packet transmit_packets = 10;
+  repeated cwspb.network.Packet received_packets = 11;
+  double transmit_power = 12;
+  double receive_threshold = 13;
+};
+
+message BaseCamera {
+  Plain base = 1;
+  double power = 10;
+  double power_threshold = 11;
+};
+
+message InfraredCamera {
+  BaseCamera base = 1;
+};
+
+message LightCamera {
+  BaseCamera base = 1;
+  double light_threshold = 10;
+};
+
+message Turnable {
+  Plain base = 1;
+  int32 turnable_status = 10;
+  Obstruction off_light_obs = 11;
+  Obstruction off_wireless_obs = 12;
+  Obstruction off_air_obs = 13;
+};
+
+message SensorAirTemperature {
+  Plain base = 1;
+  Temperature air_temperature = 10;
+};
+
+message SensorIllumination {
+  Plain base = 1;
+  Illumination cell_illumination = 10;
+};
+
+message Any {
+  oneof subject {
+    Plain plain = 1;  
+    TempEmitter temp_emitter = 2;
+    TurnableTempEmitter turnable_temp_emitter = 3;
+    LightEmitter light_emitter = 4;
+    TurnableLightEmitter turnable_light_emitter = 5;
+    WirelessNetworkDevice wireless_network_device = 6;
+    InfraredCamera infrared_camera = 7;
+    LightCamera light_camera = 8;
+    Turnable turnable = 9;
+    SensorAirTemperature sensor_air_temperature = 10;
+    SensorIllumination sensor_illumination = 11;
+  };
+};

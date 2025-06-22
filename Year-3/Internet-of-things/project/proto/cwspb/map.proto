@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package cwspb;
+
+import "cwspb/common.proto";
+import "cwspb/layer.proto";
+
+
+message Cell {
+  Coordinates coordinates = 1;
+  layer.Air air = 10;
+  layer.Illumination illumination = 11;
+  layer.WirelessNetwork wireless_network = 12;
+  layer.Obstruction obstruction = 13;
+  layer.Subject subject = 14;
+};
+
+message Map {
+  Dimension dimension = 1;
+  repeated Cell cells = 2;
+}

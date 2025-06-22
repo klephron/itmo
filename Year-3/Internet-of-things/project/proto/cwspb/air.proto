@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package cwspb.air;
+
+import "cwspb/common.proto";
+import "cwspb/physical.proto";
+
+message Id {
+  int32 type = 1;
+  int32 idx = 2;
+};
+
+message Plain {
+  Physical base = 1;
+  Id id = 10;
+  double heat_transfer_coef = 11;
+};

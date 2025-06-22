@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package cwspb;
+
+enum ErrorType {
+  ERROR_TYPE_UNSPECIFIED = 0;
+  ERROR_TYPE_BAD_REQUEST = 1;
+}
+
+message Status {
+  optional string text = 1;
+  optional ErrorType type = 2;
+}
+
+message Request {
+};
+
+message Response {
+  Status status = 1;
+};
