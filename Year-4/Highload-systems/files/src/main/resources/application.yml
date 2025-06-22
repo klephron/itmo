@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: files
+  config:
+    import: optional:configserver:${CONFIGSERVER_URI:http://localhost:8888}
+  cloud:
+    config:
+      enabled: false
+  profiles:
+    active: local
+
+app:
+  fs:
+    paintings:
+      path: ${HS_FILES_VOLUME:./pictures}
