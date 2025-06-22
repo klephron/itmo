@@ -1,0 +1,29 @@
+.root {
+  min-height: 100%;
+  background-color: var(--itmo-colors-page-auth);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.block {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 50px 30px 50px;
+}
+
+.button {
+  background-color: var(--itmo-colors-white);
+  color: black;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: var(--itmo-box-shadow);
+}
+
+.button:hover {
+  background-color: var(--itmo-colors-gray-2);
+}

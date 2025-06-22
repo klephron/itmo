@@ -1,0 +1,38 @@
+.textarea {
+  border: 1px solid hsl(0, 0%, 80%);
+  border-radius: 4px;
+  padding: 10px 10px;
+  font-size: 16px;
+  outline: none;
+  resize: none;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+.textarea:focus {
+  border: 1px solid var(--itmo-colors-blue);
+}
+
+.input_error {
+  border-color: var(--itmo-colors-red);
+}
+
+.input_error:focus {
+  border-color: var(--itmo-colors-red);
+}
+
+.visible {
+  display: block;
+}
+
+.hidden {
+  display: none;
+}
+
+.helper_error {
+  color: var(--itmo-colors-red);
+  margin: 0;
+  padding: 10px 0;
+  font-size: 14px;
+}

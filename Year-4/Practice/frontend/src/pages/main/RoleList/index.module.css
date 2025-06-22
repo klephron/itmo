@@ -1,0 +1,74 @@
+.top {
+  display: flex;
+  gap: 20px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.visible {
+  visibility: visible;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.context_menu {
+  position: fixed;
+  z-index: 10;
+}
+
+.fade {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
+  padding-top: 30px;
+}
+
+.dialog {
+  margin-left: auto;
+  margin-right: auto;
+  max-height: calc(100% - 60px);
+  width: auto;
+  max-width: 960px;
+}
+
+.dialog_content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 10px;
+}
+
+.dialog_form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialog_item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.create_button {
+  border: none;
+  padding: 8px 16px;
+}
+
+.error {
+  color: red;
+  max-width: 400px;
+}
+
+.dialog__select {
+  pointer-events: none;
+  opacity: 0.8;
+}

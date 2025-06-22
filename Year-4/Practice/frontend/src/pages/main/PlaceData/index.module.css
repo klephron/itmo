@@ -1,0 +1,58 @@
+.header {
+  background-color: var(--itmo-colors-white);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px;
+}
+
+.filters {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 10px;
+}
+
+.filter_group {
+  border: 1px solid var(--itmo-colors-gray);
+  border-radius: 10px;
+  display: flex;
+  flex-flow: row wrap;
+  width: 100%;
+  gap: 20px;
+  padding: 10px;
+}
+
+.filter_element {
+  min-width: 200px;
+  border: 1px solid var(--itmo-colors-black);
+  border-radius: 10px;
+  padding: 10px 10px;
+  font-size: 16px;
+}
+
+.dropdownfilter {
+  min-width: 200px;
+}
+
+.place_column {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  min-width: 150px;
+  display: inline-block;
+  font-weight: bold;
+}
+
+.empty_field_msg {
+  color: var(--itmo-colors-red);
+}
+
+.bottom__right {
+  height: calc(100vh - 73px);
+}
+.placedata__descr {
+  margin-bottom: 20px;
+}

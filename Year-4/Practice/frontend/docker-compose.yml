@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16.0
+    ports:
+      - "5555:5432"
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-U", "postgres" ]
+      interval: 5s
+      timeout: 1s
+      retries: 2
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - postgres-data:/var/lib/posgresql/data
+
+  event-app:
+    image: ip13/event-app:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: "wget localhost:8080 2>&1| grep 'HTTP/1.1 403'"
+      interval: 1s
+      timeout: 2s
+      start_period: 10s
+      retries: 60
+    deploy:
+      restart_policy:
+        condition: on-failure
+    environment:
+      - "SPRING_PROFILES_ACTIVE=docker"
+      - "EMAIL_USERNAME=${EMAIL_USERNAME}"
+      - "EMAIL_HOST=${EMAIL_HOST}"
+      - "EMAIL_PORT=${EMAIL_PORT}"
+      - "MINIO_URL=${MINIO_URL}"
+      - "MINIO_PORT=${MINIO_PORT}"
+      - "MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}"
+      - "MINIO_SECRET_KEY=${MINIO_SECRET_KEY}"
+      - "TASK_URL=${TASK_URL}"
+      - "IP=${IP}"
+  minio:
+    image: minio/minio
+    environment:
+      - MINIO_ROOT_USER=minio-admin # AKA accessKey in minioClient, min len 3 characters
+      - MINIO_ROOT_PASSWORD=minio-admin # AKA secretKey in minioClient, min len 8 characters
+    command: server ~/minio --console-address :9001
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      - '9001:9001'
+      - '9000:9000'
+
+  geo:
+    image: trickyfoxy/itmo_practice_geo
+    profiles:
+      - frontend
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      - '9999:80'
+
+  frontend:
+    image: zubrailx/itmo-events-app-frontend:latest
+    profiles:
+      - frontend
+    ports:
+      - "5573:80"
+    depends_on:
+      event-app:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes: # mount config
+      - '${PWD}/public/config.js:/usr/share/nginx/html/config.js'
+volumes:
+  postgres-data:
+  minio-data:

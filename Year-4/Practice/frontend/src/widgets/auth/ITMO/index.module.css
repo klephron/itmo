@@ -1,0 +1,9 @@
+.logo {
+  position: absolute;
+  left: 30px;
+  top: 20px;
+}
+
+.logo:hover {
+  cursor: pointer;
+}
