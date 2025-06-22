@@ -1,0 +1,17 @@
+services:
+  config:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - ${HS_CONFIG_PORT:-8380}:8888
+    environment:
+      HS_CONFIG_SEARCH_LOCATIONS: file:/var/hs/config
+    volumes:
+      - "./config:/var/hs/config"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail --silent localhost:8888/actuator/health | grep UP || exit 1" ]
+      start_period: 60s
+      interval: 10s
+      timeout: 60s
+      retries: 5
