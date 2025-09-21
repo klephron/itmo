@@ -25,14 +25,14 @@
             "id": "924bf54bfbae9150",
             "type": "leaf",
             "state": {
-              "type": "split-diff-view",
+              "type": "markdown",
               "state": {
-                "aFile": "мпи/.obsidian/workspace.json",
-                "bFile": "мпи/.obsidian/workspace.json",
-                "aRef": ""
+                "file": "Welcome.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "diff",
-              "title": "Diff: workspace.json"
+              "icon": "lucide-file",
+              "title": "Welcome"
             }
           }
         ],
@@ -173,12 +173,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "Welcome.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of Welcome"
             }
           },
           {
@@ -213,7 +214,7 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "924bf54bfbae9150",
+  "active": "8529d504857a940f",
   "lastOpenFiles": [
     "бубубу.md",
     "Welcome.md",
