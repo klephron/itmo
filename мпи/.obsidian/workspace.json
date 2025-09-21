@@ -25,14 +25,14 @@
             "id": "924bf54bfbae9150",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "split-diff-view",
               "state": {
-                "file": "бубубу.md",
-                "mode": "source",
-                "source": false
+                "aFile": "мпи/.obsidian/workspace.json",
+                "bFile": "мпи/.obsidian/workspace.json",
+                "aRef": ""
               },
-              "icon": "lucide-file",
-              "title": "бубубу"
+              "icon": "diff",
+              "title": "Diff: workspace.json"
             }
           }
         ],
@@ -173,13 +173,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "бубубу.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of бубубу"
+              "title": "Outline"
             }
           },
           {
@@ -210,15 +209,14 @@
       "bases:Create new base": false,
       "obsidian-excalidraw-plugin:New drawing": false,
       "templater-obsidian:Templater": false,
-      "remotely-save:Remotely Save": false,
       "copilot:Open Copilot Chat": false,
       "obsidian-git:Open Git source control": false
     }
   },
   "active": "924bf54bfbae9150",
   "lastOpenFiles": [
-    "Welcome.md",
     "бубубу.md",
+    "Welcome.md",
     "copilot-custom-prompts/Simplify.md",
     "create a link.md",
     "copilot-custom-prompts/Emojify.md",
