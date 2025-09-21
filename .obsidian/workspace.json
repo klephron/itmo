@@ -1,49 +1,30 @@
 {
   "main": {
-    "id": "4a6e4ccebe212dde",
+    "id": "4f3db71d32ade448",
     "type": "split",
     "children": [
       {
-        "id": "6a98fe8ad6901fd6",
+        "id": "cf70096e29d7e557",
         "type": "tabs",
         "children": [
           {
-            "id": "d041931aeb2a1a6a",
+            "id": "07e60ea95afd4a0b",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Welcome.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Welcome"
-            }
-          },
-          {
-            "id": "924bf54bfbae9150",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Welcome.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Welcome"
+              "title": "New tab"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       },
       {
-        "id": "fe27edb7cf93bed3",
+        "id": "c37ef41ff1709944",
         "type": "tabs",
         "children": [
           {
-            "id": "1612f7ae47f95257",
+            "id": "55489fec635d54ec",
             "type": "leaf",
             "state": {
               "type": "graph",
@@ -58,15 +39,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "40f003d245cafaee",
+    "id": "6d9f1d604ba5fb40",
     "type": "split",
     "children": [
       {
-        "id": "e834740165912d92",
+        "id": "32bd6487bf641408",
         "type": "tabs",
         "children": [
           {
-            "id": "8529d504857a940f",
+            "id": "12c2607c3a842b63",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -79,7 +60,7 @@
             }
           },
           {
-            "id": "d0280d2241bc5fe6",
+            "id": "c0a54d66b5f55522",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -96,7 +77,7 @@
             }
           },
           {
-            "id": "9f30566efb6d139f",
+            "id": "391f0266155100a6",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -112,20 +93,19 @@
     "width": 300
   },
   "right": {
-    "id": "90969a8fd1d42a5e",
+    "id": "f80197d3d7c83077",
     "type": "split",
     "children": [
       {
-        "id": "5e9a11fc6111b9f6",
+        "id": "7506e7b5b564a3f1",
         "type": "tabs",
         "children": [
           {
-            "id": "d40d7403e2efe12b",
+            "id": "378b7aef2999fa86",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "бубубу.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -135,25 +115,24 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for бубубу"
+              "title": "Backlinks"
             }
           },
           {
-            "id": "bcdf554bf3f54d2d",
+            "id": "bd37197f64030972",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "бубубу.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from бубубу"
+              "title": "Outgoing links"
             }
           },
           {
-            "id": "149029261ee62544",
+            "id": "4693b7166720dd0c",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -168,7 +147,7 @@
             }
           },
           {
-            "id": "8e2357430c0bdf16",
+            "id": "132c7e5385217b25",
             "type": "leaf",
             "state": {
               "type": "outline",
@@ -183,7 +162,7 @@
             }
           },
           {
-            "id": "a5097c44cf2003e8",
+            "id": "76bc8f769f6f1f13",
             "type": "leaf",
             "state": {
               "type": "git-view",
@@ -209,29 +188,16 @@
       "command-palette:Open command palette": false,
       "bases:Create new base": false,
       "obsidian-excalidraw-plugin:New drawing": false,
-      "templater-obsidian:Templater": false,
-      "copilot:Open Copilot Chat": false,
-      "obsidian-git:Open Git source control": false
+      "obsidian-git:Open Git source control": false,
+      "templater-obsidian:Templater": false
     }
   },
-  "active": "8529d504857a940f",
+  "active": "12c2607c3a842b63",
   "lastOpenFiles": [
-    "бубубу.md",
-    "Welcome.md",
-    "copilot-custom-prompts/Simplify.md",
-    "create a link.md",
-    "copilot-custom-prompts/Emojify.md",
-    "copilot-custom-prompts/Rewrite as tweet thread.md",
-    "copilot-custom-prompts/Rewrite as tweet.md",
-    "copilot-custom-prompts/Remove URLs.md",
-    "copilot-custom-prompts/Generate glossary.md",
-    "copilot-custom-prompts/Generate table of contents.md",
-    "copilot-custom-prompts/Make longer.md",
-    "copilot-custom-prompts/Make shorter.md",
-    "copilot-custom-prompts/Explain like I am 5.md",
-    "copilot-custom-prompts/Summarize.md",
-    "copilot-custom-prompts/Translate to Chinese.md",
-    "copilot-custom-prompts/Fix grammar and spelling.md",
-    "copilot-custom-prompts"
+    "мпи/бубубу.md",
+    "мпи/Welcome.md",
+    "мпи",
+    "README.md",
+    "Welcome.md"
   ]
 }
