@@ -1,11 +1,11 @@
 ```plantuml
 @startuml
 title UC2 — Работа с уликами (Implementation View)
-left to right direction
+top to bottom direction
 skinparam linetype ortho
-skinparam actorStyle awesome
-skinparam nodesep 60
-skinparam ranksep 60
+skinparam nodesep 30
+skinparam ranksep 30
+scale 0.9
 
 
 package "ru.itmopai.backend.controller" as controller {
@@ -355,45 +355,46 @@ entity -[hidden]-> dto
 dto -[hidden]-> request
 request -[hidden]-> mapper
 
-CluesController -right-> ClueService
-CluesController -down-> ClueMapper
-CluesController -down-> ClueMainInfoMapper
-CluesController -down-> UpdateClueRequest
-UsersController -right-> UserService
-UsersController -down-> UserMapper
+CluesController ..right..> ClueService
+CluesController ..down..> ClueMapper
+CluesController ..down..> ClueMainInfoMapper
+CluesController ..down..> UpdateClueRequest
+CluesController ..down..> NotificationService
 
-CasesController -right-> CaseService
-CasesController -down-> CaseMapper
-CasesController -right-> ClueService
-CasesController -down-> ClueMainInfoMapper
-CasesController -down-> AddClueRequest
-CasesController -down-> NotificationService
+UsersController ..right..> UserService
+UsersController ..down..> UserMapper
 
-ClueService -right-> ClueRepository
-ClueService -up-> UserService
-ClueService -right-> CaseService
-CaseService -right-> CaseRepository
-UserService -right-> UserRepository
-NotificationService -[norank]-> UsersController
+CasesController ..right..> CaseService
+CasesController ..down..> CaseMapper
+CasesController ..right..> ClueService
+CasesController ..down..> ClueMainInfoMapper
+CasesController ..down..> AddClueRequest
+CasesController ..down..> NotificationService
 
-ClueRepository -down-> ClueEntity
-CaseRepository -down-> CaseEntity
-UserRepository -down-> UserEntity
+ClueService ..right..> ClueRepository
+ClueService ..up..> UserService
+ClueService ..right..> CaseService
+CaseService ..right..> CaseRepository
+UserService ..right..> UserRepository
 
-CaseMapper -down-> CaseDto
-CaseMapper -down-> CaseEntity
-ClueMapper -down-> ClueDto
-ClueMapper -down-> ClueEntity
-ClueMainInfoMapper -down-> ClueMainInfoDto
-ClueMainInfoMapper -down-> ClueEntity
-UserMapper -down-> UserDto
-UserMapper -down-> UserEntity
+CaseMapper ..down..> CaseDto
+CaseMapper ..down..> CaseEntity
+ClueMapper ..down..> ClueDto
+ClueMapper ..down..> ClueEntity
+ClueMainInfoMapper ..down..> ClueMainInfoDto
+ClueMainInfoMapper ..down..> ClueEntity
+UserMapper ..down..> UserDto
+UserMapper ..down..> UserEntity
 
-ClueEntity -right-> UserEntity
-ClueEntity -down-> CaseEntity
-CaseEntity -down-> IncidentEntity
-IncidentEntity -right-> UserEntity
-IncidentEntity -up-> CaseEntity
+ClueEntity --right--> UserEntity
+ClueEntity --down-->  CaseEntity
+CaseEntity --down-->  IncidentEntity
+IncidentEntity --up--> CaseEntity
+
+UserEntity ..> UserRepository
+CaseEntity ..> CaseRepository
+ClueEntity ..> ClueRepository
+
 @enduml
 
 ```
