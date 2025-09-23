@@ -2,14 +2,11 @@
 @startuml
 left to right direction
 skinparam actorStyle awesome
-skinparam linetype polyline
-skinparam nodesep 50
-skinparam ranksep 50
-skinparam usecase {
-  BorderColor #666
-  BackgroundColor #EFEFEF
-}
-title UC2 — Работа с уликами (Logical View, с DTO)
+skinparam linetype ortho
+skinparam nodesep 150
+skinparam ranksep 120
+
+title UC2 — Работа с уликами (Logical View)
 
 package "controller" {
   class CluesController
@@ -60,32 +57,37 @@ package "mapper" {
   class UserMapper
 }
 
-CluesController --> ClueService
-UsersController --> UserService
-CluesController --> ClueMapper
-CluesController --> ClueMainInfoMapper
-UsersController --> UserMapper
+CaseEntity "1" o-- "0..*" ClueEntity
+ClueEntity "0..*" --> "0..1" UserEntity : creator
+ClueEntity "0..*" --> "0..1" UserEntity : updator
+CaseEntity "0..*" --> "0..1" UserEntity : creator
+CaseEntity "0..*" --> "0..1" UserEntity : updator
+IncidentEntity "0..*" --> "0..1" UserEntity : creator
+IncidentEntity "0..*" --> "0..1" UserEntity : updator
+CaseEntity "1" -- "0..1" IncidentEntity
 
-ClueService --> ClueRepository
-ClueService --> UserRepository
-ClueService --> CaseService
-CaseService --> CaseRepository
-UserService --> UserRepository
+CluesController ..> ClueService
+UsersController ..> UserService
+CluesController ..> ClueMapper
+CluesController ..> ClueMainInfoMapper
+UsersController ..> UserMapper
 
-ClueRepository --> ClueEntity
-CaseRepository --> CaseEntity
-UserRepository --> UserEntity
+ClueService ..> ClueRepository
+ClueService ..> UserRepository
+ClueService ..> CaseService
+CaseService ..> CaseRepository
+UserService ..> UserRepository
 
-ClueEntity --> UserEntity : creator/updator
-ClueEntity --> CaseEntity
-CaseEntity --> IncidentEntity
+ClueRepository ..> ClueEntity
+CaseRepository ..> CaseEntity
+UserRepository ..> UserEntity
 
-ClueMapper --> ClueDto
-ClueMapper --> ClueEntity
-ClueMainInfoMapper --> ClueMainInfoDto
-ClueMainInfoMapper --> ClueEntity
-UserMapper --> UserDto
-UserMapper --> UserEntity
+ClueMapper ..> ClueDto
+ClueMapper ..> ClueEntity
+ClueMainInfoMapper ..> ClueMainInfoDto
+ClueMainInfoMapper ..> ClueEntity
+UserMapper ..> UserDto
+UserMapper ..> UserEntity
 @enduml
 
 ```
