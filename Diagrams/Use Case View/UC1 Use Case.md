@@ -1,14 +1,10 @@
-```plantuml
+```plantuml-svg
 @startuml
 left to right direction
 skinparam actorStyle awesome
 skinparam linetype polyline
 skinparam nodesep 60
 skinparam ranksep 60
-skinparam usecase {
-  BorderColor #666
-  BackgroundColor #EFEFEF
-}
 
 actor "Диспетчер" as Dispatcher
 

@@ -1,4 +1,4 @@
-```plantuml
+```plantuml-svg
 @startuml
 left to right direction
 skinparam actorStyle awesome

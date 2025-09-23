@@ -1,4 +1,4 @@
-```plantuml
+```plantuml-svg
 @startuml
 title UC3 — Формирование шаблона отчёта (Logical View)
 left to right direction
@@ -7,15 +7,35 @@ skinparam nodesep 60
 skinparam ranksep 60
 
 package "controller" {
-  class CasesController
-  class TemplatesController
+  class CasesController {
+    +getCaseTemplates(...)
+    +addCaseTemplate(...)
+  }
+  class TemplatesController {
+    +getTemplate(...)
+    +updateTemplate(...)
+    +deleteTemplate(...)
+    +addTemplateToCDB(...)
+  }
 }
 
 package "application" {
-  class TemplateService
-  class CaseService
-  class ClueService
-  class UserService
+  class TemplateService {
+    +getTemplate(...)
+    +getTemplatesByCaseId(...)
+    +addTemplate(...)
+    +updateTemplate(...)
+    +deleteTemplate(...)
+  }
+  class CaseService {
+    +getCaseById(...)
+  }
+  class ClueService {
+    +getAllClueByCase(...)
+  }
+  class UserService {
+    +getUser(...)
+  }
 }
 
 package "infrastructure" {
@@ -76,11 +96,11 @@ TemplateMainInfoDto ..> TemplateEntity
 AddTemplateRequest ..> TemplateEntity
 UpdateTemplateRequest ..> TemplateEntity
 
-TemplateEntity -- CaseEntity
-TemplateEntity -- UserEntity
-ClueEntity -- CaseEntity
-CaseEntity -- IncidentEntity
-CaseEntity -- UserEntity
+CaseEntity "1" o-- "0..*" TemplateEntity
+TemplateEntity "0..*" --> "0..1" UserEntity : {creator, updator}
+CaseEntity "1" -- "0..1" IncidentEntity
+CaseEntity "0..*" --> "0..1" UserEntity : {creator, updator}
+CaseEntity "1" o-- "0..*" ClueEntity
 @enduml
 
 ```

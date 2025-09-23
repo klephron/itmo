@@ -1,4 +1,4 @@
-```plantuml
+```plantuml-svg
 @startuml
 left to right direction
 skinparam actorStyle awesome
@@ -9,8 +9,15 @@ skinparam ranksep 120
 title UC2 — Работа с уликами (Logical View)
 
 package "controller" {
-  class CluesController
-  class UsersController
+  class CluesController {
+    +getClue(...)
+    +updateClue(...)
+    +deleteClue(...)
+  }
+  class UsersController {
+    +getUser(...)
+    +deleteUser(...)
+  }
 }
 
 package "application" {
