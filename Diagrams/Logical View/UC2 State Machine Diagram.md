@@ -1,6 +1,6 @@
 ```plantuml-svg
 @startuml
-title UC2 — State Machine Diagram (Logical View)
+title UC2 — Работа с уликами (Logical View)
 
 top to bottom direction
 skinparam linetype ortho

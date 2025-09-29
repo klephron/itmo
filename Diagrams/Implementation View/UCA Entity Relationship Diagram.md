@@ -1,6 +1,6 @@
 ```plantuml-svg
 @startuml
-title UCA - ER-модель (Implementation View)
+title UCA — ER-модель (Implementation View)
 skinparam linetype ortho
 skinparam nodesep 110
 skinparam ranksep 110

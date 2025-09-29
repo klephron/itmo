@@ -1,6 +1,6 @@
 ```plantuml-svg
 @startuml
-title UC3.A — State Machine Diagram (Implementation View)
+title UC3.A — Добавить шаблон к делу (Implementation View)
 
 top to bottom direction
 skinparam linetype ortho
@@ -55,7 +55,7 @@ Controller.ReturnOk --> [*]
 
 ```plantuml-svg
 @startuml
-title UC3.B — State Machine Diagram (Implementation View)
+title UC3.B — Обновить шаблон (Implementation View)
 
 top to bottom direction
 skinparam linetype ortho

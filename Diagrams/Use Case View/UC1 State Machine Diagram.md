@@ -1,6 +1,6 @@
 ```plantuml-svg
 @startuml
-title UC1 — State Machine Diagram (Use Case View)
+title UC1 — Обработка вызовов (Use Case View)
 
 [*] --> ReceiveRequest
 

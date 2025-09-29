@@ -1,6 +1,6 @@
 ```plantuml-svg
 @startuml
-title UCA Logical Diagram (Implementation View)
+title UCA — Logical Diagram (Implementation View)
 skinparam linetype ortho
 skinparam nodesep 60
 skinparam ranksep 60
