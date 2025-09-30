@@ -1,6 +1,6 @@
 ```plantuml-svg
 @startuml
-title UC2 — Работа с уликами (Logical View, Sequence)
+title UC2 — Работа с уликами (Logical View)
 
 actor Пользователь as U
 

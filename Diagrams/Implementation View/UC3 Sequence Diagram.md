@@ -119,12 +119,12 @@ deactivate TR
 alt шаблон не найден
   S -> C : throw NotFound("Template not found")
   deactivate S
-  C --> U : 404 Not Found
+  C --> U : 404 Not Found "Template not found"
   deactivate C
 else шаблон найден
   S -> PS : checkOrThrow(auth,\n"CASES", template.caseId,\n"TEMPLATES_UPDATE")
   activate PS
-  PS --> S : ok / throw Unauthorized
+  PS --> S : ok / throw PermissionDeniedException
   deactivate PS
 
   alt нет прав
@@ -141,7 +141,7 @@ else шаблон найден
     alt пользователь не найден
       S -> C : throw NotFound("User not found")
       deactivate S
-      C --> U : 404 Not Found
+      C --> U : 404 Not Found "User not found"
       deactivate C
     else пользователь найден
       S -> M : partialUpdate(req, template)
