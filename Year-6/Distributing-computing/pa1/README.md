@@ -34,7 +34,7 @@ make clean
 
 ## Docker
 
-To build and run make commands above docker environment can be used.
+To build and run above make commands docker environment can be used.
 
 Build:
 
