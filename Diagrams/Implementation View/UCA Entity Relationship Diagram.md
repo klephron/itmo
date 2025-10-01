@@ -111,6 +111,6 @@ Case ||--o{ Template
 User ||--o{ Clue
 User ||--o{ Template
 User ||--o{ Notification
-@enduml
 
+@enduml
 ```

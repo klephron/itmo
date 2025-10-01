@@ -294,5 +294,4 @@ CaseEntity "0..*" --> "0..1" UserEntity : {creator, updator}
 CaseEntity "1" -- "0..1" IncidentEntity
 @enduml
 
-
 ```

@@ -116,6 +116,7 @@ users ||--o{ clues
 users ||--o{ templates
 users ||--o{ incidents
 
+
 @enduml
 
 ```
