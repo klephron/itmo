@@ -1,7 +1,4 @@
 ---
 BasedOnStyle: LLVM
-BreakTemplateDeclarations: Yes
 AllowShortFunctionsOnASingleLine: None
-SpaceAfterTemplateKeyword: false
-SeparateDefinitionBlocks: Always
 ---

@@ -1,5 +1,6 @@
 ARCH 		 		 ?= 64
 FORMAT       ?= clang-format --verbose -i
+# FORMAT       ?= clang-format-3.6 -i
 
 LIBRARY_PATH := $(CURDIR)/lib$(ARCH)
 

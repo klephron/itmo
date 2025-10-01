@@ -20,6 +20,12 @@ E.g. run with 10 processes:
 make run -- -p 10
 ```
 
+## Format
+
+```sh
+make format
+```
+
 ## Clean
 
 ```sh
@@ -40,4 +46,10 @@ Run:
 
 ```sh
 docker run -v .:/app -it klephron/itmo-dc:latest bash
+```
+
+To use `make format` replace `FORMAT` in `Makefile`:
+
+```make
+FORMAT       ?= clang-format-3.6 -i
 ```
