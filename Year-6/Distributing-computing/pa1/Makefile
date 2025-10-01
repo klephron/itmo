@@ -1,4 +1,3 @@
-ARCH 		 		 ?= 64
 FORMAT       ?= clang-format --verbose -i
 # FORMAT       ?= clang-format-3.6 -i
 
@@ -21,7 +20,7 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
 endif
 
 
-.PHONY: build run clean
+.PHONY: build run clean format
 
 
 $(PROG): $(SRCS)
