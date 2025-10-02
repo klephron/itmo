@@ -131,13 +131,16 @@ int pipes_open(ctx *ctx) {
         if (pipe((int *)p) < 0) {
           goto error;
         }
+        fprintf(ctx->pipes_f, "%d/%d\n", p->r, p->w);
       }
     }
   }
 
+  fflush(ctx->pipes_f);
   return 0;
 
 error:
+  fflush(ctx->pipes_f);
   pipes_close(ctx);
   return CODES_BAD_PIPE;
 }
