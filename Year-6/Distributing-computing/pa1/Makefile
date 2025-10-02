@@ -5,11 +5,16 @@ CC := clang
 CC_FLAGS := -std=c99 -Wall -pedantic
 CC_FLAGS_DEBUG := -g -fsanitize=address,undefined,leak
 
-PROG := $(CURDIR)/a.out
-SRCS := $(wildcard *.c)
-HDRS := $(wildcard *.h)
-LOGS := $(wildcard *.log)
+SRCS_APP := main.c
+HDRS_APP :=
 
+SRCS_LIB := argparse.c
+HDRS_LIB := argparse.h
+
+PROG := a.out
+SRCS := $(SRCS_LIB) $(SRCS_APP)
+HDRS := $(HDRS_LIB) $(HDRS_APP)
+LOGS := $(wildcard *.log)
 
 # If the first argument is "run"...
 ifeq (run,$(firstword $(MAKECMDGOALS)))
@@ -29,11 +34,11 @@ $(PROG): $(SRCS)
 build: $(PROG)
 
 run: $(PROG)
-	@$< $(RUN_ARGS)
+	@./$< $(RUN_ARGS)
 
 clean:
 	rm -f $(PROG) $(LOGS)
 
 format:
-	@$(FORMAT) $(SRCS) $(HDRS)
+	@$(FORMAT) $(SRCS_APP) $(HDRS_APP)
 
