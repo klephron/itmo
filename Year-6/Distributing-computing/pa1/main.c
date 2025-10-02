@@ -139,13 +139,11 @@ static int pipes_open(ctx *ctx) {
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      if (i != j) {
-        ctx_pipe *p = pipes_select(ctx, i, j);
-        if (pipe((int *)p) < 0) {
-          goto error;
-        }
-        fprintf(ctx->pipes_f, "%d/%d\n", p->r, p->w);
+      ctx_pipe *p = pipes_select(ctx, i, j);
+      if (pipe((int *)p) < 0) {
+        goto error;
       }
+      fprintf(ctx->pipes_f, "%d/%d\n", p->r, p->w);
     }
   }
 
