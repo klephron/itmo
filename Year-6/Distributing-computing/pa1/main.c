@@ -9,14 +9,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-typedef enum codes {
-  CODES_OK = 0,
-  CODES_BAD_ALLOC = 1,
-  CODES_BAD_PIPE = 2,
-  CODES_BAD_FILE = 3,
-  CODES_BAD_FORK = 4,
-  CODES_BAD_USAGE = 255,
-} codes;
+typedef enum status {
+  STATUS_OK = 0,
+  STATUS_BAD_ALLOC = 1,
+  STATUS_BAD_PIPE = 2,
+  STATUS_BAD_FILE = 3,
+  STATUS_BAD_FORK = 4,
+  STATUS_BAD_USAGE = 255,
+} status;
 
 typedef struct args {
   int proc_n;
@@ -63,13 +63,13 @@ static int args_parse(args *args, int argc, const char **argv) {
   argparse_init(&argparse, options, s_usages, ARGPARSE_STOP_AT_NON_OPTION);
   argparse_describe(&argparse, NULL, NULL);
 
-  int code = argparse_parse(&argparse, argc, argv);
+  int status = argparse_parse(&argparse, argc, argv);
 
-  if (code) {
+  if (status) {
     argparse_usage(&argparse);
-    return CODES_BAD_USAGE;
+    return STATUS_BAD_USAGE;
   }
-  return code;
+  return status;
 }
 
 static void logs_close(ctx *ctx) {
@@ -84,20 +84,20 @@ static void logs_close(ctx *ctx) {
 }
 
 static int logs_open(ctx *ctx) {
-  int code = 0;
+  int status = 0;
 
   if (!(ctx->events_f = fopen(ctx->args->events_path, "w"))) {
-    code = CODES_BAD_FILE;
+    status = STATUS_BAD_FILE;
   };
   if (!(ctx->pipes_f = fopen(ctx->args->pipes_path, "w"))) {
-    code = CODES_BAD_FILE;
+    status = STATUS_BAD_FILE;
   };
 
-  if (code) {
+  if (status) {
     logs_close(ctx);
   }
 
-  return code;
+  return status;
 }
 
 static ctx_pipe *pipes_select(const ctx *ctx, int i, int j) {
@@ -134,7 +134,7 @@ static int pipes_open(ctx *ctx) {
   ctx->pipes = calloc(1, sizeof(*ctx->pipes) * n * n);
 
   if (!ctx->pipes) {
-    return CODES_BAD_ALLOC;
+    return STATUS_BAD_ALLOC;
   }
 
   for (int i = 0; i < n; ++i) {
@@ -155,7 +155,7 @@ static int pipes_open(ctx *ctx) {
 error:
   fflush(ctx->pipes_f);
   pipes_close(ctx);
-  return CODES_BAD_PIPE;
+  return STATUS_BAD_PIPE;
 }
 
 static int pipes_type(ctx *ctx, int i, int j) {
@@ -259,7 +259,7 @@ static int proc_run_all(ctx *ctx) {
       ctx->proc_id = i;
       return proc_fn(ctx);
     } else if (pid < 0) {
-      return CODES_BAD_FORK;
+      return STATUS_BAD_FORK;
     }
   }
   return 0;
@@ -286,7 +286,7 @@ int receive_any(void *self, Message *msg) {
 }
 
 int main(int argc, const char **argv) {
-  int code;
+  int status;
 
   args args = {
       .proc_n = 0,
@@ -301,24 +301,24 @@ int main(int argc, const char **argv) {
       .proc_id = 0, // parent
   };
 
-  if ((code = args_parse(&args, argc, argv))) {
-    return code;
+  if ((status = args_parse(&args, argc, argv))) {
+    return status;
   }
 
-  if ((code = logs_open(&ctx))) {
+  if ((status = logs_open(&ctx))) {
     goto cleanup;
   }
 
-  if ((code = pipes_open(&ctx))) {
+  if ((status = pipes_open(&ctx))) {
     goto cleanup;
   }
 
-  if ((code = proc_run_all(&ctx))) {
+  if ((status = proc_run_all(&ctx))) {
     goto cleanup;
   }
 
   if (parent_is(&ctx)) {
-    code = parent_fn(&ctx);
+    status = parent_fn(&ctx);
   }
 
 cleanup:
@@ -326,5 +326,5 @@ cleanup:
 
   logs_close(&ctx);
 
-  return code;
+  return status;
 }
