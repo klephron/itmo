@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-typedef enum status {
+typedef enum status_t {
   STATUS_OK = 0,
   STATUS_BAD_ALLOC = 1,
   STATUS_BAD_PIPE = 2,
@@ -18,24 +18,24 @@ typedef enum status {
   STATUS_BAD_USAGE = 255,
 } status;
 
-typedef struct args {
+typedef struct args_t {
   int proc_n;
   const char *pipes_path;
   const char *events_path;
 } args;
 
-typedef struct ctx_pipe {
+typedef struct ctx_pipe_t {
   int r;
   int w;
 } ctx_pipe;
 
-typedef enum ctx_pipe_type {
+typedef enum ctx_pipe_type_t {
   PIPE_UNUSED = 0,
   PIPE_READER,
   PIPE_WRITER,
 } ctx_pipe_type;
 
-typedef struct ctx {
+typedef struct ctx_t {
   const args *args;
 
   FILE *events_f;
