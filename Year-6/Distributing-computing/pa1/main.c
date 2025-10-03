@@ -437,19 +437,19 @@ int receive(void *self, local_id from, Message *msg) {
   while (1) {
     int r = read(rfd, msg, sizeof(MessageHeader));
 
-    if (r > 0) {
-      r = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
-      if (r > 0) {
-        ret = 0;
-      }
-      break;
+    if (r == -1) {
+      nanosleep(&s_ts, NULL);
+      continue;
     }
-
     if (r == 0) {
       break;
     }
 
-    nanosleep(&s_ts, NULL);
+    r = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+    if (r > 0) {
+      ret = 0;
+    }
+    break;
   }
   return ret;
 }
