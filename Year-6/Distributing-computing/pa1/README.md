@@ -51,5 +51,5 @@ docker run -v .:/app -it klephron/itmo-dc:latest bash
 To use `make format` replace `FORMAT` in `Makefile`:
 
 ```make
-FORMAT       ?= clang-format-3.6 -i
+FORMAT       ?= clang-format -i
 ```

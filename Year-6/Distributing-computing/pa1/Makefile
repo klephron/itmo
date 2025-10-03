@@ -1,5 +1,5 @@
 FORMAT       ?= clang-format --verbose -i
-# FORMAT       ?= clang-format-3.6 -i
+# FORMAT       ?= clang-format -i
 
 CC := clang
 CC_FLAGS := -std=c99 -Wall -pedantic
