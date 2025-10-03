@@ -281,16 +281,16 @@ static int parent_fn(ctx *ctx) {
 
   // receive started
   for (int i = 0; i < n; ++i) {
-    int r = receive_any(ctx, &message);
-    if (r) {
+    int s = receive_any(ctx, &message);
+    if (s) {
       fprintf(stderr, "error: parent unable to receive_any\n");
     }
   }
 
   // receive done
   for (int i = 0; i < n; ++i) {
-    int r = receive_any(ctx, &message);
-    if (r) {
+    int s = receive_any(ctx, &message);
+    if (s) {
       fprintf(stderr, "error: parent unable to receive_any\n");
     }
   }
@@ -339,9 +339,9 @@ static int proc_fn(ctx *ctx) {
       continue;
     }
 
-    int r = receive(ctx, i, &response);
+    int s = receive(ctx, i, &response);
 
-    if (r || response.s_header.s_type != STARTED) {
+    if (s || response.s_header.s_type != STARTED) {
       fprintf(stderr, "error: %i unable to receive STARTED from id=%d\n",
               ctx->proc_id, i);
     }
@@ -370,9 +370,9 @@ static int proc_fn(ctx *ctx) {
       continue;
     }
 
-    int r = receive(ctx, i, &response);
+    int s = receive(ctx, i, &response);
 
-    if (r || response.s_header.s_type != DONE) {
+    if (s || response.s_header.s_type != DONE) {
       fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
               ctx->proc_id, i);
     }
@@ -404,16 +404,16 @@ int send(void *self, local_id dst, const Message *msg) {
   ctx *ctx = self;
 
   int wfd = pipes_writer_fd(ctx, dst);
-  int r = write(wfd, msg, msg->s_header.s_payload_len + sizeof(MessageHeader));
+  int s = write(wfd, msg, msg->s_header.s_payload_len + sizeof(MessageHeader));
 
-  return r == -1 ? -1 : 0;
+  return s == -1 ? -1 : 0;
 }
 
 int send_multicast(void *self, const Message *msg) {
   ctx *ctx = self;
   int n = ctx->args->proc_n;
 
-  int ret = 0;
+  int status = 0;
 
   // to children and parent
   for (int id_to = 0; id_to <= n; ++id_to) {
@@ -421,11 +421,11 @@ int send_multicast(void *self, const Message *msg) {
       continue;
     }
     if (send(ctx, id_to, msg) == -1) {
-      ret = -1;
+      status = -1;
     }
   }
 
-  return ret;
+  return status;
 }
 
 int receive(void *self, local_id from, Message *msg) {
@@ -437,28 +437,28 @@ int receive(void *self, local_id from, Message *msg) {
   ctx *ctx = self;
   int rfd = pipes_reader_fd(ctx, from);
 
-  int ret = -1;
+  int status = -1;
 
   memset(msg->s_payload, 0, msg->s_header.s_payload_len);
 
   while (1) {
-    int r = read(rfd, msg, sizeof(MessageHeader));
+    int s = read(rfd, msg, sizeof(MessageHeader));
 
-    if (r == -1) {
+    if (s == -1) {
       nanosleep(&s_ts, NULL);
       continue;
     }
-    if (r == 0) {
+    if (s == 0) {
       break;
     }
 
-    r = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
-    if (r > 0) {
-      ret = 0;
+    s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+    if (s > 0) {
+      status = 0;
     }
     break;
   }
-  return ret;
+  return status;
 }
 
 int receive_any(void *self, Message *msg) {
@@ -471,7 +471,7 @@ int receive_any(void *self, Message *msg) {
   const int n = ctx->args->proc_n;
   const int n_eofs = ctx->proc_id == 0 ? n : n - 1;
 
-  int ret = -1;
+  int status = -1;
 
   memset(msg->s_payload, 0, msg->s_header.s_payload_len);
 
@@ -488,23 +488,23 @@ int receive_any(void *self, Message *msg) {
     }
 
     int rfd = pipes_reader_fd(ctx, id_from);
-    int r = read(rfd, msg, sizeof(MessageHeader));
+    int s = read(rfd, msg, sizeof(MessageHeader));
 
-    if (r == 0) {
+    if (s == 0) {
       ++eofs;
       continue;
     }
-    if (r == -1) {
+    if (s == -1) {
       continue;
     }
 
-    r = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
-    if (r > 0) {
-      ret = 0;
+    s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+    if (s > 0) {
+      status = 0;
     }
     break;
   }
-  return ret;
+  return status;
 }
 
 int main(int argc, const char **argv) {
