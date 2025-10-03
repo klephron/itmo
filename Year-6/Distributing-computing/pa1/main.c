@@ -1,12 +1,18 @@
+#define _POSIX_C_SOURCE 199309L
+
 #include "argparse.h"
 #include "common.h"
 #include "ipc.h"
+#include "pa1.h"
+
 #include <assert.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 typedef enum status_t {
@@ -45,6 +51,11 @@ typedef struct ctx_t {
 
   int proc_id;
 } ctx;
+
+typedef struct ctx_pipe_idx_t {
+  int i;
+  int j;
+} ctx_pipe_idx;
 
 static int args_parse(args *args, int argc, const char **argv) {
   static const char *const s_usages[] = {
@@ -100,8 +111,22 @@ static int logs_open(ctx *ctx) {
   return status;
 }
 
-static ctx_pipe *pipes_select(const ctx *ctx, int i, int j) {
-  return ctx->pipes + ((i * ctx->args->proc_n) + j);
+static void logs_event_write(ctx *ctx, char *data, int size) {
+  fwrite(data, sizeof(*data), size, stdout);
+  fwrite(data, sizeof(*data), size, ctx->events_f);
+}
+
+static ctx_pipe *pipes_select(const ctx *ctx, ctx_pipe_idx idx) {
+  return ctx->pipes + ((idx.i * ctx->args->proc_n) + idx.j);
+}
+
+static ctx_pipe_idx pipes_idx(const ctx *ctx, ctx_pipe *p) {
+  int n = ctx->args->proc_n;
+
+  int idx = p - ctx->pipes;
+  int i = idx / n;
+  int j = idx % n;
+  return (ctx_pipe_idx){.i = i, .j = j};
 }
 
 static void pipes_close1(ctx_pipe *p) {
@@ -119,7 +144,7 @@ static void pipes_close(ctx *ctx) {
   if (ctx->pipes) {
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
-        ctx_pipe *p = pipes_select(ctx, i, j);
+        ctx_pipe *p = pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
         pipes_close1(p);
       }
     }
@@ -139,7 +164,7 @@ static int pipes_open(ctx *ctx) {
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      ctx_pipe *p = pipes_select(ctx, i, j);
+      ctx_pipe *p = pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
       if (pipe((int *)p) < 0) {
         goto error;
       }
@@ -156,20 +181,24 @@ error:
   return STATUS_BAD_PIPE;
 }
 
-static int pipes_type(ctx *ctx, int i, int j) {
+static int pipes_type(ctx *ctx, ctx_pipe_idx idx) {
   if (ctx->proc_id) {
-    if (ctx->proc_id - 1 == i) {
+    if (ctx->proc_id - 1 == idx.i) {
       return PIPE_WRITER;
     }
-    if (ctx->proc_id - 1 == j) {
+    if (ctx->proc_id - 1 == idx.j) {
       return PIPE_READER;
     }
   } else {
-    if (i == j) {
+    if (idx.i == idx.j) {
       return PIPE_READER;
     }
   }
   return PIPE_UNUSED;
+}
+
+static int pipes_type_pipe(ctx *ctx, ctx_pipe *p) {
+  return pipes_type(ctx, pipes_idx(ctx, p));
 }
 
 // closes and configures all pipes
@@ -178,9 +207,10 @@ static void pipes_configure(ctx *ctx) {
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      ctx_pipe *p = pipes_select(ctx, i, j);
+      ctx_pipe_idx idx = (ctx_pipe_idx){.i = i, .j = j};
+      ctx_pipe *p = pipes_select(ctx, idx);
 
-      switch (pipes_type(ctx, i, j)) {
+      switch (pipes_type(ctx, idx)) {
       case PIPE_READER: {
         int rfs = fcntl(p->r, F_GETFL);
         rfs |= O_NONBLOCK;
@@ -202,6 +232,35 @@ static void pipes_configure(ctx *ctx) {
   }
 }
 
+// match proc_id with idx cuz they encode differently
+// 1. to write to proc_id=1 -> idx{i=(1-1)}
+// 2. to read from proc_id=1 -> idx{j=(1-1)}
+// 3. to write to parent (proc_id=0) -> idx{i=j}
+static ctx_pipe *pipes_select_proc(ctx *ctx, int id_from, int id_to) {
+  if (id_to == 0) {
+    id_to = id_from;
+  }
+  int i = id_from - 1;
+  int j = id_to - 1;
+  return pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
+}
+
+static int pipes_writer_fd(ctx *ctx, int id_to) {
+  ctx_pipe *p = pipes_select_proc(ctx, ctx->proc_id, id_to);
+
+  assert(pipes_type_pipe(ctx, p) == PIPE_WRITER);
+
+  return p->w;
+}
+
+static int pipes_reader_fd(ctx *ctx, int id_from) {
+  ctx_pipe *p = pipes_select_proc(ctx, id_from, ctx->proc_id);
+
+  assert(pipes_type_pipe(ctx, p) == PIPE_READER);
+
+  return p->r;
+}
+
 static int parent_is(ctx *ctx) {
   return ctx->proc_id == 0;
 }
@@ -209,16 +268,7 @@ static int parent_is(ctx *ctx) {
 static int parent_fn(ctx *ctx) {
   int n = ctx->args->proc_n;
 
-  Message message = {
-      .s_header =
-          {
-              .s_magic = MESSAGE_MAGIC,
-              .s_payload_len = MAX_PAYLOAD_LEN,
-              .s_type = 0,
-              .s_local_time = 0,
-          },
-      .s_payload = {0},
-  };
+  Message message = {{0}};
 
   pipes_configure(ctx);
 
@@ -242,9 +292,68 @@ static int parent_fn(ctx *ctx) {
 }
 
 static int proc_fn(ctx *ctx) {
+  const int n = ctx->args->proc_n;
+  const int proc_id = ctx->proc_id;
+
+  Message request = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_payload_len = MAX_PAYLOAD_LEN,
+          },
+      .s_payload = {0},
+  };
+  Message response = {{0}};
+
   pipes_configure(ctx);
 
-  // TODO:
+  // send started
+  int payload_len =
+      sprintf(request.s_payload, log_started_fmt, proc_id, getpid(), getppid());
+  request.s_header.s_type = STARTED;
+  request.s_header.s_payload_len = payload_len;
+
+  send_multicast(ctx, &request);
+
+  logs_event_write(ctx, request.s_payload, payload_len);
+
+  // receive started from all procs
+  for (int i = 1; i <= n; ++i) {
+    if (i == proc_id) {
+      continue;
+    }
+
+    receive(ctx, i, &response);
+  }
+
+  // log received all started
+  payload_len =
+      sprintf(request.s_payload, log_received_all_started_fmt, proc_id);
+
+  logs_event_write(ctx, request.s_payload, payload_len);
+
+  // send done
+  payload_len = sprintf(request.s_payload, log_done_fmt, proc_id);
+  request.s_header.s_type = DONE;
+  request.s_header.s_payload_len = payload_len;
+
+  send_multicast(ctx, &request);
+
+  logs_event_write(ctx, request.s_payload, payload_len);
+
+  // receive done from all procs
+  for (int i = 1; i <= n; ++i) {
+    if (i == proc_id) {
+      continue;
+    }
+
+    receive(ctx, i, &response);
+  }
+
+  // log received all done
+  payload_len = sprintf(request.s_payload, log_received_all_done_fmt, proc_id);
+
+  logs_event_write(ctx, request.s_payload, payload_len);
 
   return 0;
 }
@@ -264,23 +373,112 @@ static int proc_run_all(ctx *ctx) {
 }
 
 int send(void *self, local_id dst, const Message *msg) {
-  // TODO:
-  return 0;
+  ctx *ctx = self;
+
+  int wfd = pipes_writer_fd(ctx, dst);
+  int r = write(wfd, msg, msg->s_header.s_payload_len + sizeof(MessageHeader));
+
+  return r == -1 ? -1 : 0;
 }
 
 int send_multicast(void *self, const Message *msg) {
-  // TODO:
-  return 0;
+  ctx *ctx = self;
+  int n = ctx->args->proc_n;
+
+  int ret = 0;
+
+  // to children and parent
+  for (int id_to = 0; id_to <= n; ++id_to) {
+    if (ctx->proc_id == id_to) {
+      continue;
+    }
+    if (send(ctx, id_to, msg) == -1) {
+      ret = -1;
+    }
+  }
+
+  return ret;
 }
 
 int receive(void *self, local_id from, Message *msg) {
-  // TODO:
-  return 0;
+  ctx *ctx = self;
+  int rfd = pipes_reader_fd(ctx, from);
+
+  struct timespec ts;
+  ts.tv_sec = 0;
+  ts.tv_nsec = 1000000;
+
+  int ret = -1;
+
+  memset(msg->s_payload, 0, msg->s_header.s_payload_len);
+
+  while (1) {
+    int r = read(rfd, msg, sizeof(MessageHeader));
+
+    if (r > 0) {
+      r = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+      if (r > 0) {
+        ret = 0;
+      }
+      break;
+    }
+
+    if (r == 0) {
+      break;
+    }
+
+    nanosleep(&ts, NULL);
+  }
+  return ret;
 }
 
 int receive_any(void *self, Message *msg) {
-  // TODO:
-  return 0;
+  ctx *ctx = self;
+  const int n = ctx->args->proc_n;
+
+  struct timespec ts;
+  ts.tv_sec = 0;
+  ts.tv_nsec = 1000000;
+
+  assert(n >= 1);
+
+  int ret = -1;
+
+  int id_from = 1;
+  int eofs = 0;
+
+  // excluding parent and itself until from all procs received eof
+  while (eofs != n - 1) {
+    if (id_from > n) {
+      id_from = 1;
+      nanosleep(&ts, NULL); // sleep and loop again
+      continue;
+    }
+
+    if (id_from == ctx->proc_id) {
+      ++id_from;
+      continue;
+    }
+
+    int rfd = pipes_reader_fd(ctx, id_from);
+    int r = read(rfd, msg, sizeof(MessageHeader));
+
+    if (r == 0) {
+      ++eofs;
+      continue;
+    }
+
+    if (r == -1) {
+      continue; // not ready
+    }
+
+    r = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+    if (r > 0) {
+      ret = 0;
+    }
+    break;
+  }
+  return ret;
 }
 
 int main(int argc, const char **argv) {
