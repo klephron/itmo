@@ -36,7 +36,8 @@ typedef struct ctx_pipe_t {
 } ctx_pipe;
 
 typedef enum ctx_pipe_type_t {
-  PIPE_UNUSED = 0,
+  PIPE_UNDEFINED = 0,
+  PIPE_UNUSED,
   PIPE_READER,
   PIPE_WRITER,
 } ctx_pipe_type;
@@ -66,7 +67,7 @@ static int args_parse(args *args, int argc, const char **argv) {
   struct argparse_option options[] = {
       OPT_GROUP("Options:"),
       OPT_HELP(),
-      OPT_INTEGER('p', "nproc", &args->proc_n, "number of processes"),
+      OPT_INTEGER('p', "processes", &args->proc_n, "number of processes"),
       OPT_END(),
   };
 
@@ -116,12 +117,16 @@ static void logs_event_write(ctx *ctx, char *data, int size) {
   fwrite(data, sizeof(*data), size, ctx->events_f);
 }
 
+static int pipes_proc_n(const ctx *ctx) {
+  return ctx->args->proc_n + 1;
+}
+
 static ctx_pipe *pipes_select(const ctx *ctx, ctx_pipe_idx idx) {
-  return ctx->pipes + ((idx.i * ctx->args->proc_n) + idx.j);
+  return ctx->pipes + ((idx.i * pipes_proc_n(ctx)) + idx.j);
 }
 
 static ctx_pipe_idx pipes_idx(const ctx *ctx, ctx_pipe *p) {
-  int n = ctx->args->proc_n;
+  const int n = pipes_proc_n(ctx);
 
   int idx = p - ctx->pipes;
   int i = idx / n;
@@ -130,21 +135,40 @@ static ctx_pipe_idx pipes_idx(const ctx *ctx, ctx_pipe *p) {
 }
 
 static void pipes_close1(ctx_pipe *p) {
-  if (p->r) {
-    close(p->r);
+  close(p->r);
+  close(p->w);
+}
+
+static ctx_pipe_type pipes_type(ctx *ctx, ctx_pipe_idx idx) {
+  if (idx.i == idx.j) {
+    return PIPE_UNDEFINED;
   }
-  if (p->w) {
-    close(p->w);
+  if (ctx->proc_id == idx.i) {
+    return PIPE_WRITER;
   }
+  if (ctx->proc_id == idx.j) {
+    return PIPE_READER;
+  }
+  return PIPE_UNUSED;
+}
+
+static ctx_pipe_type pipes_type_pipe(ctx *ctx, ctx_pipe *p) {
+  return pipes_type(ctx, pipes_idx(ctx, p));
 }
 
 static void pipes_close(ctx *ctx) {
-  int n = ctx->args->proc_n;
+  const int n = pipes_proc_n(ctx);
 
   if (ctx->pipes) {
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
-        ctx_pipe *p = pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
+        ctx_pipe_idx idx = {.i = i, .j = j};
+
+        if (pipes_type(ctx, idx) == PIPE_UNDEFINED) {
+          continue;
+        }
+
+        ctx_pipe *p = pipes_select(ctx, idx);
         pipes_close1(p);
       }
     }
@@ -154,7 +178,7 @@ static void pipes_close(ctx *ctx) {
 }
 
 static int pipes_open(ctx *ctx) {
-  int n = ctx->args->proc_n;
+  const int n = pipes_proc_n(ctx);
 
   ctx->pipes = calloc(1, sizeof(*ctx->pipes) * n * n);
 
@@ -164,7 +188,13 @@ static int pipes_open(ctx *ctx) {
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      ctx_pipe *p = pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
+      ctx_pipe_idx idx = {.i = i, .j = j};
+
+      if (pipes_type(ctx, idx) == PIPE_UNDEFINED) {
+        continue;
+      }
+
+      ctx_pipe *p = pipes_select(ctx, idx);
       if (pipe((int *)p) < 0) {
         goto error;
       }
@@ -181,29 +211,9 @@ error:
   return STATUS_BAD_PIPE;
 }
 
-static int pipes_type(ctx *ctx, ctx_pipe_idx idx) {
-  if (ctx->proc_id) {
-    if (ctx->proc_id - 1 == idx.i) {
-      return PIPE_WRITER;
-    }
-    if (ctx->proc_id - 1 == idx.j) {
-      return PIPE_READER;
-    }
-  } else {
-    if (idx.i == idx.j) {
-      return PIPE_READER;
-    }
-  }
-  return PIPE_UNUSED;
-}
-
-static int pipes_type_pipe(ctx *ctx, ctx_pipe *p) {
-  return pipes_type(ctx, pipes_idx(ctx, p));
-}
-
 // closes and configures all pipes
 static void pipes_configure(ctx *ctx) {
-  int n = ctx->args->proc_n;
+  const int n = pipes_proc_n(ctx);
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
@@ -211,6 +221,9 @@ static void pipes_configure(ctx *ctx) {
       ctx_pipe *p = pipes_select(ctx, idx);
 
       switch (pipes_type(ctx, idx)) {
+      case PIPE_UNDEFINED: {
+        break;
+      }
       case PIPE_READER: {
         int rfs = fcntl(p->r, F_GETFL);
         rfs |= O_NONBLOCK;
@@ -232,16 +245,10 @@ static void pipes_configure(ctx *ctx) {
   }
 }
 
-// match proc_id with idx cuz they encode differently
-// 1. to write to proc_id=1 -> idx{i=(1-1)}
-// 2. to read from proc_id=1 -> idx{j=(1-1)}
-// 3. to write to parent (proc_id=0) -> idx{i=j}
+// match proc_id with idx cuz they may be encoded differently
 static ctx_pipe *pipes_select_proc(ctx *ctx, int id_from, int id_to) {
-  if (id_to == 0) {
-    id_to = id_from;
-  }
-  int i = id_from - 1;
-  int j = id_to - 1;
+  int i = id_from;
+  int j = id_to;
   return pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
 }
 
