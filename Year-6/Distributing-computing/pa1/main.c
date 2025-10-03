@@ -274,12 +274,18 @@ static int parent_fn(ctx *ctx) {
 
   // receive started
   for (int i = 0; i < n; ++i) {
-    receive_any(ctx, &message);
+    int r = receive_any(ctx, &message);
+    if (r) {
+      fprintf(stderr, "error: parent unable to receive_any\n");
+    }
   }
 
   // receive done
   for (int i = 0; i < n; ++i) {
-    receive_any(ctx, &message);
+    int r = receive_any(ctx, &message);
+    if (r) {
+      fprintf(stderr, "error: parent unable to receive_any\n");
+    }
   }
 
   int wpid;
@@ -313,7 +319,10 @@ static int proc_fn(ctx *ctx) {
   request.s_header.s_type = STARTED;
   request.s_header.s_payload_len = payload_len;
 
-  send_multicast(ctx, &request);
+  if (send_multicast(ctx, &request)) {
+    fprintf(stderr, "error: %i unable to send_multicast STARTED\n",
+            ctx->proc_id);
+  }
 
   logs_event_write(ctx, request.s_payload, payload_len);
 
@@ -323,7 +332,12 @@ static int proc_fn(ctx *ctx) {
       continue;
     }
 
-    receive(ctx, i, &response);
+    int r = receive(ctx, i, &response);
+
+    if (r || response.s_header.s_type != STARTED) {
+      fprintf(stderr, "error: %i unable to receive STARTED from id=%d\n",
+              ctx->proc_id, i);
+    }
   }
 
   // log received all started
@@ -337,7 +351,9 @@ static int proc_fn(ctx *ctx) {
   request.s_header.s_type = DONE;
   request.s_header.s_payload_len = payload_len;
 
-  send_multicast(ctx, &request);
+  if (send_multicast(ctx, &request)) {
+    fprintf(stderr, "error: %i unable to send_multicast DONE\n", ctx->proc_id);
+  }
 
   logs_event_write(ctx, request.s_payload, payload_len);
 
@@ -347,7 +363,12 @@ static int proc_fn(ctx *ctx) {
       continue;
     }
 
-    receive(ctx, i, &response);
+    int r = receive(ctx, i, &response);
+
+    if (r || response.s_header.s_type != DONE) {
+      fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
+              ctx->proc_id, i);
+    }
   }
 
   // log received all done
@@ -401,12 +422,13 @@ int send_multicast(void *self, const Message *msg) {
 }
 
 int receive(void *self, local_id from, Message *msg) {
+  static struct timespec s_ts = {
+      .tv_sec = 0,
+      .tv_nsec = 1000000,
+  };
+
   ctx *ctx = self;
   int rfd = pipes_reader_fd(ctx, from);
-
-  struct timespec ts;
-  ts.tv_sec = 0;
-  ts.tv_nsec = 1000000;
 
   int ret = -1;
 
@@ -427,36 +449,34 @@ int receive(void *self, local_id from, Message *msg) {
       break;
     }
 
-    nanosleep(&ts, NULL);
+    nanosleep(&s_ts, NULL);
   }
   return ret;
 }
 
 int receive_any(void *self, Message *msg) {
+  static struct timespec s_ts = {
+      .tv_sec = 0,
+      .tv_nsec = 1000000,
+  };
+
   ctx *ctx = self;
   const int n = ctx->args->proc_n;
-
-  struct timespec ts;
-  ts.tv_sec = 0;
-  ts.tv_nsec = 1000000;
-
-  assert(n >= 1);
+  const int n_eofs = ctx->proc_id == 0 ? n : n - 1;
 
   int ret = -1;
 
-  int id_from = 1;
-  int eofs = 0;
+  memset(msg->s_payload, 0, msg->s_header.s_payload_len);
 
-  // excluding parent and itself until from all procs received eof
-  while (eofs != n - 1) {
+  for (int id_from = 1, eofs = 0; eofs < n_eofs; ++id_from) {
+    // sleep and loop again
     if (id_from > n) {
       id_from = 1;
-      nanosleep(&ts, NULL); // sleep and loop again
-      continue;
+      eofs = 0;
+      nanosleep(&s_ts, NULL);
     }
 
     if (id_from == ctx->proc_id) {
-      ++id_from;
       continue;
     }
 
@@ -467,9 +487,8 @@ int receive_any(void *self, Message *msg) {
       ++eofs;
       continue;
     }
-
     if (r == -1) {
-      continue; // not ready
+      continue;
     }
 
     r = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
