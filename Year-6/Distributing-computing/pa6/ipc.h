@@ -42,9 +42,7 @@ typedef struct {
   uint16_t s_magic;         ///< magic signature, must be MESSAGE_MAGIC
   uint16_t s_payload_len;   ///< length of payload
   int16_t s_type;           ///< type of the message
-  timestamp_t s_local_time; ///< set by sender, depends on particular PA:
-                            ///< physical time in PA2 or Lamport's scalar
-                            ///< time in PA3
+  timestamp_t s_local_time; ///< set by sender, time in PA3
 } __attribute__((packed)) MessageHeader;
 
 enum { MAX_PAYLOAD_LEN = MAX_MESSAGE_LEN - sizeof(MessageHeader) };
@@ -52,7 +50,7 @@ enum { MAX_PAYLOAD_LEN = MAX_MESSAGE_LEN - sizeof(MessageHeader) };
 typedef struct {
   MessageHeader s_header;
   char s_payload[MAX_PAYLOAD_LEN]; ///< Must be used as a buffer, unused "tail"
-                                   ///< shouldn't be transfered
+                                   ///< shouldn't be transferred
 } __attribute__((packed)) Message;
 
 //------------------------------------------------------------------------------
@@ -60,7 +58,7 @@ typedef struct {
 /** Send a message to the process specified by id.
  *
  * @param self    Any data structure implemented by students to perform I/O
- * @param dst     ID of recepient
+ * @param dst     ID of recipient
  * @param msg     Message to send
  *
  * @return 0 on success, any non-zero value on error
@@ -71,7 +69,7 @@ int send(void *self, local_id dst, const Message *msg);
 
 /** Send multicast message.
  *
- * Send msg to all other processes including parrent.
+ * Send msg to all other processes including parent.
  * Should stop on the first error.
  *
  * @param self    Any data structure implemented by students to perform I/O

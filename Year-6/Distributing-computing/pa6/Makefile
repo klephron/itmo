@@ -1,19 +1,20 @@
-ARCH 		 		 ?= 64
 FORMAT       ?= clang-format --verbose -i
-# FORMAT       ?= clang-format-3.6 -i
-
-LIBRARY_PATH := $(CURDIR)/lib$(ARCH)
+# FORMAT       ?= clang-format -i
 
 CC := clang
 CC_FLAGS := -std=c99 -Wall -pedantic
 CC_FLAGS_DEBUG := -g -fsanitize=address,undefined,leak
 
-PROG := a.out
-LIBS := -lruntime
-SRCS := $(wildcard *.c)
-HDRS := $(wildcard *.h)
-LOGS := $(wildcard *.log)
+SRCS_APP := main.c
+HDRS_APP :=
 
+SRCS_LIB := argparse.c
+HDRS_LIB := argparse.h
+
+PROG := a.out
+SRCS := $(SRCS_LIB) $(SRCS_APP)
+HDRS := $(HDRS_LIB) $(HDRS_APP)
+LOGS := $(wildcard *.log)
 
 # If the first argument is "run"...
 ifeq (run,$(firstword $(MAKECMDGOALS)))
@@ -24,20 +25,20 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
 endif
 
 
-.PHONY: build run clean
+.PHONY: build run clean format
 
 
 $(PROG): $(SRCS)
-	$(CC) $(CC_FLAGS) $(CC_FLAGS_DEBUG) $^ -L$(LIBRARY_PATH) $(LIBS) -o $@
+	$(CC) $(CC_FLAGS) $(CC_FLAGS_DEBUG) $^ -o $@
 
 build: $(PROG)
 
 run: $(PROG)
-	LD_LIBRARY_PATH=$(LIBRARY_PATH) $(PWD)/$< $(RUN_ARGS)
+	@./$< $(RUN_ARGS)
 
 clean:
 	rm -f $(PROG) $(LOGS)
 
 format:
-	@$(FORMAT) $(SRCS) $(HDRS)
+	@$(FORMAT) $(SRCS_APP) $(HDRS_APP)
 

@@ -1,224 +1,552 @@
+#define _POSIX_C_SOURCE 199309L
+
+#include "argparse.h"
 #include "common.h"
-#include "cs_self.h"
 #include "ipc.h"
-#include "ipc_self.h"
-#include "lamport.h"
-#include "message.h"
-#include "pa2345.h"
-#include <getopt.h>
+#include "pa1.h"
+
+#include <assert.h>
+#include <fcntl.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
-static char *prog_name;
-static int pr_count;
-static int mutexl_flag;
+typedef enum status_t {
+  STATUS_OK = 0,
+  STATUS_BAD_ALLOC = 1,
+  STATUS_BAD_PIPE = 2,
+  STATUS_BAD_FILE = 3,
+  STATUS_BAD_FORK = 4,
+  STATUS_BAD_USAGE = 255,
+} status;
 
-static FILE *events_f, *pipes_f;
+typedef struct args_t {
+  int proc_n;
+  const char *pipes_path;
+  const char *events_path;
+} args;
 
-void usage(void);
-void parse_args(int argc, char *argv[]);
+typedef struct ctx_pipe_t {
+  int r;
+  int w;
+} ctx_pipe;
 
-void execute(void);
-void execute_child(local_id lpid, ipc_self *ipc);
-void execute_parent(local_id lpid, ipc_self *ipc);
+typedef enum ctx_pipe_type_t {
+  PIPE_UNDEFINED = 0,
+  PIPE_UNUSED,
+  PIPE_READER,
+  PIPE_WRITER,
+} ctx_pipe_type;
 
-void write_pipes_f(ipc_self *ipc) {
-  for (int i = 0; i < ipc->n; ++i) {
-    for (int j = 0; j < ipc->n; ++j) {
-      if (i == j)
+typedef struct ctx_t {
+  const args *args;
+
+  FILE *events_f;
+  FILE *pipes_f;
+
+  ctx_pipe *pipes;
+
+  int proc_id;
+} ctx;
+
+typedef struct ctx_pipe_idx_t {
+  int i;
+  int j;
+} ctx_pipe_idx;
+
+static int args_parse(args *args, int argc, const char **argv) {
+  static const char *const s_usages[] = {
+      "app [options]",
+      NULL,
+  };
+
+  struct argparse_option options[] = {
+      OPT_GROUP("Options:"),
+      OPT_HELP(),
+      OPT_INTEGER('p', "processes", &args->proc_n, "number of processes"),
+      OPT_END(),
+  };
+
+  struct argparse argparse;
+  argparse_init(&argparse, options, s_usages, ARGPARSE_STOP_AT_NON_OPTION);
+  argparse_describe(&argparse, NULL, NULL);
+
+  int status = argparse_parse(&argparse, argc, argv);
+
+  if (status) {
+    argparse_usage(&argparse);
+    return STATUS_BAD_USAGE;
+  }
+  return status;
+}
+
+static void logs_close(ctx *ctx) {
+  if (ctx->events_f) {
+    fclose(ctx->events_f);
+    ctx->events_f = NULL;
+  }
+  if (ctx->pipes_f) {
+    fclose(ctx->pipes_f);
+    ctx->events_f = NULL;
+  }
+}
+
+static int logs_open(ctx *ctx) {
+  int status = 0;
+
+  if (!(ctx->events_f = fopen(ctx->args->events_path, "w"))) {
+    status = STATUS_BAD_FILE;
+  };
+  if (!(ctx->pipes_f = fopen(ctx->args->pipes_path, "w"))) {
+    status = STATUS_BAD_FILE;
+  };
+
+  if (status) {
+    logs_close(ctx);
+  }
+
+  return status;
+}
+
+static void logs_event_write(ctx *ctx, char *data, int size) {
+  fwrite(data, sizeof(*data), size, stdout);
+  fwrite(data, sizeof(*data), size, ctx->events_f);
+}
+
+static int pipes_proc_n(const ctx *ctx) {
+  return ctx->args->proc_n + 1;
+}
+
+static ctx_pipe *pipes_select(const ctx *ctx, ctx_pipe_idx idx) {
+  return ctx->pipes + ((idx.i * pipes_proc_n(ctx)) + idx.j);
+}
+
+static ctx_pipe_idx pipes_idx(const ctx *ctx, ctx_pipe *p) {
+  const int n = pipes_proc_n(ctx);
+
+  int idx = p - ctx->pipes;
+  int i = idx / n;
+  int j = idx % n;
+  return (ctx_pipe_idx){.i = i, .j = j};
+}
+
+static void pipes_close1(ctx_pipe *p) {
+  close(p->r);
+  close(p->w);
+}
+
+static ctx_pipe_type pipes_type(ctx *ctx, ctx_pipe_idx idx) {
+  if (idx.i == idx.j) {
+    return PIPE_UNDEFINED;
+  }
+  if (ctx->proc_id == idx.i) {
+    return PIPE_WRITER;
+  }
+  if (ctx->proc_id == idx.j) {
+    return PIPE_READER;
+  }
+  return PIPE_UNUSED;
+}
+
+static ctx_pipe_type pipes_type_pipe(ctx *ctx, ctx_pipe *p) {
+  return pipes_type(ctx, pipes_idx(ctx, p));
+}
+
+static void pipes_close(ctx *ctx) {
+  const int n = pipes_proc_n(ctx);
+
+  if (ctx->pipes) {
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        ctx_pipe_idx idx = {.i = i, .j = j};
+
+        if (pipes_type(ctx, idx) == PIPE_UNDEFINED) {
+          continue;
+        }
+
+        ctx_pipe *p = pipes_select(ctx, idx);
+        pipes_close1(p);
+      }
+    }
+    free(ctx->pipes);
+    ctx->pipes = NULL;
+  }
+}
+
+static int pipes_open(ctx *ctx) {
+  const int n = pipes_proc_n(ctx);
+
+  ctx->pipes = calloc(1, sizeof(*ctx->pipes) * n * n);
+
+  if (!ctx->pipes) {
+    return STATUS_BAD_ALLOC;
+  }
+
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      ctx_pipe_idx idx = {.i = i, .j = j};
+
+      if (pipes_type(ctx, idx) == PIPE_UNDEFINED) {
         continue;
-      int *pipe = ipc->pipes + 2 * (i * ipc->n + j);
-      fprintf(pipes_f, "%d/%d\n", pipe[0], pipe[1]);
-    }
-  }
-  fflush(pipes_f);
-}
+      }
 
-void write_out_events_f(char *buf, size_t size) {
-  fwrite(buf, sizeof(char), size, events_f);
-  printf("%s", buf);
-}
-
-void write_out_unexpected_type(local_id lpid, char *exp, int16_t rec) {
-  printf("unexpected s_type from %d, expected %s, received %d\n", lpid, exp,
-         rec);
-}
-
-void execute(void) {
-  ipc_self *ipc;
-
-  int is_parent = 1;
-
-  ipc = ipc_self_ctr(pr_count + 1, 0);
-  write_pipes_f(ipc);
-
-  for (local_id i = 1; i <= pr_count; ++i) {
-    int fr = fork();
-    if (fr == 0) {
-      is_parent = 0;
-      ipc_self_set_cur(ipc, i);
-      ipc_self_pipe_link(ipc);
-      execute_child(i, ipc);
-      break;
+      ctx_pipe *p = pipes_select(ctx, idx);
+      if (pipe((int *)p) < 0) {
+        goto error;
+      }
+      fprintf(ctx->pipes_f, "%d/%d\n", p->r, p->w);
     }
   }
 
-  if (is_parent) {
-    local_id parent_id = 0;
-    ipc_self_set_cur(ipc, parent_id);
-    ipc_self_pipe_link(ipc);
-    execute_parent(parent_id, ipc);
-  }
+  fflush(ctx->pipes_f);
+  return 0;
 
-  ipc_self_dtr(&ipc);
+error:
+  fflush(ctx->pipes_f);
+  pipes_close(ctx);
+  return STATUS_BAD_PIPE;
 }
 
-void execute_parent(local_id lpid, ipc_self *ipc) {
+// closes and configures all pipes
+static void pipes_configure(ctx *ctx) {
+  const int n = pipes_proc_n(ctx);
+
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      ctx_pipe_idx idx = (ctx_pipe_idx){.i = i, .j = j};
+      ctx_pipe *p = pipes_select(ctx, idx);
+
+      switch (pipes_type(ctx, idx)) {
+      case PIPE_UNDEFINED: {
+        break;
+      }
+      case PIPE_READER: {
+        int rfs = fcntl(p->r, F_GETFL);
+        rfs |= O_NONBLOCK;
+        fcntl(p->r, F_SETFL, rfs);
+        close(p->w);
+        break;
+      }
+      case PIPE_WRITER: {
+        close(p->r);
+        break;
+      }
+      case PIPE_UNUSED: {
+        close(p->r);
+        close(p->w);
+        break;
+      }
+      }
+    }
+  }
+}
+
+// match proc_id with idx cuz they may be encoded differently
+static ctx_pipe *pipes_select_proc(ctx *ctx, int id_from, int id_to) {
+  int i = id_from;
+  int j = id_to;
+  return pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
+}
+
+static int pipes_writer_fd(ctx *ctx, int id_to) {
+  ctx_pipe *p = pipes_select_proc(ctx, ctx->proc_id, id_to);
+
+  assert(pipes_type_pipe(ctx, p) == PIPE_WRITER);
+
+  return p->w;
+}
+
+static int pipes_reader_fd(ctx *ctx, int id_from) {
+  ctx_pipe *p = pipes_select_proc(ctx, id_from, ctx->proc_id);
+
+  assert(pipes_type_pipe(ctx, p) == PIPE_READER);
+
+  return p->r;
+}
+
+static int parent_is(ctx *ctx) {
+  return ctx->proc_id == 0;
+}
+
+static int parent_fn(ctx *ctx) {
+  int n = ctx->args->proc_n;
+
+  Message message = {{0}};
+
+  pipes_configure(ctx);
+
+  // receive started
+  for (int i = 0; i < n; ++i) {
+    int s = receive_any(ctx, &message);
+    if (s) {
+      fprintf(stderr, "error: parent unable to receive_any\n");
+    }
+  }
+
+  // receive done
+  for (int i = 0; i < n; ++i) {
+    int s = receive_any(ctx, &message);
+    if (s) {
+      fprintf(stderr, "error: parent unable to receive_any\n");
+    }
+  }
+
   int wpid;
   int status = 0;
 
   while ((wpid = wait(&status)) > 0)
     ;
-}
-
-void execute_child(local_id lpid, ipc_self *ipc) {
-  size_t l;
-  Message req = {.s_header = {0}};
-  Message res = {.s_header = {0}};
-
-  ipc_self_pipe_link(ipc);
-
-  // NOTE: maybe need to use balance
-  l = sprintf(req.s_payload, log_started_fmt, get_lamport_time(), lpid,
-              getpid(), getppid(), 0);
-  write_out_events_f(req.s_payload, l);
-
-  message_update_hdr(&req, l, STARTED);
-  send_multicast_lamport(ipc, &req);
-
-  for (local_id i = 1; i <= pr_count; ++i) {
-    if (i != lpid) {
-      receive_lamport(ipc, i, &res);
-      if (res.s_header.s_type != STARTED) {
-        write_out_unexpected_type(i, "STARTED", res.s_header.s_type);
-        exit(-1);
-      }
-    }
-  }
-
-  l = sprintf(req.s_payload, log_received_all_started_fmt, get_lamport_time(),
-              lpid);
-  write_out_events_f(req.s_payload, l);
-
-  // add process ids that are listened
-  cs_self *cs = cs_self_ctr(ipc);
-  for (local_id i = 1; i <= pr_count; ++i) {
-    if (i != lpid) {
-      cs_self_pr_add(cs, i);
-    }
-  }
-
-  const int iters = lpid * 5;
-  for (int i = 1; i <= iters; ++i) {
-    if (mutexl_flag) {
-      request_cs(cs);
-    }
-
-    l = sprintf(req.s_payload, log_loop_operation_fmt, lpid, i, iters);
-    print(req.s_payload);
-
-    if (mutexl_flag) {
-      release_cs(cs);
-    }
-  }
-
-  l = sprintf(req.s_payload, log_done_fmt, get_lamport_time(), lpid, 0);
-
-  message_update_hdr(&req, l, DONE);
-  send_multicast_lamport(ipc, &req);
-
-  while (!list_empty(cs->pr_rep_l)) {
-    receive_any_lamport(ipc, &res);
-    if (res.s_header.s_type == DONE) {
-      int time, pr;
-      sscanf(res.s_payload, "%d: process %d", &time, &pr);
-      cs_self_pr_rm(cs, pr);
-    }
-  }
-
-  l = sprintf(req.s_payload, log_received_all_done_fmt, get_lamport_time(),
-              lpid);
-  write_out_events_f(req.s_payload, l);
-
-  cs_self_dtr(&cs);
-}
-
-void usage(void) {
-  printf("Usage: \nprog -p <pr_count> [--mutexl]\n");
-}
-
-void parse_args(int argc, char *argv[]) {
-  int c;
-  prog_name = argv[0];
-
-  while (1) {
-    static struct option long_options[] = {
-        {"mutexl", no_argument, &mutexl_flag, 1},
-    };
-
-    int option_index = 0;
-
-    c = getopt_long(argc, argv, "p:h", long_options, &option_index);
-
-    if (c == EOF) {
-      break;
-    }
-    switch (c) {
-    case 0:
-      // if this option only sets flag
-      if (long_options[option_index].flag != 0)
-        break;
-      break;
-    case 'p':
-      pr_count = strtol(optarg, NULL, 10);
-      break;
-    case 'h':
-      usage();
-      break;
-    default:
-      usage();
-      exit(-1);
-      break;
-    }
-  }
-
-  argc -= optind;
-  argv += optind;
-
-  if (pr_count <= 0) {
-    printf("p <= 0\n");
-    exit(-1);
-  }
-
-  if (argc != 0) {
-    usage();
-    exit(-1);
-  }
-}
-
-int main(int argc, char *argv[]) {
-  parse_args(argc, argv);
-
-  events_f = fopen(events_log, "w");
-  pipes_f = fopen(pipes_log, "w");
-
-  execute();
-
-  fclose(pipes_f);
-  fclose(events_f);
 
   return 0;
+}
+
+static int proc_fn(ctx *ctx) {
+  const int n = ctx->args->proc_n;
+  const int proc_id = ctx->proc_id;
+
+  Message request = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_payload_len = MAX_PAYLOAD_LEN,
+          },
+      .s_payload = {0},
+  };
+  Message response = {{0}};
+
+  pipes_configure(ctx);
+
+  // send started
+  int payload_len =
+      sprintf(request.s_payload, log_started_fmt, proc_id, getpid(), getppid());
+  request.s_header.s_type = STARTED;
+  request.s_header.s_payload_len = payload_len;
+
+  if (send_multicast(ctx, &request)) {
+    fprintf(stderr, "error: %i unable to send_multicast STARTED\n",
+            ctx->proc_id);
+  }
+
+  logs_event_write(ctx, request.s_payload, payload_len);
+
+  // receive started from all procs
+  for (int i = 1; i <= n; ++i) {
+    if (i == proc_id) {
+      continue;
+    }
+
+    int s = receive(ctx, i, &response);
+
+    if (s || response.s_header.s_type != STARTED) {
+      fprintf(stderr, "error: %i unable to receive STARTED from id=%d\n",
+              ctx->proc_id, i);
+    }
+  }
+
+  // log received all started
+  payload_len =
+      sprintf(request.s_payload, log_received_all_started_fmt, proc_id);
+
+  logs_event_write(ctx, request.s_payload, payload_len);
+
+  // send done
+  payload_len = sprintf(request.s_payload, log_done_fmt, proc_id);
+  request.s_header.s_type = DONE;
+  request.s_header.s_payload_len = payload_len;
+
+  if (send_multicast(ctx, &request)) {
+    fprintf(stderr, "error: %i unable to send_multicast DONE\n", ctx->proc_id);
+  }
+
+  logs_event_write(ctx, request.s_payload, payload_len);
+
+  // receive done from all procs
+  for (int i = 1; i <= n; ++i) {
+    if (i == proc_id) {
+      continue;
+    }
+
+    int s = receive(ctx, i, &response);
+
+    if (s || response.s_header.s_type != DONE) {
+      fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
+              ctx->proc_id, i);
+    }
+  }
+
+  // log received all done
+  payload_len = sprintf(request.s_payload, log_received_all_done_fmt, proc_id);
+
+  logs_event_write(ctx, request.s_payload, payload_len);
+
+  return 0;
+}
+
+static int proc_run_all(ctx *ctx) {
+  for (int i = 1; i <= ctx->args->proc_n; ++i) {
+    int pid = fork();
+
+    if (pid == 0) {
+      ctx->proc_id = i;
+      return proc_fn(ctx);
+    } else if (pid < 0) {
+      return STATUS_BAD_FORK;
+    }
+  }
+  return 0;
+}
+
+int send(void *self, local_id dst, const Message *msg) {
+  ctx *ctx = self;
+
+  int wfd = pipes_writer_fd(ctx, dst);
+  int s = write(wfd, msg, msg->s_header.s_payload_len + sizeof(MessageHeader));
+
+  return s == -1 ? -1 : 0;
+}
+
+int send_multicast(void *self, const Message *msg) {
+  ctx *ctx = self;
+  int n = ctx->args->proc_n;
+
+  int status = 0;
+
+  // to children and parent
+  for (int id_to = 0; id_to <= n; ++id_to) {
+    if (ctx->proc_id == id_to) {
+      continue;
+    }
+    if (send(ctx, id_to, msg) == -1) {
+      status = -1;
+    }
+  }
+
+  return status;
+}
+
+int receive(void *self, local_id from, Message *msg) {
+  static struct timespec s_ts = {
+      .tv_sec = 0,
+      .tv_nsec = 1000000,
+  };
+
+  ctx *ctx = self;
+  int rfd = pipes_reader_fd(ctx, from);
+
+  int status = -1;
+
+  memset(msg->s_payload, 0, msg->s_header.s_payload_len);
+
+  while (1) {
+    int s = read(rfd, msg, sizeof(MessageHeader));
+
+    if (s == -1) {
+      nanosleep(&s_ts, NULL);
+      continue;
+    }
+    if (s == 0) {
+      break;
+    }
+
+    s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+    if (s > 0) {
+      status = 0;
+    }
+    break;
+  }
+  return status;
+}
+
+int receive_any(void *self, Message *msg) {
+  static struct timespec s_ts = {
+      .tv_sec = 0,
+      .tv_nsec = 1000000,
+  };
+
+  ctx *ctx = self;
+  const int n = ctx->args->proc_n;
+  const int n_eofs = ctx->proc_id == 0 ? n : n - 1;
+
+  int status = -1;
+
+  memset(msg->s_payload, 0, msg->s_header.s_payload_len);
+
+  for (int id_from = 1, eofs = 0; eofs < n_eofs; ++id_from) {
+    // sleep and loop again
+    if (id_from > n) {
+      id_from = 1;
+      eofs = 0;
+      nanosleep(&s_ts, NULL);
+    }
+
+    if (id_from == ctx->proc_id) {
+      continue;
+    }
+
+    int rfd = pipes_reader_fd(ctx, id_from);
+    int s = read(rfd, msg, sizeof(MessageHeader));
+
+    if (s == 0) {
+      ++eofs;
+      continue;
+    }
+    if (s == -1) {
+      continue;
+    }
+
+    s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+    if (s > 0) {
+      status = 0;
+    }
+    break;
+  }
+  return status;
+}
+
+int main(int argc, const char **argv) {
+  int status;
+
+  args args = {
+      .proc_n = 0,
+      .events_path = events_log,
+      .pipes_path = pipes_log,
+  };
+  ctx ctx = {
+      .args = &args,
+      .events_f = NULL,
+      .pipes_f = NULL,
+      .pipes = NULL,
+      .proc_id = 0, // parent
+  };
+
+  if ((status = args_parse(&args, argc, argv))) {
+    return status;
+  }
+
+  if ((status = logs_open(&ctx))) {
+    goto cleanup;
+  }
+
+  if ((status = pipes_open(&ctx))) {
+    goto cleanup;
+  }
+
+  if ((status = proc_run_all(&ctx))) {
+    goto cleanup;
+  }
+
+  if (parent_is(&ctx)) {
+    status = parent_fn(&ctx);
+  }
+
+cleanup:
+  pipes_close(&ctx);
+
+  logs_close(&ctx);
+
+  return status;
 }
