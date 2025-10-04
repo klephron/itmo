@@ -1,5 +1,6 @@
-FORMAT       ?= clang-format --verbose -i
-# FORMAT       ?= clang-format -i
+ARCH   ?= 64
+FORMAT ?= clang-format --verbose -i
+# FORMAT ?= clang-format -i
 
 CC := clang
 CC_FLAGS := -std=c99 -Wall -pedantic
@@ -10,8 +11,10 @@ HDRS_APP :=
 
 SRCS_LIB := argparse.c
 HDRS_LIB := argparse.h
+PATH_LIB := $(CURDIR)/lib$(ARCH)
 
 PROG := a.out
+LIBS := -lruntime
 SRCS := $(SRCS_LIB) $(SRCS_APP)
 HDRS := $(HDRS_LIB) $(HDRS_APP)
 LOGS := $(wildcard *.log)
@@ -29,12 +32,12 @@ endif
 
 
 $(PROG): $(SRCS)
-	$(CC) $(CC_FLAGS) $(CC_FLAGS_DEBUG) $^ -o $@
+	$(CC) $(CC_FLAGS) $(CC_FLAGS_DEBUG) $^ -L$(PATH_LIB) $(LIBS) -o $@
 
 build: $(PROG)
 
 run: $(PROG)
-	@./$< $(RUN_ARGS)
+	LD_LIBRARY_PATH=$(PATH_LIB) ./$< $(RUN_ARGS)
 
 clean:
 	rm -f $(PROG) $(LOGS)
