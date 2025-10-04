@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 199309L
+#define _GNU_SOURCE
 
 #include "argparse.h"
 #include "common.h"
@@ -197,7 +197,7 @@ static int pipes_open(ctx *ctx) {
       }
 
       ctx_pipe *p = pipes_select(ctx, idx);
-      if (pipe((int *)p) < 0) {
+      if (pipe2((int *)p, O_NONBLOCK)) {
         goto error;
       }
       fprintf(ctx->pipes_f, "%d/%d\n", p->r, p->w);
@@ -227,9 +227,6 @@ static void pipes_configure(ctx *ctx) {
         break;
       }
       case PIPE_READER: {
-        int rfs = fcntl(p->r, F_GETFL);
-        rfs |= O_NONBLOCK;
-        fcntl(p->r, F_SETFL, rfs);
         close(p->w);
         break;
       }
