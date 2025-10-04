@@ -321,8 +321,8 @@ static int proc_fn(ctx *ctx) {
   pipes_configure(ctx);
 
   // send started
-  int payload_len =
-      sprintf(request.s_payload, log_started_fmt, proc_id, getpid(), getppid());
+  int payload_len = sprintf(request.s_payload, log_started_fmt, 0, proc_id,
+                            getpid(), getppid(), 0);
   request.s_header.s_type = STARTED;
   request.s_header.s_payload_len = payload_len;
 
@@ -349,12 +349,12 @@ static int proc_fn(ctx *ctx) {
 
   // log received all started
   payload_len =
-      sprintf(request.s_payload, log_received_all_started_fmt, proc_id);
+      sprintf(request.s_payload, log_received_all_started_fmt, 0, proc_id);
 
   logs_event_write(ctx, request.s_payload, payload_len);
 
   // send done
-  payload_len = sprintf(request.s_payload, log_done_fmt, proc_id);
+  payload_len = sprintf(request.s_payload, log_done_fmt, 0, proc_id, 0);
   request.s_header.s_type = DONE;
   request.s_header.s_payload_len = payload_len;
 
@@ -379,7 +379,8 @@ static int proc_fn(ctx *ctx) {
   }
 
   // log received all done
-  payload_len = sprintf(request.s_payload, log_received_all_done_fmt, proc_id);
+  payload_len =
+      sprintf(request.s_payload, log_received_all_done_fmt, 0, proc_id);
 
   logs_event_write(ctx, request.s_payload, payload_len);
 
