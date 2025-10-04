@@ -26,6 +26,7 @@ typedef enum status_t {
 
 typedef struct args_t {
   int proc_n;
+  int mutexl;
   const char *pipes_path;
   const char *events_path;
 } args;
@@ -68,6 +69,7 @@ static int args_parse(args *args, int argc, const char **argv) {
       OPT_GROUP("Options:"),
       OPT_HELP(),
       OPT_INTEGER('p', "processes", &args->proc_n, "number of processes"),
+      OPT_BOOLEAN('l', "mutexl", &args->mutexl, "with mutex lock"),
       OPT_END(),
   };
 
@@ -307,6 +309,7 @@ static int parent_fn(ctx *ctx) {
 static int proc_fn(ctx *ctx) {
   const int n = ctx->args->proc_n;
   const int proc_id = ctx->proc_id;
+  const int mutexl = ctx->args->mutexl;
 
   Message request = {
       .s_header =
@@ -352,6 +355,23 @@ static int proc_fn(ctx *ctx) {
       sprintf(request.s_payload, log_received_all_started_fmt, 0, proc_id);
 
   logs_event_write(ctx, request.s_payload, payload_len);
+
+  // effective work
+  int total_iterations = ctx->proc_id * 5;
+  for (int i = 0; i < total_iterations; ++i) {
+    payload_len = sprintf(request.s_payload, log_loop_operation_fmt,
+                          ctx->proc_id, i + 1, total_iterations);
+
+    if (mutexl) {
+      request_cs(ctx);
+    }
+
+    print(request.s_payload);
+
+    if (mutexl) {
+      release_cs(ctx);
+    }
+  }
 
   // send done
   payload_len = sprintf(request.s_payload, log_done_fmt, 0, proc_id, 0);
@@ -508,11 +528,21 @@ int receive_any(void *self, Message *msg) {
   return status;
 }
 
+int request_cs(const void *self) {
+  // TODO
+  return 0;
+}
+int release_cs(const void *self) {
+  // TODO
+  return 0;
+}
+
 int main(int argc, const char **argv) {
   int status;
 
   args args = {
       .proc_n = 0,
+      .mutexl = 0,
       .events_path = events_log,
       .pipes_path = pipes_log,
   };
