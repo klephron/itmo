@@ -43,6 +43,12 @@ typedef enum ctx_pipe_type_t {
   PIPE_WRITER,
 } ctx_pipe_type;
 
+typedef enum ctx_net_status_t {
+  NET_FORK_SET = 1,
+  NET_DURTY_SET = 1,
+  NET_REQF_SET = 1,
+} ctx_net_status;
+
 typedef struct ctx_t {
   const args *args;
 
@@ -50,6 +56,12 @@ typedef struct ctx_t {
   FILE *pipes_f;
 
   ctx_pipe *pipes;
+
+  struct { // can use just bits
+    int *forks;
+    int *durties;
+    int *reqfs;
+  } net;
 
   int proc_id;
 } ctx;
@@ -119,16 +131,16 @@ static void logs_event_write(ctx *ctx, char *data, int size) {
   fwrite(data, sizeof(*data), size, ctx->events_f);
 }
 
-static int pipes_proc_n(const ctx *ctx) {
+static int pipes_n(const ctx *ctx) {
   return ctx->args->proc_n + 1;
 }
 
 static ctx_pipe *pipes_select(const ctx *ctx, ctx_pipe_idx idx) {
-  return ctx->pipes + ((idx.i * pipes_proc_n(ctx)) + idx.j);
+  return ctx->pipes + ((idx.i * pipes_n(ctx)) + idx.j);
 }
 
 static ctx_pipe_idx pipes_idx(const ctx *ctx, ctx_pipe *p) {
-  const int n = pipes_proc_n(ctx);
+  const int n = pipes_n(ctx);
 
   int idx = p - ctx->pipes;
   int i = idx / n;
@@ -159,7 +171,7 @@ static ctx_pipe_type pipes_type_pipe(ctx *ctx, ctx_pipe *p) {
 }
 
 static void pipes_close(ctx *ctx) {
-  const int n = pipes_proc_n(ctx);
+  const int n = pipes_n(ctx);
 
   if (ctx->pipes) {
     for (int i = 0; i < n; ++i) {
@@ -180,7 +192,7 @@ static void pipes_close(ctx *ctx) {
 }
 
 static int pipes_open(ctx *ctx) {
-  const int n = pipes_proc_n(ctx);
+  const int n = pipes_n(ctx);
 
   ctx->pipes = calloc(1, sizeof(*ctx->pipes) * n * n);
 
@@ -198,7 +210,7 @@ static int pipes_open(ctx *ctx) {
 
       ctx_pipe *p = pipes_select(ctx, idx);
       if (pipe2((int *)p, O_NONBLOCK)) {
-        goto error;
+        goto err;
       }
       fprintf(ctx->pipes_f, "%d/%d\n", p->r, p->w);
     }
@@ -207,7 +219,7 @@ static int pipes_open(ctx *ctx) {
   fflush(ctx->pipes_f);
   return 0;
 
-error:
+err:
   fflush(ctx->pipes_f);
   pipes_close(ctx);
   return STATUS_BAD_PIPE;
@@ -215,7 +227,7 @@ error:
 
 // closes and configures all pipes
 static void pipes_configure(ctx *ctx) {
-  const int n = pipes_proc_n(ctx);
+  const int n = pipes_n(ctx);
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
@@ -267,6 +279,114 @@ static int pipes_reader_fd(ctx *ctx, int id_from) {
   return p->r;
 }
 
+static void net_deinit(ctx *ctx) {
+  if (ctx->net.forks) {
+    free(ctx->net.forks);
+    ctx->net.forks = NULL;
+  }
+  if (ctx->net.durties) {
+    free(ctx->net.durties);
+    ctx->net.durties = NULL;
+  }
+  if (ctx->net.reqfs) {
+    free(ctx->net.reqfs);
+    ctx->net.reqfs = NULL;
+  }
+}
+
+static int net_n(ctx *ctx) {
+  return ctx->args->proc_n;
+}
+
+static int net_select_proc(int proc_id) {
+  return proc_id - 1;
+}
+
+// 1: proc with higher id will have reqf.
+// 2: proc with lower id will have durty forks.
+// 3: parent is not used as stated in net_n.
+static int net_init(ctx *ctx) {
+  const int n = net_n(ctx);
+
+  ctx->net.forks = (int *)malloc(sizeof(int) * n);
+  if (!ctx->net.forks) {
+    goto err;
+  }
+
+  ctx->net.durties = (int *)malloc(sizeof(int) * n);
+  if (!ctx->net.durties) {
+    goto err;
+  }
+
+  ctx->net.reqfs = (int *)malloc(sizeof(int) * n);
+  if (!ctx->net.reqfs) {
+    goto err;
+  }
+
+  for (int i = 0; i < net_select_proc(ctx->proc_id); ++i) {
+    ctx->net.forks[i] = !NET_FORK_SET;
+    ctx->net.durties[i] = !NET_DURTY_SET;
+    ctx->net.reqfs[i] = NET_REQF_SET;
+  }
+  for (int i = net_select_proc(ctx->proc_id) + 1; i < n; ++i) {
+    ctx->net.forks[i] = NET_FORK_SET;
+    ctx->net.durties[i] = NET_DURTY_SET;
+    ctx->net.reqfs[i] = !NET_REQF_SET;
+  }
+
+  return 0;
+
+err:
+  net_deinit(ctx);
+  return STATUS_BAD_ALLOC;
+}
+
+static void net_print(ctx *ctx) {
+  int n = net_n(ctx);
+  int net_i = net_select_proc(ctx->proc_id);
+
+  // with alignment
+  int width = snprintf(NULL, 0, "%d", n);
+  printf("%*d: ", width, ctx->proc_id);
+
+  printf("fork=[");
+  for (int i = 0; i < n; ++i) {
+    if (i) {
+      printf(",");
+    }
+    if (i == net_i) {
+      printf("x");
+    } else {
+      printf("%d", ctx->net.forks[i]);
+    }
+  }
+  printf("], ");
+  printf("durty=[");
+  for (int i = 0; i < n; ++i) {
+    if (i) {
+      printf(",");
+    }
+    if (i == net_i) {
+      printf("x");
+    } else {
+      printf("%d", ctx->net.durties[i]);
+    }
+  }
+  printf("], ");
+  printf("reqf=[");
+  for (int i = 0; i < n; ++i) {
+    if (i) {
+      printf(",");
+    }
+    if (i == net_i) {
+      printf("x");
+    } else {
+      printf("%d", ctx->net.reqfs[i]);
+    }
+  }
+  printf("]\n");
+}
+
 static int parent_is(ctx *ctx) {
   return ctx->proc_id == 0;
 }
@@ -307,6 +427,7 @@ static int proc_fn(ctx *ctx) {
   const int n = ctx->args->proc_n;
   const int proc_id = ctx->proc_id;
   const int mutexl = ctx->args->mutexl;
+  int status = 0;
 
   Message request = {
       .s_header =
@@ -354,6 +475,12 @@ static int proc_fn(ctx *ctx) {
   logs_event_write(ctx, request.s_payload, payload_len);
 
   // effective work
+  if ((status = net_init(ctx))) {
+    return status;
+  }
+
+  /* net_print(ctx); */
+
   int total_iterations = ctx->proc_id * 5;
   for (int i = 0; i < total_iterations; ++i) {
     payload_len = sprintf(request.s_payload, log_loop_operation_fmt,
@@ -369,6 +496,8 @@ static int proc_fn(ctx *ctx) {
       release_cs(ctx);
     }
   }
+
+  net_deinit(ctx);
 
   // send done
   payload_len = sprintf(request.s_payload, log_done_fmt, 0, proc_id, 0);
@@ -401,7 +530,7 @@ static int proc_fn(ctx *ctx) {
 
   logs_event_write(ctx, request.s_payload, payload_len);
 
-  return 0;
+  return status;
 }
 
 static int proc_run_all(ctx *ctx) {
