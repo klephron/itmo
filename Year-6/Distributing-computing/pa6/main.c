@@ -58,6 +58,7 @@ typedef struct ctx_t {
     int *forks;
     int *durties;
     int *reqfs;
+    int *stats; // to ignore DONE
   } net;
 
   int proc_id;
@@ -299,6 +300,10 @@ static void net_deinit(ctx *ctx) {
     free(ctx->net.reqfs);
     ctx->net.reqfs = NULL;
   }
+  if (ctx->net.stats) {
+    free(ctx->net.stats);
+    ctx->net.stats = NULL;
+  }
 }
 
 static int net_n(const ctx *ctx) {
@@ -334,6 +339,11 @@ static int net_init(ctx *ctx) {
     goto err;
   }
 
+  ctx->net.stats = (int *)malloc(sizeof(int) * n);
+  if (!ctx->net.stats) {
+    goto err;
+  }
+
   for (int i = 0; i < net_proc_from(ctx->proc_id); ++i) {
     ctx->net.forks[i] = 0;
     ctx->net.durties[i] = 0;
@@ -343,6 +353,9 @@ static int net_init(ctx *ctx) {
     ctx->net.forks[i] = 1;
     ctx->net.durties[i] = 1;
     ctx->net.reqfs[i] = 0;
+  }
+  for (int i = 0; i < n; ++i) {
+    ctx->net.stats[i] = 1;
   }
 
   return 0;
@@ -394,6 +407,14 @@ __attribute__((unused)) static void net_print(const ctx *ctx) {
     } else {
       printf("%d", ctx->net.reqfs[i]);
     }
+  }
+  printf("], ");
+  printf("stats=[");
+  for (int i = 0; i < n; ++i) {
+    if (i) {
+      printf(",");
+    }
+    printf("%d", ctx->net.stats[i]);
   }
   printf("]\n");
 }
@@ -510,10 +531,7 @@ static int proc_fn(ctx *ctx) {
     nanosleep(&s_ts, NULL);
 
     if (mutexl) {
-      release_cs(&(release_ctx){
-          .ctx = ctx,
-          .leave = (iteration == total_iterations),
-      });
+      release_cs(ctx);
     }
   }
 
@@ -722,6 +740,8 @@ static void net_handle(ctx *ctx, const Message *msg) {
     ctx->net.forks[net_j] = 1;
     break;
   }
+  case CS_REPLY: {
+  }
   }
 }
 
@@ -827,6 +847,35 @@ static void net_durty(ctx *ctx) {
 
     ctx->net.durties[net_j] = 1;
   }
+}
+
+static void net_leave(ctx *ctx) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  Message msg = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_type = CS_REPLY,
+              .s_payload_len = 0,
+          },
+      .s_payload = {0},
+  };
+
+  send_multicast(ctx, &msg);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+    ctx->net.forks[net_j] = 0;
+    ctx->net.durties[net_j] = 0;
+  }
+
+  ctx->net.stats[net_i] = 0;
+  ctx->net.reqfs[net_i] = 1;
 }
 
 int request_cs(const void *self) {
