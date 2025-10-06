@@ -458,7 +458,7 @@ static int parent_fn(ctx *ctx) {
 }
 
 static int proc_fn(ctx *ctx) {
-  static struct timespec s_ts = {
+  __attribute__((unused)) static struct timespec s_ts = {
       .tv_sec = 0,
       .tv_nsec = 100000000,
   };
@@ -702,7 +702,7 @@ int receive_any(void *self, Message *msg) {
   return STATUS_EOF;
 }
 
-static const char *msg_type_str(MessageType type) {
+__attribute__((unused)) static const char *msg_type_str(MessageType type) {
   switch (type) {
   case STARTED:
     return "STARTED";
@@ -912,7 +912,7 @@ int request_cs(const void *self) {
 }
 
 int release_cs(const void *self) {
-  ctx *ctx = ctx;
+  ctx *ctx = (void *)(self);
 
   Message msg = {
       .s_header =
