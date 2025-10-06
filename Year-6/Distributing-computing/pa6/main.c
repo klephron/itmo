@@ -79,7 +79,30 @@ typedef struct release_ctx_t {
   int leave;
 } release_ctx;
 
-static void net_leave(ctx *ctx);
+__attribute__((unused)) static const char *msg_type_str(MessageType type) {
+  switch (type) {
+  case STARTED:
+    return "STARTED";
+  case DONE:
+    return "DONE";
+  case ACK:
+    return "ACK";
+  case STOP:
+    return "STOP";
+  case TRANSFER:
+    return "TRANSFER";
+  case BALANCE_HISTORY:
+    return "BALANCE_HISTORY";
+  case CS_REQUEST:
+    return "CS_REQUEST";
+  case CS_REPLY:
+    return "CS_REPLY";
+  case CS_RELEASE:
+    return "CS_RELEASE";
+    break;
+  }
+  return "UNKNOWN";
+}
 
 static int args_parse(args *args, int argc, const char **argv) {
   static const char *const s_usages[] = {
@@ -421,6 +444,160 @@ __attribute__((unused)) static void net_print(const ctx *ctx) {
   printf("]\n");
 }
 
+static void net_handle(ctx *ctx, const Message *msg, int net_j) {
+  switch (msg->s_header.s_type) {
+  case CS_REQUEST: {
+    ctx->net.reqfs[net_j] = 1;
+    break;
+  }
+  case CS_RELEASE: {
+    ctx->net.forks[net_j] = 1;
+    break;
+  }
+  case CS_REPLY: {
+    ctx->net.forks[net_j] = 1;
+    ctx->net.durties[net_j] = 1;
+    ctx->net.reqfs[net_j] = 0;
+    ctx->net.stats[net_j] = 0;
+  }
+  }
+}
+
+static void net_hearout(ctx *ctx, Message *msg) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+
+    int proc_j = net_proc_to(net_j);
+
+    int s;
+    while (ctx->net.stats[net_j] &&
+           (s = receive(&(rec_ctx){.ctx = ctx, .nio = 1}, proc_j, msg)) ==
+               STATUS_OK) {
+      net_handle(ctx, msg, net_j);
+    }
+  }
+}
+
+static void net_send(ctx *ctx, Message *msg, int all) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+    if (ctx->net.forks[net_j] && ctx->net.durties[net_j] &&
+        (all || ctx->net.reqfs[net_j])) {
+
+      // NOTE: not empty! (see receive impl.)
+      msg->s_header.s_type = CS_RELEASE;
+      msg->s_header.s_payload_len = 1;
+
+      int proc_j = net_proc_to(net_j);
+      send(ctx, proc_j, msg);
+
+      ctx->net.forks[net_j] = 0;
+      ctx->net.durties[net_j] = 0;
+    }
+  }
+}
+
+static void net_request(ctx *ctx, Message *msg) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+    if (!ctx->net.forks[net_j] && ctx->net.reqfs[net_j]) {
+      // NOTE: not empty! (see receive impl.)
+      msg->s_header.s_type = CS_REQUEST;
+      msg->s_header.s_payload_len = 1;
+
+      int proc_j = net_proc_to(net_j);
+      send(ctx, proc_j, msg);
+
+      ctx->net.reqfs[net_j] = 0;
+    }
+  }
+}
+
+static int net_forks_n(ctx *ctx) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  int forks = 1;
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+    if (ctx->net.forks[net_j]) {
+      ++forks;
+    }
+  }
+  return forks;
+}
+
+static void net_durty(ctx *ctx) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+
+    assert(ctx->net.forks[net_j]);
+
+    ctx->net.durties[net_j] = 1;
+  }
+}
+
+// just to not read DONE message, permament (others will start to ignore)
+static void net_leave(ctx *ctx) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  // NOTE: not empty! (see receive impl.)
+  Message msg = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_type = CS_REPLY,
+              .s_payload_len = 1,
+          },
+      .s_payload = {0},
+  };
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+
+    int proc_j = net_proc_to(net_j);
+
+    send(ctx, proc_j, &msg);
+
+    ctx->net.forks[net_j] = 0;
+    ctx->net.durties[net_j] = 0;
+  }
+
+  ctx->net.stats[net_i] = 0;
+  ctx->net.reqfs[net_i] = 1;
+}
+
 static int parent_is(ctx *ctx) {
   return ctx->proc_id == 0;
 }
@@ -432,19 +609,21 @@ static int parent_fn(ctx *ctx) {
 
   pipes_configure(ctx);
 
-  // receive started
   for (int i = 0; i < n; ++i) {
     int s = receive_any(&(rec_ctx){.ctx = ctx, .nio = 0}, &message);
-    if (s) {
-      fprintf(stderr, "error: parent unable to receive_any\n");
+    MessageType type = message.s_header.s_type;
+    if (s || type != STARTED) {
+      fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
+              msg_type_str(type), msg_type_str(STARTED));
     }
   }
 
-  // receive done
   for (int i = 0; i < n; ++i) {
     int s = receive_any(&(rec_ctx){.ctx = ctx, .nio = 0}, &message);
-    if (s) {
-      fprintf(stderr, "error: parent unable to receive_any\n");
+    MessageType type = message.s_header.s_type;
+    if (s || message.s_header.s_type != DONE) {
+      fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
+              msg_type_str(type), msg_type_str(DONE));
     }
   }
 
@@ -700,187 +879,6 @@ int receive_any(void *self, Message *msg) {
     return -1;
   }
   return STATUS_EOF;
-}
-
-__attribute__((unused)) static const char *msg_type_str(MessageType type) {
-  switch (type) {
-  case STARTED:
-    return "STARTED";
-  case DONE:
-    return "DONE";
-  case ACK:
-    return "ACK";
-  case STOP:
-    return "STOP";
-  case TRANSFER:
-    return "TRANSFER";
-  case BALANCE_HISTORY:
-    return "BALANCE_HISTORY";
-  case CS_REQUEST:
-    return "CS_REQUEST";
-  case CS_REPLY:
-    return "CS_REPLY";
-  case CS_RELEASE:
-    return "CS_RELEASE";
-    break;
-  }
-  return "UNKNOWN";
-}
-
-static void net_handle(ctx *ctx, const Message *msg, int net_j) {
-  // printf("%d: received msg %s\n", ctx->proc_id,
-  //        msg_type_str(msg->s_header.s_type));
-
-  switch (msg->s_header.s_type) {
-  case CS_REQUEST: {
-    ctx->net.reqfs[net_j] = 1;
-    break;
-  }
-  case CS_RELEASE: {
-    ctx->net.forks[net_j] = 1;
-    break;
-  }
-  case CS_REPLY: {
-    ctx->net.forks[net_j] = 1;
-    ctx->net.durties[net_j] = 1;
-    ctx->net.reqfs[net_j] = 0;
-    ctx->net.stats[net_j] = 0;
-  }
-  }
-}
-
-static void net_hearout(ctx *ctx, Message *msg) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
-  const int n = net_n(ctx);
-
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
-      continue;
-    }
-
-    int proc_j = net_proc_to(net_j);
-
-    int s;
-    while (ctx->net.stats[net_j] &&
-           (s = receive(&(rec_ctx){.ctx = ctx, .nio = 1}, proc_j, msg)) ==
-               STATUS_OK) {
-      net_handle(ctx, msg, net_j);
-    }
-  }
-}
-
-static void net_send(ctx *ctx, Message *msg, int all) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
-  const int n = net_n(ctx);
-
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
-      continue;
-    }
-    if (ctx->net.forks[net_j] && ctx->net.durties[net_j] &&
-        (all || ctx->net.reqfs[net_j])) {
-
-      // NOTE: not empty! (see receive impl.)
-      msg->s_header.s_type = CS_RELEASE;
-      msg->s_header.s_payload_len = 1;
-
-      int proc_j = net_proc_to(net_j);
-      send(ctx, proc_j, msg);
-
-      ctx->net.forks[net_j] = 0;
-      ctx->net.durties[net_j] = 0;
-    }
-  }
-}
-
-static void net_request(ctx *ctx, Message *msg) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
-  const int n = net_n(ctx);
-
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
-      continue;
-    }
-    if (!ctx->net.forks[net_j] && ctx->net.reqfs[net_j]) {
-      // NOTE: not empty! (see receive impl.)
-      msg->s_header.s_type = CS_REQUEST;
-      msg->s_header.s_payload_len = 1;
-
-      int proc_j = net_proc_to(net_j);
-      send(ctx, proc_j, msg);
-
-      ctx->net.reqfs[net_j] = 0;
-
-      // printf("%d: requested missing %d\n", ctx->proc_id, proc_j);
-    }
-  }
-}
-
-static int net_forks_n(ctx *ctx) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
-  const int n = net_n(ctx);
-
-  int forks = 1;
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
-      continue;
-    }
-    if (ctx->net.forks[net_j]) {
-      ++forks;
-    }
-  }
-  return forks;
-}
-
-static void net_durty(ctx *ctx) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
-  const int n = net_n(ctx);
-
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
-      continue;
-    }
-
-    assert(ctx->net.forks[net_j]);
-
-    ctx->net.durties[net_j] = 1;
-  }
-}
-
-// just to not read DONE message, permament (others will start to ignore)
-static void net_leave(ctx *ctx) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
-  const int n = net_n(ctx);
-
-  // NOTE: not empty! (see receive impl.)
-  Message msg = {
-      .s_header =
-          {
-              .s_magic = MESSAGE_MAGIC,
-              .s_type = CS_REPLY,
-              .s_payload_len = 1,
-          },
-      .s_payload = {0},
-  };
-
-  send_multicast(ctx, &msg);
-
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
-      continue;
-    }
-    ctx->net.forks[net_j] = 0;
-    ctx->net.durties[net_j] = 0;
-  }
-
-  ctx->net.stats[net_i] = 0;
-  ctx->net.reqfs[net_i] = 1;
 }
 
 int request_cs(const void *self) {
