@@ -528,9 +528,9 @@ static int proc_fn(ctx *ctx) {
       request_cs(ctx);
     }
 
-    // print(request.s_payload);
-    printf("%s", request.s_payload);
-    nanosleep(&s_ts, NULL);
+    print(request.s_payload);
+    // printf("%s", request.s_payload);
+    // nanosleep(&s_ts, NULL);
 
     if (mutexl) {
       release_cs(ctx);
@@ -558,12 +558,15 @@ static int proc_fn(ctx *ctx) {
       continue;
     }
 
-    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &response);
-
-    if (s || response.s_header.s_type != DONE) {
-      fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
-              ctx->proc_id, i);
-    }
+    int s;
+    do {
+      s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &response);
+      if (s) {
+        fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
+                ctx->proc_id, i);
+        break;
+      }
+    } while (response.s_header.s_type != DONE);
   }
 
   // log received all done
