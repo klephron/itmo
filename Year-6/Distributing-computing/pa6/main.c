@@ -46,12 +46,6 @@ typedef enum ctx_pipe_type_t {
   PIPE_WRITER,
 } ctx_pipe_type;
 
-typedef enum ctx_net_status_t {
-  NET_FORK_SET = 1,
-  NET_DURTY_SET = 1,
-  NET_REQF_SET = 1,
-} ctx_net_status;
-
 typedef struct ctx_t {
   const args *args;
 
@@ -78,6 +72,11 @@ typedef struct rec_ctx_t {
   ctx *ctx;
   int nio; // nonblocking
 } rec_ctx;
+
+typedef struct release_ctx_t {
+  ctx *ctx;
+  int leave;
+} release_ctx;
 
 static int args_parse(args *args, int argc, const char **argv) {
   static const char *const s_usages[] = {
@@ -302,12 +301,16 @@ static void net_deinit(ctx *ctx) {
   }
 }
 
-static int net_n(ctx *ctx) {
+static int net_n(const ctx *ctx) {
   return ctx->args->proc_n;
 }
 
-static int net_select_proc(int proc_id) {
+static int net_proc_from(int proc_id) {
   return proc_id - 1;
+}
+
+static int net_proc_to(int net_id) {
+  return net_id + 1;
 }
 
 // 1: proc with higher id will have reqf.
@@ -331,15 +334,15 @@ static int net_init(ctx *ctx) {
     goto err;
   }
 
-  for (int i = 0; i < net_select_proc(ctx->proc_id); ++i) {
-    ctx->net.forks[i] = !NET_FORK_SET;
-    ctx->net.durties[i] = !NET_DURTY_SET;
-    ctx->net.reqfs[i] = NET_REQF_SET;
+  for (int i = 0; i < net_proc_from(ctx->proc_id); ++i) {
+    ctx->net.forks[i] = 0;
+    ctx->net.durties[i] = 0;
+    ctx->net.reqfs[i] = 1;
   }
-  for (int i = net_select_proc(ctx->proc_id) + 1; i < n; ++i) {
-    ctx->net.forks[i] = NET_FORK_SET;
-    ctx->net.durties[i] = NET_DURTY_SET;
-    ctx->net.reqfs[i] = !NET_REQF_SET;
+  for (int i = net_proc_from(ctx->proc_id) + 1; i < n; ++i) {
+    ctx->net.forks[i] = 1;
+    ctx->net.durties[i] = 1;
+    ctx->net.reqfs[i] = 0;
   }
 
   return 0;
@@ -349,9 +352,9 @@ err:
   return STATUS_BAD_ALLOC;
 }
 
-__attribute__((unused)) static void net_print(ctx *ctx) {
+__attribute__((unused)) static void net_print(const ctx *ctx) {
   int n = net_n(ctx);
-  int net_i = net_select_proc(ctx->proc_id);
+  int net_i = net_proc_from(ctx->proc_id);
 
   // with alignment
   int width = snprintf(NULL, 0, "%d", n);
@@ -432,6 +435,11 @@ static int parent_fn(ctx *ctx) {
 }
 
 static int proc_fn(ctx *ctx) {
+  static struct timespec s_ts = {
+      .tv_sec = 0,
+      .tv_nsec = 100000000,
+  };
+
   const int n = ctx->args->proc_n;
   const int proc_id = ctx->proc_id;
   const int mutexl = ctx->args->mutexl;
@@ -487,24 +495,29 @@ static int proc_fn(ctx *ctx) {
     return status;
   }
 
-  /* net_print(ctx); */
-
   int total_iterations = ctx->proc_id * 5;
   for (int i = 0; i < total_iterations; ++i) {
+    int iteration = i + 1;
     payload_len = sprintf(request.s_payload, log_loop_operation_fmt,
-                          ctx->proc_id, i + 1, total_iterations);
+                          ctx->proc_id, iteration, total_iterations);
 
     if (mutexl) {
       request_cs(ctx);
     }
 
-    print(request.s_payload);
+    // print(request.s_payload);
+    printf("%s", request.s_payload);
+    nanosleep(&s_ts, NULL);
 
     if (mutexl) {
-      release_cs(ctx);
+      release_cs(&(release_ctx){
+          .ctx = ctx,
+          .leave = (iteration == total_iterations),
+      });
     }
   }
 
+  net_print(ctx);
   net_deinit(ctx);
 
   // send done
@@ -665,12 +678,202 @@ int receive_any(void *self, Message *msg) {
   return STATUS_EOF;
 }
 
+static const char *msg_type_str(MessageType type) {
+  switch (type) {
+  case STARTED:
+    return "STARTED";
+  case DONE:
+    return "DONE";
+  case ACK:
+    return "ACK";
+  case STOP:
+    return "STOP";
+  case TRANSFER:
+    return "TRANSFER";
+  case BALANCE_HISTORY:
+    return "BALANCE_HISTORY";
+  case CS_REQUEST:
+    return "CS_REQUEST";
+  case CS_REPLY:
+    return "CS_REPLY";
+  case CS_RELEASE:
+    return "CS_RELEASE";
+    break;
+  }
+  return "UNKNOWN";
+}
+
+static void net_handle(ctx *ctx, const Message *msg) {
+  // printf("%d: received msg %s\n", ctx->proc_id,
+  //        msg_type_str(msg->s_header.s_type));
+
+  switch (msg->s_header.s_type) {
+  case CS_REQUEST: {
+    int net_j;
+    sscanf(msg->s_payload, "%d", &net_j);
+    // printf("%d: net_j=%d\n", ctx->proc_id, net_j);
+    ctx->net.reqfs[net_j] = 1;
+    break;
+  }
+  case CS_RELEASE: {
+    int net_j;
+    sscanf(msg->s_payload, "%d", &net_j);
+    // printf("%d: net_j=%d\n", ctx->proc_id, net_j);
+    ctx->net.forks[net_j] = 1;
+    break;
+  }
+  }
+}
+
+static void net_hearout(ctx *ctx, Message *msg) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+
+    int proc_j = net_proc_to(net_j);
+
+    int s;
+    while ((s = receive(&(rec_ctx){.ctx = ctx, .nio = 1}, proc_j, msg)) ==
+           STATUS_OK) {
+      net_handle(ctx, msg);
+    }
+  }
+}
+
+static void net_send(ctx *ctx, Message *msg, int all) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+    if (ctx->net.forks[net_j] && ctx->net.durties[net_j] &&
+        (all || ctx->net.reqfs[net_j])) {
+
+      msg->s_header.s_type = CS_RELEASE;
+      int len = sprintf(msg->s_payload, "%d", net_i);
+      msg->s_header.s_payload_len = len;
+
+      int proc_j = net_proc_to(net_j);
+      send(ctx, proc_j, msg);
+
+      ctx->net.forks[net_j] = 0;
+      ctx->net.durties[net_j] = 0;
+
+      // printf("%d: sent durty %d\n", ctx->proc_id, proc_j);
+    }
+  }
+}
+
+static void net_request(ctx *ctx, Message *msg) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+    if (!ctx->net.forks[net_j] && ctx->net.reqfs[net_j]) {
+      msg->s_header.s_type = CS_REQUEST;
+      int len = sprintf(msg->s_payload, "%d", net_i);
+      msg->s_header.s_payload_len = len;
+
+      int proc_j = net_proc_to(net_j);
+      send(ctx, proc_j, msg);
+
+      ctx->net.reqfs[net_j] = 0;
+
+      // printf("%d: requested missing %d\n", ctx->proc_id, proc_j);
+    }
+  }
+}
+
+static int net_forks_n(ctx *ctx) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  int forks = 1;
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+    if (ctx->net.forks[net_j]) {
+      ++forks;
+    }
+  }
+  return forks;
+}
+
+static void net_durty(ctx *ctx) {
+  const int proc_i = ctx->proc_id;
+  const int net_i = net_proc_from(proc_i);
+  const int n = net_n(ctx);
+
+  for (int net_j = 0; net_j < n; ++net_j) {
+    if (net_j == net_i) {
+      continue;
+    }
+
+    assert(ctx->net.forks[net_j]);
+
+    ctx->net.durties[net_j] = 1;
+  }
+}
+
 int request_cs(const void *self) {
-  // TODO
+  ctx *ctx = (void *)self;
+  const int n = net_n(ctx);
+
+  Message msg = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_payload_len = MAX_PAYLOAD_LEN,
+          },
+      .s_payload = {0},
+  };
+
+  int forks;
+  do {
+    net_hearout(ctx, &msg);
+
+    net_send(ctx, &msg, 0);
+
+    net_request(ctx, &msg);
+
+    forks = net_forks_n(ctx);
+
+  } while (forks < n);
+
   return 0;
 }
+
 int release_cs(const void *self) {
-  // TODO
+  release_ctx *rel = (void *)self;
+  ctx *ctx = rel->ctx;
+
+  Message msg = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_payload_len = MAX_PAYLOAD_LEN,
+          },
+      .s_payload = {0},
+  };
+
+  net_durty(ctx);
+
+  net_send(ctx, &msg, rel->leave);
+
   return 0;
 }
 
