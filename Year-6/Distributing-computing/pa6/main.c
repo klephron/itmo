@@ -58,7 +58,7 @@ typedef struct ctx_t {
     int *forks;
     int *durties;
     int *reqfs;
-    int *stats; // to ignore DONE
+    int *stats;
   } net;
 
   int proc_id;
@@ -78,6 +78,8 @@ typedef struct release_ctx_t {
   ctx *ctx;
   int leave;
 } release_ctx;
+
+static void net_leave(ctx *ctx);
 
 static int args_parse(args *args, int argc, const char **argv) {
   static const char *const s_usages[] = {
@@ -535,7 +537,8 @@ static int proc_fn(ctx *ctx) {
     }
   }
 
-  net_print(ctx);
+  net_leave(ctx);
+
   net_deinit(ctx);
 
   // send done
@@ -721,26 +724,24 @@ static const char *msg_type_str(MessageType type) {
   return "UNKNOWN";
 }
 
-static void net_handle(ctx *ctx, const Message *msg) {
+static void net_handle(ctx *ctx, const Message *msg, int net_j) {
   // printf("%d: received msg %s\n", ctx->proc_id,
   //        msg_type_str(msg->s_header.s_type));
 
   switch (msg->s_header.s_type) {
   case CS_REQUEST: {
-    int net_j;
-    sscanf(msg->s_payload, "%d", &net_j);
-    // printf("%d: net_j=%d\n", ctx->proc_id, net_j);
     ctx->net.reqfs[net_j] = 1;
     break;
   }
   case CS_RELEASE: {
-    int net_j;
-    sscanf(msg->s_payload, "%d", &net_j);
-    // printf("%d: net_j=%d\n", ctx->proc_id, net_j);
     ctx->net.forks[net_j] = 1;
     break;
   }
   case CS_REPLY: {
+    ctx->net.forks[net_j] = 1;
+    ctx->net.durties[net_j] = 1;
+    ctx->net.reqfs[net_j] = 0;
+    ctx->net.stats[net_j] = 0;
   }
   }
 }
@@ -758,9 +759,10 @@ static void net_hearout(ctx *ctx, Message *msg) {
     int proc_j = net_proc_to(net_j);
 
     int s;
-    while ((s = receive(&(rec_ctx){.ctx = ctx, .nio = 1}, proc_j, msg)) ==
-           STATUS_OK) {
-      net_handle(ctx, msg);
+    while (ctx->net.stats[net_j] &&
+           (s = receive(&(rec_ctx){.ctx = ctx, .nio = 1}, proc_j, msg)) ==
+               STATUS_OK) {
+      net_handle(ctx, msg, net_j);
     }
   }
 }
@@ -777,17 +779,15 @@ static void net_send(ctx *ctx, Message *msg, int all) {
     if (ctx->net.forks[net_j] && ctx->net.durties[net_j] &&
         (all || ctx->net.reqfs[net_j])) {
 
+      // NOTE: not empty! (see receive impl.)
       msg->s_header.s_type = CS_RELEASE;
-      int len = sprintf(msg->s_payload, "%d", net_i);
-      msg->s_header.s_payload_len = len;
+      msg->s_header.s_payload_len = 1;
 
       int proc_j = net_proc_to(net_j);
       send(ctx, proc_j, msg);
 
       ctx->net.forks[net_j] = 0;
       ctx->net.durties[net_j] = 0;
-
-      // printf("%d: sent durty %d\n", ctx->proc_id, proc_j);
     }
   }
 }
@@ -802,9 +802,9 @@ static void net_request(ctx *ctx, Message *msg) {
       continue;
     }
     if (!ctx->net.forks[net_j] && ctx->net.reqfs[net_j]) {
+      // NOTE: not empty! (see receive impl.)
       msg->s_header.s_type = CS_REQUEST;
-      int len = sprintf(msg->s_payload, "%d", net_i);
-      msg->s_header.s_payload_len = len;
+      msg->s_header.s_payload_len = 1;
 
       int proc_j = net_proc_to(net_j);
       send(ctx, proc_j, msg);
@@ -849,17 +849,19 @@ static void net_durty(ctx *ctx) {
   }
 }
 
+// just to not read DONE message, permament (others will start to ignore)
 static void net_leave(ctx *ctx) {
   const int proc_i = ctx->proc_id;
   const int net_i = net_proc_from(proc_i);
   const int n = net_n(ctx);
 
+  // NOTE: not empty! (see receive impl.)
   Message msg = {
       .s_header =
           {
               .s_magic = MESSAGE_MAGIC,
               .s_type = CS_REPLY,
-              .s_payload_len = 0,
+              .s_payload_len = 1,
           },
       .s_payload = {0},
   };
@@ -907,8 +909,7 @@ int request_cs(const void *self) {
 }
 
 int release_cs(const void *self) {
-  release_ctx *rel = (void *)self;
-  ctx *ctx = rel->ctx;
+  ctx *ctx = ctx;
 
   Message msg = {
       .s_header =
@@ -921,7 +922,7 @@ int release_cs(const void *self) {
 
   net_durty(ctx);
 
-  net_send(ctx, &msg, rel->leave);
+  net_send(ctx, &msg, 0);
 
   return 0;
 }
