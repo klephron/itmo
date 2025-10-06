@@ -6,6 +6,7 @@
 #include "pa2345.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -22,6 +23,8 @@ typedef enum status_t {
   STATUS_BAD_FILE = 3,
   STATUS_BAD_FORK = 4,
   STATUS_BAD_USAGE = 255,
+  STATUS_EOF = 10,
+  STATUS_EAGAIN = 11,
 } status;
 
 typedef struct args_t {
@@ -70,6 +73,11 @@ typedef struct ctx_pipe_idx_t {
   int i;
   int j;
 } ctx_pipe_idx;
+
+typedef struct rec_ctx_t {
+  ctx *ctx;
+  int nio; // nonblocking
+} rec_ctx;
 
 static int args_parse(args *args, int argc, const char **argv) {
   static const char *const s_usages[] = {
@@ -341,7 +349,7 @@ err:
   return STATUS_BAD_ALLOC;
 }
 
-static void net_print(ctx *ctx) {
+__attribute__((unused)) static void net_print(ctx *ctx) {
   int n = net_n(ctx);
   int net_i = net_select_proc(ctx->proc_id);
 
@@ -400,7 +408,7 @@ static int parent_fn(ctx *ctx) {
 
   // receive started
   for (int i = 0; i < n; ++i) {
-    int s = receive_any(ctx, &message);
+    int s = receive_any(&(rec_ctx){.ctx = ctx, .nio = 0}, &message);
     if (s) {
       fprintf(stderr, "error: parent unable to receive_any\n");
     }
@@ -408,7 +416,7 @@ static int parent_fn(ctx *ctx) {
 
   // receive done
   for (int i = 0; i < n; ++i) {
-    int s = receive_any(ctx, &message);
+    int s = receive_any(&(rec_ctx){.ctx = ctx, .nio = 0}, &message);
     if (s) {
       fprintf(stderr, "error: parent unable to receive_any\n");
     }
@@ -460,7 +468,7 @@ static int proc_fn(ctx *ctx) {
       continue;
     }
 
-    int s = receive(ctx, i, &response);
+    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &response);
 
     if (s || response.s_header.s_type != STARTED) {
       fprintf(stderr, "error: %i unable to receive STARTED from id=%d\n",
@@ -516,7 +524,7 @@ static int proc_fn(ctx *ctx) {
       continue;
     }
 
-    int s = receive(ctx, i, &response);
+    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &response);
 
     if (s || response.s_header.s_type != DONE) {
       fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
@@ -553,14 +561,14 @@ int send(void *self, local_id dst, const Message *msg) {
   int wfd = pipes_writer_fd(ctx, dst);
   int s = write(wfd, msg, msg->s_header.s_payload_len + sizeof(MessageHeader));
 
-  return s == -1 ? -1 : 0;
+  return s == -1 ? -1 : STATUS_OK;
 }
 
 int send_multicast(void *self, const Message *msg) {
   ctx *ctx = self;
   int n = ctx->args->proc_n;
 
-  int status = 0;
+  int status = STATUS_OK;
 
   // to children and parent
   for (int id_to = 0; id_to <= n; ++id_to) {
@@ -581,10 +589,9 @@ int receive(void *self, local_id from, Message *msg) {
       .tv_nsec = 1000000,
   };
 
-  ctx *ctx = self;
+  rec_ctx *rec = self;
+  ctx *ctx = rec->ctx;
   int rfd = pipes_reader_fd(ctx, from);
-
-  int status = -1;
 
   memset(msg->s_payload, 0, msg->s_header.s_payload_len);
 
@@ -592,20 +599,22 @@ int receive(void *self, local_id from, Message *msg) {
     int s = read(rfd, msg, sizeof(MessageHeader));
 
     if (s == -1) {
+      if (rec->nio && errno == EAGAIN) {
+        return STATUS_EAGAIN;
+      }
       nanosleep(&s_ts, NULL);
       continue;
     }
     if (s == 0) {
-      break;
+      return STATUS_EOF;
     }
 
     s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
     if (s > 0) {
-      status = 0;
+      return STATUS_OK;
     }
-    break;
+    return -1;
   }
-  return status;
 }
 
 int receive_any(void *self, Message *msg) {
@@ -614,17 +623,19 @@ int receive_any(void *self, Message *msg) {
       .tv_nsec = 1000000,
   };
 
-  ctx *ctx = self;
+  rec_ctx *rec = self;
+  ctx *ctx = rec->ctx;
   const int n = ctx->args->proc_n;
   const int n_eofs = ctx->proc_id == 0 ? n : n - 1;
-
-  int status = -1;
 
   memset(msg->s_payload, 0, msg->s_header.s_payload_len);
 
   for (int id_from = 1, eofs = 0; eofs < n_eofs; ++id_from) {
     // sleep and loop again
     if (id_from > n) {
+      if (rec->nio) {
+        return STATUS_EAGAIN;
+      }
       id_from = 1;
       eofs = 0;
       nanosleep(&s_ts, NULL);
@@ -647,11 +658,11 @@ int receive_any(void *self, Message *msg) {
 
     s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
     if (s > 0) {
-      status = 0;
+      return STATUS_OK;
     }
-    break;
+    return -1;
   }
-  return status;
+  return STATUS_EOF;
 }
 
 int request_cs(const void *self) {
