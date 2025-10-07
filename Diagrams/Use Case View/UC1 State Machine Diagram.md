@@ -25,7 +25,7 @@ state RegisterIncident
 RegisterIncident --> ReturnIncident : инцидент зарегистрирован
 
 state ReturnIncident
-ReturnIncident --> [*] : 200 OK (инцидент)
+ReturnIncident --> [*] : 201 Created (инцидент)
 ReturnIncident --> CheckCaseRequest : создание дела запрошено
 
 state CheckCaseRequest
@@ -50,7 +50,7 @@ state CreateCase
 CreateCase --> ReturnCase
 
 state ReturnCase
-ReturnCase --> [*] : 200 OK (дело)
+ReturnCase --> [*] : 201 Created (дело)
 @enduml
 
 ```

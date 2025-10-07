@@ -74,7 +74,7 @@ deactivate TemplateMapper
 TemplateService --> CasesController : TemplateDto
 deactivate TemplateService
 
-CasesController --> U : 200 OK (TemplateDto)
+CasesController --> U : 201 Created (TemplateDto)
 deactivate CasesController
 
 @enduml
@@ -117,7 +117,7 @@ TR --> S : Optional<TemplateEntity>
 deactivate TR
 
 alt шаблон не найден
-  S -> C : throw NotFound("Template not found")
+  S -> C : throw NoSuchElementException("Template not found")
   deactivate S
   C --> U : 404 Not Found "Template not found"
   deactivate C
@@ -139,7 +139,7 @@ else шаблон найден
     deactivate UR
 
     alt пользователь не найден
-      S -> C : throw NotFound("User not found")
+      S -> C : throw NoSuchElementException("User not found")
       deactivate S
       C --> U : 404 Not Found "User not found"
       deactivate C

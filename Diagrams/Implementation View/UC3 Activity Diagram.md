@@ -64,7 +64,7 @@ else (да)
 		  :TemplateMapper.toDto(template) -> TemplateDto;
 		}
 		partition "controller" {
-		  :Вернуть 200 OK с TemplateDto;
+		  :Вернуть 201 Created с TemplateDto;
 		}
 		stop
 	endif

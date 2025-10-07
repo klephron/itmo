@@ -34,7 +34,7 @@ APP  -[#black]> MAP : 1.1.8 toDto(ClueEntity)
 MAP  -[#black]--> APP: 1.1.8.1 ClueDto
 
 APP  -[#black]--> CTRL: 1.1.9 ClueDto
-CTRL -[#black]--> U  : 1.2 200 OK (ClueDto)
+CTRL -[#black]--> U  : 1.2 201 Created (ClueDto)
 
 legend right
   Уровни → пакеты:

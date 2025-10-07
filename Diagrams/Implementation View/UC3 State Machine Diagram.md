@@ -12,7 +12,7 @@ skinparam ranksep 150
 state "Controller" as Controller {
   state Receive    : CasesController.addCaseTemplate(id, req, auth)\nuserId <- auth["id"]
   state ReturnNotFound  : HttpResponse.notFound()
-  state ReturnOk  : HttpResponse.ok(TemplateDto)
+  state ReturnCreated  : HttpResponse.created(TemplateDto)
 }
 
 state "Application" as Application {
@@ -45,10 +45,10 @@ Application.ValidateMetadata --> Application.BuildEntity  : metadata ok
 Application.BuildEntity --> Infrastructure.SaveTemplate
 Infrastructure.SaveTemplate --> Application.Notify
 Application.Notify --> Mapper.ToDto
-Mapper.ToDto --> Controller.ReturnOk
+Mapper.ToDto --> Controller.ReturnCreated
 
 Controller.ReturnNotFound --> [*]
-Controller.ReturnOk --> [*]
+Controller.ReturnCreated --> [*]
 @enduml
 
 ```

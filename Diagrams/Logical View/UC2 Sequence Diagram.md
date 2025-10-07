@@ -61,7 +61,7 @@ else пользователь найден
 
     S --> C : ClueDto
     deactivate S
-    C --> U : 200 OK (ClueDto)
+    C --> U : 201 Created (ClueDto)
     deactivate C
   end
 end

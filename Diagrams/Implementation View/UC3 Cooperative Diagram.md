@@ -34,7 +34,7 @@ APP  -> APP   : 1.16 NotificationService.addNotification(userId,\n"PAI Notificat
 APP  -> MAP   : 1.17 TemplateMapper.toDto(template)
 MAP  --> APP  : 1.18 TemplateDto
 APP  --> CTRL : 1.19 TemplateDto
-CTRL --> U    : 1.20 200 OK (TemplateDto)
+CTRL --> U    : 1.20 201 Created (TemplateDto)
 
 legend right
   Уровни -> пакеты:
