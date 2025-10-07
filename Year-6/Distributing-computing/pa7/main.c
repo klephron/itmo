@@ -1,9 +1,10 @@
 #define _GNU_SOURCE
 
 #include "argparse.h"
+#include "banking.h"
 #include "common.h"
 #include "ipc.h"
-#include "pa1.h"
+#include "pa2345.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -86,7 +87,14 @@ __attribute__((unused)) static const char *msg_type_str(MessageType type) {
     return "CS_REPLY";
   case CS_RELEASE:
     return "CS_RELEASE";
-    break;
+  case BALANCE_STATE:
+    return "BALANCE_STATE";
+  case SNAPSHOT_VTIME:
+    return "SNAPSHOT_VTIME";
+  case SNAPSHOT_ACK:
+    return "SNAPSHOT_ACK";
+  case EMPTY:
+    return "EMPTY";
   }
   return "UNKNOWN";
 }
@@ -309,8 +317,8 @@ static int parent_fn(ctx *ctx) {
 
   pipes_configure(ctx);
 
-  for (int i = 0; i < n; ++i) {
-    int s = receive_any(&(rec_ctx){.ctx = ctx, .nio = 0}, &message);
+  for (int i = 1; i <= n; ++i) {
+    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &message);
     MessageType type = message.s_header.s_type;
     if (s || type != STARTED) {
       fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
@@ -318,8 +326,8 @@ static int parent_fn(ctx *ctx) {
     }
   }
 
-  for (int i = 0; i < n; ++i) {
-    int s = receive_any(&(rec_ctx){.ctx = ctx, .nio = 0}, &message);
+  for (int i = 1; i <= n; ++i) {
+    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &message);
     MessageType type = message.s_header.s_type;
     if (s || message.s_header.s_type != DONE) {
       fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
@@ -359,8 +367,8 @@ static int proc_fn(ctx *ctx) {
   pipes_configure(ctx);
 
   // send started
-  int payload_len =
-      sprintf(request.s_payload, log_started_fmt, proc_id, getpid(), getppid());
+  int payload_len = sprintf(request.s_payload, log_started_fmt, 0, proc_id,
+                            getpid(), getppid(), 0);
   request.s_header.s_type = STARTED;
   request.s_header.s_payload_len = payload_len;
 
@@ -387,12 +395,12 @@ static int proc_fn(ctx *ctx) {
 
   // log received all started
   payload_len =
-      sprintf(request.s_payload, log_received_all_started_fmt, proc_id);
+      sprintf(request.s_payload, log_received_all_started_fmt, 0, proc_id);
 
   logs_event_write(ctx, request.s_payload, payload_len);
 
   // send done
-  payload_len = sprintf(request.s_payload, log_done_fmt, proc_id);
+  payload_len = sprintf(request.s_payload, log_done_fmt, 0, proc_id, 0);
   request.s_header.s_type = DONE;
   request.s_header.s_payload_len = payload_len;
 
@@ -420,7 +428,8 @@ static int proc_fn(ctx *ctx) {
   }
 
   // log received all done
-  payload_len = sprintf(request.s_payload, log_received_all_done_fmt, proc_id);
+  payload_len =
+      sprintf(request.s_payload, log_received_all_done_fmt, 0, proc_id);
 
   logs_event_write(ctx, request.s_payload, payload_len);
 
@@ -553,6 +562,9 @@ int receive_any(void *self, Message *msg) {
     return STATUS_OK;
   }
   return STATUS_EOF;
+}
+
+void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
 }
 
 int main(int argc, const char **argv) {

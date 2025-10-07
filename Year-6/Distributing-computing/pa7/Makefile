@@ -2,10 +2,10 @@ FORMAT       ?= clang-format --verbose -i
 # FORMAT       ?= clang-format -i
 
 CC := clang
-CC_FLAGS := -std=c99 -Wall -pedantic
+CC_FLAGS := -std=c99 -Wall -pedantic -Wno-strict-prototypes
 CC_FLAGS_DEBUG := -g -fsanitize=address,undefined,leak
 
-SRCS_APP := main.c
+SRCS_APP := bank_robbery.c main.c
 HDRS_APP :=
 
 SRCS_LIB := argparse.c
