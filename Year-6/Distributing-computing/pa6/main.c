@@ -496,9 +496,8 @@ static void net_send(ctx *ctx, Message *msg, int all) {
     if (ctx->net.forks[net_j] && ctx->net.durties[net_j] &&
         (all || ctx->net.reqfs[net_j])) {
 
-      // NOTE: not empty! (see receive impl.)
       msg->s_header.s_type = CS_RELEASE;
-      msg->s_header.s_payload_len = 1;
+      msg->s_header.s_payload_len = 0;
 
       int proc_j = net_proc_to(net_j);
       send(ctx, proc_j, msg);
@@ -519,9 +518,8 @@ static void net_request(ctx *ctx, Message *msg) {
       continue;
     }
     if (!ctx->net.forks[net_j] && ctx->net.reqfs[net_j]) {
-      // NOTE: not empty! (see receive impl.)
       msg->s_header.s_type = CS_REQUEST;
-      msg->s_header.s_payload_len = 1;
+      msg->s_header.s_payload_len = 0;
 
       int proc_j = net_proc_to(net_j);
       send(ctx, proc_j, msg);
@@ -570,13 +568,12 @@ static void net_leave(ctx *ctx) {
   const int net_i = net_proc_from(proc_i);
   const int n = net_n(ctx);
 
-  // NOTE: not empty! (see receive impl.)
   Message msg = {
       .s_header =
           {
               .s_magic = MESSAGE_MAGIC,
               .s_type = CS_REPLY,
-              .s_payload_len = 1,
+              .s_payload_len = 0,
           },
       .s_payload = {0},
   };
@@ -825,11 +822,13 @@ int receive(void *self, local_id from, Message *msg) {
       return STATUS_EOF;
     }
 
-    s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
-    if (s > 0) {
-      return STATUS_OK;
+    if (msg->s_header.s_payload_len) {
+      s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+      if (s <= 0) {
+        return -1;
+      }
     }
-    return -1;
+    return STATUS_OK;
   }
 }
 
@@ -872,11 +871,13 @@ int receive_any(void *self, Message *msg) {
       continue;
     }
 
-    s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
-    if (s > 0) {
-      return STATUS_OK;
+    if (msg->s_header.s_payload_len) {
+      s = read(rfd, msg->s_payload, msg->s_header.s_payload_len);
+      if (s <= 0) {
+        return -1;
+      }
     }
-    return -1;
+    return STATUS_OK;
   }
   return STATUS_EOF;
 }
