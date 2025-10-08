@@ -54,14 +54,14 @@ typedef struct ctx_t {
 
   ctx_pipe *pipes;
 
+  int proc_id;
+
   struct { // can use just bits
     int *forks;
     int *durties;
     int *reqfs;
     int *stats;
   } net;
-
-  int proc_id;
 } ctx;
 
 typedef struct ctx_pipe_idx_t {

@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,7 @@ typedef struct args_t {
   int proc_n;
   const char *pipes_path;
   const char *events_path;
+  int *balances;
 } args;
 
 typedef struct ctx_pipe_t {
@@ -55,6 +57,10 @@ typedef struct ctx_t {
   ctx_pipe *pipes;
 
   int proc_id;
+
+  struct {
+    int *vec;
+  } clock;
 } ctx;
 
 typedef struct ctx_pipe_idx_t {
@@ -99,16 +105,25 @@ __attribute__((unused)) static const char *msg_type_str(MessageType type) {
   return "UNKNOWN";
 }
 
+static void args_deinit(args *args) {
+  if (args->balances) {
+    free(args->balances);
+    args->balances = NULL;
+  }
+}
+
 static int args_parse(args *args, int argc, const char **argv) {
   static const char *const s_usages[] = {
-      "app [options]",
+      "app [options] balances...\n"
+      "    balances...     list of integer process balances, length\n"
+      "                    must be equal to number of processes",
       NULL,
   };
 
   struct argparse_option options[] = {
-      OPT_GROUP("Options:"),
       OPT_HELP(),
-      OPT_INTEGER('p', "processes", &args->proc_n, "number of processes"),
+      OPT_GROUP("Options:"),
+      OPT_INTEGER('p', "procs", &args->proc_n, "number of processes"),
       OPT_END(),
   };
 
@@ -116,13 +131,33 @@ static int args_parse(args *args, int argc, const char **argv) {
   argparse_init(&argparse, options, s_usages, ARGPARSE_STOP_AT_NON_OPTION);
   argparse_describe(&argparse, NULL, NULL);
 
-  int status = argparse_parse(&argparse, argc, argv);
+  argc = argparse_parse(&argparse, argc, argv);
 
-  if (status) {
+  if (argc != args->proc_n) {
     argparse_usage(&argparse);
     return STATUS_BAD_USAGE;
   }
-  return status;
+
+  args->balances = (int *)malloc(sizeof(int) * args->proc_n);
+  if (!args->balances) {
+    return STATUS_BAD_ALLOC;
+  }
+
+  for (int i = 0; i < args->proc_n; ++i) {
+    char *endptr;
+    long balance = strtol(argv[i], &endptr, 10);
+
+    if (*endptr != '\0' || balance > INT_MAX || balance < INT_MIN) {
+      args_deinit(args);
+
+      argparse_usage(&argparse);
+      return STATUS_BAD_USAGE;
+    }
+
+    args->balances[i] = balance;
+  }
+
+  return STATUS_OK;
 }
 
 static void logs_close(ctx *ctx) {
@@ -574,13 +609,15 @@ int main(int argc, const char **argv) {
       .proc_n = 0,
       .events_path = events_log,
       .pipes_path = pipes_log,
+      .balances = NULL,
   };
   ctx ctx = {
       .args = &args,
       .events_f = NULL,
       .pipes_f = NULL,
       .pipes = NULL,
-      .proc_id = 0, // parent
+      .proc_id = 0,
+      .clock = {0} // parent
   };
 
   if ((status = args_parse(&args, argc, argv))) {
@@ -607,6 +644,8 @@ cleanup:
   pipes_close(&ctx);
 
   logs_close(&ctx);
+
+  args_deinit(&args);
 
   return status;
 }

@@ -10,7 +10,6 @@ static void total_sum_snapshot() {
 }
 
 void bank_robbery(void *parent_data, local_id max_id) {
-  // TODO: testing implementation
   for (int i = 1; i < max_id; ++i) {
     transfer(parent_data, i, i + 1, i);
     if (i % 2) {

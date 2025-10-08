@@ -21,8 +21,10 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
   # use the rest as arguments for "run"
   RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   # ...and turn them into do-nothing targets
+  # with duplicates it will show 'up to date'
   $(eval $(sort $(RUN_ARGS)):;@:)
-  .SILENT:
+	# replaces 'up to date' -> 'nothing to be done'
+  .PHONY: $(sort $(RUN_ARGS))
 endif
 
 
@@ -35,7 +37,7 @@ $(PROG): $(SRCS)
 build: $(PROG)
 
 run: $(PROG)
-	@./$< $(RUN_ARGS)
+	./$< $(RUN_ARGS)
 
 clean:
 	rm -f $(PROG) $(LOGS)
