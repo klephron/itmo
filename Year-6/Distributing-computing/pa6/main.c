@@ -290,14 +290,14 @@ static void pipes_configure(ctx *ctx) {
 }
 
 // match proc_id with idx cuz they may be encoded differently
-static ctx_pipe *pipes_select_proc(ctx *ctx, int id_from, int id_to) {
+static ctx_pipe *pipes_select_proc_id(ctx *ctx, int id_from, int id_to) {
   int i = id_from;
   int j = id_to;
   return pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
 }
 
 static int pipes_writer_fd(ctx *ctx, int id_to) {
-  ctx_pipe *p = pipes_select_proc(ctx, ctx->proc_id, id_to);
+  ctx_pipe *p = pipes_select_proc_id(ctx, ctx->proc_id, id_to);
 
   assert(pipes_type_pipe(ctx, p) == PIPE_WRITER);
 
@@ -305,7 +305,7 @@ static int pipes_writer_fd(ctx *ctx, int id_to) {
 }
 
 static int pipes_reader_fd(ctx *ctx, int id_from) {
-  ctx_pipe *p = pipes_select_proc(ctx, id_from, ctx->proc_id);
+  ctx_pipe *p = pipes_select_proc_id(ctx, id_from, ctx->proc_id);
 
   assert(pipes_type_pipe(ctx, p) == PIPE_READER);
 
@@ -335,11 +335,11 @@ static int net_n(const ctx *ctx) {
   return ctx->args->proc_n;
 }
 
-static int net_proc_from(int proc_id) {
+static int net_by_proc_id(int proc_id) {
   return proc_id - 1;
 }
 
-static int net_proc_to(int net_id) {
+static int net_to_proc_id(int net_id) {
   return net_id + 1;
 }
 
@@ -369,12 +369,12 @@ static int net_init(ctx *ctx) {
     goto err;
   }
 
-  for (int i = 0; i < net_proc_from(ctx->proc_id); ++i) {
+  for (int i = 0; i < net_by_proc_id(ctx->proc_id); ++i) {
     ctx->net.forks[i] = 0;
     ctx->net.durties[i] = 0;
     ctx->net.reqfs[i] = 1;
   }
-  for (int i = net_proc_from(ctx->proc_id) + 1; i < n; ++i) {
+  for (int i = net_by_proc_id(ctx->proc_id) + 1; i < n; ++i) {
     ctx->net.forks[i] = 1;
     ctx->net.durties[i] = 1;
     ctx->net.reqfs[i] = 0;
@@ -392,7 +392,7 @@ err:
 
 __attribute__((unused)) static void net_print(const ctx *ctx) {
   int n = net_n(ctx);
-  int net_i = net_proc_from(ctx->proc_id);
+  int net_id = net_by_proc_id(ctx->proc_id);
 
   // with alignment
   int width = snprintf(NULL, 0, "%d", n);
@@ -403,7 +403,7 @@ __attribute__((unused)) static void net_print(const ctx *ctx) {
     if (i) {
       printf(",");
     }
-    if (i == net_i) {
+    if (i == net_id) {
       printf("x");
     } else {
       printf("%d", ctx->net.forks[i]);
@@ -415,7 +415,7 @@ __attribute__((unused)) static void net_print(const ctx *ctx) {
     if (i) {
       printf(",");
     }
-    if (i == net_i) {
+    if (i == net_id) {
       printf("x");
     } else {
       printf("%d", ctx->net.durties[i]);
@@ -427,7 +427,7 @@ __attribute__((unused)) static void net_print(const ctx *ctx) {
     if (i) {
       printf(",");
     }
-    if (i == net_i) {
+    if (i == net_id) {
       printf("x");
     } else {
       printf("%d", ctx->net.reqfs[i]);
@@ -464,82 +464,82 @@ static void net_handle(ctx *ctx, const Message *msg, int net_j) {
 }
 
 static void net_hearout(ctx *ctx, Message *msg) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
+  const int proc_id = ctx->proc_id;
+  const int net_id = net_by_proc_id(proc_id);
   const int n = net_n(ctx);
 
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
+  for (int net_jd = 0; net_jd < n; ++net_jd) {
+    if (net_jd == net_id) {
       continue;
     }
 
-    int proc_j = net_proc_to(net_j);
+    int proc_jd = net_to_proc_id(net_jd);
 
     int s;
-    while (ctx->net.stats[net_j] &&
-           (s = receive(&(rec_ctx){.ctx = ctx, .nio = 1}, proc_j, msg)) ==
+    while (ctx->net.stats[net_jd] &&
+           (s = receive(&(rec_ctx){.ctx = ctx, .nio = 1}, proc_jd, msg)) ==
                STATUS_OK) {
-      net_handle(ctx, msg, net_j);
+      net_handle(ctx, msg, net_jd);
     }
   }
 }
 
 static void net_send(ctx *ctx, Message *msg, int all) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
+  const int proc_id = ctx->proc_id;
+  const int net_id = net_by_proc_id(proc_id);
   const int n = net_n(ctx);
 
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
+  for (int net_jd = 0; net_jd < n; ++net_jd) {
+    if (net_jd == net_id) {
       continue;
     }
-    if (ctx->net.forks[net_j] && ctx->net.durties[net_j] &&
-        (all || ctx->net.reqfs[net_j])) {
+    if (ctx->net.forks[net_jd] && ctx->net.durties[net_jd] &&
+        (all || ctx->net.reqfs[net_jd])) {
 
       msg->s_header.s_type = CS_RELEASE;
       msg->s_header.s_payload_len = 0;
 
-      int proc_j = net_proc_to(net_j);
-      send(ctx, proc_j, msg);
+      int proc_jd = net_to_proc_id(net_jd);
+      send(ctx, proc_jd, msg);
 
-      ctx->net.forks[net_j] = 0;
-      ctx->net.durties[net_j] = 0;
+      ctx->net.forks[net_jd] = 0;
+      ctx->net.durties[net_jd] = 0;
     }
   }
 }
 
 static void net_request(ctx *ctx, Message *msg) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
+  const int proc_id = ctx->proc_id;
+  const int net_id = net_by_proc_id(proc_id);
   const int n = net_n(ctx);
 
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
+  for (int net_jd = 0; net_jd < n; ++net_jd) {
+    if (net_jd == net_id) {
       continue;
     }
-    if (!ctx->net.forks[net_j] && ctx->net.reqfs[net_j]) {
+    if (!ctx->net.forks[net_jd] && ctx->net.reqfs[net_jd]) {
       msg->s_header.s_type = CS_REQUEST;
       msg->s_header.s_payload_len = 0;
 
-      int proc_j = net_proc_to(net_j);
+      int proc_j = net_to_proc_id(net_jd);
       send(ctx, proc_j, msg);
 
-      ctx->net.reqfs[net_j] = 0;
+      ctx->net.reqfs[net_jd] = 0;
     }
   }
 }
 
 static int net_forks_n(ctx *ctx) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
+  const int proc_id = ctx->proc_id;
+  const int net_id = net_by_proc_id(proc_id);
   const int n = net_n(ctx);
 
   int forks = 1;
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
+  for (int net_jd = 0; net_jd < n; ++net_jd) {
+    if (net_jd == net_id) {
       continue;
     }
-    if (ctx->net.forks[net_j]) {
+    if (ctx->net.forks[net_jd]) {
       ++forks;
     }
   }
@@ -547,25 +547,25 @@ static int net_forks_n(ctx *ctx) {
 }
 
 static void net_durty(ctx *ctx) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
+  const int proc_id = ctx->proc_id;
+  const int net_id = net_by_proc_id(proc_id);
   const int n = net_n(ctx);
 
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
+  for (int net_jd = 0; net_jd < n; ++net_jd) {
+    if (net_jd == net_id) {
       continue;
     }
 
-    assert(ctx->net.forks[net_j]);
+    assert(ctx->net.forks[net_jd]);
 
-    ctx->net.durties[net_j] = 1;
+    ctx->net.durties[net_jd] = 1;
   }
 }
 
 // just to not read DONE message, permament (others will start to ignore)
 static void net_leave(ctx *ctx) {
-  const int proc_i = ctx->proc_id;
-  const int net_i = net_proc_from(proc_i);
+  const int proc_id = ctx->proc_id;
+  const int net_id = net_by_proc_id(proc_id);
   const int n = net_n(ctx);
 
   Message msg = {
@@ -578,21 +578,21 @@ static void net_leave(ctx *ctx) {
       .s_payload = {0},
   };
 
-  for (int net_j = 0; net_j < n; ++net_j) {
-    if (net_j == net_i) {
+  for (int net_jd = 0; net_jd < n; ++net_jd) {
+    if (net_jd == net_id) {
       continue;
     }
 
-    int proc_j = net_proc_to(net_j);
+    int proc_jd = net_to_proc_id(net_jd);
 
-    send(ctx, proc_j, &msg);
+    send(ctx, proc_jd, &msg);
 
-    ctx->net.forks[net_j] = 0;
-    ctx->net.durties[net_j] = 0;
+    ctx->net.forks[net_jd] = 0;
+    ctx->net.durties[net_jd] = 0;
   }
 
-  ctx->net.stats[net_i] = 0;
-  ctx->net.reqfs[net_i] = 1;
+  ctx->net.stats[net_id] = 0;
+  ctx->net.reqfs[net_id] = 1;
 }
 
 static int parent_is(ctx *ctx) {
@@ -633,7 +633,7 @@ static int parent_fn(ctx *ctx) {
   return 0;
 }
 
-static int proc_fn(ctx *ctx) {
+static int child_fn(ctx *ctx) {
   __attribute__((unused)) static struct timespec s_ts = {
       .tv_sec = 0,
       .tv_nsec = 100000000,
@@ -754,13 +754,13 @@ static int proc_fn(ctx *ctx) {
   return status;
 }
 
-static int proc_run_all(ctx *ctx) {
+static int child_run_all(ctx *ctx) {
   for (int i = 1; i <= ctx->args->proc_n; ++i) {
     int pid = fork();
 
     if (pid == 0) {
       ctx->proc_id = i;
-      return proc_fn(ctx);
+      return child_fn(ctx);
     } else if (pid < 0) {
       return STATUS_BAD_FORK;
     }
@@ -958,7 +958,7 @@ int main(int argc, const char **argv) {
     goto cleanup;
   }
 
-  if ((status = proc_run_all(&ctx))) {
+  if ((status = child_run_all(&ctx))) {
     goto cleanup;
   }
 

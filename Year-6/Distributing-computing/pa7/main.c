@@ -319,14 +319,14 @@ static void pipes_configure(ctx *ctx) {
 }
 
 // match proc_id with idx cuz they may be encoded differently
-static ctx_pipe *pipes_select_proc(ctx *ctx, int id_from, int id_to) {
+static ctx_pipe *pipes_select_proc_id(ctx *ctx, int id_from, int id_to) {
   int i = id_from;
   int j = id_to;
   return pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
 }
 
 static int pipes_writer_fd(ctx *ctx, int id_to) {
-  ctx_pipe *p = pipes_select_proc(ctx, ctx->proc_id, id_to);
+  ctx_pipe *p = pipes_select_proc_id(ctx, ctx->proc_id, id_to);
 
   assert(pipes_type_pipe(ctx, p) == PIPE_WRITER);
 
@@ -334,7 +334,7 @@ static int pipes_writer_fd(ctx *ctx, int id_to) {
 }
 
 static int pipes_reader_fd(ctx *ctx, int id_from) {
-  ctx_pipe *p = pipes_select_proc(ctx, id_from, ctx->proc_id);
+  ctx_pipe *p = pipes_select_proc_id(ctx, id_from, ctx->proc_id);
 
   assert(pipes_type_pipe(ctx, p) == PIPE_READER);
 
@@ -379,7 +379,7 @@ static int parent_fn(ctx *ctx) {
   return 0;
 }
 
-static int proc_fn(ctx *ctx) {
+static int child_fn(ctx *ctx) {
   __attribute__((unused)) static struct timespec s_ts = {
       .tv_sec = 0,
       .tv_nsec = 100000000,
@@ -471,13 +471,13 @@ static int proc_fn(ctx *ctx) {
   return status;
 }
 
-static int proc_run_all(ctx *ctx) {
+static int child_run_all(ctx *ctx) {
   for (int i = 1; i <= ctx->args->proc_n; ++i) {
     int pid = fork();
 
     if (pid == 0) {
       ctx->proc_id = i;
-      return proc_fn(ctx);
+      return child_fn(ctx);
     } else if (pid < 0) {
       return STATUS_BAD_FORK;
     }
@@ -632,7 +632,7 @@ int main(int argc, const char **argv) {
     goto cleanup;
   }
 
-  if ((status = proc_run_all(&ctx))) {
+  if ((status = child_run_all(&ctx))) {
     goto cleanup;
   }
 
