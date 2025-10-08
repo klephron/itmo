@@ -58,6 +58,8 @@ typedef struct ctx_t {
 
   int proc_id;
 
+  balance_t balance;
+
   struct {
     int *vec;
   } clock;
@@ -403,7 +405,7 @@ static int child_fn(ctx *ctx) {
 
   // send started
   int payload_len = sprintf(request.s_payload, log_started_fmt, 0, proc_id,
-                            getpid(), getppid(), 0);
+                            getpid(), getppid(), ctx->balance);
   request.s_header.s_type = STARTED;
   request.s_header.s_payload_len = payload_len;
 
@@ -435,7 +437,8 @@ static int child_fn(ctx *ctx) {
   logs_event_write(ctx, request.s_payload, payload_len);
 
   // send done
-  payload_len = sprintf(request.s_payload, log_done_fmt, 0, proc_id, 0);
+  payload_len =
+      sprintf(request.s_payload, log_done_fmt, 0, proc_id, ctx->balance);
   request.s_header.s_type = DONE;
   request.s_header.s_payload_len = payload_len;
 
@@ -471,12 +474,17 @@ static int child_fn(ctx *ctx) {
   return status;
 }
 
+static void child_configure(ctx *ctx, int proc_id, balance_t balance) {
+  ctx->proc_id = proc_id;
+  ctx->balance = balance;
+}
+
 static int child_run_all(ctx *ctx) {
-  for (int i = 1; i <= ctx->args->proc_n; ++i) {
+  for (int id = 1; id <= ctx->args->proc_n; ++id) {
     int pid = fork();
 
     if (pid == 0) {
-      ctx->proc_id = i;
+      child_configure(ctx, id, ctx->args->balances[id - 1]);
       return child_fn(ctx);
     } else if (pid < 0) {
       return STATUS_BAD_FORK;
@@ -616,8 +624,9 @@ int main(int argc, const char **argv) {
       .events_f = NULL,
       .pipes_f = NULL,
       .pipes = NULL,
-      .proc_id = 0,
-      .clock = {0} // parent
+      .proc_id = 0, // parent
+      .balance = 0,
+      .clock = {0},
   };
 
   if ((status = args_parse(&args, argc, argv))) {
