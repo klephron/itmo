@@ -48,6 +48,8 @@ typedef enum ctx_pipe_type_t {
   PIPE_WRITER,
 } ctx_pipe_type;
 
+typedef int local_time_t;
+
 typedef struct ctx_t {
   const args *args;
 
@@ -61,7 +63,7 @@ typedef struct ctx_t {
   balance_t balance;
 
   struct {
-    int *vec;
+    local_time_t *vec;
   } clock;
 } ctx;
 
@@ -341,6 +343,36 @@ static int pipes_reader_fd(ctx *ctx, int id_from) {
   assert(pipes_type_pipe(ctx, p) == PIPE_READER);
 
   return p->r;
+}
+
+static int clock_n(const ctx *ctx) {
+  return ctx->args->proc_n;
+}
+
+static void clock_deinit(ctx *ctx) {
+  if (ctx->clock.vec) {
+    free(ctx->clock.vec);
+    ctx->clock.vec = NULL;
+  }
+}
+
+static int clock_init(ctx *ctx) {
+  const int n = clock_n(ctx);
+
+  ctx->clock.vec = (local_time_t *)malloc(sizeof(local_time_t) * n);
+  if (!ctx->clock.vec) {
+    goto err;
+  }
+
+  for (int i = 0; i < n; ++i) {
+    ctx->clock.vec[i] = 0;
+  }
+
+  return 0;
+
+err:
+  clock_deinit(ctx);
+  return STATUS_BAD_ALLOC;
 }
 
 static int parent_is(ctx *ctx) {
