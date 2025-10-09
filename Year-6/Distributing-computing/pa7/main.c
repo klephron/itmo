@@ -488,6 +488,18 @@ static void clock_msg_receive(Message *msg, int status,
   }
 }
 
+// counts number of events
+static local_time_t clock_time(const ctx_t *ctx) {
+  const int n = clock_n(ctx);
+
+  local_time_t time = 0;
+  for (int i = 0; i < n; ++i) {
+    time += ctx->clock.vec[i];
+  }
+
+  return time;
+}
+
 static int parent_id() {
   return 0;
 }
@@ -509,26 +521,30 @@ static int parent_fn(ctx_t *ctx) {
 
   pipes_configure(ctx);
 
-  // receive started
-  for (int i = 1; i <= n; ++i) {
-    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
-    check_receive(ctx, &msg, s, STARTED);
+  {
+    for (int i = 1; i <= n; ++i) {
+      int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
+      check_receive(ctx, &msg, s, STARTED);
+    }
   }
 
-  local_id max_id = ctx->args->proc_n;
-  bank_robbery(ctx, max_id);
+  {
+    local_id max_id = ctx->args->proc_n;
+    bank_robbery(ctx, max_id);
 
-  // send stop
-  msg.s_header.s_type = STOP;
-  msg.s_header.s_payload_len = 0;
-  if (send_multicast(ctx, &msg)) {
-    error_send_multicast(ctx, &msg);
+    msg.s_header.s_type = STOP;
+    msg.s_header.s_payload_len = 0;
+
+    if (send_multicast(ctx, &msg)) {
+      error_send_multicast(ctx, &msg);
+    }
   }
 
-  // receive done
-  for (int i = 1; i <= n; ++i) {
-    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
-    check_receive(ctx, &msg, s, DONE);
+  {
+    for (int i = 1; i <= n; ++i) {
+      int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
+      check_receive(ctx, &msg, s, DONE);
+    }
   }
 
   int wpid;
@@ -565,8 +581,8 @@ static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
         error_send(ctx, msg);
       }
 
-      int len = sprintf(msg->s_payload, log_transfer_out_fmt, 0, proc_id,
-                        order_ref->s_amount, order_ref->s_dst);
+      int len = sprintf(msg->s_payload, log_transfer_out_fmt, clock_time(ctx),
+                        proc_id, order_ref->s_amount, order_ref->s_dst);
       logs_event_write(ctx, msg->s_payload, len);
       break;
     }
@@ -583,8 +599,8 @@ static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
         error_send(ctx, msg);
       }
 
-      int len = sprintf(msg->s_payload, log_transfer_in_fmt, 0, proc_id,
-                        order_ref->s_amount, order_ref->s_src);
+      int len = sprintf(msg->s_payload, log_transfer_in_fmt, clock_time(ctx),
+                        proc_id, order_ref->s_amount, order_ref->s_src);
       logs_event_write(ctx, msg->s_payload, len);
       break;
     }
@@ -610,7 +626,8 @@ static int child_fn(ctx_t *ctx) {
 
   const int n = ctx->args->proc_n;
   const int proc_id = ctx->proc_id;
-  int status = 0;
+
+  const local_time_t *vec_proc_jd = NULL;
 
   Message msg = {
       .s_header =
@@ -621,88 +638,102 @@ static int child_fn(ctx_t *ctx) {
   };
 
   pipes_configure(ctx);
-
-  // send started
-  int payload_len = sprintf(msg.s_payload, log_started_fmt, 0, proc_id,
-                            getpid(), getppid(), ctx->balance);
-  msg.s_header.s_type = STARTED;
-  msg.s_header.s_payload_len = payload_len;
-
-  if (send_multicast(ctx, &msg)) {
-    error_send_multicast(ctx, &msg);
-  }
-
-  logs_event_write(ctx, msg.s_payload, payload_len);
-
-  // receive started from all procs
-  for (int i = 1; i <= n; ++i) {
-    if (i == proc_id) {
-      continue;
-    }
-
-    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
-    check_receive(ctx, &msg, s, STARTED);
-  }
-
-  // log received all started
-  payload_len =
-      sprintf(msg.s_payload, log_received_all_started_fmt, 0, proc_id);
-
-  logs_event_write(ctx, msg.s_payload, payload_len);
-
-  // effective work
   clock_init(ctx);
 
-  child_state_t state = CHILD_STARTED;
-  const local_time_t *vec_proc_jd = NULL;
+  {
+    clock_inc(ctx);
+    int len = sprintf(msg.s_payload, log_started_fmt, clock_time(ctx), proc_id,
+                      getpid(), getppid(), ctx->balance);
+    msg.s_header.s_type = STARTED;
+    msg.s_header.s_payload_len = len;
 
-  while (state != CHILD_DONE) {
-    int s = receive_any_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, &msg,
-                              &vec_proc_jd);
-
-    if (s) {
-      error_receive_not(ctx);
-      continue;
+    if (send_multicast_clock(ctx, &msg)) {
+      error_send_multicast(ctx, &msg);
     }
 
-    child_handle(ctx, &state, &msg, vec_proc_jd);
+    logs_event_write(ctx, msg.s_payload, len);
+  }
+
+  {
+    for (int i = 1; i <= n; ++i) {
+      if (i == proc_id) {
+        continue;
+      }
+
+      int s = receive_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg,
+                            &vec_proc_jd);
+
+      check_receive(ctx, &msg, s, STARTED);
+
+      clock_syn(ctx, vec_proc_jd);
+      clock_inc(ctx);
+    }
+
+    int len = sprintf(msg.s_payload, log_received_all_started_fmt,
+                      clock_time(ctx), proc_id);
+
+    logs_event_write(ctx, msg.s_payload, len);
+  }
+
+  {
+    child_state_t state = CHILD_STARTED;
+
+    while (state != CHILD_DONE) {
+      int s = receive_any_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, &msg,
+                                &vec_proc_jd);
+
+      if (s) {
+        error_receive_not(ctx);
+        continue;
+      }
+
+      child_handle(ctx, &state, &msg, vec_proc_jd);
+    }
+  }
+
+  {
+    clock_inc(ctx);
+    int len = sprintf(msg.s_payload, log_done_fmt, clock_time(ctx), proc_id,
+                      ctx->balance);
+    msg.s_header.s_type = DONE;
+    msg.s_header.s_payload_len = len;
+
+    if (send_multicast_clock(ctx, &msg)) {
+      error_send_multicast(ctx, &msg);
+    }
+
+    logs_event_write(ctx, msg.s_payload, len);
+  }
+
+  {
+    for (int i = 1; i <= n; ++i) {
+      if (i == proc_id) {
+        continue;
+      }
+
+      int s;
+      do {
+        s = receive_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg,
+                          &vec_proc_jd);
+        if (s) {
+          error_receive_not(ctx);
+          break;
+        }
+
+        clock_syn(ctx, vec_proc_jd);
+        clock_inc(ctx);
+      } while (msg.s_header.s_type != DONE);
+    }
+
+    int len = sprintf(msg.s_payload, log_received_all_done_fmt, clock_time(ctx),
+                      proc_id);
+
+    logs_event_write(ctx, msg.s_payload, len);
   }
 
   clock_deinit(ctx);
 
-  // send done
-  payload_len = sprintf(msg.s_payload, log_done_fmt, 0, proc_id, ctx->balance);
-  msg.s_header.s_type = DONE;
-  msg.s_header.s_payload_len = payload_len;
-
-  if (send_multicast(ctx, &msg)) {
-    error_send_multicast(ctx, &msg);
-  }
-
-  logs_event_write(ctx, msg.s_payload, payload_len);
-
-  // receive done from all procs
-  for (int i = 1; i <= n; ++i) {
-    if (i == proc_id) {
-      continue;
-    }
-
-    int s;
-    do {
-      s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
-      if (s) {
-        error_receive_not(ctx);
-        break;
-      }
-    } while (msg.s_header.s_type != DONE);
-  }
-
-  // log received all done
-  payload_len = sprintf(msg.s_payload, log_received_all_done_fmt, 0, proc_id);
-
-  logs_event_write(ctx, msg.s_payload, payload_len);
-
-  return status;
+  return STATUS_OK;
 }
 
 static void child_configure(ctx_t *ctx, int proc_id, balance_t balance) {
@@ -721,7 +752,7 @@ static int child_run_all(ctx_t *ctx) {
       return STATUS_BAD_FORK;
     }
   }
-  return 0;
+  return STATUS_OK;
 }
 
 int send(void *self, local_id dst, const Message *msg) {
