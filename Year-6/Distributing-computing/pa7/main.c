@@ -78,12 +78,14 @@ typedef struct {
 
   struct {
     local_time_t *vec;
+    int *stats;
   } clock;
 } ctx_t;
 
 typedef struct {
   ctx_t *ctx;
   int nio; // nonblocking
+  int id;  // identifier, from which message is received
 } rec_ctx_t;
 
 typedef enum {
@@ -408,6 +410,10 @@ static void clock_deinit(ctx_t *ctx) {
     free(ctx->clock.vec);
     ctx->clock.vec = NULL;
   }
+  if (ctx->clock.stats) {
+    free(ctx->clock.stats);
+    ctx->clock.stats = NULL;
+  }
 }
 
 static int clock_init(ctx_t *ctx) {
@@ -418,8 +424,14 @@ static int clock_init(ctx_t *ctx) {
     goto err;
   }
 
+  ctx->clock.stats = (int *)malloc(sizeof(int) * n);
+  if (!ctx->clock.stats) {
+    goto err;
+  }
+
   for (int i = 0; i < n; ++i) {
     ctx->clock.vec[i] = 0;
+    ctx->clock.stats[i] = 0;
   }
 
   return 0;
@@ -445,6 +457,13 @@ __attribute__((unused)) static void clock_print(const ctx_t *ctx) {
       printf(", ");
     }
     printf("%d", ctx->clock.vec[i]);
+  }
+  printf("], stats=[");
+  for (int i = 0; i < n; ++i) {
+    if (i) {
+      printf(", ");
+    }
+    printf("%d", ctx->clock.stats[i]);
   }
   printf("]\n");
 }
@@ -498,6 +517,23 @@ static local_time_t clock_time(const ctx_t *ctx) {
   }
 
   return time;
+}
+
+static void clock_activate(const ctx_t *ctx, int proc_id) {
+  ctx->clock.stats[clock_by_proc_id(proc_id)] = 1;
+}
+
+static void clock_deactivate(const ctx_t *ctx, int proc_id) {
+  ctx->clock.stats[clock_by_proc_id(proc_id)] = 0;
+}
+
+static int clock_actives(const ctx_t *ctx) {
+  const int n = clock_n(ctx);
+  int c = 0;
+  for (int i = 0; i < n; ++i) {
+    c += ctx->clock.stats[i];
+  }
+  return c;
 }
 
 static int parent_id() {
@@ -557,13 +593,38 @@ static int parent_fn(ctx_t *ctx) {
 }
 
 static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
-                        const local_time_t *vec_proc_jd) {
+                        int proc_jd, const local_time_t *vec_proc_jd) {
   const int proc_id = ctx->proc_id;
+  MessageType type = msg->s_header.s_type;
 
-  switch ((MessageType)msg->s_header.s_type) {
+  switch (type) {
   case STOP: {
-    *state = CHILD_K_STOPPED;
     clock_inc(ctx);
+
+    if (proc_jd != parent_id()) {
+      clock_deactivate(ctx, proc_jd);
+      break;
+    }
+
+    // multicast (without parent) send STOP messages to notify that we are
+    // stopping. FIFO will help us go to DONE state
+
+    *state = CHILD_K_STOPPED;
+
+    clock_deactivate(ctx, proc_id);
+
+    const int n = ctx->args->proc_n;
+
+    clock_inc(ctx);
+    for (int id = 1; id <= n; ++id) {
+      if (id == proc_id) {
+        continue;
+      }
+      if (send_clock(ctx, id, msg)) {
+        error_send(ctx, msg);
+      }
+    }
+
     break;
   }
   case TRANSFER: {
@@ -612,18 +673,51 @@ static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
     return STATUS_UNEXPECTED;
   }
   default:
+    fprintf(stderr, "unexpected type in %i handling %s\n", proc_id,
+            msg_type_str(type));
     return STATUS_BAD_TYPE;
+  }
+
+  if (*state == CHILD_K_STOPPED && !clock_actives(ctx)) {
+    *state = CHILD_DONE;
   }
 
   return STATUS_OK;
 }
 
-static int child_fn(ctx_t *ctx) {
-  __attribute__((unused)) static struct timespec s_ts = {
+static int child_yield_active(ctx_t *ctx, child_state_t *state, Message *msg) {
+  static struct timespec s_ts = {
       .tv_sec = 0,
-      .tv_nsec = 100000000,
+      .tv_nsec = 1000000,
   };
 
+  const int proc_id = ctx->proc_id;
+  const int n = ctx->args->proc_n;
+
+  const local_time_t *vec_proc_jd = NULL;
+
+  while (1) {
+    for (int id = 0; id <= n; ++id) {
+      // receive only from actives or parent, not to read DONE msg
+      if (proc_id == id ||
+          (id != 0 && !ctx->clock.stats[clock_by_proc_id(id)])) {
+        continue;
+      }
+
+      int s = receive_clock(&(rec_ctx_t){.ctx = ctx, .nio = 1}, id, msg,
+                            &vec_proc_jd);
+      if (s) {
+        continue;
+      }
+
+      return child_handle(ctx, state, msg, id, vec_proc_jd);
+    }
+
+    nanosleep(&s_ts, NULL);
+  }
+}
+
+static int child_fn(ctx_t *ctx) {
   const int n = ctx->args->proc_n;
   const int proc_id = ctx->proc_id;
 
@@ -652,6 +746,8 @@ static int child_fn(ctx_t *ctx) {
     }
 
     logs_event_write(ctx, msg.s_payload, len);
+
+    clock_activate(ctx, proc_id);
   }
 
   {
@@ -667,6 +763,8 @@ static int child_fn(ctx_t *ctx) {
 
       clock_syn(ctx, vec_proc_jd);
       clock_inc(ctx);
+
+      clock_activate(ctx, i);
     }
 
     int len = sprintf(msg.s_payload, log_received_all_started_fmt,
@@ -679,15 +777,7 @@ static int child_fn(ctx_t *ctx) {
     child_state_t state = CHILD_STARTED;
 
     while (state != CHILD_DONE) {
-      int s = receive_any_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, &msg,
-                                &vec_proc_jd);
-
-      if (s) {
-        error_receive_not(ctx);
-        continue;
-      }
-
-      child_handle(ctx, &state, &msg, vec_proc_jd);
+      child_yield_active(ctx, &state, &msg);
     }
   }
 
@@ -882,6 +972,9 @@ int receive_any(void *self, Message *msg) {
         return -1;
       }
     }
+
+    rec->id = id;
+
     return STATUS_OK;
   }
   return STATUS_EOF;
@@ -915,9 +1008,6 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
   if (send(ctx, src, &msg)) {
     error_send(ctx, &msg);
   }
-
-  printf("parent sent order %d -> %d $%d\n", order_ref->s_src, order_ref->s_dst,
-         order_ref->s_amount);
 
   int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, dst, &msg);
   check_receive(ctx, &msg, s, ACK);
