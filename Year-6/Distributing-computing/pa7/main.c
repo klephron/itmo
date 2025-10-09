@@ -773,6 +773,9 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
   check_receive(ctx, &msg, s, ACK);
 }
 
+void total_sum_snapshot(void *parent_data) {
+}
+
 int main(int argc, const char **argv) {
   int status;
 
