@@ -53,7 +53,14 @@ typedef struct {
   int j;
 } pipe_idx_t;
 
-typedef int local_time_t;
+typedef timestamp_t local_time_t;
+
+typedef enum {
+  CLOCK_CMP_EQ = 0,                           // equal
+  CLOCK_CMP_LT = 1 << 0,                      // lower
+  CLOCK_CMP_GT = 1 << 1,                      // greater
+  CLOCK_CMP_PR = CLOCK_CMP_GT | CLOCK_CMP_LT, // parallel
+} clock_cmp_t;
 
 typedef struct {
   const args_t *args;
@@ -375,10 +382,50 @@ err:
   return STATUS_BAD_ALLOC;
 }
 
-static
+static int clock_by_proc_id(int proc_id) {
+  return proc_id - 1;
+}
 
-    static int
-    parent_is(ctx_t *ctx) {
+static clock_cmp_t clock_syn(ctx_t *ctx, const local_time_t *vec) {
+  const int n = clock_n(ctx);
+
+  clock_cmp_t cmp = CLOCK_CMP_EQ;
+
+  for (int i = 0; i < n; ++i) {
+    if (ctx->clock.vec[i] < vec[i]) {
+      ctx->clock.vec[i] = vec[i];
+      cmp |= CLOCK_CMP_LT;
+    } else if (ctx->clock.vec[i] > vec[i]) {
+      cmp |= CLOCK_CMP_GT;
+    }
+  }
+
+  return cmp;
+}
+
+static void clock_inc(ctx_t *ctx) {
+  int id = clock_by_proc_id(ctx->proc_id);
+  ctx->clock.vec[id]++;
+}
+
+static void clock_msg_send(ctx_t *ctx, Message *msg) {
+  const int n = clock_n(ctx);
+
+  for (int i = 0; i < n; ++i) {
+    msg->s_header.s_local_timevector[i] = ctx->clock.vec[i];
+  }
+}
+
+static void clock_msg_receive(Message *msg, int status,
+                              const local_time_t **vec_o) {
+  if (status == STATUS_OK) {
+    *vec_o = msg->s_header.s_local_timevector;
+  } else {
+    *vec_o = NULL;
+  }
+}
+
+static int parent_is(ctx_t *ctx) {
   return ctx->proc_id == 0;
 }
 
@@ -537,6 +584,11 @@ int send(void *self, local_id dst, const Message *msg) {
   return s == -1 ? -1 : STATUS_OK;
 }
 
+int send_clock(void *self, local_id dst, Message *msg) {
+  clock_msg_send(self, msg);
+  return send(self, dst, msg);
+}
+
 int send_multicast(void *self, const Message *msg) {
   ctx_t *ctx = self;
   int n = ctx->args->proc_n;
@@ -554,6 +606,11 @@ int send_multicast(void *self, const Message *msg) {
   }
 
   return status;
+}
+
+int send_multicast_clock(void *self, Message *msg) {
+  clock_msg_send(self, msg);
+  return send_multicast(self, msg);
 }
 
 int receive(void *self, local_id from, Message *msg) {
@@ -590,6 +647,13 @@ int receive(void *self, local_id from, Message *msg) {
     }
     return STATUS_OK;
   }
+}
+
+int receive_clock(void *self, local_id from, Message *msg,
+                  const local_time_t **vec_o) {
+  int status = receive(self, from, msg);
+  clock_msg_receive(msg, status, vec_o);
+  return status;
 }
 
 int receive_any(void *self, Message *msg) {
@@ -640,6 +704,12 @@ int receive_any(void *self, Message *msg) {
     return STATUS_OK;
   }
   return STATUS_EOF;
+}
+
+int receive_any_clock(void *self, Message *msg, const local_time_t **vec_o) {
+  int status = receive_any(self, msg);
+  clock_msg_receive(msg, status, vec_o);
+  return status;
 }
 
 void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
