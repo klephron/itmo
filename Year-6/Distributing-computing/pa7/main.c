@@ -26,6 +26,7 @@ typedef enum {
   STATUS_BAD_FORK = 4,
   STATUS_BAD_TYPE = 5,
   STATUS_BAD_USAGE = 255,
+  STATUS_UNEXPECTED = -1,
   STATUS_EOF = 10,
   STATUS_EAGAIN = 11,
 } status_t;
@@ -84,6 +85,18 @@ typedef struct {
   ctx_t *ctx;
   int nio; // nonblocking
 } rec_ctx_t;
+
+typedef enum {
+  CHILD_STARTED,
+  CHILD_K_STOPPED,
+  CHILD_DONE,
+} child_state_t;
+
+int send_clock(void *self, local_id dst, Message *msg);
+int send_multicast_clock(void *self, Message *msg);
+int receive_clock(void *self, local_id from, Message *msg,
+                  const local_time_t **vec_o);
+int receive_any_clock(void *self, Message *msg, const local_time_t **vec_o);
 
 __attribute__((unused)) static const char *msg_type_str(MessageType type) {
   switch (type) {
@@ -420,6 +433,22 @@ static int clock_by_proc_id(int proc_id) {
   return proc_id - 1;
 }
 
+__attribute__((unused)) static void clock_print(const ctx_t *ctx) {
+  const int n = clock_n(ctx);
+
+  int width = snprintf(NULL, 0, "%d", n);
+
+  printf("%*d: ", width, ctx->proc_id);
+  printf("vec=[");
+  for (int i = 0; i < n; ++i) {
+    if (i) {
+      printf(", ");
+    }
+    printf("%d", ctx->clock.vec[i]);
+  }
+  printf("]\n");
+}
+
 static clock_cmp_t clock_syn(ctx_t *ctx, const local_time_t *vec) {
   const int n = clock_n(ctx);
 
@@ -457,6 +486,10 @@ static void clock_msg_receive(Message *msg, int status,
   } else {
     *vec_o = NULL;
   }
+}
+
+static int parent_id() {
+  return 0;
 }
 
 static int parent_is(ctx_t *ctx) {
@@ -507,6 +540,68 @@ static int parent_fn(ctx_t *ctx) {
   return 0;
 }
 
+static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
+                        const local_time_t *vec_proc_jd) {
+  const int proc_id = ctx->proc_id;
+
+  switch ((MessageType)msg->s_header.s_type) {
+  case STOP: {
+    *state = CHILD_K_STOPPED;
+    clock_inc(ctx);
+    break;
+  }
+  case TRANSFER: {
+    clock_syn(ctx, vec_proc_jd);
+    clock_inc(ctx);
+
+    const TransferOrder *order_ref = (const TransferOrder *)msg->s_payload;
+
+    // to src
+    if (order_ref->s_src == proc_id) {
+      ctx->balance -= order_ref->s_amount;
+
+      clock_inc(ctx);
+      if (send_clock(ctx, order_ref->s_dst, msg)) {
+        error_send(ctx, msg);
+      }
+
+      int len = sprintf(msg->s_payload, log_transfer_out_fmt, 0, proc_id,
+                        order_ref->s_amount, order_ref->s_dst);
+      logs_event_write(ctx, msg->s_payload, len);
+      break;
+    }
+
+    // to dst
+    if (order_ref->s_dst == proc_id) {
+      ctx->balance += order_ref->s_amount;
+
+      msg->s_header.s_type = ACK;
+      msg->s_header.s_payload_len = 0;
+
+      clock_inc(ctx);
+      if (send(ctx, parent_id(), msg)) {
+        error_send(ctx, msg);
+      }
+
+      int len = sprintf(msg->s_payload, log_transfer_in_fmt, 0, proc_id,
+                        order_ref->s_amount, order_ref->s_src);
+      logs_event_write(ctx, msg->s_payload, len);
+      break;
+    }
+
+    fprintf(stderr,
+            "error: %d received not its transfer order (%d -> %d) $%d\n",
+            proc_id, order_ref->s_src, order_ref->s_dst, order_ref->s_amount);
+
+    return STATUS_UNEXPECTED;
+  }
+  default:
+    return STATUS_BAD_TYPE;
+  }
+
+  return STATUS_OK;
+}
+
 static int child_fn(ctx_t *ctx) {
   __attribute__((unused)) static struct timespec s_ts = {
       .tv_sec = 0,
@@ -554,6 +649,26 @@ static int child_fn(ctx_t *ctx) {
       sprintf(msg.s_payload, log_received_all_started_fmt, 0, proc_id);
 
   logs_event_write(ctx, msg.s_payload, payload_len);
+
+  // effective work
+  clock_init(ctx);
+
+  child_state_t state = CHILD_STARTED;
+  const local_time_t *vec_proc_jd = NULL;
+
+  while (state != CHILD_DONE) {
+    int s = receive_any_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, &msg,
+                              &vec_proc_jd);
+
+    if (s) {
+      error_receive_not(ctx);
+      continue;
+    }
+
+    child_handle(ctx, &state, &msg, vec_proc_jd);
+  }
+
+  clock_deinit(ctx);
 
   // send done
   payload_len = sprintf(msg.s_payload, log_done_fmt, 0, proc_id, ctx->balance);
@@ -699,26 +814,27 @@ int receive_any(void *self, Message *msg) {
   rec_ctx_t *rec = self;
   ctx_t *ctx = rec->ctx;
   const int n = ctx->args->proc_n;
-  const int n_eofs = ctx->proc_id == 0 ? n : n - 1;
+  const int n_eofs = n;
+  const int id_start = 0;
 
   memset(msg->s_payload, 0, msg->s_header.s_payload_len);
 
-  for (int id_from = 1, eofs = 0; eofs < n_eofs; ++id_from) {
+  for (int id = id_start, eofs = 0; eofs < n_eofs; ++id) {
     // sleep and loop again
-    if (id_from > n) {
+    if (id > n) {
       if (rec->nio) {
         return STATUS_EAGAIN;
       }
-      id_from = 1;
+      id = id_start;
       eofs = 0;
       nanosleep(&s_ts, NULL);
     }
 
-    if (id_from == ctx->proc_id) {
+    if (id == ctx->proc_id) {
       continue;
     }
 
-    int rfd = pipes_reader_fd(ctx, id_from);
+    int rfd = pipes_reader_fd(ctx, id);
     int s = read(rfd, msg, sizeof(MessageHeader));
 
     if (s == 0) {
@@ -769,6 +885,9 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
     error_send(ctx, &msg);
   }
 
+  printf("parent sent order %d -> %d $%d\n", order_ref->s_src, order_ref->s_dst,
+         order_ref->s_amount);
+
   int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, dst, &msg);
   check_receive(ctx, &msg, s, ACK);
 }
@@ -790,7 +909,7 @@ int main(int argc, const char **argv) {
       .events_f = NULL,
       .pipes_f = NULL,
       .pipes = NULL,
-      .proc_id = 0, // parent
+      .proc_id = parent_id(),
       .balance = 0,
       .clock = {0},
   };
