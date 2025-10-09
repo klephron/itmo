@@ -24,6 +24,7 @@ typedef enum {
   STATUS_BAD_PIPE = 2,
   STATUS_BAD_FILE = 3,
   STATUS_BAD_FORK = 4,
+  STATUS_BAD_TYPE = 5,
   STATUS_BAD_USAGE = 255,
   STATUS_EOF = 10,
   STATUS_EAGAIN = 11,
@@ -114,6 +115,39 @@ __attribute__((unused)) static const char *msg_type_str(MessageType type) {
     return "EMPTY";
   }
   return "UNKNOWN";
+}
+
+static void error_send(const ctx_t *ctx, const Message *msg) {
+  fprintf(stderr, "error: %i unable to send %s\n", ctx->proc_id,
+          msg_type_str(msg->s_header.s_type));
+}
+
+static void error_send_multicast(const ctx_t *ctx, const Message *msg) {
+  fprintf(stderr, "error: %i unable to send_multicast %s\n", ctx->proc_id,
+          msg_type_str(msg->s_header.s_type));
+}
+
+static void error_receive_not(const ctx_t *ctx) {
+  fprintf(stderr, "error: %i unable to receive\n", ctx->proc_id);
+}
+
+static void error_receive_type(const ctx_t *ctx, const Message *msg,
+                               MessageType expected) {
+  fprintf(stderr, "error: %i received %s, expected %s\n", ctx->proc_id,
+          msg_type_str(msg->s_header.s_type), msg_type_str(expected));
+}
+
+static int check_receive(const ctx_t *ctx, const Message *msg, int status,
+                         MessageType type) {
+  if (status) {
+    error_receive_not(ctx);
+    return status;
+  }
+  if (msg->s_header.s_type != type) {
+    error_receive_type(ctx, msg, type);
+    return STATUS_BAD_TYPE;
+  }
+  return STATUS_OK;
 }
 
 static void args_deinit(args_t *args) {
@@ -432,26 +466,36 @@ static int parent_is(ctx_t *ctx) {
 static int parent_fn(ctx_t *ctx) {
   int n = ctx->args->proc_n;
 
-  Message message = {{0}};
+  Message msg = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+          },
+      .s_payload = {0},
+  };
 
   pipes_configure(ctx);
 
+  // receive started
   for (int i = 1; i <= n; ++i) {
-    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &message);
-    MessageType type = message.s_header.s_type;
-    if (s || type != STARTED) {
-      fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
-              msg_type_str(type), msg_type_str(STARTED));
-    }
+    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
+    check_receive(ctx, &msg, s, STARTED);
   }
 
+  local_id max_id = ctx->args->proc_n;
+  bank_robbery(ctx, max_id);
+
+  // send stop
+  msg.s_header.s_type = STOP;
+  msg.s_header.s_payload_len = 0;
+  if (send_multicast(ctx, &msg)) {
+    error_send_multicast(ctx, &msg);
+  }
+
+  // receive done
   for (int i = 1; i <= n; ++i) {
-    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &message);
-    MessageType type = message.s_header.s_type;
-    if (s || message.s_header.s_type != DONE) {
-      fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
-              msg_type_str(type), msg_type_str(DONE));
-    }
+    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
+    check_receive(ctx, &msg, s, DONE);
   }
 
   int wpid;
@@ -473,30 +517,27 @@ static int child_fn(ctx_t *ctx) {
   const int proc_id = ctx->proc_id;
   int status = 0;
 
-  Message request = {
+  Message msg = {
       .s_header =
           {
               .s_magic = MESSAGE_MAGIC,
-              .s_payload_len = MAX_PAYLOAD_LEN,
           },
       .s_payload = {0},
   };
-  Message response = {{0}};
 
   pipes_configure(ctx);
 
   // send started
-  int payload_len = sprintf(request.s_payload, log_started_fmt, 0, proc_id,
+  int payload_len = sprintf(msg.s_payload, log_started_fmt, 0, proc_id,
                             getpid(), getppid(), ctx->balance);
-  request.s_header.s_type = STARTED;
-  request.s_header.s_payload_len = payload_len;
+  msg.s_header.s_type = STARTED;
+  msg.s_header.s_payload_len = payload_len;
 
-  if (send_multicast(ctx, &request)) {
-    fprintf(stderr, "error: %i unable to send_multicast STARTED\n",
-            ctx->proc_id);
+  if (send_multicast(ctx, &msg)) {
+    error_send_multicast(ctx, &msg);
   }
 
-  logs_event_write(ctx, request.s_payload, payload_len);
+  logs_event_write(ctx, msg.s_payload, payload_len);
 
   // receive started from all procs
   for (int i = 1; i <= n; ++i) {
@@ -504,31 +545,26 @@ static int child_fn(ctx_t *ctx) {
       continue;
     }
 
-    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &response);
-
-    if (s || response.s_header.s_type != STARTED) {
-      fprintf(stderr, "error: %i unable to receive STARTED from id=%d\n",
-              ctx->proc_id, i);
-    }
+    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
+    check_receive(ctx, &msg, s, STARTED);
   }
 
   // log received all started
   payload_len =
-      sprintf(request.s_payload, log_received_all_started_fmt, 0, proc_id);
+      sprintf(msg.s_payload, log_received_all_started_fmt, 0, proc_id);
 
-  logs_event_write(ctx, request.s_payload, payload_len);
+  logs_event_write(ctx, msg.s_payload, payload_len);
 
   // send done
-  payload_len =
-      sprintf(request.s_payload, log_done_fmt, 0, proc_id, ctx->balance);
-  request.s_header.s_type = DONE;
-  request.s_header.s_payload_len = payload_len;
+  payload_len = sprintf(msg.s_payload, log_done_fmt, 0, proc_id, ctx->balance);
+  msg.s_header.s_type = DONE;
+  msg.s_header.s_payload_len = payload_len;
 
-  if (send_multicast(ctx, &request)) {
-    fprintf(stderr, "error: %i unable to send_multicast DONE\n", ctx->proc_id);
+  if (send_multicast(ctx, &msg)) {
+    error_send_multicast(ctx, &msg);
   }
 
-  logs_event_write(ctx, request.s_payload, payload_len);
+  logs_event_write(ctx, msg.s_payload, payload_len);
 
   // receive done from all procs
   for (int i = 1; i <= n; ++i) {
@@ -538,20 +574,18 @@ static int child_fn(ctx_t *ctx) {
 
     int s;
     do {
-      s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &response);
+      s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg);
       if (s) {
-        fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
-                ctx->proc_id, i);
+        error_receive_not(ctx);
         break;
       }
-    } while (response.s_header.s_type != DONE);
+    } while (msg.s_header.s_type != DONE);
   }
 
   // log received all done
-  payload_len =
-      sprintf(request.s_payload, log_received_all_done_fmt, 0, proc_id);
+  payload_len = sprintf(msg.s_payload, log_received_all_done_fmt, 0, proc_id);
 
-  logs_event_write(ctx, request.s_payload, payload_len);
+  logs_event_write(ctx, msg.s_payload, payload_len);
 
   return status;
 }
@@ -713,6 +747,30 @@ int receive_any_clock(void *self, Message *msg, const local_time_t **vec_o) {
 }
 
 void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
+  ctx_t *ctx = parent_data;
+
+  Message msg = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_payload_len = sizeof(TransferOrder),
+              .s_type = TRANSFER,
+              .s_local_time = 0,
+              .s_local_timevector = {0},
+          },
+  };
+
+  TransferOrder *order_ref = (void *)msg.s_payload;
+  order_ref->s_src = src;
+  order_ref->s_dst = dst;
+  order_ref->s_amount = amount;
+
+  if (send(ctx, src, &msg)) {
+    error_send(ctx, &msg);
+  }
+
+  int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, dst, &msg);
+  check_receive(ctx, &msg, s, ACK);
 }
 
 int main(int argc, const char **argv) {
