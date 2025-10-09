@@ -18,7 +18,7 @@
 #include <time.h>
 #include <unistd.h>
 
-typedef enum status_t {
+typedef enum {
   STATUS_OK = 0,
   STATUS_BAD_ALLOC = 1,
   STATUS_BAD_PIPE = 2,
@@ -27,36 +27,41 @@ typedef enum status_t {
   STATUS_BAD_USAGE = 255,
   STATUS_EOF = 10,
   STATUS_EAGAIN = 11,
-} status;
+} status_t;
 
-typedef struct args_t {
+typedef struct {
   int proc_n;
   const char *pipes_path;
   const char *events_path;
   int *balances;
-} args;
+} args_t;
 
-typedef struct ctx_pipe_t {
+typedef struct {
   int r;
   int w;
-} ctx_pipe;
+} pipe_t;
 
-typedef enum ctx_pipe_type_t {
+typedef enum {
   PIPE_UNDEFINED = 0,
   PIPE_UNUSED,
   PIPE_READER,
   PIPE_WRITER,
-} ctx_pipe_type;
+} pipe_type_t;
+
+typedef struct {
+  int i;
+  int j;
+} pipe_idx_t;
 
 typedef int local_time_t;
 
-typedef struct ctx_t {
-  const args *args;
+typedef struct {
+  const args_t *args;
 
   FILE *events_f;
   FILE *pipes_f;
 
-  ctx_pipe *pipes;
+  pipe_t *pipes;
 
   int proc_id;
 
@@ -65,17 +70,12 @@ typedef struct ctx_t {
   struct {
     local_time_t *vec;
   } clock;
-} ctx;
+} ctx_t;
 
-typedef struct ctx_pipe_idx_t {
-  int i;
-  int j;
-} ctx_pipe_idx;
-
-typedef struct rec_ctx_t {
-  ctx *ctx;
+typedef struct {
+  ctx_t *ctx;
   int nio; // nonblocking
-} rec_ctx;
+} rec_ctx_t;
 
 __attribute__((unused)) static const char *msg_type_str(MessageType type) {
   switch (type) {
@@ -109,14 +109,14 @@ __attribute__((unused)) static const char *msg_type_str(MessageType type) {
   return "UNKNOWN";
 }
 
-static void args_deinit(args *args) {
+static void args_deinit(args_t *args) {
   if (args->balances) {
     free(args->balances);
     args->balances = NULL;
   }
 }
 
-static int args_parse(args *args, int argc, const char **argv) {
+static int args_parse(args_t *args, int argc, const char **argv) {
   static const char *const s_usages[] = {
       "app [options] balances...\n"
       "    balances...     list of integer process balances, length\n"
@@ -164,7 +164,7 @@ static int args_parse(args *args, int argc, const char **argv) {
   return STATUS_OK;
 }
 
-static void logs_close(ctx *ctx) {
+static void logs_close(ctx_t *ctx) {
   if (ctx->events_f) {
     fclose(ctx->events_f);
     ctx->events_f = NULL;
@@ -175,7 +175,7 @@ static void logs_close(ctx *ctx) {
   }
 }
 
-static int logs_open(ctx *ctx) {
+static int logs_open(ctx_t *ctx) {
   int status = 0;
 
   if (!(ctx->events_f = fopen(ctx->args->events_path, "w"))) {
@@ -192,34 +192,34 @@ static int logs_open(ctx *ctx) {
   return status;
 }
 
-static void logs_event_write(ctx *ctx, char *data, int size) {
+static void logs_event_write(ctx_t *ctx, char *data, int size) {
   fwrite(data, sizeof(*data), size, stdout);
   fwrite(data, sizeof(*data), size, ctx->events_f);
 }
 
-static int pipes_n(const ctx *ctx) {
+static int pipes_n(const ctx_t *ctx) {
   return ctx->args->proc_n + 1;
 }
 
-static ctx_pipe *pipes_select(const ctx *ctx, ctx_pipe_idx idx) {
+static pipe_t *pipes_select(const ctx_t *ctx, pipe_idx_t idx) {
   return ctx->pipes + ((idx.i * pipes_n(ctx)) + idx.j);
 }
 
-static ctx_pipe_idx pipes_idx(const ctx *ctx, ctx_pipe *p) {
+static pipe_idx_t pipes_idx(const ctx_t *ctx, pipe_t *p) {
   const int n = pipes_n(ctx);
 
   int idx = p - ctx->pipes;
   int i = idx / n;
   int j = idx % n;
-  return (ctx_pipe_idx){.i = i, .j = j};
+  return (pipe_idx_t){.i = i, .j = j};
 }
 
-static void pipes_close1(ctx_pipe *p) {
+static void pipes_close1(pipe_t *p) {
   close(p->r);
   close(p->w);
 }
 
-static ctx_pipe_type pipes_type(ctx *ctx, ctx_pipe_idx idx) {
+static pipe_type_t pipes_type(ctx_t *ctx, pipe_idx_t idx) {
   if (idx.i == idx.j) {
     return PIPE_UNDEFINED;
   }
@@ -232,23 +232,23 @@ static ctx_pipe_type pipes_type(ctx *ctx, ctx_pipe_idx idx) {
   return PIPE_UNUSED;
 }
 
-static ctx_pipe_type pipes_type_pipe(ctx *ctx, ctx_pipe *p) {
+static pipe_type_t pipes_type_pipe(ctx_t *ctx, pipe_t *p) {
   return pipes_type(ctx, pipes_idx(ctx, p));
 }
 
-static void pipes_close(ctx *ctx) {
+static void pipes_close(ctx_t *ctx) {
   const int n = pipes_n(ctx);
 
   if (ctx->pipes) {
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
-        ctx_pipe_idx idx = {.i = i, .j = j};
+        pipe_idx_t idx = {.i = i, .j = j};
 
         if (pipes_type(ctx, idx) == PIPE_UNDEFINED) {
           continue;
         }
 
-        ctx_pipe *p = pipes_select(ctx, idx);
+        pipe_t *p = pipes_select(ctx, idx);
         pipes_close1(p);
       }
     }
@@ -257,7 +257,7 @@ static void pipes_close(ctx *ctx) {
   }
 }
 
-static int pipes_open(ctx *ctx) {
+static int pipes_open(ctx_t *ctx) {
   const int n = pipes_n(ctx);
 
   ctx->pipes = calloc(1, sizeof(*ctx->pipes) * n * n);
@@ -268,13 +268,13 @@ static int pipes_open(ctx *ctx) {
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      ctx_pipe_idx idx = {.i = i, .j = j};
+      pipe_idx_t idx = {.i = i, .j = j};
 
       if (pipes_type(ctx, idx) == PIPE_UNDEFINED) {
         continue;
       }
 
-      ctx_pipe *p = pipes_select(ctx, idx);
+      pipe_t *p = pipes_select(ctx, idx);
       if (pipe2((int *)p, O_NONBLOCK)) {
         goto err;
       }
@@ -292,13 +292,13 @@ err:
 }
 
 // closes and configures all pipes
-static void pipes_configure(ctx *ctx) {
+static void pipes_configure(ctx_t *ctx) {
   const int n = pipes_n(ctx);
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      ctx_pipe_idx idx = (ctx_pipe_idx){.i = i, .j = j};
-      ctx_pipe *p = pipes_select(ctx, idx);
+      pipe_idx_t idx = (pipe_idx_t){.i = i, .j = j};
+      pipe_t *p = pipes_select(ctx, idx);
 
       switch (pipes_type(ctx, idx)) {
       case PIPE_UNDEFINED: {
@@ -323,40 +323,40 @@ static void pipes_configure(ctx *ctx) {
 }
 
 // match proc_id with idx cuz they may be encoded differently
-static ctx_pipe *pipes_select_proc_id(ctx *ctx, int id_from, int id_to) {
+static pipe_t *pipes_select_proc_id(ctx_t *ctx, int id_from, int id_to) {
   int i = id_from;
   int j = id_to;
-  return pipes_select(ctx, (ctx_pipe_idx){.i = i, .j = j});
+  return pipes_select(ctx, (pipe_idx_t){.i = i, .j = j});
 }
 
-static int pipes_writer_fd(ctx *ctx, int id_to) {
-  ctx_pipe *p = pipes_select_proc_id(ctx, ctx->proc_id, id_to);
+static int pipes_writer_fd(ctx_t *ctx, int id_to) {
+  pipe_t *p = pipes_select_proc_id(ctx, ctx->proc_id, id_to);
 
   assert(pipes_type_pipe(ctx, p) == PIPE_WRITER);
 
   return p->w;
 }
 
-static int pipes_reader_fd(ctx *ctx, int id_from) {
-  ctx_pipe *p = pipes_select_proc_id(ctx, id_from, ctx->proc_id);
+static int pipes_reader_fd(ctx_t *ctx, int id_from) {
+  pipe_t *p = pipes_select_proc_id(ctx, id_from, ctx->proc_id);
 
   assert(pipes_type_pipe(ctx, p) == PIPE_READER);
 
   return p->r;
 }
 
-static int clock_n(const ctx *ctx) {
+static int clock_n(const ctx_t *ctx) {
   return ctx->args->proc_n;
 }
 
-static void clock_deinit(ctx *ctx) {
+static void clock_deinit(ctx_t *ctx) {
   if (ctx->clock.vec) {
     free(ctx->clock.vec);
     ctx->clock.vec = NULL;
   }
 }
 
-static int clock_init(ctx *ctx) {
+static int clock_init(ctx_t *ctx) {
   const int n = clock_n(ctx);
 
   ctx->clock.vec = (local_time_t *)malloc(sizeof(local_time_t) * n);
@@ -375,11 +375,14 @@ err:
   return STATUS_BAD_ALLOC;
 }
 
-static int parent_is(ctx *ctx) {
+static
+
+    static int
+    parent_is(ctx_t *ctx) {
   return ctx->proc_id == 0;
 }
 
-static int parent_fn(ctx *ctx) {
+static int parent_fn(ctx_t *ctx) {
   int n = ctx->args->proc_n;
 
   Message message = {{0}};
@@ -387,7 +390,7 @@ static int parent_fn(ctx *ctx) {
   pipes_configure(ctx);
 
   for (int i = 1; i <= n; ++i) {
-    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &message);
+    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &message);
     MessageType type = message.s_header.s_type;
     if (s || type != STARTED) {
       fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
@@ -396,7 +399,7 @@ static int parent_fn(ctx *ctx) {
   }
 
   for (int i = 1; i <= n; ++i) {
-    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &message);
+    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &message);
     MessageType type = message.s_header.s_type;
     if (s || message.s_header.s_type != DONE) {
       fprintf(stderr, "error: parent unable to receive_any %s, expected %s\n",
@@ -413,7 +416,7 @@ static int parent_fn(ctx *ctx) {
   return 0;
 }
 
-static int child_fn(ctx *ctx) {
+static int child_fn(ctx_t *ctx) {
   __attribute__((unused)) static struct timespec s_ts = {
       .tv_sec = 0,
       .tv_nsec = 100000000,
@@ -454,7 +457,7 @@ static int child_fn(ctx *ctx) {
       continue;
     }
 
-    int s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &response);
+    int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &response);
 
     if (s || response.s_header.s_type != STARTED) {
       fprintf(stderr, "error: %i unable to receive STARTED from id=%d\n",
@@ -488,7 +491,7 @@ static int child_fn(ctx *ctx) {
 
     int s;
     do {
-      s = receive(&(rec_ctx){.ctx = ctx, .nio = 0}, i, &response);
+      s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &response);
       if (s) {
         fprintf(stderr, "error: %i unable to receive DONE from id=%d\n",
                 ctx->proc_id, i);
@@ -506,12 +509,12 @@ static int child_fn(ctx *ctx) {
   return status;
 }
 
-static void child_configure(ctx *ctx, int proc_id, balance_t balance) {
+static void child_configure(ctx_t *ctx, int proc_id, balance_t balance) {
   ctx->proc_id = proc_id;
   ctx->balance = balance;
 }
 
-static int child_run_all(ctx *ctx) {
+static int child_run_all(ctx_t *ctx) {
   for (int id = 1; id <= ctx->args->proc_n; ++id) {
     int pid = fork();
 
@@ -526,7 +529,7 @@ static int child_run_all(ctx *ctx) {
 }
 
 int send(void *self, local_id dst, const Message *msg) {
-  ctx *ctx = self;
+  ctx_t *ctx = self;
 
   int wfd = pipes_writer_fd(ctx, dst);
   int s = write(wfd, msg, msg->s_header.s_payload_len + sizeof(MessageHeader));
@@ -535,7 +538,7 @@ int send(void *self, local_id dst, const Message *msg) {
 }
 
 int send_multicast(void *self, const Message *msg) {
-  ctx *ctx = self;
+  ctx_t *ctx = self;
   int n = ctx->args->proc_n;
 
   int status = STATUS_OK;
@@ -559,8 +562,8 @@ int receive(void *self, local_id from, Message *msg) {
       .tv_nsec = 1000000,
   };
 
-  rec_ctx *rec = self;
-  ctx *ctx = rec->ctx;
+  rec_ctx_t *rec = self;
+  ctx_t *ctx = rec->ctx;
   int rfd = pipes_reader_fd(ctx, from);
 
   memset(msg->s_payload, 0, msg->s_header.s_payload_len);
@@ -595,8 +598,8 @@ int receive_any(void *self, Message *msg) {
       .tv_nsec = 1000000,
   };
 
-  rec_ctx *rec = self;
-  ctx *ctx = rec->ctx;
+  rec_ctx_t *rec = self;
+  ctx_t *ctx = rec->ctx;
   const int n = ctx->args->proc_n;
   const int n_eofs = ctx->proc_id == 0 ? n : n - 1;
 
@@ -645,13 +648,13 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
 int main(int argc, const char **argv) {
   int status;
 
-  args args = {
+  args_t args = {
       .proc_n = 0,
       .events_path = events_log,
       .pipes_path = pipes_log,
       .balances = NULL,
   };
-  ctx ctx = {
+  ctx_t ctx = {
       .args = &args,
       .events_f = NULL,
       .pipes_f = NULL,
