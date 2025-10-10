@@ -84,8 +84,9 @@ typedef enum {
 
 typedef enum {
   SNAPSHOT_NONE,
-  SNAPSHOT_STARTED,
-  SNAPSHOT_ACKED,
+  SNAPSHOT_MASTER_STARTED,
+  SNAPSHOT_MASTER_ACKED,
+  SNAPSHOT_SLAVE_STARTED,
 } snapshot_t;
 
 typedef struct {
@@ -765,11 +766,9 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
     return STATUS_UNEXPECTED;
   }
   case BALANCE_HISTORY: {
-    // if previous snapshot hasn't been completed then ignore
     if (clck->snapshot == SNAPSHOT_NONE) {
-      clck->snapshot = SNAPSHOT_STARTED;
+      clck->snapshot = SNAPSHOT_MASTER_STARTED;
       clck->snapshot_t = clck->vec[clck_by_proc_id(proc_id)] + 1;
-      clck->snapshot_proc_id = proc_id;
 
       msg->s_header.s_type = SNAPSHOT_VTIME;
       msg->s_header.s_local_time = clck->snapshot_t;
@@ -783,20 +782,24 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
         }
       }
       clck_snapshot_ack(clck, proc_id); // ack itself
+      break;
     }
+
+    fprintf(stderr, "%d previous snapshot hasn't been completed\n", proc_id);
     break;
   }
   case BALANCE_STATE: {
-    if (clck->snapshot != SNAPSHOT_ACKED) {
-      fprintf(stderr, "%d snapshot hasn't been acked\n", proc_id);
+    if (clck->snapshot != SNAPSHOT_MASTER_ACKED) {
+      fprintf(stderr,
+              "%d snapshot hasn't been ACKed to receive balance states\n",
+              proc_id);
       return STATUS_UNEXPECTED;
     }
 
-    clck_snapshot_ack(clck, proc_jd);
-
     BalanceState *bs_ref = (BalanceState *)msg->s_payload;
-
     clck->snapshot_balances[clck_by_proc_id(proc_jd)] = bs_ref->s_balance;
+
+    clck_snapshot_ack(clck, proc_jd);
 
     if (clck_snapshot_ack_c(clck) == n) {
       balance_t total = 0;
@@ -823,7 +826,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
         bs_ref->s_balance_pending_in = 0;
         memcpy(bs_ref->s_timevector, clck->vec, sizeof(*clck->vec) * n);
 
-        if (send_clck(clck, parent_id(), msg)) {
+        if (send(clck->ctx_rf, parent_id(), msg)) {
           error_send(clck->ctx_rf, msg);
         }
       }
@@ -834,11 +837,12 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
   }
   case SNAPSHOT_VTIME: {
     if (clck->snapshot != SNAPSHOT_NONE) {
-      fprintf(stderr, "%d previous snapshot hasn't been done\n", proc_id);
+      fprintf(stderr, "%d previous snapshot from %d hasn't been done\n",
+              proc_id, clck->snapshot_proc_id);
       return STATUS_UNEXPECTED;
     }
 
-    clck->snapshot = SNAPSHOT_STARTED;
+    clck->snapshot = SNAPSHOT_SLAVE_STARTED;
     clck->snapshot_t = msg->s_header.s_local_time;
     clck->snapshot_proc_id = proc_jd;
 
@@ -850,7 +854,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
     break;
   }
   case SNAPSHOT_ACK: {
-    if (clck->snapshot != SNAPSHOT_STARTED) {
+    if (clck->snapshot != SNAPSHOT_MASTER_STARTED) {
       fprintf(stderr, "%d snapshot hasn't been started\n", proc_id);
       return STATUS_UNEXPECTED;
     }
@@ -858,10 +862,10 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
     clck_snapshot_ack(clck, proc_jd);
 
     if (clck_snapshot_ack_c(clck) == n) {
-      clck->snapshot = SNAPSHOT_ACKED;
+      clck->snapshot = SNAPSHOT_MASTER_ACKED;
     }
 
-    if (clck->snapshot == SNAPSHOT_ACKED) {
+    if (clck->snapshot == SNAPSHOT_MASTER_ACKED) {
       const int clck_id = clck_by_proc_id(proc_id);
 
       // clear ack array to ack balance_states
@@ -897,7 +901,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
     return STATUS_BAD_TYPE;
   }
 
-  if (clck->snapshot == SNAPSHOT_STARTED && clck->snapshot_proc_id != proc_id &&
+  if (clck->snapshot == SNAPSHOT_SLAVE_STARTED &&
       clck->vec[clck_by_proc_id(clck->snapshot_proc_id)] >= clck->snapshot_t) {
     clck_inc(clck);
 
