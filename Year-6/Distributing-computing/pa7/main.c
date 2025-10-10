@@ -99,6 +99,10 @@ typedef struct {
   state_t state;
 
   snapshot_t snapshot;
+  local_time_t snapshot_t;
+  int snapshot_proc_id;
+  int *snapshot_acks;
+  balance_t *snapshot_balances;
 } clck_t;
 
 typedef struct {
@@ -425,6 +429,38 @@ static int clck_n(const clck_t *clck) {
   return clck->ctx_rf->args->proc_n;
 }
 
+static int clck_by_proc_id(int proc_id) {
+  return proc_id - 1;
+}
+
+static void clck_snapshot_reset(clck_t *clck) {
+  const int n = clck_n(clck);
+
+  clck->snapshot = SNAPSHOT_NONE;
+
+  for (int i = 0; i < n; ++i) {
+    clck->snapshot_acks[i] = 0;
+    clck->snapshot_balances[i] = 0;
+  }
+
+  clck->snapshot_t = 0;
+  clck->snapshot_proc_id = 0;
+}
+
+static int clck_snapshot_ack_c(const clck_t *clck) {
+  const int n = clck_n(clck);
+
+  int c = 0;
+  for (int i = 0; i < n; ++i) {
+    c += clck->snapshot_acks[i];
+  }
+  return c;
+}
+
+static void clck_snapshot_ack(clck_t *clck, int proc_id) {
+  clck->snapshot_acks[clck_by_proc_id(proc_id)] = 1;
+}
+
 static void clck_deinit(clck_t *clck) {
   clck->ctx_rf = NULL;
 
@@ -438,7 +474,17 @@ static void clck_deinit(clck_t *clck) {
   }
 
   clck->balance = 0;
+
   clck->snapshot = SNAPSHOT_NONE;
+
+  if (clck->snapshot_acks) {
+    free(clck->snapshot_acks);
+    clck->snapshot_acks = NULL;
+  }
+  if (clck->snapshot_balances) {
+    free(clck->snapshot_balances);
+    clck->snapshot_balances = NULL;
+  }
 }
 
 static int clck_init(clck_t *clck, ctx_t *ctx_rf, balance_t balance) {
@@ -456,6 +502,16 @@ static int clck_init(clck_t *clck, ctx_t *ctx_rf, balance_t balance) {
     goto err;
   }
 
+  clck->snapshot_acks = (int *)malloc(sizeof(int) * n);
+  if (!clck->snapshot_acks) {
+    goto err;
+  }
+
+  clck->snapshot_balances = (balance_t *)malloc(sizeof(balance_t) * n);
+  if (!clck->snapshot_balances) {
+    goto err;
+  }
+
   for (int i = 0; i < n; ++i) {
     clck->vec[i] = 0;
     clck->stats[i] = 0;
@@ -463,17 +519,14 @@ static int clck_init(clck_t *clck, ctx_t *ctx_rf, balance_t balance) {
 
   clck->balance = balance;
   clck->state = STATE_INITED;
-  clck->snapshot = SNAPSHOT_NONE;
+
+  clck_snapshot_reset(clck);
 
   return 0;
 
 err:
   clck_deinit(clck);
   return STATUS_BAD_ALLOC;
-}
-
-static int clck_by_proc_id(int proc_id) {
-  return proc_id - 1;
 }
 
 __attribute__((unused)) static void clck_print(const clck_t *clck) {
@@ -558,15 +611,15 @@ static rec_ctx_t clck_rec_t(rec_clck_t *rec) {
   };
 }
 
-static void clck_activate(clck_t *clck, int proc_id) {
+static void clck_up(clck_t *clck, int proc_id) {
   clck->stats[clck_by_proc_id(proc_id)] = 1;
 }
 
-static void clck_deactivate(clck_t *clck, int proc_id) {
+static void clck_down(clck_t *clck, int proc_id) {
   clck->stats[clck_by_proc_id(proc_id)] = 0;
 }
 
-static int clck_active_n(const clck_t *clck) {
+static int clck_up_c(const clck_t *clck) {
   const int n = clck_n(clck);
   int c = 0;
   for (int i = 0; i < n; ++i) {
@@ -634,6 +687,8 @@ static int parent_fn(ctx_t *ctx) {
 static int child_handle(clck_t *clck, Message *msg, int proc_jd,
                         const local_time_t *vec_proc_jd) {
   const int proc_id = clck->ctx_rf->proc_id;
+  const int n = clck->ctx_rf->args->proc_n;
+
   MessageType type = msg->s_header.s_type;
 
   switch (type) {
@@ -641,7 +696,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
     clck_inc(clck);
 
     if (proc_jd != parent_id()) {
-      clck_deactivate(clck, proc_jd);
+      clck_down(clck, proc_jd);
       break;
     }
 
@@ -650,9 +705,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
 
     clck->state = STATE_STOPPED;
 
-    clck_deactivate(clck, proc_id);
-
-    const int n = clck->ctx_rf->args->proc_n;
+    clck_down(clck, proc_id);
 
     clck_inc(clck);
     for (int id = 1; id <= n; ++id) {
@@ -711,13 +764,148 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
 
     return STATUS_UNEXPECTED;
   }
+  case BALANCE_HISTORY: {
+    // if previous snapshot hasn't been completed then ignore
+    if (clck->snapshot == SNAPSHOT_NONE) {
+      const int clck_id = clck_by_proc_id(proc_id);
+
+      clck->snapshot = SNAPSHOT_STARTED;
+      clck->snapshot_t = clck->vec[clck_id] + 1;
+      clck->snapshot_proc_id = proc_id;
+
+      msg->s_header.s_type = SNAPSHOT_VTIME;
+      msg->s_header.s_local_time = clck->snapshot_t;
+
+      for (int id = 1; id <= n; ++id) {
+        if (id == proc_id) {
+          continue;
+        }
+        if (send_clck(clck, id, msg)) {
+          error_send(clck->ctx_rf, msg);
+        }
+      }
+      clck_snapshot_ack(clck, proc_id); // ack itself
+    }
+    break;
+  }
+  case BALANCE_STATE: {
+    if (clck->snapshot != SNAPSHOT_ACKED) {
+      fprintf(stderr, "%d snapshot hasn't been acked\n", proc_id);
+      return STATUS_UNEXPECTED;
+    }
+
+    clck_snapshot_ack(clck, proc_jd);
+
+    BalanceState *bs_ref = (BalanceState *)msg->s_payload;
+
+    clck->snapshot_balances[clck_by_proc_id(proc_jd)] = bs_ref->s_balance;
+
+    if (clck_snapshot_ack_c(clck) == n) {
+      balance_t total = 0;
+      for (int i = 0; i < n; ++i) {
+        total += clck->snapshot_balances[i];
+      }
+
+      int len = sprintf(msg->s_payload, format_vector_snapshot,
+                        n > 0 ? clck->vec[0] : 0, n > 1 ? clck->vec[1] : 0,
+                        n > 2 ? clck->vec[2] : 0, n > 3 ? clck->vec[3] : 0,
+                        n > 4 ? clck->vec[4] : 0, n > 5 ? clck->vec[5] : 0,
+                        n > 6 ? clck->vec[6] : 0, n > 7 ? clck->vec[7] : 0,
+                        n > 8 ? clck->vec[8] : 0, n > 9 ? clck->vec[9] : 0,
+                        n > 10 ? clck->vec[10] : 0, total);
+      logs_event_write(clck->ctx_rf, msg->s_payload, len);
+
+      clck_snapshot_reset(clck);
+    }
+    break;
+  }
+  case SNAPSHOT_VTIME: {
+    if (clck->snapshot != SNAPSHOT_NONE) {
+      fprintf(stderr, "%d previous snapshot hasn't been done\n", proc_id);
+      return STATUS_UNEXPECTED;
+    }
+
+    clck->snapshot = SNAPSHOT_STARTED;
+    clck->snapshot_t = msg->s_header.s_local_time;
+    clck->snapshot_proc_id = proc_jd;
+
+    msg->s_header.s_type = SNAPSHOT_ACK;
+
+    if (send_clck(clck, proc_jd, msg)) {
+      error_send(clck->ctx_rf, msg);
+    }
+    break;
+  }
+  case SNAPSHOT_ACK: {
+    if (clck->snapshot != SNAPSHOT_STARTED) {
+      fprintf(stderr, "%d snapshot hasn't been started\n", proc_id);
+      return STATUS_UNEXPECTED;
+    }
+
+    clck_snapshot_ack(clck, proc_jd);
+
+    if (clck_snapshot_ack_c(clck) == n) {
+      clck->snapshot = SNAPSHOT_ACKED;
+    }
+
+    if (clck->snapshot == SNAPSHOT_ACKED) {
+      const int clck_id = clck_by_proc_id(proc_id);
+
+      // clear ack array to ack balance_states
+      for (int i = 0; i < n; ++i) {
+        clck->snapshot_acks[i] = 0;
+      }
+
+      msg->s_header.s_type = EMPTY;
+
+      clck_inc(clck);
+      for (int id = 1; id <= n; ++id) {
+        if (id == proc_id) {
+          continue;
+        }
+        if (send_clck(clck, id, msg)) {
+          error_send(clck->ctx_rf, msg);
+        }
+      }
+
+      clck->snapshot_balances[clck_id] = clck->balance;
+      clck_snapshot_ack(clck, proc_id); // ack itself
+    }
+    break;
+  }
+  case EMPTY: {
+    clck_syn(clck, vec_proc_jd);
+    clck_inc(clck);
+    break;
+  }
   default:
     fprintf(stderr, "unexpected type in %i handling %s\n", proc_id,
             msg_type_str(type));
     return STATUS_BAD_TYPE;
   }
 
-  if (clck->state == STATE_STOPPED && !clck_active_n(clck)) {
+  if (clck->snapshot == SNAPSHOT_STARTED && clck->snapshot_proc_id != proc_id &&
+      clck->vec[clck_by_proc_id(clck->snapshot_proc_id)] >= clck->snapshot_t) {
+    clck_inc(clck);
+
+    BalanceState *bs_ref = (BalanceState *)msg->s_payload;
+
+    msg->s_header.s_type = BALANCE_STATE;
+    msg->s_header.s_payload_len = sizeof(BalanceState);
+
+    bs_ref->s_balance = clck->balance;
+    bs_ref->s_balance_pending_in = 0;
+    bs_ref->s_time = clck_time(clck);
+    memcpy(bs_ref->s_timevector, clck->vec, sizeof(*clck->vec) * n);
+
+    if (send_clck(clck, clck->snapshot_proc_id, msg)) {
+      error_send(clck->ctx_rf, msg);
+    }
+
+    clck_snapshot_reset(clck);
+  }
+
+  if (clck->state == STATE_STOPPED && !clck_up_c(clck)) {
     clck->state = STATE_DONE;
   }
 
@@ -788,7 +976,7 @@ static int child_fn(ctx_t *ctx, balance_t balance) {
 
     logs_event_write(ctx, msg.s_payload, len);
 
-    clck_activate(&clck, proc_id);
+    clck_up(&clck, proc_id);
   }
 
   {
@@ -805,7 +993,7 @@ static int child_fn(ctx_t *ctx, balance_t balance) {
       clck_syn(&clck, vec_proc_jd);
       clck_inc(&clck);
 
-      clck_activate(&clck, i);
+      clck_up(&clck, i);
     }
 
     int len = sprintf(msg.s_payload, log_received_all_started_fmt,
@@ -1062,7 +1250,7 @@ void total_sum_snapshot(void *parent_data) {
           {
               .s_magic = MESSAGE_MAGIC,
               .s_payload_len = 0,
-              .s_type = BALANCE_STATE,
+              .s_type = BALANCE_HISTORY,
           },
   };
 
