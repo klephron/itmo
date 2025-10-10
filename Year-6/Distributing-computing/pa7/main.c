@@ -82,6 +82,12 @@ typedef enum {
   STATE_DONE,
 } state_t;
 
+typedef enum {
+  SNAPSHOT_NONE,
+  SNAPSHOT_STARTED,
+  SNAPSHOT_ACKED,
+} snapshot_t;
+
 typedef struct {
   ctx_t *ctx_rf;
 
@@ -91,6 +97,8 @@ typedef struct {
   balance_t balance;
 
   state_t state;
+
+  snapshot_t snapshot;
 } clck_t;
 
 typedef struct {
@@ -430,6 +438,7 @@ static void clck_deinit(clck_t *clck) {
   }
 
   clck->balance = 0;
+  clck->snapshot = SNAPSHOT_NONE;
 }
 
 static int clck_init(clck_t *clck, ctx_t *ctx_rf, balance_t balance) {
@@ -454,6 +463,7 @@ static int clck_init(clck_t *clck, ctx_t *ctx_rf, balance_t balance) {
 
   clck->balance = balance;
   clck->state = STATE_INITED;
+  clck->snapshot = SNAPSHOT_NONE;
 
   return 0;
 
@@ -1028,8 +1038,6 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
               .s_magic = MESSAGE_MAGIC,
               .s_payload_len = sizeof(TransferOrder),
               .s_type = TRANSFER,
-              .s_local_time = 0,
-              .s_local_timevector = {0},
           },
   };
 
@@ -1047,6 +1055,31 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
 }
 
 void total_sum_snapshot(void *parent_data) {
+  ctx_t *ctx = parent_data;
+
+  Message msg = {
+      .s_header =
+          {
+              .s_magic = MESSAGE_MAGIC,
+              .s_payload_len = 0,
+              .s_type = BALANCE_STATE,
+          },
+  };
+
+  local_id min_id = 1;
+  local_id max_id = ctx->args->proc_n;
+
+  if (max_id == 0) {
+    fprintf(stderr, "error: %d noone to send snapshot request to\n",
+            ctx->proc_id);
+    return;
+  }
+
+  local_id src = rand() % (max_id + 1 - min_id) + min_id;
+
+  if (send(ctx, src, &msg)) {
+    error_send(ctx, &msg);
+  }
 }
 
 int main(int argc, const char **argv) {
