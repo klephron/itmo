@@ -767,10 +767,8 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
   case BALANCE_HISTORY: {
     // if previous snapshot hasn't been completed then ignore
     if (clck->snapshot == SNAPSHOT_NONE) {
-      const int clck_id = clck_by_proc_id(proc_id);
-
       clck->snapshot = SNAPSHOT_STARTED;
-      clck->snapshot_t = clck->vec[clck_id] + 1;
+      clck->snapshot_t = clck->vec[clck_by_proc_id(proc_id)] + 1;
       clck->snapshot_proc_id = proc_id;
 
       msg->s_header.s_type = SNAPSHOT_VTIME;
@@ -814,6 +812,21 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
                         n > 8 ? clck->vec[8] : 0, n > 9 ? clck->vec[9] : 0,
                         n > 10 ? clck->vec[10] : 0, total);
       logs_event_write(clck->ctx_rf, msg->s_payload, len);
+
+      {
+        BalanceState *bs_ref = (BalanceState *)msg->s_payload;
+
+        msg->s_header.s_type = BALANCE_HISTORY;
+        msg->s_header.s_payload_len = sizeof(BalanceState);
+
+        bs_ref->s_balance = total;
+        bs_ref->s_balance_pending_in = 0;
+        memcpy(bs_ref->s_timevector, clck->vec, sizeof(*clck->vec) * n);
+
+        if (send_clck(clck, parent_id(), msg)) {
+          error_send(clck->ctx_rf, msg);
+        }
+      }
 
       clck_snapshot_reset(clck);
     }
@@ -895,7 +908,6 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
 
     bs_ref->s_balance = clck->balance;
     bs_ref->s_balance_pending_in = 0;
-    bs_ref->s_time = clck_time(clck);
     memcpy(bs_ref->s_timevector, clck->vec, sizeof(*clck->vec) * n);
 
     if (send_clck(clck, clck->snapshot_proc_id, msg)) {
@@ -1268,6 +1280,11 @@ void total_sum_snapshot(void *parent_data) {
   if (send(ctx, src, &msg)) {
     error_send(ctx, &msg);
   }
+
+  // cuz induring snapshotting no internal messages can occur
+  // that's why need to block until snapshotting is done to continue transfer
+  int s = receive(&(rec_ctx_t){.ctx = ctx, .nio = 0}, src, &msg);
+  check_receive(ctx, &msg, s, BALANCE_HISTORY);
 }
 
 int main(int argc, const char **argv) {
