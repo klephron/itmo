@@ -73,14 +73,16 @@ typedef struct {
   pipe_t *pipes;
 
   int proc_id;
+} ctx_t;
+
+typedef struct {
+  ctx_t *ctx_rf;
+
+  local_time_t *vec;
+  int *stats;
 
   balance_t balance;
-
-  struct {
-    local_time_t *vec;
-    int *stats;
-  } clock;
-} ctx_t;
+} clck_t;
 
 typedef struct {
   ctx_t *ctx;
@@ -88,17 +90,24 @@ typedef struct {
   int id;  // identifier, from which message is received
 } rec_ctx_t;
 
+typedef struct {
+  clck_t *clck;
+  int nio;
+  int id;
+} rec_clck_t;
+
 typedef enum {
   CHILD_STARTED,
   CHILD_K_STOPPED,
   CHILD_DONE,
 } child_state_t;
 
-int send_clock(void *self, local_id dst, Message *msg);
-int send_multicast_clock(void *self, Message *msg);
-int receive_clock(void *self, local_id from, Message *msg,
-                  const local_time_t **vec_o);
-int receive_any_clock(void *self, Message *msg, const local_time_t **vec_o);
+int send_clck(clck_t *self, local_id dst, Message *msg);
+int send_multicast_clck(clck_t *self, Message *msg);
+int receive_clck(rec_clck_t *self, local_id from, Message *msg,
+                 const local_time_t **vec_o);
+int receive_any_clck(rec_clck_t *self, Message *msg,
+                     const local_time_t **vec_o);
 
 __attribute__((unused)) static const char *msg_type_str(MessageType type) {
   switch (type) {
@@ -401,83 +410,91 @@ static int pipes_reader_fd(ctx_t *ctx, int id_from) {
   return p->r;
 }
 
-static int clock_n(const ctx_t *ctx) {
-  return ctx->args->proc_n;
+static int clck_n(const clck_t *clck) {
+  return clck->ctx_rf->args->proc_n;
 }
 
-static void clock_deinit(ctx_t *ctx) {
-  if (ctx->clock.vec) {
-    free(ctx->clock.vec);
-    ctx->clock.vec = NULL;
+static void clck_deinit(clck_t *clck) {
+  clck->ctx_rf = NULL;
+
+  if (clck->vec) {
+    free(clck->vec);
+    clck->vec = NULL;
   }
-  if (ctx->clock.stats) {
-    free(ctx->clock.stats);
-    ctx->clock.stats = NULL;
+  if (clck->stats) {
+    free(clck->stats);
+    clck->stats = NULL;
   }
+
+  clck->balance = 0;
 }
 
-static int clock_init(ctx_t *ctx) {
-  const int n = clock_n(ctx);
+static int clck_init(clck_t *clck, ctx_t *ctx_rf, balance_t balance) {
+  clck->ctx_rf = ctx_rf;
 
-  ctx->clock.vec = (local_time_t *)malloc(sizeof(local_time_t) * n);
-  if (!ctx->clock.vec) {
+  const int n = clck_n(clck);
+
+  clck->vec = (local_time_t *)malloc(sizeof(local_time_t) * n);
+  if (!clck->vec) {
     goto err;
   }
 
-  ctx->clock.stats = (int *)malloc(sizeof(int) * n);
-  if (!ctx->clock.stats) {
+  clck->stats = (int *)malloc(sizeof(int) * n);
+  if (!clck->stats) {
     goto err;
   }
 
   for (int i = 0; i < n; ++i) {
-    ctx->clock.vec[i] = 0;
-    ctx->clock.stats[i] = 0;
+    clck->vec[i] = 0;
+    clck->stats[i] = 0;
   }
+
+  clck->balance = balance;
 
   return 0;
 
 err:
-  clock_deinit(ctx);
+  clck_deinit(clck);
   return STATUS_BAD_ALLOC;
 }
 
-static int clock_by_proc_id(int proc_id) {
+static int clck_by_proc_id(int proc_id) {
   return proc_id - 1;
 }
 
-__attribute__((unused)) static void clock_print(const ctx_t *ctx) {
-  const int n = clock_n(ctx);
+__attribute__((unused)) static void clck_print(const clck_t *clck) {
+  const int n = clck_n(clck);
 
   int width = snprintf(NULL, 0, "%d", n);
 
-  printf("%*d: ", width, ctx->proc_id);
+  printf("%*d: ", width, clck->ctx_rf->proc_id);
   printf("vec=[");
   for (int i = 0; i < n; ++i) {
     if (i) {
       printf(", ");
     }
-    printf("%d", ctx->clock.vec[i]);
+    printf("%d", clck->vec[i]);
   }
   printf("], stats=[");
   for (int i = 0; i < n; ++i) {
     if (i) {
       printf(", ");
     }
-    printf("%d", ctx->clock.stats[i]);
+    printf("%d", clck->stats[i]);
   }
   printf("]\n");
 }
 
-static clock_cmp_t clock_syn(ctx_t *ctx, const local_time_t *vec) {
-  const int n = clock_n(ctx);
+static clock_cmp_t clck_syn(clck_t *clck, const local_time_t *vec) {
+  const int n = clck_n(clck);
 
   clock_cmp_t cmp = CLOCK_CMP_EQ;
 
   for (int i = 0; i < n; ++i) {
-    if (ctx->clock.vec[i] < vec[i]) {
-      ctx->clock.vec[i] = vec[i];
+    if (clck->vec[i] < vec[i]) {
+      clck->vec[i] = vec[i];
       cmp |= CLOCK_CMP_LT;
-    } else if (ctx->clock.vec[i] > vec[i]) {
+    } else if (clck->vec[i] > vec[i]) {
       cmp |= CLOCK_CMP_GT;
     }
   }
@@ -485,21 +502,21 @@ static clock_cmp_t clock_syn(ctx_t *ctx, const local_time_t *vec) {
   return cmp;
 }
 
-static void clock_inc(ctx_t *ctx) {
-  int id = clock_by_proc_id(ctx->proc_id);
-  ctx->clock.vec[id]++;
+static void clck_inc(clck_t *clck) {
+  int id = clck_by_proc_id(clck->ctx_rf->proc_id);
+  clck->vec[id]++;
 }
 
-static void clock_msg_send(ctx_t *ctx, Message *msg) {
-  const int n = clock_n(ctx);
+static void clck_msg_send(clck_t *clck, Message *msg) {
+  const int n = clck_n(clck);
 
   for (int i = 0; i < n; ++i) {
-    msg->s_header.s_local_timevector[i] = ctx->clock.vec[i];
+    msg->s_header.s_local_timevector[i] = clck->vec[i];
   }
 }
 
-static void clock_msg_receive(Message *msg, int status,
-                              const local_time_t **vec_o) {
+static void clck_msg_receive(Message *msg, int status,
+                             const local_time_t **vec_o) {
   if (status == STATUS_OK) {
     *vec_o = msg->s_header.s_local_timevector;
   } else {
@@ -508,30 +525,38 @@ static void clock_msg_receive(Message *msg, int status,
 }
 
 // counts number of events
-static local_time_t clock_time(const ctx_t *ctx) {
-  const int n = clock_n(ctx);
+static local_time_t clck_time(const clck_t *clck) {
+  const int n = clck_n(clck);
 
   local_time_t time = 0;
   for (int i = 0; i < n; ++i) {
-    time += ctx->clock.vec[i];
+    time += clck->vec[i];
   }
 
   return time;
 }
 
-static void clock_activate(const ctx_t *ctx, int proc_id) {
-  ctx->clock.stats[clock_by_proc_id(proc_id)] = 1;
+static rec_ctx_t clck_rec_t(rec_clck_t *rec) {
+  return (rec_ctx_t){
+      .ctx = rec->clck->ctx_rf,
+      .id = rec->id,
+      .nio = rec->nio,
+  };
 }
 
-static void clock_deactivate(const ctx_t *ctx, int proc_id) {
-  ctx->clock.stats[clock_by_proc_id(proc_id)] = 0;
+static void clock_activate(clck_t *clck, int proc_id) {
+  clck->stats[clck_by_proc_id(proc_id)] = 1;
 }
 
-static int clock_actives(const ctx_t *ctx) {
-  const int n = clock_n(ctx);
+static void clock_deactivate(clck_t *clck, int proc_id) {
+  clck->stats[clck_by_proc_id(proc_id)] = 0;
+}
+
+static int clock_active_n(const clck_t *clck) {
+  const int n = clck_n(clck);
   int c = 0;
   for (int i = 0; i < n; ++i) {
-    c += ctx->clock.stats[i];
+    c += clck->stats[i];
   }
   return c;
 }
@@ -592,17 +617,17 @@ static int parent_fn(ctx_t *ctx) {
   return 0;
 }
 
-static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
+static int child_handle(clck_t *clck, child_state_t *state, Message *msg,
                         int proc_jd, const local_time_t *vec_proc_jd) {
-  const int proc_id = ctx->proc_id;
+  const int proc_id = clck->ctx_rf->proc_id;
   MessageType type = msg->s_header.s_type;
 
   switch (type) {
   case STOP: {
-    clock_inc(ctx);
+    clck_inc(clck);
 
     if (proc_jd != parent_id()) {
-      clock_deactivate(ctx, proc_jd);
+      clock_deactivate(clck, proc_jd);
       break;
     }
 
@@ -611,64 +636,64 @@ static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
 
     *state = CHILD_K_STOPPED;
 
-    clock_deactivate(ctx, proc_id);
+    clock_deactivate(clck, proc_id);
 
-    const int n = ctx->args->proc_n;
+    const int n = clck->ctx_rf->args->proc_n;
 
-    clock_inc(ctx);
+    clck_inc(clck);
     for (int id = 1; id <= n; ++id) {
       if (id == proc_id) {
         continue;
       }
-      if (send_clock(ctx, id, msg)) {
-        error_send(ctx, msg);
+      if (send_clck(clck, id, msg)) {
+        error_send(clck->ctx_rf, msg);
       }
     }
 
     break;
   }
   case TRANSFER: {
-    clock_syn(ctx, vec_proc_jd);
-    clock_inc(ctx);
+    clck_syn(clck, vec_proc_jd);
+    clck_inc(clck);
 
-    const TransferOrder *order_ref = (const TransferOrder *)msg->s_payload;
+    const TransferOrder *order_rf = (const TransferOrder *)msg->s_payload;
 
     // to src
-    if (order_ref->s_src == proc_id) {
-      ctx->balance -= order_ref->s_amount;
+    if (order_rf->s_src == proc_id) {
+      clck->balance -= order_rf->s_amount;
 
-      clock_inc(ctx);
-      if (send_clock(ctx, order_ref->s_dst, msg)) {
-        error_send(ctx, msg);
+      clck_inc(clck);
+      if (send_clck(clck, order_rf->s_dst, msg)) {
+        error_send(clck->ctx_rf, msg);
       }
 
-      int len = sprintf(msg->s_payload, log_transfer_out_fmt, clock_time(ctx),
-                        proc_id, order_ref->s_amount, order_ref->s_dst);
-      logs_event_write(ctx, msg->s_payload, len);
+      int len = sprintf(msg->s_payload, log_transfer_out_fmt, clck_time(clck),
+                        proc_id, order_rf->s_amount, order_rf->s_dst);
+      logs_event_write(clck->ctx_rf, msg->s_payload, len);
       break;
     }
 
     // to dst
-    if (order_ref->s_dst == proc_id) {
-      ctx->balance += order_ref->s_amount;
+    if (order_rf->s_dst == proc_id) {
+      clck->balance += order_rf->s_amount;
 
       msg->s_header.s_type = ACK;
       msg->s_header.s_payload_len = 0;
 
-      clock_inc(ctx);
-      if (send(ctx, parent_id(), msg)) {
-        error_send(ctx, msg);
+      clck_inc(clck);
+      if (send(clck->ctx_rf, parent_id(), msg)) {
+        error_send(clck->ctx_rf, msg);
       }
 
-      int len = sprintf(msg->s_payload, log_transfer_in_fmt, clock_time(ctx),
-                        proc_id, order_ref->s_amount, order_ref->s_src);
-      logs_event_write(ctx, msg->s_payload, len);
+      int len = sprintf(msg->s_payload, log_transfer_in_fmt, clck_time(clck),
+                        proc_id, order_rf->s_amount, order_rf->s_src);
+      logs_event_write(clck->ctx_rf, msg->s_payload, len);
       break;
     }
 
     fprintf(stderr,
             "error: %d received not its transfer order (%d -> %d) $%d\n",
-            proc_id, order_ref->s_src, order_ref->s_dst, order_ref->s_amount);
+            proc_id, order_rf->s_src, order_rf->s_dst, order_rf->s_amount);
 
     return STATUS_UNEXPECTED;
   }
@@ -678,46 +703,46 @@ static int child_handle(ctx_t *ctx, child_state_t *state, Message *msg,
     return STATUS_BAD_TYPE;
   }
 
-  if (*state == CHILD_K_STOPPED && !clock_actives(ctx)) {
+  if (*state == CHILD_K_STOPPED && !clock_active_n(clck)) {
     *state = CHILD_DONE;
   }
 
   return STATUS_OK;
 }
 
-static int child_yield_active(ctx_t *ctx, child_state_t *state, Message *msg) {
+static int child_yield_active(clck_t *clck, child_state_t *state,
+                              Message *msg) {
   static struct timespec s_ts = {
       .tv_sec = 0,
       .tv_nsec = 1000000,
   };
 
-  const int proc_id = ctx->proc_id;
-  const int n = ctx->args->proc_n;
+  const int proc_id = clck->ctx_rf->proc_id;
+  const int n = clck->ctx_rf->args->proc_n;
 
   const local_time_t *vec_proc_jd = NULL;
 
   while (1) {
     for (int id = 0; id <= n; ++id) {
       // receive only from actives or parent, not to read DONE msg
-      if (proc_id == id ||
-          (id != 0 && !ctx->clock.stats[clock_by_proc_id(id)])) {
+      if (proc_id == id || (id != 0 && !clck->stats[clck_by_proc_id(id)])) {
         continue;
       }
 
-      int s = receive_clock(&(rec_ctx_t){.ctx = ctx, .nio = 1}, id, msg,
-                            &vec_proc_jd);
+      int s = receive_clck(&(rec_clck_t){.clck = clck, .nio = 1}, id, msg,
+                           &vec_proc_jd);
       if (s) {
         continue;
       }
 
-      return child_handle(ctx, state, msg, id, vec_proc_jd);
+      return child_handle(clck, state, msg, id, vec_proc_jd);
     }
 
     nanosleep(&s_ts, NULL);
   }
 }
 
-static int child_fn(ctx_t *ctx) {
+static int child_fn(ctx_t *ctx, balance_t balance) {
   const int n = ctx->args->proc_n;
   const int proc_id = ctx->proc_id;
 
@@ -731,23 +756,26 @@ static int child_fn(ctx_t *ctx) {
       .s_payload = {0},
   };
 
+  clck_t clck;
+
   pipes_configure(ctx);
-  clock_init(ctx);
+
+  clck_init(&clck, ctx, balance);
 
   {
-    clock_inc(ctx);
-    int len = sprintf(msg.s_payload, log_started_fmt, clock_time(ctx), proc_id,
-                      getpid(), getppid(), ctx->balance);
+    clck_inc(&clck);
+    int len = sprintf(msg.s_payload, log_started_fmt, clck_time(&clck), proc_id,
+                      getpid(), getppid(), clck.balance);
     msg.s_header.s_type = STARTED;
     msg.s_header.s_payload_len = len;
 
-    if (send_multicast_clock(ctx, &msg)) {
+    if (send_multicast_clck(&clck, &msg)) {
       error_send_multicast(ctx, &msg);
     }
 
     logs_event_write(ctx, msg.s_payload, len);
 
-    clock_activate(ctx, proc_id);
+    clock_activate(&clck, proc_id);
   }
 
   {
@@ -756,19 +784,19 @@ static int child_fn(ctx_t *ctx) {
         continue;
       }
 
-      int s = receive_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg,
-                            &vec_proc_jd);
+      int s = receive_clck(&(rec_clck_t){.clck = &clck, .nio = 0}, i, &msg,
+                           &vec_proc_jd);
 
       check_receive(ctx, &msg, s, STARTED);
 
-      clock_syn(ctx, vec_proc_jd);
-      clock_inc(ctx);
+      clck_syn(&clck, vec_proc_jd);
+      clck_inc(&clck);
 
-      clock_activate(ctx, i);
+      clock_activate(&clck, i);
     }
 
     int len = sprintf(msg.s_payload, log_received_all_started_fmt,
-                      clock_time(ctx), proc_id);
+                      clck_time(&clck), proc_id);
 
     logs_event_write(ctx, msg.s_payload, len);
   }
@@ -777,18 +805,18 @@ static int child_fn(ctx_t *ctx) {
     child_state_t state = CHILD_STARTED;
 
     while (state != CHILD_DONE) {
-      child_yield_active(ctx, &state, &msg);
+      child_yield_active(&clck, &state, &msg);
     }
   }
 
   {
-    clock_inc(ctx);
-    int len = sprintf(msg.s_payload, log_done_fmt, clock_time(ctx), proc_id,
-                      ctx->balance);
+    clck_inc(&clck);
+    int len = sprintf(msg.s_payload, log_done_fmt, clck_time(&clck), proc_id,
+                      clck.balance);
     msg.s_header.s_type = DONE;
     msg.s_header.s_payload_len = len;
 
-    if (send_multicast_clock(ctx, &msg)) {
+    if (send_multicast_clck(&clck, &msg)) {
       error_send_multicast(ctx, &msg);
     }
 
@@ -803,32 +831,31 @@ static int child_fn(ctx_t *ctx) {
 
       int s;
       do {
-        s = receive_clock(&(rec_ctx_t){.ctx = ctx, .nio = 0}, i, &msg,
-                          &vec_proc_jd);
+        s = receive_clck(&(rec_clck_t){.clck = &clck, .nio = 0}, i, &msg,
+                         &vec_proc_jd);
         if (s) {
           error_receive_not(ctx);
           break;
         }
 
-        clock_syn(ctx, vec_proc_jd);
-        clock_inc(ctx);
+        clck_syn(&clck, vec_proc_jd);
+        clck_inc(&clck);
       } while (msg.s_header.s_type != DONE);
     }
 
-    int len = sprintf(msg.s_payload, log_received_all_done_fmt, clock_time(ctx),
-                      proc_id);
+    int len = sprintf(msg.s_payload, log_received_all_done_fmt,
+                      clck_time(&clck), proc_id);
 
     logs_event_write(ctx, msg.s_payload, len);
   }
 
-  clock_deinit(ctx);
+  clck_deinit(&clck);
 
   return STATUS_OK;
 }
 
-static void child_configure(ctx_t *ctx, int proc_id, balance_t balance) {
+static void child_configure(ctx_t *ctx, int proc_id) {
   ctx->proc_id = proc_id;
-  ctx->balance = balance;
 }
 
 static int child_run_all(ctx_t *ctx) {
@@ -836,8 +863,8 @@ static int child_run_all(ctx_t *ctx) {
     int pid = fork();
 
     if (pid == 0) {
-      child_configure(ctx, id, ctx->args->balances[id - 1]);
-      return child_fn(ctx);
+      child_configure(ctx, id);
+      return child_fn(ctx, ctx->args->balances[id - 1]);
     } else if (pid < 0) {
       return STATUS_BAD_FORK;
     }
@@ -854,9 +881,9 @@ int send(void *self, local_id dst, const Message *msg) {
   return s == -1 ? -1 : STATUS_OK;
 }
 
-int send_clock(void *self, local_id dst, Message *msg) {
-  clock_msg_send(self, msg);
-  return send(self, dst, msg);
+int send_clck(clck_t *self, local_id dst, Message *msg) {
+  clck_msg_send(self, msg);
+  return send(self->ctx_rf, dst, msg);
 }
 
 int send_multicast(void *self, const Message *msg) {
@@ -878,9 +905,9 @@ int send_multicast(void *self, const Message *msg) {
   return status;
 }
 
-int send_multicast_clock(void *self, Message *msg) {
-  clock_msg_send(self, msg);
-  return send_multicast(self, msg);
+int send_multicast_clck(clck_t *self, Message *msg) {
+  clck_msg_send(self, msg);
+  return send_multicast(self->ctx_rf, msg);
 }
 
 int receive(void *self, local_id from, Message *msg) {
@@ -919,10 +946,11 @@ int receive(void *self, local_id from, Message *msg) {
   }
 }
 
-int receive_clock(void *self, local_id from, Message *msg,
-                  const local_time_t **vec_o) {
-  int status = receive(self, from, msg);
-  clock_msg_receive(msg, status, vec_o);
+int receive_clck(rec_clck_t *self, local_id from, Message *msg,
+                 const local_time_t **vec_o) {
+  rec_ctx_t rec = clck_rec_t(self);
+  int status = receive(&rec, from, msg);
+  clck_msg_receive(msg, status, vec_o);
   return status;
 }
 
@@ -980,9 +1008,11 @@ int receive_any(void *self, Message *msg) {
   return STATUS_EOF;
 }
 
-int receive_any_clock(void *self, Message *msg, const local_time_t **vec_o) {
-  int status = receive_any(self, msg);
-  clock_msg_receive(msg, status, vec_o);
+int receive_any_clck(rec_clck_t *self, Message *msg,
+                     const local_time_t **vec_o) {
+  rec_ctx_t rec = clck_rec_t(self);
+  int status = receive_any(&rec, msg);
+  clck_msg_receive(msg, status, vec_o);
   return status;
 }
 
@@ -1000,10 +1030,10 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
           },
   };
 
-  TransferOrder *order_ref = (void *)msg.s_payload;
-  order_ref->s_src = src;
-  order_ref->s_dst = dst;
-  order_ref->s_amount = amount;
+  TransferOrder *order_rf = (void *)msg.s_payload;
+  order_rf->s_src = src;
+  order_rf->s_dst = dst;
+  order_rf->s_amount = amount;
 
   if (send(ctx, src, &msg)) {
     error_send(ctx, &msg);
@@ -1031,8 +1061,6 @@ int main(int argc, const char **argv) {
       .pipes_f = NULL,
       .pipes = NULL,
       .proc_id = parent_id(),
-      .balance = 0,
-      .clock = {0},
   };
 
   if ((status = args_parse(&args, argc, argv))) {
