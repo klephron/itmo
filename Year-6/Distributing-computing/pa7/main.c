@@ -75,6 +75,13 @@ typedef struct {
   int proc_id;
 } ctx_t;
 
+typedef enum {
+  STATE_INITED,
+  STATE_STARTED,
+  STATE_STOPPED,
+  STATE_DONE,
+} state_t;
+
 typedef struct {
   ctx_t *ctx_rf;
 
@@ -82,6 +89,8 @@ typedef struct {
   int *stats;
 
   balance_t balance;
+
+  state_t state;
 } clck_t;
 
 typedef struct {
@@ -95,12 +104,6 @@ typedef struct {
   int nio;
   int id;
 } rec_clck_t;
-
-typedef enum {
-  CHILD_STARTED,
-  CHILD_K_STOPPED,
-  CHILD_DONE,
-} child_state_t;
 
 int send_clck(clck_t *self, local_id dst, Message *msg);
 int send_multicast_clck(clck_t *self, Message *msg);
@@ -450,6 +453,7 @@ static int clck_init(clck_t *clck, ctx_t *ctx_rf, balance_t balance) {
   }
 
   clck->balance = balance;
+  clck->state = STATE_INITED;
 
   return 0;
 
@@ -544,15 +548,15 @@ static rec_ctx_t clck_rec_t(rec_clck_t *rec) {
   };
 }
 
-static void clock_activate(clck_t *clck, int proc_id) {
+static void clck_activate(clck_t *clck, int proc_id) {
   clck->stats[clck_by_proc_id(proc_id)] = 1;
 }
 
-static void clock_deactivate(clck_t *clck, int proc_id) {
+static void clck_deactivate(clck_t *clck, int proc_id) {
   clck->stats[clck_by_proc_id(proc_id)] = 0;
 }
 
-static int clock_active_n(const clck_t *clck) {
+static int clck_active_n(const clck_t *clck) {
   const int n = clck_n(clck);
   int c = 0;
   for (int i = 0; i < n; ++i) {
@@ -617,8 +621,8 @@ static int parent_fn(ctx_t *ctx) {
   return 0;
 }
 
-static int child_handle(clck_t *clck, child_state_t *state, Message *msg,
-                        int proc_jd, const local_time_t *vec_proc_jd) {
+static int child_handle(clck_t *clck, Message *msg, int proc_jd,
+                        const local_time_t *vec_proc_jd) {
   const int proc_id = clck->ctx_rf->proc_id;
   MessageType type = msg->s_header.s_type;
 
@@ -627,16 +631,16 @@ static int child_handle(clck_t *clck, child_state_t *state, Message *msg,
     clck_inc(clck);
 
     if (proc_jd != parent_id()) {
-      clock_deactivate(clck, proc_jd);
+      clck_deactivate(clck, proc_jd);
       break;
     }
 
     // multicast (without parent) send STOP messages to notify that we are
     // stopping. FIFO will help us go to DONE state
 
-    *state = CHILD_K_STOPPED;
+    clck->state = STATE_STOPPED;
 
-    clock_deactivate(clck, proc_id);
+    clck_deactivate(clck, proc_id);
 
     const int n = clck->ctx_rf->args->proc_n;
 
@@ -703,15 +707,14 @@ static int child_handle(clck_t *clck, child_state_t *state, Message *msg,
     return STATUS_BAD_TYPE;
   }
 
-  if (*state == CHILD_K_STOPPED && !clock_active_n(clck)) {
-    *state = CHILD_DONE;
+  if (clck->state == STATE_STOPPED && !clck_active_n(clck)) {
+    clck->state = STATE_DONE;
   }
 
   return STATUS_OK;
 }
 
-static int child_yield_active(clck_t *clck, child_state_t *state,
-                              Message *msg) {
+static int child_yield_active(clck_t *clck, Message *msg) {
   static struct timespec s_ts = {
       .tv_sec = 0,
       .tv_nsec = 1000000,
@@ -735,7 +738,7 @@ static int child_yield_active(clck_t *clck, child_state_t *state,
         continue;
       }
 
-      return child_handle(clck, state, msg, id, vec_proc_jd);
+      return child_handle(clck, msg, id, vec_proc_jd);
     }
 
     nanosleep(&s_ts, NULL);
@@ -775,7 +778,7 @@ static int child_fn(ctx_t *ctx, balance_t balance) {
 
     logs_event_write(ctx, msg.s_payload, len);
 
-    clock_activate(&clck, proc_id);
+    clck_activate(&clck, proc_id);
   }
 
   {
@@ -792,7 +795,7 @@ static int child_fn(ctx_t *ctx, balance_t balance) {
       clck_syn(&clck, vec_proc_jd);
       clck_inc(&clck);
 
-      clock_activate(&clck, i);
+      clck_activate(&clck, i);
     }
 
     int len = sprintf(msg.s_payload, log_received_all_started_fmt,
@@ -802,10 +805,10 @@ static int child_fn(ctx_t *ctx, balance_t balance) {
   }
 
   {
-    child_state_t state = CHILD_STARTED;
+    clck.state = STATE_STARTED;
 
-    while (state != CHILD_DONE) {
-      child_yield_active(&clck, &state, &msg);
+    while (clck.state != STATE_DONE) {
+      child_yield_active(&clck, &msg);
     }
   }
 
