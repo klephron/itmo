@@ -785,14 +785,16 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
       break;
     }
 
-    fprintf(stderr, "%d previous snapshot hasn't been completed\n", proc_id);
+    fprintf(stderr, "error: %d previous snapshot hasn't been completed\n",
+            proc_id);
     break;
   }
   case BALANCE_STATE: {
     if (clck->snapshot != SNAPSHOT_MASTER_ACKED) {
-      fprintf(stderr,
-              "%d snapshot hasn't been ACKed to receive balance states\n",
-              proc_id);
+      fprintf(
+          stderr,
+          "error: %d snapshot hasn't been ACKed to receive balance states\n",
+          proc_id);
       return STATUS_UNEXPECTED;
     }
 
@@ -837,7 +839,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
   }
   case SNAPSHOT_VTIME: {
     if (clck->snapshot != SNAPSHOT_NONE) {
-      fprintf(stderr, "%d previous snapshot from %d hasn't been done\n",
+      fprintf(stderr, "error: %d previous snapshot from %d hasn't been done\n",
               proc_id, clck->snapshot_proc_id);
       return STATUS_UNEXPECTED;
     }
@@ -855,7 +857,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
   }
   case SNAPSHOT_ACK: {
     if (clck->snapshot != SNAPSHOT_MASTER_STARTED) {
-      fprintf(stderr, "%d snapshot hasn't been started\n", proc_id);
+      fprintf(stderr, "error: %d snapshot hasn't been started\n", proc_id);
       return STATUS_UNEXPECTED;
     }
 
@@ -896,7 +898,7 @@ static int child_handle(clck_t *clck, Message *msg, int proc_jd,
     break;
   }
   default:
-    fprintf(stderr, "unexpected type in %i handling %s\n", proc_id,
+    fprintf(stderr, "error: unexpected type in %i handling %s\n", proc_id,
             msg_type_str(type));
     return STATUS_BAD_TYPE;
   }
