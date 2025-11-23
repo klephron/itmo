@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini TikTok</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: dark;
+    }
+
+    body {
+      margin: 0;
+      background: #050505;
+      color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 400px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background: #111;
+      border-radius: 16px;
+      padding: 12px 12px 16px 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #222;
+      color: #bbb;
+    }
+
+    .video-wrapper {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    video {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      background: #000;
+      display: block;
+    }
+
+    .swipe-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      pointer-events: none;
+      padding-bottom: 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      text-shadow: 0 0 4px rgba(0,0,0,0.8);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    button {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+      background: #f5f5f5;
+      color: #111;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+    }
+
+    button.secondary {
+      background: #222;
+      color: #eee;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .status {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+      min-height: 16px;
+    }
+
+    .status.error {
+      color: #ff6b81;
+    }
+
+    .status.ok {
+      color: #8be38b;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="card">
+    <div class="header">
+      <div class="title" id="videoTitle">Загрузка списка видео…</div>
+      <div class="badge" id="videoCount">0 видео</div>
+    </div>
+
+    <div class="video-wrapper">
+      <!-- Автоплей + mute, чтобы не блочили -->
+      <video id="player" controls playsinline muted autoplay></video>
+      <div class="swipe-hint">Свайп вверх/вниз или используй кнопки</div>
+    </div>
+
+    <div class="controls">
+      <button class="secondary" id="btnPrev">⏮ Random prev</button>
+      <button id="btnNext">▶ Next random</button>
+    </div>
+
+    <div class="meta">
+      <div id="videoInfoSize">—</div>
+      <div id="videoInfoDate">—</div>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+  const apiBase = ''; // тот же origin
+
+  let videos = [];
+  let currentIndex = -1;
+
+  const player = document.getElementById('player');
+  const titleEl = document.getElementById('videoTitle');
+  const countEl = document.getElementById('videoCount');
+  const sizeEl = document.getElementById('videoInfoSize');
+  const dateEl = document.getElementById('videoInfoDate');
+  const statusEl = document.getElementById('status');
+  const btnNext = document.getElementById('btnNext');
+  const btnPrev = document.getElementById('btnPrev');
+
+  function humanSize(bytes) {
+    if (bytes == null) return '—';
+    const units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+    let i = 0;
+    let val = bytes;
+    while (val >= 1024 && i < units.length - 1) {
+      val /= 1024;
+      i++;
+    }
+    return val.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString();
+    } catch {
+      return iso;
+    }
+  }
+
+  function setStatus(msg, type = '') {
+    statusEl.textContent = msg || '';
+    statusEl.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  function pickRandomIndex() {
+    if (videos.length === 0) return -1;
+    if (videos.length === 1) return 0;
+    let idx;
+    do {
+      idx = Math.floor(Math.random() * videos.length);
+    } while (idx === currentIndex);
+    return idx;
+  }
+
+  function playByIndex(index) {
+    if (index < 0 || index >= videos.length) {
+      setStatus('Нет доступных видео', 'error');
+      return;
+    }
+    const v = videos[index];
+    currentIndex = index;
+
+    const url = apiBase + '/streaming/video/' + v.uuid;
+
+    player.pause();
+    player.removeAttribute('src');
+    player.load();
+
+    player.src = url;
+    player.load();
+    player.play().catch((err) => {
+      console.warn('Autoplay blocked:', err);
+      setStatus('Нажмите Play, чтобы запустить видео', 'error');
+    });
+
+    titleEl.textContent = v.name || '(без названия)';
+    sizeEl.textContent = humanSize(v.contentSize);
+    dateEl.textContent = formatDate(v.uploadedAt);
+    countEl.textContent = videos.length + ' видео';
+    setStatus('Воспроизведение…', 'ok');
+  }
+
+  async function loadVideoList() {
+    try {
+      setStatus('Загружаю список видео…');
+      const res = await fetch(apiBase + '/streaming/video/list');
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
+      videos = await res.json();
+      if (!Array.isArray(videos)) {
+        videos = [];
+      }
+
+      countEl.textContent = videos.length + ' видео';
+
+      if (videos.length === 0) {
+        titleEl.textContent = 'Видео ещё нет';
+        setStatus('Загрузите видео через /streaming/video/upload', 'error');
+        return;
+      }
+
+      const firstIndex = pickRandomIndex();
+      playByIndex(firstIndex);
+    } catch (e) {
+      console.error(e);
+      setStatus('Ошибка загрузки списка видео: ' + e.message, 'error');
+      titleEl.textContent = 'Ошибка';
+    }
+  }
+
+  // Кнопка Next random
+  btnNext.addEventListener('click', () => {
+    if (videos.length === 0) return;
+    const idx = pickRandomIndex();
+    playByIndex(idx);
+  });
+
+  // Кнопка Random prev (по сути тоже random)
+  btnPrev.addEventListener('click', () => {
+    if (videos.length === 0) return;
+    const idx = pickRandomIndex();
+    playByIndex(idx);
+  });
+
+  // Автоматически следующее видео по окончании
+  player.addEventListener('ended', () => {
+    if (videos.length === 0) return;
+    const idx = pickRandomIndex();
+    playByIndex(idx);
+  });
+
+  player.addEventListener('error', () => {
+    setStatus('Ошибка воспроизведения видео', 'error');
+  });
+
+  // === СВАЙПЫ КАК В ТИКТОК ===
+
+  let touchStartY = null;
+  let touchStartX = null;
+  const SWIPE_THRESHOLD = 50; // px, насколько нужно провести
+
+  function handleSwipe(deltaY, deltaX) {
+    // фильтруем диагональные/горизонтальные — реагируем только на вертикальные
+    if (Math.abs(deltaY) < SWIPE_THRESHOLD || Math.abs(deltaY) < Math.abs(deltaX)) {
+      return;
+    }
+    if (deltaY < 0) {
+      // свайп вверх -> следующее рандомное
+      if (videos.length === 0) return;
+      const idx = pickRandomIndex();
+      playByIndex(idx);
+    } else {
+      // свайп вниз -> "предыдущее" рандомное
+      if (videos.length === 0) return;
+      const idx = pickRandomIndex();
+      playByIndex(idx);
+    }
+  }
+
+  // touch-события
+  player.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    touchStartY = t.clientY;
+    touchStartX = t.clientX;
+  }, { passive: true });
+
+  player.addEventListener('touchend', (e) => {
+    if (touchStartY == null || touchStartX == null) return;
+    const t = e.changedTouches[0];
+    const deltaY = t.clientY - touchStartY;
+    const deltaX = t.clientX - touchStartX;
+    touchStartY = null;
+    touchStartX = null;
+    handleSwipe(deltaY, deltaX);
+  });
+
+  // мышиный "свайп" для десктопа (drag вверх/вниз)
+  let mouseDown = false;
+  let mouseStartY = null;
+  let mouseStartX = null;
+
+  player.addEventListener('mousedown', (e) => {
+    mouseDown = true;
+    mouseStartY = e.clientY;
+    mouseStartX = e.clientX;
+  });
+
+  window.addEventListener('mouseup', (e) => {
+    if (!mouseDown || mouseStartY == null || mouseStartX == null) return;
+    mouseDown = false;
+    const deltaY = e.clientY - mouseStartY;
+    const deltaX = e.clientX - mouseStartX;
+    mouseStartY = null;
+    mouseStartX = null;
+    handleSwipe(deltaY, deltaX);
+  });
+
+  // Можно ещё добавить реакцию на колёсико мыши
+  player.addEventListener('wheel', (e) => {
+    if (videos.length === 0) return;
+    if (e.deltaY > 0) {
+      // прокрутка вниз -> следующее
+      const idx = pickRandomIndex();
+      playByIndex(idx);
+    } else if (e.deltaY < 0) {
+      // прокрутка вверх -> "предыдущее"
+      const idx = pickRandomIndex();
+      playByIndex(idx);
+    }
+  }, { passive: true });
+
+  // Загружаем список при старте
+  loadVideoList();
+</script>
+</body>
+</html>
