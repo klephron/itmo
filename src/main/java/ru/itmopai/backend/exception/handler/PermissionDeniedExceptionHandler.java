@@ -17,7 +17,7 @@ public class PermissionDeniedExceptionHandler
 
   @Override
   public HttpResponse<?> handle(HttpRequest request, PermissionDeniedException exception) {
-    return HttpResponse.status(HttpStatus.UNAUTHORIZED)
+    return HttpResponse.status(HttpStatus.FORBIDDEN)
         .body(Map.of(
             "error", "permission_denied",
             "message", exception.getMessage()));
