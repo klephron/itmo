@@ -58,10 +58,10 @@ public class CaseSuspectController {
     Long userId = (Long) authentication.getAttributes().get("id");
     try {
       return HttpResponse
-          .ok(caseSuspectService.updateCaseSuspect(id, userId, updateCaseSuspectRequest.name(),
+          .ok(caseSuspectMapper.toDto(caseSuspectService.updateCaseSuspect(id, userId, updateCaseSuspectRequest.name(),
               updateCaseSuspectRequest.surname(), updateCaseSuspectRequest.patronymic(),
               updateCaseSuspectRequest.identifier(), updateCaseSuspectRequest.status(),
-              updateCaseSuspectRequest.verdict(), updateCaseSuspectRequest.accusation()));
+              updateCaseSuspectRequest.verdict(), updateCaseSuspectRequest.accusation())));
     } catch (NoSuchElementException e) {
       return HttpResponse.notFound(e.getMessage());
     }

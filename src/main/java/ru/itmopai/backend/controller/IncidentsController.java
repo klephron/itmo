@@ -117,7 +117,7 @@ public class IncidentsController {
       IncidentEntity incidentEntity =
           incidentService.updateIncident(
               userId, id, request.applicant(), request.type(),
-              request.applicant(), request.locationLatitude(), request.locationLongitude(),
+              request.reason(), request.locationLatitude(), request.locationLongitude(),
               request.locationAltitude(), request.estimatedTime());
       notificationService.addNotification(userId, "PAI Notification",
           "Incident #%d updated".formatted(id));
