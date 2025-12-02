@@ -32,7 +32,13 @@ public class FileMetadata {
     @Column(name = "content_size", nullable = false)
     private Long contentSize;
 
+    @Column(name = "uploader_name")
+    private String uploaderName;
+
     @CreationTimestamp
     @Column(name = "uploaded_at", nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
+
+    @Column(name = "likes_count", nullable = false)
+    private Long likesCount = 0L;
 }

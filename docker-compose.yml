@@ -24,6 +24,21 @@ services:
       MINIO_ROOT_USER: minio_admin
       MINIO_ROOT_PASSWORD: minio_admin
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: tikttok-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"     # AMQP — backend работает через этот порт
+      - "15672:15672"   # RabbitMQ Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+
 volumes:
+  rabbitmq-data:
   minio-data:
     driver: local

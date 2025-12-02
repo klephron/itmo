@@ -7,11 +7,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.itmo.zavar.ticktokcoretest.dto.UploadJobView;
 import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
 import ru.itmo.zavar.ticktokcoretest.service.VideoStreamingService;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamChunk;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamRange;
+import ru.itmo.zavar.ticktokcoretest.upload.UploadJobRegistry;
+import ru.itmo.zavar.ticktokcoretest.upload.UploadJobStatus;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +27,7 @@ import static org.springframework.http.HttpHeaders.*;
 public class VideoStreamingController {
 
     private final VideoStreamingService videoStreamingService;
+    private final UploadJobRegistry jobRegistry;
 
     @Value("${streaming.chunk.default-size}")
     private long chunkDefaultSize;
@@ -56,18 +61,35 @@ public class VideoStreamingController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<FileMetadata> saveVideo(
+    public ResponseEntity<UploadStartResponse> startUpload(
             @RequestParam("video") MultipartFile video,
-            @RequestParam("videoName") String videoName
-    ) throws Exception {
-        return ResponseEntity.ok(videoStreamingService.saveVideo(video, videoName));
+            @RequestParam("videoName") String videoName,
+            @RequestParam(value = "uploaderName", required = false) String uploaderName
+    ) throws IOException {
+        UUID jobId = videoStreamingService.enqueueUpload(video, videoName, uploaderName);
+        return ResponseEntity.ok(new UploadStartResponse(jobId));
     }
+
+    @GetMapping("/upload/status/{jobId}")
+    public ResponseEntity<UploadJobStatus> getUploadStatus(@PathVariable UUID jobId) {
+        return jobRegistry.get(jobId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    public record UploadStartResponse(UUID jobId) {}
 
     @PostMapping("/delete/{uuid}")
     public ResponseEntity<Void> deleteVideo(@PathVariable UUID uuid) throws Exception {
         videoStreamingService.deleteVideo(uuid);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/upload/active")
+    public List<UploadJobView> getActiveUploadJobs() {
+        return jobRegistry.getActiveJobs();
+    }
+
 
     private String getContentLengthHeader(StreamRange range, long fileSize) {
         long end = range.getRangeEnd(fileSize);

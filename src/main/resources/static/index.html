@@ -9,7 +9,6 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color-scheme: dark;
     }
-
     body {
       margin: 0;
       background: #050505;
@@ -19,14 +18,37 @@
       align-items: center;
       min-height: 100vh;
     }
-
     .app {
       width: 100%;
-      max-width: 400px;
+      max-width: 480px;
       padding: 16px;
       box-sizing: border-box;
     }
-
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .tab-btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      background: #181818;
+      color: #aaa;
+      transition: background .15s ease, color .15s ease, transform .1s ease;
+    }
+    .tab-btn.active {
+      background: #f5f5f5;
+      color: #111;
+    }
+    .tab-btn:active {
+      transform: scale(0.97);
+    }
     .card {
       background: #111;
       border-radius: 16px;
@@ -36,7 +58,6 @@
       flex-direction: column;
       gap: 8px;
     }
-
     .header {
       display: flex;
       justify-content: space-between;
@@ -44,7 +65,6 @@
       gap: 8px;
       margin-bottom: 4px;
     }
-
     .title {
       font-size: 14px;
       font-weight: 600;
@@ -52,7 +72,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .badge {
       font-size: 11px;
       padding: 2px 6px;
@@ -60,20 +79,17 @@
       background: #222;
       color: #bbb;
     }
-
     .video-wrapper {
       position: relative;
       border-radius: 12px;
       overflow: hidden;
     }
-
     video {
       width: 100%;
       aspect-ratio: 9 / 16;
       background: #000;
       display: block;
     }
-
     .swipe-hint {
       position: absolute;
       inset: 0;
@@ -86,15 +102,12 @@
       color: rgba(255,255,255,0.7);
       text-shadow: 0 0 4px rgba(0,0,0,0.8);
     }
-
     .controls {
       display: flex;
       gap: 8px;
       margin-top: 8px;
     }
-
     button {
-      flex: 1;
       border-radius: 999px;
       border: none;
       padding: 8px 12px;
@@ -105,17 +118,26 @@
       color: #111;
       transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
     }
-
     button.secondary {
       background: #222;
       color: #eee;
     }
-
+    button.danger {
+      background: #ff4d4f;
+      color: #fff;
+    }
+    button.small {
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+    button.full {
+      width: 100%;
+      margin-top: 8px;
+    }
     button:active {
       transform: scale(0.97);
       box-shadow: 0 0 0 rgba(0,0,0,0);
     }
-
     .meta {
       display: flex;
       justify-content: space-between;
@@ -123,48 +145,201 @@
       color: #999;
       margin-top: 4px;
     }
-
     .status {
       font-size: 12px;
       color: #aaa;
       margin-top: 4px;
       min-height: 16px;
     }
+    .status.error { color: #ff6b81; }
+    .status.ok { color: #8be38b; }
 
-    .status.error {
-      color: #ff6b81;
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    label {
+      font-size: 12px;
+      color: #ccc;
+    }
+    input[type="text"] {
+      border-radius: 999px;
+      border: 1px solid #333;
+      padding: 6px 10px;
+      background: #151515;
+      color: #f5f5f5;
+      font-size: 13px;
+      outline: none;
+    }
+    input[type="file"] {
+      font-size: 12px;
+    }
+    .hint {
+      font-size: 11px;
+      color: #777;
     }
 
-    .status.ok {
-      color: #8be38b;
+    /* Студия */
+    .studio-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .studio-videos {
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .studio-row {
+      border-radius: 10px;
+      background: #181818;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 6px;
+    }
+    .studio-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .studio-row-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .studio-row-meta {
+      font-size: 11px;
+      color: #aaa;
+    }
+    .studio-jobs {
+      max-height: 160px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .job-row {
+      border-radius: 10px;
+      background: #181818;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .job-row-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .job-progress-bar {
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: #333;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .job-progress-fill {
+      height: 100%;
+      width: 0;
+      background: #4caf50;
+      transition: width .2s ease-out;
     }
   </style>
 </head>
 <body>
 <div class="app">
-  <div class="card">
+  <div class="tabs">
+    <button class="tab-btn active" id="tabFeed">Лента</button>
+    <button class="tab-btn" id="tabUpload">Загрузка</button>
+    <button class="tab-btn" id="tabStudio">Студия</button>
+  </div>
+
+  <!-- Лента -->
+  <div class="card page active" id="pageFeed">
     <div class="header">
       <div class="title" id="videoTitle">Загрузка списка видео…</div>
       <div class="badge" id="videoCount">0 видео</div>
     </div>
 
     <div class="video-wrapper">
-      <!-- Автоплей + mute, чтобы не блочили -->
       <video id="player" controls playsinline muted autoplay></video>
-      <div class="swipe-hint">Свайп вверх/вниз или используй кнопки</div>
+      <div class="swipe-hint">Свайп вверх/вниз или кнопки ниже</div>
+
+      <!-- Скрытые видео для предзагрузки -->
+      <video id="preloadNext1" style="display:none" muted preload="auto"></video>
+      <video id="preloadNext2" style="display:none" muted preload="metadata"></video>
     </div>
 
+
     <div class="controls">
-      <button class="secondary" id="btnPrev">⏮ Random prev</button>
-      <button id="btnNext">▶ Next random</button>
+      <button class="secondary" id="btnPrev">⏮ Предыдущее</button>
+      <button id="btnNext">▶ Следующее</button>
+      <button class="secondary" id="btnLike">♡ 0</button>
     </div>
+
 
     <div class="meta">
       <div id="videoInfoSize">—</div>
       <div id="videoInfoDate">—</div>
     </div>
 
-    <div class="status" id="status"></div>
+    <div class="status" id="statusFeed"></div>
+  </div>
+
+  <!-- Загрузка -->
+  <div class="card page" id="pageUpload">
+    <div class="header">
+      <div class="title">Загрузка нового видео</div>
+    </div>
+
+    <div class="form-row">
+      <label for="uploaderName">Ваше имя (как автор)</label>
+      <input id="uploaderName" type="text" placeholder="Например, Yaroslav">
+    </div>
+
+    <div class="form-row">
+      <label for="uploadTitle">Название видео</label>
+      <input id="uploadTitle" type="text" placeholder="Как назвать ролик?">
+    </div>
+
+    <div class="form-row">
+      <label for="uploadFile">Файл видео</label>
+      <input id="uploadFile" type="file" accept="video/*">
+      <div class="hint">
+        Видео будет автоматически перекодировано в MP4 (H.264), чтобы браузер его точно открыл.
+      </div>
+    </div>
+
+    <button class="full" id="btnUpload">⬆ Загрузить</button>
+
+    <progress id="uploadProgress" value="0" max="100"
+              style="width:100%; margin-top:6px; display:none;"></progress>
+
+    <div class="status" id="statusUpload"></div>
+  </div>
+
+  <!-- Студия -->
+  <div class="card page" id="pageStudio">
+    <div class="header">
+      <div class="title">Студия</div>
+      <div class="badge" id="studioVideoCount">0 видео</div>
+    </div>
+
+    <div class="studio-section-title">Видео</div>
+    <div class="studio-videos" id="studioVideos"></div>
+
+    <div class="studio-section-title" style="margin-top:10px;">Активные загрузки</div>
+    <div class="studio-jobs" id="studioJobs"></div>
+
+    <div class="status" id="statusStudio"></div>
   </div>
 </div>
 
@@ -172,16 +347,150 @@
   const apiBase = ''; // тот же origin
 
   let videos = [];
-  let currentIndex = -1;
+  let playOrder = [];
+  let currentPos = -1;
+
+  const preload1 = document.getElementById('preloadNext1');
+  const preload2 = document.getElementById('preloadNext2');
+
 
   const player = document.getElementById('player');
   const titleEl = document.getElementById('videoTitle');
   const countEl = document.getElementById('videoCount');
   const sizeEl = document.getElementById('videoInfoSize');
   const dateEl = document.getElementById('videoInfoDate');
-  const statusEl = document.getElementById('status');
+  const statusFeedEl = document.getElementById('statusFeed');
+  const statusUploadEl = document.getElementById('statusUpload');
+  const statusStudioEl = document.getElementById('statusStudio');
+
   const btnNext = document.getElementById('btnNext');
   const btnPrev = document.getElementById('btnPrev');
+
+  const tabFeed = document.getElementById('tabFeed');
+  const tabUpload = document.getElementById('tabUpload');
+  const tabStudio = document.getElementById('tabStudio');
+  const pageFeed = document.getElementById('pageFeed');
+  const pageUpload = document.getElementById('pageUpload');
+  const pageStudio = document.getElementById('pageStudio');
+
+  const uploaderNameInput = document.getElementById('uploaderName');
+  const uploadTitleInput = document.getElementById('uploadTitle');
+  const uploadFileInput = document.getElementById('uploadFile');
+  const btnUpload = document.getElementById('btnUpload');
+  const uploadProgressEl = document.getElementById('uploadProgress');
+
+  const studioVideosEl = document.getElementById('studioVideos');
+  const studioVideoCountEl = document.getElementById('studioVideoCount');
+  const studioJobsEl = document.getElementById('studioJobs');
+
+  // активные джобы (jobId -> { fileName, intervalId, lastStatus })
+  const activeJobs = new Map();
+
+  const btnLike = document.getElementById('btnLike');
+
+  function updateLikeButton(videoMeta, liked) {
+    const count = videoMeta.likesCount ?? 0;
+    btnLike.textContent = (liked ? '♥ ' : '♡ ') + count;
+    btnLike.dataset.liked = liked ? 'true' : 'false';
+  }
+
+  btnLike.addEventListener('click', async () => {
+    if (currentPos < 0 || !playOrder.length) return;
+
+    const realIndex = playOrder[currentPos];
+    const v = videos[realIndex];
+    const uuid = v.uuid;
+
+    const liked = btnLike.dataset.liked === 'true';
+    const method = liked ? 'DELETE' : 'POST';
+
+    try {
+      const res = await fetch(apiBase + '/api/videos/' + uuid + '/like', { method });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json(); // { likesCount, liked }
+
+      // обновляем локальные данные
+      v.likesCount = data.likesCount ?? v.likesCount;
+      updateLikeButton(v, data.liked);
+
+    } catch (e) {
+      console.error(e);
+      setStatusFeed('Ошибка лайка: ' + e.message, 'error');
+    }
+  });
+
+
+  function buildPlayOrder() {
+    playOrder = videos.map((_, i) => i);
+    // Fisher–Yates shuffle
+    for (let i = playOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [playOrder[i], playOrder[j]] = [playOrder[j], playOrder[i]];
+    }
+    if (playOrder.length > 0) {
+      currentPos = 0;
+    } else {
+      currentPos = -1;
+    }
+  }
+
+  function getVideoUrlByIndex(index) {
+    const meta = videos[index];
+    return apiBase + '/streaming/video/' + meta.uuid;
+  }
+
+  function preloadVideoToElement(videoIndex, el, mode) {
+    if (!el) return;
+    if (videoIndex < 0 || videoIndex >= videos.length) return;
+
+    const url = getVideoUrlByIndex(videoIndex);
+
+    // если уже этот же src – не трогаем
+    if (el.src === url) return;
+
+    el.pause();
+    el.removeAttribute('src');
+    el.load();
+
+    el.preload = mode || 'auto';
+    el.src = url;
+    el.load(); // даём браузеру стартануть прелоад
+  }
+
+  function preloadAroundCurrent() {
+    if (videos.length === 0 || currentPos < 0 || playOrder.length === 0) return;
+
+    const n = playOrder.length;
+    if (n <= 1) return;
+
+    const nextPos = (currentPos + 1) % n;
+    const afterPos = n > 2 ? (currentPos + 2) % n : -1;
+
+    const nextIndex = playOrder[nextPos];
+    preloadVideoToElement(nextIndex, preload1, 'auto');
+
+    if (afterPos !== -1) {
+      const afterIndex = playOrder[afterPos];
+      preloadVideoToElement(afterIndex, preload2, 'metadata');
+    }
+  }
+
+
+
+  function setStatusFeed(msg, type = '') {
+    statusFeedEl.textContent = msg || '';
+    statusFeedEl.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  function setStatusUpload(msg, type = '') {
+    statusUploadEl.textContent = msg || '';
+    statusUploadEl.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  function setStatusStudio(msg, type = '') {
+    statusStudioEl.textContent = msg || '';
+    statusStudioEl.className = 'status' + (type ? ' ' + type : '');
+  }
 
   function humanSize(bytes) {
     if (bytes == null) return '—';
@@ -205,11 +514,6 @@
     }
   }
 
-  function setStatus(msg, type = '') {
-    statusEl.textContent = msg || '';
-    statusEl.className = 'status' + (type ? ' ' + type : '');
-  }
-
   function pickRandomIndex() {
     if (videos.length === 0) return -1;
     if (videos.length === 1) return 0;
@@ -220,37 +524,58 @@
     return idx;
   }
 
-  function playByIndex(index) {
-    if (index < 0 || index >= videos.length) {
-      setStatus('Нет доступных видео', 'error');
+  function goNext() {
+    if (!playOrder.length) return;
+    currentPos = (currentPos + 1) % playOrder.length;
+    playCurrent();
+  }
+
+  function goPrev() {
+    if (!playOrder.length) return;
+    currentPos = (currentPos - 1 + playOrder.length) % playOrder.length;
+    playCurrent();
+  }
+
+
+  function playCurrent() {
+    if (videos.length === 0 || currentPos < 0 || playOrder.length === 0) {
+      setStatusFeed('Нет доступных видео', 'error');
       return;
     }
-    const v = videos[index];
-    currentIndex = index;
 
-    const url = apiBase + '/streaming/video/' + v.uuid;
+    const realIndex = playOrder[currentPos];
+    const v = videos[realIndex];
+    const url = getVideoUrlByIndex(realIndex);
+
+    const likedInitially = false; // пока можно не запрашивать /like, если не нужно
+    updateLikeButton(v, likedInitially);
 
     player.pause();
     player.removeAttribute('src');
     player.load();
-
     player.src = url;
     player.load();
     player.play().catch((err) => {
       console.warn('Autoplay blocked:', err);
-      setStatus('Нажмите Play, чтобы запустить видео', 'error');
+      setStatusFeed('Нажмите Play, чтобы запустить видео', 'error');
     });
 
-    titleEl.textContent = v.name || '(без названия)';
+    const name = v.name || '(без названия)';
+    const author = v.uploaderName ? ` — ${v.uploaderName}` : '';
+    titleEl.textContent = name + author;
+
     sizeEl.textContent = humanSize(v.contentSize);
     dateEl.textContent = formatDate(v.uploadedAt);
     countEl.textContent = videos.length + ' видео';
-    setStatus('Воспроизведение…', 'ok');
+    setStatusFeed('Воспроизведение…', 'ok');
+
+    // и вот тут как раз предзагружаем следующие ролики
+    preloadAroundCurrent();
   }
+
 
   async function loadVideoList() {
     try {
-      setStatus('Загружаю список видео…');
       const res = await fetch(apiBase + '/streaming/video/list');
       if (!res.ok) {
         throw new Error('HTTP ' + res.status);
@@ -261,126 +586,334 @@
       }
 
       countEl.textContent = videos.length + ' видео';
+      studioVideoCountEl.textContent = videos.length + ' видео';
+      renderStudioVideos();
 
       if (videos.length === 0) {
         titleEl.textContent = 'Видео ещё нет';
-        setStatus('Загрузите видео через /streaming/video/upload', 'error');
+        setStatusFeed('Загрузите видео на вкладке "Загрузка"', 'error');
         return;
       }
 
-      const firstIndex = pickRandomIndex();
-      playByIndex(firstIndex);
+      // пересобираем случайный порядок
+      buildPlayOrder();
+      playCurrent();
     } catch (e) {
       console.error(e);
-      setStatus('Ошибка загрузки списка видео: ' + e.message, 'error');
-      titleEl.textContent = 'Ошибка';
+      setStatusFeed('Ошибка загрузки списка видео: ' + e.message, 'error');
     }
   }
 
-  // Кнопка Next random
-  btnNext.addEventListener('click', () => {
-    if (videos.length === 0) return;
-    const idx = pickRandomIndex();
-    playByIndex(idx);
-  });
 
-  // Кнопка Random prev (по сути тоже random)
-  btnPrev.addEventListener('click', () => {
-    if (videos.length === 0) return;
-    const idx = pickRandomIndex();
-    playByIndex(idx);
-  });
-
-  // Автоматически следующее видео по окончании
-  player.addEventListener('ended', () => {
-    if (videos.length === 0) return;
-    const idx = pickRandomIndex();
-    playByIndex(idx);
-  });
-
-  player.addEventListener('error', () => {
-    setStatus('Ошибка воспроизведения видео', 'error');
-  });
-
-  // === СВАЙПЫ КАК В ТИКТОК ===
-
-  let touchStartY = null;
-  let touchStartX = null;
-  const SWIPE_THRESHOLD = 50; // px, насколько нужно провести
-
-  function handleSwipe(deltaY, deltaX) {
-    // фильтруем диагональные/горизонтальные — реагируем только на вертикальные
-    if (Math.abs(deltaY) < SWIPE_THRESHOLD || Math.abs(deltaY) < Math.abs(deltaX)) {
+  function renderStudioVideos() {
+    studioVideosEl.innerHTML = '';
+    if (videos.length === 0) {
+      studioVideosEl.innerHTML = '<div class="studio-row-meta">Пока нет загруженных видео</div>';
       return;
     }
-    if (deltaY < 0) {
-      // свайп вверх -> следующее рандомное
-      if (videos.length === 0) return;
-      const idx = pickRandomIndex();
-      playByIndex(idx);
-    } else {
-      // свайп вниз -> "предыдущее" рандомное
-      if (videos.length === 0) return;
-      const idx = pickRandomIndex();
-      playByIndex(idx);
+
+    videos.forEach((v, idx) => {
+      const row = document.createElement('div');
+      row.className = 'studio-row';
+
+      const header = document.createElement('div');
+      header.className = 'studio-row-header';
+
+      const title = document.createElement('div');
+      const name = v.name || '(без названия)';
+      const author = v.uploaderName ? ` — ${v.uploaderName}` : '';
+      title.className = 'studio-row-title';
+      title.textContent = name + author;
+
+      const btns = document.createElement('div');
+
+      const playBtn = document.createElement('button');
+      playBtn.className = 'small secondary';
+      playBtn.textContent = '▶ Открыть';
+      playBtn.addEventListener('click', () => {
+        activateTab('feed');
+        playByIndex(idx);
+      });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'small danger';
+      delBtn.textContent = '🗑 Удалить';
+      delBtn.addEventListener('click', () => {
+        if (confirm('Удалить это видео?')) {
+          deleteVideo(v.uuid);
+        }
+      });
+
+      btns.appendChild(playBtn);
+      btns.appendChild(delBtn);
+
+      header.appendChild(title);
+      header.appendChild(btns);
+
+      const meta = document.createElement('div');
+      meta.className = 'studio-row-meta';
+      meta.textContent =
+              `UUID: ${v.uuid} · ${humanSize(v.contentSize)} · ${formatDate(v.uploadedAt)}`;
+
+      row.appendChild(header);
+      row.appendChild(meta);
+      studioVideosEl.appendChild(row);
+    });
+  }
+
+  async function deleteVideo(uuid) {
+    try {
+      setStatusStudio('Удаляю видео…', 'ok');
+      const res = await fetch(apiBase + '/streaming/video/delete/' + uuid, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
+      setStatusStudio('Видео удалено', 'ok');
+      await loadVideoList();
+    } catch (e) {
+      console.error(e);
+      setStatusStudio('Ошибка удаления: ' + e.message, 'error');
     }
   }
 
-  // touch-события
-  player.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) return;
-    const t = e.touches[0];
-    touchStartY = t.clientY;
-    touchStartX = t.clientX;
-  }, { passive: true });
+  function activateTab(tab) {
+    [tabFeed, tabUpload, tabStudio].forEach(btn => btn.classList.remove('active'));
+    [pageFeed, pageUpload, pageStudio].forEach(p => p.classList.remove('active'));
 
-  player.addEventListener('touchend', (e) => {
-    if (touchStartY == null || touchStartX == null) return;
-    const t = e.changedTouches[0];
-    const deltaY = t.clientY - touchStartY;
-    const deltaX = t.clientX - touchStartX;
-    touchStartY = null;
-    touchStartX = null;
-    handleSwipe(deltaY, deltaX);
-  });
-
-  // мышиный "свайп" для десктопа (drag вверх/вниз)
-  let mouseDown = false;
-  let mouseStartY = null;
-  let mouseStartX = null;
-
-  player.addEventListener('mousedown', (e) => {
-    mouseDown = true;
-    mouseStartY = e.clientY;
-    mouseStartX = e.clientX;
-  });
-
-  window.addEventListener('mouseup', (e) => {
-    if (!mouseDown || mouseStartY == null || mouseStartX == null) return;
-    mouseDown = false;
-    const deltaY = e.clientY - mouseStartY;
-    const deltaX = e.clientX - mouseStartX;
-    mouseStartY = null;
-    mouseStartX = null;
-    handleSwipe(deltaY, deltaX);
-  });
-
-  // Можно ещё добавить реакцию на колёсико мыши
-  player.addEventListener('wheel', (e) => {
-    if (videos.length === 0) return;
-    if (e.deltaY > 0) {
-      // прокрутка вниз -> следующее
-      const idx = pickRandomIndex();
-      playByIndex(idx);
-    } else if (e.deltaY < 0) {
-      // прокрутка вверх -> "предыдущее"
-      const idx = pickRandomIndex();
-      playByIndex(idx);
+    if (tab === 'feed') {
+      tabFeed.classList.add('active');
+      pageFeed.classList.add('active');
+    } else if (tab === 'upload') {
+      tabUpload.classList.add('active');
+      pageUpload.classList.add('active');
+    } else {
+      tabStudio.classList.add('active');
+      pageStudio.classList.add('active');
     }
-  }, { passive: true });
+  }
 
-  // Загружаем список при старте
-  loadVideoList();
+  tabFeed.addEventListener('click', () => activateTab('feed'));
+  tabUpload.addEventListener('click', () => activateTab('upload'));
+  tabStudio.addEventListener('click', () => {
+    activateTab('studio');
+    renderStudioVideos();
+    renderStudioJobs();
+  });
+
+  // Загрузка с XHR + jobId + ffmpeg-прогресс
+  btnUpload.addEventListener('click', () => {
+    const file = uploadFileInput.files[0];
+    const title = uploadTitleInput.value.trim();
+    const author = uploaderNameInput.value.trim();
+
+    if (!file) {
+      setStatusUpload('Выберите файл видео', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('videoName', title || file.name);
+    formData.append('uploaderName', author || 'Аноним');
+
+    uploadProgressEl.style.display = 'block';
+    uploadProgressEl.value = 0;
+    setStatusUpload('Начинаю загрузку…', 'ok');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', apiBase + '/streaming/video/upload', true);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        uploadProgressEl.value = percent;
+        setStatusUpload(`Загружаю файл… ${percent}%`, 'ok');
+      }
+    };
+
+    xhr.upload.onload = () => {
+      setStatusUpload('Файл загружен, идёт обработка…', 'ok');
+      uploadProgressEl.value = 100;
+    };
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          let resp = null;
+          try {
+            resp = JSON.parse(xhr.responseText);
+          } catch (e) {
+            console.warn('Не удалось распарсить ответ upload', e);
+          }
+          if (!resp || !resp.jobId) {
+            setStatusUpload('Сервер не вернул jobId', 'error');
+            return;
+          }
+
+          const jobId = resp.jobId;
+          const jobLabel = title || file.name;
+          setStatusUpload('Идёт обработка видео…', 'ok');
+          trackJob(jobId, jobLabel);
+
+          // показываем вкладку "Студия", чтобы наблюдать за прогрессом
+          activateTab('studio');
+        } else {
+          setStatusUpload(`Ошибка загрузки: HTTP ${xhr.status}`, 'error');
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      setStatusUpload('Сетевая ошибка при загрузке', 'error');
+    };
+
+    xhr.send(formData);
+  });
+
+  function trackJob(jobId, fileName, initialStatus) {
+    if (activeJobs.has(jobId)) return;
+
+    const job = {
+      jobId,
+      fileName,
+      lastStatus: initialStatus || null,
+      intervalId: null
+    };
+    activeJobs.set(jobId, job);
+    renderStudioJobs();
+
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch(apiBase + '/streaming/video/upload/status/' + jobId);
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status);
+        }
+        const st = await res.json(); // { stage, percent, message }
+
+        job.lastStatus = st;
+        renderStudioJobs();
+
+        if (st.stage === 'DONE') {
+          clearInterval(job.intervalId);
+          activeJobs.delete(jobId);
+          renderStudioJobs();
+          setStatusUpload('Видео готово!', 'ok');
+          await loadVideoList();
+        }
+        if (st.stage === 'ERROR') {
+          clearInterval(job.intervalId);
+          activeJobs.delete(jobId);
+          renderStudioJobs();
+          setStatusUpload(st.message || 'Ошибка обработки', 'error');
+        }
+      } catch (e) {
+        console.error('Status polling error:', e);
+        setStatusUpload('Ошибка запроса статуса: ' + e.message, 'error');
+      }
+    }, 1000);
+
+    job.intervalId = intervalId;
+  }
+
+  async function loadActiveJobsFromServer() {
+    try {
+      const res = await fetch(apiBase + '/streaming/video/upload/active');
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
+      const jobs = await res.json(); // массив UploadJobView
+
+      // очищаем локальный список и пересоздаём трекинг
+      for (const [_, job] of activeJobs) {
+        if (job.intervalId) {
+          clearInterval(job.intervalId);
+        }
+      }
+      activeJobs.clear();
+
+      jobs.forEach(j => {
+        // j = { jobId, stage, percent, message, fileName }
+        const initialStatus = {
+          stage: j.stage,
+          percent: j.percent,
+          message: j.message
+        };
+        trackJob(j.jobId, j.fileName || '(без названия)', initialStatus);
+      });
+
+      renderStudioJobs();
+    } catch (e) {
+      console.error('loadActiveJobsFromServer error:', e);
+      setStatusStudio('Ошибка загрузки активных задач: ' + e.message, 'error');
+    }
+  }
+
+  tabStudio.addEventListener('click', () => {
+    activateTab('studio');
+    renderStudioVideos();
+    renderStudioJobs();
+    loadActiveJobsFromServer(); // актуализировать список джоб
+  });
+
+  function renderStudioJobs() {
+    studioJobsEl.innerHTML = '';
+    if (activeJobs.size === 0) {
+      studioJobsEl.innerHTML = '<div class="studio-row-meta">Нет активных загрузок</div>';
+      return;
+    }
+
+    for (const [jobId, job] of activeJobs.entries()) {
+      const st = job.lastStatus || { stage: 'UPLOADING', percent: 0, message: 'Загрузка…' };
+      const row = document.createElement('div');
+      row.className = 'job-row';
+
+      const header = document.createElement('div');
+      header.className = 'job-row-header';
+
+      const left = document.createElement('div');
+      left.textContent = job.fileName || '(без названия)';
+
+      const right = document.createElement('div');
+      right.textContent = `${st.percent ?? 0}%`;
+
+      header.appendChild(left);
+      header.appendChild(right);
+
+      const msg = document.createElement('div');
+      msg.textContent = st.message || st.stage;
+
+      const bar = document.createElement('div');
+      bar.className = 'job-progress-bar';
+      const fill = document.createElement('div');
+      fill.className = 'job-progress-fill';
+      fill.style.width = (st.percent ?? 0) + '%';
+      bar.appendChild(fill);
+
+      row.appendChild(header);
+      row.appendChild(msg);
+      row.appendChild(bar);
+
+      studioJobsEl.appendChild(row);
+    }
+  }
+
+  // Кнопки ленты
+  btnNext.addEventListener('click', goNext);
+  btnPrev.addEventListener('click', goPrev);
+
+  player.addEventListener('ended', goNext);
+
+
+  player.addEventListener('error', () => {
+    setStatusFeed('Ошибка воспроизведения видео', 'error');
+  });
+
+  // старт
+  loadVideoList().then(() => {
+    loadActiveJobsFromServer();
+  });
 </script>
 </body>
 </html>

@@ -15,9 +15,15 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate   # ??? ? ??????
+      ddl-auto: update   # ??? ? ??????
     show-sql: true
     database: POSTGRESQL
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 streaming:
   chunk:
@@ -31,3 +37,11 @@ minio:
     name: videos
   stream:
     part-size: 5242880     # 5 MB
+
+transcoder:
+  ffmpeg-path: "C:/ffmpeg/bin/ffmpeg.exe"
+  ffprobe-path: "C:/ffmpeg/bin/ffprobe.exe"
+
+app:
+  likes:
+    exchange: video.likes

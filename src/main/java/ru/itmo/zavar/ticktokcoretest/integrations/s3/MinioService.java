@@ -62,6 +62,18 @@ public class MinioService {
         );
     }
 
+    public void uploadFile(InputStream inputStream, long size, FileMetadata fileMetadata) throws Exception {
+        minioClient.putObject(
+                PutObjectArgs
+                        .builder()
+                        .bucket(bucketName)
+                        .object(fileMetadata.getUuid().toString())
+                        .stream(inputStream, size, streamPartSize)
+                        .build()
+        );
+    }
+
+
     public void deleteFile(UUID fileUUID) throws Exception {
         minioClient.removeObject(
                 RemoveObjectArgs.builder()
