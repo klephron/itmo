@@ -15,5 +15,8 @@ public interface FileMetadataRepo extends JpaRepository<FileMetadata, Long> {
 
     List<FileMetadata> findAllByUploaderId(Long uploaderId);
 
+    List<FileMetadata> findByUploaderId(Long uploaderId);
+
+
     void deleteByUuid(UUID fileUUID);
 }

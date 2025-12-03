@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,7 +48,14 @@ public class SecurityBeans {
 
         @Override
         public Collection<? extends GrantedAuthority> getAuthorities() {
-            return List.of(); // роли можно добавить позже
+            if (user.getRoles() == null) {
+                return java.util.List.of();
+            }
+
+            return user.getRoles().stream()
+                    .map(Role::authority)                    // ROLE_...
+                    .map(SimpleGrantedAuthority::new)
+                    .toList();
         }
 
         @Override

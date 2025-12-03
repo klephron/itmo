@@ -6,8 +6,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.ticktokcoretest.model.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
+import ru.itmo.zavar.ticktokcoretest.security.Role;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans.UserPrincipal;
 import ru.itmo.zavar.ticktokcoretest.service.AuthService;
+
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,7 +34,7 @@ public class AuthController {
                 req.password()
         );
         String token = authService.login(req.username(), req.password());
-        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName()));
+        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles()));
     }
 
     @PostMapping("/login")
@@ -39,7 +42,7 @@ public class AuthController {
         String token = authService.login(req.username(), req.password());
         UserEntity u = userRepository.findByUsername(req.username())
                 .orElseThrow();
-        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName()));
+        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles()));
     }
 
     @GetMapping("/me")
@@ -61,13 +64,14 @@ public class AuthController {
                 null, // token not returned
                 u.getId(),
                 u.getUsername(),
-                u.getDisplayName()
+                u.getDisplayName(),
+                u.getRoles()
         ));
     }
 
     public record RegisterRequest(String username, String email, String displayName, String password) {}
     public record LoginRequest(String username, String password) {}
-    public record AuthResponse(String token, Long userId, String username, String displayName) {}
+    public record AuthResponse(String token, Long userId, String username, String displayName, Set<Role> roles) {}
 }
 
 

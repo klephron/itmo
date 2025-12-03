@@ -3,8 +3,11 @@ package ru.itmo.zavar.ticktokcoretest.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import ru.itmo.zavar.ticktokcoretest.security.Role;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -33,6 +36,13 @@ public class UserEntity {
 
     @Column(nullable = false)
     private boolean enabled = true;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 32, nullable = false)
+    private Set<Role> roles = new HashSet<>();
 
     public UserEntity() {}
 

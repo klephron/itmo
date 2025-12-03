@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.itmo.zavar.ticktokcoretest.model.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
 import ru.itmo.zavar.ticktokcoretest.security.JwtTokenProvider;
+import ru.itmo.zavar.ticktokcoretest.security.Role;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
 
 @Service
@@ -45,6 +46,7 @@ public class AuthService {
         u.setDisplayName(displayName);
         u.setPassword(passwordEncoder.encode(rawPassword));
         u.setEnabled(true);
+        u.getRoles().add(Role.USER);
 
         return userRepository.save(u);
     }
