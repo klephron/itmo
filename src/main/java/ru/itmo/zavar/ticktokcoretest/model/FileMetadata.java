@@ -32,6 +32,9 @@ public class FileMetadata {
     @Column(name = "content_size", nullable = false)
     private Long contentSize;
 
+    @Column(name = "uploader_id")
+    private Long uploaderId;
+
     @Column(name = "uploader_name")
     private String uploaderName;
 

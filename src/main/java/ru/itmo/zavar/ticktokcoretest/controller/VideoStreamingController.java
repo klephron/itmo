@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.itmo.zavar.ticktokcoretest.dto.UploadJobView;
@@ -60,13 +61,18 @@ public class VideoStreamingController {
         return videoStreamingService.getVideoList();
     }
 
+    @GetMapping("/list/my")
+    public List<FileMetadata> getMyVideoList(Authentication authentication) {
+        return videoStreamingService.getVideoList(videoStreamingService.extractUserId(authentication));
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<UploadStartResponse> startUpload(
             @RequestParam("video") MultipartFile video,
             @RequestParam("videoName") String videoName,
-            @RequestParam(value = "uploaderName", required = false) String uploaderName
+            Authentication auth
     ) throws IOException {
-        UUID jobId = videoStreamingService.enqueueUpload(video, videoName, uploaderName);
+        UUID jobId = videoStreamingService.enqueueUpload(video, videoName, auth);
         return ResponseEntity.ok(new UploadStartResponse(jobId));
     }
 
@@ -86,9 +92,12 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/upload/active")
-    public List<UploadJobView> getActiveUploadJobs() {
-        return jobRegistry.getActiveJobs();
+    public ResponseEntity<List<UploadJobView>> getActiveUploadJobs(Authentication auth) {
+        Long userId = videoStreamingService.extractUserId(auth); // такой же хелпер, как в LikeController
+        List<UploadJobView> jobs = jobRegistry.getActiveJobsForUser(userId);
+        return ResponseEntity.ok(jobs);
     }
+
 
 
     private String getContentLengthHeader(StreamRange range, long fileSize) {

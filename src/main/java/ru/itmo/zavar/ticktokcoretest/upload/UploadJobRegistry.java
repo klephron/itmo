@@ -46,5 +46,25 @@ public class UploadJobRegistry {
                 })
                 .toList();
     }
+
+    public List<UploadJobView> getActiveJobsForUser(Long userId) {
+        return jobs.entrySet().stream()
+                .filter(e -> e.getValue().getUserId() != null
+                        && e.getValue().getUserId().equals(userId))
+                .filter(e -> e.getValue().getStage() != JobStage.DONE
+                        && e.getValue().getStage() != JobStage.ERROR)
+                .map(e -> {
+                    UploadJobStatus s = e.getValue();
+                    return new UploadJobView(
+                            e.getKey(),
+                            s.getStage(),
+                            s.getPercent(),
+                            s.getMessage(),
+                            s.getFileName()
+                    );
+                })
+                .toList();
+    }
+
 }
 

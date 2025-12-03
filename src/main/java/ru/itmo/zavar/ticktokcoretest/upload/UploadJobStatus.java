@@ -14,5 +14,6 @@ public class UploadJobStatus {
     private int percent;      // 0..100
     private String message;
     private String fileName;
+    private Long userId;
 }
 
