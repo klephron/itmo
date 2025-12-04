@@ -2,6 +2,7 @@ package ru.itmo.zavar.ticktokcoretest.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,12 +20,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -37,14 +40,17 @@ public class VideoStreamingService {
     private final UploadJobRegistry jobRegistry;
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
+    @Value("${transcoder.ffmpeg-path:ffmpeg}")
+    private String ffmpegPath;
+
     public UUID enqueueUpload(MultipartFile video,
                               String videoName,
                               Authentication auth) throws java.io.IOException {
 
         UUID jobId = UUID.randomUUID();
 
-        Long userId = extractUserId(auth);              // 🔹 уже есть метод ниже
-        String displayName = extractDisplayName(auth);  // 🔹 тоже есть
+        Long userId = extractUserId(auth);
+        String displayName = extractDisplayName(auth);
 
         String safeName = (videoName == null || videoName.isBlank())
                 ? video.getOriginalFilename()
@@ -55,7 +61,7 @@ public class VideoStreamingService {
                 0,
                 "Файл загружается",
                 safeName,
-                userId                               // 🔹 записали владельца
+                userId
         );
         jobRegistry.put(jobId, status);
 
@@ -64,7 +70,7 @@ public class VideoStreamingService {
 
         executor.submit(() -> {
             try {
-                processJob(jobId, tempInput, safeName, userId, displayName);  // 🔹 auth больше не таскаем
+                processJob(jobId, tempInput, safeName, userId, displayName);
             } catch (Exception e) {
                 log.error("Upload job {} failed", jobId, e);
                 jobRegistry.update(jobId, st -> {
@@ -82,14 +88,11 @@ public class VideoStreamingService {
         return jobId;
     }
 
-
     private void processJob(UUID jobId,
                             Path tempInput,
                             String videoName,
                             Long userId,
                             String displayName) throws Exception {
-
-        // userId и displayName уже есть, auth не нужен
 
         jobRegistry.update(jobId, st -> {
             st.setStage(JobStage.TRANSCODING);
@@ -104,11 +107,20 @@ public class VideoStreamingService {
         meta.setName(videoName);
         meta.setUuid(UUID.randomUUID());
         meta.setUploaderName(displayName);
-        meta.setUploaderId(userId);           // 🔹 владелец файла
+        meta.setUploaderId(userId);
         meta.setContentType("video/mp4");
         meta.setContentSize(mp4Size);
 
         meta = fileMetadataRepo.save(meta);
+
+        // ---------- превью ----------
+        try {
+            createAndUploadThumbnail(mp4Path, meta);
+        } catch (Exception e) {
+            // превью не критично – не роняем джоб
+            log.error("Failed to create/upload thumbnail for {}", meta.getUuid(), e);
+        }
+        // ---------- конец превью ----------
 
         jobRegistry.update(jobId, st -> {
             st.setStage(JobStage.UPLOADING_TO_MINIO);
@@ -132,6 +144,65 @@ public class VideoStreamingService {
                 jobId, meta.getUuid(), meta.getName(), meta.getUploaderName());
     }
 
+    /**
+     * Общий хелпер: берёт видео, выдёргивает первый кадр через ffmpeg,
+     * загружает в MinIO и сохраняет thumbnailKey в meta.
+     */
+    private void createAndUploadThumbnail(Path videoPath, FileMetadata meta) throws Exception {
+        Path thumbPath = Files.createTempFile("thumb-", ".jpg");
+        try {
+            runFfmpegThumbnail(videoPath, thumbPath);
+
+            if (!Files.exists(thumbPath) || Files.size(thumbPath) == 0) {
+                throw new IllegalStateException("ffmpeg did not produce thumbnail file");
+            }
+
+            long thumbSize = Files.size(thumbPath);
+            String thumbKey;
+            try (InputStream is = Files.newInputStream(thumbPath)) {
+                thumbKey = minioService.uploadThumbnail(is, thumbSize, meta);
+            }
+
+            meta.setThumbnailKey(thumbKey);
+            fileMetadataRepo.save(meta);
+            log.info("Thumbnail created for video {}", meta.getUuid());
+        } finally {
+            try {
+                Files.deleteIfExists(thumbPath);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    /**
+     * Запускает ffmpeg, глушит вывод и ждёт с таймаутом.
+     */
+    private void runFfmpegThumbnail(Path input, Path output) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder(
+                ffmpegPath,
+                "-y",
+                "-i", input.toString(),
+                "-ss", "00:00:00.000",
+                "-frames:v", "1",
+                "-q:v", "2",
+                output.toString()
+        );
+        pb.redirectErrorStream(true);
+        // чтобы stdout не забивал буфер
+        pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+
+        Process p = pb.start();
+
+        boolean finished = p.waitFor(60, TimeUnit.SECONDS);
+        if (!finished) {
+            p.destroyForcibly();
+            throw new IllegalStateException("ffmpeg timeout for " + input);
+        }
+
+        int code = p.exitValue();
+        if (code != 0) {
+            throw new IllegalStateException("ffmpeg exit code " + code + " for " + input);
+        }
+    }
 
     private String extractDisplayName(Authentication auth) {
         if (auth == null) return "Аноним";
@@ -154,7 +225,6 @@ public class VideoStreamingService {
         }
         throw new RuntimeException("Cannot extract user id");
     }
-
 
     public StreamChunk fetchChunk(UUID uuid, StreamRange range) throws Exception {
         FileMetadata meta = fileMetadataRepo.findByUuid(uuid)
@@ -191,5 +261,44 @@ public class VideoStreamingService {
 
         minioService.deleteFile(meta.getUuid());
         fileMetadataRepo.delete(meta);
+    }
+
+    /**
+     * Массовая регенерация превью.
+     * @param force true — пересоздавать даже если thumbnail уже есть.
+     * @return сколько превью обновили.
+     */
+    public int regenerateAllThumbnails(boolean force) {
+        List<FileMetadata> all = fileMetadataRepo.findAll();
+        int updated = 0;
+
+        for (FileMetadata meta : all) {
+            if (!force && meta.getThumbnailKey() != null && !meta.getThumbnailKey().isBlank()) {
+                continue;
+            }
+
+            Path tempVideo = null;
+            try {
+                tempVideo = Files.createTempFile("regen-src-", ".mp4");
+
+                // 1. скачиваем видео из MinIO во временный файл
+                try (InputStream is = minioService.downloadVideo(meta)) {
+                    Files.copy(is, tempVideo, StandardCopyOption.REPLACE_EXISTING);
+                }
+
+                // 2. создаём и заливаем превью
+                createAndUploadThumbnail(tempVideo, meta);
+                updated++;
+            } catch (Exception e) {
+                log.error("Failed to regenerate thumbnail for {}", meta.getUuid(), e);
+            } finally {
+                if (tempVideo != null) {
+                    try { Files.deleteIfExists(tempVideo); } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        log.info("Thumbnail regeneration finished, updated = {}", updated);
+        return updated;
     }
 }

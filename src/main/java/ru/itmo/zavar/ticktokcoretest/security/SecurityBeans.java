@@ -2,6 +2,7 @@ package ru.itmo.zavar.ticktokcoretest.security;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,12 +39,22 @@ public class SecurityBeans {
             this.user = user;
         }
 
+        public String getAvatarUrl() {
+            return user.getAvatarKey() == null
+                    ? null
+                    : "/api/users/" + user.getId() + "/avatar";
+        }
+
         public Long getId() {
             return user.getId();
         }
 
         public String getDisplayName() {
             return user.getDisplayName();
+        }
+
+        public Set<Role> getRoles() {
+            return user.getRoles();
         }
 
         @Override
@@ -68,10 +79,25 @@ public class SecurityBeans {
             return user.getUsername();
         }
 
-        @Override public boolean isAccountNonExpired() { return true; }
-        @Override public boolean isAccountNonLocked() { return true; }
-        @Override public boolean isCredentialsNonExpired() { return true; }
-        @Override public boolean isEnabled() { return user.isEnabled(); }
+        @Override
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return user.isEnabled();
+        }
     }
 }
 

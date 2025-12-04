@@ -16,7 +16,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update   # ??? ? ??????
-    show-sql: true
+    show-sql: false
     database: POSTGRESQL
 
   rabbitmq:
@@ -34,7 +34,9 @@ minio:
   username: minio_admin
   password: minio_admin
   bucket:
-    name: videos
+    video: videos
+    thumb: thumbs
+    avatar: avatars
   stream:
     part-size: 5242880     # 5 MB
 

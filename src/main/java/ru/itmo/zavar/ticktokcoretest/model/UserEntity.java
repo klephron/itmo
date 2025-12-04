@@ -34,6 +34,9 @@ public class UserEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "avatar_key", length = 255)
+    private String avatarKey; // путь/ключ в MinIO
+
     @Column(nullable = false)
     private boolean enabled = true;
 

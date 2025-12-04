@@ -31,8 +31,10 @@ public class SecurityConfig {
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // auth endpoints
+                        .requestMatchers("/api/users/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         // публичный просмотр видео
+                        .requestMatchers("/api/videos/**").permitAll()
                         .requestMatchers("/streaming/video/**").permitAll()
                         .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
                         .requestMatchers("/moderation/**").hasRole(Role.MODERATOR.name())

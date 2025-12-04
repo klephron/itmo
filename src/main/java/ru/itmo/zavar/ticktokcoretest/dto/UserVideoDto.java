@@ -9,5 +9,7 @@ public record UserVideoDto(
         String uploaderName,
         Long contentSize,
         String contentType,
-        Instant uploadedAt
+        Instant uploadedAt,
+        String thumbnailUrl,
+        String uploaderAvatarUrl
 ) {}

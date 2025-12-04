@@ -34,7 +34,10 @@ public class AuthController {
                 req.password()
         );
         String token = authService.login(req.username(), req.password());
-        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles()));
+        String avatarUrl = u.getAvatarKey() == null
+                ? null
+                : "/api/users/" + u.getId() + "/avatar";
+        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles(), avatarUrl));
     }
 
     @PostMapping("/login")
@@ -42,7 +45,10 @@ public class AuthController {
         String token = authService.login(req.username(), req.password());
         UserEntity u = userRepository.findByUsername(req.username())
                 .orElseThrow();
-        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles()));
+        String avatarUrl = u.getAvatarKey() == null
+                ? null
+                : "/api/users/" + u.getId() + "/avatar";
+        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles(), avatarUrl));
     }
 
     @GetMapping("/me")
@@ -60,18 +66,23 @@ public class AuthController {
         UserEntity u = userRepository.findById(up.getId())
                 .orElseThrow();
 
+        String avatarUrl = u.getAvatarKey() == null
+                ? null
+                : "/api/users/" + u.getId() + "/avatar";
+
         return ResponseEntity.ok(new AuthResponse(
                 null, // token not returned
                 u.getId(),
                 u.getUsername(),
                 u.getDisplayName(),
-                u.getRoles()
+                u.getRoles(),
+                avatarUrl
         ));
     }
 
     public record RegisterRequest(String username, String email, String displayName, String password) {}
     public record LoginRequest(String username, String password) {}
-    public record AuthResponse(String token, Long userId, String username, String displayName, Set<Role> roles) {}
+    public record AuthResponse(String token, Long userId, String username, String displayName, Set<Role> roles, String avatarUrl) {}
 }
 
 

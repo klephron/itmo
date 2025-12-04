@@ -2,14 +2,20 @@ package ru.itmo.zavar.ticktokcoretest.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import ru.itmo.zavar.ticktokcoretest.dto.UploadJobView;
+import ru.itmo.zavar.ticktokcoretest.integrations.s3.MinioService;
 import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
+import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepo;
 import ru.itmo.zavar.ticktokcoretest.service.VideoStreamingService;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamChunk;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamRange;
@@ -17,6 +23,7 @@ import ru.itmo.zavar.ticktokcoretest.upload.UploadJobRegistry;
 import ru.itmo.zavar.ticktokcoretest.upload.UploadJobStatus;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +36,8 @@ public class VideoStreamingController {
 
     private final VideoStreamingService videoStreamingService;
     private final UploadJobRegistry jobRegistry;
+    private final FileMetadataRepo fileMetadataRepo;
+    private final MinioService minioService;
 
     @Value("${streaming.chunk.default-size}")
     private long chunkDefaultSize;
@@ -55,6 +64,20 @@ public class VideoStreamingController {
 
         return new ResponseEntity<>(streamChunk.getChunk(), headers, HttpStatus.PARTIAL_CONTENT);
     }
+
+    @GetMapping("/thumbnail/{uuid}")
+    public ResponseEntity<Resource> getThumbnail(@PathVariable UUID uuid) throws Exception {
+        FileMetadata meta = fileMetadataRepo.findByUuid(uuid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (meta.getThumbnailKey() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        InputStream is = minioService.getThumbAsInputStream(meta);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(new InputStreamResource(is));
+    }
+
 
     @GetMapping("/list")
     public List<FileMetadata> getVideoList() {

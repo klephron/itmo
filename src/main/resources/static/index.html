@@ -254,6 +254,173 @@
       background: #4caf50;
       transition: width .2s ease-out;
     }
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #222;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-mini {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background:#222;
+      overflow:hidden;
+    }
+    .avatar-mini img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    #videoAuthorName {
+      font-size: 11px;
+      color: #888;
+      cursor: pointer;
+    }
+    #videoAuthorName:hover {
+      text-decoration: underline;
+    }
+    .thumb-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .thumb-card {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      background:#000;
+      cursor:pointer;
+    }
+
+    .thumb-card img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      aspect-ratio: 9 / 16;
+    }
+
+    .thumb-card-overlay {
+      position:absolute;
+      right:4px;
+      bottom:4px;
+      font-size:9px;
+      padding:2px 4px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.6);
+    }
+
+    .comments {
+      margin-top: 8px;
+      border-top: 1px solid #222;
+      padding-top: 6px;
+    }
+
+    .comments-list {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-bottom: 6px;
+    }
+
+    .comment-row {
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    .comment-meta {
+      color: #777;
+      margin-left: 4px;
+    }
+
+    .comment-text {
+      margin-top: 1px;
+    }
+
+    .comment-delete {
+      font-size: 10px;
+      color: #f88;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .comment-delete:hover {
+      text-decoration: underline;
+    }
+
+    .comment-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .comment-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #222;
+      overflow: hidden;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .comment-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .comment-body {
+      flex: 1;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      margin-right: 4px;
+      cursor: pointer;
+    }
+
+    .comment-author:hover {
+      text-decoration: underline;
+    }
+
+    .comment-meta {
+      color: #777;
+      margin-left: 4px;
+    }
+
+    .comment-text {
+      margin-top: 1px;
+    }
+
+    .comment-delete {
+      font-size: 10px;
+      color: #f88;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    .comment-delete:hover {
+      text-decoration: underline;
+    }
+
+
+
   </style>
 </head>
 <body>
@@ -269,7 +436,10 @@
   <!-- Лента -->
   <div class="card page active" id="pageFeed">
     <div class="header">
-      <div class="title" id="videoTitle">Загрузка списка видео…</div>
+      <div>
+        <div class="title" id="videoTitle">Загрузка списка видео…</div>
+        <div class="studio-row-meta" id="videoAuthorName"></div>
+      </div>
       <div class="badge" id="videoCount">0 видео</div>
     </div>
 
@@ -289,8 +459,27 @@
     </div>
 
     <div class="meta">
-      <div id="videoInfoSize">—</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="avatar-mini" id="videoAuthorAvatar"></div>
+        <span id="videoInfoSize">—</span>
+      </div>
       <div id="videoInfoDate">—</div>
+    </div>
+
+
+    <div class="comments">
+      <div class="studio-section-title" style="margin-top:0;">Комментарии</div>
+      <div id="commentsList" class="comments-list"></div>
+
+      <div id="commentsForm" class="form-row">
+        <input id="commentInput" type="text" placeholder="Напишите комментарий…">
+        <button class="small full" id="btnSendComment">Отправить</button>
+      </div>
+      <div class="hint" id="commentsHint" style="display:none;">
+        Войдите в аккаунт, чтобы оставлять комментарии
+      </div>
+
+      <div class="status" id="commentsStatus"></div>
     </div>
 
     <div class="status" id="statusFeed"></div>
@@ -339,8 +528,34 @@
     <div class="status" id="statusStudio"></div>
   </div>
 
+  <div class="card page" id="pageProfile">
+    <div class="header">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="profile-avatar" id="profileAvatar"></div>
+        <div>
+          <div class="title" id="profileDisplayName">Профиль</div>
+          <div class="studio-row-meta" id="profileUsername"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="studio-section-title">Видео</div>
+    <div class="thumb-grid" id="profileVideos"></div>
+
+    <div class="status" id="statusProfile"></div>
+  </div>
+
+
   <!-- Аккаунт -->
   <div class="card page" id="pageAuth">
+    <div id="authAvatar" class="profile-avatar" style="display:none;"></div>
+
+    <div class="form-row" id="avatarUploadRow" style="display:none;">
+      <label for="avatarFile">Аватар</label>
+      <input id="avatarFile" type="file" accept="image/*">
+      <button class="full small" id="btnAvatarUpload">Обновить аватар</button>
+    </div>
+
     <div class="header">
       <div class="title">Аккаунт</div>
       <div class="badge" id="authUserShort">Гость</div>
@@ -349,6 +564,20 @@
     <div id="authLoggedBlock" style="display:none;">
       <div class="status ok" id="authWelcome">Вы вошли</div>
       <button class="full danger small" id="btnLogout">Выйти</button>
+    </div>
+
+    <div id="authProfileBlock" style="display:none; margin-top:12px;">
+      <div class="studio-section-title">Ваш профиль</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <div class="profile-avatar" id="authProfileAvatar"></div>
+        <div>
+          <div class="title" id="authProfileDisplayName"></div>
+          <div class="studio-row-meta" id="authProfileUsername"></div>
+        </div>
+      </div>
+
+      <div class="studio-section-title" style="margin-top:8px;">Ваши видео</div>
+      <div class="thumb-grid" id="authProfileVideos"></div>
     </div>
 
     <div id="authFormsBlock">
@@ -391,6 +620,10 @@
       <div class="badge" id="modUsersCount">—</div>
     </div>
 
+    <div class="studio-section-title">Сервис</div>
+    <button class="full small" id="btnRebuildThumbs" style="margin-bottom:8px; display:none;">
+      Перегенерировать превью всех видео
+    </button>
     <div class="studio-section-title">Пользователи</div>
     <div class="studio-videos" id="modUsersList"></div>
 
@@ -427,6 +660,7 @@
   const statusUploadEl = document.getElementById('statusUpload');
   const statusStudioEl = document.getElementById('statusStudio');
   const statusAuthEl = document.getElementById('statusAuth');
+  const btnRebuildThumbs = document.getElementById('btnRebuildThumbs');
 
   const btnNext = document.getElementById('btnNext');
   const btnPrev = document.getElementById('btnPrev');
@@ -457,6 +691,12 @@
   const authFormsBlock = document.getElementById('authFormsBlock');
   const authWelcomeEl = document.getElementById('authWelcome');
   const btnLogout = document.getElementById('btnLogout');
+  const pageProfile = document.getElementById('pageProfile');
+  const profileAvatarEl = document.getElementById('profileAvatar');
+  const profileDisplayNameEl = document.getElementById('profileDisplayName');
+  const profileUsernameEl = document.getElementById('profileUsername');
+  const profileVideosEl = document.getElementById('profileVideos');
+  const statusProfileEl = document.getElementById('statusProfile');
 
   const loginUsernameInput = document.getElementById('loginUsername');
   const loginPasswordInput = document.getElementById('loginPassword');
@@ -477,6 +717,40 @@
   const modUserVideosEl = document.getElementById('modUserVideos');
   const statusModerationEl = document.getElementById('statusModeration');
 
+  const authAvatarEl = document.getElementById('authAvatar');
+  const avatarFileInput = document.getElementById('avatarFile');
+  const btnAvatarUpload = document.getElementById('btnAvatarUpload');
+
+  const videoAuthorNameEl = document.getElementById('videoAuthorName');
+  const videoAuthorAvatarEl = document.getElementById('videoAuthorAvatar');
+
+  const commentsListEl = document.getElementById('commentsList');
+  const commentsFormEl = document.getElementById('commentsForm');
+  const commentInputEl = document.getElementById('commentInput');
+  const btnSendComment = document.getElementById('btnSendComment');
+  const commentsStatusEl = document.getElementById('commentsStatus');
+  const commentsHintEl = document.getElementById('commentsHint');
+
+  const avatarUploadRow = document.getElementById('avatarUploadRow');
+
+  const authProfileBlockEl = document.getElementById('authProfileBlock');
+  const authProfileAvatarEl = document.getElementById('authProfileAvatar');
+  const authProfileDisplayNameEl = document.getElementById('authProfileDisplayName');
+  const authProfileUsernameEl = document.getElementById('authProfileUsername');
+  const authProfileVideosEl = document.getElementById('authProfileVideos');
+
+  // кэш: videoUuid -> массив комментариев
+  const commentsCache = new Map();
+
+  function setStatusComments(msg, type = '') {
+    commentsStatusEl.textContent = msg || '';
+    commentsStatusEl.className = 'status' + (type ? ' ' + type : '');
+  }
+
+
+  let currentProfileUserId = null;
+
+
   let modUsers = [];
   let modSelectedUserId = null;
   // активные джобы (jobId -> { fileName, intervalId, lastStatus })
@@ -487,6 +761,133 @@
     if (authToken) h['Authorization'] = 'Bearer ' + authToken;
     return h;
   }
+
+  function clearAccountProfile() {
+    authProfileBlockEl.style.display = 'none';
+    authProfileAvatarEl.innerHTML = '';
+    authProfileDisplayNameEl.textContent = '';
+    authProfileUsernameEl.textContent = '';
+    authProfileVideosEl.innerHTML = '';
+  }
+
+  async function loadAccountProfile() {
+    if (!authUser) {
+      clearAccountProfile();
+      return;
+    }
+
+    try {
+      const [userRes, vidsRes] = await Promise.all([
+        fetch(apiBase + '/api/users/' + authUser.userId + '/profile', {
+          headers: authHeaders()
+        }),
+        fetch(apiBase + '/api/users/' + authUser.userId + '/videos', {
+          headers: authHeaders()
+        })
+      ]);
+
+      if (!userRes.ok || !vidsRes.ok) {
+        throw new Error('HTTP ' + userRes.status + '/' + vidsRes.status);
+      }
+
+      const profile = await userRes.json();
+      const vids = await vidsRes.json();
+
+      authProfileDisplayNameEl.textContent = profile.displayName || profile.username;
+      authProfileUsernameEl.textContent = '@' + profile.username;
+      authProfileAvatarEl.innerHTML = profile.avatarUrl
+              ? `<img src="${profile.avatarUrl}" alt="">`
+              : '';
+
+      authProfileBlockEl.style.display = '';
+
+      // грид превью
+      authProfileVideosEl.innerHTML = '';
+      if (!vids || vids.length === 0) {
+        authProfileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
+      } else {
+        vids.forEach(v => {
+          const card = document.createElement('div');
+          card.className = 'thumb-card';
+
+          const img = document.createElement('img');
+          img.src = v.thumbnailUrl;
+          img.alt = v.name || '';
+
+          const overlay = document.createElement('div');
+          overlay.className = 'thumb-card-overlay';
+          overlay.textContent = formatDate(v.uploadedAt);
+
+          card.appendChild(img);
+          card.appendChild(overlay);
+
+          card.addEventListener('click', () => {
+            // открыть ролик в общей ленте
+            activateTab('feed');
+            const globalIndex = videosGlobalIndexByUuid(v.uuid);
+            if (globalIndex !== -1) {
+              playByIndex(globalIndex);
+            }
+          });
+
+          authProfileVideosEl.appendChild(card);
+        });
+      }
+    } catch (e) {
+      console.error('loadAccountProfile error', e);
+      clearAccountProfile();
+    }
+  }
+
+
+  function updateAccountAvatar() {
+    if (authUser) {
+      authAvatarEl.style.display = '';
+      avatarUploadRow.style.display = '';
+
+      if (authUser.avatarUrl) {
+        authAvatarEl.innerHTML = `<img src="${authUser.avatarUrl}" alt="">`;
+      } else {
+        authAvatarEl.innerHTML = '';
+      }
+    } else {
+      authAvatarEl.style.display = 'none';
+      avatarUploadRow.style.display = 'none';
+      authAvatarEl.innerHTML = '';
+    }
+  }
+
+
+  function setStatusProfile(msg, type = '') {
+    statusProfileEl.textContent = msg || '';
+    statusProfileEl.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  btnAvatarUpload.addEventListener('click', async () => {
+    const file = avatarFileInput.files[0];
+    if (!file) {
+      setStatusAuth('Выберите файл аватара', 'error');
+      return;
+    }
+    const fd = new FormData();
+    fd.append('avatar', file);
+    try {
+      const res = await fetch(apiBase + '/api/users/me/avatar', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: fd
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json(); // { url }
+      authUser.avatarUrl = data.url;
+      localStorage.setItem('authUser', JSON.stringify(authUser));
+      updateAuthUI();
+      setStatusAuth('Аватар обновлён', 'ok');
+    } catch (e) {
+      console.error(e);
+      setStatusAuth('Ошибка загрузки аватара: ' + e.message, 'error');
+    }
+  });
 
   function setStatusModeration(msg, type = '') {
     statusModerationEl.textContent = msg || '';
@@ -509,14 +910,15 @@
 
 
 
-  function setAuth(token, userId, username, displayName, roles) {
+  function setAuth(token, userId, username, displayName, roles, avatarUrl) {
     authToken = token || null;
     if (token && userId != null) {
       authUser = {
         userId,
         username,
         displayName,
-        roles: Array.isArray(roles) ? roles : []
+        roles: Array.isArray(roles) ? roles : [],
+        avatarUrl: avatarUrl || null,
       };
       localStorage.setItem('authToken', token);
       localStorage.setItem('authUser', JSON.stringify(authUser));
@@ -535,12 +937,24 @@
       authWelcomeEl.textContent = `Вы вошли как ${authUser.displayName || authUser.username}`;
       authLoggedBlock.style.display = '';
       authFormsBlock.style.display = 'none';
+
+      // аватар в аккаунте
+      authAvatarEl.style.display = '';
+      avatarUploadRow.style.display = '';
+      authAvatarEl.innerHTML = authUser.avatarUrl
+              ? `<img src="${authUser.avatarUrl}" alt="">`
+              : '';
     } else {
       authUserShortEl.textContent = 'Гость';
       authLoggedBlock.style.display = 'none';
       authFormsBlock.style.display = '';
+
+      authAvatarEl.style.display = 'none';
+      avatarUploadRow.style.display = 'none';
+      authAvatarEl.innerHTML = '';
     }
 
+    // модерация / админ
     if (authUser && isModerator()) {
       tabModeration.style.display = '';
     } else {
@@ -549,7 +963,60 @@
         activateTab('feed');
       }
     }
+
+    if (authUser && isAdmin()) {
+      btnRebuildThumbs.style.display = '';
+    } else {
+      btnRebuildThumbs.style.display = 'none';
+    }
+
+    // комментарии: форма только для залогиненных
+    if (authUser) {
+      commentsFormEl.style.display = '';
+      commentsHintEl.style.display = 'none';
+    } else {
+      commentsFormEl.style.display = 'none';
+      commentsHintEl.style.display = '';
+    }
+
+    if (authUser) {
+      loadAccountProfile();
+    } else {
+      clearAccountProfile();
+    }
   }
+
+
+  btnRebuildThumbs.addEventListener('click', async () => {
+    if (!authToken || !isAdmin()) return;
+
+    if (!confirm('Перегенерировать превью для всех видео? Это может занять время.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(apiBase + '/admin/thumbnails/rebuild', {
+        method: 'POST',
+        headers: authHeaders()
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatusModeration('Сессия истекла, войдите снова', 'error');
+        activateTab('auth');
+        return;
+      }
+
+      if (!res.ok && res.status !== 202) {
+        throw new Error('HTTP ' + res.status);
+      }
+
+      setStatusModeration('Запущена перегенерация превью (может занять время)', 'ok');
+    } catch (e) {
+      console.error(e);
+      setStatusModeration('Ошибка запуска перегенерации: ' + e.message, 'error');
+    }
+  });
+
 
   async function initAuth() {
     const savedToken = localStorage.getItem('authToken');
@@ -588,7 +1055,7 @@
 
       const data = await res.json();
       // сохраняем результат
-      setAuth(savedToken, data.userId, data.username, data.displayName, data.roles);
+      setAuth(savedToken, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
 
     } catch (e) {
       console.error("auth/me fetch error:", e);
@@ -808,13 +1275,218 @@
     const author = v.uploaderName ? ` — ${v.uploaderName}` : '';
     titleEl.textContent = name + author;
 
+    videoAuthorNameEl.textContent = v.uploaderName || 'Автор';
+    videoAuthorAvatarEl.innerHTML = v.uploaderAvatarUrl
+            ? `<img src="${v.uploaderAvatarUrl}" alt="">`
+            : '';
+
+    const openAuthorProfile = () => {
+      if (!v.uploaderId) return;
+      openProfilePage(v.uploaderId);
+    };
+    videoAuthorNameEl.onclick = openAuthorProfile;
+    videoAuthorAvatarEl.onclick = openAuthorProfile;
+
     sizeEl.textContent = humanSize(v.contentSize);
     dateEl.textContent = formatDate(v.uploadedAt);
     countEl.textContent = videos.length + ' видео';
+
+
     setStatusFeed('Воспроизведение…', 'ok');
 
     preloadAroundCurrent();
+    // загрузить комментарии для текущего видео
+    loadComments(v.uuid);
   }
+
+  async function loadComments(videoUuid) {
+    setStatusComments('Загрузка комментариев…', '');
+    commentsListEl.innerHTML = '';
+
+    // если уже в кэше — сначала покажем его, а потом тихо обновим
+    if (commentsCache.has(videoUuid)) {
+      renderComments(videoUuid, commentsCache.get(videoUuid));
+    }
+
+    try {
+      const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/comments', {
+        headers: authHeaders()
+      });
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const data = await res.json(); // List<CommentDto>
+      commentsCache.set(videoUuid, data);
+      renderComments(videoUuid, data);
+      setStatusComments('', '');
+    } catch (e) {
+      console.error(e);
+      setStatusComments('Ошибка загрузки комментариев: ' + e.message, 'error');
+    }
+  }
+
+  function renderComments(videoUuid, list) {
+    commentsListEl.innerHTML = '';
+
+    if (!list || list.length === 0) {
+      commentsListEl.innerHTML = '<div class="studio-row-meta">Комментариев пока нет</div>';
+      return;
+    }
+
+    list.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'comment-row';
+
+      // 🔹 Аватар
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'comment-avatar';
+
+      if (c.authorAvatarUrl) {
+        const img = document.createElement('img');
+        img.src = c.authorAvatarUrl;
+        img.alt = c.authorName || 'Автор';
+        avatarDiv.appendChild(img);
+      }
+
+      if (c.authorId) {
+        avatarDiv.addEventListener('click', () => {
+          openProfilePage(c.authorId);
+        });
+      }
+
+      // 🔹 Тело комментария
+      const bodyDiv = document.createElement('div');
+      bodyDiv.className = 'comment-body';
+
+      const header = document.createElement('div');
+
+      const authorSpan = document.createElement('span');
+      authorSpan.className = 'comment-author';
+      authorSpan.textContent = c.authorName || 'Аноним';
+
+      if (c.authorId) {
+        authorSpan.addEventListener('click', () => {
+          openProfilePage(c.authorId);
+        });
+      }
+
+      const metaSpan = document.createElement('span');
+      metaSpan.className = 'comment-meta';
+      metaSpan.textContent = formatDate(c.createdAt);
+
+      header.appendChild(authorSpan);
+      header.appendChild(metaSpan);
+
+      // 🔹 Удаление (для своих / модераторов/админов)
+      const canDelete =
+              c.mine ||
+              (authUser && (authUser.roles || []).some(r => r === 'ADMIN' || r === 'MODERATOR'));
+
+      if (canDelete) {
+        const delSpan = document.createElement('span');
+        delSpan.className = 'comment-delete';
+        delSpan.textContent = 'удалить';
+        delSpan.addEventListener('click', () => deleteComment(videoUuid, c.id));
+        header.appendChild(delSpan);
+      }
+
+      const textDiv = document.createElement('div');
+      textDiv.className = 'comment-text';
+      textDiv.textContent = c.text;
+
+      bodyDiv.appendChild(header);
+      bodyDiv.appendChild(textDiv);
+
+      row.appendChild(avatarDiv);
+      row.appendChild(bodyDiv);
+
+      commentsListEl.appendChild(row);
+    });
+  }
+
+  btnSendComment.addEventListener('click', async () => {
+    if (!authToken) {
+      setStatusComments('Войдите, чтобы комментировать', 'error');
+      activateTab('auth');
+      return;
+    }
+
+    if (currentPos < 0 || !playOrder.length) return;
+    const realIndex = playOrder[currentPos];
+    const v = videos[realIndex];
+
+    const text = commentInputEl.value.trim();
+    if (!text) {
+      setStatusComments('Введите текст комментария', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch(apiBase + '/api/videos/' + v.uuid + '/comments', {
+        method: 'POST',
+        headers: {
+          ...authHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text })
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatusComments('Сессия истекла, войдите снова', 'error');
+        activateTab('auth');
+        return;
+      }
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const newComment = await res.json(); // CommentDto
+      commentInputEl.value = '';
+
+      // обновляем кэш и рендер
+      const list = commentsCache.get(v.uuid) || [];
+      list.push(newComment);
+      commentsCache.set(v.uuid, list);
+      renderComments(v.uuid, list);
+      setStatusComments('Комментарий отправлен', 'ok');
+    } catch (e) {
+      console.error(e);
+      setStatusComments('Ошибка отправки: ' + e.message, 'error');
+    }
+  });
+
+  async function deleteComment(videoUuid, commentId) {
+    if (!authToken) {
+      setStatusComments('Войдите, чтобы удалять комментарии', 'error');
+      activateTab('auth');
+      return;
+    }
+
+    if (!confirm('Удалить комментарий?')) return;
+
+    try {
+      const res = await fetch(apiBase + `/api/videos/${videoUuid}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatusComments('Сессия истекла, войдите снова', 'error');
+        activateTab('auth');
+        return;
+      }
+
+      if (!res.ok && res.status !== 204) throw new Error('HTTP ' + res.status);
+
+      const list = (commentsCache.get(videoUuid) || []).filter(c => c.id !== commentId);
+      commentsCache.set(videoUuid, list);
+      renderComments(videoUuid, list);
+      setStatusComments('Комментарий удалён', 'ok');
+    } catch (e) {
+      console.error(e);
+      setStatusComments('Ошибка удаления: ' + e.message, 'error');
+    }
+  }
+
 
   async function loadVideoList() {
     try {
@@ -961,14 +1633,89 @@
     }
   }
 
+  async function openProfilePage(userId) {
+    activateTab('profile');
+    setStatusProfile('Загрузка профиля…', 'ok');
+    profileVideosEl.innerHTML = '';
+
+    try {
+      const [userRes, videosRes] = await Promise.all([
+        fetch(apiBase + '/api/users/' + userId + '/profile'),
+        fetch(apiBase + '/api/users/' + userId + '/videos')
+      ]);
+
+      if (!userRes.ok) throw new Error('user HTTP ' + userRes.status);
+      if (!videosRes.ok) throw new Error('videos HTTP ' + videosRes.status);
+
+      const profile = await userRes.json();
+      const vids = await videosRes.json();
+
+      profileDisplayNameEl.textContent = profile.displayName || profile.username;
+      profileUsernameEl.textContent = '@' + profile.username;
+      profileAvatarEl.innerHTML = profile.avatarUrl
+              ? `<img src="${profile.avatarUrl}" alt="">`
+              : '';
+
+      renderProfileVideos(vids);
+      setStatusProfile('', '');
+    } catch (e) {
+      console.error(e);
+      setStatusProfile('Ошибка загрузки профиля: ' + e.message, 'error');
+    }
+  }
+
+  function renderProfileVideos(videos) {
+    profileVideosEl.innerHTML = '';
+    if (!videos || videos.length === 0) {
+      profileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
+      return;
+    }
+
+    videos.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'thumb-card';
+
+      const img = document.createElement('img');
+      img.src = v.thumbnailUrl;
+      img.alt = v.name || '';
+
+      const overlay = document.createElement('div');
+      overlay.className = 'thumb-card-overlay';
+      overlay.textContent = formatDate(v.uploadedAt);
+
+      card.appendChild(img);
+      card.appendChild(overlay);
+
+      card.addEventListener('click', () => {
+        // открыть в ленте
+        const idx = videos.findIndex(meta => meta.uuid === v.uuid);
+        // проще: перейти к общей ленте и проигрывать по uuid
+        activateTab('feed');
+        const globalIndex = videosGlobalIndexByUuid(v.uuid);
+        if (globalIndex !== -1) {
+          playByIndex(globalIndex);
+        }
+      });
+
+      profileVideosEl.appendChild(card);
+    });
+  }
+
+  function videosGlobalIndexByUuid(uuid) {
+    return videos.findIndex(v => v.uuid === uuid);
+  }
+
+
   function activateTab(tab) {
     [tabFeed, tabUpload, tabStudio, tabModeration, tabAuth].forEach(btn => btn.classList.remove('active'));
-    [pageFeed, pageUpload, pageStudio, pageModeration, pageAuth].forEach(p => p.classList.remove('active'));
+    [pageFeed, pageUpload, pageStudio, pageModeration, pageAuth, pageProfile].forEach(p => p.classList.remove('active'));
 
     if (tab === 'feed') {
       tabFeed.classList.add('active');
       pageFeed.classList.add('active');
-    } else if (tab === 'upload') {
+    } else if (tab === 'profile') {
+      pageProfile.classList.add('active');
+    }  else if (tab === 'upload') {
       tabUpload.classList.add('active');
       pageUpload.classList.add('active');
     } else if (tab === 'studio') {
@@ -1594,8 +2341,7 @@
         throw new Error('HTTP ' + res.status);
       }
       const data = await res.json(); // { token, userId, username, displayName }
-      setAuth(data.token, data.userId, data.username, data.displayName, data.roles);
-      setStatusAuth('Успешный вход', 'ok');
+      setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);      setStatusAuth('Успешный вход', 'ok');
       setStatusUpload('');
       setStatusStudio('');
       setStatusFeed('');
@@ -1632,8 +2378,7 @@
         throw new Error('HTTP ' + res.status);
       }
       const data = await res.json(); // { token, userId, username, displayName }
-      setAuth(data.token, data.userId, data.username, data.displayName, data.roles);
-      setStatusAuth('Регистрация прошла успешно', 'ok');
+      setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);      setStatusAuth('Регистрация прошла успешно', 'ok');
       setStatusUpload('');
       setStatusStudio('');
       setStatusFeed('');

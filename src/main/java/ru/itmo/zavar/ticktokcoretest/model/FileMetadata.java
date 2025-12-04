@@ -44,4 +44,8 @@ public class FileMetadata {
 
     @Column(name = "likes_count", nullable = false)
     private Long likesCount = 0L;
+
+    @Column(name = "thumbnail_key", length = 255)
+    private String thumbnailKey;
+
 }

@@ -78,15 +78,30 @@ public class ModerationController {
     }
 
     private UserVideoDto toUserVideoDto(FileMetadata f) {
+
+        String thumbnailUrl = (f.getThumbnailKey() != null)
+                ? "/streaming/video/thumbnail/" + f.getUuid()
+                : null;
+
+        UserEntity uploader = userRepository.findById(f.getUploaderId())
+                .orElse(null);
+
+        String uploaderAvatarUrl = (uploader != null && uploader.getAvatarKey() != null)
+                ? "/api/users/" + uploader.getId() + "/avatar"
+                : null;
+
         return new UserVideoDto(
                 f.getUuid(),
                 f.getName(),
                 f.getUploaderName(),
                 f.getContentSize(),
                 f.getContentType(),
-                f.getUploadedAt().toInstant(ZoneOffset.UTC)
+                f.getUploadedAt().toInstant(ZoneOffset.UTC),
+                thumbnailUrl,
+                uploaderAvatarUrl
         );
     }
+
 
     // бан (disable)
     @PostMapping("/users/{id}/ban")
