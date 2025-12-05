@@ -46,6 +46,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE,"/api/videos/*/likes").authenticated()
                         .requestMatchers(HttpMethod.GET,"/api/videos/*/view").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/videos/*/view").authenticated()
+                        .requestMatchers("/api/users/*/follow").authenticated()
+                        .requestMatchers("/api/users/*/followers").permitAll()
+                        .requestMatchers("/api/users/*/following").permitAll()
+
                         .requestMatchers("/api/videos/**").permitAll()
                         .requestMatchers("/streaming/video/**").permitAll()
 

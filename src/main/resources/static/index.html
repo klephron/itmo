@@ -42,6 +42,12 @@
       color: #aaa;
       transition: background .15s ease, color .15s ease, transform .1s ease;
     }
+    #profileStats,
+    #authProfileStats {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 2px;
+    }
     .tab-btn.active {
       background: #f5f5f5;
       color: #111;
@@ -311,13 +317,13 @@
     }
 
     .thumb-card-overlay {
-      position:absolute;
-      right:4px;
-      bottom:4px;
-      font-size:9px;
-      padding:2px 4px;
-      border-radius:999px;
-      background:rgba(0,0,0,0.6);
+      position: absolute;
+      right: 4px;
+      top: 4px;
+      font-size: 9px;
+      padding: 2px 4px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.6);
     }
 
     .thumb-card-likes {
@@ -343,6 +349,19 @@
     .thumb-card-delete:hover {
       background:rgba(255,77,79,0.9);
     }
+    .thumb-card-meta {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      font-size: 9px;
+      padding: 2px 4px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
 
     .comments {
       margin-top: 8px;
@@ -513,8 +532,14 @@
         <div>
           <div class="title" id="profileDisplayName">Профиль</div>
           <div class="studio-row-meta" id="profileUsername"></div>
+          <!-- 🔽 новый блок статистики чужого профиля -->
+          <div class="studio-row-meta" id="profileStats"></div>
         </div>
       </div>
+      <!-- 🔽 кнопка подписки -->
+      <button class="small secondary" id="btnProfileFollow" style="display:none;">
+        Подписаться
+      </button>
     </div>
 
     <div class="studio-section-title">Видео</div>
@@ -550,8 +575,12 @@
         <div>
           <div class="title" id="authProfileDisplayName"></div>
           <div class="studio-row-meta" id="authProfileUsername"></div>
+          <div class="studio-row-meta" id="authProfileStats"></div>
         </div>
       </div>
+
+      <div class="studio-section-title" style="margin-top:8px;">Мои подписки</div>
+      <div class="studio-videos" id="authFollowingList"></div>
 
       <div class="studio-section-title" style="margin-top:8px;">Активные загрузки</div>
       <div class="studio-jobs" id="studioJobs"></div>
@@ -563,6 +592,7 @@
         <span class="badge" id="studioVideoCount">0 видео</span>
       </div>
       <div class="thumb-grid" id="authProfileVideos"></div>
+
     </div>
 
     <div id="authFormsBlock">
@@ -722,6 +752,14 @@
   const authProfileUsernameEl = document.getElementById('authProfileUsername');
   const authProfileVideosEl = document.getElementById('authProfileVideos');
 
+  const profileFollowBtn = document.getElementById('profileFollowBtn');
+  const profileFollowStatsEl = document.getElementById('profileFollowStats');
+  const authFollowingListEl = document.getElementById('authFollowingList');
+  const authProfileStatsEl = document.getElementById('authProfileStats');
+
+  const profileStatsEl = document.getElementById('profileStats');
+  const btnProfileFollow = document.getElementById('btnProfileFollow');
+
   let profileVideosPaging = {
     userId: null,
     page: 0,
@@ -846,15 +884,25 @@
     }
 
     try {
-      const userRes = await fetch(apiBase + '/api/users/' + authUser.userId + '/profile', {
-        headers: authHeaders()
-      });
+      const [userRes, vidsRes] = await Promise.all([
+        fetch(apiBase + '/api/users/' + authUser.userId + '/profile', {
+          headers: authHeaders()
+        }),
+        fetch(apiBase + '/api/users/' + authUser.userId + '/videos?page=0&size=30', {
+          headers: authHeaders()
+        })
+      ]);
 
-      if (!userRes.ok) {
-        throw new Error('HTTP ' + userRes.status);
+      if (!userRes.ok || !vidsRes.ok) {
+        throw new Error('HTTP ' + userRes.status + '/' + vidsRes.status);
       }
 
       const profile = await userRes.json();
+      const vidsPage = await vidsRes.json();
+      const vids = Array.isArray(vidsPage.content) ? vidsPage.content : vidsPage;
+      const totalVideos = typeof vidsPage.totalElements === 'number'
+              ? vidsPage.totalElements
+              : vids.length;
 
       authProfileDisplayNameEl.textContent = profile.displayName || profile.username;
       authProfileUsernameEl.textContent = '@' + profile.username;
@@ -862,26 +910,177 @@
               ? `<img src="${profile.avatarUrl}" alt="">`
               : '';
 
+      // 🔹 здесь добавляем статистику
+      if (authProfileStatsEl) {
+        const followers = profile.followersCount ?? 0;
+        const following = profile.followingCount ?? 0;
+        authProfileStatsEl.textContent =
+                `${totalVideos} видео · ${followers} подписчиков · ${following} подписок`;
+      }
+
+      loadAccountFollowing();
       authProfileBlockEl.style.display = '';
 
-      // сбрасываем грид и состояние пагинации
+      // грид превью
       authProfileVideosEl.innerHTML = '';
-      authProfileVideosPaging = {
-        userId: authUser.userId,
-        page: 0,
-        size: 12,
-        last: false,
-        loading: false
-      };
+      if (!vids || vids.length === 0) {
+        authProfileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
+      } else {
+        vids.forEach(v => {
+          const card = document.createElement('div');
+          card.className = 'thumb-card';
 
-      // подгружаем первую страницу
-      await loadMoreAuthProfileVideos();
+          const img = document.createElement('img');
+          img.src = v.thumbnailUrl;
+          img.alt = v.name || '';
+
+          // дата (как было)
+          const overlayDate = document.createElement('div');
+          overlayDate.className = 'thumb-card-overlay';
+          overlayDate.textContent = formatDate(v.uploadedAt);
+
+          // лайки
+          const likesVal = (typeof v.likesCount === 'number')
+                  ? v.likesCount
+                  : (typeof v.likes === 'number' ? v.likes : null);
+
+          // просмотры
+          const viewsVal = (typeof v.viewsCount === 'number')
+                  ? v.viewsCount
+                  : (typeof v.views === 'number' ? v.views : null);
+
+          // блок статистики: 👁 / ♥
+          if (likesVal != null || viewsVal != null) {
+            const meta = document.createElement('div');
+            meta.className = 'thumb-card-meta';
+
+            const parts = [];
+            if (viewsVal != null) parts.push('👁 ' + viewsVal);
+            if (likesVal != null) parts.push('♥ ' + likesVal);
+
+            meta.textContent = parts.join(' · ');
+            card.appendChild(meta);
+          }
+
+          // кнопка удаления
+          const deleteBtn = document.createElement('div');
+          deleteBtn.className = 'thumb-card-delete';
+          deleteBtn.textContent = '🗑';
+          deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!authToken) {
+              setStatusAuth('Войдите, чтобы удалять видео', 'error');
+              activateTab('auth');
+              return;
+            }
+            if (confirm('Удалить это видео?')) {
+              deleteVideo(v.uuid);
+            }
+          });
+
+          card.appendChild(img);
+          card.appendChild(overlayDate);
+          card.appendChild(deleteBtn);
+
+          card.addEventListener('click', () => {
+            // открыть ролик в общей ленте
+            activateTab('feed');
+            const globalIndex = videosGlobalIndexByUuid(v.uuid);
+            if (globalIndex !== -1) {
+              playByIndex(globalIndex);
+            }
+          });
+
+          authProfileVideosEl.appendChild(card);
+        });
+      }
 
     } catch (e) {
       console.error('loadAccountProfile error', e);
       clearAccountProfile();
     }
   }
+
+  async function loadAccountFollowing() {
+    if (!authUser || !authToken) {
+      if (authFollowingListEl) {
+        authFollowingListEl.innerHTML = '<div class="studio-row-meta">Войдите, чтобы видеть подписки</div>';
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(apiBase + `/api/users/${authUser.userId}/following`, {
+        headers: authHeaders()
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        if (authFollowingListEl) {
+          authFollowingListEl.innerHTML = '<div class="studio-row-meta">Сессия истекла, войдите снова</div>';
+        }
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
+
+      const list = await res.json(); // List<PublicUserShortDto>
+      renderAccountFollowing(list);
+    } catch (e) {
+      console.error(e);
+      if (authFollowingListEl) {
+        authFollowingListEl.innerHTML = '<div class="studio-row-meta">Ошибка загрузки подписок: ' + e.message + '</div>';
+      }
+    }
+  }
+
+  function renderAccountFollowing(list) {
+    if (!authFollowingListEl) return;
+
+    authFollowingListEl.innerHTML = '';
+
+    if (!list || list.length === 0) {
+      authFollowingListEl.innerHTML = '<div class="studio-row-meta">Подписок пока нет</div>';
+      return;
+    }
+
+    list.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'studio-row';
+      row.style.cursor = 'pointer';
+
+      const header = document.createElement('div');
+      header.className = 'studio-row-header';
+
+      const left = document.createElement('div');
+      left.className = 'studio-row-title';
+      left.textContent = u.displayName || u.username;
+
+      const meta = document.createElement('div');
+      meta.className = 'studio-row-meta';
+      meta.textContent = '@' + u.username;
+
+      header.appendChild(left);
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar-mini';
+      if (u.avatarUrl) {
+        avatar.innerHTML = `<img src="${u.avatarUrl}" alt="">`;
+      }
+      header.appendChild(avatar);
+
+      row.appendChild(header);
+      row.appendChild(meta);
+
+      row.addEventListener('click', () => {
+        openProfilePage(u.id);
+      });
+
+      authFollowingListEl.appendChild(row);
+    });
+  }
+
 
   async function loadMoreAuthProfileVideos() {
     const state = authProfileVideosPaging;
@@ -1746,35 +1945,163 @@
     setStatusProfile('Загрузка профиля…', 'ok');
     profileVideosEl.innerHTML = '';
 
-    profileVideosPaging = {
-      userId,
-      page: 0,
-      size: 12,
-      last: false,
-      loading: false
-    };
-
     try {
-      const userRes = await fetch(apiBase + '/api/users/' + userId + '/profile');
+      const [userRes, videosRes] = await Promise.all([
+        fetch(apiBase + '/api/users/' + userId + '/profile', {
+          headers: authHeaders()
+        }),
+        fetch(apiBase + `/api/users/${userId}/videos?page=0&size=30`, {
+          headers: authHeaders()
+        })
+      ]);
+
       if (!userRes.ok) throw new Error('user HTTP ' + userRes.status);
+      if (!videosRes.ok) throw new Error('videos HTTP ' + videosRes.status);
 
       const profile = await userRes.json();
+      const vidsPage = await videosRes.json();
+      const vids = Array.isArray(vidsPage.content) ? vidsPage.content : vidsPage;
+      const totalVideos = typeof vidsPage.totalElements === 'number'
+              ? vidsPage.totalElements
+              : vids.length;
+
       profileDisplayNameEl.textContent = profile.displayName || profile.username;
       profileUsernameEl.textContent = '@' + profile.username;
       profileAvatarEl.innerHTML = profile.avatarUrl
               ? `<img src="${profile.avatarUrl}" alt="">`
               : '';
 
+      // 🔹 статистика чужого профиля
+      if (profileStatsEl) {
+        const followers = profile.followersCount ?? 0;
+        const following = profile.followingCount ?? 0;
+        profileStatsEl.textContent =
+                `${totalVideos} видео · ${followers} подписчиков · ${following} подписок`;
+      }
+
+      // 🔹 кнопка Подписаться / Отписаться
+      if (!authUser || authUser.userId === userId) {
+        // на себя не подписываемся
+        btnProfileFollow.style.display = 'none';
+      } else {
+        btnProfileFollow.style.display = '';
+        btnProfileFollow.dataset.userId = String(userId);
+        btnProfileFollow.dataset.following = profile.following ? 'true' : 'false';
+        btnProfileFollow.textContent = profile.following ? 'Отписаться' : 'Подписаться';
+      }
+
+      renderProfileVideos(vids);
       setStatusProfile('', '');
-
-      // первая страница видео
-      await loadMoreProfileVideos();
-
     } catch (e) {
       console.error(e);
       setStatusProfile('Ошибка загрузки профиля: ' + e.message, 'error');
     }
   }
+
+  btnProfileFollow.addEventListener('click', async () => {
+    if (!authToken) {
+      setStatusProfile('Войдите, чтобы подписываться', 'error');
+      activateTab('auth');
+      return;
+    }
+
+    const userIdStr = btnProfileFollow.dataset.userId;
+    if (!userIdStr) return;
+    const userId = Number(userIdStr);
+
+    const following = btnProfileFollow.dataset.following === 'true';
+    const method = following ? 'DELETE' : 'POST';
+
+    try {
+      const res = await fetch(apiBase + `/api/users/${userId}/follow`, {
+        method,
+        headers: authHeaders()
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatusProfile('Сессия истекла, войдите снова', 'error');
+        activateTab('auth');
+        return;
+      }
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      // Предположим, что бэкенд возвращает обновлённый PublicUserProfileDto
+      const updated = await res.json();
+
+      const followers = updated.followersCount ?? 0;
+      const followingCount = updated.followingCount ?? 0;
+
+      if (profileStatsEl) {
+        // totalVideos оставляем как было, но если backend тоже его возвращает — можешь взять оттуда
+        const stats = profileStatsEl.textContent || '';
+        const videosPrefix = stats.split(' · ')[0] || '';
+        profileStatsEl.textContent =
+                `${videosPrefix || '— видео'} · ${followers} подписчиков · ${followingCount} подписок`;
+      }
+
+      btnProfileFollow.dataset.following = updated.following ? 'true' : 'false';
+      btnProfileFollow.textContent = updated.following ? 'Отписаться' : 'Подписаться';
+    } catch (e) {
+      console.error(e);
+      setStatusProfile('Ошибка изменения подписки: ' + e.message, 'error');
+    }
+  });
+
+
+  function setupFollowButton(profile) {
+    if (!authUser || !authToken || authUser.userId === profile.id) {
+      profileFollowBtn.style.display = 'none';
+      profileFollowBtn.onclick = null;
+      return;
+    }
+
+    profileFollowBtn.style.display = '';
+    updateFollowButtonAppearance(profile.following);
+
+    profileFollowBtn.onclick = async () => {
+      try {
+        const method = profile.following ? 'DELETE' : 'POST';
+        const res = await fetch(apiBase + `/api/users/${profile.id}/follow`, {
+          method,
+          headers: authHeaders()
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          setStatusProfile('Сессия истекла, войдите снова', 'error');
+          activateTab('auth');
+          return;
+        }
+
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        // поменяли состояние локально
+        profile.following = !profile.following;
+        updateFollowButtonAppearance(profile.following);
+
+        // опционально — дёрнуть профиль ещё раз, чтобы обновить счётчики
+        // const refreshed = await (await fetch(apiBase + `/api/users/${profile.id}/profile`, { headers: authHeaders() })).json();
+        // profileFollowStatsEl.textContent =
+        //   `Подписчики: ${refreshed.followersCount ?? 0} · Подписки: ${refreshed.followingCount ?? 0}`;
+      } catch (e) {
+        console.error(e);
+        setStatusProfile('Ошибка подписки: ' + e.message, 'error');
+      }
+    };
+  }
+
+  function updateFollowButtonAppearance(following) {
+    if (following) {
+      profileFollowBtn.textContent = 'Вы подписаны';
+      profileFollowBtn.classList.remove('secondary');
+      profileFollowBtn.classList.add('danger'); // визуально «отписаться»
+    } else {
+      profileFollowBtn.textContent = 'Подписаться';
+      profileFollowBtn.classList.add('secondary');
+      profileFollowBtn.classList.remove('danger');
+    }
+  }
+
 
   async function loadMoreProfileVideos() {
     const state = profileVideosPaging;
@@ -1873,17 +2200,50 @@
   });
 
 
-  function renderProfileVideos(videosList) {
+  function renderProfileVideos(videos) {
     profileVideosEl.innerHTML = '';
-    if (!videosList || videosList.length === 0) {
+    if (!videos || videos.length === 0) {
       profileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
       return;
     }
 
-    videosList.forEach(v => {
-      const card = createThumbCard(v);
+    videos.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'thumb-card';
+
+      const img = document.createElement('img');
+      img.src = v.thumbnailUrl;
+      img.alt = v.name || '';
+
+      const overlayDate = document.createElement('div');
+      overlayDate.className = 'thumb-card-overlay';
+      overlayDate.textContent = formatDate(v.uploadedAt);
+
+      const likesVal = (typeof v.likesCount === 'number')
+              ? v.likesCount
+              : (typeof v.likes === 'number' ? v.likes : null);
+
+      const viewsVal = (typeof v.viewsCount === 'number')
+              ? v.viewsCount
+              : (typeof v.views === 'number' ? v.views : null);
+
+      if (likesVal != null || viewsVal != null) {
+        const meta = document.createElement('div');
+        meta.className = 'thumb-card-meta';
+
+        const parts = [];
+        if (viewsVal != null) parts.push('👁 ' + viewsVal);
+        if (likesVal != null) parts.push('♥ ' + likesVal);
+
+        meta.textContent = parts.join(' · ');
+        card.appendChild(meta);
+      }
+
+      card.appendChild(img);
+      card.appendChild(overlayDate);
 
       card.addEventListener('click', () => {
+        // открыть в ленте
         activateTab('feed');
         const globalIndex = videosGlobalIndexByUuid(v.uuid);
         if (globalIndex !== -1) {
@@ -1894,6 +2254,7 @@
       profileVideosEl.appendChild(card);
     });
   }
+
 
   function videosGlobalIndexByUuid(uuid) {
     return videos.findIndex(v => v.uuid === uuid);

@@ -1,20 +1,39 @@
 package ru.itmo.zavar.ticktokcoretest.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import lombok.Setter;
+import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.itmo.zavar.ticktokcoretest.dto.PublicUserProfileDto;
 import ru.itmo.zavar.ticktokcoretest.entity.UserEntity;
+import ru.itmo.zavar.ticktokcoretest.service.FollowService;
 
 import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface UserToPublicProfileMapper {
+public abstract class UserToPublicProfileMapper {
+    @Autowired
+    protected FollowService followService;
+
+    @Setter
+    protected Long currentUserId;
 
     @Mapping(target = "avatarUrl",
             expression = "java( user.getAvatarKey() == null ? null : \"/api/users/\" + user.getId() + \"/avatar\" )")
-    PublicUserProfileDto toDto(UserEntity user);
+    @Mapping(target = "followersCount", ignore = true)
+    @Mapping(target = "followingCount", ignore = true)
+    @Mapping(target = "following", ignore = true)
+    public abstract PublicUserProfileDto toDto(UserEntity user);
 
-    List<PublicUserProfileDto> toDto(List<UserEntity> userEntity);
-}
+    public abstract List<PublicUserProfileDto> toDto(List<UserEntity> users);
+
+    @AfterMapping
+    protected void enrich(UserEntity user, @MappingTarget PublicUserProfileDto.PublicUserProfileDtoBuilder builder) {
+
+        long followers = followService.countFollowers(user.getId());
+        long following = followService.countFollowing(user.getId());
+        boolean isFollowing = currentUserId != null && followService.isFollowing(currentUserId, user.getId());
+
+        builder.followersCount(followers);
+        builder.followingCount(following);
+        builder.following(isFollowing);
+    }}

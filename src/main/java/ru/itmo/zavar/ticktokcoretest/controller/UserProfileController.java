@@ -67,9 +67,13 @@ public class UserProfileController {
     }
 
     @GetMapping("/{id}/profile")
-    public ResponseEntity<PublicUserProfileDto> getProfile(@PathVariable Long id) {
+    public ResponseEntity<PublicUserProfileDto> getProfile(@PathVariable Long id, Authentication authentication) {
+        Long currentId = authentication != null ? AuthService.extractUserId(authentication) : null;
         return this.userRepository.findById(id)
-                .map(this.userToPublicProfileMapper::toDto)
+                .map(user -> {
+                    this.userToPublicProfileMapper.setCurrentUserId(currentId);
+                    return this.userToPublicProfileMapper.toDto(user);
+                })
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
