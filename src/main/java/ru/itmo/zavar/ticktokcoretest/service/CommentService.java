@@ -25,42 +25,23 @@ public class CommentService {
     private final FileMetadataRepository fileMetadataRepository;
     private final UserRepository userRepository;
 
-    private Long extractUserId(Authentication auth) {
-        if (auth == null) throw new RuntimeException("Unauthenticated");
+    private Optional<String> extractAvatarUrl(Authentication auth) {
+        if (auth == null) return Optional.empty();
         Object principal = auth.getPrincipal();
         if (principal instanceof SecurityBeans.UserPrincipal up) {
-            return up.getId();
+            return up.getAvatarUrl() == null ? Optional.empty() : up.getAvatarUrl().describeConstable();
         }
-        throw new RuntimeException("Cannot extract user id");
-    }
-
-    private String extractAvatarUrl(Authentication auth) {
-        if (auth == null) return null;
-        Object principal = auth.getPrincipal();
-        if (principal instanceof SecurityBeans.UserPrincipal up) {
-            return up.getAvatarUrl();
-        }
-        return null;
-    }
-
-    private String extractDisplayName(Authentication auth) {
-        if (auth == null) return "Аноним";
-        Object principal = auth.getPrincipal();
-        if (principal instanceof SecurityBeans.UserPrincipal up) {
-            return up.getDisplayName();
-        }
-        return "Аноним";
+        return Optional.empty();
     }
 
     @Transactional(readOnly = true)
     public List<CommentDto> listComments(UUID videoUuid, Long currentUserId) {
-        fileMetadataRepository.findByUuid(videoUuid)
+        this.fileMetadataRepository.findByUuid(videoUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Video not found: " + videoUuid));
 
         List<CommentEntity> comments =
-                commentRepository.findByVideoUuidOrderByCreatedAtAsc(videoUuid);
+                this.commentRepository.findByVideoUuidOrderByCreatedAtAsc(videoUuid);
 
-        // 🔹 одним запросом забираем всех авторов, чтобы достать avatarUrl
         Set<Long> authorIds = comments.stream()
                 .map(CommentEntity::getAuthorId)
                 .filter(Objects::nonNull)
@@ -68,7 +49,7 @@ public class CommentService {
 
         Map<Long, UserEntity> userMap = authorIds.isEmpty()
                 ? Collections.emptyMap()
-                : userRepository.findAllById(authorIds).stream()
+                : this.userRepository.findAllById(authorIds).stream()
                 .collect(Collectors.toMap(UserEntity::getId, u -> u));
 
         return comments.stream()
@@ -95,12 +76,12 @@ public class CommentService {
                                  CreateCommentRequest req,
                                  Authentication auth) {
 
-        fileMetadataRepository.findByUuid(videoUuid)
+        this.fileMetadataRepository.findByUuid(videoUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Video not found: " + videoUuid));
 
-        Long userId = extractUserId(auth);
-        String displayName = extractDisplayName(auth);
-        String avatarUrl = extractAvatarUrl(auth);
+        Long userId = AuthService.extractUserId(auth);
+        String displayName = AuthService.extractDisplayName(auth);
+        Optional<String> avatarUrl = extractAvatarUrl(auth);
 
         CommentEntity entity = new CommentEntity();
         entity.setVideoUuid(videoUuid);
@@ -109,13 +90,13 @@ public class CommentService {
         entity.setText(req.text());
         entity.setCreatedAt(Instant.now());
 
-        entity = commentRepository.save(entity);
+        entity = this.commentRepository.save(entity);
 
         return new CommentDto(
                 entity.getId(),
                 entity.getAuthorId(),
                 entity.getAuthorName(),
-                avatarUrl,
+                avatarUrl.orElse(null),
                 entity.getText(),
                 entity.getCreatedAt(),
                 true
@@ -124,19 +105,19 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(UUID videoUuid, Long commentId, Authentication auth, boolean isModeratorOrAdmin) {
-        CommentEntity entity = commentRepository.findById(commentId)
+        CommentEntity entity = this.commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
 
         if (!entity.getVideoUuid().equals(videoUuid)) {
             throw new IllegalArgumentException("Comment does not belong to this video");
         }
 
-        Long currentUserId = extractUserId(auth);
+        Long currentUserId = AuthService.extractUserId(auth);
 
         if (!isModeratorOrAdmin && !entity.getAuthorId().equals(currentUserId)) {
             throw new RuntimeException("Forbidden");
         }
 
-        commentRepository.delete(entity);
+        this.commentRepository.delete(entity);
     }
 }

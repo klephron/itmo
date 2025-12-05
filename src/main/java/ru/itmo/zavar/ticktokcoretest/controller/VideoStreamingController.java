@@ -12,10 +12,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import ru.itmo.zavar.ticktokcoretest.dto.FileMetadataDto;
 import ru.itmo.zavar.ticktokcoretest.dto.UploadJobViewDto;
-import ru.itmo.zavar.ticktokcoretest.integrations.minio.MinioService;
+import ru.itmo.zavar.ticktokcoretest.dto.response.UploadStartResponse;
 import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
+import ru.itmo.zavar.ticktokcoretest.integrations.minio.MinioService;
+import ru.itmo.zavar.ticktokcoretest.mapper.FileMetadataMapper;
 import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
+import ru.itmo.zavar.ticktokcoretest.service.AuthService;
 import ru.itmo.zavar.ticktokcoretest.service.VideoStreamingService;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamChunk;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamRange;
@@ -38,23 +42,19 @@ public class VideoStreamingController {
     private final UploadJobRegistry jobRegistry;
     private final FileMetadataRepository fileMetadataRepository;
     private final MinioService minioService;
+    private final FileMetadataMapper fileMetadataMapper;
 
     @Value("${streaming.chunk.default-size}")
     private long chunkDefaultSize;
 
     @GetMapping("/{uuid}")
-    public ResponseEntity<byte[]> fetchChunk(
-            @RequestHeader(value = RANGE, required = false) String range,
-            @PathVariable UUID uuid
-    ) throws Exception {
+    public ResponseEntity<byte[]> fetchChunk(@RequestHeader(value = RANGE, required = false) String range,
+                                             @PathVariable UUID uuid) throws Exception {
 
-        StreamRange parsedRange = StreamRange.parseHttpRangeString(range, chunkDefaultSize);
-        StreamChunk streamChunk = videoStreamingService.fetchChunk(uuid, parsedRange);
-        FileMetadataEntity meta = streamChunk.getFileMetadataEntity();
+        StreamRange parsedRange = StreamRange.parseHttpRangeString(range, this.chunkDefaultSize);
+        StreamChunk streamChunk = this.videoStreamingService.fetchChunk(uuid, parsedRange);
+        FileMetadataEntity meta = streamChunk.fileMetadataEntity();
         long fileSize = meta.getContentSize();
-
-        long rangeStart = parsedRange.getRangeStart();
-        long rangeEnd = parsedRange.getRangeEnd(fileSize);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(CONTENT_TYPE, meta.getContentType());
@@ -62,17 +62,17 @@ public class VideoStreamingController {
         headers.add(CONTENT_LENGTH, getContentLengthHeader(parsedRange, fileSize));
         headers.add(CONTENT_RANGE, getContentRangeHeader(parsedRange, fileSize));
 
-        return new ResponseEntity<>(streamChunk.getChunk(), headers, HttpStatus.PARTIAL_CONTENT);
+        return new ResponseEntity<>(streamChunk.chunk(), headers, HttpStatus.PARTIAL_CONTENT);
     }
 
     @GetMapping("/thumbnail/{uuid}")
     public ResponseEntity<Resource> getThumbnail(@PathVariable UUID uuid) throws Exception {
-        FileMetadataEntity meta = fileMetadataRepository.findByUuid(uuid)
+        FileMetadataEntity meta = this.fileMetadataRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (meta.getThumbnailKey() == null) {
             return ResponseEntity.notFound().build();
         }
-        InputStream is = minioService.getThumbAsInputStream(meta);
+        InputStream is = this.minioService.getThumbnailAsInputStream(meta);
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_JPEG)
                 .body(new InputStreamResource(is));
@@ -80,47 +80,41 @@ public class VideoStreamingController {
 
 
     @GetMapping("/list")
-    public List<FileMetadataEntity> getVideoList() {
-        return videoStreamingService.getVideoList();
+    public List<FileMetadataDto> getVideoList() {
+        return this.fileMetadataMapper.toDto(this.videoStreamingService.getVideoList());
     }
 
     @GetMapping("/list/my")
-    public List<FileMetadataEntity> getMyVideoList(Authentication authentication) {
-        return videoStreamingService.getVideoList(videoStreamingService.extractUserId(authentication));
+    public List<FileMetadataDto> getMyVideoList(Authentication authentication) {
+        return this.fileMetadataMapper.toDto(this.videoStreamingService.getVideoList(AuthService.extractUserId(authentication)));
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<UploadStartResponse> startUpload(
-            @RequestParam("video") MultipartFile video,
-            @RequestParam("videoName") String videoName,
-            Authentication auth
+    public ResponseEntity<UploadStartResponse> startUpload(@RequestParam("video") MultipartFile video, @RequestParam("videoName") String videoName, Authentication auth
     ) throws IOException {
-        UUID jobId = videoStreamingService.enqueueUpload(video, videoName, auth);
+        UUID jobId = this.videoStreamingService.enqueueUpload(video, videoName, auth);
         return ResponseEntity.ok(new UploadStartResponse(jobId));
     }
 
     @GetMapping("/upload/status/{jobId}")
     public ResponseEntity<UploadJobStatus> getUploadStatus(@PathVariable UUID jobId) {
-        return jobRegistry.get(jobId)
+        return this.jobRegistry.get(jobId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    public record UploadStartResponse(UUID jobId) {}
-
     @PostMapping("/delete/{uuid}")
     public ResponseEntity<Void> deleteVideo(@PathVariable UUID uuid) throws Exception {
-        videoStreamingService.deleteVideo(uuid);
+        this.videoStreamingService.deleteVideo(uuid);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/upload/active")
     public ResponseEntity<List<UploadJobViewDto>> getActiveUploadJobs(Authentication auth) {
-        Long userId = videoStreamingService.extractUserId(auth); // такой же хелпер, как в LikeController
-        List<UploadJobViewDto> jobs = jobRegistry.getActiveJobsForUser(userId);
+        Long userId = AuthService.extractUserId(auth);
+        List<UploadJobViewDto> jobs = this.jobRegistry.getActiveJobsForUser(userId);
         return ResponseEntity.ok(jobs);
     }
-
 
 
     private String getContentLengthHeader(StreamRange range, long fileSize) {

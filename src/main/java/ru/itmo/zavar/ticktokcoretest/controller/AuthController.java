@@ -1,6 +1,7 @@
 package ru.itmo.zavar.ticktokcoretest.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -14,67 +15,37 @@ import ru.itmo.zavar.ticktokcoretest.service.AuthService;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
 
-    public AuthController(AuthService authService,
-                          UserRepository userRepository) {
-        this.authService = authService;
-        this.userRepository = userRepository;
-    }
-
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest req) {
-        UserEntity u = authService.register(
-                req.username(),
-                req.email(),
-                req.displayName(),
-                req.password()
-        );
-        String token = authService.login(req.username(), req.password());
-        String avatarUrl = u.getAvatarKey() == null
-                ? null
-                : "/api/users/" + u.getId() + "/avatar";
-        return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles(), avatarUrl));
+        UserEntity userEntity = this.authService.register(req.username(), req.email(), req.displayName(), req.password());
+        String token = this.authService.login(req.username(), req.password());
+        String avatarUrl = this.getAvatarUrl(userEntity);
+        return ResponseEntity.ok(new AuthResponse(token, userEntity.getId(), userEntity.getUsername(), userEntity.getDisplayName(), userEntity.getRoles(), avatarUrl));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
-        String token = authService.login(req.username(), req.password());
-        UserEntity u = userRepository.findByUsername(req.username())
-                .orElseThrow();
-        String avatarUrl = u.getAvatarKey() == null
-                ? null
-                : "/api/users/" + u.getId() + "/avatar";
+        String token = this.authService.login(req.username(), req.password());
+        UserEntity u = this.userRepository.findByUsername(req.username()).orElseThrow();
+        String avatarUrl = getAvatarUrl(u);
         return ResponseEntity.ok(new AuthResponse(token, u.getId(), u.getUsername(), u.getDisplayName(), u.getRoles(), avatarUrl));
     }
 
     @GetMapping("/me")
     public ResponseEntity<AuthResponse> me(Authentication authentication, HttpServletRequest request) {
-        if (authentication == null)
-            return ResponseEntity.status(401).build();
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        String avatarUrl = userPrincipal.getAvatarUrl();
+        return ResponseEntity.ok(new AuthResponse(null, userPrincipal.getId(), userPrincipal.getUsername(), userPrincipal.getDisplayName(), userPrincipal.getRoles(), avatarUrl));
+    }
 
-        Object principal = authentication.getPrincipal();
-        if (!(principal instanceof UserPrincipal up))
-            return ResponseEntity.status(401).build();
-
-        UserEntity u = userRepository.findById(up.getId())
-                .orElseThrow();
-
-        String avatarUrl = u.getAvatarKey() == null
-                ? null
-                : "/api/users/" + u.getId() + "/avatar";
-
-        return ResponseEntity.ok(new AuthResponse(
-                null, // token not returned
-                u.getId(),
-                u.getUsername(),
-                u.getDisplayName(),
-                u.getRoles(),
-                avatarUrl
-        ));
+    private String getAvatarUrl(UserEntity userEntity) {
+        return userEntity.getAvatarKey() == null ? null : "/api/users/" + userEntity.getId() + "/avatar";
     }
 }
 

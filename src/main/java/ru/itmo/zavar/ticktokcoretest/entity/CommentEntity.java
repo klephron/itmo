@@ -1,10 +1,10 @@
 package ru.itmo.zavar.ticktokcoretest.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class CommentEntity {
     private Long id;
 
     @Column(nullable = false)
-    private UUID videoUuid;   // FileMetadata.uuid
+    private UUID videoUuid;
 
     @Column(nullable = false)
     private Long authorId;

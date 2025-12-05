@@ -11,4 +11,5 @@ public record VideoLikeEvent(
         Long videoId,
         Long likesCount,
         Instant occurredAt
-) implements Serializable {}
+) implements Serializable {
+}

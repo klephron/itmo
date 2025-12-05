@@ -23,10 +23,8 @@ public class AdminController {
 
     @PostMapping("/thumbnails/rebuild")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> regenerateThumbnails(
-            @RequestParam(name = "force", defaultValue = "true") boolean force
-    ) {
-        int updated = videoStreamingService.regenerateAllThumbnails(force);
+    public ResponseEntity<Map<String, Object>> regenerateThumbnails(@RequestParam(name = "force", defaultValue = "true") boolean force) {
+        int updated = this.videoStreamingService.regenerateAllThumbnails(force);
         return ResponseEntity.ok(Map.of(
                 "updated", updated,
                 "force", force
@@ -36,7 +34,7 @@ public class AdminController {
     @GetMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<Role>> getUserRoles(@PathVariable Long id) {
-        return userRepository.findById(id)
+        return this.userRepository.findById(id)
                 .map(UserEntity::getRoles)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -46,7 +44,7 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<Role>> updateUserRoles(@PathVariable Long id,
                                                      @RequestBody UpdateUserRolesRequest req) {
-        return userRepository.findById(id)
+        return this.userRepository.findById(id)
                 .map(u -> {
                     u.getRoles().clear();
                     if (req.roles() != null && !req.roles().isEmpty()) {
@@ -54,7 +52,7 @@ public class AdminController {
                     } else {
                         u.getRoles().add(Role.USER);
                     }
-                    userRepository.save(u);
+                    this.userRepository.save(u);
                     return ResponseEntity.ok(u.getRoles());
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());

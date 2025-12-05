@@ -13,6 +13,6 @@ public class LikesRabbitConfig {
 
     @Bean
     public DirectExchange likesExchange() {
-        return new DirectExchange(likesExchangeName, true, false);
+        return new DirectExchange(this.likesExchangeName, true, false);
     }
 }

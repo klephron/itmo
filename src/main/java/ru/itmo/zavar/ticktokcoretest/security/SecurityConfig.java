@@ -2,15 +2,16 @@ package ru.itmo.zavar.ticktokcoretest.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.*;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.*;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import ru.itmo.zavar.ticktokcoretest.security.jwt.JwtAuthenticationFilter;
@@ -31,17 +32,25 @@ public class SecurityConfig {
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // auth endpoints
-                        .requestMatchers("/api/users/**").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
-                        // публичный просмотр видео
+
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
+
+                        .requestMatchers(HttpMethod.GET,"/api/videos/*/comments").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/videos/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.DELETE,"/api/videos/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.GET,"/api/videos/*/likes").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/videos/*/likes").authenticated()
+                        .requestMatchers(HttpMethod.DELETE,"/api/videos/*/likes").authenticated()
                         .requestMatchers("/api/videos/**").permitAll()
                         .requestMatchers("/streaming/video/**").permitAll()
+
                         .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
                         .requestMatchers("/moderation/**").hasRole(Role.MODERATOR.name())
-                        // статика, index.html
+
                         .requestMatchers("/", "/index.html", "/static/**").permitAll()
-                        // всё остальное — только для залогиненных
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

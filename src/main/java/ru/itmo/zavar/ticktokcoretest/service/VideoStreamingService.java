@@ -6,10 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import ru.itmo.zavar.ticktokcoretest.integrations.minio.MinioService;
 import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
+import ru.itmo.zavar.ticktokcoretest.integrations.minio.MinioService;
 import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
-import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamChunk;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamRange;
 import ru.itmo.zavar.ticktokcoretest.transcode.JobStage;
@@ -23,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -47,8 +45,8 @@ public class VideoStreamingService {
     public UUID enqueueUpload(MultipartFile video, String videoName, Authentication auth) throws IOException {
         UUID jobId = UUID.randomUUID();
 
-        Long userId = extractUserId(auth);
-        String displayName = extractDisplayName(auth);
+        Long userId = AuthService.extractUserId(auth);
+        String displayName = AuthService.extractDisplayName(auth);
 
         String safeName = (videoName == null || videoName.isBlank())
                 ? video.getOriginalFilename()
@@ -61,17 +59,17 @@ public class VideoStreamingService {
                 safeName,
                 userId
         );
-        jobRegistry.put(jobId, status);
+        this.jobRegistry.put(jobId, status);
 
         Path tempInput = Files.createTempFile("upload-src-", ".tmp");
         video.transferTo(tempInput.toFile());
 
-        executor.submit(() -> {
+        this.executor.submit(() -> {
             try {
                 processJob(jobId, tempInput, safeName, userId, displayName);
             } catch (Exception e) {
                 log.error("Upload job {} failed", jobId, e);
-                jobRegistry.update(jobId, st -> {
+                this.jobRegistry.update(jobId, st -> {
                     st.setStage(JobStage.ERROR);
                     st.setPercent(100);
                     st.setMessage("Ошибка: " + e.getMessage());
@@ -93,13 +91,13 @@ public class VideoStreamingService {
                             Long userId,
                             String displayName) throws Exception {
 
-        jobRegistry.update(jobId, st -> {
+        this.jobRegistry.update(jobId, st -> {
             st.setStage(JobStage.TRANSCODING);
             st.setPercent(0);
             st.setMessage("Подготовка к перекодированию…");
         });
 
-        Path mp4Path = transcodingService.transcodeToMp4WithProgress(tempInput, jobId);
+        Path mp4Path = this.transcodingService.transcodeToMp4WithProgress(tempInput, jobId);
         long mp4Size = Files.size(mp4Path);
 
         FileMetadataEntity meta = new FileMetadataEntity();
@@ -110,7 +108,7 @@ public class VideoStreamingService {
         meta.setContentType("video/mp4");
         meta.setContentSize(mp4Size);
 
-        meta = fileMetadataRepository.save(meta);
+        meta = this.fileMetadataRepository.save(meta);
 
         try {
             createAndUploadThumbnail(mp4Path, meta);
@@ -118,19 +116,19 @@ public class VideoStreamingService {
             log.error("Failed to create/upload thumbnail for {}", meta.getUuid(), e);
         }
 
-        jobRegistry.update(jobId, st -> {
+        this.jobRegistry.update(jobId, st -> {
             st.setStage(JobStage.UPLOADING_TO_MINIO);
             st.setPercent(100);
             st.setMessage("Загрузка в хранилище…");
         });
 
         try (InputStream is = Files.newInputStream(mp4Path)) {
-            minioService.uploadFile(is, mp4Size, meta);
+            this.minioService.uploadVideoFile(is, mp4Size, meta);
         } finally {
             Files.deleteIfExists(mp4Path);
         }
 
-        jobRegistry.update(jobId, st -> {
+        this.jobRegistry.update(jobId, st -> {
             st.setStage(JobStage.DONE);
             st.setPercent(100);
             st.setMessage("Готово");
@@ -152,11 +150,11 @@ public class VideoStreamingService {
             long thumbSize = Files.size(thumbPath);
             String thumbKey;
             try (InputStream is = Files.newInputStream(thumbPath)) {
-                thumbKey = minioService.uploadThumbnail(is, thumbSize, meta);
+                thumbKey = this.minioService.uploadThumbnail(is, thumbSize, meta);
             }
 
             meta.setThumbnailKey(thumbKey);
-            fileMetadataRepository.save(meta);
+            this.fileMetadataRepository.save(meta);
             log.info("Thumbnail created for video {}", meta.getUuid());
         } finally {
             try {
@@ -168,7 +166,7 @@ public class VideoStreamingService {
 
     private void runFfmpegThumbnail(Path input, Path output) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(
-                ffmpegPath,
+                this.ffmpegPath,
                 "-y",
                 "-i", input.toString(),
                 "-ss", "00:00:00.000",
@@ -192,30 +190,8 @@ public class VideoStreamingService {
         }
     }
 
-    private String extractDisplayName(Authentication auth) {
-        if (auth == null) return "Аноним";
-        Object principal = auth.getPrincipal();
-        if (principal instanceof SecurityBeans.UserPrincipal up) {
-            return up.getDisplayName();
-        }
-        return "Аноним";
-    }
-
-    public Long extractUserId(Authentication authentication) {
-        if (authentication == null) throw new RuntimeException("Unauthenticated");
-        Object details = authentication.getDetails();
-        if (details instanceof Map<?, ?> map && map.get("id") != null) {
-            return Long.valueOf(map.get("id").toString());
-        }
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof SecurityBeans.UserPrincipal up) {
-            return up.getId();
-        }
-        throw new RuntimeException("Cannot extract user id");
-    }
-
     public StreamChunk fetchChunk(UUID uuid, StreamRange range) throws Exception {
-        FileMetadataEntity meta = fileMetadataRepository.findByUuid(uuid)
+        FileMetadataEntity meta = this.fileMetadataRepository.findByUuid(uuid)
                 .orElseThrow(() -> new NoSuchElementException("File not found: " + uuid));
 
         long fileSize = meta.getContentSize();
@@ -226,7 +202,7 @@ public class VideoStreamingService {
         long end = range.getRangeEnd(fileSize);
         long length = end - start + 1;
 
-        try (InputStream is = minioService.getFileAsInputStream(meta, start, length);
+        try (InputStream is = this.minioService.getVideoFileAsInputStream(meta, start, length);
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
             is.transferTo(baos);
@@ -236,23 +212,23 @@ public class VideoStreamingService {
     }
 
     public List<FileMetadataEntity> getVideoList(Long userId) {
-        return fileMetadataRepository.findAllByUploaderId(userId);
+        return this.fileMetadataRepository.findAllByUploaderId(userId);
     }
 
     public List<FileMetadataEntity> getVideoList() {
-        return fileMetadataRepository.findAll();
+        return this.fileMetadataRepository.findAll();
     }
 
     public void deleteVideo(UUID uuid) throws Exception {
-        FileMetadataEntity meta = fileMetadataRepository.findByUuid(uuid)
+        FileMetadataEntity meta = this.fileMetadataRepository.findByUuid(uuid)
                 .orElseThrow(() -> new NoSuchElementException("File not found: " + uuid));
 
-        minioService.deleteFile(meta.getUuid());
-        fileMetadataRepository.delete(meta);
+        this.minioService.deleteVideoFile(meta.getUuid());
+        this.fileMetadataRepository.delete(meta);
     }
 
     public int regenerateAllThumbnails(boolean force) {
-        List<FileMetadataEntity> all = fileMetadataRepository.findAll();
+        List<FileMetadataEntity> all = this.fileMetadataRepository.findAll();
         int updated = 0;
 
         for (FileMetadataEntity meta : all) {
@@ -264,7 +240,7 @@ public class VideoStreamingService {
             try {
                 tempVideo = Files.createTempFile("regen-src-", ".mp4");
 
-                try (InputStream is = minioService.downloadVideo(meta)) {
+                try (InputStream is = this.minioService.downloadVideoFile(meta)) {
                     Files.copy(is, tempVideo, StandardCopyOption.REPLACE_EXISTING);
                 }
                 createAndUploadThumbnail(tempVideo, meta);

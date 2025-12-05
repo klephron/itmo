@@ -16,22 +16,22 @@ public class UploadJobRegistry {
     private final Map<UUID, UploadJobStatus> jobs = new ConcurrentHashMap<>();
 
     public void put(UUID id, UploadJobStatus status) {
-        jobs.put(id, status);
+        this.jobs.put(id, status);
     }
 
     public Optional<UploadJobStatus> get(UUID id) {
-        return Optional.ofNullable(jobs.get(id));
+        return Optional.ofNullable(this.jobs.get(id));
     }
 
     public void update(UUID id, Consumer<UploadJobStatus> updater) {
-        jobs.computeIfPresent(id, (k, v) -> {
+        this.jobs.computeIfPresent(id, (k, v) -> {
             updater.accept(v);
             return v;
         });
     }
 
     public List<UploadJobViewDto> getActiveJobs() {
-        return jobs.entrySet().stream()
+        return this.jobs.entrySet().stream()
                 .filter(e -> e.getValue().getStage() != JobStage.DONE
                         && e.getValue().getStage() != JobStage.ERROR)
                 .map(e -> {
@@ -48,7 +48,7 @@ public class UploadJobRegistry {
     }
 
     public List<UploadJobViewDto> getActiveJobsForUser(Long userId) {
-        return jobs.entrySet().stream()
+        return this.jobs.entrySet().stream()
                 .filter(e -> e.getValue().getUserId() != null
                         && e.getValue().getUserId().equals(userId))
                 .filter(e -> e.getValue().getStage() != JobStage.DONE

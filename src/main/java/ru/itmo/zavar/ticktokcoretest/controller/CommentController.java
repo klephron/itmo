@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.ticktokcoretest.dto.CommentDto;
 import ru.itmo.zavar.ticktokcoretest.dto.request.CreateCommentRequest;
 import ru.itmo.zavar.ticktokcoretest.security.Role;
-import ru.itmo.zavar.ticktokcoretest.service.CommentService;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
+import ru.itmo.zavar.ticktokcoretest.service.CommentService;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,40 +31,22 @@ public class CommentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CommentDto>> list(
-            @PathVariable UUID videoUuid,
-            Authentication auth) {
-
+    public ResponseEntity<List<CommentDto>> list(@PathVariable UUID videoUuid, Authentication auth) {
         Long currentUserId = null;
         if (auth != null && auth.getPrincipal() instanceof SecurityBeans.UserPrincipal up) {
             currentUserId = up.getId();
         }
-
-        return ResponseEntity.ok(commentService.listComments(videoUuid, currentUserId));
+        return ResponseEntity.ok(this.commentService.listComments(videoUuid, currentUserId));
     }
 
     @PostMapping
-    public ResponseEntity<CommentDto> add(
-            @PathVariable UUID videoUuid,
-            @Valid @RequestBody CreateCommentRequest req,
-            Authentication auth) {
-
-        if (auth == null) {
-            return ResponseEntity.status(401).build();
-        }
-        return ResponseEntity.ok(commentService.addComment(videoUuid, req, auth));
+    public ResponseEntity<CommentDto> add(@PathVariable UUID videoUuid, @Valid @RequestBody CreateCommentRequest req, Authentication auth) {
+        return ResponseEntity.ok(this.commentService.addComment(videoUuid, req, auth));
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID videoUuid,
-            @PathVariable Long commentId,
-            Authentication auth) {
-
-        if (auth == null) {
-            return ResponseEntity.status(401).build();
-        }
-        commentService.deleteComment(videoUuid, commentId, auth, isModeratorOrAdmin(auth));
+    public ResponseEntity<Void> delete(@PathVariable UUID videoUuid, @PathVariable Long commentId, Authentication auth) {
+        this.commentService.deleteComment(videoUuid, commentId, auth, isModeratorOrAdmin(auth));
         return ResponseEntity.noContent().build();
     }
 }

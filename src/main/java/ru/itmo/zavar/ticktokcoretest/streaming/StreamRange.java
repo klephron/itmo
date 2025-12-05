@@ -6,7 +6,7 @@ import lombok.Getter;
 public class StreamRange {
 
     private final long rangeStart;
-    private final Long rangeEnd;   // может быть null, если "до конца"
+    private final Long rangeEnd;   // может быть null, если до конца
     private final long defaultChunkSize;
 
     private StreamRange(long rangeStart, Long rangeEnd, long defaultChunkSize) {
@@ -17,12 +17,10 @@ public class StreamRange {
 
     public static StreamRange parseHttpRangeString(String rangeHeader, long defaultChunkSize) {
         if (rangeHeader == null || !rangeHeader.startsWith("bytes=")) {
-            // Нет Range → считаем, что клиент хочет с начала файла
             return new StreamRange(0L, null, defaultChunkSize);
         }
 
         String value = rangeHeader.substring("bytes=".length()).trim();
-        // поддерживаем "start-" и "start-end"
         String[] parts = value.split("-");
         long start = Long.parseLong(parts[0].trim());
         Long end = null;
@@ -34,10 +32,10 @@ public class StreamRange {
     }
 
     public long getRangeEnd(long fileSize) {
-        if (rangeEnd != null) {
-            return Math.min(rangeEnd, fileSize - 1);
+        if (this.rangeEnd != null) {
+            return Math.min(this.rangeEnd, fileSize - 1);
         }
-        long candidate = rangeStart + defaultChunkSize - 1;
+        long candidate = this.rangeStart + this.defaultChunkSize - 1;
         return Math.min(candidate, fileSize - 1);
     }
 }

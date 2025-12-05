@@ -1,16 +1,21 @@
 package ru.itmo.zavar.ticktokcoretest.service;
 
-import org.springframework.security.authentication.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.itmo.zavar.ticktokcoretest.entity.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
-import ru.itmo.zavar.ticktokcoretest.security.jwt.JwtTokenProvider;
 import ru.itmo.zavar.ticktokcoretest.security.Role;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
+import ru.itmo.zavar.ticktokcoretest.security.jwt.JwtTokenProvider;
+
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -18,47 +23,54 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager,
-                       JwtTokenProvider jwtTokenProvider) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
-    public UserEntity register(String username,
-                               String email,
-                               String displayName,
-                               String rawPassword) {
-
-        if (userRepository.existsByUsername(username)) {
+    public UserEntity register(String username, String email, String displayName, String rawPassword) {
+        if (this.userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already taken");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (this.userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email already taken");
         }
 
-        UserEntity u = new UserEntity();
-        u.setUsername(username);
-        u.setEmail(email);
-        u.setDisplayName(displayName);
-        u.setPassword(passwordEncoder.encode(rawPassword));
-        u.setEnabled(true);
-        u.getRoles().add(Role.USER);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setUsername(username);
+        userEntity.setEmail(email);
+        userEntity.setDisplayName(displayName);
+        userEntity.setPassword(this.passwordEncoder.encode(rawPassword));
+        userEntity.setEnabled(true);
+        userEntity.getRoles().add(Role.USER);
 
-        return userRepository.save(u);
+        return this.userRepository.save(userEntity);
     }
 
     public String login(String username, String rawPassword) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, rawPassword)
-        );
+        Authentication auth = this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, rawPassword));
         var principal = (SecurityBeans.UserPrincipal) auth.getPrincipal();
-        UserEntity user = userRepository.findByUsername(principal.getUsername())
+        UserEntity user = this.userRepository.findByUsername(principal.getUsername())
                 .orElseThrow();
-        return jwtTokenProvider.generateToken(user.getId(), user.getUsername());
+        return this.jwtTokenProvider.generateToken(user.getId(), user.getUsername());
+    }
+
+    public static Long extractUserId(Authentication authentication) {
+        if (authentication == null)
+            throw new RuntimeException("Unauthenticated");
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> map && map.get("id") != null) {
+            return Long.valueOf(map.get("id").toString());
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof SecurityBeans.UserPrincipal up) {
+            return up.getId();
+        }
+        throw new RuntimeException("Cannot extract user id");
+    }
+
+    public static String extractDisplayName(Authentication auth) {
+        if (auth == null) return "Аноним";
+        Object principal = auth.getPrincipal();
+        if (principal instanceof SecurityBeans.UserPrincipal up) {
+            return up.getDisplayName();
+        }
+        return "Аноним";
     }
 }
 
