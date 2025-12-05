@@ -4,6 +4,8 @@ import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -73,11 +75,15 @@ public class UserProfileController {
     }
 
     @GetMapping("/{id}/videos")
-    public ResponseEntity<List<PublicUserVideoDto>> getUserVideos(@PathVariable Long id) {
+    public ResponseEntity<Page<PublicUserVideoDto>> getUserVideos(@PathVariable Long id, Pageable pageable) {
         if (!this.userRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(this.fileMetadataToPublicUserVideoMapper
-                .toDto(this.fileMetadataRepository.findByUploaderId(id)));
+
+        Page<PublicUserVideoDto> page = this.fileMetadataRepository
+                .findByUploaderId(id, pageable)
+                .map(this.fileMetadataToPublicUserVideoMapper::toDto);
+
+        return ResponseEntity.ok(page);
     }
 }
