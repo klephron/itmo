@@ -186,7 +186,7 @@
       color: #777;
     }
 
-    /* Студия */
+    /* Студийные стили (используются в аккаунте и модерации) */
     .studio-section-title {
       font-size: 13px;
       font-weight: 600;
@@ -320,6 +320,30 @@
       background:rgba(0,0,0,0.6);
     }
 
+    .thumb-card-likes {
+      position:absolute;
+      left:4px;
+      top:4px;
+      font-size:9px;
+      padding:2px 4px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.6);
+    }
+
+    .thumb-card-delete {
+      position:absolute;
+      left:4px;
+      bottom:4px;
+      font-size:10px;
+      padding:2px 4px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.6);
+      cursor:pointer;
+    }
+    .thumb-card-delete:hover {
+      background:rgba(255,77,79,0.9);
+    }
+
     .comments {
       margin-top: 8px;
       border-top: 1px solid #222;
@@ -330,35 +354,6 @@
       max-height: 150px;
       overflow-y: auto;
       margin-bottom: 6px;
-    }
-
-    .comment-row {
-      font-size: 11px;
-      margin-bottom: 4px;
-    }
-
-    .comment-author {
-      font-weight: 600;
-      margin-right: 4px;
-    }
-
-    .comment-meta {
-      color: #777;
-      margin-left: 4px;
-    }
-
-    .comment-text {
-      margin-top: 1px;
-    }
-
-    .comment-delete {
-      font-size: 10px;
-      color: #f88;
-      cursor: pointer;
-      margin-left: 6px;
-    }
-    .comment-delete:hover {
-      text-decoration: underline;
     }
 
     .comment-row {
@@ -418,9 +413,6 @@
     .comment-delete:hover {
       text-decoration: underline;
     }
-
-
-
   </style>
 </head>
 <body>
@@ -428,7 +420,6 @@
   <div class="tabs">
     <button class="tab-btn active" id="tabFeed">Лента</button>
     <button class="tab-btn" id="tabUpload">Загрузка</button>
-    <button class="tab-btn" id="tabStudio">Студия</button>
     <button class="tab-btn" id="tabModeration" style="display:none;">Модерация</button>
     <button class="tab-btn" id="tabAuth">Аккаунт</button>
   </div>
@@ -463,9 +454,11 @@
         <div class="avatar-mini" id="videoAuthorAvatar"></div>
         <span id="videoInfoSize">—</span>
       </div>
-      <div id="videoInfoDate">—</div>
+      <div style="text-align:right;">
+        <div id="videoInfoViews">—</div>
+        <div id="videoInfoDate">—</div>
+      </div>
     </div>
-
 
     <div class="comments">
       <div class="studio-section-title" style="margin-top:0;">Комментарии</div>
@@ -512,22 +505,7 @@
     <div class="status" id="statusUpload"></div>
   </div>
 
-  <!-- Студия -->
-  <div class="card page" id="pageStudio">
-    <div class="header">
-      <div class="title">Студия</div>
-      <div class="badge" id="studioVideoCount">0 видео</div>
-    </div>
-
-    <div class="studio-section-title">Видео</div>
-    <div class="studio-videos" id="studioVideos"></div>
-
-    <div class="studio-section-title" style="margin-top:10px;">Активные загрузки</div>
-    <div class="studio-jobs" id="studioJobs"></div>
-
-    <div class="status" id="statusStudio"></div>
-  </div>
-
+  <!-- Профиль (чужой / из ленты) -->
   <div class="card page" id="pageProfile">
     <div class="header">
       <div style="display:flex;align-items:center;gap:8px;">
@@ -544,7 +522,6 @@
 
     <div class="status" id="statusProfile"></div>
   </div>
-
 
   <!-- Аккаунт -->
   <div class="card page" id="pageAuth">
@@ -576,9 +553,18 @@
         </div>
       </div>
 
-      <div class="studio-section-title" style="margin-top:8px;">Ваши видео</div>
+      <div class="studio-section-title" style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span>Ваши видео</span>
+        <span class="badge" id="studioVideoCount">0 видео</span>
+      </div>
       <div class="thumb-grid" id="authProfileVideos"></div>
+
+      <div class="studio-section-title" style="margin-top:8px;">Активные загрузки</div>
+      <div class="studio-jobs" id="studioJobs"></div>
     </div>
+
+    <!-- статус для операций с видео / джобами (бывшая "студия") -->
+    <div class="status" id="statusStudio"></div>
 
     <div id="authFormsBlock">
       <div class="studio-section-title">Вход</div>
@@ -613,6 +599,7 @@
     </div>
     <div class="status" id="statusAuth"></div>
   </div>
+
   <!-- Модерация -->
   <div class="card page" id="pageModeration">
     <div class="header">
@@ -646,7 +633,7 @@
 
   // auth state
   let authToken = null;
-  let authUser = null; // { userId, username, displayName }
+  let authUser = null; // { userId, username, displayName, roles, avatarUrl }
 
   const preload1 = document.getElementById('preloadNext1');
   const preload2 = document.getElementById('preloadNext2');
@@ -656,6 +643,7 @@
   const countEl = document.getElementById('videoCount');
   const sizeEl = document.getElementById('videoInfoSize');
   const dateEl = document.getElementById('videoInfoDate');
+  const viewsEl = document.getElementById('videoInfoViews');
   const statusFeedEl = document.getElementById('statusFeed');
   const statusUploadEl = document.getElementById('statusUpload');
   const statusStudioEl = document.getElementById('statusStudio');
@@ -668,12 +656,10 @@
 
   const tabFeed = document.getElementById('tabFeed');
   const tabUpload = document.getElementById('tabUpload');
-  const tabStudio = document.getElementById('tabStudio');
   const tabAuth = document.getElementById('tabAuth');
 
   const pageFeed = document.getElementById('pageFeed');
   const pageUpload = document.getElementById('pageUpload');
-  const pageStudio = document.getElementById('pageStudio');
   const pageAuth = document.getElementById('pageAuth');
 
   const uploadTitleInput = document.getElementById('uploadTitle');
@@ -681,7 +667,6 @@
   const btnUpload = document.getElementById('btnUpload');
   const uploadProgressEl = document.getElementById('uploadProgress');
 
-  const studioVideosEl = document.getElementById('studioVideos');
   const studioVideoCountEl = document.getElementById('studioVideoCount');
   const studioJobsEl = document.getElementById('studioJobs');
 
@@ -690,7 +675,6 @@
   const authLoggedBlock = document.getElementById('authLoggedBlock');
   const authFormsBlock = document.getElementById('authFormsBlock');
   const authWelcomeEl = document.getElementById('authWelcome');
-  const btnLogout = document.getElementById('btnLogout');
   const pageProfile = document.getElementById('pageProfile');
   const profileAvatarEl = document.getElementById('profileAvatar');
   const profileDisplayNameEl = document.getElementById('profileDisplayName');
@@ -747,9 +731,69 @@
     commentsStatusEl.className = 'status' + (type ? ' ' + type : '');
   }
 
+  function renderViews(count) {
+    if (!viewsEl) return;
+    const n = count ?? 0;
+
+    let label;
+    if (n === 0) {
+      label = 'Нет просмотров';
+    } else if (n === 1) {
+      label = '1 просмотр';
+    } else if (n >= 2 && n <= 4) {
+      label = n + ' просмотра';
+    } else {
+      label = n + ' просмотров';
+    }
+
+    viewsEl.textContent = label;
+  }
+
+  async function registerView(videoUuid) {
+    // Сначала пробуем увеличить счётчик (POST)
+    try {
+      const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/view', {
+        method: 'POST',
+        headers: authHeaders()
+      });
+
+      if (res.ok) {
+        const data = await res.json(); // { count: long }
+        renderViews(data.viewsCount);
+        return;
+      }
+
+      // если вдруг 401/403 или другая ошибка — пробуем просто получить число просмотров
+      if (res.status === 401 || res.status === 403) {
+        await loadViews(videoUuid);
+        return;
+      }
+
+      throw new Error('HTTP ' + res.status);
+    } catch (e) {
+      console.error('registerView error', e);
+      // на ошибке не падаем, просто не обновляем текст
+    }
+  }
+
+  async function loadViews(videoUuid) {
+    try {
+      const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/view', {
+        method: 'GET',
+        headers: authHeaders()
+      });
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const data = await res.json(); // { count: long }
+      renderViews(data.viewsCount);
+    } catch (e) {
+      console.error('loadViews error', e);
+    }
+  }
+
 
   let currentProfileUserId = null;
-
 
   let modUsers = [];
   let modSelectedUserId = null;
@@ -768,6 +812,8 @@
     authProfileDisplayNameEl.textContent = '';
     authProfileUsernameEl.textContent = '';
     authProfileVideosEl.innerHTML = '';
+    studioVideoCountEl.textContent = '0 видео';
+    studioJobsEl.innerHTML = '';
   }
 
   async function loadAccountProfile() {
@@ -801,6 +847,8 @@
 
       authProfileBlockEl.style.display = '';
 
+      studioVideoCountEl.textContent = (vids && vids.length ? vids.length : 0) + ' видео';
+
       // грид превью
       authProfileVideosEl.innerHTML = '';
       if (!vids || vids.length === 0) {
@@ -814,15 +862,43 @@
           img.src = v.thumbnailUrl;
           img.alt = v.name || '';
 
+          // оверлей со статистикой
           const overlay = document.createElement('div');
           overlay.className = 'thumb-card-overlay';
-          overlay.textContent = formatDate(v.uploadedAt);
+
+          const likesVal = (typeof v.likesCount === 'number')
+                  ? v.likesCount
+                  : (typeof v.likes === 'number' ? v.likes : 0);
+
+          const viewsVal = (typeof v.viewsCount === 'number')
+                  ? v.viewsCount
+                  : (typeof v.viewsCount === 'number' ? v.viewsCount : 0);
+
+          overlay.textContent = `♥ ${likesVal} · 👁 ${viewsVal}`;
+          overlay.title = formatDate(v.uploadedAt);
+
+          // кнопка удаления
+          const deleteBtn = document.createElement('div');
+          deleteBtn.className = 'thumb-card-delete';
+          deleteBtn.textContent = '🗑';
+          deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!authToken) {
+              setStatusAuth('Войдите, чтобы удалять видео', 'error');
+              activateTab('auth');
+              return;
+            }
+            if (confirm('Удалить это видео?')) {
+              deleteVideo(v.uuid);
+            }
+          });
 
           card.appendChild(img);
           card.appendChild(overlay);
+          card.appendChild(deleteBtn);
 
+          // клик по карточке — открыть в ленте
           card.addEventListener('click', () => {
-            // открыть ролик в общей ленте
             activateTab('feed');
             const globalIndex = videosGlobalIndexByUuid(v.uuid);
             if (globalIndex !== -1) {
@@ -838,7 +914,6 @@
       clearAccountProfile();
     }
   }
-
 
   function updateAccountAvatar() {
     if (authUser) {
@@ -856,7 +931,6 @@
       authAvatarEl.innerHTML = '';
     }
   }
-
 
   function setStatusProfile(msg, type = '') {
     statusProfileEl.textContent = msg || '';
@@ -908,8 +982,6 @@
     return userHasRole('ADMIN');
   }
 
-
-
   function setAuth(token, userId, username, displayName, roles, avatarUrl) {
     authToken = token || null;
     if (token && userId != null) {
@@ -929,7 +1001,6 @@
     }
     updateAuthUI();
   }
-
 
   function updateAuthUI() {
     if (authUser) {
@@ -986,7 +1057,6 @@
     }
   }
 
-
   btnRebuildThumbs.addEventListener('click', async () => {
     if (!authToken || !isAdmin()) return;
 
@@ -1016,7 +1086,6 @@
       setStatusModeration('Ошибка запуска перегенерации: ' + e.message, 'error');
     }
   });
-
 
   async function initAuth() {
     const savedToken = localStorage.getItem('authToken');
@@ -1061,7 +1130,7 @@
       console.error("auth/me fetch error:", e);
       // сетевые ошибки не должны приводить к logout
       if (authUser) {
-        setAuth(savedToken, authUser.userId, authUser.username, authUser.displayName, authUser.roles);
+        setAuth(savedToken, authUser.userId, authUser.username, authUser.displayName, authUser.roles, authUser.avatarUrl);
       }
     }
   }
@@ -1250,7 +1319,6 @@
           const data = await res.json();
           likedInitially = !!data.liked;
         } else if (res.status === 401 || res.status === 403) {
-          // просто считаем "не лайкнуто", без ошибок и без разлогина
           likedInitially = false;
         } else {
           throw new Error('HTTP ' + res.status);
@@ -1291,12 +1359,36 @@
     dateEl.textContent = formatDate(v.uploadedAt);
     countEl.textContent = videos.length + ' видео';
 
-
     setStatusFeed('Воспроизведение…', 'ok');
 
     preloadAroundCurrent();
+    // зарегистрировать просмотр и обновить счётчик
+    registerView(v.uuid);
     // загрузить комментарии для текущего видео
     loadComments(v.uuid);
+  }
+
+  function createThumbCard(v) {
+    const card = document.createElement('div');
+    card.className = 'thumb-card';
+
+    const img = document.createElement('img');
+    img.src = v.thumbnailUrl;
+    img.alt = v.name || '';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'thumb-card-overlay';
+
+    const likes = v.likesCount ?? 0;
+    const views = v.viewsCount ?? 0;
+
+    overlay.textContent = `♥ ${likes} · 👁 ${views}`;
+    overlay.title = `Загружено: ${formatDate(v.uploadedAt)}`;
+
+    card.appendChild(img);
+    card.appendChild(overlay);
+
+    return card;
   }
 
   async function loadComments(videoUuid) {
@@ -1337,7 +1429,6 @@
       const row = document.createElement('div');
       row.className = 'comment-row';
 
-      // 🔹 Аватар
       const avatarDiv = document.createElement('div');
       avatarDiv.className = 'comment-avatar';
 
@@ -1354,7 +1445,6 @@
         });
       }
 
-      // 🔹 Тело комментария
       const bodyDiv = document.createElement('div');
       bodyDiv.className = 'comment-body';
 
@@ -1377,7 +1467,6 @@
       header.appendChild(authorSpan);
       header.appendChild(metaSpan);
 
-      // 🔹 Удаление (для своих / модераторов/админов)
       const canDelete =
               c.mine ||
               (authUser && (authUser.roles || []).some(r => r === 'ADMIN' || r === 'MODERATOR'));
@@ -1442,7 +1531,6 @@
       const newComment = await res.json(); // CommentDto
       commentInputEl.value = '';
 
-      // обновляем кэш и рендер
       const list = commentsCache.get(v.uuid) || [];
       list.push(newComment);
       commentsCache.set(v.uuid, list);
@@ -1487,7 +1575,6 @@
     }
   }
 
-
   async function loadVideoList() {
     try {
       const res = await fetch(apiBase + '/streaming/video/list');
@@ -1500,7 +1587,6 @@
       }
 
       countEl.textContent = videos.length + ' видео';
-      studioVideoCountEl.textContent = videos.length + ' видео';
 
       if (videos.length === 0) {
         titleEl.textContent = 'Видео ещё нет';
@@ -1515,100 +1601,6 @@
       setStatusFeed('Ошибка загрузки списка видео: ' + e.message, 'error');
     }
   }
-
-  async function loadMyVideos() {
-    if (!authToken) {
-      studioVideosEl.innerHTML = '<div class="studio-row-meta">Войдите, чтобы видеть свои видео</div>';
-      return;
-    }
-
-    try {
-      const res = await fetch(apiBase + '/streaming/video/list/my', {
-        headers: authHeaders(),
-      });
-
-      if (res.status === 401 || res.status === 403) {
-        setStatusStudio('Сессия истекла, войдите снова', 'error');
-        activateTab('auth');
-        return;
-      }
-
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-
-      const myVideos = await res.json();
-
-      studioVideoCountEl.textContent = myVideos.length + ' видео';
-      renderStudioVideos(myVideos);
-
-    } catch (e) {
-      console.error(e);
-      setStatusStudio('Ошибка загрузки видео: ' + e.message, 'error');
-    }
-  }
-
-  function renderStudioVideos(list = videos) {
-    studioVideosEl.innerHTML = '';
-
-    if (!list || list.length === 0) {
-      studioVideosEl.innerHTML = '<div class="studio-row-meta">Нет видео</div>';
-      return;
-    }
-
-    list.forEach((v, idx) => {
-
-      const row = document.createElement('div');
-      row.className = 'studio-row';
-
-      const header = document.createElement('div');
-      header.className = 'studio-row-header';
-
-      const title = document.createElement('div');
-      const name = v.name || '(без названия)';
-      const author = v.uploaderName ? ` — ${v.uploaderName}` : '';
-      title.className = 'studio-row-title';
-      title.textContent = name + author;
-
-      const btns = document.createElement('div');
-
-      const playBtn = document.createElement('button');
-      playBtn.className = 'small secondary';
-      playBtn.textContent = '▶ Открыть';
-      playBtn.addEventListener('click', () => {
-        activateTab('feed');
-        playByIndex(idx);
-      });
-
-      const delBtn = document.createElement('button');
-      delBtn.className = 'small danger';
-      delBtn.textContent = '🗑 Удалить';
-      delBtn.addEventListener('click', () => {
-        if (!authToken) {
-          setStatusStudio('Войдите, чтобы удалять', 'error');
-          activateTab('auth');
-          return;
-        }
-        if (confirm('Удалить это видео?')) {
-          deleteVideo(v.uuid);
-        }
-      });
-
-      btns.appendChild(playBtn);
-      btns.appendChild(delBtn);
-
-      header.appendChild(title);
-      header.appendChild(btns);
-
-      const meta = document.createElement('div');
-      meta.className = 'studio-row-meta';
-      meta.textContent =
-              `UUID: ${v.uuid} · ${humanSize(v.contentSize)} · ${formatDate(v.uploadedAt)}`;
-
-      row.appendChild(header);
-      row.appendChild(meta);
-      studioVideosEl.appendChild(row);
-    });
-  }
-
 
   async function deleteVideo(uuid) {
     try {
@@ -1627,6 +1619,9 @@
       }
       setStatusStudio('Видео удалено', 'ok');
       await loadVideoList();
+      if (authUser) {
+        await loadAccountProfile();
+      }
     } catch (e) {
       console.error(e);
       setStatusStudio('Ошибка удаления: ' + e.message, 'error');
@@ -1664,32 +1659,17 @@
     }
   }
 
-  function renderProfileVideos(videos) {
+  function renderProfileVideos(videosList) {
     profileVideosEl.innerHTML = '';
-    if (!videos || videos.length === 0) {
+    if (!videosList || videosList.length === 0) {
       profileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
       return;
     }
 
-    videos.forEach(v => {
-      const card = document.createElement('div');
-      card.className = 'thumb-card';
-
-      const img = document.createElement('img');
-      img.src = v.thumbnailUrl;
-      img.alt = v.name || '';
-
-      const overlay = document.createElement('div');
-      overlay.className = 'thumb-card-overlay';
-      overlay.textContent = formatDate(v.uploadedAt);
-
-      card.appendChild(img);
-      card.appendChild(overlay);
+    videosList.forEach(v => {
+      const card = createThumbCard(v);
 
       card.addEventListener('click', () => {
-        // открыть в ленте
-        const idx = videos.findIndex(meta => meta.uuid === v.uuid);
-        // проще: перейти к общей ленте и проигрывать по uuid
         activateTab('feed');
         const globalIndex = videosGlobalIndexByUuid(v.uuid);
         if (globalIndex !== -1) {
@@ -1705,22 +1685,18 @@
     return videos.findIndex(v => v.uuid === uuid);
   }
 
-
   function activateTab(tab) {
-    [tabFeed, tabUpload, tabStudio, tabModeration, tabAuth].forEach(btn => btn.classList.remove('active'));
-    [pageFeed, pageUpload, pageStudio, pageModeration, pageAuth, pageProfile].forEach(p => p.classList.remove('active'));
+    [tabFeed, tabUpload, tabModeration, tabAuth].forEach(btn => btn && btn.classList.remove('active'));
+    [pageFeed, pageUpload, pageModeration, pageAuth, pageProfile].forEach(p => p && p.classList.remove('active'));
 
     if (tab === 'feed') {
       tabFeed.classList.add('active');
       pageFeed.classList.add('active');
     } else if (tab === 'profile') {
       pageProfile.classList.add('active');
-    }  else if (tab === 'upload') {
+    } else if (tab === 'upload') {
       tabUpload.classList.add('active');
       pageUpload.classList.add('active');
-    } else if (tab === 'studio') {
-      tabStudio.classList.add('active');
-      pageStudio.classList.add('active');
     } else if (tab === 'moderation') {
       tabModeration.classList.add('active');
       pageModeration.classList.add('active');
@@ -1875,7 +1851,6 @@
     rolesText.textContent = 'Роли: ' + (Array.isArray(u.roles) ? u.roles.join(', ') : '—');
     rolesDiv.appendChild(rolesText);
 
-    // 🔹 Для админа — редактор ролей
     if (isAdmin()) {
       const editor = document.createElement('div');
       editor.style.marginTop = '4px';
@@ -1945,23 +1920,23 @@
 
       if (!res.ok) throw new Error('HTTP ' + res.status);
 
-      const videos = await res.json(); // List<UserVideoDto>
-      renderUserVideos(videos);
+      const videosList = await res.json(); // List<UserVideoDto>
+      renderUserVideos(videosList);
     } catch (e) {
       console.error(e);
       setStatusModeration('Ошибка загрузки видео пользователя: ' + e.message, 'error');
     }
   }
 
-  function renderUserVideos(videos) {
+  function renderUserVideos(videosList) {
     modUserVideosEl.innerHTML = '';
 
-    if (!videos || videos.length === 0) {
+    if (!videosList || videosList.length === 0) {
       modUserVideosEl.innerHTML = '<div class="studio-row-meta">Видео не найдено</div>';
       return;
     }
 
-    videos.forEach(v => {
+    videosList.forEach(v => {
       const row = document.createElement('div');
       row.className = 'job-row';
 
@@ -2051,9 +2026,6 @@
     }
   }
 
-
-
-
   tabModeration.addEventListener('click', () => {
     if (!authToken || !isModerator()) {
       setStatusModeration('Недостаточно прав для модерации', 'error');
@@ -2066,6 +2038,7 @@
   });
 
   tabFeed.addEventListener('click', () => activateTab('feed'));
+
   tabUpload.addEventListener('click', () => {
     if (!authToken) {
       setStatusUpload('Войдите, чтобы загружать видео', 'error');
@@ -2074,20 +2047,6 @@
     }
     setStatusUpload('');
     activateTab('upload');
-  });
-  tabStudio.addEventListener('click', () => {
-    if (!authToken) {
-      setStatusStudio('Войдите, чтобы открыть студию', 'error');
-      activateTab('auth');
-      return;
-    }
-
-    setStatusStudio('');
-    activateTab('studio');
-
-    loadMyVideos();       // <--- Личный список
-    renderStudioJobs();
-    loadActiveJobsFromServer();
   });
 
   tabAuth.addEventListener('click', () => activateTab('auth'));
@@ -2155,7 +2114,8 @@
           setStatusUpload('Идёт обработка видео…', 'ok');
           trackJob(jobId, jobLabel);
 
-          activateTab('studio');
+          // теперь студия внутри аккаунта
+          activateTab('auth');
         } else if (xhr.status === 401 || xhr.status === 403) {
           setStatusUpload('Сессия истекла, войдите снова', 'error');
           activateTab('auth');
@@ -2213,6 +2173,9 @@
           renderStudioJobs();
           setStatusUpload('Видео готово!', 'ok');
           await loadVideoList();
+          if (authUser) {
+            await loadAccountProfile();
+          }
         }
         if (st.stage === 'ERROR') {
           clearInterval(job.intervalId);
@@ -2268,7 +2231,7 @@
 
       renderStudioJobs();
     } catch (e) {
-      console.error('loadActiveJobsFromServer error:', e);
+      console.error('loadActiveJobsFromServer error', e);
       setStatusStudio('Ошибка загрузки активных задач: ' + e.message, 'error');
     }
   }
@@ -2340,11 +2303,14 @@
       if (!res.ok) {
         throw new Error('HTTP ' + res.status);
       }
-      const data = await res.json(); // { token, userId, username, displayName }
-      setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);      setStatusAuth('Успешный вход', 'ok');
+      const data = await res.json(); // { token, userId, username, displayName, roles, avatarUrl }
+      setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
+      setStatusAuth('Успешный вход', 'ok');
       setStatusUpload('');
       setStatusStudio('');
       setStatusFeed('');
+      await loadAccountProfile();
+      await loadActiveJobsFromServer();
     } catch (e) {
       console.error(e);
       setStatusAuth('Ошибка входа: ' + e.message, 'error');
@@ -2377,11 +2343,14 @@
       if (!res.ok) {
         throw new Error('HTTP ' + res.status);
       }
-      const data = await res.json(); // { token, userId, username, displayName }
-      setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);      setStatusAuth('Регистрация прошла успешно', 'ok');
+      const data = await res.json(); // { token, userId, username, displayName, roles, avatarUrl }
+      setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
+      setStatusAuth('Регистрация прошла успешно', 'ok');
       setStatusUpload('');
       setStatusStudio('');
       setStatusFeed('');
+      await loadAccountProfile();
+      await loadActiveJobsFromServer();
     } catch (e) {
       console.error(e);
       setStatusAuth('Ошибка регистрации: ' + e.message, 'error');
@@ -2391,6 +2360,7 @@
   btnLogout.addEventListener('click', () => {
     setAuth(null, null, null, null);
     setStatusAuth('Вы вышли из аккаунта', 'ok');
+    clearAccountProfile();
   });
 
   // Кнопки ленты

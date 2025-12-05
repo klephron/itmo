@@ -7,5 +7,7 @@ public record PublicUserVideoDto(
         UUID uuid,
         String name,
         String thumbnailUrl,
-        Instant uploadedAt
+        Instant uploadedAt,
+        long likesCount,
+        long viewsCount
 ) {}

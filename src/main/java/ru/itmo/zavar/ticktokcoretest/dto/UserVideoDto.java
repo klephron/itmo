@@ -14,5 +14,6 @@ public record UserVideoDto(
         String contentType,
         Instant uploadedAt,
         String thumbnailUrl,
-        String uploaderAvatarUrl
+        String uploaderAvatarUrl,
+        long likesCount
 ) {}
