@@ -11,6 +11,8 @@ import ru.itmo.zavar.ticktokcoretest.repo.UserFollowRepository;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -76,5 +78,18 @@ public class FollowService {
         List<UserFollowEntity> links = this.followRepository.findByFollowerId(userId);
         List<Long> ids = links.stream().map(UserFollowEntity::getFolloweeId).toList();
         return this.userToPublicShortUserMapper.toDto(this.userRepository.findAllById(ids));
+    }
+
+    @Transactional(readOnly = true)
+    public Set<Long> getFollowingWithin(Long followerId, Set<Long> candidateIds) {
+        if (followerId == null || candidateIds == null || candidateIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return this.followRepository
+                .findByFollowerIdAndFolloweeIdIn(followerId, candidateIds)
+                .stream()
+                .map(UserFollowEntity::getFolloweeId)
+                .collect(Collectors.toSet());
     }
 }
