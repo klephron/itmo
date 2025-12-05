@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.ticktokcoretest.dto.CommentDto;
-import ru.itmo.zavar.ticktokcoretest.dto.CreateCommentRequest;
+import ru.itmo.zavar.ticktokcoretest.dto.request.CreateCommentRequest;
 import ru.itmo.zavar.ticktokcoretest.security.Role;
 import ru.itmo.zavar.ticktokcoretest.service.CommentService;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;

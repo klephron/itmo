@@ -3,12 +3,11 @@ package ru.itmo.zavar.ticktokcoretest.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.itmo.zavar.ticktokcoretest.dto.UserSummaryDto;
 import ru.itmo.zavar.ticktokcoretest.dto.UserDetailDto;
 import ru.itmo.zavar.ticktokcoretest.dto.UserVideoDto;
-import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
-import ru.itmo.zavar.ticktokcoretest.model.UserEntity;
-import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepo;
+import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
+import ru.itmo.zavar.ticktokcoretest.entity.UserEntity;
+import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
 
 import java.time.ZoneOffset;
@@ -19,20 +18,20 @@ import java.util.List;
 public class ModerationController {
 
     private final UserRepository userRepository;
-    private final FileMetadataRepo fileMetadataRepo;
+    private final FileMetadataRepository fileMetadataRepository;
 
     public ModerationController(UserRepository userRepository,
-                                FileMetadataRepo fileMetadataRepo) {
+                                FileMetadataRepository fileMetadataRepository) {
         this.userRepository = userRepository;
-        this.fileMetadataRepo = fileMetadataRepo;
+        this.fileMetadataRepository = fileMetadataRepository;
     }
 
     // список пользователей
     @GetMapping("/users")
     @PreAuthorize("hasRole('MODERATOR')") // ADMIN тоже пройдёт по иерархии
-    public List<UserSummaryDto> listUsers() {
+    public List<UserDetailDto> listUsers() {
         return userRepository.findAll().stream()
-                .map(u -> new UserSummaryDto(
+                .map(u -> new UserDetailDto(
                         u.getId(),
                         u.getUsername(),
                         u.getDisplayName(),
@@ -70,14 +69,14 @@ public class ModerationController {
             return ResponseEntity.notFound().build();
         }
 
-        List<UserVideoDto> videos = fileMetadataRepo.findByUploaderId(id).stream()
+        List<UserVideoDto> videos = fileMetadataRepository.findByUploaderId(id).stream()
                 .map(this::toUserVideoDto)
                 .toList();
 
         return ResponseEntity.ok(videos);
     }
 
-    private UserVideoDto toUserVideoDto(FileMetadata f) {
+    private UserVideoDto toUserVideoDto(FileMetadataEntity f) {
 
         String thumbnailUrl = (f.getThumbnailKey() != null)
                 ? "/streaming/video/thumbnail/" + f.getUuid()

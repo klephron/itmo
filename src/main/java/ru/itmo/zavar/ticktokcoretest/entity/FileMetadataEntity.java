@@ -1,6 +1,7 @@
-package ru.itmo.zavar.ticktokcoretest.model;
+package ru.itmo.zavar.ticktokcoretest.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,8 +14,9 @@ import java.util.UUID;
 @Table(name = "file_meta")
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
-public class FileMetadata {
+public class FileMetadataEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.itmo.zavar.ticktokcoretest.dto.PublicUserProfileDto;
 import ru.itmo.zavar.ticktokcoretest.dto.PublicUserVideoDto;
-import ru.itmo.zavar.ticktokcoretest.integrations.s3.MinioService;
-import ru.itmo.zavar.ticktokcoretest.model.UserEntity;
-import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepo;
+import ru.itmo.zavar.ticktokcoretest.dto.response.UserAvatarResponse;
+import ru.itmo.zavar.ticktokcoretest.integrations.minio.MinioService;
+import ru.itmo.zavar.ticktokcoretest.entity.UserEntity;
+import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
 
@@ -30,13 +31,13 @@ public class UserProfileController {
 
     private final UserRepository userRepository;
     private final MinioService minioService;
-    private final FileMetadataRepo fileMetadataRepo;
+    private final FileMetadataRepository fileMetadataRepository;
 
     public UserProfileController(UserRepository userRepository,
-                                 MinioService minioService, FileMetadataRepo fileMetadataRepo) {
+                                 MinioService minioService, FileMetadataRepository fileMetadataRepository) {
         this.userRepository = userRepository;
         this.minioService = minioService;
-        this.fileMetadataRepo = fileMetadataRepo;
+        this.fileMetadataRepository = fileMetadataRepository;
     }
 
     @PostMapping("/me/avatar")
@@ -102,7 +103,7 @@ public class UserProfileController {
         if (!userRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
-        List<PublicUserVideoDto> res = fileMetadataRepo.findByUploaderId(id).stream()
+        List<PublicUserVideoDto> res = fileMetadataRepository.findByUploaderId(id).stream()
                 .map(m -> new PublicUserVideoDto(
                         m.getUuid(),
                         m.getName(),
@@ -112,6 +113,4 @@ public class UserProfileController {
                 .toList();
         return ResponseEntity.ok(res);
     }
-
-    public record UserAvatarResponse(String url) {}
 }

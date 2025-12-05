@@ -5,11 +5,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.ticktokcoretest.dto.CommentDto;
-import ru.itmo.zavar.ticktokcoretest.dto.CreateCommentRequest;
-import ru.itmo.zavar.ticktokcoretest.model.CommentEntity;
-import ru.itmo.zavar.ticktokcoretest.model.UserEntity;
+import ru.itmo.zavar.ticktokcoretest.dto.request.CreateCommentRequest;
+import ru.itmo.zavar.ticktokcoretest.entity.CommentEntity;
+import ru.itmo.zavar.ticktokcoretest.entity.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.repo.CommentRepository;
-import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepo;
+import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
 
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final FileMetadataRepo fileMetadataRepo;
+    private final FileMetadataRepository fileMetadataRepository;
     private final UserRepository userRepository;
 
     private Long extractUserId(Authentication auth) {
@@ -54,7 +54,7 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public List<CommentDto> listComments(UUID videoUuid, Long currentUserId) {
-        fileMetadataRepo.findByUuid(videoUuid)
+        fileMetadataRepository.findByUuid(videoUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Video not found: " + videoUuid));
 
         List<CommentEntity> comments =
@@ -95,7 +95,7 @@ public class CommentService {
                                  CreateCommentRequest req,
                                  Authentication auth) {
 
-        fileMetadataRepo.findByUuid(videoUuid)
+        fileMetadataRepository.findByUuid(videoUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Video not found: " + videoUuid));
 
         Long userId = extractUserId(auth);

@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.integrations.s3;
+package ru.itmo.zavar.ticktokcoretest.integrations.minio;
 
 import io.minio.*;
 import io.minio.errors.*;
@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
+import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,8 +77,6 @@ public class MinioService {
         try {
             MakeBucketArgs args = MakeBucketArgs.builder()
                     .bucket(videoBucketName)
-                    .bucket(thumbBucketName)
-                    .bucket(avatarBucketName)
                     .build();
             minioClient.makeBucket(args);
         } catch (Exception e) {
@@ -111,23 +109,23 @@ public class MinioService {
         }
     }
 
-    public void uploadFile(MultipartFile file, FileMetadata fileMetadata) throws Exception {
+    public void uploadFile(MultipartFile file, FileMetadataEntity fileMetadataEntity) throws Exception {
         minioClient.putObject(
                 PutObjectArgs
                         .builder()
                         .bucket(videoBucketName)
-                        .object(fileMetadata.getUuid().toString())
+                        .object(fileMetadataEntity.getUuid().toString())
                         .stream(file.getInputStream(), file.getSize(), streamPartSize)
                         .build()
         );
     }
 
-    public void uploadFile(InputStream inputStream, long size, FileMetadata fileMetadata) throws Exception {
+    public void uploadFile(InputStream inputStream, long size, FileMetadataEntity fileMetadataEntity) throws Exception {
         minioClient.putObject(
                 PutObjectArgs
                         .builder()
                         .bucket(videoBucketName)
-                        .object(fileMetadata.getUuid().toString())
+                        .object(fileMetadataEntity.getUuid().toString())
                         .stream(inputStream, size, streamPartSize)
                         .build()
         );
@@ -163,7 +161,7 @@ public class MinioService {
         return minioClient.getObject(args);
     }
 
-    public String uploadThumbnail(InputStream is, long size, FileMetadata meta) throws Exception {
+    public String uploadThumbnail(InputStream is, long size, FileMetadataEntity meta) throws Exception {
         // можно использовать тот же bucket, просто другой префикс
         String objectName = "thumbnails/" + meta.getUuid() + ".jpg";
 
@@ -178,22 +176,22 @@ public class MinioService {
         return objectName; // вернём ключ, чтобы сохранить в БД
     }
 
-    public InputStream getFileAsInputStream(FileMetadata fileMetadata, long offset, long length) throws Exception {
+    public InputStream getFileAsInputStream(FileMetadataEntity fileMetadataEntity, long offset, long length) throws Exception {
         return minioClient.getObject(
                 GetObjectArgs
                         .builder()
                         .bucket(videoBucketName)
                         .offset(offset)
                         .length(length)
-                        .object(fileMetadata.getUuid().toString())
+                        .object(fileMetadataEntity.getUuid().toString())
                         .build()
         );
     }
 
-    public InputStream getThumbAsInputStream(FileMetadata fileMetadata) throws Exception {
-        String key = fileMetadata.getThumbnailKey();
+    public InputStream getThumbAsInputStream(FileMetadataEntity fileMetadataEntity) throws Exception {
+        String key = fileMetadataEntity.getThumbnailKey();
         if (key == null || key.isBlank()) {
-            throw new IllegalStateException("No thumbnail key for file " + fileMetadata.getUuid());
+            throw new IllegalStateException("No thumbnail key for file " + fileMetadataEntity.getUuid());
         }
 
         return minioClient.getObject(
@@ -204,7 +202,7 @@ public class MinioService {
         );
     }
 
-    public InputStream downloadVideo(FileMetadata meta) throws Exception {
+    public InputStream downloadVideo(FileMetadataEntity meta) throws Exception {
         return minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(videoBucketName)

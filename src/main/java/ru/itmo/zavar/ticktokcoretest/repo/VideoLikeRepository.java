@@ -1,13 +1,13 @@
 package ru.itmo.zavar.ticktokcoretest.repo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.itmo.zavar.ticktokcoretest.model.VideoLike;
+import ru.itmo.zavar.ticktokcoretest.entity.VideoLikeEntity;
 
 import java.util.Optional;
 
-public interface VideoLikeRepository extends JpaRepository<VideoLike, Long> {
+public interface VideoLikeRepository extends JpaRepository<VideoLikeEntity, Long> {
 
-    Optional<VideoLike> findByVideoIdAndUserId(Long videoId, Long userId);
+    Optional<VideoLikeEntity> findByVideoIdAndUserId(Long videoId, Long userId);
 
     boolean existsByVideoIdAndUserId(Long videoId, Long userId);
 

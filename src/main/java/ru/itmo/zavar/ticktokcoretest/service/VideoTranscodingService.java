@@ -3,8 +3,8 @@ package ru.itmo.zavar.ticktokcoretest.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.itmo.zavar.ticktokcoretest.upload.JobStage;
-import ru.itmo.zavar.ticktokcoretest.upload.UploadJobRegistry;
+import ru.itmo.zavar.ticktokcoretest.transcode.JobStage;
+import ru.itmo.zavar.ticktokcoretest.transcode.UploadJobRegistry;
 
 import java.io.*;
 import java.nio.file.Files;

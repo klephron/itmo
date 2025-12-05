@@ -3,6 +3,7 @@ package ru.itmo.zavar.ticktokcoretest.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import ru.itmo.zavar.ticktokcoretest.dto.response.LikeResponse;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
 import ru.itmo.zavar.ticktokcoretest.service.LikeService;
 
@@ -36,7 +37,6 @@ public class LikeController {
     public ResponseEntity<LikeResponse> getLikeStatus(@PathVariable UUID uuid, Authentication authentication) {
         Long userId = extractUserId(authentication);
         boolean liked = likeService.isLikedByUser(uuid, userId);
-        // Количество лайков здесь не возвращаем (null), т.к. фронт берет его из списка видео
         return ResponseEntity.ok(new LikeResponse(null, liked));
     }
 
@@ -45,13 +45,10 @@ public class LikeController {
             throw new RuntimeException("Unauthenticated");
         }
 
-        // Исправлено: берем Principal напрямую
         if (authentication.getPrincipal() instanceof SecurityBeans.UserPrincipal up) {
             return up.getId();
         }
 
         throw new RuntimeException("Unknown principal type: " + authentication.getPrincipal().getClass());
     }
-
-    public record LikeResponse(Long likesCount, Boolean liked) {}
 }

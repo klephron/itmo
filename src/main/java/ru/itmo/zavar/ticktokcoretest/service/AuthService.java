@@ -4,9 +4,9 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import ru.itmo.zavar.ticktokcoretest.model.UserEntity;
+import ru.itmo.zavar.ticktokcoretest.entity.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
-import ru.itmo.zavar.ticktokcoretest.security.JwtTokenProvider;
+import ru.itmo.zavar.ticktokcoretest.security.jwt.JwtTokenProvider;
 import ru.itmo.zavar.ticktokcoretest.security.Role;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
 

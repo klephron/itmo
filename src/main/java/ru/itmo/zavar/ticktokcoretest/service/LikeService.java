@@ -4,10 +4,10 @@ import jakarta.transaction.Transactional;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-import ru.itmo.zavar.ticktokcoretest.dto.VideoLikeEvent;
-import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
-import ru.itmo.zavar.ticktokcoretest.model.VideoLike;
-import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepo;
+import ru.itmo.zavar.ticktokcoretest.integrations.rabbit.VideoLikeEvent;
+import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
+import ru.itmo.zavar.ticktokcoretest.entity.VideoLikeEntity;
+import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
 import ru.itmo.zavar.ticktokcoretest.repo.VideoLikeRepository;
 
 import java.time.Instant;
@@ -17,16 +17,16 @@ import java.util.UUID;
 @Service
 public class LikeService {
 
-    private final FileMetadataRepo fileMetadataRepo;
+    private final FileMetadataRepository fileMetadataRepository;
     private final VideoLikeRepository videoLikeRepository;
     private final RabbitTemplate rabbitTemplate;
     private final DirectExchange likesExchange;
 
-    public LikeService(FileMetadataRepo fileMetadataRepo,
+    public LikeService(FileMetadataRepository fileMetadataRepository,
                        VideoLikeRepository videoLikeRepository,
                        RabbitTemplate rabbitTemplate,
                        DirectExchange likesExchange) {
-        this.fileMetadataRepo = fileMetadataRepo;
+        this.fileMetadataRepository = fileMetadataRepository;
         this.videoLikeRepository = videoLikeRepository;
         this.rabbitTemplate = rabbitTemplate;
         this.likesExchange = likesExchange;
@@ -34,7 +34,7 @@ public class LikeService {
 
     @Transactional
     public long likeVideo(UUID videoUuid, Long userId) {
-        FileMetadata video = fileMetadataRepo.findByUuid(videoUuid)
+        FileMetadataEntity video = fileMetadataRepository.findByUuid(videoUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Видео не найдено"));
 
         if (videoLikeRepository.existsByVideoIdAndUserId(video.getId(), userId)) {
@@ -42,13 +42,15 @@ public class LikeService {
             return video.getLikesCount();
         }
 
-        VideoLike like = new VideoLike(video.getId(), userId);
+        VideoLikeEntity like = new VideoLikeEntity();
+        like.setVideoId(video.getId());
+        like.setUserId(userId);
         videoLikeRepository.save(like);
 
         // увеличиваем локальный счётчик
         long newCount = video.getLikesCount() + 1;
         video.setLikesCount(newCount);
-        fileMetadataRepo.save(video);
+        fileMetadataRepository.save(video);
 
         // публикуем событие
         publishEvent("VIDEO_LIKED", video, userId, newCount);
@@ -58,10 +60,10 @@ public class LikeService {
 
     @Transactional
     public long unlikeVideo(UUID videoUuid, Long userId) {
-        FileMetadata video = fileMetadataRepo.findByUuid(videoUuid)
+        FileMetadataEntity video = fileMetadataRepository.findByUuid(videoUuid)
                 .orElseThrow(() -> new IllegalArgumentException("Видео не найдено"));
 
-        Optional<VideoLike> existing = videoLikeRepository.findByVideoIdAndUserId(video.getId(), userId);
+        Optional<VideoLikeEntity> existing = videoLikeRepository.findByVideoIdAndUserId(video.getId(), userId);
         if (existing.isEmpty()) {
             // не лайкал — просто возвращаем текущий счётчик
             return video.getLikesCount();
@@ -71,7 +73,7 @@ public class LikeService {
 
         long newCount = Math.max(0, video.getLikesCount() - 1);
         video.setLikesCount(newCount);
-        fileMetadataRepo.save(video);
+        fileMetadataRepository.save(video);
 
         publishEvent("VIDEO_UNLIKED", video, userId, newCount);
 
@@ -79,12 +81,12 @@ public class LikeService {
     }
 
     public boolean isLikedByUser(UUID videoUuid, Long userId) {
-        return fileMetadataRepo.findByUuid(videoUuid)
+        return fileMetadataRepository.findByUuid(videoUuid)
                 .map(v -> videoLikeRepository.existsByVideoIdAndUserId(v.getId(), userId))
                 .orElse(false);
     }
 
-    private void publishEvent(String type, FileMetadata video, Long userId, Long likesCount) {
+    private void publishEvent(String type, FileMetadataEntity video, Long userId, Long likesCount) {
         VideoLikeEvent event = new VideoLikeEvent(
                 type,
                 userId,

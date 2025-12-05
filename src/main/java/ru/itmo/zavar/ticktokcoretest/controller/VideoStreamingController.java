@@ -12,15 +12,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import ru.itmo.zavar.ticktokcoretest.dto.UploadJobView;
-import ru.itmo.zavar.ticktokcoretest.integrations.s3.MinioService;
-import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
-import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepo;
+import ru.itmo.zavar.ticktokcoretest.dto.UploadJobViewDto;
+import ru.itmo.zavar.ticktokcoretest.integrations.minio.MinioService;
+import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
+import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
 import ru.itmo.zavar.ticktokcoretest.service.VideoStreamingService;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamChunk;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamRange;
-import ru.itmo.zavar.ticktokcoretest.upload.UploadJobRegistry;
-import ru.itmo.zavar.ticktokcoretest.upload.UploadJobStatus;
+import ru.itmo.zavar.ticktokcoretest.transcode.UploadJobRegistry;
+import ru.itmo.zavar.ticktokcoretest.transcode.UploadJobStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +36,7 @@ public class VideoStreamingController {
 
     private final VideoStreamingService videoStreamingService;
     private final UploadJobRegistry jobRegistry;
-    private final FileMetadataRepo fileMetadataRepo;
+    private final FileMetadataRepository fileMetadataRepository;
     private final MinioService minioService;
 
     @Value("${streaming.chunk.default-size}")
@@ -50,7 +50,7 @@ public class VideoStreamingController {
 
         StreamRange parsedRange = StreamRange.parseHttpRangeString(range, chunkDefaultSize);
         StreamChunk streamChunk = videoStreamingService.fetchChunk(uuid, parsedRange);
-        FileMetadata meta = streamChunk.getFileMetadata();
+        FileMetadataEntity meta = streamChunk.getFileMetadataEntity();
         long fileSize = meta.getContentSize();
 
         long rangeStart = parsedRange.getRangeStart();
@@ -67,7 +67,7 @@ public class VideoStreamingController {
 
     @GetMapping("/thumbnail/{uuid}")
     public ResponseEntity<Resource> getThumbnail(@PathVariable UUID uuid) throws Exception {
-        FileMetadata meta = fileMetadataRepo.findByUuid(uuid)
+        FileMetadataEntity meta = fileMetadataRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (meta.getThumbnailKey() == null) {
             return ResponseEntity.notFound().build();
@@ -80,12 +80,12 @@ public class VideoStreamingController {
 
 
     @GetMapping("/list")
-    public List<FileMetadata> getVideoList() {
+    public List<FileMetadataEntity> getVideoList() {
         return videoStreamingService.getVideoList();
     }
 
     @GetMapping("/list/my")
-    public List<FileMetadata> getMyVideoList(Authentication authentication) {
+    public List<FileMetadataEntity> getMyVideoList(Authentication authentication) {
         return videoStreamingService.getVideoList(videoStreamingService.extractUserId(authentication));
     }
 
@@ -115,9 +115,9 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/upload/active")
-    public ResponseEntity<List<UploadJobView>> getActiveUploadJobs(Authentication auth) {
+    public ResponseEntity<List<UploadJobViewDto>> getActiveUploadJobs(Authentication auth) {
         Long userId = videoStreamingService.extractUserId(auth); // такой же хелпер, как в LikeController
-        List<UploadJobView> jobs = jobRegistry.getActiveJobsForUser(userId);
+        List<UploadJobViewDto> jobs = jobRegistry.getActiveJobsForUser(userId);
         return ResponseEntity.ok(jobs);
     }
 

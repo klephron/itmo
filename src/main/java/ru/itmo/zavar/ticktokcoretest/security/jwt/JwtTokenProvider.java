@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.security;
+package ru.itmo.zavar.ticktokcoretest.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -7,9 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
 
 @Component
 public class JwtTokenProvider {

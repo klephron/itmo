@@ -2,12 +2,12 @@ package ru.itmo.zavar.ticktokcoretest.streaming;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
+import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
 
 @Getter
 @AllArgsConstructor
 public class StreamChunk {
-    private final FileMetadata fileMetadata;
+    private final FileMetadataEntity fileMetadataEntity;
     private final byte[] chunk;
 }
 

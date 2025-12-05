@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.dto;
+package ru.itmo.zavar.ticktokcoretest.dto.request;
 
 import ru.itmo.zavar.ticktokcoretest.security.Role;
 

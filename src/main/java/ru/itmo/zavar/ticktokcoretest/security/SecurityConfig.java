@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.*;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import ru.itmo.zavar.ticktokcoretest.security.jwt.JwtAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {

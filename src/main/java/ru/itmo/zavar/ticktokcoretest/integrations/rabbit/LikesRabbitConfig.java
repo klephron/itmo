@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.config;
+package ru.itmo.zavar.ticktokcoretest.integrations.rabbit;
 
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.beans.factory.annotation.Value;

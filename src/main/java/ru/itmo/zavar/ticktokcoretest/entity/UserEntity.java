@@ -1,7 +1,9 @@
-package ru.itmo.zavar.ticktokcoretest.model;
+package ru.itmo.zavar.ticktokcoretest.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.itmo.zavar.ticktokcoretest.security.Role;
 
@@ -13,6 +15,8 @@ import java.util.Set;
 @Table(name = "users")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserEntity {
 
     @Id
@@ -26,7 +30,7 @@ public class UserEntity {
     private String email;
 
     @Column(nullable = false, length = 255)
-    private String password; // bcrypt hash
+    private String password;
 
     @Column(name = "display_name", nullable = false, length = 128)
     private String displayName;
@@ -35,7 +39,7 @@ public class UserEntity {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "avatar_key", length = 255)
-    private String avatarKey; // путь/ключ в MinIO
+    private String avatarKey;
 
     @Column(nullable = false)
     private boolean enabled = true;
@@ -46,9 +50,5 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 32, nullable = false)
     private Set<Role> roles = new HashSet<>();
-
-    public UserEntity() {}
-
-    // getters/setters
 }
 

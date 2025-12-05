@@ -1,7 +1,7 @@
-package ru.itmo.zavar.ticktokcoretest.upload;
+package ru.itmo.zavar.ticktokcoretest.transcode;
 
 import org.springframework.stereotype.Component;
-import ru.itmo.zavar.ticktokcoretest.dto.UploadJobView;
+import ru.itmo.zavar.ticktokcoretest.dto.UploadJobViewDto;
 
 import java.util.List;
 import java.util.Map;
@@ -30,13 +30,13 @@ public class UploadJobRegistry {
         });
     }
 
-    public List<UploadJobView> getActiveJobs() {
+    public List<UploadJobViewDto> getActiveJobs() {
         return jobs.entrySet().stream()
                 .filter(e -> e.getValue().getStage() != JobStage.DONE
                         && e.getValue().getStage() != JobStage.ERROR)
                 .map(e -> {
                     UploadJobStatus s = e.getValue();
-                    return new UploadJobView(
+                    return new UploadJobViewDto(
                             e.getKey(),
                             s.getStage(),
                             s.getPercent(),
@@ -47,7 +47,7 @@ public class UploadJobRegistry {
                 .toList();
     }
 
-    public List<UploadJobView> getActiveJobsForUser(Long userId) {
+    public List<UploadJobViewDto> getActiveJobsForUser(Long userId) {
         return jobs.entrySet().stream()
                 .filter(e -> e.getValue().getUserId() != null
                         && e.getValue().getUserId().equals(userId))
@@ -55,7 +55,7 @@ public class UploadJobRegistry {
                         && e.getValue().getStage() != JobStage.ERROR)
                 .map(e -> {
                     UploadJobStatus s = e.getValue();
-                    return new UploadJobView(
+                    return new UploadJobViewDto(
                             e.getKey(),
                             s.getStage(),
                             s.getPercent(),

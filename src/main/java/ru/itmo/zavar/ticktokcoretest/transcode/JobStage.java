@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.upload;
+package ru.itmo.zavar.ticktokcoretest.transcode;
 
 public enum JobStage {
     UPLOADING,

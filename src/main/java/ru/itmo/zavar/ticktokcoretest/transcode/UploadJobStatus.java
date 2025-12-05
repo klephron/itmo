@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.upload;
+package ru.itmo.zavar.ticktokcoretest.transcode;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UploadJobStatus {
     private JobStage stage;
-    private int percent;      // 0..100
+    private int percent;
     private String message;
     private String fileName;
     private Long userId;

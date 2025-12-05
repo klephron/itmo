@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.model;
+package ru.itmo.zavar.ticktokcoretest.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -1,6 +1,5 @@
-package ru.itmo.zavar.ticktokcoretest.dto;
+package ru.itmo.zavar.ticktokcoretest.integrations.rabbit;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;

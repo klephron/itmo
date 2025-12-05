@@ -1,7 +1,6 @@
 package ru.itmo.zavar.ticktokcoretest.security;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
@@ -11,7 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import ru.itmo.zavar.ticktokcoretest.model.UserEntity;
+import ru.itmo.zavar.ticktokcoretest.entity.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.repo.UserRepository;
 
 @Configuration
@@ -64,7 +63,7 @@ public class SecurityBeans {
             }
 
             return user.getRoles().stream()
-                    .map(Role::authority)                    // ROLE_...
+                    .map(Role::authority)
                     .map(SimpleGrantedAuthority::new)
                     .toList();
         }

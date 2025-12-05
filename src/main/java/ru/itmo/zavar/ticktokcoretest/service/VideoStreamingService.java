@@ -6,17 +6,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import ru.itmo.zavar.ticktokcoretest.integrations.s3.MinioService;
-import ru.itmo.zavar.ticktokcoretest.model.FileMetadata;
-import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepo;
+import ru.itmo.zavar.ticktokcoretest.integrations.minio.MinioService;
+import ru.itmo.zavar.ticktokcoretest.entity.FileMetadataEntity;
+import ru.itmo.zavar.ticktokcoretest.repo.FileMetadataRepository;
 import ru.itmo.zavar.ticktokcoretest.security.SecurityBeans;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamChunk;
 import ru.itmo.zavar.ticktokcoretest.streaming.StreamRange;
-import ru.itmo.zavar.ticktokcoretest.upload.JobStage;
-import ru.itmo.zavar.ticktokcoretest.upload.UploadJobRegistry;
-import ru.itmo.zavar.ticktokcoretest.upload.UploadJobStatus;
+import ru.itmo.zavar.ticktokcoretest.transcode.JobStage;
+import ru.itmo.zavar.ticktokcoretest.transcode.UploadJobRegistry;
+import ru.itmo.zavar.ticktokcoretest.transcode.UploadJobStatus;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class VideoStreamingService {
 
-    private final FileMetadataRepo fileMetadataRepo;
+    private final FileMetadataRepository fileMetadataRepository;
     private final MinioService minioService;
     private final VideoTranscodingService transcodingService;
     private final UploadJobRegistry jobRegistry;
@@ -43,10 +44,7 @@ public class VideoStreamingService {
     @Value("${transcoder.ffmpeg-path:ffmpeg}")
     private String ffmpegPath;
 
-    public UUID enqueueUpload(MultipartFile video,
-                              String videoName,
-                              Authentication auth) throws java.io.IOException {
-
+    public UUID enqueueUpload(MultipartFile video, String videoName, Authentication auth) throws IOException {
         UUID jobId = UUID.randomUUID();
 
         Long userId = extractUserId(auth);
@@ -81,7 +79,8 @@ public class VideoStreamingService {
             } finally {
                 try {
                     Files.deleteIfExists(tempInput);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         });
 
@@ -103,7 +102,7 @@ public class VideoStreamingService {
         Path mp4Path = transcodingService.transcodeToMp4WithProgress(tempInput, jobId);
         long mp4Size = Files.size(mp4Path);
 
-        FileMetadata meta = new FileMetadata();
+        FileMetadataEntity meta = new FileMetadataEntity();
         meta.setName(videoName);
         meta.setUuid(UUID.randomUUID());
         meta.setUploaderName(displayName);
@@ -111,16 +110,13 @@ public class VideoStreamingService {
         meta.setContentType("video/mp4");
         meta.setContentSize(mp4Size);
 
-        meta = fileMetadataRepo.save(meta);
+        meta = fileMetadataRepository.save(meta);
 
-        // ---------- превью ----------
         try {
             createAndUploadThumbnail(mp4Path, meta);
         } catch (Exception e) {
-            // превью не критично – не роняем джоб
             log.error("Failed to create/upload thumbnail for {}", meta.getUuid(), e);
         }
-        // ---------- конец превью ----------
 
         jobRegistry.update(jobId, st -> {
             st.setStage(JobStage.UPLOADING_TO_MINIO);
@@ -144,11 +140,7 @@ public class VideoStreamingService {
                 jobId, meta.getUuid(), meta.getName(), meta.getUploaderName());
     }
 
-    /**
-     * Общий хелпер: берёт видео, выдёргивает первый кадр через ffmpeg,
-     * загружает в MinIO и сохраняет thumbnailKey в meta.
-     */
-    private void createAndUploadThumbnail(Path videoPath, FileMetadata meta) throws Exception {
+    private void createAndUploadThumbnail(Path videoPath, FileMetadataEntity meta) throws Exception {
         Path thumbPath = Files.createTempFile("thumb-", ".jpg");
         try {
             runFfmpegThumbnail(videoPath, thumbPath);
@@ -164,18 +156,16 @@ public class VideoStreamingService {
             }
 
             meta.setThumbnailKey(thumbKey);
-            fileMetadataRepo.save(meta);
+            fileMetadataRepository.save(meta);
             log.info("Thumbnail created for video {}", meta.getUuid());
         } finally {
             try {
                 Files.deleteIfExists(thumbPath);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
-    /**
-     * Запускает ffmpeg, глушит вывод и ждёт с таймаутом.
-     */
     private void runFfmpegThumbnail(Path input, Path output) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(
                 ffmpegPath,
@@ -187,11 +177,9 @@ public class VideoStreamingService {
                 output.toString()
         );
         pb.redirectErrorStream(true);
-        // чтобы stdout не забивал буфер
         pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
         Process p = pb.start();
-
         boolean finished = p.waitFor(60, TimeUnit.SECONDS);
         if (!finished) {
             p.destroyForcibly();
@@ -216,7 +204,7 @@ public class VideoStreamingService {
     public Long extractUserId(Authentication authentication) {
         if (authentication == null) throw new RuntimeException("Unauthenticated");
         Object details = authentication.getDetails();
-        if (details instanceof Map<?,?> map && map.get("id") != null) {
+        if (details instanceof Map<?, ?> map && map.get("id") != null) {
             return Long.valueOf(map.get("id").toString());
         }
         Object principal = authentication.getPrincipal();
@@ -227,7 +215,7 @@ public class VideoStreamingService {
     }
 
     public StreamChunk fetchChunk(UUID uuid, StreamRange range) throws Exception {
-        FileMetadata meta = fileMetadataRepo.findByUuid(uuid)
+        FileMetadataEntity meta = fileMetadataRepository.findByUuid(uuid)
                 .orElseThrow(() -> new NoSuchElementException("File not found: " + uuid));
 
         long fileSize = meta.getContentSize();
@@ -247,32 +235,27 @@ public class VideoStreamingService {
         }
     }
 
-    public List<FileMetadata> getVideoList(Long userId) {
-        return fileMetadataRepo.findAllByUploaderId(userId);
+    public List<FileMetadataEntity> getVideoList(Long userId) {
+        return fileMetadataRepository.findAllByUploaderId(userId);
     }
 
-    public List<FileMetadata> getVideoList() {
-        return fileMetadataRepo.findAll();
+    public List<FileMetadataEntity> getVideoList() {
+        return fileMetadataRepository.findAll();
     }
 
     public void deleteVideo(UUID uuid) throws Exception {
-        FileMetadata meta = fileMetadataRepo.findByUuid(uuid)
+        FileMetadataEntity meta = fileMetadataRepository.findByUuid(uuid)
                 .orElseThrow(() -> new NoSuchElementException("File not found: " + uuid));
 
         minioService.deleteFile(meta.getUuid());
-        fileMetadataRepo.delete(meta);
+        fileMetadataRepository.delete(meta);
     }
 
-    /**
-     * Массовая регенерация превью.
-     * @param force true — пересоздавать даже если thumbnail уже есть.
-     * @return сколько превью обновили.
-     */
     public int regenerateAllThumbnails(boolean force) {
-        List<FileMetadata> all = fileMetadataRepo.findAll();
+        List<FileMetadataEntity> all = fileMetadataRepository.findAll();
         int updated = 0;
 
-        for (FileMetadata meta : all) {
+        for (FileMetadataEntity meta : all) {
             if (!force && meta.getThumbnailKey() != null && !meta.getThumbnailKey().isBlank()) {
                 continue;
             }
@@ -281,23 +264,22 @@ public class VideoStreamingService {
             try {
                 tempVideo = Files.createTempFile("regen-src-", ".mp4");
 
-                // 1. скачиваем видео из MinIO во временный файл
                 try (InputStream is = minioService.downloadVideo(meta)) {
                     Files.copy(is, tempVideo, StandardCopyOption.REPLACE_EXISTING);
                 }
-
-                // 2. создаём и заливаем превью
                 createAndUploadThumbnail(tempVideo, meta);
                 updated++;
             } catch (Exception e) {
                 log.error("Failed to regenerate thumbnail for {}", meta.getUuid(), e);
             } finally {
                 if (tempVideo != null) {
-                    try { Files.deleteIfExists(tempVideo); } catch (Exception ignored) {}
+                    try {
+                        Files.deleteIfExists(tempVideo);
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         }
-
         log.info("Thumbnail regeneration finished, updated = {}", updated);
         return updated;
     }

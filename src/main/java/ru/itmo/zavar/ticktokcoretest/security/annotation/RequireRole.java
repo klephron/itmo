@@ -1,6 +1,7 @@
-package ru.itmo.zavar.ticktokcoretest.security;
+package ru.itmo.zavar.ticktokcoretest.security.annotation;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import ru.itmo.zavar.ticktokcoretest.security.Role;
 
 import java.lang.annotation.*;
 
