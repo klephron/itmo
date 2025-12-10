@@ -2,6 +2,7 @@ import { Outlet } from "react-router";
 import Header from "@components/header";
 import Sidebar from "@components/sidebar";
 import Logo from "@components/logo";
+import NotificationsLive from "@components/notifications-live";
 import styles from "./index.module.scss";
 
 export default function DashboardLayout() {
@@ -15,6 +16,7 @@ export default function DashboardLayout() {
           <Outlet />
         </div>
       </div>
+      <NotificationsLive />
     </>
   );
 }

@@ -3,6 +3,7 @@ import styles from "./index.module.scss";
 import { useClient } from "@state/client";
 import { IncidentMainInfoDto } from "@api/gen/data-contracts";
 import { Link, useNavigate } from "react-router";
+import { hasPermission, usePermissions } from "@state/permissions";
 
 type IncidentEntry = {
   id: number;
@@ -15,6 +16,7 @@ type IncidentEntry = {
   createdAt?: string;
   updatedAt?: string;
   caseId?: number | null;
+  waitForAssignment: boolean;
 };
 
 function infoToMap(infos: IncidentMainInfoDto[]): Map<number, IncidentEntry> {
@@ -29,6 +31,7 @@ function infoToMap(infos: IncidentMainInfoDto[]): Map<number, IncidentEntry> {
         locationLongitude: info.locationLongitude,
         locationAltitude: info.locationAltitude,
         estimatedTime: info.estimatedTime,
+        waitForAssignment: !!info.waitForAssignment,
         caseId: null,
       } satisfies IncidentEntry,
     ])
@@ -65,6 +68,7 @@ function Table() {
               locationLongitude: incident.locationLongitude,
               locationAltitude: incident.locationAltitude,
               estimatedTime: incident.estimatedTime,
+              waitForAssignment: incident.waitForAssignment,
               createdAt: r.data.createdAt,
               updatedAt: r.data.updatedAt,
               caseId: r.data.relatedCaseId ?? undefined,
@@ -85,6 +89,7 @@ function Table() {
           <th>Type</th>
           <th>Location</th>
           <th>Time</th>
+          <th>Wait For Assignment</th>
           <th>Created At (UTC)</th>
           <th>Updated At (UTC)</th>
           <th>Case</th>
@@ -104,6 +109,7 @@ function Table() {
                 {incident.locationAltitude}
               </td>
               <td>{new Date(incident.estimatedTime).toLocaleString()}</td>
+              <td>{incident.waitForAssignment ? "Yes" : "No"}</td>
               <td>{incident.createdAt ? new Date(incident.createdAt).toLocaleString() : ""}</td>
               <td>{incident.updatedAt ? new Date(incident.updatedAt).toLocaleString() : ""}</td>
               <td>
@@ -124,15 +130,24 @@ function Table() {
 
 function Menu() {
   const navigate = useNavigate();
+  const permissionState = usePermissions((state) => state.permissions);
+  const canCreate = permissionState ? hasPermission("INCIDENTS:*:ADD") : false;
+  const canViewDebug = permissionState ? hasPermission("LOGS:*:READ") : false;
   return (
     <div className={styles.menu}>
       <button
         onClick={() => {
           navigate("/incidents/create");
         }}
+        disabled={!canCreate}
       >
         Create
       </button>
+      {!canCreate ? (
+        <span className={styles.hint}>
+          Нет прав{canViewDebug ? " (INCIDENTS:*:ADD)" : ""}
+        </span>
+      ) : null}
     </div>
   );
 }

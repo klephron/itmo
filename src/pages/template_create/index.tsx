@@ -3,8 +3,9 @@ import styles from "./index.module.scss";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { catchResponse } from "@util";
+import { useToken } from "@state/token";
 import Checkbox from "@components/checkbox";
-import { CaseSuspectDto, CaseSuspectMainInfoDto } from "@api/gen/data-contracts";
+import { CaseSuspectDto, CaseSuspectMainInfoDto, TemplateEntityStatus, TemplateMetadata } from "@api/gen/data-contracts";
 
 type UserEntry = {
   id: number;
@@ -31,6 +32,9 @@ export default function TemplatesCreatePage() {
   const navigate = useNavigate();
   const [search, _searchSet] = useSearchParams();
   const client = useClient((state) => state.client);
+  const token = useToken((state) => state.token);
+  const authHeader =
+    token.present && token.accessToken ? `${token.tokenType} ${token.accessToken}` : undefined;
 
   const [caseId, _caseIdSet] = useState(search.get("case_id"));
 
@@ -39,6 +43,8 @@ export default function TemplatesCreatePage() {
   const [users, usersSet] = useState(null as Map<number, UserEntry> | null);
   const [clues, cluesSet] = useState(null as Map<number, ClueEntry> | null);
   const [suspects, suspectsSet] = useState(null as Map<number, SuspectEntry> | null);
+  const [creating, creatingSet] = useState(false);
+  const [error, errorSet] = useState<string | null>(null);
 
   useEffect(() => {
     if (users) {
@@ -113,7 +119,7 @@ export default function TemplatesCreatePage() {
   }, [caseId, client]);
 
   function buildMetadata() {
-    const data = {
+    const data: TemplateMetadata = {
       employeeIds: users
         ? users
             .values()
@@ -132,28 +138,94 @@ export default function TemplatesCreatePage() {
         ? clues
             .values()
             .filter((u) => u.selected)
-            .map((u) => u.id)
-            .toArray()
-        : [],
-    };
-    return JSON.stringify(data);
+      .map((u) => u.id)
+        .toArray()
+      : [],
+  };
+  return data;
+}
+
+  function buildTemplateContent() {
+    const lines: string[] = [];
+    lines.push(`# Template: ${title || "(untitled)"}`);
+    lines.push("");
+    if (description) {
+      lines.push(description);
+      lines.push("");
+    }
+    lines.push("## Users");
+    lines.push("");
+    lines.push("| ID | Name | Position |");
+    lines.push("|----|------|----------|");
+    users?.forEach((u) => {
+      if (u.selected) {
+        lines.push(`|${u.id}|${(u.name ?? "") + " " + (u.surname ?? "")}|${u.position ?? ""}|`);
+      }
+    });
+    lines.push("");
+    lines.push("## Clues");
+    lines.push("");
+    lines.push("| ID | Title | Description |");
+    lines.push("|----|-------|-------------|");
+    clues?.forEach((c) => {
+      if (c.selected) {
+        lines.push(`|${c.id}|${c.title}|${c.description ?? ""}|`);
+      }
+    });
+    lines.push("");
+    lines.push("## Suspects");
+    lines.push("");
+    lines.push("| ID | Name | Verdict | Accusation | Status |");
+    lines.push("|----|------|---------|------------|--------|");
+    suspects?.forEach((s) => {
+      if (s.selected) {
+        lines.push(`|${s.id}|${s.name} ${s.surname}|${s.verdict ?? ""}|${s.accusation ?? ""}|${s.status}|`);
+      }
+    });
+    lines.push("");
+    return lines.join("\n");
   }
 
-  function createTemplate() {
-    try {
-      client.cases
-        .addCaseTemplate(Number(caseId), {
-          title: title,
-          description: description,
-          metadata: buildMetadata(),
-        })
-        .then((r) => {
-          navigate(`/cases/${r.data.relatedCaseId}`);
-        })
-        .catch(catchResponse);
-    } catch (e) {
-      alert(e);
-    }
+  async function createTemplate() {
+    creatingSet(true);
+    errorSet(null);
+    client.cases
+      .addCaseTemplate(Number(caseId), {
+        title: title,
+        description: description,
+        metadata: buildMetadata(),
+      })
+      .then(async (r) => {
+        const templateId = r.data.id;
+        // Автозагрузка шаблона в ЦБД
+        if (client.baseUrl && authHeader) {
+          try {
+            const content = buildTemplateContent();
+            const blob = new Blob([content], { type: "text/markdown" });
+            const formData = new FormData();
+            formData.append("file", blob, `template_${templateId}.md`);
+            const res = await fetch(`${client.baseUrl}/api/files`, {
+              method: "POST",
+              headers: { Authorization: authHeader },
+              body: formData,
+            });
+            if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+            const idResp = (await res.json()) as { id: string };
+            await client.templates.updateTemplate(templateId, {
+              title: r.data.title,
+              status: TemplateEntityStatus.CDB_ADDED,
+              cdbId: idResp.id,
+              metadata: buildMetadata(),
+            });
+          } catch (e: any) {
+            console.error("Auto-upload template file failed", e);
+            errorSet(e?.message || "Не удалось загрузить шаблон в ЦБД");
+          }
+        }
+        navigate(`/cases/${r.data.relatedCaseId}`);
+      })
+      .catch(catchResponse)
+      .finally(() => creatingSet(false));
   }
 
   return (
@@ -185,9 +257,11 @@ export default function TemplatesCreatePage() {
             e.preventDefault();
             createTemplate();
           }}
+          disabled={creating}
         >
           Submit
         </button>
+        {error ? <div className={styles.error}>{error}</div> : null}
       </form>
     </div>
   );

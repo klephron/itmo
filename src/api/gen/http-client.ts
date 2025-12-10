@@ -228,21 +228,59 @@ export class HttpClient<SecurityDataType = unknown> {
       r.data = null as unknown as T;
       r.error = null as unknown as E;
 
-      const data = !responseFormat
-        ? r
-        : await response[responseFormat]()
-            .then((data) => {
-              if (r.ok) {
-                r.data = data;
-              } else {
-                r.error = data;
-              }
-              return r;
-            })
-            .catch((e) => {
-              r.error = e;
-              return r;
-            });
+      if (!responseFormat) {
+        if (cancelToken) this.abortControllers.delete(cancelToken);
+        if (!response.ok) throw r;
+        return r;
+      }
+
+      const parseResponse = async () => {
+        // Отдельно обрабатываем JSON, чтобы можно было вернуть raw-текст при невалидном JSON
+        if (responseFormat === "json") {
+          const text = await response.text(); // читаем тело ОДИН раз
+          if (!text) {
+            return r;
+          }
+
+          try {
+            const data = JSON.parse(text);
+            if (r.ok) {
+              r.data = data as T;
+            } else {
+              r.error = data as E;
+            }
+          } catch {
+            // Это не валидный JSON -> отдаем как обычный текст
+            if (r.ok) {
+              r.data = text as unknown as T;
+            } else {
+              r.error = text as unknown as E;
+            }
+          }
+
+          // заодно кладём raw-текст в поле rawBody, если хочется
+          (r as any).rawBody = text;
+
+          return r;
+        }
+
+        // Для остальных форматов (text, blob и т.п.) оставляем старую логику
+        try {
+          // @ts-ignore
+          const data = await (response as any)[responseFormat]();
+          if (r.ok) {
+            r.data = data;
+          } else {
+            r.error = data;
+          }
+        } catch (err) {
+          r.error = err as E;
+        }
+
+        return r;
+      };
+
+      const data = await parseResponse();
 
       if (cancelToken) {
         this.abortControllers.delete(cancelToken);

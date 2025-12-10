@@ -1,6 +1,7 @@
 import { NotificationDto, UserDto } from "@api/gen/data-contracts";
 import { useClient } from "@state/client";
-import { useEffect, useState } from "react";
+import { useNotifications } from "@state/notifications";
+import { useEffect, useRef, useState } from "react";
 import { Route } from "~react-router/src/pages/notification/+types";
 import styles from "./index.module.scss";
 import { Link } from "react-router";
@@ -18,6 +19,8 @@ function Info({ id }: { id: number }) {
   const client = useClient((state) => state.client);
   const [notification, notificationSet] = useState(null as NotificationDto | null);
   const [user, userSet] = useState(null as UserDto | null);
+  const unreadUpdateById = useNotifications((state) => state.updateById);
+  const markSent = useRef(false);
 
   useEffect(() => {
     client.notifications
@@ -27,6 +30,25 @@ function Info({ id }: { id: number }) {
       })
       .catch((e) => console.error(e));
   }, []);
+
+  useEffect(() => {
+    if (!notification) return;
+    if (notification.readAt) return;
+    if (markSent.current) return;
+
+    markSent.current = true;
+    const ts = new Date().toISOString();
+
+    client.notifications
+      .updateNotification(notification.id, {
+        readAt: ts,
+      })
+      .then((r) => {
+        notificationSet(r.data);
+        unreadUpdateById(r.data);
+      })
+      .catch((e) => console.error(e));
+  }, [client.notifications, notification, unreadUpdateById]);
 
   useEffect(() => {
     if (notification) {

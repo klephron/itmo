@@ -22,6 +22,15 @@ export enum TemplateEntityStatus {
   CDB_ADDED = "CDB_ADDED",
 }
 
+export enum DefaultPermissions {
+  OPERATOR = "OPERATOR",
+  OFFICER = "OFFICER",
+  ANDROID_INVESTIGATOR = "ANDROID_INVESTIGATOR",
+  ANDROID_PATROLMAN = "ANDROID_PATROLMAN",
+  ANDROID_OPERATIVE = "ANDROID_OPERATIVE",
+  ADMIN = "ADMIN",
+}
+
 export enum NotificationsControllerStatus {
   READ = "READ",
   UNREAD = "UNREAD",
@@ -86,14 +95,22 @@ export interface AddIncidentRequest {
   locationAltitude: number;
   /** @format date-time */
   estimatedTime: string;
+  waitForAssignment: boolean;
 }
 
 export interface AddTemplateRequest {
   /** @minLength 1 */
   title: string;
-  /** @minLength 1 */
-  metadata: string;
+  metadata: TemplateMetadata;
   description?: string | null;
+}
+
+export interface RankedUserInfoResponse {
+  user: UserInfoResponse;
+  score: number;
+  distanceMeters: number;
+  activeCases: number;
+  positionMatches: boolean;
 }
 
 /** DTO for ru.itmopai.backend.entity.CaseEntity */
@@ -169,7 +186,7 @@ export interface ClueDto {
   title: string;
   description?: string | null;
   status: ClueEntityStatus;
-  metadata?: string | null;
+  metadata?: ClueMetadata | null;
   /** @format int64 */
   relatedCaseId: number;
 }
@@ -182,6 +199,7 @@ export interface ClueMainInfoDto {
   title: string;
   description?: string | null;
   status: ClueEntityStatus;
+  metadata?: ClueMetadata | null;
 }
 
 /** DTO for ru.itmopai.backend.entity.IncidentEntity */
@@ -211,6 +229,7 @@ export interface IncidentDto {
   estimatedTime: string;
   /** @format int64 */
   relatedCaseId?: number | null;
+  waitForAssignment: boolean;
 }
 
 /** DTO for ru.itmopai.backend.entity.IncidentEntity */
@@ -230,6 +249,7 @@ export interface IncidentMainInfoDto {
   locationAltitude: number;
   /** @format date-time */
   estimatedTime: string;
+  waitForAssignment: boolean;
 }
 
 export interface LocationUpdateRequest {
@@ -258,6 +278,55 @@ export interface LoginResponse {
   id: number;
   /** @format int64 */
   iat: number;
+}
+
+export interface ClueLocation {
+  latitude?: number | null;
+  longitude?: number | null;
+  altitude?: number | null;
+}
+
+export interface ClueMetadata {
+  imageUris?: string[] | null;
+  videoUris?: string[] | null;
+  reportUris?: string[] | null;
+  location?: ClueLocation | null;
+}
+
+export interface FileIdResponse {
+  /** @format uuid */
+  id: string;
+}
+
+export interface FileMetaResponse {
+  /** @format uuid */
+  id: string;
+  filename: string;
+  contentType: string;
+  /** @format int64 */
+  sizeBytes: number;
+  downloadUrl: string;
+  inlineUrl: string;
+}
+
+export interface LogEntryDto {
+  /** @format int64 */
+  id?: number;
+  /** @format date-time */
+  createdAt: string;
+  level: string;
+  loggerName: string;
+  threadName: string;
+  message: string;
+  exception?: string | null;
+}
+
+export interface PageLogEntryDto {
+  content: LogEntryDto[];
+  totalSize?: number;
+  totalPages?: number;
+  pageNumber?: number;
+  size?: number;
 }
 
 /** DTO for ru.itmopai.backend.entity.NotificationEntity */
@@ -345,6 +414,7 @@ export interface UpdateClueRequest {
   title?: string | null;
   description?: string | null;
   status?: ClueEntityStatus | null;
+  metadata: ClueMetadata;
 }
 
 export interface UpdateIncidentRequest {
@@ -359,6 +429,7 @@ export interface UpdateIncidentRequest {
   locationAltitude?: number | null;
   /** @format date-time */
   estimatedTime?: string | null;
+  waitForAssignment: boolean;
 }
 
 export interface UpdateNotificationRequest {
@@ -371,8 +442,43 @@ export interface UpdateNotificationRequest {
 export interface UpdateTemplateRequest {
   title?: string | null;
   status?: TemplateEntityStatus | null;
-  metadata?: string | null;
+  metadata?: TemplateMetadata | null;
   description?: string | null;
+  uri?: string | null;
+  cdbId?: string | null;
+  cdbURI?: string | null;
+}
+
+export interface DefaultPermissionsRequest {
+  preset: DefaultPermissions;
+}
+
+export interface PermissionsInScopeResponse {
+  permissions: string[];
+}
+
+export interface ScopesResponse {
+  scopes: string[];
+}
+
+export enum UserPrimaryPosition {
+  OPERATOR = "OPERATOR",
+  OFFICER = "OFFICER",
+  INVESTIGATOR = "INVESTIGATOR",
+}
+
+export interface TemplateMetadata {
+  clueIds?: number[];
+  suspectIds?: number[];
+  employeeIds?: number[];
+  templateFileUrl?: string;
+  templateFileId?: string;
+  templateFileName?: string;
+  templateContentType?: string;
+  reportFileUrl?: string;
+  reportFileId?: string;
+  reportFileName?: string;
+  reportContentType?: string;
 }
 
 /** DTO for ru.itmopai.backend.entity.UserCaseEntity */

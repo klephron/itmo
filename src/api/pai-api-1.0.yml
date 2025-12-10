@@ -1145,10 +1145,10 @@ paths:
           description: Пользователь не найден
       security:
       - bearerAuth: []
-  /api/users/{id}/privileges:
+  /api/users/{id}/permissions:
     get:
       tags:
-      - users
+        - users
       summary: Получить права пользователя
       description: Возвращает список привилегий пользователя
       operationId: getUserPermissions

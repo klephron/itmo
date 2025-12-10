@@ -8,6 +8,7 @@ import { Test } from "./gen/Test";
 import { Users } from "./gen/Users";
 import { ApiConfig } from "./gen/http-client";
 import { Suspects } from "./gen/Suspects";
+import { Logs } from "./gen/Logs";
 
 interface SecurityData {
   anonymous?: boolean;
@@ -27,6 +28,7 @@ export class Client {
   templates: Templates<SecurityData>;
   users: Users<SecurityData>;
   test: Test<SecurityData>;
+  logs: Logs<SecurityData>;
 
   constructor(baseUrl?: string, authorization?: string) {
     this.baseUrl = baseUrl;
@@ -69,5 +71,6 @@ export class Client {
     this.templates = new Templates(config);
     this.users = new Users(config);
     this.test = new Test(config);
+    this.logs = new Logs(config);
   }
 }

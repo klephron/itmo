@@ -12,12 +12,18 @@
 
 import {
   LocationUpdateRequest,
+  DefaultPermissions,
+  DefaultPermissionsRequest,
+  PermissionsInScopeResponse,
+  ScopesResponse,
   RegisterRequest,
+  RankedUserInfoResponse,
   UserCaseDto,
   UserDto,
   UserInfoResponse,
   UserPermissionsRequest,
   UserPermissionsResponse,
+  UserPrimaryPosition,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
@@ -111,6 +117,57 @@ export class Users<
       ...params,
     });
   /**
+   * @description Возвращает список должностей из UserEntity.PrimaryPosition
+   *
+   * @tags users
+   * @name GetPrimaryPositions
+   * @summary Получить список должностей
+   * @request GET:/api/users/primary-positions
+   * @secure
+   */
+  getPrimaryPositions = (params: RequestParams = {}) =>
+    this.request<UserPrimaryPosition[], any>({
+      path: `/api/users/primary-positions`,
+      method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Возвращает все scopes доступных прав
+   *
+   * @tags users
+   * @name ListPermissionScopes
+   * @summary Получить все scopes доступных прав
+   * @request GET:/api/users/permissions
+   * @secure
+   */
+  listPermissionScopes = (params: RequestParams = {}) =>
+    this.request<ScopesResponse, any>({
+      path: `/api/users/permissions`,
+      method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Возвращает список прав в scope
+   *
+   * @tags users
+   * @name GetPermissionsInScope
+   * @summary Получить список прав в scope
+   * @request GET:/api/users/permissions/{scopeName}
+   * @secure
+   */
+  getPermissionsInScope = (scopeName: string, params: RequestParams = {}) =>
+    this.request<PermissionsInScopeResponse, any>({
+      path: `/api/users/permissions/${scopeName}`,
+      method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
    * @description Обновляет координаты пользователя по идентификатору
    *
    * @tags users
@@ -139,13 +196,40 @@ export class Users<
    * @tags users
    * @name GetUserPermissions
    * @summary Получить права пользователя
-   * @request GET:/api/users/{id}/privileges
+   * @request GET:/api/users/{id}/permissions
    * @secure
    */
   getUserPermissions = (id: number, params: RequestParams = {}) =>
     this.request<UserPermissionsResponse, void>({
-      path: `/api/users/${id}/privileges`,
+      path: `/api/users/${id}/permissions`,
       method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Ранжированный список пользователей по координатам и должности
+   *
+   * @tags users
+   * @name GetRankedUsers
+   * @summary Получить ранжированный список пользователей
+   * @request GET:/api/users/ranked
+   * @secure
+   */
+  getRankedUsers = (
+    query: {
+      latitude: number;
+      longitude: number;
+      altitude: number;
+      /** @default null */
+      primaryPosition?: string | null;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<RankedUserInfoResponse[], any>({
+      path: `/api/users/ranked`,
+      method: "GET",
+      query: query,
       secure: true,
       format: "json",
       ...params,
@@ -156,7 +240,7 @@ export class Users<
    * @tags users
    * @name UpdateUserPermissions
    * @summary Обновить права пользователя
-   * @request PUT:/api/users/{id}/privileges
+   * @request PUT:/api/users/{id}/permissions
    * @secure
    */
   updateUserPermissions = (
@@ -165,7 +249,30 @@ export class Users<
     params: RequestParams = {},
   ) =>
     this.request<UserPermissionsResponse, void>({
-      path: `/api/users/${id}/privileges`,
+      path: `/api/users/${id}/permissions`,
+      method: "PUT",
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Полностью заменяет права пользователя на один из предопределённых наборов DefaultPermissions
+   *
+   * @tags users
+   * @name UpdateUserPermissionsByPreset
+   * @summary Установить права пользователя по предопределённому набору
+   * @request PUT:/api/users/{id}/permissions/default
+   * @secure
+   */
+  updateUserPermissionsByPreset = (
+    id: number,
+    data: DefaultPermissionsRequest,
+    params: RequestParams = {},
+  ) =>
+    this.request<UserPermissionsResponse, void>({
+      path: `/api/users/${id}/permissions/default`,
       method: "PUT",
       body: data,
       secure: true,

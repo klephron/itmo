@@ -6,6 +6,7 @@ import { useUser } from "./user";
 import { useClient } from "./client";
 
 export type Notifications = Map<number, NotificationDto> | null;
+export type NotificationQueue = NotificationDto[];
 
 function toMap(notifications: NotificationDto[]) {
   return new Map(
@@ -15,11 +16,7 @@ function toMap(notifications: NotificationDto[]) {
 
 function updateById(notification: NotificationDto) {
   const unread = useNotifications.getState().unread;
-  if (!unread) {
-    return {};
-  }
-
-  const unread1 = new Map(unread);
+  const unread1 = new Map(unread ?? []);
 
   if (notification.readAt) {
     unread1.delete(notification.id);
@@ -31,11 +28,30 @@ function updateById(notification: NotificationDto) {
 
 export const useNotifications = create(
   subscribeWithSelector(
-    combine({ unread: null as Notifications }, (set) => ({
-      update: (notifications: NotificationDto[]) => set({ unread: toMap(notifications) }),
-      updateById: (notification: NotificationDto) => set(updateById(notification)),
-      reset: () => set({ unread: null }),
-    }))
+    combine(
+      { unread: null as Notifications, incomingQueue: [] as NotificationQueue },
+      (set, get) => ({
+        update: (notifications: NotificationDto[]) => set({ unread: toMap(notifications) }),
+        updateById: (notification: NotificationDto) => set(updateById(notification)),
+        pushIncoming: (notification: NotificationDto) =>
+          set((state) => {
+            const exists = state.incomingQueue.some((n) => n.id === notification.id);
+            if (exists) return {};
+            return { incomingQueue: [...state.incomingQueue, notification] };
+          }),
+        clearIncoming: (id?: number) =>
+          set((state) => {
+            if (!state.incomingQueue.length) return {};
+            if (id) {
+              const filtered = state.incomingQueue.filter((n) => n.id !== id);
+              return { incomingQueue: filtered };
+            }
+            // pop first
+            return { incomingQueue: state.incomingQueue.slice(1) };
+          }),
+        reset: () => set({ unread: null, incomingQueue: [] }),
+      })
+    )
   )
 );
 

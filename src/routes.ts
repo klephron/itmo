@@ -14,6 +14,7 @@ export default [
       route("cases/create", "./pages/case_create/index.tsx"),
       route("cases/:id", "./pages/case/index.tsx"),
 
+      route("clues/:id", "./pages/clue/index.tsx"),
       route("clues/create", "./pages/clue_create/index.tsx"),
       route("templates/create", "./pages/template_create/index.tsx"),
       route("suspects/create", "./pages/suspect_create/index.tsx"),
@@ -23,6 +24,8 @@ export default [
 
       route("notifications", "./pages/notifications/index.tsx"),
       route("notifications/:id", "./pages/notification/index.tsx"),
+
+      route("logs", "./pages/logs/index.tsx"),
 
       route("logout", "./pages/logout/index.tsx"),
     ]),

@@ -6,14 +6,25 @@ import Checkbox from "@components/checkbox";
 import { useEffect, useState } from "react";
 import { NotificationDto, NotificationsControllerStatus } from "@api/gen/data-contracts";
 
-function sliceRemaining(text: string | null | undefined, max: number) {
-  if (text) {
-    const len = text.length;
-    if (len > max) {
-      return text.slice(0, max).trim() + " ...";
-    }
-    return text.slice(0, max).trim();
+function sliceRemaining(text: string | null | undefined) {
+  if (!text) return "";
+  return text;
+}
+
+function toInputValue(value?: string) {
+  if (!value) return "";
+  try {
+    return new Date(value).toISOString().slice(0, 16);
+  } catch {
+    return "";
   }
+}
+
+function toIso(value?: string) {
+  if (!value) return undefined;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return undefined;
+  return d.toISOString();
 }
 
 function UnreadTable({ descriptionMax }: { descriptionMax: number }) {
@@ -42,7 +53,7 @@ function UnreadTable({ descriptionMax }: { descriptionMax: number }) {
               <td>
                 <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
               </td>
-              <td>{sliceRemaining(notification.description, descriptionMax)}</td>
+              <td>{sliceRemaining(notification.description)}</td>
               <td>{new Date(notification.createdAt).toLocaleString()}</td>
               <td>
                 <Checkbox
@@ -72,8 +83,8 @@ function Search({ descriptionMax }: { descriptionMax: number }) {
 
   const [searchNotifications, searchNotificationsSet] = useState([] as NotificationDto[]);
   const [searchStatus, searchStatusSet] = useState(NotificationsControllerStatus.ALL);
-  const [searchFrom, searchFromSet] = useState(new Date(0).toISOString());
-  const [searchTo, searchToSet] = useState(new Date().toISOString());
+  const [searchFrom, searchFromSet] = useState(toInputValue(new Date(0).toISOString()));
+  const [searchTo, searchToSet] = useState(toInputValue(new Date().toISOString()));
 
   useEffect(() => {
     search();
@@ -82,8 +93,8 @@ function Search({ descriptionMax }: { descriptionMax: number }) {
   function search() {
     client.notifications
       .getNotifications({
-        from: searchFrom,
-        to: searchTo,
+        from: toIso(searchFrom),
+        to: toIso(searchTo),
         status: searchStatus,
       })
       .then((r) => {
@@ -98,11 +109,19 @@ function Search({ descriptionMax }: { descriptionMax: number }) {
         <button onClick={search}>Search</button>
         <div>
           <label>From (UTC):</label>
-          <input type="input" value={searchFrom} onChange={(e) => searchFromSet(e.target.value)} />
+          <input
+            type="datetime-local"
+            value={searchFrom}
+            onChange={(e) => searchFromSet(e.target.value)}
+          />
         </div>
         <div>
           <label>To (UTC):</label>
-          <input type="input" value={searchTo} onChange={(e) => searchToSet(e.target.value)} />
+          <input
+            type="datetime-local"
+            value={searchTo}
+            onChange={(e) => searchToSet(e.target.value)}
+          />
         </div>
         <select
           value={searchStatus}
@@ -136,7 +155,7 @@ function Search({ descriptionMax }: { descriptionMax: number }) {
               <td>
                 <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
               </td>
-              <td>{sliceRemaining(notification.description, descriptionMax)}</td>
+              <td>{sliceRemaining(notification.description)}</td>
               <td>{new Date(notification.createdAt).toLocaleString()}</td>
               <td>{notification.readAt ? new Date(notification.readAt).toLocaleString() : "-"}</td>
             </tr>
@@ -149,11 +168,16 @@ function Search({ descriptionMax }: { descriptionMax: number }) {
 
 export default function NotificationsPage(props: { descriptionMaxLen?: number }) {
   const descriptionMaxLen = props.descriptionMaxLen ?? 20;
+  const unread = useNotifications((state) => state.unread);
+  const unreadCount = unread?.size ?? 0;
 
   return (
     <div className={styles.root}>
       <div className={styles.unread}>
-        <h2>Unread Notifications</h2>
+        <div className={styles.headerRow}>
+          <h2>Unread Notifications</h2>
+          <span className={styles.badge}>{unreadCount}</span>
+        </div>
         <UnreadTable descriptionMax={descriptionMaxLen} />
       </div>
       <div className={styles.search}>

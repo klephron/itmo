@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useClient } from "@state/client";
 import { catchResponse } from "@util";
-import { IncidentDto, UserInfoResponse } from "@api/gen/data-contracts";
+import { IncidentDto, RankedUserInfoResponse, UserInfoResponse } from "@api/gen/data-contracts";
 import Checkbox from "@components/checkbox";
+import { hasPermission, usePermissions } from "@state/permissions";
 
 type UserEntry = {
   id: number;
@@ -89,13 +90,29 @@ export default function CaseCreatePage() {
   const [users, usersSet] = useState(null as Map<number, UserEntry> | null);
   const [usersLoaded, usersLoadedSet] = useState(false);
   const [incident, incidentSet] = useState(null as IncidentDto | null);
+  const permissionsState = usePermissions((state) => state.permissions);
+  const [canCreate, canCreateSet] = useState(false);
+  const [positions, positionsSet] = useState<string[]>([]);
+  const [createError, createErrorSet] = useState<string | null>(null);
+  const [ranked, rankedSet] = useState<RankedUserInfoResponse[] | null>(null);
+  const [rankedInfo, rankedInfoSet] = useState<
+    Record<string, { score: number; distance: number; activeCases: number; positionMatches: boolean }>
+  >({});
+  const [rankedLoaded, rankedLoadedSet] = useState(false);
 
   useEffect(() => {
     client.incidents
       .getIncident(Number(incidentId))
-      .then((r) => incidentSet(r.data))
+      .then((r) => {
+        incidentSet(r.data);
+        const ownerId = r.data.creatorId;
+        const allowed = permissionsState
+          ? hasPermission(`INCIDENTS:${r.data.id}:UPDATE`, ownerId)
+          : false;
+        canCreateSet(allowed);
+      })
       .catch(console.error);
-  }, [incidentId]);
+  }, [incidentId, permissionsState]);
 
   useEffect(() => {
     client.users
@@ -106,6 +123,65 @@ export default function CaseCreatePage() {
       })
       .catch(console.error);
   }, [client]);
+
+  useEffect(() => {
+    client.users
+      .getPrimaryPositions()
+      .then((r) => {
+        const normalized = r.data.map((p: any) => (typeof p === "string" ? p : p.value ?? p.label ?? String(p)));
+        positionsSet(normalized);
+      })
+      .catch(console.error);
+  }, [client]);
+
+  useEffect(() => {
+    async function loadRanked() {
+      if (!incident || !users || !usersLoaded || rankedLoaded) return;
+      try {
+        const res = await client.users.getRankedUsers({
+          latitude: incident.locationLatitude,
+          longitude: incident.locationLongitude,
+          altitude: incident.locationAltitude,
+          primaryPosition: null,
+        });
+        rankedSet(res.data);
+        const info: Record<string, { score: number; distance: number; activeCases: number; positionMatches: boolean }> =
+          {};
+        res.data.forEach((r) => {
+          info[String(r.user.id)] = {
+            score: r.score,
+            distance: r.distanceMeters,
+            activeCases: r.activeCases,
+            positionMatches: !!r.positionMatches,
+          };
+        });
+        rankedInfoSet(info);
+        const next = new Map(users);
+        res.data.forEach((r) => {
+          const existing = next.get(r.user.id);
+          const defaultPos = existing?.position || r.user.primaryPosition || positions[0] || "";
+          next.set(r.user.id, {
+            id: r.user.id,
+            username: existing?.username || r.user.username,
+            name: existing?.name || r.user.name,
+            surname: existing?.surname || r.user.surname,
+            patronymic: existing?.patronymic ?? r.user.patronymic ?? undefined,
+            primaryPosition: existing?.primaryPosition ?? r.user.primaryPosition ?? undefined,
+            locationLatitude: existing?.locationLatitude ?? r.user.locationLatitude,
+            locationLongitude: existing?.locationLongitude ?? r.user.locationLongitude,
+            locationAltitude: existing?.locationAltitude ?? r.user.locationAltitude,
+            position: defaultPos,
+            selected: existing?.selected ?? false,
+          });
+        });
+        usersSet(next);
+        rankedLoadedSet(true);
+      } catch (e) {
+        console.error("load ranked users failed", e);
+      }
+    }
+    loadRanked();
+  }, [client, incident, users, usersLoaded, rankedLoaded, positions]);
 
   useEffect(() => {
     if (!users || usersLoaded) {
@@ -138,7 +214,8 @@ export default function CaseCreatePage() {
     })();
   }, [users]);
 
-  function createCase() {
+  async function createCase() {
+    createErrorSet(null);
     const usersRecord = {} as Record<string, string>;
     if (users) {
       for (const user of users.values()) {
@@ -148,25 +225,37 @@ export default function CaseCreatePage() {
       }
     }
 
+    if (!canCreate) {
+      createErrorSet(`Нет прав на создание дела (INCIDENTS:${incidentId}:UPDATE)`);
+      return;
+    }
+    if (!title.trim() || !description.trim()) {
+      createErrorSet("Title и Description обязательны");
+      return;
+    }
+
     try {
-      client.incidents
-        .addCaseForIncident(Number(incidentId), {
-          title: title,
-          description: description,
-          users: usersRecord,
-        })
-        .then((r) => {
-          navigate(`/cases/${r.data.id}`);
-        })
-        .catch(catchResponse);
-    } catch (e) {
-      alert(e);
+      const res = await client.incidents.addCaseForIncident(Number(incidentId), {
+        title: title,
+        description: description,
+        users: usersRecord,
+      });
+      navigate(`/cases/${res.data.id}`);
+    } catch (e: any) {
+      const msg =
+        e?.rawBody ||
+        e?.error?._embedded?.errors?.map((er: any) => er.message).join("\n") ||
+        e?.error?.message ||
+        e?.message ||
+        "Не удалось создать дело";
+      createErrorSet(msg);
     }
   }
 
   return (
     <div className={styles.root}>
       <h2>Create Case</h2>
+      {!canCreate ? <span>Нет прав (нужно INCIDENTS:{incidentId}:UPDATE или свое)</span> : null}
       <form>
         <div>
           <h3>Incident</h3>
@@ -190,47 +279,65 @@ export default function CaseCreatePage() {
             <thead>
               <tr className={styles.row}>
                 <th>Select</th>
+                <th>ID</th>
                 <th>Position</th>
                 <th>Username</th>
                 <th>Name</th>
                 <th>Primary Position</th>
                 <th>Location</th>
                 <th>Distance (meters)</th>
+                <th>Active cases</th>
               </tr>
             </thead>
             <tbody>
-              {Array.from(users && incident ? users.values() : [])
-                .sort(distanceSort(incident))
-                .map((user) => (
-                  <tr className={styles.row} key={user.id}>
-                    <td>
-                      <Checkbox
-                        isChecked={user.selected}
-                        onChange={(e) => {
-                          user.selected = e;
-                          usersSet(new Map(users));
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        onChange={(e) => {
-                          user.position = e.target.value;
-                          usersSet(new Map(users));
-                        }}
-                      />
-                    </td>
-                    <td>{user.username}</td>
-                    <td>{`${user.name} ${user.surname} ${user.patronymic}`}</td>
-                    <td>{user.primaryPosition ?? "Not Specified"}</td>
-                    <td>{`${user.locationLatitude}, ${user.locationLongitude}, ${user.locationAltitude}`}</td>
-                    <td>
-                      {distance(incident, user).toLocaleString(undefined, {
+              {(ranked && users
+                ? ranked
+                    .map((r) => users.get(r.user.id))
+                    .filter((u): u is UserEntry => !!u)
+                : Array.from(users && incident ? users.values() : []).sort(distanceSort(incident))
+              ).map((user) => (
+                <tr className={styles.row} key={user.id}>
+                  <td>
+                    <Checkbox
+                      isChecked={user.selected}
+                      onChange={(e) => {
+                        user.selected = e;
+                        usersSet(new Map(users));
+                      }}
+                    />
+                  </td>
+                  <td>{user.id}</td>
+                  <td>
+                    <select
+                      value={user.position}
+                      onChange={(e) => {
+                        user.position = e.target.value;
+                        usersSet(new Map(users));
+                      }}
+                    >
+                      <option value="">Select position</option>
+                      {positions.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>{user.username}</td>
+                  <td>{`${user.name} ${user.surname} ${user.patronymic}`}</td>
+                  <td>{user.primaryPosition ?? "Not Specified"}</td>
+                  <td>{`${user.locationLatitude}, ${user.locationLongitude}, ${user.locationAltitude}`}</td>
+                  <td>
+                    {(rankedInfo[String(user.id)]?.distance ?? distance(incident, user)).toLocaleString(
+                      undefined,
+                      {
                         maximumFractionDigits: 0,
-                      })}
-                    </td>
-                  </tr>
-                ))}
+                      }
+                    )}
+                  </td>
+                  <td>{rankedInfo[String(user.id)]?.activeCases ?? "-"}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -239,9 +346,11 @@ export default function CaseCreatePage() {
             e.preventDefault();
             createCase();
           }}
+          disabled={!canCreate}
         >
           Submit
         </button>
+        {createError ? <div className={styles.hint}>{createError}</div> : null}
       </form>
     </div>
   );

@@ -8,6 +8,62 @@ import { useToken } from "./token";
 // if is null not loaded
 export type Permissions = Set<string> | null;
 
+function matchesPermission(
+  pattern: string,
+  required: string,
+  resourceOwnerId?: number,
+  currentUserId?: number,
+) {
+  const patParts = pattern.split(":");
+  const reqParts = required.split(":");
+  if (patParts.length !== 3 || reqParts.length !== 3) {
+    return false;
+  }
+
+  const [patScope, patObj, patPriv] = patParts;
+  const [reqScope, reqObj, reqPriv] = reqParts;
+
+  if (!(patScope === "*" || patScope === reqScope)) {
+    return false;
+  }
+  if (!(patPriv === "*" || patPriv === reqPriv)) {
+    return false;
+  }
+
+  if (patObj === "*") {
+    return true;
+  }
+
+  if (patObj === "$") {
+    if (resourceOwnerId === undefined || currentUserId === undefined) {
+      return false;
+    }
+    // Разрешено, если ресурс принадлежит текущему пользователю
+    return resourceOwnerId === currentUserId;
+  }
+
+  return patObj === reqObj;
+}
+
+export function hasPermission(required: string, resourceOwnerId?: number): boolean {
+  const permissions = usePermissions.getState().permissions;
+  const currentUser = useUser.getState().user;
+  const currentUserId = currentUser.present ? currentUser.id : undefined;
+  if (!permissions) {
+    return false;
+  }
+  for (const perm of permissions) {
+    if (matchesPermission(perm, required, resourceOwnerId, currentUserId)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function hasAnyPermission(required: string[], ownerId?: number): boolean {
+  return required.some((p) => hasPermission(p, ownerId));
+}
+
 export const usePermissions = create(
   subscribeWithSelector(
     combine({ permissions: null as Permissions }, (set) => ({
