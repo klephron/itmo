@@ -118,11 +118,11 @@ export default function TemplatesCreatePage() {
       .catch(console.error);
   }, [caseId, client]);
 
-  function buildMetadata() {
-    const data: TemplateMetadata = {
-      employeeIds: users
-        ? users
-            .values()
+function buildMetadata() {
+  const data: TemplateMetadata = {
+    employeeIds: users
+      ? users
+          .values()
             .filter((u) => u.selected)
             .map((u) => u.id)
             .toArray()
@@ -140,7 +140,7 @@ export default function TemplatesCreatePage() {
             .filter((u) => u.selected)
       .map((u) => u.id)
         .toArray()
-      : [],
+    : [],
   };
   return data;
 }
@@ -211,11 +211,24 @@ export default function TemplatesCreatePage() {
             });
             if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
             const idResp = (await res.json()) as { id: string };
+            const metaRes = await fetch(`${client.baseUrl}/api/files/${idResp.id}/meta`, {
+              headers: { Authorization: authHeader },
+            });
+            if (!metaRes.ok) throw new Error(`Meta failed: ${metaRes.status}`);
+            const meta = await metaRes.json();
+
+            const nextMeta: TemplateMetadata = {
+              ...buildMetadata(),
+              templateFileId: idResp.id,
+              templateFileUrl: client.baseUrl ? `${client.baseUrl}/api${meta.downloadUrl}` : meta.downloadUrl,
+              templateFileName: meta.filename,
+              templateContentType: meta.contentType,
+            };
             await client.templates.updateTemplate(templateId, {
               title: r.data.title,
               status: TemplateEntityStatus.CDB_ADDED,
               cdbId: idResp.id,
-              metadata: buildMetadata(),
+              metadata: nextMeta,
             });
           } catch (e: any) {
             console.error("Auto-upload template file failed", e);

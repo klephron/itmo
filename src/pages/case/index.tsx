@@ -1,7 +1,7 @@
 import { Route } from "~react-router/src/pages/case/+types";
 import styles from "./index.module.scss";
 import { useClient } from "@state/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CaseDto,
   CaseSuspectEntityStatus,
@@ -718,6 +718,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
   const [metadataModal, setMetadataModal] = useState<{ id: number; value: string } | null>(null);
   const authHeader =
     token.present && token.accessToken ? `${token.tokenType} ${token.accessToken}` : undefined;
+  const syncedCdbMeta = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     client.cases
@@ -732,6 +733,64 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
       )
       .catch(console.error);
   }, [caze]);
+
+  useEffect(() => {
+    // автозаполнение меты по cdbId, если она пустая
+    if (!templates || !authHeader) return;
+    templates.forEach(async (t) => {
+      if (!t.cdbId) return;
+      const meta = normalizeTemplateMetadata(t.metadata);
+      const alreadySynced = syncedCdbMeta.current.has(t.id);
+      const hasFileInfo = !!meta?.templateFileId || !!meta?.templateFileUrl;
+      if (alreadySynced || hasFileInfo) return;
+      try {
+        const url = client.baseUrl ? `${client.baseUrl}/api/files/${t.cdbId}/meta` : `/api/files/${t.cdbId}/meta`;
+        const res = await fetch(url, {
+          headers: { Authorization: authHeader },
+        });
+        if (!res.ok) return;
+        const contentType = res.headers.get("content-type") || "";
+        if (!contentType.includes("json")) {
+          console.warn("Meta response is not json, skip", t.id, contentType);
+          return;
+        }
+        let fileMeta: any;
+        try {
+          fileMeta = await res.json();
+        } catch (err) {
+          console.warn("Failed to parse meta json", t.id, err);
+          return;
+        }
+        const nextMeta = {
+          ...(meta || {}),
+          templateFileId: t.cdbId,
+          templateFileUrl: fileMeta.downloadUrl?.startsWith("http")
+            ? fileMeta.downloadUrl
+            : `${client.baseUrl ?? ""}/api${fileMeta.downloadUrl}`,
+          templateFileName: fileMeta.filename,
+          templateContentType: fileMeta.contentType,
+        };
+        const updated = await client.templates.updateTemplate(t.id, {
+          title: t.title,
+          status: t.status,
+          metadata: nextMeta as any,
+          cdbId: t.cdbId,
+        });
+        syncedCdbMeta.current.add(t.id);
+        templatesSet((prev) =>
+          prev
+            ? prev.map((tpl) =>
+                tpl.id === t.id
+                  ? { ...tpl, ...updated.data, metadata: metadataToString(updated.data.metadata) }
+                  : tpl
+              )
+            : prev
+        );
+      } catch (e) {
+        console.error("Failed to sync cdb metadata for template", t.id, e);
+      }
+    });
+  }, [templates, authHeader, client.baseUrl, client.templates]);
 
   // use server function for that
   function downloadConstructed(
@@ -959,9 +1018,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
                         templatesSet([...templates]);
                       }}
                     />
-                    <div className={styles.small}>
-                      <Link to={`/templates/${template.id}`}>open</Link>
-                    </div>
+                    {/* open link removed per requirement */}
                   </td>
                   <td>
                     <select
@@ -1003,6 +1060,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
                       return (
                         <div className={styles.filesCol}>
                           <div className={styles.fileRow}>
+                            <div className={styles.small}>Template</div>
                             {hasTemplateFile ? (
                               <button
                                 type="button"
@@ -1019,7 +1077,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
                                   }
                                 }}
                               >
-                                Download template
+                                Download
                               </button>
                             ) : (
                               <span className={styles.small}>—</span>
@@ -1029,6 +1087,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
                             ) : null}
                           </div>
                           <div className={styles.fileRow}>
+                            <div className={styles.small}>Report</div>
                             {hasReportFile ? (
                               <button
                                 type="button"
@@ -1045,7 +1104,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
                                   }
                                 }}
                               >
-                                Download report
+                                Download
                               </button>
                             ) : (
                               <span className={styles.small}>—</span>
