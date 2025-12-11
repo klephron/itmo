@@ -25,9 +25,10 @@ System_Boundary(tiktok, "BrainStop") {
 }
 
 ' Внешние системы
-ContainerDb_Ext(db, "PostgreSQL", "RDBMS", "Общая база: пользователи, видео, лайки, комментарии, профили, права, статусы job’ов и т.п")
+ContainerDb_Ext(db, "PostgreSQL", "RDBMS", "Общая база: пользователи, видео, лайки, комментарии, профили, права, статусы job'ов и т.п")
 Container_Ext(minio, "MinIO / S3", "Object Storage", "Хранение raw и processed видеофайлов")
 Container_Ext(queue, "RabbitMQ", "AMQP Broker", "Очередь задач конвертации и событий лайков")
+Container_Ext(prom, "Prometheus", "Monitoring", "Сбор метрик с /actuator/prometheus у gateway и сервисов")
 System_Ext(ffmpeg, "FFmpeg", "CLI tool", "Конвертация видео в H.264 MP4 и создание превью")
 
 ' Пользователь ↔ фронт ↔ платформа
@@ -69,6 +70,15 @@ Rel(streamSvc, minio, "Стримит processed-видео по Range-запро
 ' Лайки и события
 Rel(likeSvc, queue, "Публикует события лайков (VideoLikeEvent)", "AMQP topic (video.likes)")
 Rel(queue, adminSvc, "Опционально: подписывается для аналитики / модерации", "AMQP consumer")
+
+' Метрики
+Rel(prom, gateway, "Scrapes /actuator/prometheus", "HTTP pull")
+Rel(prom, streamSvc, "Scrapes /actuator/prometheus", "HTTP pull")
+Rel(prom, commentSvc, "Scrapes /actuator/prometheus", "HTTP pull")
+Rel(prom, likeSvc, "Scrapes /actuator/prometheus", "HTTP pull")
+Rel(prom, profileSvc, "Scrapes /actuator/prometheus", "HTTP pull")
+Rel(prom, adminSvc, "Scrapes /actuator/prometheus", "HTTP pull")
+Rel(prom, transcodeSvc, "Scrapes /actuator/prometheus", "HTTP pull")
 
 @enduml
 ```

@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.common.infra;
+package ru.itmo.zavar.ticktokcoretest.storage.infra;
 
 import io.minio.*;
 import jakarta.annotation.PostConstruct;
@@ -13,8 +13,7 @@ import java.io.InputStream;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "minio", name = "url")
-// MSPLIT: MinIO adapter for future storage abstraction
-public class MinioService implements VideoObjectStorage {
+public class MinioStorageService implements VideoObjectStorage {
 
     @Value("${minio.bucket.video}")
     private String videoBucketName;
@@ -148,4 +147,10 @@ public class MinioService implements VideoObjectStorage {
         );
     }
 
+    public long getProcessedObjectSize(String key) throws Exception {
+        StatObjectResponse stat = this.minioClient.statObject(
+                StatObjectArgs.builder().bucket(this.videoBucketName).object(key).build()
+        );
+        return stat.size();
+    }
 }

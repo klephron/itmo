@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.common.infra;
+package ru.itmo.zavar.ticktokcoretest.storage.infra;
 
 import io.minio.MinioClient;
 import org.springframework.beans.factory.annotation.Value;

@@ -28,7 +28,7 @@ import ru.itmo.zavar.ticktokcoretest.video.mapper.FileMetadataMapper;
 import ru.itmo.zavar.ticktokcoretest.video.model.FileMetadataEntity;
 import ru.itmo.zavar.ticktokcoretest.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.ticktokcoretest.video.service.FeedService;
-import ru.itmo.zavar.ticktokcoretest.security.CurrentUser;
+import ru.itmo.zavar.ticktokcoretest.common.security.CurrentUser;
 
 import java.io.IOException;
 import java.io.InputStream;

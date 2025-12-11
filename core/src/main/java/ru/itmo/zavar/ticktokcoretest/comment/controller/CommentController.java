@@ -9,7 +9,7 @@ import ru.itmo.zavar.ticktokcoretest.common.security.Role;
 import ru.itmo.zavar.ticktokcoretest.comment.dto.CommentDto;
 import ru.itmo.zavar.ticktokcoretest.comment.dto.CreateCommentRequest;
 import ru.itmo.zavar.ticktokcoretest.comment.service.CommentService;
-import ru.itmo.zavar.ticktokcoretest.security.CurrentUser;
+import ru.itmo.zavar.ticktokcoretest.common.security.CurrentUser;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,0 +1,25 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: storage-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+
+minio:
+  url: http://localhost:9000
+  username: minio_admin
+  password: minio_admin
+  bucket:
+    video: videos
+    thumb: thumbs
+    avatar: avatars
+  stream:
+    part-size: 5242880

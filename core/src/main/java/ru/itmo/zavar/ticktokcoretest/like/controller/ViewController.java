@@ -6,7 +6,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.ticktokcoretest.like.dto.response.ViewResponse;
 import ru.itmo.zavar.ticktokcoretest.like.service.ViewService;
-import ru.itmo.zavar.ticktokcoretest.security.CurrentUser;
+import ru.itmo.zavar.ticktokcoretest.common.security.CurrentUser;
 
 import java.util.UUID;
 

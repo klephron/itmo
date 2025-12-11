@@ -104,6 +104,37 @@
             transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
+        .feed-loader {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4));
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+            pointer-events: none;
+            gap: 8px;
+            font-size: 14px;
+            color: #f5f5f5;
+        }
+
+        .feed-loader.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .video-wrapper.swipe-up {
             animation: swipeUp 220ms ease;
         }
@@ -582,6 +613,10 @@
         </div>
 
         <div class="video-wrapper" id="videoWrapper">
+            <div class="feed-loader" id="feedLoader">
+                <div class="spinner"></div>
+                <span id="feedLoaderText">Загружаем видео…</span>
+            </div>
             <div class="video-poster" id="videoPoster"></div>
             <video id="player" controls playsinline muted autoplay preload="auto"></video>
             <div class="swipe-hint">Свайп вверх/вниз или кнопки ниже</div>
@@ -857,6 +892,8 @@
     const btnLike = document.getElementById('btnLike');
     const qualityRow = document.getElementById('qualityRow');
     const qualitySelect = document.getElementById('qualitySelect');
+    const feedLoader = document.getElementById('feedLoader');
+    const feedLoaderText = document.getElementById('feedLoaderText');
 
     const tabFeed = document.getElementById('tabFeed');
     const tabUpload = document.getElementById('tabUpload');
@@ -1762,6 +1799,14 @@
         statusFeedEl.className = 'status' + (type ? ' ' + type : '');
     }
 
+    function showFeedLoader(show, text = '') {
+        if (!feedLoader) return;
+        feedLoader.classList.toggle('visible', !!show);
+        if (text && feedLoaderText) {
+            feedLoaderText.textContent = text;
+        }
+    }
+
     function setStatusUpload(msg, type = '') {
         statusUploadEl.textContent = msg || '';
         statusUploadEl.className = 'status' + (type ? ' ' + type : '');
@@ -2363,6 +2408,7 @@
     async function loadVideoPage(page = 0, append = false) {
         if (feedLoading) return;
         feedLoading = true;
+        showFeedLoader(true, 'Загружаем видео…');
 
         try {
             const res = await fetch(
@@ -2417,6 +2463,7 @@
                 titleEl.textContent = 'Видео ещё нет';
                 setStatusFeed('Загрузите видео на вкладке "Загрузка"', 'error');
                 currentIndex = -1;
+                showFeedLoader(false);
                 return;
             }
 
@@ -2424,11 +2471,16 @@
                 currentIndex = 0;
                 await playCurrent();
             }
+            showFeedLoader(false);
         } catch (e) {
             console.error(e);
             setStatusFeed('Ошибка загрузки списка видео: ' + e.message, 'error');
+            showFeedLoader(false);
         } finally {
             feedLoading = false;
+            if (videos.length > 0) {
+                showFeedLoader(false);
+            }
         }
     }
 
@@ -3638,6 +3690,7 @@
 
     // старт
     initAuth();
+    showFeedLoader(true, 'Готовим ленту…');
     loadVideoPage(0, false).then(() => {
         loadActiveJobsFromServer();
     });

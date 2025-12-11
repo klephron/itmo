@@ -4,65 +4,66 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import ru.itmo.zavar.ticktokcoretest.auth.security.jwt.JwtAuthenticationFilter;
-import ru.itmo.zavar.ticktokcoretest.common.security.Role;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import ru.itmo.zavar.ticktokcoretest.common.security.JwtAuthConverter;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final JwtAuthConverter jwtAuthConverter;
+    private final String jwtSecret;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
-        this.jwtAuthFilter = jwtAuthFilter;
+    public SecurityConfig(JwtAuthConverter jwtAuthConverter,
+                          org.springframework.core.env.Environment env) {
+        this.jwtAuthConverter = jwtAuthConverter;
+        this.jwtSecret = env.getProperty("app.jwt.secret", "super-secret-key-change-me-to-long-random-string");
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
-
-                        .requestMatchers(HttpMethod.GET, "/api/videos/*/comments").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/videos/*/comments").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/videos/*/comments").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/videos/*/likes").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/videos/*/likes").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/videos/*/likes").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/videos/*/view").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/videos/*/view").authenticated()
-                        .requestMatchers("/api/users/*/follow").authenticated()
-                        .requestMatchers("/api/users/*/followers").permitAll()
-                        .requestMatchers("/api/users/*/following").permitAll()
-
-                        .requestMatchers("/api/search/**").permitAll()
-
-                        .requestMatchers("/api/videos/**").permitAll()
-                        .requestMatchers("/streaming/video/**").permitAll()
-
-                        .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
-                        .requestMatchers("/moderation/**").hasAnyRole(Role.MODERATOR.name(), Role.ADMIN.name())
-
-                        .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
-                        .anyRequest().authenticated()
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .authorizeExchange(ex -> ex
+                        .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
+                        .pathMatchers("/streaming/**").permitAll()
+                        .pathMatchers("/api/search/**").permitAll()
+                        .pathMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
+                        .anyExchange().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
+                .oauth2ResourceServer(oauth -> oauth
+                        .jwt(jwt -> jwt
+                                .jwtDecoder(jwtDecoder())
+                                .jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(jwtAuthConverter))
+                        )
+                );
         return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
-        return cfg.getAuthenticationManager();
+    public ReactiveJwtDecoder jwtDecoder() {
+        SecretKey key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        return NimbusReactiveJwtDecoder.withSecretKey(key).build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return new ProviderManager(provider);
     }
 }

@@ -20,7 +20,7 @@ import ru.itmo.zavar.ticktokcoretest.profile.model.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.profile.repo.UserRepository;
 import ru.itmo.zavar.ticktokcoretest.common.api.video.VideoProfileApi;
 import ru.itmo.zavar.ticktokcoretest.common.api.video.dto.PublicUserVideoDto;
-import ru.itmo.zavar.ticktokcoretest.security.CurrentUser;
+import ru.itmo.zavar.ticktokcoretest.common.security.CurrentUser;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,0 +1,34 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: profile-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/video-streaming
+    username: test
+    password: test
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database: POSTGRESQL
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+
+app:
+  jwt:
+    secret: "super-secret-key-change-me-to-long-random-string"
+
+storage:
+  client:
+    base-url: http://storage-service

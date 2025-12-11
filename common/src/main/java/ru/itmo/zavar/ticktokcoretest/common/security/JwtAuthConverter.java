@@ -1,4 +1,4 @@
-package ru.itmo.zavar.ticktokcoretest.security;
+package ru.itmo.zavar.ticktokcoretest.common.security;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -7,7 +7,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-import ru.itmo.zavar.ticktokcoretest.common.security.Role;
 
 import java.util.Collection;
 import java.util.HashSet;

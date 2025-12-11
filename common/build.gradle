@@ -14,9 +14,13 @@ jar {
 
 dependencies {
     implementation "org.springframework.boot:spring-boot-starter"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-amqp"
+    implementation "org.springframework.boot:spring-boot-starter-webflux"
     implementation "org.springframework.data:spring-data-commons"
-    implementation "io.minio:minio:8.6.0"
+    implementation "org.springframework.cloud:spring-cloud-starter-loadbalancer"
+    implementation "org.springframework:spring-web"
     implementation "jakarta.persistence:jakarta.persistence-api:3.1.0"
     implementation "jakarta.annotation:jakarta.annotation-api:2.1.1"
 

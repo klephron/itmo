@@ -1,2 +1,2 @@
 rootProject.name = "ticktok-platform"
-include("common", "core", "gateway")
+include("common", "core", "gateway", "profile", "discovery", "storage")

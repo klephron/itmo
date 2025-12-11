@@ -1,10 +1,8 @@
-package ru.itmo.zavar.ticktokcoretest.security;
+package ru.itmo.zavar.ticktokcoretest.common.security;
 
 import lombok.Getter;
-import ru.itmo.zavar.ticktokcoretest.common.security.Role;
 
 import java.security.Principal;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 

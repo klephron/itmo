@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.ticktokcoretest.profile.dto.PublicUserShortDto;
 import ru.itmo.zavar.ticktokcoretest.profile.repo.UserRepository;
 import ru.itmo.zavar.ticktokcoretest.profile.service.FollowService;
-import ru.itmo.zavar.ticktokcoretest.security.CurrentUser;
+import ru.itmo.zavar.ticktokcoretest.common.security.CurrentUser;
 
 import java.util.List;
 
