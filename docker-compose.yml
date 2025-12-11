@@ -3,13 +3,19 @@ version: '3.8'
 services:
   postgres:
     container_name: "video-streaming-postgres"
-    image: postgres
+    image: pgvector/pgvector:pg16
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
       POSTGRES_DB: video-streaming
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "max_connections=200"
 
   minio:
     container_name: "video-streaming-minio"

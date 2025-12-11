@@ -1,0 +1,36 @@
+plugins {
+    id "org.springframework.boot" version "3.4.2" apply false
+    id "io.spring.dependency-management" version "1.1.6" apply false
+}
+
+ext {
+    mapstructVersion = "1.6.3"
+    lombokVersion = "1.18.36"
+    springCloudVersion = "2024.0.0"
+}
+
+allprojects {
+    group = "ru.itmo.zavar"
+    version = "0.0.1-SNAPSHOT"
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: "java"
+    apply plugin: "io.spring.dependency-management"
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}
+
+dependencies {
+    // place for shared BOM imports if needed in root
+}

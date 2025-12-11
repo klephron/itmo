@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ticktok-gateway
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/video-streaming
+    username: test
+    password: test
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database: POSTGRESQL
+
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: core
+            uri: http://localhost:8081
+            predicates:
+              - Path=/api/users/**,/api/videos/**,/api/comments/**,/api/admin/**,/api/moderation/**,/streaming/**,/admin/**,/moderation/**,/api/search/**
+
+logging:
+  level:
+    org.springframework.security: INFO
+
+app:
+  jwt:
+    secret: "super-secret-key-change-me-to-long-random-string"
+    expiration-ms: 3600000
