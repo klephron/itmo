@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.ticktokcoretest.profile.dto.PublicUserProfileDto;
 import ru.itmo.zavar.ticktokcoretest.profile.dto.response.UserAvatarResponse;
@@ -33,6 +35,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "Профиль, аватар и видео пользователя")
 // MSPLIT: HTTP API that will move to User Profile Service
 public class UserProfileController {
 
@@ -42,6 +45,7 @@ public class UserProfileController {
     private final VideoProfileApi videoProfileApi;
 
     @PostMapping("/me/avatar")
+    @Operation(summary = "Загрузить аватар текущего пользователя")
     public ResponseEntity<UserAvatarResponse> uploadAvatar(@RequestParam("avatar") MultipartFile avatar, @AuthenticationPrincipal CurrentUser principal) throws Exception {
         if (principal == null) {
             return ResponseEntity.status(401).build();
@@ -60,6 +64,7 @@ public class UserProfileController {
     }
 
     @GetMapping("/{id}/avatar")
+    @Operation(summary = "Получить аватар пользователя")
     public ResponseEntity<Resource> getAvatar(@PathVariable Long id) throws Exception {
         UserEntity userEntity = this.userRepository.findById(id).orElseThrow();
         if (userEntity.getAvatarKey() == null) {
@@ -72,6 +77,7 @@ public class UserProfileController {
     }
 
     @GetMapping("/{id}/profile")
+    @Operation(summary = "Получить публичный профиль пользователя")
     public ResponseEntity<PublicUserProfileDto> getProfile(@PathVariable Long id, @AuthenticationPrincipal CurrentUser principal) {
         Long currentId = principal != null ? principal.getId() : null;
         return this.userRepository.findById(id)
@@ -84,6 +90,7 @@ public class UserProfileController {
     }
 
     @GetMapping("/{id}/videos")
+    @Operation(summary = "Список видео пользователя", description = "Пагинация и безопасная сортировка")
     public ResponseEntity<Page<PublicUserVideoDto>> getUserVideos(@PathVariable Long id, Pageable pageable) {
         if (!this.userRepository.existsById(id)) {
             return ResponseEntity.notFound().build();

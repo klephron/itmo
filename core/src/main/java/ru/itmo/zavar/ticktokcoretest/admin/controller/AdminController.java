@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.admin.dto.UpdateUserRolesRequest;
 import ru.itmo.zavar.ticktokcoretest.common.security.Role;
 import ru.itmo.zavar.ticktokcoretest.common.api.profile.ProfileAdminApi;
@@ -14,8 +16,9 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@Tag(name = "Admin", description = "Админские операции (мини-модуль)")
 // MSPLIT: Admin boundary for future Admin/Moderation service
 public class AdminController {
 
@@ -24,6 +27,7 @@ public class AdminController {
 
     @PostMapping("/thumbnails/rebuild")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Пересоздать превью всех видео")
     public ResponseEntity<Map<String, Object>> regenerateThumbnails(@RequestParam(name = "force", defaultValue = "true") boolean force) {
         int updated = this.videoAdminApi.regenerateThumbnails(force);
         return ResponseEntity.ok(Map.of(
@@ -34,6 +38,7 @@ public class AdminController {
 
     @GetMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Получить роли пользователя")
     public ResponseEntity<Set<Role>> getUserRoles(@PathVariable Long id) {
         return this.profileAdminApi.findUser(id)
                 .map(ProfileUserDetails::roles)
@@ -43,6 +48,7 @@ public class AdminController {
 
     @PostMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Обновить роли пользователя")
     public ResponseEntity<Set<Role>> updateUserRoles(@PathVariable Long id,
                                                      @RequestBody UpdateUserRolesRequest req) {
         try {
@@ -53,4 +59,3 @@ public class AdminController {
         }
     }
 }
-

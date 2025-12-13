@@ -1855,7 +1855,7 @@
     function buildVideoUrl(v, overrideQuality) {
         const q = overrideQuality != null ? overrideQuality : resolveQuality(v);
         const suffix = q ? `?quality=${q}` : '';
-        return apiBase + '/streaming/video/' + v.uuid + suffix;
+        return apiBase + '/api/streaming/video/' + v.uuid + suffix;
     }
 
     function applyQualitySelector(v) {
@@ -2003,7 +2003,7 @@
 
     function setPlayerPoster(v) {
         if (!player) return;
-        const fallbackUrl = v && v.uuid ? `/streaming/video/thumbnail/${v.uuid}` : null;
+        const fallbackUrl = v && v.uuid ? `/api/streaming/video/thumbnail/${v.uuid}` : null;
         const poster = (v && v.thumbnailUrl) ? v.thumbnailUrl : fallbackUrl;
 
         if (poster) {
@@ -2412,7 +2412,7 @@
 
         try {
             const res = await fetch(
-                apiBase + `/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`,
+                apiBase + `/api/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`,
                 { headers: authHeaders() }
             );
 
@@ -2487,7 +2487,7 @@
     async function deleteVideo(uuid) {
         try {
             setStatusStudio('Удаляю видео…', 'ok');
-            const res = await fetch(apiBase + '/streaming/video/delete/' + uuid, {
+            const res = await fetch(apiBase + '/api/streaming/video/delete/' + uuid, {
                 method: 'POST',
                 headers: authHeaders()
             });
@@ -2884,7 +2884,7 @@
         }
 
         try {
-            const res = await fetch(apiBase + '/moderation/users', {
+            const res = await fetch(apiBase + '/api/moderation/users', {
                 headers: authHeaders()
             });
 
@@ -2964,7 +2964,7 @@
         if (!authToken || !isModerator()) return;
 
         try {
-            const res = await fetch(apiBase + '/moderation/users/' + userId, {
+            const res = await fetch(apiBase + '/api/moderation/users/' + userId, {
                 headers: authHeaders()
             });
 
@@ -3070,7 +3070,7 @@
         if (!authToken || !isModerator()) return;
 
         try {
-            const res = await fetch(apiBase + '/moderation/users/' + userId + '/videos', {
+            const res = await fetch(apiBase + '/api/moderation/users/' + userId + '/videos', {
                 headers: authHeaders()
             });
 
@@ -3133,7 +3133,7 @@
         if (!authToken || !isModerator()) return;
 
         const action = user.enabled ? 'ban' : 'unban';
-        const url = apiBase + `/moderation/users/${user.id}/${action}`;
+        const url = apiBase + `/api/moderation/users/${user.id}/${action}`;
 
         try {
             const res = await fetch(url, {
@@ -3251,7 +3251,7 @@
         setStatusUpload('Начинаю загрузку…', 'ok');
 
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', apiBase + '/streaming/video/upload', true);
+        xhr.open('POST', apiBase + '/api/streaming/video/upload', true);
 
         if (authToken) {
             xhr.setRequestHeader('Authorization', 'Bearer ' + authToken);
@@ -3321,7 +3321,7 @@
 
         const intervalId = setInterval(async () => {
             try {
-                const res = await fetch(apiBase + '/streaming/video/upload/status/' + jobId, {
+                const res = await fetch(apiBase + '/api/streaming/video/upload/status/' + jobId, {
                     headers: authHeaders()
                 });
 
@@ -3374,7 +3374,7 @@
         }
 
         try {
-            const res = await fetch(apiBase + '/streaming/video/upload/active', {
+            const res = await fetch(apiBase + '/api/streaming/video/upload/active', {
                 headers: authHeaders()
             });
 

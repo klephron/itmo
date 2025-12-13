@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.admin.dto.UserDetailDto;
 import ru.itmo.zavar.ticktokcoretest.admin.mapper.ProfileModerationMapper;
 import ru.itmo.zavar.ticktokcoretest.common.api.profile.ProfileAdminApi;
@@ -13,8 +15,9 @@ import ru.itmo.zavar.ticktokcoretest.common.api.video.dto.UserVideoDto;
 import java.util.List;
 
 @RestController
-@RequestMapping("/moderation")
+@RequestMapping("/api/moderation")
 @RequiredArgsConstructor
+@Tag(name = "Moderation", description = "Модерация пользователей и их видео")
 // MSPLIT: Moderation API for future Admin/Moderation service
 public class ModerationController {
 
@@ -24,6 +27,7 @@ public class ModerationController {
 
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
+    @Operation(summary = "Список пользователей для модерации")
     public List<UserDetailDto> listUsers() {
         return this.profileAdminApi.findAllUsers().stream()
                 .map(this.profileModerationMapper::toDto)
@@ -32,6 +36,7 @@ public class ModerationController {
 
     @GetMapping("/users/{id}")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
+    @Operation(summary = "Получить детали пользователя для модерации")
     public ResponseEntity<UserDetailDto> getUser(@PathVariable Long id) {
         return this.profileAdminApi.findUser(id)
                 .map(this.profileModerationMapper::toDto)
@@ -41,6 +46,7 @@ public class ModerationController {
 
     @GetMapping("/users/{id}/videos")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
+    @Operation(summary = "Получить видео пользователя")
     public ResponseEntity<List<UserVideoDto>> getUserVideos(@PathVariable Long id) {
         if (!this.profileAdminApi.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -50,6 +56,7 @@ public class ModerationController {
 
     @PostMapping("/users/{id}/ban")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
+    @Operation(summary = "Забанить пользователя")
     public ResponseEntity<Void> banUser(@PathVariable Long id) {
         return this.profileAdminApi.findUser(id)
                 .map(u -> {
@@ -61,6 +68,7 @@ public class ModerationController {
 
     @PostMapping("/users/{id}/unban")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
+    @Operation(summary = "Разбанить пользователя")
     public ResponseEntity<Void> unbanUser(@PathVariable Long id) {
         return this.profileAdminApi.findUser(id)
                 .map(u -> {

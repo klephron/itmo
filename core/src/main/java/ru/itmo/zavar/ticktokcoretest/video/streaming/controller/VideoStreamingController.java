@@ -14,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.ticktokcoretest.video.streaming.dto.response.UploadStartResponse;
 import ru.itmo.zavar.ticktokcoretest.video.streaming.model.StreamChunk;
@@ -38,8 +40,9 @@ import java.util.UUID;
 import static org.springframework.http.HttpHeaders.*;
 
 @RestController
-@RequestMapping("/streaming/video")
+@RequestMapping("/api/streaming/video")
 @RequiredArgsConstructor
+@Tag(name = "Streaming", description = "Стриминг и загрузка видео")
 // MSPLIT: HTTP API that will move to Streaming service
 public class VideoStreamingController {
 
@@ -54,6 +57,7 @@ public class VideoStreamingController {
     private long chunkDefaultSize;
 
     @GetMapping("/{uuid}")
+    @Operation(summary = "Отдать чанк видео по Range", description = "Возвращает 206 Partial Content для указанного видео и качества")
     public ResponseEntity<byte[]> fetchChunk(@RequestHeader(value = RANGE, required = false) String range,
                                              @PathVariable UUID uuid,
                                              @RequestParam(value = "quality", required = false) Integer quality) throws Exception {
@@ -73,6 +77,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/thumbnail/{uuid}")
+    @Operation(summary = "Получить превью видео")
     public ResponseEntity<Resource> getThumbnail(@PathVariable UUID uuid) throws Exception {
         FileMetadataEntity meta = this.fileMetadataRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -87,11 +92,13 @@ public class VideoStreamingController {
 
 
     @GetMapping("/list-all")
+    @Operation(summary = "Список всех видео (без пагинации)")
     public List<FileMetadataDto> getVideoList() {
         return this.fileMetadataMapper.toDto(this.videoStreamingService.getVideoList());
     }
 
     @GetMapping("/list")
+    @Operation(summary = "Лента видео", description = "Пагинированная лента; авторизация не обязательна")
     public ResponseEntity<Page<FeedVideoDto>> getVideoFeed(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @AuthenticationPrincipal CurrentUser principal) {
         Long userId = principal != null ? principal.getId() : null;
         Page<FeedVideoDto> feed = this.feedService.getFeed(userId, PageRequest.of(page, size));
@@ -99,6 +106,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/list/my")
+    @Operation(summary = "Мои видео", description = "Требует авторизации")
     public List<FileMetadataDto> getMyVideoList(@AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -107,6 +115,7 @@ public class VideoStreamingController {
     }
 
     @PostMapping("/upload")
+    @Operation(summary = "Начать загрузку видео", description = "Ставит задачу на загрузку/транскодирование")
     public ResponseEntity<UploadStartResponse> startUpload(@RequestParam("video") MultipartFile video,
                                                            @RequestParam("videoName") String videoName,
                                                            @RequestParam(value = "description", required = false) String description,
@@ -120,6 +129,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/upload/status/{jobId}")
+    @Operation(summary = "Статус загрузки/транскода")
     public ResponseEntity<TranscodingJobStatus> getUploadStatus(@PathVariable UUID jobId) {
         return this.jobRegistry.get(jobId)
                 .map(ResponseEntity::ok)
@@ -127,12 +137,14 @@ public class VideoStreamingController {
     }
 
     @PostMapping("/delete/{uuid}")
+    @Operation(summary = "Удалить видео", description = "Удаляет метаданные и файлы в хранилище")
     public ResponseEntity<Void> deleteVideo(@PathVariable UUID uuid) throws Exception {
         this.videoStreamingService.deleteVideo(uuid);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/upload/active")
+    @Operation(summary = "Активные загрузки пользователя")
     public ResponseEntity<List<UploadJobViewDto>> getActiveUploadJobs(@AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);

@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: core-service
+  profiles:
+    default: dev
 
   servlet:
     multipart:

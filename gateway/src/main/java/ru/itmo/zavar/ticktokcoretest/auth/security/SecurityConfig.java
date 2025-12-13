@@ -37,9 +37,10 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
                         .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
-                        .pathMatchers("/streaming/**").permitAll()
+                        .pathMatchers("/api/streaming/**").permitAll()
                         .pathMatchers("/api/search/**").permitAll()
                         .pathMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
                         .anyExchange().authenticated()

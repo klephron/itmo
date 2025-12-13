@@ -38,6 +38,7 @@ public class ResourceServerConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/internal/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
 
@@ -56,10 +57,10 @@ public class ResourceServerConfig {
                         .requestMatchers("/api/search/**").permitAll()
 
                         .requestMatchers("/api/videos/**").permitAll()
-                        .requestMatchers("/streaming/video/**").permitAll()
+                        .requestMatchers("/api/streaming/video/**").permitAll()
 
-                        .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
-                        .requestMatchers("/moderation/**").hasAnyRole(Role.MODERATOR.name(), Role.ADMIN.name())
+                        .requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name())
+                        .requestMatchers("/api/moderation/**").hasAnyRole(Role.MODERATOR.name(), Role.ADMIN.name())
 
                         .anyRequest().authenticated()
                 )

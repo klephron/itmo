@@ -19,6 +19,7 @@ import java.time.Duration;
 
 public class RemoteVideoObjectStorage implements VideoObjectStorage {
 
+    private static final String STORAGE_ROOT = "/internal/storage";
     private final WebClient webClient;
 
     public RemoteVideoObjectStorage(WebClient webClient) {
@@ -28,7 +29,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public void uploadProcessed(String key, InputStream is, long size) throws Exception {
         withRetry(this.webClient.post()
-                .uri(uriBuilder -> uriBuilder.path("/storage/processed").queryParam("key", key).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/processed").queryParam("key", key).build())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .contentLength(size)
                 .body(BodyInserters.fromResource(new SizedInputStreamResource(is, size)))
@@ -39,7 +40,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public InputStream openProcessed(String key, long offset, long length) throws Exception {
         byte[] data = withRetry(this.webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/storage/processed").queryParam("key", key).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/processed").queryParam("key", key).build())
                 .header("X-Range-Start", Long.toString(offset))
                 .header("X-Range-Length", Long.toString(length))
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
@@ -54,7 +55,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public InputStream downloadProcessed(String key) throws Exception {
         byte[] data = withRetry(this.webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/storage/processed/download").queryParam("key", key).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/processed/download").queryParam("key", key).build())
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .retrieve()
                 .bodyToMono(byte[].class)).block();
@@ -67,7 +68,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public String uploadThumbnail(String key, InputStream is, long size) throws Exception {
         ObjectKeyResponse response = withRetry(this.webClient.post()
-                .uri(uriBuilder -> uriBuilder.path("/storage/thumbnails").queryParam("key", key).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/thumbnails").queryParam("key", key).build())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .contentLength(size)
                 .body(BodyInserters.fromResource(new SizedInputStreamResource(is, size)))
@@ -79,7 +80,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public InputStream openThumbnail(String key) throws Exception {
         byte[] data = withRetry(this.webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/storage/thumbnails").queryParam("key", key).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/thumbnails").queryParam("key", key).build())
                 .accept(MediaType.IMAGE_JPEG)
                 .retrieve()
                 .bodyToMono(byte[].class)).block();
@@ -92,7 +93,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public void deleteProcessed(String key) throws Exception {
         withRetry(this.webClient.delete()
-                .uri(uriBuilder -> uriBuilder.path("/storage/processed").queryParam("key", key).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/processed").queryParam("key", key).build())
                 .retrieve()
                 .bodyToMono(Void.class)).block();
     }
@@ -100,7 +101,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public String uploadAvatar(InputStream is, long size, String contentType, Long userId) throws Exception {
         ObjectKeyResponse response = withRetry(this.webClient.post()
-                .uri(uriBuilder -> uriBuilder.path("/storage/avatars").queryParam("userId", userId).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/avatars").queryParam("userId", userId).build())
                 .contentType(MediaType.parseMediaType(
                         StringUtils.hasText(contentType) ? contentType : MediaType.APPLICATION_OCTET_STREAM_VALUE))
                 .contentLength(size)
@@ -113,7 +114,7 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
     @Override
     public InputStream downloadAvatar(String objectName) throws Exception {
         byte[] data = withRetry(this.webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/storage/avatars").queryParam("key", objectName).build())
+                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/avatars").queryParam("key", objectName).build())
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .retrieve()
                 .bodyToMono(byte[].class)).block();

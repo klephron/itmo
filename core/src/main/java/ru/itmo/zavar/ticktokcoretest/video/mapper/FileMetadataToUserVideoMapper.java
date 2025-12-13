@@ -33,7 +33,7 @@ public abstract class FileMetadataToUserVideoMapper {
     @AfterMapping
     protected void enrich(FileMetadataEntity src, @MappingTarget UserVideoDto.UserVideoDtoBuilder target) {
         String thumbnailUrl = (src.getThumbnailKey() != null)
-                ? "/streaming/video/thumbnail/" + src.getUuid() : null;
+                ? "/api/streaming/video/thumbnail/" + src.getUuid() : null;
         target.thumbnailUrl(thumbnailUrl);
 
         if (src.getUploaderId() != null) {

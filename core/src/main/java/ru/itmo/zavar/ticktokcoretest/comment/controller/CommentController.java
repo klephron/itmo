@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.common.security.Role;
 import ru.itmo.zavar.ticktokcoretest.comment.dto.CommentDto;
 import ru.itmo.zavar.ticktokcoretest.comment.dto.CreateCommentRequest;
@@ -17,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/videos/{videoUuid}/comments")
+@Tag(name = "Comments", description = "Комментарии под видео")
 // MSPLIT: boundary for future Comment Service API
 public class CommentController {
 
@@ -28,12 +31,14 @@ public class CommentController {
     }
 
     @GetMapping
+    @Operation(summary = "Получить комментарии видео")
     public ResponseEntity<List<CommentDto>> list(@PathVariable UUID videoUuid, @AuthenticationPrincipal CurrentUser principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
         return ResponseEntity.ok(this.commentService.listComments(videoUuid, currentUserId));
     }
 
     @PostMapping
+    @Operation(summary = "Добавить комментарий")
     public ResponseEntity<CommentDto> add(@PathVariable UUID videoUuid, @Valid @RequestBody CreateCommentRequest req, @AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             return ResponseEntity.status(401).build();
@@ -44,6 +49,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/{commentId}")
+    @Operation(summary = "Удалить комментарий")
     public ResponseEntity<Void> delete(@PathVariable UUID videoUuid, @PathVariable Long commentId, @AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             return ResponseEntity.status(401).build();
@@ -52,4 +58,3 @@ public class CommentController {
         return ResponseEntity.noContent().build();
     }
 }
-

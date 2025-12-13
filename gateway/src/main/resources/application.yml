@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: ticktok-gateway
+  profiles:
+    default: dev
   cloud:
     loadbalancer:
       retry:
@@ -13,11 +15,29 @@ spring:
         - id: core
           uri: lb://core-service
           predicates:
-            - Path=/api/videos/**,/api/comments/**,/api/admin/**,/api/moderation/**,/streaming/**,/admin/**,/moderation/**,/api/search/**
+            - Path=/api/videos/**,/api/comments/**,/api/admin/**,/api/moderation/**,/api/streaming/**,/api/search/**
         - id: profile
           uri: lb://profile-service
           predicates:
             - Path=/api/users/**
+        - id: openapi-core
+          uri: lb://core-service
+          predicates:
+            - Path=/v3/api-docs/core
+          filters:
+            - RewritePath=/v3/api-docs/core, /v3/api-docs
+        - id: openapi-profile
+          uri: lb://profile-service
+          predicates:
+            - Path=/v3/api-docs/profile
+          filters:
+            - RewritePath=/v3/api-docs/profile, /v3/api-docs
+        - id: openapi-storage
+          uri: lb://storage-service
+          predicates:
+            - Path=/v3/api-docs/storage
+          filters:
+            - RewritePath=/v3/api-docs/storage, /v3/api-docs
   datasource:
     url: jdbc:postgresql://localhost:5432/video-streaming
     username: test
@@ -42,6 +62,20 @@ eureka:
   instance:
     hostname: localhost
     prefer-ip-address: true
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: gateway
+        url: /v3/api-docs
+      - name: core-service
+        url: /v3/api-docs/core
+      - name: profile-service
+        url: /v3/api-docs/profile
+      - name: storage-service
+        url: /v3/api-docs/storage
+    urls-primary-name: gateway
+    display-request-duration: true
 
 app:
   jwt:

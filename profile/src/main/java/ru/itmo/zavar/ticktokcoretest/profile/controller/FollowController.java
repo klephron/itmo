@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.profile.dto.PublicUserShortDto;
 import ru.itmo.zavar.ticktokcoretest.profile.repo.UserRepository;
 import ru.itmo.zavar.ticktokcoretest.profile.service.FollowService;
@@ -14,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "Follows", description = "Подписки/отписки и списки фолловеров")
 // MSPLIT: boundary for future User Profile/Follow API
 public class FollowController {
 
@@ -21,6 +24,7 @@ public class FollowController {
     private final UserRepository userRepository;
 
     @PostMapping("/{id}/follow")
+    @Operation(summary = "Подписаться на пользователя")
     public ResponseEntity<Void> follow(@PathVariable Long id, @AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             return ResponseEntity.status(401).build();
@@ -36,6 +40,7 @@ public class FollowController {
     }
 
     @DeleteMapping("/{id}/follow")
+    @Operation(summary = "Отписаться от пользователя")
     public ResponseEntity<Void> unfollow(@PathVariable Long id, @AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             return ResponseEntity.status(401).build();
@@ -51,6 +56,7 @@ public class FollowController {
     }
 
     @GetMapping("/{id}/followers")
+    @Operation(summary = "Список подписчиков пользователя")
     public ResponseEntity<List<PublicUserShortDto>> followers(@PathVariable Long id) {
         if (!this.userRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -59,6 +65,7 @@ public class FollowController {
     }
 
     @GetMapping("/{id}/following")
+    @Operation(summary = "Кого читает пользователь")
     public ResponseEntity<List<PublicUserShortDto>> following(@PathVariable Long id) {
         if (!this.userRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -66,4 +73,3 @@ public class FollowController {
         return ResponseEntity.ok(this.followService.getFollowing(id));
     }
 }
-

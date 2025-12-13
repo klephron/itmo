@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.ticktokcoretest.common.dto.storage.ObjectKeyResponse;
 import ru.itmo.zavar.ticktokcoretest.storage.infra.MinioStorageService;
@@ -18,14 +20,16 @@ import java.io.InputStream;
 
 @Slf4j
 @RestController
-@RequestMapping("/storage")
+@RequestMapping("/internal/storage")
 @RequiredArgsConstructor
+@Tag(name = "Storage", description = "Внутренний фасад над MinIO")
 // MSPLIT: dedicated storage facade for all services
 public class StorageController {
 
     private final VideoObjectStorage storage;
 
     @PostMapping(value = "/processed", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Загрузить processed-видео")
     public ResponseEntity<Void> uploadProcessed(@RequestParam("key") String key, HttpServletRequest request) throws Exception {
         long size = resolveSize(request);
         this.storage.uploadProcessed(key, request.getInputStream(), size);
@@ -33,6 +37,7 @@ public class StorageController {
     }
 
     @GetMapping(value = "/processed", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Получить чанк processed-видео по смещению/длине")
     public ResponseEntity<Resource> openProcessed(@RequestParam("key") String key,
                                                   @RequestHeader("X-Range-Start") long start,
                                                   @RequestHeader("X-Range-Length") long length) throws Exception {
@@ -48,6 +53,7 @@ public class StorageController {
     }
 
     @GetMapping(value = "/processed/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Скачать processed-видео целиком")
     public ResponseEntity<Resource> downloadProcessed(@RequestParam("key") String key) throws Exception {
         InputStream is = this.storage.downloadProcessed(key);
         long size = -1;
@@ -67,12 +73,14 @@ public class StorageController {
     }
 
     @DeleteMapping("/processed")
+    @Operation(summary = "Удалить processed-видео")
     public ResponseEntity<Void> deleteProcessed(@RequestParam("key") String key) throws Exception {
         this.storage.deleteProcessed(key);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/thumbnails", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Загрузить thumbnail")
     public ResponseEntity<ObjectKeyResponse> uploadThumbnail(@RequestParam("key") String key, HttpServletRequest request) throws Exception {
         long size = resolveSize(request);
         String storedKey = this.storage.uploadThumbnail(key, request.getInputStream(), size);
@@ -80,6 +88,7 @@ public class StorageController {
     }
 
     @GetMapping(value = "/thumbnails", produces = MediaType.IMAGE_JPEG_VALUE)
+    @Operation(summary = "Получить thumbnail")
     public ResponseEntity<Resource> openThumbnail(@RequestParam("key") String key) throws Exception {
         InputStream is = this.storage.openThumbnail(key);
         return ResponseEntity.ok()
@@ -88,6 +97,7 @@ public class StorageController {
     }
 
     @PostMapping(value = "/avatars", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Загрузить аватар")
     public ResponseEntity<ObjectKeyResponse> uploadAvatar(@RequestParam("userId") Long userId,
                                                           @RequestHeader(value = HttpHeaders.CONTENT_TYPE, required = false) String contentType,
                                                           HttpServletRequest request) throws Exception {
@@ -98,6 +108,7 @@ public class StorageController {
     }
 
     @GetMapping(value = "/avatars", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Скачать аватар")
     public ResponseEntity<Resource> downloadAvatar(@RequestParam("key") String key) throws Exception {
         InputStream is = this.storage.downloadAvatar(key);
         return ResponseEntity.ok()

@@ -14,7 +14,7 @@ import java.util.List;
 public interface FileMetadataToPublicUserVideoMapper {
 
     @Mapping(target = "thumbnailUrl",
-            expression = "java(\"/streaming/video/thumbnail/\" + file.getUuid())")
+            expression = "java(\"/api/streaming/video/thumbnail/\" + file.getUuid())")
     @Mapping(target = "uploadedAt",
             expression = "java(file.getUploadedAt() != null ? "
                     + "file.getUploadedAt().toInstant(ZoneOffset.UTC) : null)")
@@ -22,4 +22,3 @@ public interface FileMetadataToPublicUserVideoMapper {
 
     List<PublicUserVideoDto> toDto(List<FileMetadataEntity> files);
 }
-

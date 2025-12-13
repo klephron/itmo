@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.ticktokcoretest.auth.dto.request.LoginRequest;
 import ru.itmo.zavar.ticktokcoretest.auth.dto.request.RegisterRequest;
 import ru.itmo.zavar.ticktokcoretest.auth.dto.response.AuthResponse;
@@ -19,12 +21,14 @@ import ru.itmo.zavar.ticktokcoretest.user.UserRepository;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "Регистрация, логин, текущий пользователь")
 public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
 
     @PostMapping("/register")
+    @Operation(summary = "Регистрация нового пользователя")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest req) {
         UserEntity user = this.authService.register(req.username(), req.email(), req.displayName(), req.password());
         String token = this.authService.login(req.username(), req.password());
@@ -40,6 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Логин по username/password")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
         String token = this.authService.login(req.username(), req.password());
         UserEntity user = this.userRepository.findByUsername(req.username()).orElseThrow();
@@ -55,6 +60,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Получить данные текущего пользователя")
     public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal SecurityBeans.UserPrincipal userPrincipal) {
         if (userPrincipal == null) {
             return ResponseEntity.status(401).build();
