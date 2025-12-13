@@ -30,15 +30,18 @@ nginx -c $(pwd)/nginx.conf -e $(pwd)/nginx.log
 ```
 
 > IMPORTANT!
+>
 > 1. Update `nginx.conf` paths if needed. Current project prefix is `/home/studs/s312563/works/mpi`.
 > 2. Ensure `nginx/temp` directory exists.
 
 ## Tunneling
 
 ```sh
-ssh -p 443 -R0:localhost:762 a.pinggy.io
+ssh -p 443 -R0:localhost:7621 a.pinggy.io
 ```
 
+> None of these work now, as external network is down:
+>
 > - `ngrok` ip is in blacklist
 > - `vk-tunnel` doesn't work
 > - `localtunnel` is not supported by FreeBSD
@@ -56,7 +59,7 @@ https://rnvlk-77-234-196-15.a.free.pinggy.link
 Build application:
 
 ```sh
-./gradlew build
+./gradlew build -x test -x spotlessJavaCheck -x spotlessYamlCheck
 ```
 
 Install application:
@@ -68,7 +71,14 @@ scp -P 2222 build/libs/backend-0.1-all-optimized.jar s312563@helios:/home/studs/
 Start application on helios:
 
 ```sh
-DATASOURCES_DEFAULT_URL="jdbc:postgresql://localhost:5432/studs" DATASOURCES_DEFAULT_USERNAME="<username>" DATASOURCES_DEFAULT_PASSWORD="<password>" MICRONAUT_SERVER_PORT=7622 java -jar backend-0.1-all-optimized.jar
+DATASOURCES_DEFAULT_URL="$DATASOURCES_DEFAULT_URL" \
+DATASOURCES_DEFAULT_USERNAME="$DATASOURCES_DEFAULT_USERNAME" \
+DATASOURCES_DEFAULT_PASSWORD="$DATASOURCES_DEFAULT_PASSWORD" \
+DATASOURCES_CBD_URL="$DATASOURCES_CBD_URL" \
+DATASOURCES_CBD_USERNAME="$DATASOURCES_CBD_USERNAME" \
+DATASOURCES_CBD_PASSWORD="$DATASOURCES_CBD_PASSWORD" \
+MICRONAUT_SERVER_PORT=7622 \
+java -jar backend-0.1-all-optimized.jar
 ```
 
 Native builds are currently not supported.
@@ -89,5 +99,5 @@ And on helios:
 ```sh
 pwd
 /home/studs/s312563/works/mpi
-[s312563@helios ~/works/mpi]$ tar xvf frontend.tar -C nginx/html/
+tar xvf frontend.tar -C nginx/html/
 ```
