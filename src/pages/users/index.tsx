@@ -3,6 +3,7 @@ import { useClient } from "@state/client";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import styles from "./index.module.scss";
+import { hasPermission, usePermissions } from "@state/permissions";
 
 type UserEntry = {
   id: number;
@@ -20,12 +21,24 @@ function infoToMap(infos: UserInfoResponse[]) {
   return new Map(infos.map((info) => [info.id, { id: info.id, username: info.username }]));
 }
 
-function Table() {
+function Table({
+  canRead,
+  canViewDebug,
+  reloadKey,
+}: {
+  canRead: boolean;
+  canViewDebug: boolean;
+  reloadKey: number;
+}) {
   const client = useClient((state) => state.client);
   const [users, usersSet] = useState(null as Map<number, UserEntry> | null);
   const [usersLoaded, usersLoadedSet] = useState(false);
 
   useEffect(() => {
+    if (!canRead) {
+      usersSet(null);
+      return;
+    }
     client.users
       .getUsers()
       .then((r) => {
@@ -33,7 +46,7 @@ function Table() {
         usersLoadedSet(false);
       })
       .catch(console.error);
-  }, [client]);
+  }, [client, canRead, reloadKey]);
 
   useEffect(() => {
     if (!users || usersLoaded) {
@@ -63,6 +76,14 @@ function Table() {
       usersSet(users1);
     })();
   }, [users]);
+
+  if (!canRead) {
+    return (
+      <span className={styles.hint}>
+        Нет прав на просмотр пользователей{canViewDebug ? " (USERS:*:READ)" : ""}
+      </span>
+    );
+  }
 
   return (
     <table className={styles.table}>
@@ -96,10 +117,162 @@ function Table() {
 }
 
 export default function UsersPage() {
+  const client = useClient((state) => state.client);
+  const permissions = usePermissions((state) => state.permissions);
+  const canViewDebug = !!permissions && hasPermission("LOGS:*:READ");
+  const canRead = !!permissions && hasPermission("USERS:*:READ");
+  const canAdd = !!permissions && hasPermission("USERS:*:ADD");
+  const canListPositions = !!permissions && hasPermission("USERS:*:LIST_SYSTEM_PERMISSIONS");
+
+  const [reloadKey, reloadKeySet] = useState(0);
+  const [showCreate, showCreateSet] = useState(false);
+  const [creating, creatingSet] = useState(false);
+  const [createError, createErrorSet] = useState<string | null>(null);
+  const [createOk, createOkSet] = useState<string | null>(null);
+
+  const [positions, positionsSet] = useState<string[]>([]);
+  const [positionsLoaded, positionsLoadedSet] = useState(false);
+
+  const [username, usernameSet] = useState("");
+  const [password, passwordSet] = useState("");
+  const [name, nameSet] = useState("");
+  const [surname, surnameSet] = useState("");
+  const [patronymic, patronymicSet] = useState("");
+  const [primaryPosition, primaryPositionSet] = useState("");
+
+  useEffect(() => {
+    if (!showCreate || !canAdd || !canListPositions || positionsLoaded) return;
+    client.users
+      .getPrimaryPositions()
+      .then((r) => {
+        const normalized = r.data.map((p: any) =>
+          typeof p === "string" ? p : p.value ?? p.label ?? String(p)
+        );
+        positionsSet(normalized);
+        positionsLoadedSet(true);
+        if (!primaryPosition && normalized.length) {
+          primaryPositionSet(normalized[0]);
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+        positionsLoadedSet(true);
+      });
+  }, [showCreate, canAdd, canListPositions, client, positionsLoaded, primaryPosition]);
+
+  async function submitCreate() {
+    createOkSet(null);
+    createErrorSet(null);
+    if (!canAdd) {
+      createErrorSet("Нет прав на создание пользователя");
+      return;
+    }
+    if (!username.trim() || !password.trim() || !name.trim() || !surname.trim() || !primaryPosition.trim()) {
+      createErrorSet("username, password, name, surname, primaryPosition обязательны");
+      return;
+    }
+    creatingSet(true);
+    try {
+      await client.users.addUser({
+        username: username.trim(),
+        password: password,
+        name: name.trim(),
+        surname: surname.trim(),
+        patronymic: patronymic.trim() ? patronymic.trim() : null,
+        primaryPosition: primaryPosition.trim(),
+      });
+      createOkSet("Ok");
+      usernameSet("");
+      passwordSet("");
+      nameSet("");
+      surnameSet("");
+      patronymicSet("");
+      primaryPositionSet(positions[0] ?? "");
+      reloadKeySet((v) => v + 1);
+    } catch (e: any) {
+      const msg =
+        e?.rawBody ||
+        e?.error?._embedded?.errors?.map((er: any) => er.message).join("\n") ||
+        (typeof e?.error === "string" ? e.error : null) ||
+        e?.error?.message ||
+        e?.message ||
+        "Failed to create user";
+      createErrorSet(msg);
+    } finally {
+      creatingSet(false);
+    }
+  }
+
   return (
     <div className={styles.root}>
       <h2>Users</h2>
-      <Table />
+      <div className={styles.menu}>
+        <button type="button" onClick={() => showCreateSet((v) => !v)} disabled={!canAdd}>
+          {showCreate ? "Close" : "Create"}
+        </button>
+        {!canAdd ? (
+          <span className={styles.hint}>
+            Нет прав на создание пользователя{canViewDebug ? " (USERS:*:ADD)" : ""}
+          </span>
+        ) : null}
+      </div>
+
+      {showCreate ? (
+        <div className={styles.card}>
+          <h3>Create user</h3>
+          {canAdd && !canListPositions ? (
+            <div className={styles.hint}>
+              Нет прав на список должностей{canViewDebug ? " (USERS:*:LIST_SYSTEM_PERMISSIONS)" : ""}.
+              PrimaryPosition нужно указать вручную (enum value).
+            </div>
+          ) : null}
+          <div className={styles.form}>
+            <label>
+              Username
+              <input value={username} onChange={(e) => usernameSet(e.target.value)} />
+            </label>
+            <label>
+              Password
+              <input value={password} type="password" onChange={(e) => passwordSet(e.target.value)} />
+            </label>
+            <label>
+              Name
+              <input value={name} onChange={(e) => nameSet(e.target.value)} />
+            </label>
+            <label>
+              Surname
+              <input value={surname} onChange={(e) => surnameSet(e.target.value)} />
+            </label>
+            <label>
+              Patronymic
+              <input value={patronymic} onChange={(e) => patronymicSet(e.target.value)} />
+            </label>
+            <label>
+              Primary position
+              {canListPositions && positions.length ? (
+                <select value={primaryPosition} onChange={(e) => primaryPositionSet(e.target.value)}>
+                  {positions.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input value={primaryPosition} onChange={(e) => primaryPositionSet(e.target.value)} />
+              )}
+            </label>
+            <div className={styles.actions}>
+              <button type="button" onClick={submitCreate} disabled={!canAdd || creating}>
+                Submit
+              </button>
+              {createOk ? <span>{createOk}</span> : null}
+              {createError ? <span className={styles.error}>{createError}</span> : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <Table canRead={canRead} canViewDebug={canViewDebug} reloadKey={reloadKey} />
     </div>
   );
 }

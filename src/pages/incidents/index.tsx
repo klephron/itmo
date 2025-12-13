@@ -4,6 +4,7 @@ import { useClient } from "@state/client";
 import { IncidentMainInfoDto } from "@api/gen/data-contracts";
 import { Link, useNavigate } from "react-router";
 import { hasPermission, usePermissions } from "@state/permissions";
+import { formatUtc } from "@util";
 
 type IncidentEntry = {
   id: number;
@@ -108,10 +109,10 @@ function Table() {
                 {incident.locationLatitude}, {incident.locationLongitude},{" "}
                 {incident.locationAltitude}
               </td>
-              <td>{new Date(incident.estimatedTime).toLocaleString()}</td>
+              <td>{formatUtc(incident.estimatedTime)}</td>
               <td>{incident.waitForAssignment ? "Yes" : "No"}</td>
-              <td>{incident.createdAt ? new Date(incident.createdAt).toLocaleString() : ""}</td>
-              <td>{incident.updatedAt ? new Date(incident.updatedAt).toLocaleString() : ""}</td>
+              <td>{incident.createdAt ? formatUtc(incident.createdAt) : ""}</td>
+              <td>{incident.updatedAt ? formatUtc(incident.updatedAt) : ""}</td>
               <td>
                 {incident.caseId === null ? (
                   ""

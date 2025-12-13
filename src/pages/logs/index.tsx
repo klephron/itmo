@@ -3,6 +3,7 @@ import { hasPermission, usePermissions } from "@state/permissions";
 import { useEffect, useMemo, useState } from "react";
 import { LogEntryDto, PageLogEntryDto } from "@api/gen/data-contracts";
 import styles from "./index.module.scss";
+import { datetimeLocalToUtcIso, formatUtc } from "@util";
 
 type Filters = {
   level: string;
@@ -15,12 +16,7 @@ type Filters = {
 };
 
 function formatDate(value?: string | null) {
-  if (!value) return "";
-  try {
-    return new Date(value).toLocaleString();
-  } catch {
-    return value;
-  }
+  return formatUtc(value);
 }
 
 function toInputValue(value?: string) {
@@ -33,10 +29,7 @@ function toInputValue(value?: string) {
 }
 
 function toIso(value?: string) {
-  if (!value) return undefined;
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return undefined;
-  return d.toISOString();
+  return datetimeLocalToUtcIso(value);
 }
 
 export default function LogsPage() {
@@ -127,7 +120,7 @@ export default function LogsPage() {
           />
         </label>
         <label>
-          From (ISO)
+          From
           <input
             type="datetime-local"
             value={filters.from}
@@ -136,7 +129,7 @@ export default function LogsPage() {
           />
         </label>
         <label>
-          To (ISO)
+          To
           <input
             type="datetime-local"
             value={filters.to}

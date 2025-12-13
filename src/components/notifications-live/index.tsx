@@ -6,6 +6,7 @@ import { useNotifications } from "@state/notifications";
 import { useToken } from "@state/token";
 import { useUser } from "@state/user";
 import styles from "./index.module.scss";
+import { formatUtc } from "@util";
 
 function buildWsUrl(baseUrl?: string, token?: string) {
   if (!baseUrl || !token) {
@@ -160,7 +161,7 @@ export default function NotificationsLive() {
     <div className={styles.toast}>
       <div className={styles.header}>
         <div className={styles.pill}>Новое уведомление</div>
-        <span className={styles.time}>{new Date(incoming.createdAt).toLocaleString()}</span>
+        <span className={styles.time}>{formatUtc(incoming.createdAt)}</span>
       </div>
       <div className={styles.title}>{incoming.title}</div>
       {incoming.description ? (

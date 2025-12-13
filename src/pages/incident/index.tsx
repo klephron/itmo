@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router";
 import { catchResponse } from "@util";
 import { hasPermission, usePermissions } from "@state/permissions";
 import { useUser } from "@state/user";
+import { formatUtc } from "@util";
 
 function Info({ id }: { id: number }) {
   const client = useClient((state) => state.client);
@@ -150,7 +151,7 @@ function Info({ id }: { id: number }) {
         </div>
         <div>
           <h3>Created At (UTC)</h3>
-          <span>{new Date(incident.createdAt).toLocaleString()}</span>
+          <span>{formatUtc(incident.createdAt)}</span>
         </div>
         <div>
           <h3>Updator</h3>
@@ -166,7 +167,7 @@ function Info({ id }: { id: number }) {
         </div>
         <div>
           <h3>Updated At (UTC)</h3>
-          <span>{new Date(incident.updatedAt).toLocaleString()}</span>
+          <span>{formatUtc(incident.updatedAt)}</span>
         </div>
         <div>
           <h3>Case</h3>
@@ -182,7 +183,7 @@ function Info({ id }: { id: number }) {
         </div>
         <div>
           <h3>Incident Time</h3>
-          <span>{new Date(incident.estimatedTime).toLocaleString()}</span>
+          <span>{formatUtc(incident.estimatedTime)}</span>
         </div>
         <div>
           <h3>Wait For Assignment</h3>

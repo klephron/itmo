@@ -52,3 +52,28 @@ export function exportToFile(content: string | Blob, type: string, filename: str
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+export function formatUtc(value?: string | number | Date | null) {
+  if (value === null || value === undefined) return "";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, { timeZone: "UTC" });
+}
+
+export function formatUtcDate(value?: string | number | Date | null) {
+  if (value === null || value === undefined) return "";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { timeZone: "UTC" });
+}
+
+/**
+ * `datetime-local` input value -> ISO string in UTC.
+ * Notes: browser returns a string without timezone, so we treat it as UTC by appending `Z`.
+ */
+export function datetimeLocalToUtcIso(value?: string | null) {
+  if (!value) return undefined;
+  const d = new Date(`${value}Z`);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d.toISOString();
+}

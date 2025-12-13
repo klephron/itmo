@@ -5,7 +5,7 @@ import { useClient } from "@state/client";
 import { useToken } from "@state/token";
 import { ClueDto, ClueMetadata, FileMetaResponse } from "@api/gen/data-contracts";
 import { Route } from "~react-router/src/pages/clue/+types";
-import { exportToFile } from "@util";
+import { exportToFile, formatUtc } from "@util";
 
 type Attachment = {
   uri: string;
@@ -151,7 +151,7 @@ export default function CluePage({ params }: Route.ComponentProps) {
       <div>
         <h3>Created / Updated</h3>
         <span>
-          {new Date(clue.createdAt).toLocaleString()} / {new Date(clue.updatedAt).toLocaleString()}
+          {formatUtc(clue.createdAt)} / {formatUtc(clue.updatedAt)}
         </span>
       </div>
 

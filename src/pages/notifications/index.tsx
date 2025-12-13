@@ -5,6 +5,7 @@ import styles from "./index.module.scss";
 import Checkbox from "@components/checkbox";
 import { useEffect, useState } from "react";
 import { NotificationDto, NotificationsControllerStatus } from "@api/gen/data-contracts";
+import { datetimeLocalToUtcIso, formatUtc } from "@util";
 
 function sliceRemaining(text: string | null | undefined) {
   if (!text) return "";
@@ -21,10 +22,7 @@ function toInputValue(value?: string) {
 }
 
 function toIso(value?: string) {
-  if (!value) return undefined;
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return undefined;
-  return d.toISOString();
+  return datetimeLocalToUtcIso(value);
 }
 
 function UnreadTable({ descriptionMax }: { descriptionMax: number }) {
@@ -54,7 +52,7 @@ function UnreadTable({ descriptionMax }: { descriptionMax: number }) {
                 <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
               </td>
               <td>{sliceRemaining(notification.description)}</td>
-              <td>{new Date(notification.createdAt).toLocaleString()}</td>
+              <td>{formatUtc(notification.createdAt)}</td>
               <td>
                 <Checkbox
                   isChecked={!!notification.readAt}
@@ -156,8 +154,8 @@ function Search({ descriptionMax }: { descriptionMax: number }) {
                 <Link to={`/notifications/${notification.id}`}>{notification.title}</Link>
               </td>
               <td>{sliceRemaining(notification.description)}</td>
-              <td>{new Date(notification.createdAt).toLocaleString()}</td>
-              <td>{notification.readAt ? new Date(notification.readAt).toLocaleString() : "-"}</td>
+              <td>{formatUtc(notification.createdAt)}</td>
+              <td>{notification.readAt ? formatUtc(notification.readAt) : "-"}</td>
             </tr>
           ))}
         </tbody>

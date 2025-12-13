@@ -21,7 +21,7 @@ import {
   UserDto,
 } from "@api/gen/data-contracts";
 import { Link, useNavigate } from "react-router";
-import { exportToFile } from "@util";
+import { exportToFile, formatUtc, formatUtcDate } from "@util";
 import { hasPermission, usePermissions } from "@state/permissions";
 import { useUser } from "@state/user";
 import { useToken } from "@state/token";
@@ -801,7 +801,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
     clues: ClueDto[]
   ) {
     let content = "";
-    content += `# Отчет №${template.id} о деле №${caze.id} от ${new Date(template.updatedAt).toLocaleDateString()}\n\n`;
+    content += `# Отчет №${template.id} о деле №${caze.id} от ${formatUtcDate(template.updatedAt)}\n\n`;
 
     content += "## Участники дела\n\n";
 
@@ -1439,7 +1439,7 @@ function Case({ id }: { id: number }) {
         </div>
         <div>
           <h3>Updated At (UTC)</h3>
-          <span>{new Date(caze.updatedAt).toLocaleString()}</span>
+          <span>{formatUtc(caze.updatedAt)}</span>
         </div>
         <div>
           <h3>Updator</h3>
@@ -1455,7 +1455,7 @@ function Case({ id }: { id: number }) {
         </div>
         <div>
           <h3>Created At (UTC)</h3>
-          <span>{new Date(caze.createdAt).toLocaleString()}</span>
+          <span>{formatUtc(caze.createdAt)}</span>
         </div>
         <div>
           <h3>Status</h3>

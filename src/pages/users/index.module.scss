@@ -5,6 +5,46 @@
   gap: 10px;
 }
 
+.menu {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hint {
+  color: #7f1d1d;
+  font-size: 12px;
+}
+
+.card {
+  border: 1px solid black;
+  padding: 10px;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+
+  label {
+    display: grid;
+    gap: 4px;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.error {
+  color: #7f1d1d;
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
 .table {
   border: 1px solid black;
   border-collapse: collapse;
