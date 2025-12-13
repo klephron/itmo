@@ -37,7 +37,7 @@ nginx -c $(pwd)/nginx.conf -e $(pwd)/nginx.log
 ## Tunneling
 
 ```sh
-ssh -p 443 -R0:localhost:7621 a.pinggy.io
+ssh -p 443 -R0:localhost:7621 free.pinggy.io
 ```
 
 > None of these work now, as external network is down:
@@ -92,6 +92,12 @@ sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://rnvlk-77-234-196-15.a.fre
 pnpm run build
 tar cvf frontend.tar -C build/client .
 scp -P 2222 frontend.tar s312563@helios:/home/studs/s312563/works/mpi
+```
+
+Or if localhost:
+
+```sh
+sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=http://localhost:7621|' .env.production
 ```
 
 And on helios:
