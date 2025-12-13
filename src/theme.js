@@ -9,6 +9,8 @@ const PURPLE_PRIMARY = {
     contrastText: "#ffffff",
 };
 
+export const BOTTOM_NAV_HEIGHT = 64;
+
 export const theme = createTheme({
         colorSchemeSelector: "class",
         colorSchemes: {
@@ -46,7 +48,7 @@ export const theme = createTheme({
             MuiBottomNavigation: {
                 styleOverrides: {
                     root: {
-                        height: 64,
+                        height: BOTTOM_NAV_HEIGHT,
                     },
                 },
             },
