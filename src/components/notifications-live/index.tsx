@@ -16,19 +16,16 @@ function buildWsUrl(baseUrl?: string, token?: string) {
   }
 
   try {
-    // If VITE_WS_URL is set (can be ws/wss/http/https, full path or base), prefer it.
+    // If VITE_WS_URL is set (host/base), always append /ws/notifications and token.
     if (wsOverride) {
-      // If override already includes a protocol, use as-is; otherwise treat as base.
-      const hasProtocol = /^[a-zA-Z]+:\/\//.test(wsOverride);
-      const url = hasProtocol ? new URL(wsOverride) : new URL(wsOverride, baseUrl);
+      const base = new URL(wsOverride);
+      const url = new URL("/ws/notifications", base);
       if (url.protocol === "http:") {
         url.protocol = "ws:";
       } else if (url.protocol === "https:") {
         url.protocol = "wss:";
       }
-      if (!url.searchParams.has("token")) {
-        url.searchParams.set("token", token);
-      }
+      url.searchParams.set("token", token);
       return url.toString();
     }
 
