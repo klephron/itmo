@@ -26,7 +26,7 @@ mpi/
 Start Nginx after installing frontend application in html directory:
 
 ```sh
-nginx -c $(pwd)/nginx.conf -e $(pwd)/nginx.log
+$(cd works/mpi/nginx && nginx -c $(pwd)/nginx.conf -e $(pwd)/nginx.log)
 ```
 
 > IMPORTANT!
@@ -48,9 +48,9 @@ ssh -p 443 -R0:localhost:7621 free.pinggy.io
 
 No installation required. Use server url to build frontend application. For example:
 
-```
-https://rnvlk-77-234-196-15.a.free.pinggy.link
-```
+> ```
+> https://rnvlk-77-234-196-15.a.free.pinggy.link
+> ```
 
 > See Backend and Frontend for additional details.
 
@@ -71,6 +71,8 @@ scp -P 2222 build/libs/backend-0.1-all-optimized.jar s312563@helios:/home/studs/
 Start application on helios:
 
 ```sh
+pushd works/mpi
+
 DATASOURCES_DEFAULT_URL="$DATASOURCES_DEFAULT_URL" \
 DATASOURCES_DEFAULT_USERNAME="$DATASOURCES_DEFAULT_USERNAME" \
 DATASOURCES_DEFAULT_PASSWORD="$DATASOURCES_DEFAULT_PASSWORD" \
@@ -88,7 +90,7 @@ Native builds are currently not supported.
 Use earlier received URL to configure `VITE_SERVER_URL`:
 
 ```sh
-sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://rnvlk-77-234-196-15.a.free.pinggy.link|' .env.production
+sed -i 's|^VITE_SERVER_URL=.*$|https://xgzti-188-243-217-139.a.free.pinggy.link|' .env.production
 pnpm run build
 tar cvf frontend.tar -C build/client .
 scp -P 2222 frontend.tar s312563@helios:/home/studs/s312563/works/mpi
@@ -103,7 +105,7 @@ sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=http://localhost:7621|' .env.prod
 And on helios:
 
 ```sh
-pwd
-/home/studs/s312563/works/mpi
+pushd works/mpi
+
 tar xvf frontend.tar -C nginx/html/
 ```
