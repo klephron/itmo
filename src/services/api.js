@@ -4,8 +4,6 @@ const API_BASE = import.meta.env.VITE_BACKEND_URL ?? "";
  * Универсальный fetch с обработкой ошибок
  */
 async function request(url, options = {}) {
-    console.log("Test");
-
     const opts = {
         headers: {
             "Content-Type": "application/json",
