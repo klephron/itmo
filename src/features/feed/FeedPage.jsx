@@ -2,6 +2,8 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "@/hooks";
 import { api } from "@/services/api.js";
+import { VideoCard } from "@/features/feed/VideoCard.jsx";
+import { BOTTOM_NAV_HEIGHT } from "@/theme.js";
 
 const COLORS = [
     "#ff5252", "#ff9800", "#ffeb3b", "#4caf50", "#00bcd4",
@@ -139,27 +141,57 @@ export const FeedPage = () => {
         return page.content.map((video, index) => ({ ...video, page, indexInPage: index }));
     });
 
+    const windowData = useMemo(() => {
+        if (!videos.length) return { from: 0, items: [] };
+
+        const from = Math.max(activeVideoIndex - PAGE_SIZE, 0);
+        const to = Math.min(activeVideoIndex + PAGE_SIZE + 1, videos.length);
+
+        return { from, items: videos.slice(from, to) };
+    }, [videos, activeVideoIndex]);
+
     return (
-        <>
+        <Box
+            //ref={containerRef}
+            //onMouseDown={onMouseDown}
+            //onMouseUp={onMouseUp}
+            sx={{
+                height: `calc(100dvh - ${BOTTOM_NAV_HEIGHT}px)`,
+                overflowY: "auto",
+                scrollSnapType: "y mandatory",
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": {
+                    display: "none",
+                },
+            }}
+        >
             <Button
+                sx={{ position: "absolute", top: 0, left: 0, }}
                 variant="contained"
                 onClick={prevVideo}
             >
                 Prev video
             </Button>
             <Button
+                sx={{ position: "absolute", top: 0, right: 0, }}
                 variant="contained"
                 onClick={nextVideo}
             >
                 Next video
             </Button>
-            <Stack>
-                {videos?.map(({ page }, index) => (
-                    <div key={index}>
-                        {`${index} (page = ${page.number}, ${activeVideoIndex === index ? "active" : ""})`}
-                    </div>
-                ))}
-            </Stack>
-        </>
+            {windowData.items.map(({ page, uuid }, i) => {
+                const globalIndex = windowData.from + i;
+
+                return (
+                    <VideoCard
+                        key={uuid}
+                        uuid={`${globalIndex} (page=${page.number}, ${
+                            globalIndex === activeVideoIndex ? "active" : ""
+                        })`}
+                        color={COLORS[globalIndex % COLORS.length]}
+                    />
+                );
+            })}
+        </Box>
     );
 };
