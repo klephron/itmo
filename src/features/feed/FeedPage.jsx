@@ -1,7 +1,6 @@
-import { Box, Button } from "@mui/material";
-import { VideoCard } from "./VideoCard.jsx";
-import { BOTTOM_NAV_HEIGHT } from "@/theme.js";
-import { useEffect, useMemo, useRef, useState } from "react";
+/* eslint-disable react-hooks/refs */
+import { Box, Button, Stack, Typography } from "@mui/material";
+import { useMemo, useRef, useState } from "react";
 import { useApi } from "@/hooks";
 import { api } from "@/services/api.js";
 
@@ -11,101 +10,158 @@ const COLORS = [
     "#3f51b5", "#009688", "#8bc34a", "#ffc107", "#f44336",
 ];
 
-const PAGE_SIZE = 2;
+const PAGE_SIZE = 3;
 const DRAG_THRESHOLD = 30;
+const PREFETCH_THRESHOLD = 1;
 
 export const FeedPage = () => {
-    /* ---------- Scroll ---------- */
+    const [pageNum, setPageNum] = useState(0);
+    const { data } = useApi(api.getVideosPage, pageNum, PAGE_SIZE);
 
-    const containerRef = useRef(null);
-    const startY = useRef(0);
-    const wasDragged = useRef(false);
-    const isDragging = useRef(false);
+    const pageCache = useRef({});
+    const pageQueue = useRef([]);
+    const direction = useRef("forward");
 
-    const onMouseDown = (e) => {
-        startY.current = e.clientY;
-        wasDragged.current = false;
-        isDragging.current = true;
-    };
+    const [activePos, setActivePos] = useState({
+        pageNum: 0,
+        indexInPage: 0,
+    });
 
-    const onMouseUp = (e) => {
-        if (!isDragging.current) return;
-        isDragging.current = false;
+    const addPageToQueue = (pageNum) => {
+        const index = pageQueue.current.indexOf(pageNum);
+        if (index !== -1) {
+            pageQueue.current.splice(index, 1);
+        }
 
-        const deltaY = e.clientY - startY.current;
-        const container = containerRef.current;
-        const pageHeight = container.clientHeight;
-
-        if (Math.abs(deltaY) > DRAG_THRESHOLD) {
-            wasDragged.current = true;
-
-            container.scrollBy({
-                top: deltaY > 0 ? -pageHeight : pageHeight,
-                behavior: "smooth",
-            });
+        if (direction.current === "backward") {
+            pageQueue.current.unshift(pageNum);
+        } else {
+            pageQueue.current.push(pageNum);
         }
     };
 
-    /* ---------- Data ---------- */
+    const nextVideo = () => {
+        const activePage = pageCache.current[activePos.pageNum];
+        if (!activePage) return;
 
-    const [pages, setPages] = useState({}); // влияет на UI
-    const [requestedPage, setRequestedPage] = useState(0);
-    const [activeVideo, setActiveVideo] = useState(0);
-    const activePage = Math.floor(activeVideo / PAGE_SIZE)
-    const loadedPagesRef = useRef(new Set()); // не влияет на UI
+        const nextIndexInPage = (
+            activePos.indexInPage === activePage.numberOfElements - 1 ? 0 : activePos.indexInPage + 1
+        );
+        const nextPageNum = (
+            nextIndexInPage !== 0 ? (
+                activePage.number // don't change the page if index got incremented
+            ) : !activePage.last ? (
+                activePage.number + 1 // increment pageNum if current page isn't last
+            ) : (
+                0 // start from first page if current page is last
+            )
+        );
+        const nextPage = pageCache.current[nextPageNum];
 
-    const { data } = useApi(api.getVideosPage, requestedPage, PAGE_SIZE);
-
-    /* ---------- Save page ---------- */
-
-    useEffect(() => {
-        if (!data || !Array.isArray(data.content)) return;
-
-        const page = data.number;
-
-        // guard — без setState
-        if (loadedPagesRef.current.has(page)) return;
-
-        loadedPagesRef.current.add(page);
-
-        setPages((prev) => {
-            const next = { ...prev, [page]: data.content };
-
-            // чистим по activePage
-            const keep = new Set([activePage - 1, activePage, activePage + 1]);
-
-            Object.keys(next).forEach((p) => {
-                if (!keep.has(Number(p))) {
-                    delete next[p];
-                    loadedPagesRef.current.delete(Number(p));
-                }
-            });
-
-            return next;
-        });
-    }, [data, activePage]);
-
-    /* ---------- Flatten ---------- */
-
-    useEffect(() => {
-        if (activeVideo % PAGE_SIZE === PAGE_SIZE - 1) {
-            if (loadedPagesRef.current.has(activePage + 1)) return;
-
-            //console.log(activeVideo)
-
-            setRequestedPage(activePage + 1);
+        direction.current = "forward";
+        if (nextPage.totalPages > 1 && (
+            nextIndexInPage === Math.max(nextPage.numberOfElements - 1 - PREFETCH_THRESHOLD, 0)
+        )) {
+            const prefetchPageNum = !nextPage.last ? nextPage.number + 1 : 0;
+            if (pageCache.current[prefetchPageNum]) {
+                addPageToQueue(prefetchPageNum);
+            } else if (pageNum !== prefetchPageNum) {
+                setPageNum(prefetchPageNum);
+            }
         }
-    }, [activePage, activeVideo]);
 
-    const videos = useMemo(() => {
-        return Object.keys(pages)
-            .map(Number)
-            .sort((a, b) => a - b)
-            .flatMap((page) => pages[page]);
-    }, [pages]);
+        setActivePos({ pageNum: nextPageNum, indexInPage: nextIndexInPage });
+    };
 
-    console.log(activePage, activeVideo, Object.keys(pages));
+    const prevVideo = () => {
+        const activePage = pageCache.current[activePos.pageNum];
+        if (!activePage) return;
 
+        const prevPageNum = (
+            activePos.indexInPage !== 0 ? (
+                activePage.number // don't change the page
+            ) : !activePage.first ? (
+                activePage.number - 1 // decrement pageNum if current page isn't first
+            ) : (
+                activePage.totalPages - 1 // start from last page if current page is first
+            )
+        );
+        const prevPage = pageCache.current[prevPageNum];
+        if (!prevPage) return; // handle initial state
+
+        const prevIndexInPage = (
+            activePos.indexInPage !== 0 ? activePos.indexInPage - 1 : prevPage.numberOfElements - 1
+        );
+
+        direction.current = "backward";
+        if (prevPage.totalPages > 1 && (
+            prevIndexInPage === Math.min(PREFETCH_THRESHOLD, prevPage.numberOfElements - 1)
+        )) {
+            const prefetchPageNum = !prevPage.first ? prevPage.number - 1 : activePage.totalPages - 1;
+            if (pageCache.current[prefetchPageNum]) {
+                addPageToQueue(prefetchPageNum);
+            } else if (pageNum !== prefetchPageNum) {
+                setPageNum(prefetchPageNum);
+            }
+        }
+
+        setActivePos({ pageNum: prevPageNum, indexInPage: prevIndexInPage });
+    };
+
+    const activeVideoIndex = useMemo(() => {
+        let offset = 0;
+        for (const p of pageQueue.current) {
+            const page = pageCache.current[p];
+            if (!page) continue;
+
+            if (p === activePos.pageNum) {
+                return offset + activePos.indexInPage;
+            }
+            offset += page.content.length;
+        }
+        return 0;
+    }, [activePos]);
+
+    if (data && !pageCache.current[data.number]) {
+        pageCache.current[data.number] = data;
+        addPageToQueue(data.number);
+    }
+
+    const videos = pageQueue.current.flatMap((pageNum) => {
+        const page = pageCache.current[pageNum];
+        if (!page) return [];
+        return page.content.map((video, index) => ({
+            ...video,
+            page,
+            indexInPage: index,
+        }));
+    });
+
+    return (
+        <>
+            <Button
+                variant="contained"
+                onClick={prevVideo}
+            >
+                Prev video
+            </Button>
+            <Button
+                variant="contained"
+                onClick={nextVideo}
+            >
+                Next video
+            </Button>
+            <Stack>
+                {videos?.map(({ page }, index) => (
+                    <div key={index}>
+                        {`${index} (page = ${page.number}, ${activeVideoIndex === index ? "active" : ""})`}
+                    </div>
+                ))}
+            </Stack>
+        </>
+    );
+
+    /*
     return (
         <Box
             ref={containerRef}
@@ -135,4 +191,5 @@ export const FeedPage = () => {
             ))}
         </Box>
     );
+    */
 };
