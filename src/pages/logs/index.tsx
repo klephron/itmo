@@ -120,7 +120,7 @@ export default function LogsPage() {
           />
         </label>
         <label>
-          From
+          From (ISO)
           <input
             type="datetime-local"
             value={filters.from}
@@ -129,7 +129,7 @@ export default function LogsPage() {
           />
         </label>
         <label>
-          To
+          To (ISO)
           <input
             type="datetime-local"
             value={filters.to}

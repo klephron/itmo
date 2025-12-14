@@ -8,15 +8,42 @@ import { useUser } from "@state/user";
 import styles from "./index.module.scss";
 import { formatUtc } from "@util";
 
+const wsOverride = import.meta.env.VITE_WS_URL?.trim();
+
 function buildWsUrl(baseUrl?: string, token?: string) {
-  if (!baseUrl || !token) {
+  if (!token) {
     return null;
   }
 
-  const url = new URL("/ws/notifications", baseUrl);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  url.searchParams.set("token", token);
-  return url.toString();
+  try {
+    // If VITE_WS_URL is set (can be ws/wss/http/https, full path or base), prefer it.
+    if (wsOverride) {
+      // If override already includes a protocol, use as-is; otherwise treat as base.
+      const hasProtocol = /^[a-zA-Z]+:\/\//.test(wsOverride);
+      const url = hasProtocol ? new URL(wsOverride) : new URL(wsOverride, baseUrl);
+      if (url.protocol === "http:") {
+        url.protocol = "ws:";
+      } else if (url.protocol === "https:") {
+        url.protocol = "wss:";
+      }
+      if (!url.searchParams.has("token")) {
+        url.searchParams.set("token", token);
+      }
+      return url.toString();
+    }
+
+    if (!baseUrl) {
+      return null;
+    }
+
+    const url = new URL("/ws/notifications", baseUrl);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    url.searchParams.set("token", token);
+    return url.toString();
+  } catch (e) {
+    console.error("Failed to build WS url", e);
+    return null;
+  }
 }
 
 function pickId(message: string) {
@@ -107,17 +134,31 @@ export default function NotificationsLive() {
     };
 
     const connect = () => {
+      if (import.meta.env.DEV) {
+        console.log("[notifications-live] connecting", wsUrl);
+      }
       ws = new WebSocket(wsUrl);
 
       ws.onmessage = (event) => {
         handlePayload(event.data);
       };
+      ws.onopen = () => {
+        if (import.meta.env.DEV) {
+          console.log("[notifications-live] ws open");
+        }
+      };
       ws.onclose = () => {
         if (!closed) {
+          if (import.meta.env.DEV) {
+            console.log("[notifications-live] ws closed, reconnect in 5s");
+          }
           reconnectTimer = setTimeout(connect, 5000);
         }
       };
-      ws.onerror = () => {
+      ws.onerror = (event) => {
+        if (import.meta.env.DEV) {
+          console.log("[notifications-live] ws error", event);
+        }
         ws?.close();
       };
     };
