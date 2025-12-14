@@ -10,6 +10,7 @@ const COLORS = [
 ];
 
 const PAGE_SIZE = 3;
+const QUEUE_SIZE = 3;
 const DRAG_THRESHOLD = 30;
 const PREFETCH_THRESHOLD = 1;
 
@@ -28,8 +29,18 @@ export const FeedPage = () => {
 
         directions.current.delete(page.number);
         setPageQueue((prev) => {
-            const next = [...prev.filter(p => p.number !== page.number)];
-            return direction === "backward" ? [page, ...next] : [...next, page];
+            const filtered = prev.filter((p) => p.number !== page.number);
+            const next = direction === "backward" ? (
+                [page, ...filtered.slice(0, QUEUE_SIZE - 1)] // unshift + cut
+            ) : (
+                [...filtered.slice(-(QUEUE_SIZE - 1)), page] // cut + push
+            );
+
+            // evict cut pages from cache (Set for extra reliability)
+            const nextNumbers = new Set(next.map((p) => p.number));
+            prev.filter((p) => !nextNumbers.has(p.number)).forEach((p) => delete pageCache.current[p.number])
+
+            return next;
         });
     }, []);
 
