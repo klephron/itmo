@@ -136,19 +136,17 @@ Native builds are currently not supported.
 
 ## Frontend
 
-Use earlier received URL to configure `VITE_SERVER_URL`:
+Use earlier received URL to configure `VITE_SERVER_URL`, `VITE_WS_URL`:
 
 ```sh
-sed -i 's|^VITE_SERVER_URL=.*$|https://zmsct-188-243-217-139.a.free.pinggy.link|' .env.production
+sed -i '
+  s|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=https://zmsct-188-243-217-139.a.free.pinggy.link|
+  s|^VITE_WS_URL=.*$|VITE_WS_URL=wss://zmsct-188-243-217-139.a.free.pinggy.link|
+' .env.production
+
 pnpm run build
 tar cvf frontend.tar -C build/client .
 scp -P 2222 frontend.tar s312563@helios:/home/studs/s312563/works/mpi
-```
-
-Or if localhost:
-
-```sh
-sed -i 's|^VITE_SERVER_URL=.*$|VITE_SERVER_URL=http://localhost:7621|' .env.production
 ```
 
 And on helios:
