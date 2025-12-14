@@ -27,6 +27,11 @@ import {
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
+export type PermissionRequest = {
+  permission: string;
+  reason?: string | null;
+};
+
 export class Users<
   SecurityDataType = unknown,
 > extends HttpClient<SecurityDataType> {
@@ -148,6 +153,24 @@ export class Users<
       method: "GET",
       secure: true,
       format: "json",
+      ...params,
+    });
+  /**
+   * @description Отправляет запрос на выдачу прав, уведомляя обладателей USERS:*:UPDATE
+   *
+   * @tags users
+   * @name RequestPermission
+   * @summary Запросить право
+   * @request POST:/api/users/permissions/request
+   * @secure
+   */
+  requestPermission = (data: PermissionRequest, params: RequestParams = {}) =>
+    this.request<void, any>({
+      path: `/api/users/permissions/request`,
+      method: "POST",
+      body: data,
+      secure: true,
+      type: ContentType.Json,
       ...params,
     });
   /**

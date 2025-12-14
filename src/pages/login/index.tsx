@@ -15,8 +15,16 @@ export default function LoginPage() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, errorSet] = useState<string | null>(null);
+  const [loading, loadingSet] = useState(false);
 
   function login() {
+    errorSet(null);
+    if (!username.trim() || !password.trim()) {
+      errorSet("Username and password are required");
+      return;
+    }
+    loadingSet(true);
     client.auth
       .login(
         {
@@ -44,14 +52,14 @@ export default function LoginPage() {
         navigate("/");
       })
       .catch(async (e) => {
-        switch (e.status) {
-          case 401:
-            alert("Login failed");
-            break;
-          default:
-            alert(await e);
+        if (e?.status === 401) {
+          errorSet("Invalid username or password");
+          return;
         }
-      });
+        const body = typeof e?.error === "string" ? e.error : e?.rawBody;
+        errorSet(body || e?.message || "Login failed");
+      })
+      .finally(() => loadingSet(false));
   }
 
   return (
@@ -72,9 +80,11 @@ export default function LoginPage() {
               e.preventDefault();
               login();
             }}
+            disabled={loading}
           >
-            Login
+            {loading ? "Signing in..." : "Login"}
           </button>
+          {error ? <div className={styles.error}>{error}</div> : null}
         </form>
       </div>
     </>

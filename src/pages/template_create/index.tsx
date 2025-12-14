@@ -232,7 +232,7 @@ function buildMetadata() {
             });
           } catch (e: any) {
             console.error("Auto-upload template file failed", e);
-            errorSet(e?.message || "Не удалось загрузить шаблон в ЦБД");
+            errorSet(e?.message || "Failed to upload template to CDB");
           }
         }
         navigate(`/cases/${r.data.relatedCaseId}`);

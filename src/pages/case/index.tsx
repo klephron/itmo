@@ -25,7 +25,7 @@ import { exportToFile, formatUtc, formatUtcDate } from "@util";
 import { hasPermission, usePermissions } from "@state/permissions";
 import { useUser } from "@state/user";
 import { useToken } from "@state/token";
-import { useToken } from "@state/token";
+import { PermissionRequestHint } from "@components/permission-request";
 
 type UserEntry = {
   id: number;
@@ -259,8 +259,84 @@ function Clues({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePermis
     (ClueMainInfoDto & { description?: string | null; metadata?: ClueMetadata | null })[] | null
   >(null);
   const [previewMap, previewMapSet] = useState<Record<string, string>>({});
+  const [fileNames, fileNamesSet] = useState<Record<string, string>>({});
   const authHeader =
     token.present && token.accessToken ? `${token.tokenType} ${token.accessToken}` : undefined;
+
+  function filenameFromUri(uri: string) {
+    try {
+      const url = new URL(uri, "http://dummy");
+      const parts = url.pathname.split("/").filter(Boolean);
+      // drop trailing /inline or /download to avoid showing it as filename
+      const cleaned =
+        parts.length > 1 && (parts[parts.length - 1] === "inline" || parts[parts.length - 1] === "download")
+          ? parts.slice(0, -1)
+          : parts;
+      const last = cleaned.pop();
+      return last && last !== "files" ? last : "file";
+    } catch {
+      const parts = uri.split("/").filter(Boolean);
+      const cleaned =
+        parts.length > 1 && (parts[parts.length - 1] === "inline" || parts[parts.length - 1] === "download")
+          ? parts.slice(0, -1)
+          : parts;
+      const last = cleaned.pop();
+      return last && last !== "files" ? last : "file";
+    }
+  }
+
+  function extractFileId(uri: string) {
+    try {
+      const cleaned = uri.replace(/\/(inline|download)\/?$/i, "");
+      const bySlash = cleaned.split("/").filter(Boolean);
+      // if path contains "files/<uuid>"
+      const idx = bySlash.findIndex((p) =>
+        /^[0-9a-fA-F-]{36}$/.test(p)
+      );
+      if (idx >= 0) {
+        return bySlash[idx];
+      }
+      // if just uuid
+      if (/^[0-9a-fA-F-]{36}$/.test(cleaned)) {
+        return cleaned;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+
+  useEffect(() => {
+    if (!clues) return;
+    const uris: string[] = [];
+    clues.forEach((clue) => {
+      const meta = clue.metadata as ClueMetadata | undefined;
+      if (!meta) return;
+      uris.push(...(meta.imageUris ?? []));
+      uris.push(...(meta.reportUris ?? []));
+      uris.push(...(meta.videoUris ?? []));
+    });
+    uris.forEach((uri) => {
+      if (fileNames[uri]) return;
+      const id = extractFileId(uri);
+      if (!id) return;
+      const metaUrl = client.baseUrl ? `${client.baseUrl}/api/files/${id}/meta` : `/api/files/${id}/meta`;
+      // set fallback immediately
+      fileNamesSet((prev) => ({ ...prev, [uri]: filenameFromUri(uri) }));
+      fetch(metaUrl, {
+        headers: authHeader ? { Authorization: authHeader } : undefined,
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((meta) => {
+          if (meta?.filename) {
+            fileNamesSet((prev) => ({ ...prev, [uri]: meta.filename }));
+          }
+        })
+        .catch(() => {
+          fileNamesSet((prev) => ({ ...prev, [uri]: "Loading error" }));
+        });
+    });
+  }, [clues, client.baseUrl, authHeader, fileNames]);
 
   useEffect(() => {
     client.cases
@@ -324,7 +400,7 @@ function Clues({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePermis
       window.open(obj, "_blank");
     } catch (e) {
       console.error(e);
-      alert("Не удалось открыть файл");
+      alert("Failed to open file");
     }
   }
 
@@ -339,7 +415,7 @@ function Clues({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePermis
       exportToFile(blob, blob.type || "application/octet-stream", filename || "file");
     } catch (e) {
       console.error(e);
-      alert("Не удалось скачать файл");
+      alert("Failed to download file");
     }
   }
 
@@ -356,9 +432,12 @@ function Clues({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePermis
             Create
           </button>
           {!perms.clueAdd ? (
-            <span className={styles.hint}>
-              Нет прав{canViewDebug ? ` (CASES:${caze.id}:CLUES_ADD)` : ""}
-            </span>
+            <PermissionRequestHint
+              permission={`CASES:${caze.id}:CLUES_ADD`}
+              message="No permission to create clues"
+              showDebug={canViewDebug}
+              reason={`case ${caze.id}`}
+            />
           ) : null}
           {!perms.clueAdd && canViewDebug ? (
             <div className={styles.debug}>
@@ -434,6 +513,9 @@ function Clues({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePermis
                             <div className={styles.small}>Loading preview...</div>
                           )}
                           <div className={styles.small}>
+                            {fileNames[uri] ?? filenameFromUri(uri)}
+                          </div>
+                          <div className={styles.small}>
                             <button type="button" onClick={() => openInline(uri)}>
                               Open
                             </button>
@@ -442,13 +524,18 @@ function Clues({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePermis
                       ))}
                       {(clue.metadata?.reportUris ?? []).map((uri: string) => (
                         <div key={uri} className={styles.file}>
-                          <button type="button" onClick={() => download(uri)}>
+                          <div className={styles.small}>{fileNames[uri] ?? filenameFromUri(uri)}</div>
+                          <button
+                            type="button"
+                            onClick={() => download(uri, fileNames[uri] ?? filenameFromUri(uri))}
+                          >
                             Download
                           </button>
                         </div>
                       ))}
                       {(clue.metadata?.videoUris ?? []).map((uri: string) => (
                         <div key={uri} className={styles.file}>
+                          <div className={styles.small}>{fileNames[uri] ?? filenameFromUri(uri)}</div>
                           <button type="button" onClick={() => openInline(uri)}>
                             View video
                           </button>
@@ -536,9 +623,12 @@ function Suspects({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePer
             Create
           </button>
           {!perms.suspectAdd ? (
-            <span className={styles.hint}>
-              Нет прав{canViewDebug ? ` (CASES:${caze.id}:SUSPECT_ADD)` : ""}
-            </span>
+            <PermissionRequestHint
+              permission={`CASES:${caze.id}:SUSPECT_ADD`}
+              message="No permission to create suspects"
+              showDebug={canViewDebug}
+              reason={`case ${caze.id}`}
+            />
           ) : null}
         </div>
         <table className={styles.table}>
@@ -801,36 +891,36 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
     clues: ClueDto[]
   ) {
     let content = "";
-    content += `# Отчет №${template.id} о деле №${caze.id} от ${formatUtcDate(template.updatedAt)}\n\n`;
+    content += `# Report #${template.id} for case #${caze.id} at ${formatUtcDate(template.updatedAt)}\n\n`;
 
-    content += "## Участники дела\n\n";
+    content += "## Case participants\n\n";
 
-    content += "| ФИО | Должность |\n";
+    content += "| Name | Position |\n";
     content += "|-----|-----------|\n";
     for (const user of users) {
       content += `|${user.name} ${user.surname} ${user?.patronymic}|${user.position}|\n`;
     }
     content += "\n\n";
 
-    content += "## Улики\n\n";
+    content += "## Clues\n\n";
 
-    content += "|Номер (№)|Название|Описание|\n";
+    content += "|ID|Title|Description|\n";
     content += "|-----|--------|--------|\n";
     for (const clue of clues) {
-      content += `|${clue.id}|${clue.title}|${clue.description ?? "Отсутствует"}|\n`;
+      content += `|${clue.id}|${clue.title}|${clue.description ?? "Missing"}|\n`;
     }
     content += "\n\n";
 
-    content += "## Подозреваемые\n\n";
+    content += "## Suspects\n\n";
 
-    content += "| ФИО | Идентифицирующие данные | Вердикт | Обвиняется в | Статус |\n";
+    content += "| Name | Identifiers | Verdict | Accused of | Status |\n";
     content += "|-----|-------------------------|---------|--------------|----------|\n";
     for (const suspect of suspects) {
       content += `|${suspect.name} ${suspect.surname} ${suspect.patronymic}|${suspect.identifier}|${suspect.verdict}|${suspect.accusation}|${suspect.status}|\n`;
     }
     content += "\n\n";
 
-    content += `Подписано ${subscriber.name} ${subscriber.surname} ${subscriber.patronymic} ________________`;
+    content += `Signed by ${subscriber.name} ${subscriber.surname} ${subscriber.patronymic} ________________`;
 
     exportToFile(content, "text/markdown", `PAI_report_${template.id}.md`);
   }
@@ -920,7 +1010,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
       exportToFile(blob, blob.type || "application/octet-stream", filename || "file");
     } catch (e) {
       console.error(e);
-      alert("Не удалось скачать файл");
+      alert("Failed to download file");
     }
   }
 
@@ -930,7 +1020,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
     file: File
   ) {
     if (!client.baseUrl || !authHeader) {
-      alert("Не авторизован для загрузки файла");
+      alert("Not authorized to upload file");
       return;
     }
     try {
@@ -972,7 +1062,7 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
       templatesSet(nextList ?? null);
     } catch (e) {
       console.error(e);
-      alert("Не удалось загрузить файл");
+      alert("Failed to upload file");
     }
   }
 
@@ -989,9 +1079,12 @@ function Templates({ caze, perms, canViewDebug }: { caze: CaseDto; perms: CasePe
             Create
           </button>
           {!perms.templateAdd ? (
-            <span className={styles.hint}>
-              Нет прав{canViewDebug ? ` (CASES:${caze.id}:TEMPLATES_ADD)` : ""}
-            </span>
+            <PermissionRequestHint
+              permission={`CASES:${caze.id}:TEMPLATES_ADD`}
+              message="No permission to create templates"
+              showDebug={canViewDebug}
+              reason={`case ${caze.id}`}
+            />
           ) : null}
         </div>
         <table className={styles.table}>
@@ -1387,6 +1480,9 @@ function Case({ id }: { id: number }) {
           } else if (typeof e?.rawBody === "string") {
             // наше дополнительное поле с raw body
             msg = e.rawBody;
+          } else if (typeof e?.error?.rawBody === "string") {
+            // raw внутри error, если http-client обернул
+            msg = e.error.rawBody;
 
           // 2. Классический JSON с _embedded.errors от Micronaut
           } else if (e?.error?._embedded?.errors) {
@@ -1503,9 +1599,12 @@ function Case({ id }: { id: number }) {
                 Save case
               </button>
               {!canUpdateCase ? (
-                <span className={styles.hint}>
-                  Нет прав{canViewDebug ? ` (INCIDENTS:${caze.incidentId}:UPDATE)` : ""}
-                </span>
+                <PermissionRequestHint
+                  permission={`INCIDENTS:${caze.incidentId}:UPDATE`}
+                  message="No permission to update case"
+                  showDebug={canViewDebug}
+                  reason={`case ${caze.id}`}
+                />
               ) : null}
               {saveError ? <span className={styles.error}>{saveError}</span> : null}
               {canViewDebug && incident ? (

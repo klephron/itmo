@@ -102,7 +102,7 @@ export default function ClueCreatePage() {
 
   async function uploadFile(file: File) {
     if (!canUpload) {
-      uploadErrorSet("Нет прав на загрузку файлов (FILES:*:UPLOAD)");
+      uploadErrorSet("No permission to upload files (FILES:*:UPLOAD)");
       return;
     }
     if (!client.baseUrl) {
@@ -171,11 +171,11 @@ export default function ClueCreatePage() {
 
   function createClue() {
     if (ownerLoading) {
-      alert("Проверка прав...");
+      alert("Checking permissions...");
       return;
     }
     if (!canAddClue) {
-      alert(`Нет прав (CASES:${caseId}:CLUES_ADD)`);
+      alert(`No permission (CASES:${caseId}:CLUES_ADD)`);
       return;
     }
     try {
@@ -208,7 +208,7 @@ export default function ClueCreatePage() {
       <h2>Create Clue</h2>
       {!canAddClue && !ownerLoading ? (
         <span className={styles.error}>
-          Нет прав{canViewDebug ? ` (CASES:${caseId}:CLUES_ADD)` : ""}
+          No permission{canViewDebug ? ` (CASES:${caseId}:CLUES_ADD)` : ""}
         </span>
       ) : null}
       <form>
@@ -232,7 +232,7 @@ export default function ClueCreatePage() {
             disabled={uploading || !canUpload}
           />
           {!canUpload ? (
-            <span className={styles.error}>Нет прав (FILES:*:UPLOAD)</span>
+            <span className={styles.error}>No permission (FILES:*:UPLOAD)</span>
           ) : null}
           {uploadError ? <span className={styles.error}>{uploadError}</span> : null}
           <div className={styles.files}>

@@ -8,6 +8,7 @@ import { catchResponse } from "@util";
 import { hasPermission, usePermissions } from "@state/permissions";
 import { useUser } from "@state/user";
 import { formatUtc } from "@util";
+import { PermissionRequestHint } from "@components/permission-request";
 
 function Info({ id }: { id: number }) {
   const client = useClient((state) => state.client);
@@ -176,9 +177,12 @@ function Info({ id }: { id: number }) {
           ) : canCreateCase ? (
             <Link to={`/cases/create?incident_id=${incident.id}`}>Create</Link>
           ) : (
-            <span className={styles.hint}>
-              Нет прав{canViewDebug ? ` (INCIDENTS:${incident.id}:UPDATE)` : ""}
-            </span>
+            <PermissionRequestHint
+              permission={`INCIDENTS:${incident.id}:UPDATE`}
+              message="No permission"
+              showDebug={canViewDebug}
+              reason={`incident ${incident.id}`}
+            />
           )}
         </div>
         <div>
@@ -272,14 +276,20 @@ function Info({ id }: { id: number }) {
               </div>
             </form>
             {!canUpdate ? (
-              <span className={styles.hint}>
-                Нет прав на обновление{canViewDebug ? ` (INCIDENTS:${incident.id}:UPDATE)` : ""}
-              </span>
+              <PermissionRequestHint
+                permission={`INCIDENTS:${incident.id}:UPDATE`}
+                message="No permission to update"
+                showDebug={canViewDebug}
+                reason={`incident ${incident.id}`}
+              />
             ) : null}
             {!canDelete ? (
-              <span className={styles.hint}>
-                Нет прав на удаление{canViewDebug ? ` (INCIDENTS:${incident.id}:DELETE)` : ""}
-              </span>
+              <PermissionRequestHint
+                permission={`INCIDENTS:${incident.id}:DELETE`}
+                message="No permission to delete"
+                showDebug={canViewDebug}
+                reason={`incident ${incident.id}`}
+              />
             ) : null}
           </div>
         ) : null}

@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import styles from "./index.module.scss";
 import { hasPermission, usePermissions } from "@state/permissions";
+import { PermissionRequestHint } from "@components/permission-request";
 
 type UserEntry = {
   id: number;
@@ -79,9 +80,12 @@ function Table({
 
   if (!canRead) {
     return (
-      <span className={styles.hint}>
-        Нет прав на просмотр пользователей{canViewDebug ? " (USERS:*:READ)" : ""}
-      </span>
+      <PermissionRequestHint
+        permission="USERS:*:READ"
+        message="No permission to view users"
+        showDebug={canViewDebug}
+        reason="users list"
+      />
     );
   }
 
@@ -164,11 +168,11 @@ export default function UsersPage() {
     createOkSet(null);
     createErrorSet(null);
     if (!canAdd) {
-      createErrorSet("Нет прав на создание пользователя");
+      createErrorSet("No permission to create user");
       return;
     }
     if (!username.trim() || !password.trim() || !name.trim() || !surname.trim() || !primaryPosition.trim()) {
-      createErrorSet("username, password, name, surname, primaryPosition обязательны");
+      createErrorSet("username, password, name, surname, primaryPosition are required");
       return;
     }
     creatingSet(true);
@@ -211,9 +215,12 @@ export default function UsersPage() {
           {showCreate ? "Close" : "Create"}
         </button>
         {!canAdd ? (
-          <span className={styles.hint}>
-            Нет прав на создание пользователя{canViewDebug ? " (USERS:*:ADD)" : ""}
-          </span>
+          <PermissionRequestHint
+            permission="USERS:*:ADD"
+            message="No permission to create users"
+            showDebug={canViewDebug}
+            reason="users list create"
+          />
         ) : null}
       </div>
 
@@ -222,8 +229,8 @@ export default function UsersPage() {
           <h3>Create user</h3>
           {canAdd && !canListPositions ? (
             <div className={styles.hint}>
-              Нет прав на список должностей{canViewDebug ? " (USERS:*:LIST_SYSTEM_PERMISSIONS)" : ""}.
-              PrimaryPosition нужно указать вручную (enum value).
+              No permission for positions list
+              {canViewDebug ? " (USERS:*:LIST_SYSTEM_PERMISSIONS)" : ""}. Enter enum manually.
             </div>
           ) : null}
           <div className={styles.form}>

@@ -216,6 +216,38 @@ export default function CaseCreatePage() {
 
   async function createCase() {
     createErrorSet(null);
+
+    const extractError = (err: any): string => {
+      let msg: string | null = null;
+      // 1. Plain strings first
+      if (typeof err === "string") {
+        msg = err;
+      } else if (typeof err?.error === "string") {
+        msg = err.error;
+      } else if (typeof err?.data === "string") {
+        msg = err.data;
+      } else if (typeof err?.error?.data === "string") {
+        msg = err.error.data;
+      } else if (typeof err?.rawBody === "string") {
+        msg = err.rawBody;
+      } else if (typeof err?.error?.rawBody === "string") {
+        msg = err.error.rawBody;
+      }
+
+      // 2. Micronaut _embedded errors
+      if (!msg && err?.error?._embedded?.errors) {
+        msg = err.error._embedded.errors.map((ev: any) => ev.message).join("\n");
+      }
+
+      // 3. message fields
+      if (!msg && err?.error?.message) {
+        msg = err.error.message;
+      } else if (!msg && err?.message) {
+        msg = err.message;
+      }
+
+      return msg || "Failed to create case";
+    };
     const usersRecord = {} as Record<string, string>;
     if (users) {
       for (const user of users.values()) {
@@ -226,11 +258,11 @@ export default function CaseCreatePage() {
     }
 
     if (!canCreate) {
-      createErrorSet(`Нет прав на создание дела (INCIDENTS:${incidentId}:UPDATE)`);
+      createErrorSet(`No permission to create a case (INCIDENTS:${incidentId}:UPDATE)`);
       return;
     }
     if (!title.trim() || !description.trim()) {
-      createErrorSet("Title и Description обязательны");
+      createErrorSet("Title and Description are required");
       return;
     }
 
@@ -242,12 +274,8 @@ export default function CaseCreatePage() {
       });
       navigate(`/cases/${res.data.id}`);
     } catch (e: any) {
-      const msg =
-        e?.rawBody ||
-        e?.error?._embedded?.errors?.map((er: any) => er.message).join("\n") ||
-        e?.error?.message ||
-        e?.message ||
-        "Не удалось создать дело";
+      const msg = extractError(e);
+      console.error("[case-create] failed to create case", { error: e, message: msg });
       createErrorSet(msg);
     }
   }
@@ -255,7 +283,9 @@ export default function CaseCreatePage() {
   return (
     <div className={styles.root}>
       <h2>Create Case</h2>
-      {!canCreate ? <span>Нет прав (нужно INCIDENTS:{incidentId}:UPDATE или свое)</span> : null}
+      {!canCreate ? (
+        <span>No permission (needs INCIDENTS:{incidentId}:UPDATE or own incident)</span>
+      ) : null}
       <form>
         <div>
           <h3>Incident</h3>

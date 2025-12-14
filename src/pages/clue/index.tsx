@@ -48,7 +48,7 @@ export default function CluePage({ params }: Route.ComponentProps) {
       .catch((e) => {
         const status = (e?.response && e.response.status) || e?.status;
         if (status === 401 || status === 403) {
-          errorSet("Нет прав на просмотр");
+          errorSet("No permission to view this clue");
         } else {
           console.error(e);
           errorSet("Failed to load clue");
@@ -95,7 +95,7 @@ export default function CluePage({ params }: Route.ComponentProps) {
       window.open(url, "_blank");
     } catch (e) {
       console.error(e);
-      alert("Нет прав на просмотр файла или файл недоступен");
+      alert("No permission to view the file or it is unavailable");
     }
   }
 
@@ -106,7 +106,7 @@ export default function CluePage({ params }: Route.ComponentProps) {
       });
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
-          throw new Error("Нет прав на скачивание файла");
+          throw new Error("No permission to download the file");
         }
         throw new Error(`Download failed ${res.status}`);
       }

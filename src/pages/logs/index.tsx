@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LogEntryDto, PageLogEntryDto } from "@api/gen/data-contracts";
 import styles from "./index.module.scss";
 import { datetimeLocalToUtcIso, formatUtc } from "@util";
+import { PermissionRequestHint } from "@components/permission-request";
 
 type Filters = {
   level: string;
@@ -81,7 +82,12 @@ export default function LogsPage() {
     return (
       <div className={styles.root}>
         <h2>Logs</h2>
-        <span className={styles.hint}>Нет прав (LOGS:*:READ)</span>
+        <PermissionRequestHint
+          permission="LOGS:*:READ"
+          message="No permission (LOGS:*:READ)"
+          showDebug={true}
+          reason="logs page"
+        />
       </div>
     );
   }

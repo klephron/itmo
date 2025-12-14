@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DefaultPermissions, UserCaseDto, UserDto } from "@api/gen/data-contracts";
 import { Route } from "~react-router/src/pages/user/+types";
 import { hasPermission, usePermissions } from "@state/permissions";
+import { PermissionRequestHint } from "@components/permission-request";
 
 function UserPermissions({ id }: { id: number }) {
   const client = useClient((state) => state.client);
@@ -20,6 +21,9 @@ function UserPermissions({ id }: { id: number }) {
   const [saveMessage, saveMessageSet] = useState<string | null>(null);
   const [targetStatus, targetStatusSet] = useState<
     { status: "idle" | "checking" | "ok" | "error"; message?: string }
+  >({ status: "idle" });
+  const [permRequest, permRequestSet] = useState<
+    { status: "idle" | "sending" | "ok" | "error"; message?: string }
   >({ status: "idle" });
 
   const canUpdate = permissionsState ? hasPermission("USERS:*:UPDATE") : false;
@@ -78,7 +82,7 @@ function UserPermissions({ id }: { id: number }) {
     }
     const idNum = Number(targetValue);
     if (!Number.isFinite(idNum)) {
-      targetStatusSet({ status: "error", message: "ID должен быть числом" });
+      targetStatusSet({ status: "error", message: "ID must be a number" });
       return;
     }
     targetStatusSet({ status: "checking" });
@@ -93,8 +97,8 @@ function UserPermissions({ id }: { id: number }) {
         req = client.incidents.getIncident(idNum, { signal: ctrl.signal });
       }
       req
-        .then(() => targetStatusSet({ status: "ok", message: "ID найден" }))
-        .catch(() => targetStatusSet({ status: "error", message: "ID не найден" }));
+        .then(() => targetStatusSet({ status: "ok", message: "ID found" }))
+        .catch(() => targetStatusSet({ status: "error", message: "ID not found" }));
     }, 400);
     return () => {
       clearTimeout(timer);
@@ -139,8 +143,27 @@ function UserPermissions({ id }: { id: number }) {
       })
       .catch((e) => {
         console.error(e);
-        saveMessageSet(e?.message || "Ошибка");
+        saveMessageSet(e?.message || "Error");
       });
+  }
+
+  function requestUpdatePermission() {
+    permRequestSet({ status: "sending" });
+    client.users
+      .requestPermission({ permission: "USERS:*:UPDATE", reason: `User page id=${id}` })
+      .then(() => permRequestSet({ status: "ok", message: "Request sent" }))
+      .catch((e) =>
+        permRequestSet({
+          status: "error",
+          message:
+            e?.rawBody ||
+            e?.error?._embedded?.errors?.map((er: any) => er.message).join("\n") ||
+            (typeof e?.error === "string" ? e.error : null) ||
+            e?.error?.message ||
+            e?.message ||
+            "Failed to send request",
+        })
+      );
   }
 
   function applyPreset() {
@@ -154,7 +177,7 @@ function UserPermissions({ id }: { id: number }) {
       })
       .catch((e) => {
         console.error(e);
-        saveMessageSet(e?.message || "Ошибка");
+        saveMessageSet(e?.message || "Error");
       });
   }
 
@@ -260,14 +283,14 @@ function UserPermissions({ id }: { id: number }) {
                   className={styles.targetInput}
                 />
                 {targetStatus.status === "checking" ? (
-                  <span className={styles.hint}>Проверяем ID...</span>
+                  <span className={styles.hint}>Checking ID...</span>
                 ) : targetStatus.status === "error" ? (
                   <span className={styles.hint}>{targetStatus.message}</span>
                 ) : targetStatus.status === "ok" ? (
                   <span className={styles.small}>{targetStatus.message}</span>
                 ) : null}
               </div>
-              <span className={styles.hint}>Права записываются как SCOPE:TARGET:ACTION</span>
+              <span className={styles.hint}>Permissions format: SCOPE:TARGET:ACTION</span>
             </div>
             <div className={styles.available}>
               {available.map((perm) => {
@@ -306,13 +329,16 @@ function UserPermissions({ id }: { id: number }) {
         ) : null}
 
         {!canUpdate ? (
-          <span className={styles.hint}>
-            Нет прав на изменение{canViewDebug ? " (USERS:*:UPDATE)" : ""}
-          </span>
+          <PermissionRequestHint
+            permission="USERS:*:UPDATE"
+            message="No permission to modify users"
+            showDebug={canViewDebug}
+            reason={`user page id=${id}`}
+          />
         ) : null}
         {canUpdate && !canBrowsePermissions ? (
           <span className={styles.hint}>
-            Нет прав для просмотра системных прав
+            No permission to view system permissions
             {canViewDebug ? " (USERS:*:LIST_SYSTEM_PERMISSIONS)" : ""}
           </span>
         ) : null}
@@ -466,10 +492,12 @@ function Info({ id }: { id: number }) {
             </button>
           </div>
           {!canUpdateLocation ? (
-            <span className={styles.hint}>
-              Нет прав
-              {canViewDebug ? ` (USERS:*:UPDATE или USERS:${id}:UPDATE)` : ""}
-            </span>
+            <PermissionRequestHint
+              permission={`USERS:${id}:UPDATE`}
+              message="No permission to update location"
+              showDebug={canViewDebug}
+              reason={`user ${id} location`}
+            />
           ) : null}
           {error ? <span className={styles.hint}>{error}</span> : null}
         </div>

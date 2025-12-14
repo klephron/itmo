@@ -5,6 +5,7 @@ import { IncidentMainInfoDto } from "@api/gen/data-contracts";
 import { Link, useNavigate } from "react-router";
 import { hasPermission, usePermissions } from "@state/permissions";
 import { formatUtc } from "@util";
+import { PermissionRequestHint } from "@components/permission-request";
 
 type IncidentEntry = {
   id: number;
@@ -145,9 +146,12 @@ function Menu() {
         Create
       </button>
       {!canCreate ? (
-        <span className={styles.hint}>
-          Нет прав{canViewDebug ? " (INCIDENTS:*:ADD)" : ""}
-        </span>
+        <PermissionRequestHint
+          permission="INCIDENTS:*:ADD"
+          message="No permission to create incident"
+          showDebug={canViewDebug}
+          reason="incidents list"
+        />
       ) : null}
     </div>
   );

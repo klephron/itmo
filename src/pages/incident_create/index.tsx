@@ -57,14 +57,14 @@ export default function IncidentsCreatePage() {
 
   function loadRanked() {
     if (!canRank) {
-      loadErrorSet("Укажите координаты для ранжирования");
+      loadErrorSet("Specify coordinates to rank users");
       return;
     }
     const lat = Number(locationLatitude);
     const lon = Number(locationLongitude);
     const alt = Number(locationAltitude);
     if (Number.isNaN(lat) || Number.isNaN(lon) || Number.isNaN(alt)) {
-      loadErrorSet("Координаты должны быть числами");
+      loadErrorSet("Coordinates must be numbers");
       return;
     }
     loadErrorSet(null);
@@ -109,7 +109,7 @@ export default function IncidentsCreatePage() {
       })
       .catch((e) => {
         console.error(e);
-        loadErrorSet("Не удалось загрузить ранжирование");
+        loadErrorSet("Failed to load ranking");
       });
   }
 
@@ -141,14 +141,18 @@ export default function IncidentsCreatePage() {
 
   async function createIncident() {
     if (!canCreate) {
-      alert(`Нет прав на создание инцидента${canViewDebug ? " (INCIDENTS:*:ADD)" : ""}`);
+      createErrorSet(`No permission to create incident${canViewDebug ? " (INCIDENTS:*:ADD)" : ""}`);
+      return;
+    }
+    if (!type.trim() || !reason.trim()) {
+      createErrorSet("Type and Reason are required");
       return;
     }
     const lat = Number(locationLatitude);
     const lon = Number(locationLongitude);
     const alt = Number(locationAltitude);
     if (Number.isNaN(lat) || Number.isNaN(lon) || Number.isNaN(alt)) {
-      alert("Координаты должны быть числами");
+      createErrorSet("Coordinates must be numbers");
       return;
     }
     creatingSet(true);
@@ -183,6 +187,35 @@ export default function IncidentsCreatePage() {
         });
         navigate(`/cases/${res.data.id}`);
       } catch (e: any) {
+        const extractCaseError = (err: any): string => {
+          let msg: string | null = null;
+          if (typeof err === "string") {
+            msg = err;
+          } else if (typeof err?.error === "string") {
+            msg = err.error;
+          } else if (typeof err?.data === "string") {
+            msg = err.data;
+          } else if (typeof err?.error?.data === "string") {
+            msg = err.error.data;
+          } else if (typeof err?.rawBody === "string") {
+            msg = err.rawBody;
+          } else if (typeof err?.error?.rawBody === "string") {
+            msg = err.error.rawBody;
+          }
+
+          if (!msg && err?.error?._embedded?.errors) {
+            msg = err.error._embedded.errors.map((ev: any) => ev.message).join("\n");
+          }
+
+          if (!msg && err?.error?.message) {
+            msg = err.error.message;
+          } else if (!msg && err?.message) {
+            msg = err.message;
+          }
+
+          return msg || "Failed to create case";
+        };
+
         // rollback incident so что не осталось “пустого” инцидента без кейса
         try {
           await client.incidents.deleteIncident(incidentResp.data.id);
@@ -190,11 +223,12 @@ export default function IncidentsCreatePage() {
           console.error("Failed to rollback incident after case error", cleanupErr);
         }
 
-        const msg =
-          e?.error?._embedded?.errors?.map((er: any) => er.message).join("\n") ||
-          e?.error?.message ||
-          e?.message ||
-          "Не удалось создать дело";
+        const msg = extractCaseError(e);
+        console.error("[incident-create] failed to create case for incident", {
+          incidentId: incidentResp.data.id,
+          error: e,
+          message: msg,
+        });
         createErrorSet(msg);
       }
     } catch (e) {
@@ -202,7 +236,7 @@ export default function IncidentsCreatePage() {
         (e as any)?.error?._embedded?.errors?.map((er: any) => er.message).join("\n") ||
         (e as any)?.error?.message ||
         (e as any)?.message ||
-        "Не удалось создать инцидент";
+        "Failed to create incident";
       createErrorSet(msg);
     }
     creatingSet(false);
@@ -212,7 +246,7 @@ export default function IncidentsCreatePage() {
     <div className={styles.root}>
       <h2>Create Incident</h2>
       {!canCreate ? (
-        <span>Недостаточно прав{canViewDebug ? " (INCIDENTS:*:ADD)" : ""}</span>
+        <span>Insufficient permissions{canViewDebug ? " (INCIDENTS:*:ADD)" : ""}</span>
       ) : null}
       <form>
         <div>
@@ -252,9 +286,9 @@ export default function IncidentsCreatePage() {
           <input type="input" value={applicant} onChange={(e) => applicantSet(e.target.value)} />
         </div>
         <div>
-          <h3>Required position (для ранжирования)</h3>
+          <h3>Required position (for ranking)</h3>
           <select value={requiredPosition} onChange={(e) => requiredPositionSet(e.target.value)}>
-            <option value="">Любая</option>
+            <option value="">Any</option>
             {positions.map((p) => (
               <option key={p} value={p}>
                 {p}
@@ -271,9 +305,9 @@ export default function IncidentsCreatePage() {
           />
           <label htmlFor="waitForAssignment">Wait For Assignment</label>
           {waitForAssignment ? (
-            <span className={styles.hint}>Если включено, дело не будет создано автоматически</span>
+            <span className={styles.hint}>If enabled, the case will not be created automatically</span>
           ) : (
-            <span className={styles.small}>Будет создано дело с выбранными участниками</span>
+            <span className={styles.small}>Case will be created with selected participants</span>
           )}
         </div>
         {!waitForAssignment ? (
@@ -302,7 +336,7 @@ export default function IncidentsCreatePage() {
           <div className={styles.rankBlock}>
             <div className={styles.rankActions}>
               <button type="button" onClick={loadRanked} disabled={!canRank}>
-                Загрузить ранжированных
+                Load ranked
               </button>
               {loadError ? <span className={styles.hint}>{loadError}</span> : null}
             </div>
@@ -310,7 +344,7 @@ export default function IncidentsCreatePage() {
               <table className={styles.table}>
                 <thead>
                   <tr className={styles.row}>
-                    <th>Включить</th>
+                    <th>Select</th>
                     <th>User</th>
                     <th>Position</th>
                     <th>Score</th>
@@ -350,7 +384,7 @@ export default function IncidentsCreatePage() {
             ) : null}
 
             <div className={styles.manualAdd}>
-              <h4>Добавить вручную</h4>
+              <h4>Add manually</h4>
               <div className={styles.addRow}>
                 <select
                   value={manualUserId}
@@ -386,7 +420,7 @@ export default function IncidentsCreatePage() {
                 </button>
               </div>
               {Object.keys(caseUsers).length ? (
-                <div className={styles.small}>Выбрано участников: {Object.keys(caseUsers).length}</div>
+                <div className={styles.small}>Selected participants: {Object.keys(caseUsers).length}</div>
               ) : null}
               {Object.keys(caseUsers).length ? (
                 <table className={styles.table}>
