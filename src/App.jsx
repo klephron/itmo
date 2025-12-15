@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Tabs from './components/Tabs';
 import FeedPage from './pages/FeedPage';
 import UploadPage from './pages/UploadPage';
-import AuthPage from './pages/AuthPage';
+import AccountPage from './pages/AccountPage.jsx';
 import ProfilePage from './pages/ProfilePage';
 import ModerationPage from './pages/ModerationPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -170,6 +170,7 @@ function AppInner() {
                 activeTab={activeTab}  // Передаем активное состояние
                 onTab={onTab}
                 showModeration={showModerationTab}
+                isAuthenticated={Boolean(user)}
             />
 
             <FeedPage
@@ -196,8 +197,8 @@ function AppInner() {
                 onLoadMoreRequest={(fn) => { profileLoadMoreRef.current = fn; }}
             />
 
-            <AuthPage
-                active={activeTab === 'auth'}  // Передаем активное состояние для страницы аккаунта
+            <AccountPage
+                active={activeTab === 'account'}  // Передаем активное состояние для страницы аккаунта
                 onOpenProfile={onOpenProfile}
                 onRequireAuth={onRequireAuth}
                 onGlobalPlayByUuid={onGlobalPlayByUuid}

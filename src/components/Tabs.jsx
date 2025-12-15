@@ -1,27 +1,46 @@
 import React from 'react';
 
-export default function Tabs({ activeTab, onTab, showModeration }) {
+export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated }) {
     return (
         <div className="tabs">
-            <button className={'tab-btn ' + (activeTab === 'feed' ? 'active' : '')} onClick={() => onTab('feed')}>
+            <button
+                className={'tab-btn ' + (activeTab === 'feed' ? 'active' : '')}
+                onClick={() => onTab('feed')}
+            >
                 Лента
             </button>
 
-            <button className={'tab-btn ' + (activeTab === 'upload' ? 'active' : '')} onClick={() => onTab('upload')}>
+            <button
+                className={'tab-btn ' + (activeTab === 'upload' ? 'active' : '')}
+                onClick={() => onTab('upload')}
+            >
                 Загрузка
             </button>
 
-            <button
-                className={'tab-btn ' + (activeTab === 'moderation' ? 'active' : '')}
-                onClick={() => onTab('moderation')}
-                style={{ display: showModeration ? '' : 'none' }}
-            >
-                Модерация
-            </button>
+            {showModeration && (
+                <button
+                    className={'tab-btn ' + (activeTab === 'moderation' ? 'active' : '')}
+                    onClick={() => onTab('moderation')}
+                >
+                    Модерация
+                </button>
+            )}
 
-            <button className={'tab-btn ' + (activeTab === 'auth' ? 'active' : '')} onClick={() => onTab('auth')}>
-                Аккаунт
-            </button>
+            {isAuthenticated ? (
+                <button
+                    className={'tab-btn ' + (activeTab === 'account' ? 'active' : '')}
+                    onClick={() => onTab('account')}
+                >
+                    Аккаунт
+                </button>
+            ) : (
+                <button
+                    className={'tab-btn ' + (activeTab === 'auth' ? 'active' : '')}
+                    onClick={() => onTab('auth')}
+                >
+                    Вход
+                </button>
+            )}
         </div>
     );
 }
