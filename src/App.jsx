@@ -14,27 +14,27 @@ function AppInner() {
     const [activeTab, setActiveTab] = useState('feed'); // Изначально активен Feed
     const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
 
-    const [activeJobs, setActiveJobs] = useState([]);
-    const jobsRef = useRef(new Map());
-    const [statusStudio, setStatusStudio] = useState('');
+    const [activeJobs, setActiveJobs] = useState([]);  // Статус активных задач
+    const jobsRef = useRef(new Map());  // Мапа для активных задач
+    const [statusStudio, setStatusStudio] = useState(''); // Статус для студии
 
     const feedControlsRef = useRef(null);
     const profileLoadMoreRef = useRef(null);
     const authLoadMoreRef = useRef(null);
 
-    const showModerationTab = !!(user && isModerator);
+    const showModerationTab = !!(user && isModerator);  // Проверка на наличие модератора
 
     const onTab = useCallback((tab) => {
         if (tab === 'upload' && !token) { setActiveTab('auth'); return; }
         if (tab === 'moderation' && (!token || !showModerationTab)) { setActiveTab('auth'); return; }
-        setActiveTab(tab);
+        setActiveTab(tab); // Установка активной вкладки
     }, [token, showModerationTab]);
 
-    const onRequireAuth = useCallback(() => setActiveTab('auth'), []);
+    const onRequireAuth = useCallback(() => setActiveTab('auth'), []);  // Переключение на вкладку авторизации
 
     const onOpenProfile = useCallback((userId) => {
-        setProfileUserId(userId);
-        setActiveTab('profile');
+        setProfileUserId(userId);  // Открытие профиля
+        setActiveTab('profile');  // Переключаем вкладку на профайл
     }, []);
 
     const onGlobalPlayByUuid = useCallback((uuid) => {
@@ -197,7 +197,7 @@ function AppInner() {
             />
 
             <AuthPage
-                active={activeTab === 'auth'}
+                active={activeTab === 'auth'}  // Передаем активное состояние для страницы аккаунта
                 onOpenProfile={onOpenProfile}
                 onRequireAuth={onRequireAuth}
                 onGlobalPlayByUuid={onGlobalPlayByUuid}

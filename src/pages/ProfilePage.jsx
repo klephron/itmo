@@ -11,10 +11,7 @@ export default function ProfilePage({
                                         onGlobalPlayByUuid,
                                         onLoadMoreRequest,
                                     }) {
-    console.log('ProfilePage render. active:', active, 'userId:', userId);  // Логируем состояние активной вкладки
-
-    if (!active) return null;  // Не рендерим страницу, если вкладка не активна
-
+    // Хуки всегда вызываются, даже если компонент не рендерится
     const { token, user } = useAuth();
     const [status, setStatus] = useState({ msg: '', type: '' });
     const [profile, setProfile] = useState(null);
@@ -27,6 +24,7 @@ export default function ProfilePage({
 
     const isSelf = useMemo(() => user && Number(user.userId) === Number(userId), [user, userId]);
 
+    // Загружаем данные профиля при активации компонента
     useEffect(() => {
         if (!active || !userId) return;
 
@@ -41,7 +39,7 @@ export default function ProfilePage({
             try {
                 const [userRes, videosRes] = await Promise.all([
                     fetch(`${apiBase}/api/users/${userId}/profile`, { headers: authHeaders(token) }),
-                    fetch(`${apiBase}/streaming/video/${userId}/videos?page=0&size=12`, { headers: authHeaders(token) }),
+                    fetch(`${apiBase}/api/users/${userId}/videos?page=0&size=12`, { headers: authHeaders(token) }),
                 ]);
 
                 if (!userRes.ok) throw new Error('user HTTP ' + userRes.status);
@@ -52,7 +50,7 @@ export default function ProfilePage({
 
                 if (cancelled) return;
 
-                const vids = Array.isArray(vidsPage?.content) ? vidsPage.content : (Array.isArray(vidsPage) ? vidsPage : []);
+                const vids = Array.isArray(vidsPage?.content) ? vidsPage.content : [];
                 const totalVideos = typeof vidsPage?.totalElements === 'number' ? vidsPage.totalElements : vids.length;
 
                 setProfile({ ...prof, totalVideos });
@@ -73,9 +71,12 @@ export default function ProfilePage({
         }
 
         load();
-        return () => { cancelled = true; };
+        return () => {
+            cancelled = true;
+        };
     }, [active, userId, token]);
 
+    // Загрузка дополнительных видео
     async function loadMore() {
         if (!userId) return;
         if (paging.loading || paging.last) return;
@@ -84,7 +85,7 @@ export default function ProfilePage({
         setStatusProfile('Загрузка видео…', 'ok');
 
         try {
-            const res = await fetch(`${apiBase}/streaming/video/${userId}/videos?page=${paging.page}&size=${paging.size}`, {
+            const res = await fetch(`${apiBase}/api/users/${userId}/videos?page=${paging.page}&size=${paging.size}`, {
                 headers: authHeaders(token),
             });
 
@@ -135,13 +136,18 @@ export default function ProfilePage({
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
 
-            const updated = await res.json();
-            setProfile((p) => ({ ...p, ...updated, totalVideos: p?.totalVideos ?? 0 }));
+            setProfile((prevProfile) => ({
+                ...prevProfile,
+                following: !prevProfile.following,  // Меняем статус подписки
+            }));
+
+            setStatusProfile(profile.following ? 'Отписались от пользователя' : 'Подписались на пользователя', 'ok');
         } catch (e) {
             setStatusProfile('Ошибка изменения подписки: ' + e.message, 'error');
         }
     }
 
+    // Возвращаем null, если активная вкладка не "Profile"
     if (!active) return null;
 
     const totalVideos = profile?.totalVideos ?? videos.length;
@@ -153,8 +159,7 @@ export default function ProfilePage({
             <div className="header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div className="profile-avatar" id="profileAvatar">
-                        {/* Используем apiBase для аватара */}
-                        {profile?.avatarUrl ? <img src={`${apiBase}${profile?.avatarUrl}`} alt="" /> : null}
+                        {profile?.avatarUrl ? <img src={`${apiBase}${profile?.avatarUrl}`} alt=""/> : null}
                     </div>
                     <div>
                         <div className="title" id="profileDisplayName">
@@ -187,12 +192,13 @@ export default function ProfilePage({
                 <ThumbGrid
                     videos={videos}
                     renderCard={(v) => (
-                        <ThumbCard key={v.uuid} video={v} showDelete={false} onOpen={() => onGlobalPlayByUuid?.(v.uuid)} />
+                        <ThumbCard key={v.uuid} video={v} showDelete={false}
+                                   onOpen={() => onGlobalPlayByUuid?.(v.uuid)}/>
                     )}
                 />
             )}
 
-            <Status id="statusProfile" message={status.msg} type={status.type} />
+            <Status id="statusProfile" message={status.msg} type={status.type}/>
         </div>
     );
 }
