@@ -158,10 +158,18 @@ export default function AuthPage({
             if (!res.ok) throw new Error('HTTP ' + res.status);
 
             const data = await res.json(); // { url }
-            setAuth(token, { ...user, avatarUrl: data.url });
+
+            // Обновляем user и profile с новым avatarUrl, добавляем параметр для обновления кеша
+            const updatedUser = { ...user, avatarUrl: `${data.url}?t=${new Date().getTime()}` }; // Добавляем уникальную метку времени
+            setAuth(token, updatedUser);
+
+            // Обновляем локальное состояние профиля
+            setProfile((prevProfile) => ({
+                ...prevProfile,
+                avatarUrl: `${data.url}?t=${new Date().getTime()}`, // Добавляем уникальную метку времени
+            }));
 
             setStatusAuth('Аватар обновлён', 'ok');
-            await loadAccountProfile({ ...user, avatarUrl: data.url }, token);
         } catch (e) {
             setStatusAuth('Ошибка загрузки аватара: ' + e.message, 'error');
         }
