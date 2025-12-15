@@ -5,6 +5,7 @@ import UploadPage from './pages/UploadPage';
 import AccountPage from './pages/AccountPage.jsx';
 import ProfilePage from './pages/ProfilePage';
 import ModerationPage from './pages/ModerationPage';
+import AuthPage from "./pages/AuthPage.jsx";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { apiBase, authHeaders, isUnauthorized } from './api/api';
 
@@ -25,8 +26,14 @@ function AppInner() {
     const showModerationTab = !!(user && isModerator);  // Проверка на наличие модератора
 
     const onTab = useCallback((tab) => {
-        if (tab === 'upload' && !token) { setActiveTab('auth'); return; }
-        if (tab === 'moderation' && (!token || !showModerationTab)) { setActiveTab('auth'); return; }
+        if (tab === 'upload' && !token) {
+            setActiveTab('auth');
+            return;
+        }
+        if (tab === 'moderation' && (!token || !showModerationTab)) {
+            setActiveTab('auth');
+            return;
+        }
         setActiveTab(tab); // Установка активной вкладки
     }, [token, showModerationTab]);
 
@@ -147,7 +154,9 @@ function AppInner() {
         }
     }, [token, trackJob, renderStudioJobs]);
 
-    useEffect(() => { loadActiveJobsFromServer(token); }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        loadActiveJobsFromServer(token);
+    }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         function onScroll() {
@@ -172,31 +181,31 @@ function AppInner() {
                 showModeration={showModerationTab}
                 isAuthenticated={Boolean(user)}
             />
-
             <FeedPage
                 active={activeTab === 'feed'}
                 onOpenProfile={onOpenProfile}
                 onRequireAuth={onRequireAuth}
-                exposeControls={(ctl) => { feedControlsRef.current = ctl; }}
+                exposeControls={(ctl) => {
+                    feedControlsRef.current = ctl;
+                }}
             />
-
             <UploadPage
                 active={activeTab === 'upload'}
                 onRequireAuth={onRequireAuth}
                 onJobTracked={(jobId, label, initialStatus) => {
                     trackJob(jobId, label, initialStatus);
-                    setActiveTab('auth'); // как в оригинале: прыжок в "Аккаунт"
+                    setActiveTab('account'); // как в оригинале: прыжок в "Аккаунт"
                 }}
             />
-
             <ProfilePage
                 active={activeTab === 'profile'}  // Передаем активное состояние для профиля
                 userId={profileUserId}
                 onRequireAuth={onRequireAuth}
                 onGlobalPlayByUuid={onGlobalPlayByUuid}
-                onLoadMoreRequest={(fn) => { profileLoadMoreRef.current = fn; }}
+                onLoadMoreRequest={(fn) => {
+                    profileLoadMoreRef.current = fn;
+                }}
             />
-
             <AccountPage
                 active={activeTab === 'account'}  // Передаем активное состояние для страницы аккаунта
                 onOpenProfile={onOpenProfile}
@@ -205,10 +214,13 @@ function AppInner() {
                 onReloadFeed={onReloadFeed}
                 jobsState={jobsState}
                 onLoadActiveJobsFromServer={loadActiveJobsFromServer}
-                onRegisterLoadMore={(fn) => { authLoadMoreRef.current = fn; }}
+                onRegisterLoadMore={(fn) => {
+                    authLoadMoreRef.current = fn;
+                }}
+                onTab={onTab}
             />
-
-            <ModerationPage active={activeTab === 'moderation'} onRequireAuth={onRequireAuth} />
+            <AuthPage active={activeTab === 'auth'} onTab={onTab}/>
+            <ModerationPage active={activeTab === 'moderation'} onRequireAuth={onRequireAuth}/>
         </div>
     );
 }
@@ -216,7 +228,7 @@ function AppInner() {
 export default function App() {
     return (
         <AuthProvider>
-            <AppInner />
+            <AppInner/>
         </AuthProvider>
     );
 }

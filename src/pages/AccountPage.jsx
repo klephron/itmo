@@ -7,6 +7,7 @@ import ThumbGrid, { ThumbCard } from '../components/ThumbGrid';
 
 export default function AccountPage({
                                         active,
+                                        onTab,
                                         onOpenProfile,
                                         onRequireAuth,
                                         onGlobalPlayByUuid,
@@ -38,6 +39,7 @@ export default function AccountPage({
         setProfile(null);
         setMyVideos([]);
         setFollowing([]);
+        onTab("auth")
     }
 
     async function uploadAvatar() {
@@ -253,24 +255,24 @@ export default function AccountPage({
     const totalVideos = profile?.totalVideos ?? (myVideos?.length || 0);
 
     return (
-        <div className={'card page ' + (active ? 'active' : '')} id="pageAuth">
+        <div className={'card page ' + (active ? 'active' : '')} id="pageAccount">
             {user ? (
                 <>
                     <div id="authAvatar" className="profile-avatar" style={{ display: '' }}>
                         {/* Используем apiBase для аватара */}
-                        {user.avatarUrl ? <img src={`${apiBase}${user.avatarUrl}`} alt="" /> : null}
+                        {user.avatarUrl ? <img src={`${apiBase}${user.avatarUrl}`} alt=""/> : null}
                     </div>
 
                     <div className="form-row" id="avatarUploadRow" style={{ display: '' }}>
                         <label htmlFor="avatarFile">Аватар</label>
-                        <input id="avatarFile" ref={avatarFileRef} type="file" accept="image/*" />
+                        <input id="avatarFile" ref={avatarFileRef} type="file" accept="image/*"/>
                         <button className="full small" id="btnAvatarUpload" onClick={uploadAvatar}>
                             Обновить аватар
                         </button>
                     </div>
                 </>
             ) : (
-                <div id="authAvatar" className="profile-avatar" style={{ display: 'none' }} />
+                <div id="authAvatar" className="profile-avatar" style={{ display: 'none' }}/>
             )}
 
             <div className="header">
@@ -295,7 +297,9 @@ export default function AccountPage({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                         <div className="profile-avatar" id="authProfileAvatar">
                             {/* Используем apiBase для аватара */}
-                            {profile?.avatarUrl ? <img src={`${apiBase}${profile.avatarUrl}`} alt="" /> : (user.avatarUrl ? <img src={`${apiBase}${user.avatarUrl}`} alt="" /> : null)}
+                            {profile?.avatarUrl ?
+                                <img src={`${apiBase}${profile.avatarUrl}`} alt=""/> : (user.avatarUrl ?
+                                    <img src={`${apiBase}${user.avatarUrl}`} alt=""/> : null)}
                         </div>
                         <div>
                             <div className="title" id="authProfileDisplayName">
@@ -319,10 +323,11 @@ export default function AccountPage({
                                 <div className="studio-row-meta">Подписок пока нет</div>
                             ) : (
                                 following.map((u) => (
-                                    <div key={u.id} className="studio-row" style={{ cursor: 'pointer' }} onClick={() => onOpenProfile?.(u.id)}>
+                                    <div key={u.id} className="studio-row" style={{ cursor: 'pointer' }}
+                                         onClick={() => onOpenProfile?.(u.id)}>
                                         <div className="studio-row-header">
                                             <div className="studio-row-title">{u.displayName || u.username}</div>
-                                            <Avatar className="avatar-mini" url={u.avatarUrl} />
+                                            <Avatar className="avatar-mini" url={u.avatarUrl}/>
                                         </div>
                                         <div className="studio-row-meta">@{u.username}</div>
                                     </div>
@@ -344,7 +349,8 @@ export default function AccountPage({
                                         </div>
                                         <div>{st.message || st.stage}</div>
                                         <div className="job-progress-bar">
-                                            <div className="job-progress-fill" style={{ width: (st.percent ?? 0) + '%' }} />
+                                            <div className="job-progress-fill"
+                                                 style={{ width: (st.percent ?? 0) + '%' }}/>
                                         </div>
                                     </div>
                                 );
@@ -356,7 +362,12 @@ export default function AccountPage({
 
                     <div className="status" id="statusStudio">{jobsState?.statusStudio || ''}</div>
 
-                    <div className="studio-section-title" style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="studio-section-title" style={{
+                        marginTop: 8,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
                         <span>Ваши видео</span>
                         <span className="badge" id="studioVideoCount">{totalVideos} видео</span>
                     </div>
@@ -380,7 +391,7 @@ export default function AccountPage({
                 </div>
             ) : null}
 
-            <Status id="statusAuth" message={status.msg} type={status.type} />
+            <Status id="statusAuth" message={status.msg} type={status.type}/>
         </div>
     );
 }
