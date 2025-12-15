@@ -4,7 +4,7 @@ import { formatDate, formatViews, humanSize } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import Status from '../components/Status';
-import Comments from '../components/comments/Comments';
+import Comments from '../components/Comments';
 
 const FEED_PAGE_SIZE = 10;
 

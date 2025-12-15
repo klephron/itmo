@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { apiBase, authHeaders, isUnauthorized } from '../../api/api';
-import { formatDate } from '../../utils/format';
-import { useAuth } from '../../context/AuthContext';
-import Status from '../Status';
+import { apiBase, authHeaders, isUnauthorized } from '../api/api';
+import { formatDate } from '../utils/format';
+import { useAuth } from '../context/AuthContext';
+import Status from './Status';
 
 export default function Comments({ videoUuid, onOpenProfile, onRequireAuth }) {
     const { token, user } = useAuth();
@@ -38,7 +38,9 @@ export default function Comments({ videoUuid, onOpenProfile, onRequireAuth }) {
         }
 
         load();
-        return () => { aborted = true; };
+        return () => {
+            aborted = true;
+        };
     }, [videoUuid, token, cache, cached]);
 
     async function send() {
@@ -126,23 +128,19 @@ export default function Comments({ videoUuid, onOpenProfile, onRequireAuth }) {
                                     onClick={() => c.authorId && onOpenProfile?.(c.authorId)}
                                     title={c.authorName || 'Автор'}
                                 >
-                                    {c.authorAvatarUrl ? <img src={c.authorAvatarUrl} alt="" /> : null}
+                                    {c.authorAvatarUrl ? <img src={`${apiBase}${c.authorAvatarUrl}`} alt=""/> : null}
                                 </div>
 
                                 <div className="comment-body">
                                     <div>
-                    <span className="comment-author" onClick={() => c.authorId && onOpenProfile?.(c.authorId)}>
-                      {c.authorName || 'Аноним'}
-                    </span>
+                                        <span className="comment-author"
+                                              onClick={() => c.authorId && onOpenProfile?.(c.authorId)}>
+                                            {c.authorName || 'Аноним'}
+                                        </span>
                                         <span className="comment-meta">{formatDate(c.createdAt)}</span>
-
-                                        {canDelete ? (
-                                            <span className="comment-delete" onClick={() => deleteComment(c.id)}>
-                        удалить
-                      </span>
-                                        ) : null}
+                                        {canDelete ? (<span className="comment-delete"
+                                                            onClick={() => deleteComment(c.id)}>удалить</span>) : null}
                                     </div>
-
                                     <div className="comment-text">{c.text}</div>
                                 </div>
                             </div>
@@ -158,7 +156,9 @@ export default function Comments({ videoUuid, onOpenProfile, onRequireAuth }) {
                         placeholder="Напишите комментарий…"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') send();
+                        }}
                     />
                     <button className="small full" onClick={send}>Отправить</button>
                 </div>
@@ -166,7 +166,7 @@ export default function Comments({ videoUuid, onOpenProfile, onRequireAuth }) {
                 <div className="hint">Войдите в аккаунт, чтобы оставлять комментарии</div>
             )}
 
-            <Status id="commentsStatus" message={status.msg} type={status.type} />
+            <Status id="commentsStatus" message={status.msg} type={status.type}/>
         </div>
     );
 }
