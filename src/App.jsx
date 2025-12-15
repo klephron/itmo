@@ -11,8 +11,8 @@ import { apiBase, authHeaders, isUnauthorized } from './api/api';
 function AppInner() {
     const { token, user, isModerator } = useAuth();
 
-    const [activeTab, setActiveTab] = useState('feed');
-    const [profileUserId, setProfileUserId] = useState(null);
+    const [activeTab, setActiveTab] = useState('feed'); // Изначально активен Feed
+    const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
 
     const [activeJobs, setActiveJobs] = useState([]);
     const jobsRef = useRef(new Map());
@@ -167,7 +167,7 @@ function AppInner() {
     return (
         <div className="app">
             <Tabs
-                activeTab={activeTab === 'profile' ? 'feed' : activeTab}
+                activeTab={activeTab}  // Передаем активное состояние
                 onTab={onTab}
                 showModeration={showModerationTab}
             />
@@ -189,7 +189,7 @@ function AppInner() {
             />
 
             <ProfilePage
-                active={activeTab === 'profile'}
+                active={activeTab === 'profile'}  // Передаем активное состояние для профиля
                 userId={profileUserId}
                 onRequireAuth={onRequireAuth}
                 onGlobalPlayByUuid={onGlobalPlayByUuid}

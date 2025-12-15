@@ -336,7 +336,8 @@ export default function AuthPage({
             {user ? (
                 <>
                     <div id="authAvatar" className="profile-avatar" style={{ display: '' }}>
-                        {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : null}
+                        {/* Используем apiBase для аватара */}
+                        {user.avatarUrl ? <img src={`${apiBase}${user.avatarUrl}`} alt="" /> : null}
                     </div>
 
                     <div className="form-row" id="avatarUploadRow" style={{ display: '' }}>
@@ -372,7 +373,8 @@ export default function AuthPage({
                     <div className="studio-section-title">Ваш профиль</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                         <div className="profile-avatar" id="authProfileAvatar">
-                            {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : (user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : null)}
+                            {/* Используем apiBase для аватара */}
+                            {profile?.avatarUrl ? <img src={`${apiBase}${profile.avatarUrl}`} alt="" /> : (user.avatarUrl ? <img src={`${apiBase}${user.avatarUrl}`} alt="" /> : null)}
                         </div>
                         <div>
                             <div className="title" id="authProfileDisplayName">

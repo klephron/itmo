@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { apiBase, authHeaders, isUnauthorized } from '../api/api';
+import { apiBase, authHeaders, isUnauthorized } from '../api/api';  // Импорт apiBase
 import { useAuth } from '../context/AuthContext';
 import Status from '../components/Status';
 import ThumbGrid, { ThumbCard } from '../components/ThumbGrid';
@@ -11,10 +11,13 @@ export default function ProfilePage({
                                         onGlobalPlayByUuid,
                                         onLoadMoreRequest,
                                     }) {
+    console.log('ProfilePage render. active:', active, 'userId:', userId);  // Логируем состояние активной вкладки
+
+    if (!active) return null;  // Не рендерим страницу, если вкладка не активна
+
     const { token, user } = useAuth();
     const [status, setStatus] = useState({ msg: '', type: '' });
     const [profile, setProfile] = useState(null);
-
     const [videos, setVideos] = useState([]);
     const [paging, setPaging] = useState({ page: 0, size: 12, last: false, loading: false });
 
@@ -37,8 +40,8 @@ export default function ProfilePage({
 
             try {
                 const [userRes, videosRes] = await Promise.all([
-                    fetch(apiBase + '/api/users/' + userId + '/profile', { headers: authHeaders(token) }),
-                    fetch(apiBase + `/api/users/${userId}/videos?page=0&size=12`, { headers: authHeaders(token) }),
+                    fetch(`${apiBase}/api/users/${userId}/profile`, { headers: authHeaders(token) }),
+                    fetch(`${apiBase}/streaming/video/${userId}/videos?page=0&size=12`, { headers: authHeaders(token) }),
                 ]);
 
                 if (!userRes.ok) throw new Error('user HTTP ' + userRes.status);
@@ -81,7 +84,7 @@ export default function ProfilePage({
         setStatusProfile('Загрузка видео…', 'ok');
 
         try {
-            const res = await fetch(apiBase + `/api/users/${userId}/videos?page=${paging.page}&size=${paging.size}`, {
+            const res = await fetch(`${apiBase}/streaming/video/${userId}/videos?page=${paging.page}&size=${paging.size}`, {
                 headers: authHeaders(token),
             });
 
@@ -106,7 +109,7 @@ export default function ProfilePage({
     useEffect(() => {
         if (!active) return;
         onLoadMoreRequest?.(() => loadMore());
-    }, [active, paging, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [active, paging, userId]);
 
     async function toggleFollow() {
         if (!token) {
@@ -119,7 +122,7 @@ export default function ProfilePage({
         const method = profile.following ? 'DELETE' : 'POST';
 
         try {
-            const res = await fetch(apiBase + `/api/users/${userId}/follow`, {
+            const res = await fetch(`${apiBase}/api/users/${userId}/follow`, {
                 method,
                 headers: authHeaders(token),
             });
@@ -150,7 +153,8 @@ export default function ProfilePage({
             <div className="header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div className="profile-avatar" id="profileAvatar">
-                        {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : null}
+                        {/* Используем apiBase для аватара */}
+                        {profile?.avatarUrl ? <img src={`${apiBase}${profile?.avatarUrl}`} alt="" /> : null}
                     </div>
                     <div>
                         <div className="title" id="profileDisplayName">

@@ -338,7 +338,10 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Avatar
                         className="avatar-mini"
-                        url={currentVideo?.uploaderAvatarUrl || null}
+                        url={currentVideo?.uploaderAvatarUrl
+                            ? `${apiBase}${currentVideo?.uploaderAvatarUrl}`
+                            : null
+                        }
                         onClick={() => currentVideo?.uploaderId && onOpenProfile?.(currentVideo.uploaderId)}
                     />
                     <span id="videoInfoSize">{humanSize(currentVideo?.contentSize)}</span>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatDate } from '../utils/format';
+import { apiBase } from '../api/api';  // Импортируем apiBase
 
 export function ThumbCard({ video, showDelete, onDelete, onOpen }) {
     const likesVal = typeof video?.likesCount === 'number'
@@ -10,9 +11,13 @@ export function ThumbCard({ video, showDelete, onDelete, onOpen }) {
         ? video.viewsCount
         : (typeof video?.views === 'number' ? video.views : 0);
 
+    // Формируем полный URL для изображения превью
+    const thumbnailUrl = video?.thumbnailUrl ? `${apiBase}${video.thumbnailUrl}` : null;
+
     return (
         <div className="thumb-card" onClick={onOpen}>
-            <img src={video.thumbnailUrl} alt={video.name || ''} />
+            {/* Используем полный URL для картинки */}
+            {thumbnailUrl && <img src={thumbnailUrl} alt={video.name || ''} />}
             <div className="thumb-card-overlay" title={formatDate(video.uploadedAt)}>
                 ♥ {likesVal} · 👁 {viewsVal}
             </div>
