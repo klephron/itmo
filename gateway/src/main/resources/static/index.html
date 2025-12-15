@@ -985,6 +985,7 @@
     const authVideosSortSelect = document.getElementById('authVideosSort');
 
     let currentVideoUuid = null;
+    let authLoading = false;
 
     let feedPage = 0;
     const FEED_PAGE_SIZE = 10;
@@ -1298,7 +1299,6 @@
 
             if (res.status === 401 || res.status === 403) {
                 setStatusAuth('Сессия истекла, войдите снова', 'error');
-                setAuth(null, null, null, null);
                 return;
             }
 
@@ -1505,6 +1505,16 @@
     }
 
     function updateAuthUI() {
+        if (authLoading) {
+            authUserShortEl.textContent = '';
+            authWelcomeEl.textContent = 'Проверяем сессию…';
+            authLoggedBlock.style.display = '';
+            authFormsBlock.style.display = 'none';
+            authAvatarEl.style.display = 'none';
+            avatarUploadRow.style.display = 'none';
+            return;
+        }
+
         if (authUser) {
             authUserShortEl.textContent = authUser.displayName || authUser.username || 'Пользователь';
             authWelcomeEl.textContent = `Вы вошли как ${authUser.displayName || authUser.username}`;
@@ -1612,6 +1622,9 @@
             return;
         }
 
+        authLoading = true;
+        updateAuthUI();
+
         // сначала используем токен локально
         authToken = savedToken;
 
@@ -1622,7 +1635,6 @@
                 authUser = null;
             }
         }
-
         // теперь — пробуем проверить токен
         try {
             const res = await fetch(apiBase + '/api/auth/me', {
@@ -1630,17 +1642,13 @@
             });
 
             if (!res.ok) {
-                // токен реально недействителен только при 401/403
-                if (res.status === 401 || res.status === 403) {
-                    console.warn("/api/auth/me →", res.status);
-                    setAuth(null, null, null, null, null);
-                }
-                return;
+                // не трогаем localStorage на 401/403 — покажем форму, но не чистим токен
+                console.warn("/api/auth/me →", res.status);
+            } else {
+                const data = await res.json();
+                // сохраняем результат
+                setAuth(savedToken, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
             }
-
-            const data = await res.json();
-            // сохраняем результат
-            setAuth(savedToken, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
 
         } catch (e) {
             console.error("auth/me fetch error:", e);
@@ -1648,6 +1656,9 @@
             if (authUser) {
                 setAuth(savedToken, authUser.userId, authUser.username, authUser.displayName, authUser.roles, authUser.avatarUrl);
             }
+        } finally {
+            authLoading = false;
+            updateAuthUI();
         }
     }
 
@@ -3164,7 +3175,7 @@
         if (!authToken || !isAdmin()) return;
 
         try {
-            const res = await fetch(apiBase + '/admin/users/' + userId + '/roles', {
+            const res = await fetch(apiBase + '/api/admin/users/' + userId + '/roles', {
                 method: 'POST',
                 headers: {
                     ...authHeaders(),

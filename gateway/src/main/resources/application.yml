@@ -12,14 +12,26 @@ spring:
         enabled: true
     gateway:
       routes:
+        - id: interactions
+          uri: lb://interactions-service
+          predicates:
+            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view
         - id: core
           uri: lb://core-service
           predicates:
-            - Path=/api/videos/**,/api/comments/**,/api/admin/**,/api/moderation/**,/api/streaming/**,/api/search/**
+            - Path=/api/videos/**,/api/streaming/**
         - id: profile
           uri: lb://profile-service
           predicates:
             - Path=/api/users/**
+        - id: admin
+          uri: lb://admin-service
+          predicates:
+            - Path=/api/admin/**,/api/moderation/**
+        - id: search
+          uri: lb://search-service
+          predicates:
+            - Path=/api/search/**
         - id: openapi-core
           uri: lb://core-service
           predicates:
@@ -38,6 +50,18 @@ spring:
             - Path=/v3/api-docs/storage
           filters:
             - RewritePath=/v3/api-docs/storage, /v3/api-docs
+        - id: openapi-admin
+          uri: lb://admin-service
+          predicates:
+            - Path=/v3/api-docs/admin
+          filters:
+            - RewritePath=/v3/api-docs/admin, /v3/api-docs
+        - id: openapi-search
+          uri: lb://search-service
+          predicates:
+            - Path=/v3/api-docs/search
+          filters:
+            - RewritePath=/v3/api-docs/search, /v3/api-docs
   datasource:
     url: jdbc:postgresql://localhost:5432/video-streaming
     username: test
@@ -74,6 +98,12 @@ springdoc:
         url: /v3/api-docs/profile
       - name: storage-service
         url: /v3/api-docs/storage
+      - name: admin-service
+        url: /v3/api-docs/admin
+      - name: search-service
+        url: /v3/api-docs/search
+      - name: interactions-service
+        url: /v3/api-docs/interactions
     urls-primary-name: gateway
     display-request-duration: true
 

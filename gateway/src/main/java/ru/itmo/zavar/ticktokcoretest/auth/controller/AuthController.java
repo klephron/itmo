@@ -15,6 +15,7 @@ import ru.itmo.zavar.ticktokcoretest.auth.dto.request.RegisterRequest;
 import ru.itmo.zavar.ticktokcoretest.auth.dto.response.AuthResponse;
 import ru.itmo.zavar.ticktokcoretest.auth.security.SecurityBeans;
 import ru.itmo.zavar.ticktokcoretest.auth.service.AuthService;
+import ru.itmo.zavar.ticktokcoretest.common.security.CurrentUser;
 import ru.itmo.zavar.ticktokcoretest.user.UserEntity;
 import ru.itmo.zavar.ticktokcoretest.user.UserRepository;
 
@@ -61,18 +62,28 @@ public class AuthController {
 
     @GetMapping("/me")
     @Operation(summary = "Получить данные текущего пользователя")
-    public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal SecurityBeans.UserPrincipal userPrincipal) {
-        if (userPrincipal == null) {
-            return ResponseEntity.status(401).build();
+    public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal Object principal) {
+        if (principal instanceof CurrentUser jwtUser) {
+            return ResponseEntity.ok(new AuthResponse(
+                    null,
+                    jwtUser.getId(),
+                    jwtUser.getUsername(),
+                    jwtUser.getDisplayName(),
+                    jwtUser.getRoles(),
+                    jwtUser.getAvatarUrl()
+            ));
         }
-        String avatarUrl = userPrincipal.getAvatarUrl();
-        return ResponseEntity.ok(new AuthResponse(
-                null,
-                userPrincipal.getId(),
-                userPrincipal.getUsername(),
-                userPrincipal.getDisplayName(),
-                userPrincipal.getRoles(),
-                avatarUrl
-        ));
+        if (principal instanceof SecurityBeans.UserPrincipal userPrincipal) {
+            String avatarUrl = userPrincipal.getAvatarUrl();
+            return ResponseEntity.ok(new AuthResponse(
+                    null,
+                    userPrincipal.getId(),
+                    userPrincipal.getUsername(),
+                    userPrincipal.getDisplayName(),
+                    userPrincipal.getRoles(),
+                    avatarUrl
+            ));
+        }
+        return ResponseEntity.status(401).build();
     }
 }

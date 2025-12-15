@@ -6,14 +6,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.itmo.zavar.ticktokcoretest.common.api.infra.VideoObjectStorage;
-import ru.itmo.zavar.ticktokcoretest.search.EmbeddingService;
 import ru.itmo.zavar.ticktokcoretest.video.streaming.model.StreamChunk;
 import ru.itmo.zavar.ticktokcoretest.video.streaming.model.StreamRange;
 import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.TranscodedRendition;
+import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.TranscodedRenditionMetadata;
+import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.TranscodingCommand;
 import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.TranscodingJobRegistry;
 import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.TranscodingJobStage;
 import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.TranscodingJobStatus;
-import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.VideoTranscoder;
+import ru.itmo.zavar.ticktokcoretest.common.api.transcoding.TranscodingResult;
+import ru.itmo.zavar.ticktokcoretest.transcoding.client.TranscodingClient;
+import ru.itmo.zavar.ticktokcoretest.search.client.SearchEmbeddingClient;
 import ru.itmo.zavar.ticktokcoretest.video.model.FileMetadataEntity;
 import ru.itmo.zavar.ticktokcoretest.video.model.VideoRenditionEntity;
 import ru.itmo.zavar.ticktokcoretest.video.repo.FileMetadataRepository;
@@ -45,9 +48,9 @@ public class VideoStreamingService {
 
     private final FileMetadataRepository fileMetadataRepository;
     private final VideoObjectStorage videoObjectStorage;
-    private final VideoTranscoder transcodingService;
     private final TranscodingJobRegistry jobRegistry;
-    private final EmbeddingService embeddingService;
+    private final SearchEmbeddingClient embeddingClient;
+    private final TranscodingClient transcodingClient;
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
     @Value("${transcoder.ffmpeg-path:ffmpeg}")
@@ -106,8 +109,12 @@ public class VideoStreamingService {
             st.setMessage("Подготовка к перекодированию…");
         });
 
-        List<TranscodedRendition> renditions = this.transcodingService
-                .transcodeToMp4WithProgress(tempInput, jobId, DEFAULT_TARGET_HEIGHTS);
+        TranscodingCommand command = new TranscodingCommand(jobId, tempInput.toString(), DEFAULT_TARGET_HEIGHTS);
+        TranscodingResult result = this.transcodingClient.transcode(command);
+        List<TranscodedRenditionMetadata> renditionsMeta = result.renditions();
+        List<TranscodedRendition> renditions = renditionsMeta.stream()
+                .map(r -> new TranscodedRendition(r.height(), Path.of(r.storageKey()), r.size()))
+                .toList();
 
         Map<Integer, TranscodedRendition> byHeight = new HashMap<>();
         for (TranscodedRendition r : renditions) {
@@ -128,11 +135,9 @@ public class VideoStreamingService {
         meta.setDefaultHeight(primary.height());
         meta.setDescription(description);
 
-        float[] titleVec = this.embeddingService.embed(videoName);
-        float[] descVec = this.embeddingService.embed(description);
-        float[] combined = this.embeddingService.embed(
-                (videoName == null ? "" : videoName) + " " + (description == null ? "" : description)
-        );
+        float[] titleVec = fetchEmbedding(videoName);
+        float[] descVec = fetchEmbedding(description);
+        float[] combined = fetchEmbedding((videoName == null ? "" : videoName) + " " + (description == null ? "" : description));
 
         meta.setTitleEmbedding(titleVec);
         meta.setDescriptionEmbedding(descVec);
@@ -194,6 +199,23 @@ public class VideoStreamingService {
 
         log.info("Upload job {} completed: uuid={}, name='{}', author='{}', qualities={}",
                 jobId, meta.getUuid(), meta.getName(), meta.getUploaderName(), byHeight.keySet());
+    }
+
+    private float[] fetchEmbedding(String text) {
+        try {
+            var resp = embeddingClient.embed(text == null ? "" : text);
+            if (resp != null && resp.vector() != null) {
+                List<Float> v = resp.vector();
+                float[] arr = new float[v.size()];
+                for (int i = 0; i < v.size(); i++) {
+                    arr[i] = v.get(i) != null ? v.get(i) : 0f;
+                }
+                return arr;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch embedding, returning zeros", e);
+        }
+        return new float[0];
     }
 
     private void createAndUploadThumbnail(Path videoPath, FileMetadataEntity meta) throws Exception {

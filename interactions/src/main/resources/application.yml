@@ -1,0 +1,25 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: interactions-service
+  profiles:
+    default: dev
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+
+springdoc:
+  swagger-ui:
+    display-request-duration: true
+    urls-primary-name: interactions-service
+
+app:
+  jwt:
+    secret: "super-secret-key-change-me-to-long-random-string"

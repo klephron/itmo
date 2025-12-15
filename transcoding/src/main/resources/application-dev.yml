@@ -1,0 +1,6 @@
+eureka:
+  client:
+    registry-fetch-interval-seconds: 3
+  instance:
+    lease-renewal-interval-in-seconds: 3
+    lease-expiration-duration-in-seconds: 9

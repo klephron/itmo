@@ -42,25 +42,8 @@ public class ResourceServerConfig {
                         .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
 
-                        .requestMatchers(HttpMethod.GET, "/api/videos/*/comments").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/videos/*/comments").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/videos/*/comments").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/videos/*/likes").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/videos/*/likes").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/videos/*/likes").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/videos/*/view").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/videos/*/view").authenticated()
-                        .requestMatchers("/api/users/*/follow").authenticated()
-                        .requestMatchers("/api/users/*/followers").permitAll()
-                        .requestMatchers("/api/users/*/following").permitAll()
-
-                        .requestMatchers("/api/search/**").permitAll()
-
                         .requestMatchers("/api/videos/**").permitAll()
                         .requestMatchers("/api/streaming/video/**").permitAll()
-
-                        .requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name())
-                        .requestMatchers("/api/moderation/**").hasAnyRole(Role.MODERATOR.name(), Role.ADMIN.name())
 
                         .anyRequest().authenticated()
                 )
