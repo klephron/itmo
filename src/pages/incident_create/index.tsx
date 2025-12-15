@@ -28,6 +28,10 @@ export default function IncidentsCreatePage() {
   const [rankedPositions, rankedPositionsSet] = useState<Record<string, string>>({});
   const [caseUsers, caseUsersSet] = useState<Record<string, string>>({});
   const [userOptions, userOptionsSet] = useState<UserInfoResponse[]>([]);
+  const [rankUserFilter, rankUserFilterSet] = useState("");
+  const [rankPositionFilter, rankPositionFilterSet] = useState("");
+  const [rankPage, rankPageSet] = useState(0);
+  const [rankPageSize, rankPageSizeSet] = useState(10);
   const [loadError, loadErrorSet] = useState<string | null>(null);
   const [creating, creatingSet] = useState(false);
   const [manualUserId, manualUserIdSet] = useState("");
@@ -50,6 +54,10 @@ export default function IncidentsCreatePage() {
       .then((r) => userOptionsSet(r.data))
       .catch(console.error);
   }, [client]);
+
+  useEffect(() => {
+    rankPageSet(0);
+  }, [rankUserFilter, rankPositionFilter, rankPageSize]);
 
   const canRank = useMemo(() => {
     return locationLatitude.trim() !== "" && locationLongitude.trim() !== "" && locationAltitude.trim() !== "";
@@ -77,6 +85,7 @@ export default function IncidentsCreatePage() {
       })
       .then((r) => {
         rankedSet(r.data);
+        rankPageSet(0);
         // подгружаем должности для отображения
         const idsToLoad = r.data.map((u) => u.user.id);
         Promise.all(
@@ -96,6 +105,7 @@ export default function IncidentsCreatePage() {
             const next = { ...prev } as Record<string, string>;
             r.data.forEach((u) => {
               const key = String(u.user.id);
+              if (!u.positionMatches) return; // auto-include only when role matches
               if (!next[key]) {
                 next[key] = map[key] || requiredPosition || positions[0] || "ASSIGNEE";
               } else if (!next[key] && map[key]) {
@@ -339,6 +349,31 @@ export default function IncidentsCreatePage() {
                 Load ranked
               </button>
               {loadError ? <span className={styles.hint}>{loadError}</span> : null}
+              <div className={styles.filtersRow}>
+                <input
+                  placeholder="Search user (name/username/id)"
+                  value={rankUserFilter}
+                  onChange={(e) => rankUserFilterSet(e.target.value)}
+                />
+                <input
+                  placeholder="Filter by position"
+                  value={rankPositionFilter}
+                  onChange={(e) => rankPositionFilterSet(e.target.value)}
+                />
+                <select
+                  value={rankPageSize}
+                  onChange={(e) => {
+                    rankPageSizeSet(Number(e.target.value) || 10);
+                    rankPageSet(0);
+                  }}
+                >
+                  {[5, 10, 20, 50].map((size) => (
+                    <option key={size} value={size}>
+                      {size} per page
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             {ranked ? (
               <table className={styles.table}>
@@ -354,33 +389,90 @@ export default function IncidentsCreatePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ranked.map((u) => {
-                  const key = String(u.user.id);
-                  const included = caseUsers[key] !== undefined;
-                  return (
-                    <tr className={styles.row} key={u.user.id}>
-                      <td>
-                          <input
-                            type="checkbox"
-                            checked={included}
-                            onChange={(e) => toggleUser(u.user.id, e.target.checked)}
-                          />
-                        </td>
-                        <td>
-                        {u.user.username} ({u.user.id})
-                      </td>
-                      <td>
-                        {rankedPositions[key] || "—"}
-                      </td>
-                        <td>{u.score.toFixed(2)}</td>
-                        <td>{u.distanceMeters.toFixed(1)}</td>
-                        <td>{u.activeCases}</td>
-                        <td>{u.positionMatches ? "✓" : ""}</td>
-                      </tr>
-                    );
-                  })}
+                  {(() => {
+                    const filtered =
+                      ranked?.filter((u) => {
+                        const key = String(u.user.id);
+                        const position = (rankedPositions[key] || "").toLowerCase();
+                        const roleOk =
+                          !rankPositionFilter.trim() ||
+                          position.includes(rankPositionFilter.toLowerCase().trim());
+                        const userString = `${u.user.username ?? ""} ${u.user.id} ${u.user.name ?? ""} ${u.user.surname ?? ""}`.toLowerCase();
+                        const userOk =
+                          !rankUserFilter.trim() || userString.includes(rankUserFilter.toLowerCase().trim());
+                        return roleOk && userOk;
+                      }) ?? [];
+                    const totalPages = Math.max(1, Math.ceil(filtered.length / rankPageSize));
+                    const page = Math.min(rankPage, totalPages - 1);
+                    if (page !== rankPage) {
+                      rankPageSet(page);
+                    }
+                    const pageItems = filtered.slice(page * rankPageSize, (page + 1) * rankPageSize);
+
+                    return pageItems.map((u) => {
+                      const key = String(u.user.id);
+                      const included = caseUsers[key] !== undefined;
+                      return (
+                        <tr className={styles.row} key={u.user.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={included}
+                              onChange={(e) => toggleUser(u.user.id, e.target.checked)}
+                            />
+                          </td>
+                          <td>
+                            {u.user.username} ({u.user.id})
+                          </td>
+                          <td>{rankedPositions[key] || "—"}</td>
+                          <td>{u.score.toFixed(2)}</td>
+                          <td>{u.distanceMeters.toFixed(1)}</td>
+                          <td>{u.activeCases}</td>
+                          <td>{u.positionMatches ? "✓" : ""}</td>
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
+            ) : null}
+            {ranked ? (
+              (() => {
+                const filtered =
+                  ranked?.filter((u) => {
+                    const key = String(u.user.id);
+                    const position = (rankedPositions[key] || "").toLowerCase();
+                    const roleOk =
+                      !rankPositionFilter.trim() || position.includes(rankPositionFilter.toLowerCase().trim());
+                    const userString = `${u.user.username ?? ""} ${u.user.id} ${u.user.name ?? ""} ${u.user.surname ?? ""}`.toLowerCase();
+                    const userOk =
+                      !rankUserFilter.trim() || userString.includes(rankUserFilter.toLowerCase().trim());
+                    return roleOk && userOk;
+                  }) ?? [];
+                const totalPages = Math.max(1, Math.ceil(filtered.length / rankPageSize));
+                const page = Math.min(rankPage, totalPages - 1);
+                return (
+                  <div className={styles.pagination}>
+                    <button
+                      type="button"
+                      onClick={() => rankPageSet(Math.max(0, page - 1))}
+                      disabled={page === 0}
+                    >
+                      Prev
+                    </button>
+                    <span className={styles.small}>
+                      Page {page + 1} / {totalPages} (shown {filtered.length ? filtered.slice(page * rankPageSize, (page + 1) * rankPageSize).length : 0} of {filtered.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => rankPageSet(Math.min(totalPages - 1, page + 1))}
+                      disabled={page >= totalPages - 1}
+                    >
+                      Next
+                    </button>
+                  </div>
+                );
+              })()
             ) : null}
 
             <div className={styles.manualAdd}>

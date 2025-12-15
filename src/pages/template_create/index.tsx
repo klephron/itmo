@@ -45,6 +45,7 @@ export default function TemplatesCreatePage() {
   const [suspects, suspectsSet] = useState(null as Map<number, SuspectEntry> | null);
   const [creating, creatingSet] = useState(false);
   const [error, errorSet] = useState<string | null>(null);
+  const [validationErrors, validationErrorsSet] = useState<string[]>([]);
 
   useEffect(() => {
     if (users) {
@@ -121,26 +122,20 @@ export default function TemplatesCreatePage() {
 function buildMetadata() {
   const data: TemplateMetadata = {
     employeeIds: users
-      ? users
-          .values()
-            .filter((u) => u.selected)
-            .map((u) => u.id)
-            .toArray()
-        : [],
-      suspectIds: suspects
-        ? suspects
-            .values()
-            .filter((u) => u.selected)
-            .map((u) => u.id)
-            .toArray()
-        : [],
-      clueIds: clues
-        ? clues
-            .values()
-            .filter((u) => u.selected)
-      .map((u) => u.id)
-        .toArray()
-    : [],
+      ? Array.from(users.values())
+          .filter((u) => u.selected)
+          .map((u) => u.id)
+      : [],
+    suspectIds: suspects
+      ? Array.from(suspects.values())
+          .filter((u) => u.selected)
+          .map((u) => u.id)
+      : [],
+    clueIds: clues
+      ? Array.from(clues.values())
+          .filter((u) => u.selected)
+          .map((u) => u.id)
+      : [],
   };
   return data;
 }
@@ -189,6 +184,30 @@ function buildMetadata() {
   async function createTemplate() {
     creatingSet(true);
     errorSet(null);
+    validationErrorsSet([]);
+
+    const currentErrors: string[] = [];
+    if (!title.trim()) currentErrors.push("Title is required");
+    if (!users) currentErrors.push("Users are still loading");
+    if (!clues) currentErrors.push("Clues are still loading");
+    if (!suspects) currentErrors.push("Suspects are still loading");
+
+    if (users && Array.from(users.values()).every((u) => !u.selected)) {
+      currentErrors.push("Select at least one user");
+    }
+    if (clues && Array.from(clues.values()).every((c) => !c.selected)) {
+      currentErrors.push("Select at least one clue");
+    }
+    if (suspects && Array.from(suspects.values()).every((s) => !s.selected)) {
+      currentErrors.push("Select at least one suspect");
+    }
+
+    if (currentErrors.length) {
+      validationErrorsSet(currentErrors);
+      creatingSet(false);
+      return;
+    }
+
     client.cases
       .addCaseTemplate(Number(caseId), {
         title: title,
@@ -274,6 +293,15 @@ function buildMetadata() {
         >
           Submit
         </button>
+        {validationErrors.length > 0 ? (
+          <div className={styles.error}>
+            <ul>
+              {validationErrors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {error ? <div className={styles.error}>{error}</div> : null}
       </form>
     </div>
