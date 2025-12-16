@@ -1043,6 +1043,10 @@
     const FEED_PAGE_SIZE = 10;
     let feedHasNext = false;
     let feedLoading = false;
+    let feedMode = { type: 'global' }; // {type: 'global'} | {type: 'profile', userId, sort}
+    let feedTargetUuid = null;
+    let profileCurrentInfo = null;
+    let authProfileInfo = null;
 
 
     let profileVideosPaging = {
@@ -1053,6 +1057,7 @@
         loading: false,
         sort: 'uploadedAt,desc'
     };
+    let currentProfileVideosList = [];
 
     let authProfileVideosPaging = {
         userId: null,
@@ -1062,6 +1067,7 @@
         loading: false,
         sort: 'uploadedAt,desc'
     };
+    let authProfileVideosList = [];
 
 
     // кэш: videoUuid -> массив комментариев
@@ -1159,8 +1165,10 @@
             page: 0,
             size: 12,
             last: false,
-            loading: false
+            loading: false,
+            sort: 'uploadedAt,desc'
         };
+        authProfileInfo = null;
     }
 
     async function loadAccountProfile() {
@@ -1175,7 +1183,8 @@
             page: 0,
             size: 12,   // первая пачка "Ваших видео"
             last: false,
-            loading: false
+            loading: false,
+            sort: authProfileVideosPaging.sort || 'uploadedAt,desc'
         };
 
         try {
@@ -1224,6 +1233,12 @@
             loadAccountFollowing();
 
             authProfileBlockEl.style.display = '';
+            authProfileInfo = {
+                id: authUser.userId,
+                displayName: profile.displayName || profile.username,
+                username: profile.username,
+                avatarUrl: profile.avatarUrl || null
+            };
 
             // очищаем грид "Ваши видео" и рисуем только первую страницу
             authProfileVideosEl.innerHTML = '';
@@ -1357,7 +1372,16 @@
             if (!res.ok) throw new Error('HTTP ' + res.status);
 
             const page = await res.json(); // Page<PublicUserVideoDto>
-            const vids = page.content || [];
+            let vids = page.content || [];
+            vids = sortVideosClient(vids, state.sort);
+            if (authProfileInfo) {
+                vids = vids.map(v => ({
+                    ...v,
+                    uploaderId: authProfileInfo.id,
+                    uploaderName: authProfileInfo.displayName || authProfileInfo.username,
+                    uploaderAvatarUrl: authProfileInfo.avatarUrl
+                }));
+            }
 
             if (studioVideoCountEl) {
                 const total = typeof page.totalElements === 'number'
@@ -1439,11 +1463,8 @@
 
             // клик по карточке — открыть в общей ленте
             card.addEventListener('click', () => {
+                switchFeedToProfile(authProfileVideosPaging.userId, authProfileVideosPaging.sort, v.uuid);
                 activateTab('feed');
-                const globalIndex = videosGlobalIndexByUuid(v.uuid);
-                if (globalIndex !== -1) {
-                    playByIndex(globalIndex);
-                }
             });
 
             authProfileVideosEl.appendChild(card);
@@ -2629,10 +2650,15 @@
         showFeedLoader(true, 'Загружаем видео…');
 
         try {
-            const res = await fetch(
-                apiBase + `/api/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`,
-                { headers: authHeaders() }
-            );
+            let url;
+            if (feedMode.type === 'profile' && feedMode.userId) {
+                const sort = encodeURIComponent(feedMode.sort || 'uploadedAt,desc');
+                url = apiBase + `/api/users/${feedMode.userId}/videos?page=${page}&size=${FEED_PAGE_SIZE}&sort=${sort}`;
+            } else {
+                url = apiBase + `/api/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`;
+            }
+
+            const res = await fetch(url, { headers: authHeaders() });
 
             if (res.status === 401 || res.status === 403) {
                 // если токен протух/битый — очищаем и пробуем без авторизации
@@ -2693,10 +2719,18 @@
                 return;
             }
 
-            if (currentIndex === -1) {
+            if (feedTargetUuid) {
+                const idx = videosGlobalIndexByUuid(feedTargetUuid);
+                if (idx !== -1) {
+                    currentIndex = idx;
+                } else if (currentIndex === -1) {
+                    currentIndex = 0;
+                }
+                feedTargetUuid = null;
+            } else if (currentIndex === -1) {
                 currentIndex = 0;
-                await playCurrent();
             }
+            await playCurrent();
             showFeedLoader(false);
         } catch (e) {
             console.error(e);
@@ -2742,14 +2776,20 @@
         profileVideosEl.innerHTML = '';
 
         // сбрасываем состояние пагинации для этого пользователя
+        const currentSort = profileVideosSortSelect && profileVideosSortSelect.value
+            ? profileVideosSortSelect.value
+            : profileVideosPaging.sort || 'uploadedAt,desc';
         profileVideosPaging = {
             userId,
             page: 0,
             size: 12,      // первая страница профиля – 12 превью
             last: false,
             loading: false,
-            sort: profileVideosPaging.sort || 'uploadedAt,desc'
+            sort: currentSort
         };
+        if (profileVideosSortSelect) {
+            profileVideosSortSelect.value = currentSort;
+        }
 
         try {
             const [userRes, videosRes] = await Promise.all([
@@ -2770,6 +2810,13 @@
             const totalVideos = typeof vidsPage.totalElements === 'number'
                 ? vidsPage.totalElements
                 : vids.length;
+
+            profileCurrentInfo = {
+                id: userId,
+                displayName: profile.displayName || profile.username,
+                username: profile.username,
+                avatarUrl: profile.avatarUrl || null
+            };
 
             // шапка профиля
             profileDisplayNameEl.textContent = profile.displayName || profile.username;
@@ -2994,11 +3041,8 @@
             card.appendChild(meta);
 
             card.addEventListener('click', () => {
+                switchFeedToProfile(profileVideosPaging.userId, profileVideosPaging.sort, v.uuid);
                 activateTab('feed');
-                const globalIndex = videosGlobalIndexByUuid(v.uuid);
-                if (globalIndex !== -1) {
-                    playByIndex(globalIndex);
-                }
             });
 
             profileVideosEl.appendChild(card);
@@ -3013,6 +3057,16 @@
     function reloadAuthVideos() {
         if (!authUser) return;
         loadMoreAuthProfileVideos(true);
+    }
+
+    function switchFeedToProfile(userId, sort, targetUuid) {
+        feedMode = { type: 'profile', userId, sort: sort || 'uploadedAt,desc' };
+        feedPage = 0;
+        feedHasNext = false;
+        videos = [];
+        currentIndex = -1;
+        feedTargetUuid = targetUuid || null;
+        loadVideoPage(0, false);
     }
 
     function renderProfileVideos(videos) {
