@@ -2623,7 +2623,7 @@
         }
     }
 
-    async function loadVideoPage(page = 0, append = false) {
+    async function loadVideoPage(page = 0, append = false, allowRetry = true) {
         if (feedLoading) return;
         feedLoading = true;
         showFeedLoader(true, 'Загружаем видео…');
@@ -2633,6 +2633,14 @@
                 apiBase + `/api/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`,
                 { headers: authHeaders() }
             );
+
+            if (res.status === 401 || res.status === 403) {
+                // если токен протух/битый — очищаем и пробуем без авторизации
+                if (authToken && allowRetry) {
+                    setAuth(null, null, null, null);
+                    return await loadVideoPage(page, append, false);
+                }
+            }
 
             if (!res.ok) {
                 throw new Error('HTTP ' + res.status);
