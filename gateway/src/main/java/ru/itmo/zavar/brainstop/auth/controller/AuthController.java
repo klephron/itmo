@@ -1,0 +1,89 @@
+package ru.itmo.zavar.brainstop.auth.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import ru.itmo.zavar.brainstop.auth.dto.request.LoginRequest;
+import ru.itmo.zavar.brainstop.auth.dto.request.RegisterRequest;
+import ru.itmo.zavar.brainstop.auth.dto.response.AuthResponse;
+import ru.itmo.zavar.brainstop.auth.security.SecurityBeans;
+import ru.itmo.zavar.brainstop.auth.service.AuthService;
+import ru.itmo.zavar.brainstop.common.security.CurrentUser;
+import ru.itmo.zavar.brainstop.user.UserEntity;
+import ru.itmo.zavar.brainstop.user.UserRepository;
+
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+@Tag(name = "Auth", description = "Регистрация, логин, текущий пользователь")
+public class AuthController {
+
+    private final AuthService authService;
+    private final UserRepository userRepository;
+
+    @PostMapping("/register")
+    @Operation(summary = "Регистрация нового пользователя")
+    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest req) {
+        UserEntity user = this.authService.register(req.username(), req.email(), req.displayName(), req.password());
+        String token = this.authService.login(req.username(), req.password());
+        String avatarUrl = user.getAvatarKey() == null ? null : "/api/users/" + user.getId() + "/avatar";
+        return ResponseEntity.ok(new AuthResponse(
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getRoles(),
+                avatarUrl
+        ));
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "Логин по username/password")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
+        String token = this.authService.login(req.username(), req.password());
+        UserEntity user = this.userRepository.findByUsername(req.username()).orElseThrow();
+        String avatarUrl = user.getAvatarKey() == null ? null : "/api/users/" + user.getId() + "/avatar";
+        return ResponseEntity.ok(new AuthResponse(
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getRoles(),
+                avatarUrl
+        ));
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Получить данные текущего пользователя")
+    public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal Object principal) {
+        if (principal instanceof CurrentUser jwtUser) {
+            return ResponseEntity.ok(new AuthResponse(
+                    null,
+                    jwtUser.getId(),
+                    jwtUser.getUsername(),
+                    jwtUser.getDisplayName(),
+                    jwtUser.getRoles(),
+                    jwtUser.getAvatarUrl()
+            ));
+        }
+        if (principal instanceof SecurityBeans.UserPrincipal userPrincipal) {
+            String avatarUrl = userPrincipal.getAvatarUrl();
+            return ResponseEntity.ok(new AuthResponse(
+                    null,
+                    userPrincipal.getId(),
+                    userPrincipal.getUsername(),
+                    userPrincipal.getDisplayName(),
+                    userPrincipal.getRoles(),
+                    avatarUrl
+            ));
+        }
+        return ResponseEntity.status(401).build();
+    }
+}

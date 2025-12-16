@@ -1,0 +1,81 @@
+package ru.itmo.zavar.brainstop.profile.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import ru.itmo.zavar.brainstop.common.api.profile.FollowQueryApi;
+import ru.itmo.zavar.brainstop.common.api.profile.ProfileAdminApi;
+import ru.itmo.zavar.brainstop.common.api.profile.ProfileUserDetails;
+import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
+import ru.itmo.zavar.brainstop.common.api.profile.UserSummary;
+import ru.itmo.zavar.brainstop.common.api.profile.dto.FollowCheckRequest;
+import ru.itmo.zavar.brainstop.common.security.Role;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+@RestController
+@RequestMapping("/internal/profile")
+@RequiredArgsConstructor
+@Tag(name = "Internal-Profile", description = "Внутренний API профилей (summary, follow-check, админ)")
+public class ProfileInternalController {
+
+    private final UserProfilePublicApi userProfilePublicApi;
+    private final FollowQueryApi followQueryApi;
+    private final ProfileAdminApi profileAdminApi;
+
+    @GetMapping("/users/{id}/summary")
+    @Operation(summary = "Внутренний: summary пользователя по id")
+    public ResponseEntity<UserSummary> getSummary(@PathVariable Long id) {
+        return this.userProfilePublicApi.findUserSummary(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/follow/check")
+    @Operation(summary = "Внутренний: проверить подписки в списке candidateIds")
+    public ResponseEntity<Set<Long>> checkFollowing(@RequestBody FollowCheckRequest request) {
+        if (request == null || request.followerId() == null || request.candidateIds() == null || request.candidateIds().isEmpty()) {
+            return ResponseEntity.ok(Collections.emptySet());
+        }
+        Set<Long> matches = this.followQueryApi.getFollowingWithin(request.followerId(), request.candidateIds());
+        return ResponseEntity.ok(matches);
+    }
+
+    @GetMapping("/admin/users")
+    @Operation(summary = "Внутренний: список пользователей (админ)")
+    public List<ProfileUserDetails> findAllUsers() {
+        return this.profileAdminApi.findAllUsers();
+    }
+
+    @GetMapping("/admin/users/{id}")
+    @Operation(summary = "Внутренний: детали пользователя (админ)")
+    public ResponseEntity<ProfileUserDetails> findUser(@PathVariable Long id) {
+        return this.profileAdminApi.findUser(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/admin/users/{id}/exists")
+    @Operation(summary = "Внутренний: проверить существование пользователя (админ)")
+    public ResponseEntity<Boolean> exists(@PathVariable Long id) {
+        return ResponseEntity.ok(this.profileAdminApi.existsById(id));
+    }
+
+    @PostMapping("/admin/users/{id}/enabled")
+    @Operation(summary = "Внутренний: включить/выключить пользователя (админ)")
+    public ResponseEntity<ProfileUserDetails> setEnabled(@PathVariable Long id, @RequestParam boolean enabled) {
+        ProfileUserDetails updated = this.profileAdminApi.setEnabled(id, enabled);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/admin/users/{id}/roles")
+    @Operation(summary = "Внутренний: обновить роли пользователя (админ)")
+    public ResponseEntity<ProfileUserDetails> updateRoles(@PathVariable Long id, @RequestBody Set<Role> roles) {
+        ProfileUserDetails updated = this.profileAdminApi.updateRoles(id, roles);
+        return ResponseEntity.ok(updated);
+    }
+}

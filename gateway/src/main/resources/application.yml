@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: ticktok-gateway
+    name: brainstop-gateway
   profiles:
     default: dev
   cloud:
@@ -16,8 +16,8 @@ spring:
           uri: lb://interactions-service
           predicates:
             - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view
-        - id: core
-          uri: lb://core-service
+        - id: video
+          uri: lb://video-service
           predicates:
             - Path=/api/videos/**,/api/streaming/**
         - id: profile
@@ -32,12 +32,12 @@ spring:
           uri: lb://search-service
           predicates:
             - Path=/api/search/**
-        - id: openapi-core
-          uri: lb://core-service
+        - id: openapi-video
+          uri: lb://video-service
           predicates:
-            - Path=/v3/api-docs/core
+            - Path=/v3/api-docs/video
           filters:
-            - RewritePath=/v3/api-docs/core, /v3/api-docs
+            - RewritePath=/v3/api-docs/video, /v3/api-docs
         - id: openapi-profile
           uri: lb://profile-service
           predicates:
@@ -92,8 +92,8 @@ springdoc:
     urls:
       - name: gateway
         url: /v3/api-docs
-      - name: core-service
-        url: /v3/api-docs/core
+      - name: video-service
+        url: /v3/api-docs/video
       - name: profile-service
         url: /v3/api-docs/profile
       - name: storage-service
