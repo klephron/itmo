@@ -31,7 +31,6 @@ public class TranscodingInternalController {
         jobRegistry.put(command.jobId(), new TranscodingJobStatus(TranscodingJobStage.UPLOADING, 0, "Получен в транскодере", null, null));
         List<TranscodedRendition> renditions = transcoder.transcodeToMp4WithProgress(
                 Path.of(command.sourcePath()), command.jobId(), command.targetHeights());
-        // вернём только метаданные; загрузка в storage на стороне core
         List<TranscodedRenditionMetadata> metas = renditions.stream()
                 .map(r -> new TranscodedRenditionMetadata(r.height(), r.path().toString(), r.size(), "video/mp4"))
                 .toList();

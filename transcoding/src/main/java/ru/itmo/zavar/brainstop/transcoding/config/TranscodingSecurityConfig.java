@@ -34,7 +34,6 @@ public class TranscodingSecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
-                        // внутренние вызовы от других сервисов — без авторизации, чтобы не сломать Feign без токена
                         .requestMatchers("/internal/transcoding/**").permitAll()
                         .anyRequest().authenticated()
                 )

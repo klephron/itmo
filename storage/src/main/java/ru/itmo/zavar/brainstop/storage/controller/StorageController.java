@@ -23,7 +23,6 @@ import java.io.InputStream;
 @RequestMapping("/internal/storage")
 @RequiredArgsConstructor
 @Tag(name = "Storage", description = "Внутренний фасад над MinIO")
-// MSPLIT: dedicated storage facade for all services
 public class StorageController {
 
     private final VideoObjectStorage storage;

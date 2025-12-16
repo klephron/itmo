@@ -8,7 +8,7 @@ import ru.itmo.zavar.brainstop.comment.dto.CreateCommentRequest;
 import ru.itmo.zavar.brainstop.comment.model.CommentEntity;
 import ru.itmo.zavar.brainstop.comment.repo.CommentRepository;
 import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
-import ru.itmo.zavar.brainstop.common.api.profile.UserSummary;
+import ru.itmo.zavar.brainstop.common.api.profile.UserSummaryDto;
 import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataPublicApi;
 
 import java.time.Instant;
@@ -34,7 +34,7 @@ public class CommentService {
 
         return comments.stream()
                 .map(c -> {
-                    UserSummary user = c.getAuthorId() == null
+                    UserSummaryDto user = c.getAuthorId() == null
                             ? null
                             : this.userProfilePublicApi.findUserSummary(c.getAuthorId()).orElse(null);
                     return new CommentDto(

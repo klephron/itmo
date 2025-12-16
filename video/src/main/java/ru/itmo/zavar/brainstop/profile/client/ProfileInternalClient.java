@@ -4,7 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.itmo.zavar.brainstop.common.api.profile.ProfileUserDetails;
-import ru.itmo.zavar.brainstop.common.api.profile.UserSummary;
+import ru.itmo.zavar.brainstop.common.api.profile.UserSummaryDto;
 import ru.itmo.zavar.brainstop.common.api.profile.dto.FollowCheckRequest;
 import ru.itmo.zavar.brainstop.common.security.Role;
 
@@ -15,7 +15,7 @@ import java.util.Set;
 public interface ProfileInternalClient {
 
     @GetMapping("/users/{id}/summary")
-    UserSummary getSummary(@PathVariable("id") Long id);
+    UserSummaryDto getSummary(@PathVariable("id") Long id);
 
     @PostMapping(value = "/follow/check", consumes = MediaType.APPLICATION_JSON_VALUE)
     Set<Long> checkFollowing(@RequestBody FollowCheckRequest request);

@@ -4,5 +4,5 @@ import java.util.Optional;
 
 public interface UserProfilePublicApi {
 
-    Optional<UserSummary> findUserSummary(Long userId);
+    Optional<UserSummaryDto> findUserSummary(Long userId);
 }

@@ -9,7 +9,7 @@ import ru.itmo.zavar.brainstop.common.api.profile.FollowQueryApi;
 import ru.itmo.zavar.brainstop.common.api.profile.ProfileAdminApi;
 import ru.itmo.zavar.brainstop.common.api.profile.ProfileUserDetails;
 import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
-import ru.itmo.zavar.brainstop.common.api.profile.UserSummary;
+import ru.itmo.zavar.brainstop.common.api.profile.UserSummaryDto;
 import ru.itmo.zavar.brainstop.common.api.profile.dto.FollowCheckRequest;
 import ru.itmo.zavar.brainstop.common.security.Role;
 
@@ -29,7 +29,7 @@ public class ProfileInternalController {
 
     @GetMapping("/users/{id}/summary")
     @Operation(summary = "Внутренний: summary пользователя по id")
-    public ResponseEntity<UserSummary> getSummary(@PathVariable Long id) {
+    public ResponseEntity<UserSummaryDto> getSummary(@PathVariable Long id) {
         return this.userProfilePublicApi.findUserSummary(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

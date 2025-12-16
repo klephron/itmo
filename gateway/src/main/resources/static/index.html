@@ -495,6 +495,48 @@
             align-items: center;
         }
 
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .suggest-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 30;
+            display: none;
+        }
+
+        .suggest-dropdown.visible {
+            display: block;
+        }
+
+        .suggest-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #1a1a1a;
+            cursor: pointer;
+        }
+
+        .suggest-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggest-item:hover {
+            background: #1f1f1f;
+        }
+
+        .suggest-meta {
+            font-size: 11px;
+            color: #888;
+        }
+
 
         .comments {
             margin-top: 8px;
@@ -706,7 +748,10 @@
         </div>
         <div class="form-row">
             <label for="searchInput">Запрос</label>
-            <input id="searchInput" type="text" placeholder="Название или описание">
+            <div class="search-input-wrapper">
+                <input id="searchInput" type="text" placeholder="Название или описание">
+                <div id="suggestDropdown" class="suggest-dropdown"></div>
+            </div>
         </div>
         <div class="controls" style="margin-top:6px;">
             <button class="full" id="btnSearchGo">Искать</button>
@@ -917,6 +962,7 @@
     const searchInputEl = document.getElementById('searchInput');
     const btnSearchGo = document.getElementById('btnSearchGo');
     const searchResultsEl = document.getElementById('searchResults');
+    const suggestDropdown = document.getElementById('suggestDropdown');
     const searchCountEl = document.getElementById('searchCount');
 
     // auth DOM
@@ -1644,6 +1690,10 @@
             if (!res.ok) {
                 // не трогаем localStorage на 401/403 — покажем форму, но не чистим токен
                 console.warn("/api/auth/me →", res.status);
+                if (res.status === 401) {
+                    // если токен недействителен — разлогиниваемся
+                    setAuth(null, null, null, null);
+                }
             } else {
                 const data = await res.json();
                 // сохраняем результат
@@ -3626,6 +3676,64 @@
                 runSearch();
             }
         });
+        let suggestTimer = null;
+        searchInputEl.addEventListener('input', () => {
+            const q = (searchInputEl.value || '').trim();
+            if (suggestTimer) clearTimeout(suggestTimer);
+            if (!q) {
+                clearSuggestDropdown();
+                return;
+            }
+            suggestTimer = setTimeout(() => runSuggest(q), 250);
+        });
+    }
+
+    function clearSuggestDropdown() {
+        if (suggestDropdown) {
+            suggestDropdown.innerHTML = '';
+            suggestDropdown.classList.remove('visible');
+        }
+    }
+
+    async function runSuggest(query) {
+        if (!suggestDropdown) return;
+        suggestDropdown.innerHTML = '<div class="suggest-item">Ищу подсказки…</div>';
+        suggestDropdown.classList.add('visible');
+        try {
+            const res = await fetch(apiBase + `/api/search/videos/suggest?q=${encodeURIComponent(query)}`, {
+                headers: authHeaders()
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const items = await res.json();
+            if (!Array.isArray(items) || items.length === 0) {
+                suggestDropdown.innerHTML = '<div class="suggest-item">Нет подсказок</div>';
+                suggestDropdown.classList.add('visible');
+                return;
+            }
+            suggestDropdown.innerHTML = '';
+            items.forEach(v => {
+                const row = document.createElement('div');
+                row.className = 'suggest-item';
+                row.innerHTML = `<div>${v.name || '(без названия)'}</div><div class=\"suggest-meta\">${formatDate(v.uploadedAt)} · ${humanSize(v.contentSize || 0)}</div>`;
+                row.addEventListener('click', () => {
+                    searchInputEl.value = v.name || '';
+                    clearSuggestDropdown();
+                    const idx = videosGlobalIndexByUuid(v.uuid);
+                    if (idx !== -1) {
+                        activateTab('feed');
+                        playByIndex(idx);
+                    } else {
+                        runSearch();
+                    }
+                });
+                suggestDropdown.appendChild(row);
+            });
+            suggestDropdown.classList.add('visible');
+        } catch (e) {
+            console.error(e);
+            suggestDropdown.innerHTML = '<div class="suggest-item">Ошибка: ' + e.message + '</div>';
+            suggestDropdown.classList.add('visible');
+        }
     }
 
     async function runSearch() {
@@ -3636,6 +3744,7 @@
         }
         setStatusSearch('Ищу…', 'ok');
         searchResultsEl.innerHTML = '';
+        clearSuggestDropdown();
 
         try {
             const res = await fetch(apiBase + `/api/search/videos?q=${encodeURIComponent(q)}&size=20`, {

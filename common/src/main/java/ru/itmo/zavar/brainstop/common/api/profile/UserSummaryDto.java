@@ -1,6 +1,6 @@
 package ru.itmo.zavar.brainstop.common.api.profile;
 
-public record UserSummary(
+public record UserSummaryDto(
         Long id,
         String displayName,
         String avatarUrl

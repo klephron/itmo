@@ -3,7 +3,7 @@ package ru.itmo.zavar.brainstop.video.mapper;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
-import ru.itmo.zavar.brainstop.common.api.profile.UserSummary;
+import ru.itmo.zavar.brainstop.common.api.profile.UserSummaryDto;
 import ru.itmo.zavar.brainstop.common.api.video.dto.UserVideoDto;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 
@@ -39,7 +39,7 @@ public abstract class FileMetadataToUserVideoMapper {
         if (src.getUploaderId() != null) {
             target.uploaderAvatarUrl(
                     userProfilePublicApi.findUserSummary(src.getUploaderId())
-                            .map(UserSummary::avatarUrl)
+                            .map(UserSummaryDto::avatarUrl)
                             .orElse(null)
             );
         }
