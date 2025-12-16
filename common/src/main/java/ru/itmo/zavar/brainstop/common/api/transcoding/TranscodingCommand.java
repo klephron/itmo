@@ -5,7 +5,11 @@ import java.util.UUID;
 
 public record TranscodingCommand(
         UUID jobId,
-        String sourcePath,
+        String storageKey,
+        String videoName,
+        String description,
+        Long userId,
+        String displayName,
         List<Integer> targetHeights
 ) {
 }

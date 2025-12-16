@@ -6,6 +6,16 @@ spring:
     name: interactions-service
   profiles:
     default: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/video-streaming
+    username: test
+    password: test
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database: POSTGRESQL
 #  cloud:
 #    loadbalancer:
 #      configurations: round_robin

@@ -672,6 +672,7 @@
             <button class="secondary" id="btnPrev">⏮ Предыдущее</button>
             <button id="btnNext">▶ Следующее</button>
             <button class="secondary" id="btnLike">♡ 0</button>
+            <button class="secondary" id="btnReportVideo" style="display:none;">Пожаловаться</button>
         </div>
 
         <div class="quality-row" id="qualityRow" style="display:none;">
@@ -896,6 +897,9 @@
         <div class="studio-section-title">Пользователи</div>
         <div class="studio-videos" id="modUsersList"></div>
 
+        <div class="studio-section-title" style="margin-top:10px;">Жалобы</div>
+        <div class="studio-jobs" id="modComplaints" style="min-height:60px;"></div>
+
         <div class="studio-section-title" style="margin-top:10px;">Детали пользователя</div>
         <div class="studio-jobs" id="modUserDetails" style="min-height:60px;"></div>
 
@@ -935,6 +939,7 @@
     const btnNext = document.getElementById('btnNext');
     const btnPrev = document.getElementById('btnPrev');
     const btnLike = document.getElementById('btnLike');
+    const btnReportVideo = document.getElementById('btnReportVideo');
     const qualityRow = document.getElementById('qualityRow');
     const qualitySelect = document.getElementById('qualitySelect');
     const feedLoader = document.getElementById('feedLoader');
@@ -994,6 +999,7 @@
     const modUsersCountEl = document.getElementById('modUsersCount');
     const modUserDetailsEl = document.getElementById('modUserDetails');
     const modUserVideosEl = document.getElementById('modUserVideos');
+    const modComplaintsEl = document.getElementById('modComplaints');
     const statusModerationEl = document.getElementById('statusModeration');
 
     const authAvatarEl = document.getElementById('authAvatar');
@@ -1516,6 +1522,75 @@
         statusModerationEl.className = 'status' + (type ? ' ' + type : '');
     }
 
+    async function loadComplaints() {
+        if (!authToken || !isModerator()) return;
+        try {
+            const res = await fetch(apiBase + '/internal/moderation/complaints', {
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            const list = await res.json();
+            if (!Array.isArray(list)) {
+                setStatusModeration('Некорректный ответ по жалобам', 'error');
+                return;
+            }
+            renderComplaints(list);
+        } catch (e) {
+            setStatusModeration('Ошибка загрузки жалоб: ' + e.message, 'error');
+        }
+    }
+
+    function renderComplaints(list) {
+        modComplaintsEl.innerHTML = '';
+        if (!list || !Array.isArray(list) || list.length === 0) {
+            modComplaintsEl.innerHTML = '<div class="studio-row-meta">Нет открытых жалоб</div>';
+            return;
+        }
+        list.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'job';
+            row.innerHTML = `
+                <div>
+                    <div><b>${c.targetType}</b> ${c.videoUuid || ''}${c.commentId ? ' / comment ' + c.commentId : ''}</div>
+                    <div class="job-sub">${c.reason}</div>
+                </div>
+                <div class="job-actions">
+                    <button class="small danger" data-id="${c.id}" data-delete="true">Удалить и закрыть</button>
+                    <button class="small" data-id="${c.id}" data-delete="false">Закрыть</button>
+                    <button class="small secondary" data-id="${c.id}" data-reject="true">Отклонить</button>
+                </div>
+            `;
+            row.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.getAttribute('data-id');
+                    const del = btn.getAttribute('data-delete') === 'true';
+                    const reject = btn.getAttribute('data-reject') === 'true';
+                    await resolveComplaint(id, del, reject);
+                });
+            });
+            modComplaintsEl.appendChild(row);
+        });
+    }
+
+    async function resolveComplaint(id, deleteTarget, reject) {
+        try {
+            const res = await fetch(apiBase + `/internal/moderation/complaints/${id}/resolve?deleteTarget=${deleteTarget}&reject=${reject}`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (!res.ok) {
+                setStatusModeration('Ошибка закрытия жалобы', 'error');
+                return;
+            }
+            await loadComplaints();
+            setStatusModeration('Жалоба обработана', 'ok');
+        } catch (e) {
+            setStatusModeration('Ошибка: ' + e.message, 'error');
+        }
+    }
     function userHasRole(role) {
         return authUser
             && Array.isArray(authUser.roles)
@@ -1568,11 +1643,19 @@
             authFormsBlock.style.display = 'none';
 
             // аватар в аккаунте
-            authAvatarEl.style.display = '';
-            avatarUploadRow.style.display = '';
-            authAvatarEl.innerHTML = authUser.avatarUrl
-                ? `<img src="${authUser.avatarUrl}" alt="">`
-                : '';
+        authAvatarEl.style.display = '';
+        avatarUploadRow.style.display = '';
+        authAvatarEl.innerHTML = authUser.avatarUrl
+            ? `<img src="${authUser.avatarUrl}" alt="">`
+            : '';
+        if (profileAvatarEl) {
+            if (authUser.avatarUrl) {
+                profileAvatarEl.src = authUser.avatarUrl;
+                profileAvatarEl.style.display = '';
+            } else {
+                profileAvatarEl.style.display = 'none';
+            }
+        }
         } else {
             authUserShortEl.textContent = 'Гость';
             authLoggedBlock.style.display = 'none';
@@ -1775,6 +1858,34 @@
             setStatusFeed('Ошибка лайка: ' + e.message, 'error');
         }
     });
+
+    if (btnReportVideo) {
+        btnReportVideo.addEventListener('click', async () => {
+            if (!authToken) {
+                setStatusFeed('Войдите, чтобы пожаловаться', 'error');
+                activateTab('auth');
+                return;
+            }
+            if (!videos.length || currentIndex < 0 || currentIndex >= videos.length) return;
+            const v = videos[currentIndex];
+            const reason = prompt('Укажите причину жалобы на видео');
+            if (!reason) return;
+            try {
+                const res = await fetch(apiBase + `/api/moderation/complaints/videos/${v.uuid}`, {
+                    method: 'POST',
+                    headers: {
+                        ...authHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                setStatusFeed('Жалоба отправлена', 'ok');
+            } catch (e) {
+                setStatusFeed('Ошибка отправки жалобы: ' + e.message, 'error');
+            }
+        });
+    }
 
     function getVideoUrlByIndex(index) {
         const meta = videos[index];
@@ -2185,6 +2296,7 @@
 
         // --- статус лайка + актуальное количество лайков ---
         if (authToken) {
+            if (btnReportVideo) btnReportVideo.style.display = '';
             try {
                 const res = await fetch(apiBase + '/api/videos/' + v.uuid + '/like', {
                     headers: authHeaders()
@@ -2206,6 +2318,9 @@
             } catch (e) {
                 console.error('like status error', e);
             }
+        } else {
+            updateLikeButtonWithCount(baseLikes, false);
+            if (btnReportVideo) btnReportVideo.style.display = 'none';
         }
 
         // --- просмотры ---
@@ -2367,6 +2482,14 @@
                 header.appendChild(delSpan);
             }
 
+            if (authUser && !c.mine) {
+                const complainSpan = document.createElement('span');
+                complainSpan.className = 'comment-delete';
+                complainSpan.textContent = 'пожаловаться';
+                complainSpan.addEventListener('click', () => complainComment(videoUuid, c.id));
+                header.appendChild(complainSpan);
+            }
+
             const textDiv = document.createElement('div');
             textDiv.className = 'comment-text';
             textDiv.textContent = c.text;
@@ -2379,6 +2502,40 @@
 
             commentsListEl.appendChild(row);
         });
+    }
+
+    async function complainComment(videoUuid, commentId) {
+        if (!authToken) {
+            setStatusComments('Войдите, чтобы отправить жалобу', 'error');
+            activateTab('auth');
+            return;
+        }
+        const reason = (prompt('Опишите причину жалобы') || '').trim();
+        if (!reason) return;
+
+        try {
+            const res = await fetch(apiBase + `/api/moderation/complaints/videos/${videoUuid}/comments/${commentId}`, {
+                method: 'POST',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason })
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusComments('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            setStatusComments('Жалоба отправлена', 'ok');
+        } catch (e) {
+            console.error('complainComment error', e);
+            setStatusComments('Ошибка отправки жалобы: ' + e.message, 'error');
+        }
     }
 
     btnSendComment.addEventListener('click', async () => {
@@ -2959,10 +3116,11 @@
 
             modUsers = await res.json(); // массив UserSummaryDto
             modUsersCountEl.textContent = modUsers.length + ' пользователей';
-            renderModerationUsers();
-        } catch (e) {
-            console.error(e);
-            setStatusModeration('Ошибка загрузки пользователей: ' + e.message, 'error');
+        renderModerationUsers();
+        await loadComplaints();
+    } catch (e) {
+        console.error(e);
+        setStatusModeration('Ошибка загрузки пользователей: ' + e.message, 'error');
         }
     }
 
@@ -2970,6 +3128,9 @@
         modUsersListEl.innerHTML = '';
         modUserDetailsEl.innerHTML = '<div class="studio-row-meta">Выберите пользователя</div>';
         modUserVideosEl.innerHTML = '<div class="studio-row-meta">Видео пользователя будут здесь</div>';
+        if (modComplaintsEl) {
+            modComplaintsEl.innerHTML = '<div class="studio-row-meta">Загрузите жалобы</div>';
+        }
 
         if (!modUsers || modUsers.length === 0) {
             modUsersListEl.innerHTML = '<div class="studio-row-meta">Пользователи не найдены</div>';

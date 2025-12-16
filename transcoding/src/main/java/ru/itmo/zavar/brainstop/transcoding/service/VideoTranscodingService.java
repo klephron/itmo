@@ -3,12 +3,21 @@ package ru.itmo.zavar.brainstop.transcoding.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodedRendition;
-import ru.itmo.zavar.brainstop.common.api.transcoding.*;
+import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodedRenditionMetadata;
+import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingCommand;
+import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobRegistry;
+import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobStatus;
+import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobStage;
+import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingProgressEvent;
+import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingResult;
+import ru.itmo.zavar.brainstop.common.api.transcoding.VideoTranscoder;
 import ru.itmo.zavar.brainstop.transcoding.messaging.TranscodingEventsProducer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,10 +39,69 @@ public class VideoTranscodingService implements VideoTranscoder {
 
     private final TranscodingJobRegistry jobRegistry;
     private final TranscodingEventsProducer eventsProducer;
+    private final VideoObjectStorage videoObjectStorage;
 
-    public VideoTranscodingService(TranscodingJobRegistry jobRegistry, TranscodingEventsProducer eventsProducer) {
+    public VideoTranscodingService(TranscodingJobRegistry jobRegistry,
+                                   TranscodingEventsProducer eventsProducer,
+                                   VideoObjectStorage videoObjectStorage) {
         this.jobRegistry = jobRegistry;
         this.eventsProducer = eventsProducer;
+        this.videoObjectStorage = videoObjectStorage;
+    }
+
+    /**
+     * Обрабатывает команду: скачивает исходник из storage, транскодирует, заливает результат и шлёт событие.
+     */
+    public void handleCommand(TranscodingCommand command) throws Exception {
+        UUID jobId = command.jobId();
+        jobRegistry.put(jobId, new TranscodingJobStatus(TranscodingJobStage.UPLOADING, 0, "Загружаем исходник", command.videoName(), command.userId()));
+
+        Path tempInput = Files.createTempFile("raw-", ".mp4");
+        try (InputStream is = videoObjectStorage.downloadProcessed(command.storageKey())) {
+            Files.copy(is, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        List<TranscodedRendition> renditions = transcodeToMp4WithProgress(tempInput, jobId, command.targetHeights());
+
+        // Заливаем результат в storage
+        List<TranscodedRenditionMetadata> metas = new ArrayList<>();
+        jobRegistry.update(jobId, st -> {
+            st.setStage(TranscodingJobStage.UPLOADING_TO_MINIO);
+            st.setPercent(90);
+            st.setMessage("Загрузка конвертированных файлов…");
+        });
+        eventsProducer.sendProgress(new TranscodingProgressEvent(jobId, 90, "Загрузка конвертированных файлов…", TranscodingJobStage.UPLOADING_TO_MINIO, java.time.Instant.now()));
+        for (TranscodedRendition r : renditions) {
+            String key = "processed/" + jobId + "/" + r.height() + "p.mp4";
+            try (InputStream is = Files.newInputStream(r.path())) {
+                videoObjectStorage.uploadProcessed(key, is, r.size());
+            }
+            metas.add(new TranscodedRenditionMetadata(r.height(), key, r.size(), "video/mp4"));
+        }
+
+        String thumbKey = null;
+        try {
+            thumbKey = generateThumbnail(tempInput, jobId);
+        } catch (Exception e) {
+            log.warn("Failed to generate thumbnail for job {}", jobId, e);
+        }
+
+        // Удаляем временные файлы
+        for (TranscodedRendition r : renditions) {
+            try { Files.deleteIfExists(r.path()); } catch (Exception ignored) {}
+        }
+        try { Files.deleteIfExists(tempInput); } catch (Exception ignored) {}
+
+        int defaultHeight = metas.stream().map(TranscodedRenditionMetadata::height).max(Integer::compareTo).orElse(720);
+        TranscodingResult result = new TranscodingResult(jobId, metas, thumbKey, defaultHeight);
+        eventsProducer.sendResult(result);
+
+        jobRegistry.update(jobId, st -> {
+            st.setStage(TranscodingJobStage.DONE);
+            st.setPercent(100);
+            st.setMessage("Готово");
+        });
+        eventsProducer.sendProgress(new TranscodingProgressEvent(jobId, 100, "Готово", TranscodingJobStage.DONE, java.time.Instant.now()));
     }
 
     @Override
@@ -70,6 +138,41 @@ public class VideoTranscodingService implements VideoTranscoder {
         this.eventsProducer.sendProgress(new TranscodingProgressEvent(jobId, 100, "Перекодирование: 100%", TranscodingJobStage.TRANSCODING, java.time.Instant.now()));
 
         return outputs;
+    }
+
+    private String generateThumbnail(Path input, UUID jobId) throws Exception {
+        Path thumb = Files.createTempFile("thumb-", ".jpg");
+        try {
+            log.info("Generating thumbnail for job {} from {}", jobId, input);
+            ProcessBuilder pb = new ProcessBuilder(
+                    this.ffmpegPath,
+                    "-y",
+                    "-i", input.toString(),
+                    "-ss", "00:00:00.000",
+                    "-frames:v", "1",
+                    "-q:v", "2",
+                    thumb.toString()
+            );
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            p.getInputStream().close(); // prevent buffer blocking
+            boolean finished = p.waitFor(60, java.util.concurrent.TimeUnit.SECONDS);
+            if (!finished) {
+                p.destroyForcibly();
+                throw new IllegalStateException("ffmpeg thumbnail timeout");
+            }
+            int code = p.exitValue();
+            if (code != 0) {
+                throw new IllegalStateException("ffmpeg thumbnail exit code " + code);
+            }
+
+            long size = Files.size(thumb);
+            try (InputStream is = Files.newInputStream(thumb)) {
+                return videoObjectStorage.uploadThumbnail("thumbnails/" + jobId + ".jpg", is, size);
+            }
+        } finally {
+            try { Files.deleteIfExists(thumb); } catch (Exception ignored) {}
+        }
     }
 
     private double probeDurationSeconds(Path input) throws IOException, InterruptedException {

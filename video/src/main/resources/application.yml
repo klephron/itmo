@@ -1,5 +1,9 @@
 server:
   port: ${PORT:0}
+  tomcat:
+    max-swallow-size: -1
+    max-http-form-post-size: -1
+    connection-timeout: 300s
 
 spring:
   application:
@@ -17,6 +21,11 @@ spring:
     multipart:
       max-file-size: 10000MB
       max-request-size: 10000MB
+      resolve-lazily: true
+
+  mvc:
+    async:
+      request-timeout: 300s
 
   datasource:
     url: jdbc:postgresql://localhost:5432/video-streaming

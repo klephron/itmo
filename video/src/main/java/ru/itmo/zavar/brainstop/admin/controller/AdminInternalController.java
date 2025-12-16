@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import ru.itmo.zavar.brainstop.common.api.video.dto.UserVideoDto;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/internal/admin")
@@ -40,5 +42,12 @@ public class AdminInternalController {
     @Operation(summary = "Внутренний: получить видео пользователя для модерации")
     public ResponseEntity<List<UserVideoDto>> getUserVideos(@PathVariable Long id) {
         return ResponseEntity.ok(this.videoModerationApi.findByUploaderId(id));
+    }
+
+    @DeleteMapping("/videos/{uuid}")
+    @Operation(summary = "Внутренний: удалить видео (для модерации)")
+    public ResponseEntity<Void> deleteVideo(@PathVariable UUID uuid) {
+        this.videoAdminApi.deleteVideo(uuid);
+        return ResponseEntity.noContent().build();
     }
 }

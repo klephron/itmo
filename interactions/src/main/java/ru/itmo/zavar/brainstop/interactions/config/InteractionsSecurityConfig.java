@@ -36,7 +36,9 @@ public class InteractionsSecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
-                        .requestMatchers("/api/videos/**").authenticated()
+                        .requestMatchers("/api/videos/**",
+                                "/api/moderation/complaints/**",
+                                "/internal/moderation/complaints/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth

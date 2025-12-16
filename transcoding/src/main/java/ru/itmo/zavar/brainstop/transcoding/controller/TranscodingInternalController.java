@@ -9,8 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.api.transcoding.*;
 import ru.itmo.zavar.brainstop.transcoding.service.VideoTranscodingService;
 
-import java.nio.file.Path;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,17 +22,13 @@ public class TranscodingInternalController {
 
     @PostMapping("/jobs")
     @Operation(summary = "Запустить транскодинг")
-    public ResponseEntity<TranscodingResult> start(@RequestBody TranscodingCommand command) throws Exception {
-        if (command == null || !StringUtils.hasText(command.sourcePath()) || command.jobId() == null) {
+    public ResponseEntity<Void> start(@RequestBody TranscodingCommand command) throws Exception {
+        if (command == null || !StringUtils.hasText(command.storageKey()) || command.jobId() == null) {
             return ResponseEntity.badRequest().build();
         }
-        jobRegistry.put(command.jobId(), new TranscodingJobStatus(TranscodingJobStage.UPLOADING, 0, "Получен в транскодере", null, null));
-        List<TranscodedRendition> renditions = transcoder.transcodeToMp4WithProgress(
-                Path.of(command.sourcePath()), command.jobId(), command.targetHeights());
-        List<TranscodedRenditionMetadata> metas = renditions.stream()
-                .map(r -> new TranscodedRenditionMetadata(r.height(), r.path().toString(), r.size(), "video/mp4"))
-                .toList();
-        return ResponseEntity.ok(new TranscodingResult(command.jobId(), metas));
+        jobRegistry.put(command.jobId(), new TranscodingJobStatus(TranscodingJobStage.UPLOADING, 0, "Получен в транскодере", command.videoName(), command.userId()));
+        transcoder.handleCommand(command);
+        return ResponseEntity.accepted().build();
     }
 
     @GetMapping("/jobs/{jobId}")

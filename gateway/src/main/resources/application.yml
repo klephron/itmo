@@ -19,8 +19,8 @@ spring:
         enabled: true
     gateway:
       httpclient:
-        connect-timeout: 2000
-        response-timeout: 3s
+        connect-timeout: 10000
+        response-timeout: 300s
       default-filters:
         - name: Retry
           args:
@@ -31,7 +31,7 @@ spring:
         - id: interactions
           uri: lb://interactions-service
           predicates:
-            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view
+            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view,/api/moderation/complaints/**,/internal/moderation/complaints/**
         - id: video
           uri: lb://video-service
           predicates:

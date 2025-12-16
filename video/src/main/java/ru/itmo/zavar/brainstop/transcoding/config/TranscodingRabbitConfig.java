@@ -19,6 +19,10 @@ public class TranscodingRabbitConfig {
     public static final String EXCHANGE = "transcoding.exchange";
     public static final String QUEUE_PROGRESS = "transcoding.progress.queue";
     public static final String ROUTING_PROGRESS = "transcoding.progress";
+    public static final String QUEUE_COMMAND = "transcoding.command.queue";
+    public static final String ROUTING_COMMAND = "transcoding.command";
+    public static final String QUEUE_RESULT = "transcoding.result.queue";
+    public static final String ROUTING_RESULT = "transcoding.result";
 
     @Bean
     public DirectExchange transcodingExchange() {
@@ -33,6 +37,16 @@ public class TranscodingRabbitConfig {
     @Bean
     public Binding progressBinding() {
         return BindingBuilder.bind(progressQueue()).to(transcodingExchange()).with(ROUTING_PROGRESS);
+    }
+
+    @Bean
+    public Queue resultQueue() {
+        return new Queue(QUEUE_RESULT, true);
+    }
+
+    @Bean
+    public Binding resultBinding() {
+        return BindingBuilder.bind(resultQueue()).to(transcodingExchange()).with(ROUTING_RESULT);
     }
 
     @Bean

@@ -48,6 +48,7 @@ public class FeedService {
 
         Map<Long, String> avatarByUserId = uploaderIds.stream()
                 .map(id -> userProfilePublicApi.findUserSummary(id)
+                        .filter(summary -> summary.avatarUrl() != null && !summary.avatarUrl().isBlank())
                         .map(summary -> Map.entry(id, summary.avatarUrl()))
                         .orElse(null))
                 .filter(Objects::nonNull)

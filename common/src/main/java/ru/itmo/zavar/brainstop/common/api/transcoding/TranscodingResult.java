@@ -5,6 +5,8 @@ import java.util.UUID;
 
 public record TranscodingResult(
         UUID jobId,
-        List<TranscodedRenditionMetadata> renditions
+        List<TranscodedRenditionMetadata> renditions,
+        String thumbnailKey,
+        Integer defaultHeight
 ) {
 }
