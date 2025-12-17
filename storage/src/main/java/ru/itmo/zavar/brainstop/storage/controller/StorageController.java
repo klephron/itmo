@@ -95,7 +95,7 @@ public class StorageController {
                 .body(new InputStreamResource(is));
     }
 
-    @PostMapping(value = "/avatars", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PostMapping(value = "/avatars", consumes = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @Operation(summary = "Загрузить аватар")
     public ResponseEntity<ObjectKeyResponse> uploadAvatar(@RequestParam("userId") Long userId,
                                                           @RequestHeader(value = HttpHeaders.CONTENT_TYPE, required = false) String contentType,

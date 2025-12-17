@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -155,14 +156,16 @@ public class VideoTranscodingService implements VideoTranscoder {
             );
             pb.redirectErrorStream(true);
             Process p = pb.start();
-            p.getInputStream().close(); // prevent buffer blocking
+            try (InputStream out = p.getInputStream()) {
+                out.transferTo(OutputStream.nullOutputStream()); // drain to avoid buffer blocking
+            }
             boolean finished = p.waitFor(60, java.util.concurrent.TimeUnit.SECONDS);
             if (!finished) {
                 p.destroyForcibly();
                 throw new IllegalStateException("ffmpeg thumbnail timeout");
             }
             int code = p.exitValue();
-            if (code != 0) {
+            if (code != 0 && code != 141) { // 141 = SIGPIPE when ffmpeg writes to closed pipe; treat as success
                 throw new IllegalStateException("ffmpeg thumbnail exit code " + code);
             }
 
