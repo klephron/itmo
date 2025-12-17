@@ -114,7 +114,7 @@ export interface RankedUserInfoResponse {
 }
 
 /** DTO for ru.itmopai.backend.entity.CaseEntity */
-export interface CaseDto {
+export interface CaseDto{
   /** @format int64 */
   id: number;
   /** @minLength 1 */
