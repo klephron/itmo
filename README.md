@@ -9,8 +9,8 @@
 - **interactions** – interactions-service (лайки, комментарии, жалобы) – [interactions/](interactions/)
 - **admin** – admin-service (админ/модерация) – [admin/](admin/)
 - **transcoding** – transcoding-service (FFmpeg, перекодирование, превью) – [transcoding/](transcoding/)
-- **search** – search-service (embeddings/поиск) – [search/](search/)
-- **common** – общий модуль с DTO/утилитами – [common/](common/)
+- **search** - search-service (embeddings/поиск) - [search/](search/)
+- **common** - общий модуль с DTO/утилитами - [common/](common/)
 
 ## Требования
 - JDK 17
@@ -40,22 +40,33 @@ Compose-файл: [docker-compose.yml](docker-compose.yml)
 ```
 Перед запуском подготовьте инфраструктуру (PostgreSQL, MinIO, RabbitMQ, Eureka). Удобно поднять их тем же docker compose и остановить ненужные сервисы.
 
+### Demo-данные фида (dev-seed)
+Есть профиль **dev-seed**, который заполняет видео-ленту тестовыми записями (только в `video-service`):
+- Конфиг: [video/src/main/java/ru/itmo/zavar/brainstop/video/config/DevSeedConfig.java](video/src/main/java/ru/itmo/zavar/brainstop/video/config/DevSeedConfig.java)
+- Запуск: `./gradlew :video:bootRun --args='--spring.profiles.active=dev,dev-seed'`
+- Требования: в PostgreSQL должен быть расширение pgvector (тип `vector`) для колонок embeddings.
+
 ## Ключевые переменные окружения (по сервисам)
 Spring relaxed binding: можно задавать через .env, env vars или application.yml.
 
-Общее (для всех, кто ходит в эти компоненты):
-- **SPRING_PROFILES_ACTIVE** – типовой профиль dev.
-- **EUREKA_CLIENT_SERVICEURL_DEFAULTZONE** – URL Eureka (docker: http://discovery:8761/eureka/, локально: http://localhost:8761/eureka/).
-- **SPRING_DATASOURCE_URL** / **SPRING_DATASOURCE_USERNAME** / **SPRING_DATASOURCE_PASSWORD** – PostgreSQL (docker: host postgres, порт 5432).
-- **SPRING_RABBITMQ_HOST** / **SPRING_RABBITMQ_PORT** / **SPRING_RABBITMQ_USERNAME** / **SPRING_RABBITMQ_PASSWORD** – RabbitMQ (docker: host rabbitmq, порт 5672).
-- **MINIO_URL** – URL MinIO (docker: http://minio:9000), **MINIO_ACCESS_KEY**, **MINIO_SECRET_KEY**, **MINIO_BUCKET**.
-- Auth:
-  - **APP_JWT_SECRET** / **APP_JWT_EXPIRATION_MS** – HMAC-секрет и время жизни токенов (используется gateway для выдачи токенов; остальные сервисы валидируют).
-  - Если включаете resource-server с публичным ключом: **SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI** (issuer), **SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI** или **SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_PUBLIC_KEY_LOCATION**. Значения можно задать через .env или application.yml (см. примеры в конфиге).
+Общее (для всех микросервисов + common):
+- **SPRING_PROFILES_ACTIVE** — например `dev` или `dev,dev-seed`.
+- **EUREKA_CLIENT_SERVICEURL_DEFAULTZONE** — Eureka (docker: `http://discovery:8761/eureka/`, локально: `http://localhost:8761/eureka/`).
+- **SPRING_DATASOURCE_URL** / **SPRING_DATASOURCE_USERNAME** / **SPRING_DATASOURCE_PASSWORD** — PostgreSQL (docker: host `postgres`, порт `5432`).
+- **SPRING_RABBITMQ_HOST** / **SPRING_RABBITMQ_PORT** / **SPRING_RABBITMQ_USERNAME** / **SPRING_RABBITMQ_PASSWORD** — RabbitMQ (docker: host `rabbitmq`, порт `5672`).
+- **MINIO_URL** — MinIO (docker: `http://minio:9000`), **MINIO_ACCESS_KEY**, **MINIO_SECRET_KEY**, **MINIO_BUCKET**.
 
-Видео/транскодер:
-- **TRANSCODER_FFMPEG_PATH** – путь к ffmpeg (в контейнере /usr/bin/ffmpeg).
-- **TRANSCODER_FFPROBE_PATH** – путь к ffprobe (в контейнере /usr/bin/ffprobe, нужен video-service).
+Auth:
+- **APP_JWT_SECRET**, **APP_JWT_EXPIRATION_MS** — HMAC-секрет и TTL токенов (выдаёт gateway, остальные валидируют).
+- Если включён resource-server (см. `application.yml` сервисов): **SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI** (issuer) и либо **SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI**, либо **SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_PUBLIC_KEY_LOCATION** (путь к PEM/ключу).
+
+Видео / транскодер:
+- **TRANSCODER_FFMPEG_PATH** — путь к ffmpeg (в контейнерах `/usr/bin/ffmpeg`).
+- **TRANSCODER_FFPROBE_PATH** — путь к ffprobe (в контейнерах `/usr/bin/ffprobe`, нужен video-service).
+
+Дополнительно:
+- Для pgvector убедитесь, что в базе выполнено `CREATE EXTENSION IF NOT EXISTS vector;` (нужно для video/search).
+- Общий модуль common подключается как зависимость; все перечисленные выше общие переменные читаются и там, и в сервисах.
 
 ## Сборка
 ```bash

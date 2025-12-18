@@ -1,5 +1,8 @@
 package ru.itmo.zavar.brainstop.storage.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.minio.errors.ErrorResponseException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.brainstop.common.dto.storage.ObjectKeyResponse;
 import ru.itmo.zavar.brainstop.storage.infra.MinioStorageService;
@@ -89,10 +90,17 @@ public class StorageController {
     @GetMapping(value = "/thumbnails", produces = MediaType.IMAGE_JPEG_VALUE)
     @Operation(summary = "Получить thumbnail")
     public ResponseEntity<Resource> openThumbnail(@RequestParam("key") String key) throws Exception {
-        InputStream is = this.storage.openThumbnail(key);
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
-                .body(new InputStreamResource(is));
+        try {
+            InputStream is = this.storage.openThumbnail(key);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(new InputStreamResource(is));
+        } catch (ErrorResponseException e) {
+            if ("NoSuchKey".equalsIgnoreCase(e.errorResponse().code())) {
+                return ResponseEntity.notFound().build();
+            }
+            throw e;
+        }
     }
 
     @PostMapping(value = "/avatars", consumes = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
