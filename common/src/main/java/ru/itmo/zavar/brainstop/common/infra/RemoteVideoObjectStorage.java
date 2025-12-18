@@ -13,6 +13,7 @@ import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.brainstop.common.dto.storage.ObjectKeyResponse;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
@@ -79,15 +80,19 @@ public class RemoteVideoObjectStorage implements VideoObjectStorage {
 
     @Override
     public InputStream openThumbnail(String key) throws Exception {
-        byte[] data = withRetry(this.webClient.get()
-                .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/thumbnails").queryParam("key", key).build())
-                .accept(MediaType.IMAGE_JPEG)
-                .retrieve()
-                .bodyToMono(byte[].class)).block();
-        if (data == null) {
-            throw new IOException("Empty body from storage service");
+        try {
+            byte[] data = withRetry(this.webClient.get()
+                    .uri(uriBuilder -> uriBuilder.path(STORAGE_ROOT + "/thumbnails").queryParam("key", key).build())
+                    .accept(MediaType.IMAGE_JPEG)
+                    .retrieve()
+                    .bodyToMono(byte[].class)).block();
+            if (data == null) {
+                throw new IOException("Empty body from storage service");
+            }
+            return new ByteArrayInputStream(data);
+        } catch (WebClientResponseException.NotFound e) {
+            throw new FileNotFoundException("Thumbnail not found: " + key);
         }
-        return new ByteArrayInputStream(data);
     }
 
     @Override

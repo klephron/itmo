@@ -2132,6 +2132,36 @@
         }
     }
 
+    // Локальная сортировка клиентских списков видео (дополняет сортировку на бэке)
+    function sortVideosClient(list, sortSpec) {
+        if (!Array.isArray(list) || list.length <= 1) {
+            return list;
+        }
+        const [field, dirRaw] = (sortSpec || 'uploadedAt,desc').split(',');
+        const dir = (dirRaw || 'desc').toLowerCase() === 'asc' ? 1 : -1;
+
+        const getVal = (v) => {
+            switch (field) {
+                case 'likesCount':
+                    return typeof v.likesCount === 'number' ? v.likesCount :
+                        (typeof v.likes === 'number' ? v.likes : 0);
+                case 'viewsCount':
+                    return typeof v.viewsCount === 'number' ? v.viewsCount :
+                        (typeof v.views === 'number' ? v.views : 0);
+                case 'uploadedAt':
+                default:
+                    return v.uploadedAt ? new Date(v.uploadedAt).getTime() : 0;
+            }
+        };
+
+        return [...list].sort((a, b) => {
+            const av = getVal(a);
+            const bv = getVal(b);
+            if (av === bv) return 0;
+            return av > bv ? dir : -dir;
+        });
+    }
+
     async function goNext() {
         triggerSwipeAnimation('up');
         if (videos.length === 0) return;

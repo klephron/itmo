@@ -32,6 +32,7 @@ import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.brainstop.video.service.FeedService;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -84,10 +85,14 @@ public class VideoStreamingController {
         if (meta.getThumbnailKey() == null) {
             return ResponseEntity.notFound().build();
         }
-        InputStream is = this.videoObjectStorage.openThumbnail(meta.getThumbnailKey());
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
-                .body(new InputStreamResource(is));
+        try {
+            InputStream is = this.videoObjectStorage.openThumbnail(meta.getThumbnailKey());
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(new InputStreamResource(is));
+        } catch (FileNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 

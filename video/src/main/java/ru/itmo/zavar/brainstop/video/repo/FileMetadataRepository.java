@@ -35,4 +35,6 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
             nativeQuery = true
     )
     Page<FileMetadataEntity> searchByEmbedding(String queryVecLiteral, Pageable pageable);
+
+    Page<FileMetadataEntity> findByCombinedEmbeddingIsNotNull(Pageable pageable);
 }
