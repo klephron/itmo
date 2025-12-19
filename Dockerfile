@@ -51,7 +51,7 @@ WORKDIR /opt/brainstop/${MODULE}
 
 COPY --from=build /opt/brainstop/${MODULE}/build/libs/${MODULE}-*.jar ${MODULE}.jar
 
-ENV MODULE=${MODULE}
+ENV MODULE="${MODULE}"
 ENV JAVA_OPTS=
 
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar /opt/brainstop/${MODULE}/${MODULE}.jar"]
