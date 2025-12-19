@@ -43,15 +43,15 @@ FROM eclipse-temurin:17-jre
 
 ARG MODULE
 
-ENV MODULE=${MODULE}
-ENV JAVA_OPTS=""
-
-WORKDIR /opt/brainstop/${MODULE}
-
 RUN apt-get update && apt-get install -y \
   ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /opt/brainstop/${MODULE}
+
 COPY --from=build /opt/brainstop/${MODULE}/build/libs/${MODULE}-*.jar ${MODULE}.jar
+
+ENV MODULE=${MODULE}
+ENV JAVA_OPTS=
 
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar /opt/brainstop/${MODULE}/${MODULE}.jar"]
