@@ -1,7 +1,6 @@
-FROM node:25-slim AS base
+FROM node:25-slim AS deps
 
-
-FROM base AS deps
+WORKDIR /opt/brainstop/frontend
 
 COPY package.json package-lock.json ./
 
