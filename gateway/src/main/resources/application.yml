@@ -31,7 +31,7 @@ spring:
         - id: interactions
           uri: lb://interactions-service
           predicates:
-            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view,/api/moderation/complaints/**,/internal/moderation/complaints/**
+            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view,/api/videos/*/watch,/api/moderation/complaints/**,/internal/moderation/complaints/**
         - id: video
           uri: lb://video-service
           predicates:

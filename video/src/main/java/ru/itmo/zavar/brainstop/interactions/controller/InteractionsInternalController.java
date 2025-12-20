@@ -9,10 +9,12 @@ import ru.itmo.zavar.brainstop.comment.dto.CommentDto;
 import ru.itmo.zavar.brainstop.comment.dto.CreateCommentRequest;
 import ru.itmo.zavar.brainstop.comment.service.CommentService;
 import ru.itmo.zavar.brainstop.common.security.Role;
+import ru.itmo.zavar.brainstop.like.dto.request.WatchProgressRequest;
 import ru.itmo.zavar.brainstop.like.dto.response.LikeResponse;
 import ru.itmo.zavar.brainstop.like.dto.response.ViewResponse;
 import ru.itmo.zavar.brainstop.like.service.LikeService;
 import ru.itmo.zavar.brainstop.like.service.ViewService;
+import ru.itmo.zavar.brainstop.like.service.WatchService;
 
 import java.util.List;
 import java.util.Set;
@@ -27,6 +29,7 @@ public class InteractionsInternalController {
     private final CommentService commentService;
     private final LikeService likeService;
     private final ViewService viewService;
+    private final WatchService watchService;
 
     @GetMapping("/videos/{uuid}/comments")
     @Operation(summary = "Внутренний: список комментариев")
@@ -88,5 +91,13 @@ public class InteractionsInternalController {
     @Operation(summary = "Внутренний: получить число просмотров")
     public ViewResponse count(@PathVariable UUID uuid) {
         return new ViewResponse(this.viewService.getViews(uuid));
+    }
+
+    @PostMapping("/videos/{uuid}/watch")
+    @Operation(summary = "Внутренний: зафиксировать прогресс просмотра")
+    public void watch(@PathVariable UUID uuid,
+                      @RequestParam(value = "userId", required = false) Long userId,
+                      @RequestBody WatchProgressRequest request) {
+        this.watchService.recordProgress(uuid, userId, request);
     }
 }
