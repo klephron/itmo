@@ -1139,6 +1139,51 @@
         }
     }
 
+    const WATCH_MILESTONES = [25, 50, 75, 100];
+    const watchMilestonesSent = new Map(); // uuid -> Set<percent>
+
+    function resetWatchProgress(videoUuid) {
+        if (!videoUuid) return;
+        watchMilestonesSent.set(videoUuid, new Set());
+    }
+
+    async function sendWatchProgress(videoUuid, percent, positionSeconds, durationSeconds) {
+        if (!authToken || !videoUuid) return;
+        try {
+            await fetch(apiBase + '/api/videos/' + videoUuid + '/watch', {
+                method: 'POST',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    positionSeconds: positionSeconds,
+                    durationSeconds: durationSeconds,
+                    percent: percent
+                })
+            });
+        } catch (e) {
+            console.error('watch progress error', e);
+        }
+    }
+
+    function handleWatchProgress() {
+        if (!authToken || !currentVideoUuid) return;
+        const duration = Math.floor(player.duration || 0);
+        if (!duration || !Number.isFinite(duration)) return;
+        const position = Math.floor(player.currentTime || 0);
+        const percent = Math.floor((position / duration) * 100);
+
+        const sent = watchMilestonesSent.get(currentVideoUuid) || new Set();
+        for (const milestone of WATCH_MILESTONES) {
+            if (percent >= milestone && !sent.has(milestone)) {
+                sent.add(milestone);
+                watchMilestonesSent.set(currentVideoUuid, sent);
+                sendWatchProgress(currentVideoUuid, milestone, position, duration);
+            }
+        }
+    }
+
 
     let currentProfileUserId = null;
 
@@ -2297,6 +2342,7 @@
         }
 
         currentVideoUuid = v.uuid;
+        resetWatchProgress(currentVideoUuid);
 
         setPlayerPoster(v);
         applyQualitySelector(v);
@@ -3856,13 +3902,20 @@
     btnNext.addEventListener('click', goNext);
     btnPrev.addEventListener('click', goPrev);
 
-    player.addEventListener('ended', goNext);
+    player.addEventListener('ended', () => {
+        const duration = Math.floor(player.duration || 0);
+        if (currentVideoUuid && duration > 0) {
+            sendWatchProgress(currentVideoUuid, 100, duration, duration);
+        }
+        goNext();
+    });
 
     player.addEventListener('error', () => {
         setStatusFeed('Ошибка воспроизведения видео', 'error');
     });
 
     player.addEventListener('playing', hidePoster);
+    player.addEventListener('timeupdate', handleWatchProgress);
 
     // Swipe вверх/вниз для переключения видео
     if (videoWrapper) {
