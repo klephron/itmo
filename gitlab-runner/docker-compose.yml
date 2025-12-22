@@ -1,12 +1,12 @@
 services:
   runner-1:
-    image: gitlab/gitlab-runner:alpine-v14.1.0
+    build: .
     container_name: "brainstop-runner-1"
     restart: always
+    runtime: sysbox-runc
     volumes:
       - runner-1-etc:/etc/gitlab-runner
       - runner-1-home:/home/gitlab-runner
-      - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       resources:
         limits:
