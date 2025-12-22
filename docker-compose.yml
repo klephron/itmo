@@ -1,0 +1,250 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: brainstop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: video-streaming
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/db/init-extensions.sql:/docker-entrypoint-initdb.d/00-init-extensions.sql:ro
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "max_connections=200"
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-04-06T05-26-02Z
+    container_name: brainstop-minio
+    restart: unless-stopped
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_admin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: brainstop-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  discovery:
+    image: klephronedu/itmo-brainstop-discovery:latest
+    container_name: brainstop-discovery
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      SERVER_PORT: 8761
+    depends_on:
+      - postgres
+
+  gateway:
+    image: klephronedu/itmo-brainstop-gateway:latest
+    container_name: brainstop-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: gateway
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8080
+      EUREKA_INSTANCE_STATUSPAGEURL: http://gateway:8080/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://gateway:8080/actuator/health
+      SPRING_PROFILES_ACTIVE: dev
+      JWT_SECRET: jwt_dev_secret
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+    depends_on:
+      - discovery
+
+  video:
+    image: klephronedu/itmo-brainstop-video:latest
+    container_name: brainstop-video
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: video
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8081
+      EUREKA_INSTANCE_STATUSPAGEURL: http://video:8081/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://video:8081/actuator/health
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minio_admin
+      MINIO_SECRET_KEY: minio_admin
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      JWT_SECRET: jwt_dev_secret
+    depends_on:
+      - postgres
+      - discovery
+      - minio
+      - rabbitmq
+
+  profile:
+    image: klephronedu/itmo-brainstop-profile:latest
+    container_name: brainstop-profile
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8082
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: profile
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8082
+      EUREKA_INSTANCE_STATUSPAGEURL: http://profile:8082/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://profile:8082/actuator/health
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      JWT_SECRET: jwt_dev_secret
+    depends_on:
+      - postgres
+      - discovery
+
+  storage:
+    image: klephronedu/itmo-brainstop-storage:latest
+    container_name: brainstop-storage
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8083
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: storage
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8083
+      EUREKA_INSTANCE_STATUSPAGEURL: http://storage:8083/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://storage:8083/actuator/health
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minio_admin
+      MINIO_SECRET_KEY: minio_admin
+      JWT_SECRET: jwt_dev_secret
+    depends_on:
+      - postgres
+      - discovery
+      - minio
+
+  interactions:
+    image: klephronedu/itmo-brainstop-interactions:latest
+    container_name: brainstop-interactions
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8084
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: interactions
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8084
+      EUREKA_INSTANCE_STATUSPAGEURL: http://interactions:8084/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://interactions:8084/actuator/health
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      JWT_SECRET: jwt_dev_secret
+    depends_on:
+      - postgres
+      - discovery
+
+  admin:
+    image: klephronedu/itmo-brainstop-admin:latest
+    container_name: brainstop-admin
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8085
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: admin
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8085
+      EUREKA_INSTANCE_STATUSPAGEURL: http://admin:8085/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://admin:8085/actuator/health
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      JWT_SECRET: jwt_dev_secret
+    depends_on:
+      - postgres
+      - discovery
+
+  search:
+    image: klephronedu/itmo-brainstop-search:latest
+    container_name: brainstop-search
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8086
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: search
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8086
+      EUREKA_INSTANCE_STATUSPAGEURL: http://search:8086/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://search:8086/actuator/health
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      JWT_SECRET: jwt_dev_secret
+    depends_on:
+      - postgres
+      - discovery
+
+  transcoding:
+    image: klephronedu/itmo-brainstop-transcoding:latest
+    container_name: brainstop-transcoding
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8088
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: transcoding
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_NONSECUREPORT: 8088
+      EUREKA_INSTANCE_STATUSPAGEURL: http://transcoding:8088/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://transcoding:8088/actuator/health
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minio_admin
+      MINIO_SECRET_KEY: minio_admin
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      JWT_SECRET: jwt_dev_secret
+    depends_on:
+      - postgres
+      - discovery
+      - minio
+      - rabbitmq
+
+volumes:
+  pgdata:
+  rabbitmq-data:
+  minio-data:
