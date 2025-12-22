@@ -1,5 +1,18 @@
 # gitlab-runner
 
+## Start
+
+```sh
+docker compose up -d
+```
+
+Edit concurrent value in config.toml:
+
+```sh
+docker exec -it brainstop-runner-1 sed -i 's/concurrent.*/concurrent = 4/' /etc/gitlab-runner/config.toml
+docker exec -it brainstop-runner-1 gitlab-runner restart
+```
+
 ## Registration
 
 Register (e.g. for `brainstop-runner-1`):
