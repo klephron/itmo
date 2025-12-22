@@ -22,6 +22,13 @@ variables:
   extends: .gradle-base
   stage: test-unit
   tags: [brainstop-docker]
+  script:
+    - ./gradlew :${MODULE}:test --no-daemon
+
+.integration-test-template:
+  extends: .gradle-base
+  stage: test-integration
+  tags: [brainstop-docker]
   needs:
     - unit-test-discovery
     - unit-test-gateway
@@ -33,12 +40,12 @@ variables:
     - unit-test-search
     - unit-test-transcoding
   script:
-    - ./gradlew :${MODULE}:test --no-daemon
+    - ./gradlew :${MODULE}:integrationTest --no-daemon || echo "Integration tests passed"
 
-.integration-test-template:
-  extends: .gradle-base
-  stage: test-integration
+.docker-build-template:
+  stage: build-and-push
   tags: [brainstop-docker]
+  image: docker:29
   needs:
     - integration-test-discovery
     - integration-test-gateway
@@ -49,15 +56,6 @@ variables:
     - integration-test-admin
     - integration-test-search
     - integration-test-transcoding
-  script:
-    - ./gradlew :${MODULE}:integrationTest --no-daemon || echo "Integration tests passed"
-
-.docker-build-template:
-  stage: build-and-push
-  tags: [brainstop-docker]
-  image: docker:20
-  services:
-    - docker:20-dind
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
   before_script:
