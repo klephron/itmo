@@ -31,7 +31,7 @@ docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
 ```sh
 docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
     --url https://gitlab.se.ifmo.ru/ \
-    --registration-token $REGISTRATION_TOKEN_FRONTEND \
+    --registration-token $REGISTRATION_TOKEN_BACKEND \
     --name "brainstop-runner-1" \
     --tag-list "brainstop-docker" \
     --run-untagged \
