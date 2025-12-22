@@ -36,9 +36,6 @@ integration-tests:
 docker-build-and-push:
   stage: build-and-push
   tags: [brainstop-docker]
-  image: docker:27
-  services:
-    - docker:27-dind
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
   before_script:
