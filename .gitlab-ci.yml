@@ -1,12 +1,12 @@
 stages:
-  - test_unit
-  - test_integration
-  - build
+  - test-unit
+  - test-integration
+  - build-and-push
 
 variables:
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
 
-.default_node_job:
+.default-node:
   image: node:25-slim
   cache:
     key: npm
@@ -15,24 +15,27 @@ variables:
   before_script:
     - npm ci --cache .npm --prefer-offline
 
-unit_tests:
-  stage: test_unit
-  extends: .default_node_job
+unit-tests:
+  extends: .default-node
+  stage: test-unit
+  tags: [brainstop-docker]
   script:
     - echo "Running unit tests"
     - npm run test:unit || echo "Dummy unit tests passed"
 
-integration_tests:
-  stage: test_integration
-  extends: .default_node_job
+integration-tests:
+  extends: .default-node
+  stage: test-integration
+  tags: [brainstop-docker]
   needs:
-    - unit_tests
+    - unit-tests
   script:
     - echo "Running integration tests"
     - npm run test:integration || echo "Dummy integration tests passed"
 
-docker_build_and_push:
-  stage: build
+docker-build-and-push:
+  stage: build-and-push
+  tags: [brainstop-docker]
   image: docker:27
   services:
     - docker:27-dind
