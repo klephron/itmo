@@ -37,8 +37,6 @@ docker-build-and-push:
   stage: build-and-push
   tags: [brainstop-docker]
   image: docker:27
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
   before_script:
