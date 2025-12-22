@@ -1,5 +1,6 @@
 stages:
-  - test
+  - test_unit
+  - test_integration
   - build
 
 variables:
@@ -15,14 +16,14 @@ variables:
     - npm ci --cache .npm --prefer-offline
 
 unit_tests:
-  stage: test
+  stage: test_unit
   extends: .default_node_job
   script:
     - echo "Running unit tests"
     - npm run test:unit || echo "Dummy unit tests passed"
 
 integration_tests:
-  stage: test
+  stage: test_integration
   extends: .default_node_job
   needs:
     - unit_tests
