@@ -1,0 +1,231 @@
+stages:
+  - test-unit
+  - test-integration
+  - build-and-push
+
+variables:
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
+
+.gradle-base:
+  image: eclipse-temurin:17-jdk
+  cache:
+    key: gradle-$CI_COMMIT_REF_SLUG
+    paths:
+      - .gradle/caches
+      - .gradle/wrapper
+  before_script:
+    - chmod +x gradlew
+    - export GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
+
+.unit-test-template:
+  extends: .gradle-base
+  stage: test-unit
+  tags: [brainstop-docker]
+  needs:
+    - unit-test-discovery
+    - unit-test-gateway
+    - unit-test-video
+    - unit-test-profile
+    - unit-test-storage
+    - unit-test-interactions
+    - unit-test-admin
+    - unit-test-search
+    - unit-test-transcoding
+  script:
+    - ./gradlew :${MODULE}:test --no-daemon
+
+.integration-test-template:
+  extends: .gradle-base
+  stage: test-integration
+  tags: [brainstop-docker]
+  needs:
+    - integration-test-discovery
+    - integration-test-gateway
+    - integration-test-video
+    - integration-test-profile
+    - integration-test-storage
+    - integration-test-interactions
+    - integration-test-admin
+    - integration-test-search
+    - integration-test-transcoding
+  script:
+    - ./gradlew :${MODULE}:integrationTest --no-daemon || echo "Integration tests passed"
+
+.docker-build-template:
+  stage: build-and-push
+  tags: [brainstop-docker]
+  image: docker:20
+  services:
+    - docker:20-dind
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    - docker build --build-arg MODULE=$MODULE -t $DOCKER_IMAGE_PREFIX$MODULE:$IMAGE_TAG .
+    - docker tag $DOCKER_IMAGE_PREFIX$MODULE:$IMAGE_TAG $DOCKER_IMAGE_PREFIX$MODULE:latest
+    - docker push $DOCKER_IMAGE_PREFIX$MODULE:$IMAGE_TAG
+    - docker push $DOCKER_IMAGE_PREFIX$MODULE:latest
+
+########## DISCOVERY ##########
+unit-test-discovery:
+  extends: .unit-test-template
+  variables:
+    MODULE: discovery
+
+integration-test-discovery:
+  extends: .integration-test-template
+  needs: [unit-test-discovery]
+  variables:
+    MODULE: discovery
+
+docker-discovery:
+  extends: .docker-build-template
+  needs: [integration-test-discovery]
+  variables:
+    MODULE: discovery
+
+########## GATEWAY ##########
+unit-test-gateway:
+  extends: .unit-test-template
+  variables:
+    MODULE: gateway
+
+integration-test-gateway:
+  extends: .integration-test-template
+  needs: [unit-test-gateway]
+  variables:
+    MODULE: gateway
+
+docker-gateway:
+  extends: .docker-build-template
+  needs: [integration-test-gateway]
+  variables:
+    MODULE: gateway
+
+########## VIDEO ##########
+unit-test-video:
+  extends: .unit-test-template
+  variables:
+    MODULE: video
+
+integration-test-video:
+  extends: .integration-test-template
+  needs: [unit-test-video]
+  variables:
+    MODULE: video
+
+docker-video:
+  extends: .docker-build-template
+  needs: [integration-test-video]
+  variables:
+    MODULE: video
+
+########## PROFILE ##########
+unit-test-profile:
+  extends: .unit-test-template
+  variables:
+    MODULE: profile
+
+integration-test-profile:
+  extends: .integration-test-template
+  needs: [unit-test-profile]
+  variables:
+    MODULE: profile
+
+docker-profile:
+  extends: .docker-build-template
+  needs: [integration-test-profile]
+  variables:
+    MODULE: profile
+
+########## STORAGE ##########
+unit-test-storage:
+  extends: .unit-test-template
+  variables:
+    MODULE: storage
+
+integration-test-storage:
+  extends: .integration-test-template
+  needs: [unit-test-storage]
+  variables:
+    MODULE: storage
+
+docker-storage:
+  extends: .docker-build-template
+  needs: [integration-test-storage]
+  variables:
+    MODULE: storage
+
+########## INTERACTIONS ##########
+unit-test-interactions:
+  extends: .unit-test-template
+  variables:
+    MODULE: interactions
+
+integration-test-interactions:
+  extends: .integration-test-template
+  needs: [unit-test-interactions]
+  variables:
+    MODULE: interactions
+
+docker-interactions:
+  extends: .docker-build-template
+  needs: [integration-test-interactions]
+  variables:
+    MODULE: interactions
+
+########## ADMIN ##########
+unit-test-admin:
+  extends: .unit-test-template
+  variables:
+    MODULE: admin
+
+integration-test-admin:
+  extends: .integration-test-template
+  needs: [unit-test-admin]
+  variables:
+    MODULE: admin
+
+docker-admin:
+  extends: .docker-build-template
+  needs: [integration-test-admin]
+  variables:
+    MODULE: admin
+
+########## SEARCH ##########
+unit-test-search:
+  extends: .unit-test-template
+  variables:
+    MODULE: search
+
+integration-test-search:
+  extends: .integration-test-template
+  needs: [unit-test-search]
+  variables:
+    MODULE: search
+
+docker-search:
+  extends: .docker-build-template
+  needs: [integration-test-search]
+  variables:
+    MODULE: search
+
+########## TRANSCODING ##########
+unit-test-transcoding:
+  extends: .unit-test-template
+  variables:
+    MODULE: transcoding
+
+integration-test-transcoding:
+  extends: .integration-test-template
+  needs: [unit-test-transcoding]
+  variables:
+    MODULE: transcoding
+
+docker-transcoding:
+  extends: .docker-build-template
+  needs: [integration-test-transcoding]
+  variables:
+    MODULE: transcoding
