@@ -215,7 +215,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
       - ./postgres/init-extensions.sql:/docker-entrypoint-initdb.d/00-init-extensions.sql:ro
     command:
       - "postgres"
@@ -252,6 +252,6 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq
 
 volumes:
-  pgdata:
+  postgres-data:
   rabbitmq-data:
   minio-data:
