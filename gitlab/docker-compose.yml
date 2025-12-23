@@ -12,6 +12,11 @@ services:
       - "gitlab-config:/etc/gitlab"
       - "gitlab-logs:/var/log/gitlab"
       - "gitlab-data:/var/opt/gitlab"
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: "7000M"
 
 volumes:
   gitlab-config:
