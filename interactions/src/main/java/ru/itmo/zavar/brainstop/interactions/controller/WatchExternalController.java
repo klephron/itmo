@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
-import ru.itmo.zavar.brainstop.interactions.client.ViewInternalClient;
 import ru.itmo.zavar.brainstop.like.dto.request.WatchProgressRequest;
+import ru.itmo.zavar.brainstop.like.service.WatchService;
 
 import java.util.UUID;
 
@@ -18,7 +18,7 @@ import java.util.UUID;
 @Tag(name = "Watch", description = "Прогресс просмотра (interactions-service)")
 public class WatchExternalController {
 
-    private final ViewInternalClient viewInternalClient;
+    private final WatchService watchService;
 
     @PostMapping("/{uuid}/watch")
     @Operation(summary = "Зафиксировать прогресс просмотра")
@@ -26,7 +26,7 @@ public class WatchExternalController {
                                       @AuthenticationPrincipal CurrentUser principal,
                                       @RequestBody WatchProgressRequest request) {
         Long userId = principal != null ? principal.getId() : null;
-        this.viewInternalClient.watch(uuid, userId, request);
+        this.watchService.recordProgress(uuid, userId, request);
         return ResponseEntity.noContent().build();
     }
 }

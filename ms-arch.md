@@ -27,7 +27,7 @@ System_Boundary(tiktok, "BrainStop") {
 ' Внешние системы
 ContainerDb_Ext(db, "PostgreSQL", "RDBMS", "Общая база: пользователи, видео, лайки, комментарии, профили, права, статусы job'ов и т.п")
 Container_Ext(minio, "MinIO / S3", "Object Storage", "Хранение raw и processed видеофайлов")
-Container_Ext(queue, "RabbitMQ", "AMQP Broker", "Очередь задач конвертации и событий лайков")
+Container_Ext(queue, "Kafka", "Kafka Broker", "Очередь задач конвертации и событий лайков")
 Container_Ext(prom, "Prometheus", "Monitoring", "Сбор метрик с /actuator/prometheus у gateway и сервисов")
 System_Ext(ffmpeg, "FFmpeg", "CLI tool", "Конвертация видео в H.264 MP4 и создание превью")
 
@@ -58,9 +58,9 @@ Rel(adminSvc, db, "Админские операции по всем сущно�
 
 ' Видео и конвертация
 Rel(streamSvc, minio, "Кладёт raw-видео после загрузки", "S3 PUT (raw/)")
-Rel(streamSvc, queue, "Публикует задачи конвертации (jobId, videoId, rawPath)", "AMQP (video.upload.jobs)")
+Rel(streamSvc, queue, "Публикует задачи конвертации (jobId, videoId, rawPath)", "Kafka (transcoding.command)")
 
-Rel(transcodeSvc, queue, "Подписывается на задачи конвертации", "AMQP consumer")
+Rel(transcodeSvc, queue, "Подписывается на задачи конвертации", "Kafka consumer")
 Rel(transcodeSvc, minio, "Читает raw, пишет processed-видео", "S3 GET/PUT")
 Rel(transcodeSvc, ffmpeg, "Вызывает ffmpeg, парсит прогресс", "CLI / stdout")
 Rel(transcodeSvc, db, "Обновляет статусы job’ов и FileMetadata", "JPA / SQL")
@@ -68,8 +68,8 @@ Rel(transcodeSvc, db, "Обновляет статусы job’ов и FileMetad
 Rel(streamSvc, minio, "Стримит processed-видео по Range-запросам", "S3 GET (processed/*)")
 
 ' Лайки и события
-Rel(likeSvc, queue, "Публикует события лайков (VideoLikeEvent)", "AMQP topic (video.likes)")
-Rel(queue, adminSvc, "Опционально: подписывается для аналитики / модерации", "AMQP consumer")
+Rel(likeSvc, queue, "Публикует события лайков (VideoLikeEvent)", "Kafka topic (video.likes)")
+Rel(queue, adminSvc, "Опционально: подписывается для аналитики / модерации", "Kafka consumer")
 
 ' Метрики
 Rel(prom, gateway, "Scrapes /actuator/prometheus", "HTTP pull")

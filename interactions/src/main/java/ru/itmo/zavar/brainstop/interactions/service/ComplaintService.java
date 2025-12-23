@@ -3,7 +3,6 @@ package ru.itmo.zavar.brainstop.interactions.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.itmo.zavar.brainstop.interactions.client.CommentInternalClient;
 import ru.itmo.zavar.brainstop.interactions.client.VideoAdminInternalClient;
 import ru.itmo.zavar.brainstop.interactions.dto.ComplaintDto;
 import ru.itmo.zavar.brainstop.interactions.dto.CreateComplaintRequest;
@@ -11,6 +10,7 @@ import ru.itmo.zavar.brainstop.interactions.model.ComplaintEntity;
 import ru.itmo.zavar.brainstop.interactions.model.ComplaintStatus;
 import ru.itmo.zavar.brainstop.interactions.model.ComplaintTargetType;
 import ru.itmo.zavar.brainstop.interactions.repo.ComplaintRepository;
+import ru.itmo.zavar.brainstop.comment.service.CommentService;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
-    private final CommentInternalClient commentInternalClient;
+    private final CommentService commentService;
     private final VideoAdminInternalClient videoAdminInternalClient;
 
     @Transactional
@@ -78,7 +78,7 @@ public class ComplaintService {
                     && entity.getVideoUuid() != null
                     && entity.getCommentId() != null) {
                 // moderator=true to bypass ownership
-                commentInternalClient.delete(entity.getVideoUuid(), entity.getCommentId(), moderatorId, true);
+                commentService.deleteComment(entity.getVideoUuid(), entity.getCommentId(), moderatorId, true);
             }
         } catch (Exception e) {
             throw new IllegalStateException("Failed to delete target: " + e.getMessage(), e);

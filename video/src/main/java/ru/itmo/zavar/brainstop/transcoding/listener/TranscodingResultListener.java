@@ -2,10 +2,10 @@ package ru.itmo.zavar.brainstop.transcoding.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingResult;
-import ru.itmo.zavar.brainstop.transcoding.config.TranscodingRabbitConfig;
+import ru.itmo.zavar.brainstop.transcoding.config.TranscodingKafkaConfig;
 import ru.itmo.zavar.brainstop.video.streaming.service.VideoStreamingService;
 
 @Slf4j
@@ -15,7 +15,7 @@ public class TranscodingResultListener {
 
     private final VideoStreamingService streamingService;
 
-    @RabbitListener(queues = TranscodingRabbitConfig.QUEUE_RESULT)
+    @KafkaListener(topics = TranscodingKafkaConfig.TOPIC_RESULT, groupId = "video-service")
     public void handleResult(TranscodingResult result) {
         if (result == null || result.jobId() == null) {
             return;

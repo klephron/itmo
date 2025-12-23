@@ -38,7 +38,7 @@ Compose-файл: [docker-compose.yml](docker-compose.yml)
 # пример: video-service
 ./gradlew :video:bootRun --args='--spring.profiles.active=dev'
 ```
-Перед запуском подготовьте инфраструктуру (PostgreSQL, MinIO, RabbitMQ, Eureka). Удобно поднять их тем же docker compose и остановить ненужные сервисы.
+Перед запуском подготовьте инфраструктуру (PostgreSQL, MinIO, Kafka, Eureka). Удобно поднять их тем же docker compose и остановить ненужные сервисы.
 
 ### Demo-данные фида (dev-seed)
 Есть профиль **dev-seed**, который заполняет видео-ленту тестовыми записями (только в `video-service`):
@@ -53,7 +53,7 @@ Spring relaxed binding: можно задавать через .env, env vars и
 - **SPRING_PROFILES_ACTIVE** — например `dev` или `dev,dev-seed`.
 - **EUREKA_CLIENT_SERVICEURL_DEFAULTZONE** — Eureka (docker: `http://discovery:8761/eureka/`, локально: `http://localhost:8761/eureka/`).
 - **SPRING_DATASOURCE_URL** / **SPRING_DATASOURCE_USERNAME** / **SPRING_DATASOURCE_PASSWORD** — PostgreSQL (docker: host `postgres`, порт `5432`).
-- **SPRING_RABBITMQ_HOST** / **SPRING_RABBITMQ_PORT** / **SPRING_RABBITMQ_USERNAME** / **SPRING_RABBITMQ_PASSWORD** — RabbitMQ (docker: host `rabbitmq`, порт `5672`).
+- **SPRING_KAFKA_BOOTSTRAP_SERVERS** — Kafka (docker: `kafka:9092`, локально: `localhost:9092`).
 - **MINIO_URL** — MinIO (docker: `http://minio:9000`), **MINIO_ACCESS_KEY**, **MINIO_SECRET_KEY**, **MINIO_BUCKET**.
 
 Auth:
@@ -87,6 +87,6 @@ TRANSCODER_FFPROBE_PATH=/usr/bin/ffprobe   # нужен video-service
 ```
 
 ## Типовой сценарий разработки
-1. Поднять базовые зависимости: `docker compose up -d discovery postgres minio rabbitmq`
+1. Поднять базовые зависимости: `docker compose up -d discovery postgres minio kafka`
 2. Запустить нужный сервис локально через `./gradlew :<module>:bootRun --args='--spring.profiles.active=dev'`
 3. Проверить регистрацию в Eureka и прокси через gateway.

@@ -31,7 +31,13 @@ spring:
         - id: interactions
           uri: lb://interactions-service
           predicates:
-            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view,/api/videos/*/watch,/api/moderation/complaints/**,/internal/moderation/complaints/**
+            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view,/api/videos/*/watch,/api/moderation/complaints/**
+        - id: interactions-admin-complaints
+          uri: lb://interactions-service
+          predicates:
+            - Path=/api/moderation/admin/complaints/**
+          filters:
+            - RewritePath=/api/moderation/admin/complaints/(?<segment>.*), /internal/moderation/complaints/${segment}
         - id: video
           uri: lb://video-service
           predicates:

@@ -2,8 +2,8 @@ package ru.itmo.zavar.brainstop.like.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import ru.itmo.zavar.brainstop.common.api.rabbit.VideoViewEvent;
 import ru.itmo.zavar.brainstop.like.model.VideoViewEntity;
@@ -20,9 +20,11 @@ import java.util.UUID;
 public class ViewService {
 
     private final VideoViewRepository videoViewRepository;
-    private final RabbitTemplate rabbitTemplate;
-    private final DirectExchange viewsExchange;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final VideoMetadataPublicApi videoMetadataPublicApi;
+
+    @Value("${app.views.exchange:video.views}")
+    private String viewsTopic;
 
     @Transactional
     public long viewVideo(UUID videoUuid, Long userId) {
@@ -57,6 +59,6 @@ public class ViewService {
                 viewsCount,
                 Instant.now()
         );
-        this.rabbitTemplate.convertAndSend(this.viewsExchange.getName(), "video.viewed", event);
+        this.kafkaTemplate.send(viewsTopic, event);
     }
 }

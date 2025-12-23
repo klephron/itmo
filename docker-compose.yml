@@ -35,18 +35,30 @@ services:
     volumes:
       - minio-data:/data
 
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: brainstop-rabbitmq
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: brainstop-kafka
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      KAFKA_BROKER_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "9092:9092"
+      - "29092:29092"
     volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+      - kafka-data:/var/lib/kafka/data
 
   discovery:
     build:
@@ -54,7 +66,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: discovery
-    container_name: brainstop-discovery
     restart: unless-stopped
     ports:
       - "8761:8761"
@@ -69,7 +80,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: gateway
-    container_name: brainstop-gateway
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -95,7 +105,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: video
-    container_name: brainstop-video
     restart: unless-stopped
     environment:
       SERVER_PORT: 8081
@@ -112,14 +121,13 @@ services:
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minio_admin
       MINIO_SECRET_KEY: minio_admin
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: jwt_dev_secret
     depends_on:
       - postgres
       - discovery
       - minio
-      - rabbitmq
+      - kafka
 
   profile:
     build:
@@ -127,7 +135,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: profile
-    container_name: brainstop-profile
     restart: unless-stopped
     environment:
       SERVER_PORT: 8082
@@ -152,7 +159,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: storage
-    container_name: brainstop-storage
     restart: unless-stopped
     environment:
       SERVER_PORT: 8083
@@ -181,7 +187,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: interactions
-    container_name: brainstop-interactions
     restart: unless-stopped
     environment:
       SERVER_PORT: 8084
@@ -195,10 +200,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: jwt_dev_secret
     depends_on:
       - postgres
       - discovery
+      - kafka
 
   admin:
     build:
@@ -206,7 +213,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: admin
-    container_name: brainstop-admin
     restart: unless-stopped
     environment:
       SERVER_PORT: 8085
@@ -231,7 +237,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: search
-    container_name: brainstop-search
     restart: unless-stopped
     environment:
       SERVER_PORT: 8086
@@ -256,7 +261,6 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: transcoding
-    container_name: brainstop-transcoding
     restart: unless-stopped
     environment:
       SERVER_PORT: 8088
@@ -273,16 +277,15 @@ services:
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minio_admin
       MINIO_SECRET_KEY: minio_admin
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: jwt_dev_secret
     depends_on:
       - postgres
       - discovery
       - minio
-      - rabbitmq
+      - kafka
 
 volumes:
   pgdata:
-  rabbitmq-data:
+  kafka-data:
   minio-data:

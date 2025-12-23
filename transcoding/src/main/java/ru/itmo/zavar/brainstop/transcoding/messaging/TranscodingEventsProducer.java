@@ -1,21 +1,22 @@
 package ru.itmo.zavar.brainstop.transcoding.messaging;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingProgressEvent;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingResult;
+import ru.itmo.zavar.brainstop.transcoding.config.KafkaConfig;
 
 @Component
 @RequiredArgsConstructor
 public class TranscodingEventsProducer {
-    private final RabbitTemplate rabbitTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendProgress(TranscodingProgressEvent event) {
-        rabbitTemplate.convertAndSend("transcoding.exchange", "transcoding.progress", event);
+        kafkaTemplate.send(KafkaConfig.TOPIC_PROGRESS, event);
     }
 
     public void sendResult(TranscodingResult result) {
-        rabbitTemplate.convertAndSend("transcoding.exchange", "transcoding.result", result);
+        kafkaTemplate.send(KafkaConfig.TOPIC_RESULT, result);
     }
 }

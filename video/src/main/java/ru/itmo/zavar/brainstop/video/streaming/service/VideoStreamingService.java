@@ -2,8 +2,8 @@ package ru.itmo.zavar.brainstop.video.streaming.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.context.event.EventListener;
@@ -16,7 +16,7 @@ import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobStage;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobStatus;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingResult;
 import ru.itmo.zavar.brainstop.search.client.SearchEmbeddingClient;
-import ru.itmo.zavar.brainstop.transcoding.config.TranscodingRabbitConfig;
+import ru.itmo.zavar.brainstop.transcoding.config.TranscodingKafkaConfig;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.model.VideoRenditionEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
@@ -51,7 +51,7 @@ public class VideoStreamingService {
     private final TranscodingJobRegistry jobRegistry;
     private final UploadJobRepository uploadJobRepository;
     private final SearchEmbeddingClient embeddingClient;
-    private final RabbitTemplate rabbitTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${transcoder.ffmpeg-path:ffmpeg}")
     private String ffmpegPath;
@@ -127,7 +127,8 @@ public class VideoStreamingService {
                 displayName,
                 DEFAULT_TARGET_HEIGHTS
         );
-        rabbitTemplate.convertAndSend(TranscodingRabbitConfig.EXCHANGE, TranscodingRabbitConfig.ROUTING_COMMAND, command);
+        // Use jobId as key so Kafka spreads messages across partitions -> multiple transcoders share the load
+        kafkaTemplate.send(TranscodingKafkaConfig.TOPIC_COMMAND, command.jobId().toString(), command);
         log.info("Upload job {} placed to queue, key={}", jobId, storageKey);
 
         return jobId;
@@ -159,7 +160,7 @@ public class VideoStreamingService {
                         job.getDisplayName(),
                         DEFAULT_TARGET_HEIGHTS
                 );
-                rabbitTemplate.convertAndSend(TranscodingRabbitConfig.EXCHANGE, TranscodingRabbitConfig.ROUTING_COMMAND, command);
+                kafkaTemplate.send(TranscodingKafkaConfig.TOPIC_COMMAND, command.jobId().toString(), command);
                 log.info("Requeued stuck job {} ({})", job.getId(), job.getVideoName());
             } catch (Exception e) {
                 log.error("Failed to requeue job {}", job.getId(), e);
