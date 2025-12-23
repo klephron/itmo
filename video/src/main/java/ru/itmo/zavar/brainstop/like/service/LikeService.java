@@ -2,8 +2,8 @@ package ru.itmo.zavar.brainstop.like.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import ru.itmo.zavar.brainstop.common.api.rabbit.VideoLikeEvent;
 import ru.itmo.zavar.brainstop.like.model.VideoLikeEntity;
@@ -21,9 +21,11 @@ import java.util.UUID;
 public class LikeService {
 
     private final VideoLikeRepository videoLikeRepository;
-    private final RabbitTemplate rabbitTemplate;
-    private final DirectExchange likesExchange;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final VideoMetadataPublicApi videoMetadataPublicApi;
+
+    @Value("${app.likes.exchange:video.likes}")
+    private String likesTopic;
 
     @Transactional
     public long likeVideo(UUID videoUuid, Long userId) {
@@ -80,8 +82,7 @@ public class LikeService {
                 likesCount,
                 Instant.now()
         );
-        String routingKey = type.equals("VIDEO_LIKED") ? "video.liked" : "video.unliked";
-        this.rabbitTemplate.convertAndSend(this.likesExchange.getName(), routingKey, event);
+        this.kafkaTemplate.send(likesTopic, event);
     }
 }
 

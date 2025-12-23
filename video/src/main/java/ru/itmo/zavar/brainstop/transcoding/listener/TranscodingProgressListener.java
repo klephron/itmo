@@ -2,12 +2,12 @@ package ru.itmo.zavar.brainstop.transcoding.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobStatus;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobRegistry;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingProgressEvent;
-import ru.itmo.zavar.brainstop.transcoding.config.TranscodingRabbitConfig;
+import ru.itmo.zavar.brainstop.transcoding.config.TranscodingKafkaConfig;
 
 import java.util.Optional;
 
@@ -18,7 +18,7 @@ public class TranscodingProgressListener {
 
     private final TranscodingJobRegistry jobRegistry;
 
-    @RabbitListener(queues = TranscodingRabbitConfig.QUEUE_PROGRESS)
+    @KafkaListener(topics = TranscodingKafkaConfig.TOPIC_PROGRESS, groupId = "video-service")
     public void handleProgress(TranscodingProgressEvent event) {
         if (event == null || event.jobId() == null) {
             return;

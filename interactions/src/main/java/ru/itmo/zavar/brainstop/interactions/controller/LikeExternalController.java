@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
-import ru.itmo.zavar.brainstop.interactions.client.LikeInternalClient;
 import ru.itmo.zavar.brainstop.like.dto.response.LikeResponse;
+import ru.itmo.zavar.brainstop.like.service.LikeService;
 
 import java.util.UUID;
 
@@ -18,7 +18,7 @@ import java.util.UUID;
 @Tag(name = "Likes", description = "Лайки (interactions-service)")
 public class LikeExternalController {
 
-    private final LikeInternalClient likeInternalClient;
+    private final LikeService likeService;
 
     @PostMapping("/{uuid}/like")
     @Operation(summary = "Поставить лайк видео")
@@ -26,8 +26,8 @@ public class LikeExternalController {
         if (principal == null) {
             return ResponseEntity.status(401).build();
         }
-        LikeResponse resp = likeInternalClient.like(uuid, principal.getId());
-        return ResponseEntity.ok(resp);
+        long count = likeService.likeVideo(uuid, principal.getId());
+        return ResponseEntity.ok(new LikeResponse(count, true));
     }
 
     @DeleteMapping("/{uuid}/like")
@@ -36,8 +36,8 @@ public class LikeExternalController {
         if (principal == null) {
             return ResponseEntity.status(401).build();
         }
-        LikeResponse resp = likeInternalClient.unlike(uuid, principal.getId());
-        return ResponseEntity.ok(resp);
+        long count = likeService.unlikeVideo(uuid, principal.getId());
+        return ResponseEntity.ok(new LikeResponse(count, false));
     }
 
     @GetMapping("/{uuid}/like")
@@ -46,7 +46,7 @@ public class LikeExternalController {
         if (principal == null) {
             return ResponseEntity.status(401).build();
         }
-        LikeResponse resp = likeInternalClient.status(uuid, principal.getId());
-        return ResponseEntity.ok(resp);
+        boolean liked = likeService.isLikedByUser(uuid, principal.getId());
+        return ResponseEntity.ok(new LikeResponse(null, liked));
     }
 }

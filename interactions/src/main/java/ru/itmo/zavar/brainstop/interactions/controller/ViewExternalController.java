@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
-import ru.itmo.zavar.brainstop.interactions.client.ViewInternalClient;
 import ru.itmo.zavar.brainstop.like.dto.response.ViewResponse;
+import ru.itmo.zavar.brainstop.like.service.ViewService;
 
 import java.util.UUID;
 
@@ -18,19 +18,20 @@ import java.util.UUID;
 @Tag(name = "Views", description = "Просмотры (interactions-service)")
 public class ViewExternalController {
 
-    private final ViewInternalClient viewInternalClient;
+    private final ViewService viewService;
 
     @PostMapping("/{uuid}/view")
     @Operation(summary = "Отметить просмотр видео")
     public ResponseEntity<ViewResponse> view(@PathVariable UUID uuid, @AuthenticationPrincipal CurrentUser principal) {
         Long userId = principal != null ? principal.getId() : null;
-        ViewResponse resp = this.viewInternalClient.view(uuid, userId);
-        return ResponseEntity.ok(resp);
+        long count = this.viewService.viewVideo(uuid, userId);
+        return ResponseEntity.ok(new ViewResponse(count));
     }
 
     @GetMapping("/{uuid}/view")
     @Operation(summary = "Получить число просмотров")
     public ResponseEntity<ViewResponse> getViews(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(this.viewInternalClient.count(uuid));
+        long count = this.viewService.getViews(uuid);
+        return ResponseEntity.ok(new ViewResponse(count));
     }
 }

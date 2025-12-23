@@ -11,7 +11,7 @@ import ru.itmo.zavar.brainstop.comment.dto.CommentDto;
 import ru.itmo.zavar.brainstop.comment.dto.CreateCommentRequest;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
 import ru.itmo.zavar.brainstop.common.security.Role;
-import ru.itmo.zavar.brainstop.interactions.client.CommentInternalClient;
+import ru.itmo.zavar.brainstop.comment.service.CommentService;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @Tag(name = "Comments", description = "Комментарии (interactions-service)")
 public class CommentExternalController {
 
-    private final CommentInternalClient commentInternalClient;
+    private final CommentService commentService;
 
     private boolean isModeratorOrAdmin(CurrentUser principal) {
         if (principal == null) return false;
@@ -33,7 +33,7 @@ public class CommentExternalController {
     @Operation(summary = "Получить комментарии видео")
     public ResponseEntity<List<CommentDto>> list(@PathVariable UUID videoUuid, @AuthenticationPrincipal CurrentUser principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
-        return ResponseEntity.ok(this.commentInternalClient.list(videoUuid, currentUserId));
+        return ResponseEntity.ok(this.commentService.listComments(videoUuid, currentUserId));
     }
 
     @PostMapping
@@ -44,7 +44,7 @@ public class CommentExternalController {
         }
         String displayName = principal.getDisplayName();
         String avatarUrl = principal.getAvatarUrl();
-        CommentDto dto = this.commentInternalClient.add(videoUuid, principal.getId(), displayName, avatarUrl, req);
+        CommentDto dto = this.commentService.addComment(videoUuid, req, principal.getId(), displayName, avatarUrl);
         return ResponseEntity.ok(dto);
     }
 
@@ -54,7 +54,7 @@ public class CommentExternalController {
         if (principal == null) {
             return ResponseEntity.status(401).build();
         }
-        this.commentInternalClient.delete(videoUuid, commentId, principal.getId(), isModeratorOrAdmin(principal));
+        this.commentService.deleteComment(videoUuid, commentId, principal.getId(), isModeratorOrAdmin(principal));
         return ResponseEntity.noContent().build();
     }
 }

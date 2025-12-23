@@ -116,7 +116,7 @@ end note
 package "Core Data & Infra" #Transparent {
   database "PostgreSQL" as db <<infra>>
   storage "MinIO / S3" as s3 <<infra>>
-  queue "RabbitMQ" as mq <<infra>>
+  queue "Kafka" as mq <<infra>>
   rectangle "Prometheus" as prom <<infra>>
 }
 
@@ -207,7 +207,7 @@ prom -[#757575]-> worker    : scrape
 
 ' ===== Notes =====
 note right of engage
-  **Events (AMQP):**
+  **Events (Kafka):**
   • likes
   • views
 
@@ -240,7 +240,7 @@ legend right
 
   <color:#8E24AA>DB</color> — PostgreSQL
   <color:#D81B60>S3</color> — MinIO / S3
-  <color:#FB8C00>AMQP</color> — RabbitMQ события
+  <color:#FB8C00>Kafka</color> — Kafka события
   <color:#43A047>Worker</color> — обработка / транскодинг
   <color:#757575>Prometheus</color> — метрики
 end legend
