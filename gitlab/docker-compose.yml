@@ -3,10 +3,10 @@ services:
     image: gitlab/gitlab-ee:18.7.0-ee.0
     restart: unless-stopped
     ports:
-      - "5080:80"
-      - "5443:443"
-      - "5022:22"
-      - "5929:8929"
+      - "6080:80"
+      - "6443:443"
+      - "6022:22"
+      - "6929:8929"
     shm_size: "256m"
     volumes:
       - "gitlab-config:/etc/gitlab"
@@ -16,7 +16,7 @@ services:
       resources:
         limits:
           cpus: "4"
-          memory: "7000M"
+          memory: "7000MiB"
 
 volumes:
   gitlab-config:
