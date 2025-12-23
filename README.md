@@ -1,3 +1,4 @@
 # infra
 
-- [GitLab Runners](./gitlab-runner/)
+- [BrainStop](./brainstop/)
+- [GitLab](./gitlab/)
