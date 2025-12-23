@@ -1,6 +1,6 @@
 services:
   runner-1:
-    build: .
+    build: runner
     container_name: "brainstop-runner-1"
     runtime: sysbox-runc
     restart: unless-stopped
