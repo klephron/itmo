@@ -1,9 +1,17 @@
-# gitlab-runner
+# GitLab
 
-## Start
+## GitLab
 
 ```sh
 docker compose up -d
+```
+
+## Runners
+
+### Start
+
+```sh
+docker compose -f docker-compose.runner.yml up -d
 ```
 
 Edit concurrent value in config.toml:
@@ -13,7 +21,7 @@ docker exec -it brainstop-runner-1 sed -i 's/concurrent.*/concurrent = 4/' /etc/
 docker exec -it brainstop-runner-1 gitlab-runner restart
 ```
 
-## Registration
+### Register
 
 Register (e.g. for `brainstop-runner-1`):
 
@@ -21,7 +29,7 @@ Register (e.g. for `brainstop-runner-1`):
 docker exec -it brainstop-runner-1 gitlab-runner register --help
 ```
 
-### Frontend
+#### Frontend
 
 ```sh
 docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
@@ -39,7 +47,7 @@ docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
     --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
 ```
 
-### Backend
+#### Backend
 
 ```sh
 docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
@@ -57,7 +65,7 @@ docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
     --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
 ```
 
-## Extras
+### Extras
 
 Maybe it will require additional ulimit set:
 
@@ -66,7 +74,7 @@ Maybe it will require additional ulimit set:
     --docker-ulimit "nproc=65535:65535"
 ```
 
-## Known issues
+### Known issues
 
 Use `sysbox-runc` in engine because or DIND:
 

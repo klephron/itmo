@@ -216,7 +216,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker/db/init-extensions.sql:/docker-entrypoint-initdb.d/00-init-extensions.sql:ro
+      - ./postgres/init-extensions.sql:/docker-entrypoint-initdb.d/00-init-extensions.sql:ro
     command:
       - "postgres"
       - "-c"

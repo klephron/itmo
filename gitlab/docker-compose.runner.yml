@@ -2,11 +2,10 @@ services:
   runner-1:
     build: .
     container_name: "brainstop-runner-1"
-    restart: always
     runtime: sysbox-runc
+    restart: unless-stopped
     volumes:
       - runner-1-etc:/etc/gitlab-runner
-      - runner-1-home:/home/gitlab-runner
     deploy:
       resources:
         limits:
@@ -15,4 +14,3 @@ services:
 
 volumes:
   runner-1-etc:
-  runner-1-home:
