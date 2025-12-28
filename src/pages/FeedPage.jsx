@@ -38,7 +38,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     }
 
     function getVideoUrlByUuid(uuid) {
-        return apiBase + '/streaming/video/' + uuid;
+        return apiBase + '/api/streaming/video/' + uuid;
     }
 
     function preloadVideo(videoIndex, el, mode) {
@@ -69,7 +69,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         setLoading(true);
 
         try {
-            const res = await fetch(apiBase + `/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`, {
+            const res = await fetch(apiBase + `/api/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`, {
                 headers: authHeaders(token),
             });
             if (!res.ok) throw new Error('HTTP ' + res.status);
