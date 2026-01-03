@@ -27,6 +27,11 @@ export default function AccountPage({
     const [following, setFollowing] = useState([]);
     const [followingStatus, setFollowingStatus] = useState('');
 
+    /* =========================
+       NEW: sort
+       ========================= */
+    const [sort, setSort] = useState('uploadedAt,desc');
+
     const avatarFileRef = useRef(null);
 
     function setStatusAuth(msg = '', type = '') {
@@ -48,6 +53,7 @@ export default function AccountPage({
             onRequireAuth?.();
             return;
         }
+
         const file = avatarFileRef.current?.files?.[0];
         if (!file) {
             setStatusAuth('Выберите файл аватара', 'error');
@@ -121,6 +127,9 @@ export default function AccountPage({
         }
     }
 
+    /* =========================
+       LOAD PROFILE + VIDEOS
+       ========================= */
     async function loadAccountProfile(u = user, tokenOverride = token) {
         if (!u || !tokenOverride) {
             setProfile(null);
@@ -133,8 +142,12 @@ export default function AccountPage({
 
         try {
             const [userRes, vidsRes] = await Promise.all([
-                fetch(apiBase + '/api/users/' + u.userId + '/profile', { headers: authHeaders(tokenOverride) }),
-                fetch(apiBase + `/api/users/${u.userId}/videos?page=0&size=12`, { headers: authHeaders(tokenOverride) }),
+                fetch(apiBase + '/api/users/' + u.userId + '/profile', {
+                    headers: authHeaders(tokenOverride),
+                }),
+                fetch(apiBase + `/api/users/${u.userId}/videos?page=0&size=12&sort=${encodeURIComponent(sort)}`, {
+                    headers: authHeaders(tokenOverride)
+                }),
             ]);
 
             if (!userRes.ok || !vidsRes.ok) throw new Error('HTTP ' + userRes.status + '/' + vidsRes.status);
@@ -142,21 +155,24 @@ export default function AccountPage({
             const prof = await userRes.json();
             const vidsPage = await vidsRes.json();
 
-            const vids = Array.isArray(vidsPage?.content) ? vidsPage.content : (Array.isArray(vidsPage) ? vidsPage : []);
-            const totalVideos = typeof vidsPage?.totalElements === 'number' ? vidsPage.totalElements : vids.length;
+            const vids = vidsPage?.content || [];
+            const totalVideos =
+                typeof vidsPage?.totalElements === 'number'
+                    ? vidsPage.totalElements
+                    : vids.length;
 
             setProfile({ ...prof, totalVideos });
-
             setMyVideos(vids);
+
             setMyVideosPaging({
-                page: (typeof vidsPage?.number === 'number' ? vidsPage.number : 0) + 1,
+                page: (vidsPage?.number ?? 0) + 1,
                 size: 12,
                 last: !!vidsPage?.last,
                 loading: false,
             });
 
             loadAccountFollowing(u.userId, tokenOverride);
-        } catch (e) {
+        } catch {
             setProfile(null);
             setMyVideos([]);
         }
@@ -169,9 +185,13 @@ export default function AccountPage({
         setMyVideosPaging((s) => ({ ...s, loading: true }));
 
         try {
-            const res = await fetch(apiBase + `/api/users/${user.userId}/videos?page=${myVideosPaging.page}&size=${myVideosPaging.size}`, {
-                headers: authHeaders(token),
-            });
+            const res = await fetch(
+                apiBase +
+                `/api/users/${user.userId}/videos?page=${myVideosPaging.page}&size=${myVideosPaging.size}&sort=${encodeURIComponent(
+                    sort
+                )}`,
+                { headers: authHeaders(token) }
+            );
 
             if (isUnauthorized(res)) {
                 setStatusAuth('Сессия истекла, войдите снова', 'error');
@@ -180,13 +200,14 @@ export default function AccountPage({
             }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
+
             const page = await res.json();
             const vids = page?.content || [];
 
             setMyVideos((prev) => prev.concat(vids));
             setMyVideosPaging((s) => ({
                 ...s,
-                page: (typeof page?.number === 'number' ? page.number : s.page) + 1,
+                page: (page?.number ?? s.page) + 1,
                 last: page?.last === true,
                 loading: false,
             }));
@@ -232,8 +253,7 @@ export default function AccountPage({
     useEffect(() => {
         if (!active) return;
         onRegisterLoadMore?.(() => loadMoreMyVideos());
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [active, myVideosPaging, user?.userId, token]);
+    }, [active, myVideosPaging, sort]);
 
     useEffect(() => {
         if (!active) return;
@@ -244,8 +264,7 @@ export default function AccountPage({
             setProfile(null);
             setMyVideos([]);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [active, user?.userId, token]);
+    }, [active, user?.userId, token, sort]);
 
     if (!active) return null;
 
@@ -372,6 +391,19 @@ export default function AccountPage({
                         <span className="badge" id="studioVideoCount">{totalVideos} видео</span>
                     </div>
 
+                    <div style={{ marginTop: 8,  marginBottom: 8 }}>
+                        <select
+                            className="feed-select"
+                            value={sort}
+                            onChange={(e) => setSort(e.target.value)}
+                        >
+                            <option value="uploadedAt,desc">Сначала новые</option>
+                            <option value="uploadedAt,asc">Сначала старые</option>
+                            <option value="viewsCount,desc">По просмотрам</option>
+                            <option value="likesCount,desc">По лайкам</option>
+                        </select>
+                    </div>
+
                     {(!myVideos || myVideos.length === 0) ? (
                         <div className="studio-row-meta">Видео пока нет</div>
                     ) : (
@@ -381,9 +413,15 @@ export default function AccountPage({
                                 <ThumbCard
                                     key={v.uuid}
                                     video={v}
-                                    showDelete={true}
+                                    showDelete
                                     onDelete={() => deleteVideo(v.uuid)}
-                                    onOpen={() => onGlobalPlayByUuid?.(v.uuid)}
+                                    onOpen={() =>
+                                        onGlobalPlayByUuid?.({
+                                            userId: user.userId,
+                                            sort,
+                                            uuid: v.uuid,
+                                        })
+                                    }
                                 />
                             )}
                         />
@@ -391,7 +429,7 @@ export default function AccountPage({
                 </div>
             ) : null}
 
-            <Status id="statusAuth" message={status.msg} type={status.type}/>
+            <Status message={status.msg} type={status.type}/>
         </div>
     );
 }

@@ -15,6 +15,9 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     const preload1Ref = useRef(null);
     const preload2Ref = useRef(null);
 
+    const feedModeRef = useRef({ type: 'global' }); // { type: 'global' } | { type: 'profile', userId, sort }
+    const targetUuidRef = useRef(null);
+
     const [videos, setVideos] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(-1);
 
@@ -69,18 +72,31 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         setLoading(true);
 
         try {
-            const res = await fetch(apiBase + `/api/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`, {
-                headers: authHeaders(token),
-            });
+            let url;
+
+            if (feedModeRef.current.type === 'profile') {
+                const { userId, sort } = feedModeRef.current;
+                url =
+                    apiBase +
+                    `/api/users/${userId}/videos?page=${page}&size=${FEED_PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
+            } else {
+                url =
+                    apiBase +
+                    `/api/streaming/video/list?page=${page}&size=${FEED_PAGE_SIZE}`;
+            }
+
+            const res = await fetch(url, { headers: authHeaders(token) });
             if (!res.ok) throw new Error('HTTP ' + res.status);
 
             const data = await res.json();
             const parsed = parseVideoListPayload(data);
 
             const nextHasNext =
-                typeof data?.hasNext === 'boolean' ? data.hasNext :
-                    typeof data?.last === 'boolean' ? !data.last :
-                        (parsed.items.length === FEED_PAGE_SIZE);
+                typeof data?.hasNext === 'boolean'
+                    ? data.hasNext
+                    : typeof data?.last === 'boolean'
+                        ? !data.last
+                        : parsed.items.length === FEED_PAGE_SIZE;
 
             setHasNext(nextHasNext);
             setFeedPage(parsed.page ?? page);
@@ -88,6 +104,15 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             setVideos((prev) => (append ? prev.concat(parsed.items) : parsed.items));
 
             setCurrentIndex((prevIdx) => {
+                // старт с targetUuid (важно!)
+                if (targetUuidRef.current) {
+                    const idx = parsed.items.findIndex(
+                        (v) => v.uuid === targetUuidRef.current
+                    );
+                    targetUuidRef.current = null;
+                    return idx >= 0 ? idx : 0;
+                }
+
                 if (prevIdx === -1 && parsed.items.length > 0) return 0;
                 if (!append && parsed.items.length > 0) return Math.min(prevIdx, parsed.items.length - 1);
                 return prevIdx;
@@ -139,10 +164,58 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
     useEffect(() => {
         exposeControls?.({
-            reloadFeed: () => loadVideoPage(0, false),
+            reloadFeed: () => {
+                feedModeRef.current = { type: 'global' };
+                targetUuidRef.current = null;
+
+                setVideos([]);
+                setCurrentIndex(-1);
+                setFeedPage(0);
+                setHasNext(false);
+
+                const player = playerRef.current;
+                if (player) {
+                    try {
+                        player.pause();
+                        player.removeAttribute('src');
+                        player.load();
+                    } catch {}
+                }
+
+                loadVideoPage(0, false);
+            },
+            switchToProfile: (userId, sort, uuid) => {
+                // 1. переключаем режим
+                feedModeRef.current = {
+                    type: 'profile',
+                    userId,
+                    sort,
+                };
+
+                // 2. ставим цель
+                targetUuidRef.current = uuid || null;
+
+                // 3. ЖЁСТКО сбрасываем состояние
+                setVideos([]);
+                setCurrentIndex(-1);
+                setFeedPage(0);
+                setHasNext(false);
+
+                // 4. останавливаем плеер
+                const player = playerRef.current;
+                if (player) {
+                    try {
+                        player.pause();
+                        player.removeAttribute('src');
+                        player.load();
+                    } catch {}
+                }
+
+                // 5. загружаем новую ленту
+                loadVideoPage(0, false);
+            },
             getGlobalIndexByUuid: (uuid) => videos.findIndex((v) => v.uuid === uuid),
             playByIndex: (idx) => setCurrentIndex(idx),
-            getVideos: () => videos,
         });
     }, [exposeControls, videos]);
 

@@ -45,14 +45,20 @@ function AppInner() {
         setActiveTab('profile');  // Переключаем вкладку на профайл
     }, []);
 
-    const onGlobalPlayByUuid = useCallback((uuid) => {
+    const onGlobalPlayByUuid = useCallback((payload) => {
         const ctl = feedControlsRef.current;
         setActiveTab('feed');
         if (!ctl) return;
 
-        const idx = ctl.getGlobalIndexByUuid(uuid);
-        if (idx !== -1) ctl.playByIndex(idx);
-        else ctl.reloadFeed?.();
+        if (typeof payload === 'string') {
+            const idx = ctl.getGlobalIndexByUuid(payload);
+            if (idx !== -1) ctl.playByIndex(idx);
+            else ctl.reloadFeed();
+            return;
+        }
+
+        const { userId, sort, uuid } = payload;
+        ctl.switchToProfile(userId, sort, uuid);
     }, []);
 
     const onReloadFeed = useCallback(async () => {

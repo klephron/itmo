@@ -17,6 +17,7 @@ export default function ProfilePage({
     const [profile, setProfile] = useState(null);
     const [videos, setVideos] = useState([]);
     const [paging, setPaging] = useState({ page: 0, size: 12, last: false, loading: false });
+    const [sort, setSort] = useState('uploadedAt,desc');
 
     function setStatusProfile(msg = '', type = '') {
         setStatus({ msg, type });
@@ -39,7 +40,10 @@ export default function ProfilePage({
             try {
                 const [userRes, videosRes] = await Promise.all([
                     fetch(`${apiBase}/api/users/${userId}/profile`, { headers: authHeaders(token) }),
-                    fetch(`${apiBase}/api/users/${userId}/videos?page=0&size=12`, { headers: authHeaders(token) }),
+                    fetch(
+                        `${apiBase}/api/users/${userId}/videos?page=0&size=12&sort=${encodeURIComponent(sort)}`,
+                        { headers: authHeaders(token) }
+                    ),
                 ]);
 
                 if (!userRes.ok) throw new Error('user HTTP ' + userRes.status);
@@ -74,7 +78,7 @@ export default function ProfilePage({
         return () => {
             cancelled = true;
         };
-    }, [active, userId, token]);
+    }, [active, userId, token, sort]);
 
     // Загрузка дополнительных видео
     async function loadMore() {
@@ -85,9 +89,10 @@ export default function ProfilePage({
         setStatusProfile('Загрузка видео…', 'ok');
 
         try {
-            const res = await fetch(`${apiBase}/api/users/${userId}/videos?page=${paging.page}&size=${paging.size}`, {
-                headers: authHeaders(token),
-            });
+            const res = await fetch(
+                `${apiBase}/api/users/${userId}/videos?page=${paging.page}&size=${paging.size}&sort=${encodeURIComponent(sort)}`,
+                { headers: authHeaders(token) }
+            );
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const page = await res.json();
@@ -186,14 +191,37 @@ export default function ProfilePage({
 
             <div className="studio-section-title">Видео</div>
 
+            <div style={{ marginTop: 8,  marginBottom: 8 }}>
+                <select
+                    className="feed-select"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                >
+                    <option value="uploadedAt,desc">Сначала новые</option>
+                    <option value="uploadedAt,asc">Сначала старые</option>
+                    <option value="viewsCount,desc">По просмотрам</option>
+                    <option value="likesCount,desc">По лайкам</option>
+                </select>
+            </div>
+
             {(!videos || videos.length === 0) ? (
                 <div className="studio-row-meta">Видео пока нет</div>
             ) : (
                 <ThumbGrid
                     videos={videos}
                     renderCard={(v) => (
-                        <ThumbCard key={v.uuid} video={v} showDelete={false}
-                                   onOpen={() => onGlobalPlayByUuid?.(v.uuid)}/>
+                        <ThumbCard
+                            key={v.uuid}
+                            video={v}
+                            showDelete={false}
+                            onOpen={() =>
+                                onGlobalPlayByUuid?.({
+                                    userId,
+                                    sort,
+                                    uuid: v.uuid,
+                                })
+                            }
+                        />
                     )}
                 />
             )}
