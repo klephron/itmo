@@ -5,7 +5,8 @@ import UploadPage from './pages/UploadPage';
 import AccountPage from './pages/AccountPage.jsx';
 import ProfilePage from './pages/ProfilePage';
 import ModerationPage from './pages/ModerationPage';
-import AuthPage from "./pages/AuthPage.jsx";
+import AuthPage from './pages/AuthPage.jsx';
+import SearchPage from './pages/SearchPage.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { apiBase, authHeaders, isUnauthorized } from './api/api';
 
@@ -77,7 +78,7 @@ function AppInner() {
 
         const intervalId = setInterval(async () => {
             try {
-                const res = await fetch(apiBase + '/streaming/video/upload/status/' + jobId, {
+                const res = await fetch(apiBase + '/api/streaming/video/upload/status/' + jobId, {
                     headers: authHeaders(token),
                 });
 
@@ -128,7 +129,7 @@ function AppInner() {
         }
 
         try {
-            const res = await fetch(apiBase + '/streaming/video/upload/active', {
+            const res = await fetch(apiBase + '/api/streaming/video/upload/active', {
                 headers: authHeaders(tokenOverride),
             });
 
@@ -221,6 +222,7 @@ function AppInner() {
             />
             <AuthPage active={activeTab === 'auth'} onTab={onTab}/>
             <ModerationPage active={activeTab === 'moderation'} onRequireAuth={onRequireAuth}/>
+            <SearchPage active={activeTab === 'search'} onGlobalPlayByUuid={onGlobalPlayByUuid}/>
         </div>
     );
 }

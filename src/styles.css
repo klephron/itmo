@@ -515,3 +515,53 @@ input[type="file"] {
 .comment-delete:hover {
     text-decoration: underline;
 }
+
+/* ============================
+   SEARCH INPUT + SUGGESTIONS
+   ============================ */
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.suggest-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 8px;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    max-height: 220px;
+    overflow-y: auto;
+
+    z-index: 30;
+
+    display: none;
+}
+
+.suggest-dropdown.visible {
+    display: block;
+}
+
+.suggest-item {
+    padding: 8px 10px;
+    border-bottom: 1px solid #1a1a1a;
+    cursor: pointer;
+}
+
+.suggest-item:last-child {
+    border-bottom: none;
+}
+
+.suggest-item:hover {
+    background: #1f1f1f;
+}
+
+.suggest-meta {
+    font-size: 11px;
+    color: #888;
+}

@@ -17,6 +17,13 @@ export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated
                 Загрузка
             </button>
 
+            <button
+                className={'tab-btn ' + (activeTab === 'search' ? 'active' : '')}
+                onClick={() => onTab('search')}
+            >
+                Поиск
+            </button>
+
             {showModeration && (
                 <button
                     className={'tab-btn ' + (activeTab === 'moderation' ? 'active' : '')}
