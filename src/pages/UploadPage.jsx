@@ -8,6 +8,7 @@ export default function UploadPage({ active, onRequireAuth, onJobTracked }) {
     const fileRef = useRef(null);
 
     const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
     const [progress, setProgress] = useState({ show: false, value: 0 });
     const [status, setStatus] = useState({ msg: '', type: '' });
 
@@ -32,6 +33,7 @@ export default function UploadPage({ active, onRequireAuth, onJobTracked }) {
 
         const file = fileRef.current?.files?.[0];
         const videoName = title.trim();
+        const videoDescription = description.trim();
 
         if (!file) {
             setStatusUpload('Выберите файл видео', 'error');
@@ -42,11 +44,15 @@ export default function UploadPage({ active, onRequireAuth, onJobTracked }) {
         formData.append('video', file);
         formData.append('videoName', videoName || file.name);
 
+        if (videoDescription) {
+            formData.append('description', videoDescription);
+        }
+
         setProgress({ show: true, value: 0 });
         setStatusUpload('Начинаю загрузку…', 'ok');
 
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', apiBase + '/streaming/video/upload', true);
+        xhr.open('POST', apiBase + '/api/streaming/video/upload', true);
         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 
         xhr.upload.onprogress = (e) => {
@@ -107,6 +113,18 @@ export default function UploadPage({ active, onRequireAuth, onJobTracked }) {
                     placeholder="Как назвать ролик?"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    disabled={!canUpload}
+                />
+            </div>
+
+            <div className="form-row">
+                <label htmlFor="uploadDescription">Описание (опционально)</label>
+                <input
+                    id="uploadDescription"
+                    type="text"
+                    placeholder="О чём ролик?"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     disabled={!canUpload}
                 />
             </div>

@@ -207,7 +207,7 @@ export default function AccountPage({
 
         try {
             setStatusAuth('Удаляю видео…', 'ok');
-            const res = await fetch(apiBase + '/streaming/video/delete/' + uuid, {
+            const res = await fetch(apiBase + '/api/streaming/video/delete/' + uuid, {
                 method: 'POST',
                 headers: authHeaders(token),
             });
