@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CssBaseline, Stack, ThemeProvider } from "@mui/material";
+
 import Tabs from './components/Tabs';
 import FeedPage from './pages/FeedPage';
 import UploadPage from './pages/UploadPage';
@@ -9,6 +11,7 @@ import AuthPage from './pages/AuthPage.jsx';
 import SearchPage from './pages/SearchPage.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { apiBase, authHeaders, isUnauthorized } from './api/api';
+import { theme } from "./theme.js";
 
 function AppInner() {
     const { token, user, isModerator } = useAuth();
@@ -181,13 +184,15 @@ function AppInner() {
     const jobsState = useMemo(() => ({ activeJobs, statusStudio }), [activeJobs, statusStudio]);
 
     return (
-        <div className="app">
-            <Tabs
-                activeTab={activeTab}  // Передаем активное состояние
-                onTab={onTab}
-                showModeration={showModerationTab}
-                isAuthenticated={Boolean(user)}
-            />
+        <Stack
+            p={1}
+            spacing={1}
+            sx={{
+                width: 1,
+                maxWidth: 480,
+                height: "100dvh",
+            }}
+        >
             <FeedPage
                 active={activeTab === 'feed'}
                 onOpenProfile={onOpenProfile}
@@ -229,14 +234,23 @@ function AppInner() {
             <AuthPage active={activeTab === 'auth'} onTab={onTab}/>
             <ModerationPage active={activeTab === 'moderation'} onRequireAuth={onRequireAuth}/>
             <SearchPage active={activeTab === 'search'} onGlobalPlayByUuid={onGlobalPlayByUuid}/>
-        </div>
+            <Tabs
+                activeTab={activeTab}  // Передаем активное состояние
+                onTab={onTab}
+                showModeration={showModerationTab}
+                isAuthenticated={Boolean(user)}
+            />
+        </Stack>
     );
 }
 
 export default function App() {
     return (
-        <AuthProvider>
-            <AppInner/>
-        </AuthProvider>
+        <ThemeProvider theme={theme} defaultMode="dark" noSsr>
+            <CssBaseline/>
+            <AuthProvider>
+                <AppInner/>
+            </AuthProvider>
+        </ThemeProvider>
     );
 }

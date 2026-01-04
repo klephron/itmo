@@ -1,53 +1,77 @@
-import React from 'react';
+import { Button, Paper, Stack } from "@mui/material";
+
+import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
+import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
 export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated }) {
     return (
-        <div className="tabs">
-            <button
-                className={'tab-btn ' + (activeTab === 'feed' ? 'active' : '')}
-                onClick={() => onTab('feed')}
+        <Paper elevation={0}>
+            <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                spacing={1}
+                px={1}
+                py={1 / 2}
             >
-                Лента
-            </button>
-
-            <button
-                className={'tab-btn ' + (activeTab === 'upload' ? 'active' : '')}
-                onClick={() => onTab('upload')}
-            >
-                Загрузка
-            </button>
-
-            <button
-                className={'tab-btn ' + (activeTab === 'search' ? 'active' : '')}
-                onClick={() => onTab('search')}
-            >
-                Поиск
-            </button>
-
-            {showModeration && (
-                <button
-                    className={'tab-btn ' + (activeTab === 'moderation' ? 'active' : '')}
-                    onClick={() => onTab('moderation')}
+                <Button
+                    variant="contained"
+                    size="uniSmall"
+                    color="inherit"
+                    onClick={() => onTab("feed")}
+                    disabled={activeTab !== "feed"}
                 >
-                    Модерация
-                </button>
-            )}
-
-            {isAuthenticated ? (
-                <button
-                    className={'tab-btn ' + (activeTab === 'account' ? 'active' : '')}
-                    onClick={() => onTab('account')}
+                    <ChevronLeftRoundedIcon sx={{ fontSize: 32 }}/>
+                </Button>
+                <Button
+                    variant="contained"
+                    size="uniSmall"
+                    color={activeTab === "feed" ? "primary" : "inherit"}
+                    onClick={() => onTab("feed")}
                 >
-                    Аккаунт
-                </button>
-            ) : (
-                <button
-                    className={'tab-btn ' + (activeTab === 'auth' ? 'active' : '')}
-                    onClick={() => onTab('auth')}
+                    <HomeRoundedIcon sx={{ fontSize: 32 }}/>
+                </Button>
+                <Button
+                    variant="contained"
+                    size="uniSmall"
+                    color={activeTab === "upload" ? "primary" : "inherit"}
+                    onClick={() => onTab("upload")}
                 >
-                    Вход
-                </button>
-            )}
-        </div>
+                    <AddRoundedIcon sx={{ fontSize: 40 }}/>
+                </Button>
+                {isAuthenticated ? (
+                    <Button
+                        variant="contained"
+                        size="uniSmall"
+                        color={activeTab === "account" ? "primary" : "inherit"}
+                        onClick={() => onTab("account")}
+                    >
+                        {/* TODO: Avatar */}
+                        <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
+                    </Button>
+                ) : (
+                    <Button
+                        variant="contained"
+                        size="uniSmall"
+                        color={activeTab === "auth" ? "primary" : "inherit"}
+                        onClick={() => onTab("auth")}
+                    >
+                        <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
+                    </Button>
+                )}
+                <Button
+                    variant="contained"
+                    size="uniSmall"
+                    color="inherit"
+                    onClick={() => onTab("feed")}
+                    disabled={activeTab !== "feed"}
+                >
+                    <ChevronRightRoundedIcon sx={{ fontSize: 32 }}/>
+                </Button>
+            </Stack>
+        </Paper>
     );
 }

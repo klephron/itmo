@@ -204,6 +204,8 @@ button:active {
 .page {
     width: 100%;
     display: none;
+    overflow: auto;
+    flex: 1;
 }
 
 .page.active {
