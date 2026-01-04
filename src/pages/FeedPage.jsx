@@ -1,10 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { apiBase, authHeaders, isUnauthorized, parseVideoListPayload } from '../api/api';
-import { formatDate, formatViews, humanSize } from '../utils/format';
+import { formatCompactNumber, formatDate, formatViews, humanSize } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
-import Avatar from '../components/Avatar';
-import Status from '../components/Status';
-import Comments from '../components/Comments';
+
+import { Avatar, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
+import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
+import CommentOutlined from "@mui/icons-material/CommentOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
 
 const FEED_PAGE_SIZE = 10;
 
@@ -58,7 +62,8 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             el.preload = mode || 'auto';
             el.src = url;
             el.load();
-        } catch {}
+        } catch {
+        }
     }
 
     function preloadAround(index) {
@@ -179,7 +184,8 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                         player.pause();
                         player.removeAttribute('src');
                         player.load();
-                    } catch {}
+                    } catch {
+                    }
                 }
 
                 loadVideoPage(0, false);
@@ -208,7 +214,8 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                         player.pause();
                         player.removeAttribute('src');
                         player.load();
-                    } catch {}
+                    } catch {
+                    }
                 }
 
                 // 5. загружаем новую ленту
@@ -244,7 +251,8 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             player.play().catch(() => {
                 setStatusFeed('Нажмите Play, чтобы запустить видео', 'error');
             });
-        } catch {}
+        } catch {
+        }
 
         const baseLikes = (typeof v.likesCount === 'number') ? v.likesCount : 0;
         setLike({ count: baseLikes, liked: false });
@@ -276,7 +284,8 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 } else if (isUnauthorized(res)) {
                     setLike({ count: baseLikes, liked: false });
                 }
-            } catch {}
+            } catch {
+            }
         })();
 
         (async () => {
@@ -298,10 +307,13 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     });
                     setViews(formatViews(cnt));
                 }
-            } catch {}
+            } catch {
+            }
         })();
 
-        return () => { cancelled = true; };
+        return () => {
+            cancelled = true;
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active, currentIndex, token]);
 
@@ -349,8 +361,12 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         const player = playerRef.current;
         if (!player) return;
 
-        const onEnded = () => { goNext(); };
-        const onError = () => { setStatusFeed('Ошибка воспроизведения видео', 'error'); };
+        const onEnded = () => {
+            goNext();
+        };
+        const onError = () => {
+            setStatusFeed('Ошибка воспроизведения видео', 'error');
+        };
 
         player.addEventListener('ended', onEnded);
         player.addEventListener('error', onError);
@@ -368,7 +384,13 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     const displayTitle = authorName ? `${title} — ${authorName}` : title;
 
     return (
-        <div className={'card page ' + (active ? 'active' : '')} id="pageFeed">
+        <Stack spacing={1} flex={1}>
+            <Paper elevation={0}>
+                <Stack direction="row" p={1}>
+                    <Typography variant="h6" px={1}>Рекомендации</Typography>
+                </Stack>
+            </Paper>
+            {/*
             <div className="header">
                 <div>
                     <div className="title" id="videoTitle">{displayTitle}</div>
@@ -384,29 +406,117 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 </div>
                 <div className="badge" id="videoCount">{videos.length} видео</div>
             </div>
-
-            <div className="video-wrapper">
-                <video ref={playerRef} id="player" controls playsInline muted autoPlay />
-                <div className="swipe-hint">Свайп вверх/вниз или кнопки ниже</div>
-
-                <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted preload="auto" />
-                <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted preload="metadata" />
-            </div>
-
-            <div className="controls">
-                <button className="secondary" id="btnPrev" onClick={goPrev}>⏮ Предыдущее</button>
-                <button id="btnNext" onClick={goNext}>▶ Следующее</button>
-                <button
-                    className="secondary"
-                    id="btnLike"
-                    onClick={toggleLike}
-                    data-liked={like.liked ? 'true' : 'false'}
-                    data-count={String(like.count)}
+            */}
+            <Box sx={{
+                position: 'relative',
+                height: 1,
+                borderRadius: 3,
+                overflow: 'hidden',
+            }}>
+                <Stack
+                    spacing={1}
+                    sx={{
+                        width: 1,
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        zIndex: 1,
+                        filter: 'drop-shadow(1px 1px 1px rgb(0,0,0))',
+                        p: 1,
+                        pt: 1 / 2,
+                        alignItems: 'flex-start',
+                    }}
                 >
-                    {(like.liked ? '♥ ' : '♡ ') + like.count}
-                </button>
-            </div>
+                    <Typography noWrap textOverflow="ellipsis" width={1}>
+                        {currentVideo?.name}
+                    </Typography>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ cursor: 'pointer' }}
+                        onClick={() => currentVideo?.uploaderId && onOpenProfile?.(currentVideo.uploaderId)}
+                    >
+                        <Avatar
+                            src={currentVideo?.uploaderAvatarUrl
+                                ? `${apiBase}${currentVideo.uploaderAvatarUrl}`
+                                : null}
+                            sx={{ width: 24, height: 24 }}
+                        >
+                            {currentVideo?.uploaderName?.[0]?.toUpperCase()}
+                        </Avatar>
+                        <Typography>{currentVideo?.uploaderName}</Typography>
+                    </Stack>
+                </Stack>
+                <Stack
+                    spacing={2}
+                    sx={(theme) => ({
+                        position: 'absolute',
+                        right: theme.spacing(1),
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 1,
+                        alignItems: 'center',
+                        filter: 'drop-shadow(2px 2px 2px rgb(0,0,0))',
+                    })}
+                >
+                    <Stack alignItems="center" spacing={0.5}>
+                        <VisibilityOutlinedIcon sx={{ fontSize: 32 }}/>
+                        <Typography variant="caption">
+                            {formatCompactNumber(currentVideo?.viewsCount)}
+                        </Typography>
+                    </Stack>
+                    <Stack alignItems="center">
+                        <Button
+                            size="uniSmall"
+                            color={like.liked ? "error" : "inherit"}
+                            onClick={toggleLike}
+                        >
+                            {like.liked ? (
+                                <FavoriteRoundedIcon sx={{ fontSize: 32 }}/>
+                            ) : (
+                                <FavoriteBorderRoundedIcon sx={{ fontSize: 32 }}/>
+                            )}
+                        </Button>
+                        <Typography variant="caption">
+                            {formatCompactNumber(like.count)}
+                        </Typography>
+                    </Stack>
+                    <Stack alignItems="center">
+                        <Button
+                            size="uniSmall"
+                            onClick={() => {
+                                /* действие добавишь позже */
+                            }}
+                        >
+                            <CommentOutlined sx={{ fontSize: 32 }}/>
+                        </Button>
+                        <Typography variant="caption">
+                            {formatCompactNumber(currentVideo?.commentsCount)}
+                        </Typography>
+                    </Stack>
+                    <Button
+                        size="uniSmall"
+                        onClick={() => {
+                            /* действие добавишь позже */
+                        }}
+                    >
+                        <OutlinedFlagRoundedIcon sx={{ fontSize: 32 }}/>
+                    </Button>
+                </Stack>
+                <video
+                    ref={playerRef}
+                    id="player"
+                    controls
+                    playsInline
+                    muted
+                    autoPlay
+                />
+                <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted preload="auto"/>
+                <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted preload="metadata"/>
+            </Box>
 
+            {/*
             <div className="meta">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Avatar
@@ -424,10 +534,11 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     <div id="videoInfoDate">{formatDate(currentVideo?.uploadedAt)}</div>
                 </div>
             </div>
+            */}
 
-            <Comments videoUuid={currentUuid} onOpenProfile={onOpenProfile} onRequireAuth={onRequireAuth} />
-
-            <Status id="statusFeed" message={status.msg} type={status.type} />
-        </div>
+            {/*
+            <Comments videoUuid={currentUuid} onOpenProfile={onOpenProfile} onRequireAuth={onRequireAuth}/>
+            */}
+        </Stack>
     );
 }
