@@ -270,6 +270,8 @@ services:
     depends_on:
       - postgres
       - discovery
+    volumes:
+      - ./djl-cache:/root/.djl.ai
 
   transcoding:
     build:
