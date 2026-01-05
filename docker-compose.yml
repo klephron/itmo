@@ -159,9 +159,12 @@ services:
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
       JWT_SECRET: jwt_dev_secret
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       - postgres
       - discovery
+      - redis
 
   storage:
     build:
@@ -212,10 +215,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: test
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_SECRET: jwt_dev_secret
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       - postgres
       - discovery
       - kafka
+      - redis
 
   admin:
     build:
