@@ -30,6 +30,8 @@ import ru.itmo.zavar.brainstop.video.mapper.FileMetadataMapper;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.brainstop.video.service.FeedService;
+import ru.itmo.zavar.brainstop.video.service.FeedSessionService;
+import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedSessionResponse;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
 
 import java.io.FileNotFoundException;
@@ -52,6 +54,7 @@ public class VideoStreamingController {
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataMapper fileMetadataMapper;
     private final FeedService feedService;
+    private final FeedSessionService feedSessionService;
     private final VideoObjectStorage videoObjectStorage;
 
     @Value("${streaming.chunk.default-size}")
@@ -108,6 +111,49 @@ public class VideoStreamingController {
         Long userId = principal != null ? principal.getId() : null;
         Page<FeedVideoDto> feed = this.feedService.getFeed(userId, PageRequest.of(page, size));
         return ResponseEntity.ok(feed);
+    }
+
+    @PostMapping("/feed/session/start")
+    @Operation(summary = "Start feed session")
+    public ResponseEntity<FeedSessionResponse> startFeedSession(@RequestParam(defaultValue = "10") int size,
+                                                                @RequestHeader("X-Device-Id") String deviceId,
+                                                                @AuthenticationPrincipal CurrentUser principal) {
+        if (deviceId == null || deviceId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Device-Id header is required");
+        }
+        Long userId = principal != null ? principal.getId() : null;
+        FeedSessionResponse response = this.feedSessionService.startSession(deviceId, userId, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/feed/session/{feedId}/next")
+    @Operation(summary = "Next feed session items")
+    public ResponseEntity<FeedSessionResponse> nextFeedItems(@PathVariable String feedId,
+                                                             @RequestParam(defaultValue = "1") int count,
+                                                             @RequestParam(required = false) Long pos,
+                                                             @RequestHeader("X-Device-Id") String deviceId,
+                                                             @AuthenticationPrincipal CurrentUser principal) {
+        if (deviceId == null || deviceId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Device-Id header is required");
+        }
+        Long userId = principal != null ? principal.getId() : null;
+        FeedSessionResponse response = this.feedSessionService.next(feedId, deviceId, userId, count, pos);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/feed/session/{feedId}/prev")
+    @Operation(summary = "Previous feed session items")
+    public ResponseEntity<FeedSessionResponse> prevFeedItems(@PathVariable String feedId,
+                                                             @RequestParam(defaultValue = "1") int count,
+                                                             @RequestParam(required = false) Long pos,
+                                                             @RequestHeader("X-Device-Id") String deviceId,
+                                                             @AuthenticationPrincipal CurrentUser principal) {
+        if (deviceId == null || deviceId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Device-Id header is required");
+        }
+        Long userId = principal != null ? principal.getId() : null;
+        FeedSessionResponse response = this.feedSessionService.prev(feedId, deviceId, userId, count, pos);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/list/my")
