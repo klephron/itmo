@@ -7,6 +7,12 @@ export function authHeaders(token) {
     return h;
 }
 
+export function deviceIdHeaders(deviceId) {
+    const h = {};
+    if (deviceId) h['X-Device-Id'] = deviceId;
+    return h;
+}
+
 export function parseVideoListPayload(data) {
     const items =
         Array.isArray(data?.items) ? data.items :
