@@ -4,16 +4,16 @@ services:
     container_name: brainstop-frontend
     restart: unless-stopped
     ports:
-      - "8180:80"
+      - "8098:80"
 
   discovery:
     image: klephronedu/itmo-brainstop-discovery:latest
     container_name: brainstop-discovery
     restart: unless-stopped
     ports:
-      - "8761:8761"
+      - "8099:8099"
     environment:
-      SERVER_PORT: 8761
+      SERVER_PORT: 8099
     depends_on:
       - postgres
 
@@ -25,7 +25,7 @@ services:
       - "8080:8080"
     environment:
       SERVER_PORT: 8080
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: gateway
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_NONSECUREPORT: 8080
@@ -46,7 +46,7 @@ services:
     environment:
       SERVER_PORT: 8081
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: video
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_NONSECUREPORT: 8081
@@ -72,7 +72,7 @@ services:
     environment:
       SERVER_PORT: 8082
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: profile
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_NONSECUREPORT: 8082
@@ -93,7 +93,7 @@ services:
     environment:
       SERVER_PORT: 8083
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: storage
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_NONSECUREPORT: 8083
@@ -118,7 +118,7 @@ services:
     environment:
       SERVER_PORT: 8084
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: interactions
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_NONSECUREPORT: 8084
@@ -140,7 +140,7 @@ services:
     environment:
       SERVER_PORT: 8085
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: admin
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_NONSECUREPORT: 8085
@@ -161,7 +161,7 @@ services:
     environment:
       SERVER_PORT: 8086
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: search
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_NONSECUREPORT: 8086
@@ -180,14 +180,14 @@ services:
     container_name: brainstop-transcoding
     restart: unless-stopped
     environment:
-      SERVER_PORT: 8088
+      SERVER_PORT: 8087
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8761/eureka
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery:8099/eureka
       EUREKA_INSTANCE_HOSTNAME: transcoding
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
-      EUREKA_INSTANCE_NONSECUREPORT: 8088
-      EUREKA_INSTANCE_STATUSPAGEURL: http://transcoding:8088/actuator/info
-      EUREKA_INSTANCE_HEALTHCHECKURL: http://transcoding:8088/actuator/health
+      EUREKA_INSTANCE_NONSECUREPORT: 8087
+      EUREKA_INSTANCE_STATUSPAGEURL: http://transcoding:8087/actuator/info
+      EUREKA_INSTANCE_HEALTHCHECKURL: http://transcoding:8087/actuator/health
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video-streaming
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
@@ -223,12 +223,12 @@ services:
     image: quay.io/minio/minio:RELEASE.2024-04-06T05-26-02Z
     container_name: brainstop-minio
     restart: unless-stopped
-    command: server --console-address ":9001" /data
+    command: server --console-address ":8091" /data
     environment:
       MINIO_ROOT_USER: minio_admin
       MINIO_ROOT_PASSWORD: minio_admin
     ports:
-      - "9001:9001"
+      - "8091:8091"
     volumes:
       - minio-data:/data
 
@@ -251,8 +251,6 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-    ports:
-      - "9092:9092"
     volumes:
       - kafka-data:/var/lib/kafka/data
 
