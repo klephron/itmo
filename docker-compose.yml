@@ -228,7 +228,6 @@ services:
 
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: brainstop-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: test
@@ -248,7 +247,6 @@ services:
 
   minio:
     image: quay.io/minio/minio:RELEASE.2024-04-06T05-26-02Z
-    container_name: brainstop-minio
     restart: unless-stopped
     command: server --console-address ":9001" /data
     environment:
@@ -262,7 +260,6 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
-    container_name: brainstop-kafka
     restart: unless-stopped
     environment:
       KAFKA_BROKER_ID: 1
