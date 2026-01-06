@@ -31,3 +31,13 @@ springdoc:
 app:
   jwt:
     secret: "super-secret-key-change-me-to-long-random-string"
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

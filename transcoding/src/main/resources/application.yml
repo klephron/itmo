@@ -6,12 +6,12 @@ spring:
     name: transcoding-service
   profiles:
     default: dev
-#  cloud:
-#    loadbalancer:
-#      configurations: round_robin
-#      cache:
-#        enabled: true
-#        ttl: 2s
+  #  cloud:
+  #    loadbalancer:
+  #      configurations: round_robin
+  #      cache:
+  #        enabled: true
+  #        ttl: 2s
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     listener:
@@ -44,3 +44,13 @@ springdoc:
 app:
   jwt:
     secret: "super-secret-key-change-me-to-long-random-string"
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

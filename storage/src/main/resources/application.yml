@@ -27,3 +27,13 @@ minio:
     avatar: avatars
   stream:
     part-size: 5242880
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

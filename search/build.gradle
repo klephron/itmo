@@ -20,6 +20,9 @@ dependencies {
     implementation "ai.djl.pytorch:pytorch-engine"
     implementation "ai.djl.huggingface:tokenizers:${djlVersion}"
 
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "io.micrometer:micrometer-registry-prometheus"
+
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 

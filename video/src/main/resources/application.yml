@@ -10,12 +10,12 @@ spring:
     name: video-service
   profiles:
     default: dev
-#  cloud:
-#    loadbalancer:
-#      configurations: round_robin
-#      cache:
-#        enabled: true
-#        ttl: 2s
+  #  cloud:
+  #    loadbalancer:
+  #      configurations: round_robin
+  #      cache:
+  #        enabled: true
+  #        ttl: 2s
   cloud:
     openfeign:
       circuitbreaker:
@@ -50,7 +50,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # ??? ? ??????
+      ddl-auto: update # ??? ? ??????
     show-sql: false
     database: POSTGRESQL
 
@@ -68,7 +68,7 @@ spring:
 
 streaming:
   chunk:
-    default-size: 2621440  # 2.5 MB
+    default-size: 2621440 # 2.5 MB
 
 storage:
   client:
@@ -95,8 +95,9 @@ logging:
 management:
   endpoints:
     web:
+      base-path: /actuator
       exposure:
-        include: health,metrics
+        include: "*"
   endpoint:
     health:
       show-details: always

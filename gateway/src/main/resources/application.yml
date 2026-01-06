@@ -11,10 +11,10 @@ spring:
       health-check:
         enabled: true
         interval: 3s
-#      configurations: round_robin
-#      cache:
-#        enabled: true
-#        ttl: 2s
+      #      configurations: round_robin
+      #      cache:
+      #        enabled: true
+      #        ttl: 2s
       retry:
         enabled: true
     gateway:
@@ -144,3 +144,13 @@ app:
   jwt:
     secret: "super-secret-key-change-me-to-long-random-string"
     expiration-ms: 3600000
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
