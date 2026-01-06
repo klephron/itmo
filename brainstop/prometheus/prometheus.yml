@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "discovery-eureka"
+    metrics_path: /actuator/prometheus
+
+    eureka_sd_configs:
+      - server: http://discovery:8099/eureka
+
+    relabel_configs:
+      - source_labels: [__meta_eureka_app_name]
+        target_label: job
+
+  - job_name: "eureka"
+    metrics_path: /actuator/prometheus
+
+    static_configs:
+      - targets:
+          - discovery:8099
+
+    relabel_configs:
+      - target_label: job
+        replacement: DISCOVERY

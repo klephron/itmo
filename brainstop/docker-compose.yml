@@ -254,7 +254,18 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
+  prometheus:
+    image: prom/prometheus:v3.8.1
+    container_name: brainstop-prometheus
+    restart: unless-stopped
+    ports:
+      - "8090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
 volumes:
   postgres-data:
   minio-data:
   kafka-data:
+  prometheus-data:
