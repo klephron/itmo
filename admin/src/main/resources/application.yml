@@ -6,12 +6,12 @@ spring:
     name: admin-service
   profiles:
     default: dev
-#  cloud:
-#    loadbalancer:
-#      configurations: round_robin
-#      cache:
-#        enabled: true
-#        ttl: 2s
+  #  cloud:
+  #    loadbalancer:
+  #      configurations: round_robin
+  #      cache:
+  #        enabled: true
+  #        ttl: 2s
   cloud:
     openfeign:
       circuitbreaker:
@@ -49,8 +49,9 @@ logging:
 management:
   endpoints:
     web:
+      base-path: /actuator
       exposure:
-        include: health,metrics
+        include: "*"
   endpoint:
     health:
       show-details: always

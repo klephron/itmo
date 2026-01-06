@@ -39,6 +39,7 @@ public class InteractionsSecurityConfig {
                         .requestMatchers("/api/videos/**",
                                 "/api/moderation/complaints/**",
                                 "/internal/moderation/complaints/**").authenticated()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth

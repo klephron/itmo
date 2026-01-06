@@ -6,12 +6,12 @@ spring:
     name: profile-service
   profiles:
     default: dev
-#  cloud:
-#    loadbalancer:
-#      configurations: round_robin
-#      cache:
-#        enabled: true
-#        ttl: 2s
+  #  cloud:
+  #    loadbalancer:
+  #      configurations: round_robin
+  #      cache:
+  #        enabled: true
+  #        ttl: 2s
 
   datasource:
     url: jdbc:postgresql://localhost:5432/video-streaming
@@ -42,3 +42,13 @@ app:
 storage:
   client:
     base-url: http://storage-service
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

@@ -44,6 +44,7 @@ public class ResourceServerConfig {
 
                         .requestMatchers("/api/videos/**").permitAll()
                         .requestMatchers("/api/streaming/video/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
