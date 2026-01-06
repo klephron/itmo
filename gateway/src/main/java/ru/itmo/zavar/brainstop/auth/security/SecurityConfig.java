@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .authorizeExchange(ex -> ex
                         .pathMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .pathMatchers("/api/auth/me").authenticated()
+                        .pathMatchers("/internal/users/**").permitAll()
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/videos/**").permitAll()

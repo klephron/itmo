@@ -18,19 +18,16 @@ import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.brainstop.profile.cache.UserSummaryCache;
 import ru.itmo.zavar.brainstop.profile.dto.PublicUserProfileDto;
 import ru.itmo.zavar.brainstop.profile.dto.response.UserAvatarResponse;
-import ru.itmo.zavar.brainstop.profile.mapper.UserToPublicProfileMapper;
-import ru.itmo.zavar.brainstop.profile.model.UserEntity;
-import ru.itmo.zavar.brainstop.profile.repo.UserRepository;
+import ru.itmo.zavar.brainstop.profile.service.FollowService;
+import feign.FeignException;
+import ru.itmo.zavar.brainstop.common.api.profile.UserAccountDto;
 import ru.itmo.zavar.brainstop.common.api.video.VideoProfileApi;
 import ru.itmo.zavar.brainstop.common.api.video.dto.PublicUserVideoDto;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
+import ru.itmo.zavar.brainstop.profile.client.AuthInternalClient;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -40,11 +37,11 @@ import java.util.Set;
 // MSPLIT: HTTP API that will move to User Profile Service
 public class UserProfileController {
 
-    private final UserRepository userRepository;
     private final VideoObjectStorage videoObjectStorage;
-    private final UserToPublicProfileMapper userToPublicProfileMapper;
     private final VideoProfileApi videoProfileApi;
     private final UserSummaryCache userSummaryCache;
+    private final AuthInternalClient authInternalClient;
+    private final FollowService followService;
 
     @PostMapping("/me/avatar")
     @Operation(summary = "Загрузить аватар текущего пользователя")
@@ -53,12 +50,14 @@ public class UserProfileController {
             return ResponseEntity.status(401).build();
         }
         Long userId = principal.getId();
-        UserEntity userEntity = this.userRepository.findById(userId).orElseThrow();
 
         try (InputStream is = avatar.getInputStream()) {
             String key = this.videoObjectStorage.uploadAvatar(is, avatar.getSize(), avatar.getContentType(), userId);
-            userEntity.setAvatarKey(key);
-            this.userRepository.save(userEntity);
+            try {
+                this.authInternalClient.updateAvatar(userId, key);
+            } catch (FeignException.NotFound e) {
+                return ResponseEntity.notFound().build();
+            }
             this.userSummaryCache.evict(userId);
             return ResponseEntity.ok(new UserAvatarResponse(
                     "/api/users/" + userId + "/avatar"
@@ -69,11 +68,16 @@ public class UserProfileController {
     @GetMapping("/{id}/avatar")
     @Operation(summary = "Получить аватар пользователя")
     public ResponseEntity<Resource> getAvatar(@PathVariable Long id) throws Exception {
-        UserEntity userEntity = this.userRepository.findById(id).orElseThrow();
-        if (userEntity.getAvatarKey() == null) {
+        UserAccountDto user;
+        try {
+            user = this.authInternalClient.getUser(id);
+        } catch (FeignException.NotFound e) {
             return ResponseEntity.notFound().build();
         }
-        InputStream is = this.videoObjectStorage.downloadAvatar(userEntity.getAvatarKey());
+        if (user.avatarKey() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        InputStream is = this.videoObjectStorage.downloadAvatar(user.avatarKey());
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_JPEG)
                 .body(new InputStreamResource(is));
@@ -83,13 +87,27 @@ public class UserProfileController {
     @Operation(summary = "Получить публичный профиль пользователя")
     public ResponseEntity<PublicUserProfileDto> getProfile(@PathVariable Long id, @AuthenticationPrincipal CurrentUser principal) {
         Long currentId = principal != null ? principal.getId() : null;
-        return this.userRepository.findById(id)
-                .map(user -> {
-                    this.userToPublicProfileMapper.setCurrentUserId(currentId);
-                    return this.userToPublicProfileMapper.toDto(user);
-                })
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        UserAccountDto user;
+        try {
+            user = this.authInternalClient.getUser(id);
+        } catch (FeignException.NotFound e) {
+            return ResponseEntity.notFound().build();
+        }
+
+        long followers = this.followService.countFollowers(id);
+        long following = this.followService.countFollowing(id);
+        boolean isFollowing = currentId != null && this.followService.isFollowing(currentId, id);
+
+        PublicUserProfileDto dto = PublicUserProfileDto.builder()
+                .id(user.id())
+                .username(user.username())
+                .displayName(user.displayName())
+                .avatarUrl(avatarUrl(user))
+                .followersCount(followers)
+                .followingCount(following)
+                .following(isFollowing)
+                .build();
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/{id}/videos")
@@ -97,13 +115,26 @@ public class UserProfileController {
     public ResponseEntity<Page<PublicUserVideoDto>> getUserVideos(@PathVariable Long id,
                                                                   Pageable pageable,
                                                                   @AuthenticationPrincipal CurrentUser principal) {
-        if (!this.userRepository.existsById(id)) {
+        Boolean exists;
+        try {
+            exists = this.authInternalClient.exists(id);
+        } catch (FeignException e) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!Boolean.TRUE.equals(exists)) {
             return ResponseEntity.notFound().build();
         }
 
         Long currentUserId = principal != null ? principal.getId() : null;
         Pageable sanitized = sanitizePageable(pageable);
         return ResponseEntity.ok(this.videoProfileApi.findUserVideos(id, currentUserId, sanitized));
+    }
+
+    private String avatarUrl(UserAccountDto user) {
+        if (user == null || user.avatarKey() == null) {
+            return null;
+        }
+        return "/api/users/" + user.id() + "/avatar";
     }
 
     private Pageable sanitizePageable(Pageable pageable) {

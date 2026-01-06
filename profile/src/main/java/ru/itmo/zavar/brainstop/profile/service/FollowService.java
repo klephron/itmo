@@ -5,11 +5,12 @@ import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import feign.FeignException;
+import ru.itmo.zavar.brainstop.common.api.profile.UserAccountDto;
+import ru.itmo.zavar.brainstop.profile.client.AuthInternalClient;
 import ru.itmo.zavar.brainstop.profile.dto.PublicUserShortDto;
-import ru.itmo.zavar.brainstop.profile.mapper.UserToPublicShortUserMapper;
 import ru.itmo.zavar.brainstop.profile.model.UserFollowEntity;
 import ru.itmo.zavar.brainstop.profile.repo.UserFollowRepository;
-import ru.itmo.zavar.brainstop.profile.repo.UserRepository;
 
 import java.time.Duration;
 import java.util.List;
@@ -26,8 +27,7 @@ public class FollowService {
     private static final String FOLLOW_KEY_PREFIX = "profile:following:";
 
     private final UserFollowRepository followRepository;
-    private final UserRepository userRepository;
-    private final UserToPublicShortUserMapper userToPublicShortUserMapper;
+    private final AuthInternalClient authInternalClient;
     private final StringRedisTemplate redisTemplate;
 
     @Transactional
@@ -39,7 +39,7 @@ public class FollowService {
             return;
         }
 
-        if (!this.userRepository.existsById(followeeId)) {
+        if (!userExists(followeeId)) {
             throw new IllegalArgumentException("Target user not found");
         }
 
@@ -88,14 +88,14 @@ public class FollowService {
     public List<PublicUserShortDto> getFollowers(Long userId) {
         List<UserFollowEntity> links = this.followRepository.findByFolloweeId(userId);
         List<Long> ids = links.stream().map(UserFollowEntity::getFollowerId).toList();
-        return this.userToPublicShortUserMapper.toDto(this.userRepository.findAllById(ids));
+        return mapAccounts(ids);
     }
 
     @Transactional(readOnly = true)
     public List<PublicUserShortDto> getFollowing(Long userId) {
         List<UserFollowEntity> links = this.followRepository.findByFollowerId(userId);
         List<Long> ids = links.stream().map(UserFollowEntity::getFolloweeId).toList();
-        return this.userToPublicShortUserMapper.toDto(this.userRepository.findAllById(ids));
+        return mapAccounts(ids);
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +124,40 @@ public class FollowService {
         return followees.stream()
                 .filter(candidateIds::contains)
                 .collect(Collectors.toSet());
+    }
+
+    private List<PublicUserShortDto> mapAccounts(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<UserAccountDto> accounts;
+        try {
+            accounts = this.authInternalClient.getUsers(ids);
+        } catch (FeignException e) {
+            return List.of();
+        }
+        return accounts.stream()
+                .filter(Objects::nonNull)
+                .map(this::toShortDto)
+                .toList();
+    }
+
+    private PublicUserShortDto toShortDto(UserAccountDto account) {
+        String avatarUrl = account.avatarKey() == null ? null : "/api/users/" + account.id() + "/avatar";
+        return new PublicUserShortDto(
+                account.id(),
+                account.username(),
+                account.displayName(),
+                avatarUrl
+        );
+    }
+
+    private boolean userExists(Long id) {
+        try {
+            return Boolean.TRUE.equals(this.authInternalClient.exists(id));
+        } catch (FeignException e) {
+            return false;
+        }
     }
 
     private void addToCache(Long followerId, Long followeeId) {
