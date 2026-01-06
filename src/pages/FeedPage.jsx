@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized, parseVideoListPayload } from '../api/api';
-import { formatCompactNumber, formatViews } from '../utils/format';
+import { formatCompactNumber } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 
 import { Avatar, Box, Button, Paper, Stack, Typography } from "@mui/material";
@@ -9,6 +9,7 @@ import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded
 import CommentOutlined from "@mui/icons-material/CommentOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 
 const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
@@ -49,16 +50,24 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
     const [loading, setLoading] = useState(false);
 
-    const [status, setStatus] = useState({ msg: '', type: '' });
-    const [like, setLike] = useState({ count: 0, liked: false });
-    const [views, setViews] = useState('—');
-
     const currentVideo = useMemo(() => {
         if (currentIndex < 0 || currentIndex >= videos.length) return null;
         return videos[currentIndex];
     }, [videos, currentIndex]);
 
-    const currentUuid = currentVideo?.uuid ?? null;
+    const {
+        uuid,
+        name,
+        uploaderId,
+        uploaderName,
+        uploaderAvatarUrl,
+        uploadedAt,
+        contentSize,
+        likesCount = 0,
+        likedByMe = false,
+        viewsCount = 0,
+        commentsCount = 0,
+    } = currentVideo ?? {};
 
     async function startFeed() {
         if (loading) return;
@@ -82,9 +91,9 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-
             const items = data.items ?? parseVideoListPayload(data).items;
 
+            setVideos(items);
             feedSessionRef.current = {
                 feedId: data.feedId ?? null,
                 baseIndex: data.baseIndex ?? 0,
@@ -93,7 +102,16 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 page: 0,
             };
 
-            setVideos(items);
+            const targetUuid = targetUuidRef.current;
+            if (targetUuid) {
+                const idx = items.findIndex(v => v.uuid === targetUuid);
+                if (idx !== -1) {
+                    setCurrentIndex(idx);
+                    targetUuidRef.current = null; // цель достигнута
+                    return;
+                }
+            }
+
             setCurrentIndex(0);
         } finally {
             setLoading(false);
@@ -193,19 +211,84 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         }
     }
 
-    function setStatusFeed(msg = '', type = '') {
-        setStatus({ msg, type });
-    }
+    const registerView = async () => {
+        if (!currentVideo || !token) return;
 
-    function getVideoUrlByUuid(uuid) {
-        return apiBase + '/api/streaming/video/' + uuid;
+        try {
+            const res = await fetch(`${apiBase}/api/videos/${uuid}/view`, {
+                method: 'POST',
+                headers: authHeaders(token)
+            });
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+            const viewsCount =
+                typeof data?.viewsCount === 'number'
+                    ? data.viewsCount
+                    : typeof data?.count === 'number'
+                        ? data.count
+                        : null;
+
+            if (viewsCount == null) return;
+
+            setVideos((prev) => {
+                const copy = [...prev];
+                const idx = copy.findIndex(v => v.uuid === uuid);
+                if (idx >= 0) {
+                    copy[idx] = { ...copy[idx], viewsCount };
+                }
+                return copy;
+            });
+        } catch {
+            // silently ignore — view is not critical
+        }
+    };
+
+    const toggleLike = async () => {
+        if (!currentVideo) return;
+        if (!token) {
+            onRequireAuth?.();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${apiBase}/api/videos/${uuid}/like`, {
+                method: likedByMe ? 'DELETE' : 'POST',
+                headers: authHeaders(token),
+            });
+
+            if (isUnauthorized(res)) {
+                onRequireAuth?.();
+                return;
+            }
+            if (!res.ok) return;
+
+            const data = await res.json();
+            const { likesCount, liked } = data ?? {};
+
+            setVideos((prev) => {
+                const copy = [...prev];
+                const idx = copy.findIndex(v => v.uuid === uuid);
+                if (idx >= 0) {
+                    copy[idx] = { ...copy[idx], likesCount, likedByMe: liked };
+                }
+                return copy;
+            });
+        } catch {
+            // silently ignore — like is non-critical
+        }
+    };
+
+    function setStatusFeed(msg = '', type = '') {
+        console.log(msg, type)
     }
 
     function preloadVideo(videoIndex, el, mode) {
         if (!el) return;
         if (videoIndex < 0 || videoIndex >= videos.length) return;
         const meta = videos[videoIndex];
-        const url = getVideoUrlByUuid(meta.uuid);
+        const url = apiBase + '/api/streaming/video/' + meta.uuid
         if (el.src === url) return;
 
         try {
@@ -225,7 +308,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         preloadVideo(index + 2, preload2Ref.current, 'metadata');
     }
 
-    async function goNext() {
+    const goNext = useCallback(async () => {
         if (!videos.length) return;
 
         if (currentIndex < videos.length - 1) {
@@ -241,14 +324,14 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             return;
         }
 
-        // УНИКАЛЬНЫЙ КЕЙС: конец фида
+        // конец фида → начинаем сначала
         if (!feedSessionRef.current.hasNext) {
             await startFeed();
             setStatusFeed('Начали ленту сначала', 'ok');
         }
-    }
+    }, [videos, currentIndex]);
 
-    function goPrev() {
+    const goPrev = useCallback(() => {
         if (!videos.length) return;
 
         if (currentIndex > 0) {
@@ -264,7 +347,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         } else {
             setStatusFeed('Это самое первое видео', 'ok');
         }
-    }
+    }, [videos, currentIndex]);
 
     useEffect(() => {
         exposeControls?.({
@@ -329,10 +412,11 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 }
 
                 startFeed();
-
             },
             getGlobalIndexByUuid: (uuid) => videos.findIndex((v) => v.uuid === uuid),
             playByIndex: (idx) => setCurrentIndex(idx),
+            goNext,
+            goPrev,
         });
     }, [exposeControls, videos]);
 
@@ -343,129 +427,27 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     }, [active]);
 
     useEffect(() => {
-        if (!active) return;
-        if (!currentVideo) return;
-
         const player = playerRef.current;
-        if (!player) return;
-
-        const v = currentVideo;
-        const url = getVideoUrlByUuid(v.uuid);
+        if (!active || !uuid || !player) return;
 
         try {
             player.pause();
             player.removeAttribute('src');
             player.load();
-            player.src = url;
+
+            player.src = apiBase + '/api/streaming/video/' + uuid;
             player.load();
+
             player.play().catch(() => {
-                setStatusFeed('Нажмите Play, чтобы запустить видео', 'error');
+                /* autoplay может быть заблокирован */
             });
         } catch {
-        }
-
-        const baseLikes = (typeof v.likesCount === 'number') ? v.likesCount : 0;
-        setLike({ count: baseLikes, liked: false });
-
-        const baseViews = (typeof v.viewsCount === 'number') ? v.viewsCount : 0;
-        setViews(formatViews(baseViews));
-
-        setStatusFeed('Воспроизведение…', 'ok');
-        preloadAround(currentIndex);
-
-        let cancelled = false;
-
-        (async () => {
-            if (!token) return;
-            try {
-                const res = await fetch(apiBase + '/api/videos/' + v.uuid + '/like', { headers: authHeaders(token) });
-                if (cancelled) return;
-                if (res.ok) {
-                    const data = await res.json();
-                    const likesCount = (typeof data?.likesCount === 'number') ? data.likesCount : baseLikes;
-                    const liked = !!data?.liked;
-                    setVideos((prev) => {
-                        const copy = [...prev];
-                        const idx = copy.findIndex((x) => x.uuid === v.uuid);
-                        if (idx >= 0) copy[idx] = { ...copy[idx], likesCount, likedByMe: liked };
-                        return copy;
-                    });
-                    setLike({ count: likesCount, liked });
-                } else if (isUnauthorized(res)) {
-                    setLike({ count: baseLikes, liked: false });
-                }
-            } catch {
-            }
-        })();
-
-        (async () => {
-            try {
-                const resViews = await fetch(apiBase + '/api/videos/' + v.uuid + '/view', {
-                    method: 'POST',
-                    headers: authHeaders(token),
-                });
-                if (cancelled) return;
-                if (resViews.ok) {
-                    const data = await resViews.json();
-                    const cnt = (typeof data?.viewsCount === 'number') ? data.viewsCount :
-                        (typeof data?.count === 'number') ? data.count : baseViews;
-                    setVideos((prev) => {
-                        const copy = [...prev];
-                        const idx = copy.findIndex((x) => x.uuid === v.uuid);
-                        if (idx >= 0) copy[idx] = { ...copy[idx], viewsCount: cnt };
-                        return copy;
-                    });
-                    setViews(formatViews(cnt));
-                }
-            } catch {
-            }
-        })();
-
-        return () => {
-            cancelled = true;
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [active, currentIndex, token]);
-
-    async function toggleLike() {
-        if (!currentVideo) return;
-        if (!token) {
-            setStatusFeed('Войдите, чтобы ставить лайки', 'error');
-            onRequireAuth?.();
             return;
         }
 
-        const method = like.liked ? 'DELETE' : 'POST';
-
-        try {
-            const res = await fetch(apiBase + '/api/videos/' + currentVideo.uuid + '/like', {
-                method,
-                headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
-            });
-
-            if (isUnauthorized(res)) {
-                setStatusFeed('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
-                return;
-            }
-
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            const likesCount = (typeof data?.likesCount === 'number') ? data.likesCount : like.count;
-            const liked = !!data?.liked;
-
-            setVideos((prev) => {
-                const copy = [...prev];
-                const idx = copy.findIndex((x) => x.uuid === currentVideo.uuid);
-                if (idx >= 0) copy[idx] = { ...copy[idx], likesCount, likedByMe: liked };
-                return copy;
-            });
-
-            setLike({ count: likesCount, liked });
-        } catch (e) {
-            setStatusFeed('Ошибка лайка: ' + e.message, 'error');
-        }
-    }
+        preloadAround(currentIndex);
+        registerView(uuid);
+    }, [active, currentIndex, uuid]);
 
     useEffect(() => {
         const player = playerRef.current;
@@ -488,10 +470,6 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     }, [currentIndex, videos, loading]);
 
     if (!active) return null;
-
-    const title = currentVideo ? (currentVideo.name || '(без названия)') : 'Загрузка списка видео…';
-    const authorName = currentVideo?.uploaderName || '';
-    const displayTitle = authorName ? `${title} — ${authorName}` : title;
 
     return (
         <Stack spacing={1} flex={1}>
@@ -521,24 +499,22 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     }}
                 >
                     <Typography noWrap textOverflow="ellipsis" width={1}>
-                        {currentVideo?.name}
+                        {name}
                     </Typography>
                     <Stack
                         direction="row"
                         spacing={1}
                         alignItems="center"
                         sx={{ cursor: 'pointer' }}
-                        onClick={() => currentVideo?.uploaderId && onOpenProfile?.(currentVideo.uploaderId)}
+                        onClick={() => uploaderId && onOpenProfile?.(uploaderId)}
                     >
                         <Avatar
-                            src={currentVideo?.uploaderAvatarUrl
-                                ? `${apiBase}${currentVideo.uploaderAvatarUrl}`
-                                : null}
+                            src={uploaderAvatarUrl ? `${apiBase}${uploaderAvatarUrl}` : null}
                             sx={{ width: 24, height: 24 }}
                         >
-                            {currentVideo?.uploaderName?.[0]?.toUpperCase()}
+                            {uploaderName?.[0]?.toUpperCase()}
                         </Avatar>
-                        <Typography>{currentVideo?.uploaderName}</Typography>
+                        <Typography>{uploaderName}</Typography>
                     </Stack>
                 </Stack>
                 <Stack
@@ -556,23 +532,23 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     <Stack alignItems="center" spacing={0.5}>
                         <VisibilityOutlinedIcon sx={{ fontSize: 32 }}/>
                         <Typography variant="caption">
-                            {formatCompactNumber(currentVideo?.viewsCount)}
+                            {formatCompactNumber(viewsCount)}
                         </Typography>
                     </Stack>
                     <Stack alignItems="center">
                         <Button
                             size="uniSmall"
-                            color={like.liked ? "error" : "inherit"}
+                            color={likedByMe ? "error" : "inherit"}
                             onClick={toggleLike}
                         >
-                            {like.liked ? (
+                            {likedByMe ? (
                                 <FavoriteRoundedIcon sx={{ fontSize: 32 }}/>
                             ) : (
                                 <FavoriteBorderRoundedIcon sx={{ fontSize: 32 }}/>
                             )}
                         </Button>
                         <Typography variant="caption">
-                            {formatCompactNumber(like.count)}
+                            {formatCompactNumber(likesCount)}
                         </Typography>
                     </Stack>
                     <Stack alignItems="center">
@@ -585,9 +561,17 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                             <CommentOutlined sx={{ fontSize: 32 }}/>
                         </Button>
                         <Typography variant="caption">
-                            {formatCompactNumber(currentVideo?.commentsCount)}
+                            {formatCompactNumber(commentsCount)}
                         </Typography>
                     </Stack>
+                    <Button
+                        size="uniSmall"
+                        onClick={() => {
+                            /* действие добавишь позже */
+                        }}
+                    >
+                        <SettingsOutlinedIcon sx={{ fontSize: 32 }}/>
+                    </Button>
                     <Button
                         size="uniSmall"
                         onClick={() => {

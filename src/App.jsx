@@ -239,6 +239,7 @@ function AppInner() {
                 onTab={onTab}
                 showModeration={showModerationTab}
                 isAuthenticated={Boolean(user)}
+                feedControlsRef={feedControlsRef}
             />
         </Stack>
     );
