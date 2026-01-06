@@ -275,8 +275,21 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
 
+  grafana:
+    container_name: brainstop-grafana
+    image: grafana/grafana:latest
+    ports:
+      - "8093:3000"
+    volumes:
+      - "./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml"
+      - "grafana-data:/var/lib/grafana"
+    privileged: true
+    depends_on:
+      - prometheus
+
 volumes:
   postgres-data:
   minio-data:
   kafka-data:
   prometheus-data:
+  grafana-data:
