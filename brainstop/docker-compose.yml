@@ -281,9 +281,10 @@ services:
     ports:
       - "8093:3000"
     volumes:
+      - "./grafana/default.yaml:/etc/grafana/provisioning/dashboards/default.yaml"
       - "./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml"
+      - "./grafana/dashboards/:/var/lib/grafana/dashboards/"
       - "grafana-data:/var/lib/grafana"
-    privileged: true
     depends_on:
       - prometheus
 
