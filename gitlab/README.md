@@ -14,13 +14,6 @@ docker compose up -d
 docker compose -f docker-compose.runner.yml up -d
 ```
 
-Edit concurrent value in config.toml:
-
-```sh
-docker exec -it brainstop-runner-1 sed -i 's/concurrent.*/concurrent = 4/' /etc/gitlab-runner/config.toml
-docker exec -it brainstop-runner-1 gitlab-runner restart
-```
-
 ### Register
 
 Register (e.g. for `brainstop-runner-1`):
@@ -66,6 +59,13 @@ docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
 ```
 
 ### Extras
+
+Edit concurrent value in config.toml:
+
+```sh
+docker exec -it brainstop-runner-1 sed -i 's/concurrent.*/concurrent = 4/' /etc/gitlab-runner/config.toml
+docker exec -it brainstop-runner-1 gitlab-runner restart
+```
 
 Maybe it will require additional ulimit set:
 
