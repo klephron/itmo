@@ -1,8 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized, parseVideoListPayload } from '../api/api';
-import { formatCompactNumber } from '../utils/format';
-import { useAuth } from '../context/AuthContext';
-
 import { Avatar, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
@@ -10,6 +6,11 @@ import CommentOutlined from "@mui/icons-material/CommentOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+
+import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized, parseVideoListPayload } from '../api/api';
+import { formatCompactNumber } from '../utils/format';
+import { useAuth } from '../context/AuthContext';
+import { VideoInfoDialog } from "../components/VideoInfoDialog.jsx";
 
 const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
@@ -27,6 +28,8 @@ function getOrCreateDeviceId() {
 
 export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeControls }) {
     const { token } = useAuth();
+
+    const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
 
     const playerRef = useRef(null);
     const preload1Ref = useRef(null);
@@ -481,7 +484,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             <Box sx={{
                 position: 'relative',
                 height: 1,
-                borderRadius: 3,
+                borderRadius: 4,
                 overflow: 'hidden',
             }}>
                 <Stack
@@ -498,7 +501,13 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                         alignItems: 'flex-start',
                     }}
                 >
-                    <Typography noWrap textOverflow="ellipsis" width={1}>
+                    <Typography
+                        noWrap
+                        textOverflow="ellipsis"
+                        width={1}
+                        sx={{ userSelect: "none", cursor: "pointer" }}
+                        onClick={() => setVideoInfoDialogOpen(true)}
+                    >
                         {name}
                     </Typography>
                     <Stack
@@ -514,7 +523,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                         >
                             {uploaderName?.[0]?.toUpperCase()}
                         </Avatar>
-                        <Typography>{uploaderName}</Typography>
+                        <Typography sx={{ userSelect: "none" }}>{uploaderName}</Typography>
                     </Stack>
                 </Stack>
                 <Stack
@@ -592,30 +601,14 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted preload="auto"/>
                 <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted preload="metadata"/>
             </Box>
-
-            {/*
-            <div className="meta">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Avatar
-                        className="avatar-mini"
-                        url={currentVideo?.uploaderAvatarUrl
-                            ? `${apiBase}${currentVideo?.uploaderAvatarUrl}`
-                            : null
-                        }
-                        onClick={() => currentVideo?.uploaderId && onOpenProfile?.(currentVideo.uploaderId)}
-                    />
-                    <span id="videoInfoSize">{humanSize(currentVideo?.contentSize)}</span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                    <div id="videoInfoViews">{views || '—'}</div>
-                    <div id="videoInfoDate">{formatDate(currentVideo?.uploadedAt)}</div>
-                </div>
-            </div>
-            */}
-
             {/*
             <Comments videoUuid={currentUuid} onOpenProfile={onOpenProfile} onRequireAuth={onRequireAuth}/>
             */}
+            <VideoInfoDialog
+                open={videoInfoDialogOpen}
+                setOpen={setVideoInfoDialogOpen}
+                video={currentVideo}
+            />
         </Stack>
     );
 }
