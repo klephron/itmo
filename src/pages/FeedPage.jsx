@@ -7,14 +7,14 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 
-import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized, parseVideoListPayload } from '../api/api';
+import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized } from '../api/api';
 import { formatCompactNumber } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import { VideoInfoDialog } from "../components/VideoInfoDialog.jsx";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 3;
 const MAX_WINDOW = 2 * PAGE_SIZE;
-const PREFETCH_DELTA = 2;
+const PREFETCH_DELTA = 1;
 
 function getOrCreateDeviceId() {
     const key = 'feed-device-id';
@@ -39,11 +39,15 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     const targetUuidRef = useRef(null);
 
     const feedSessionRef = useRef({
+        // global
         feedId: null,
-        baseIndex: 0,
-        hasPrev: false,
-        hasNext: false,
-        page: 0, // только для profile
+        prevPos: null,
+        nextPos: null,
+
+        // profile
+        page: 0,
+        first: true,
+        last: true,
     });
 
     const deviceIdRef = useRef(getOrCreateDeviceId());
@@ -64,8 +68,6 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         uploaderId,
         uploaderName,
         uploaderAvatarUrl,
-        uploadedAt,
-        contentSize,
         likesCount = 0,
         likedByMe = false,
         viewsCount = 0,
@@ -94,15 +96,16 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            const items = data.items ?? parseVideoListPayload(data).items;
+            const items = data.items ?? data.content;
 
             setVideos(items);
             feedSessionRef.current = {
                 feedId: data.feedId ?? null,
-                baseIndex: data.baseIndex ?? 0,
-                hasPrev: data.hasPrev ?? false,
-                hasNext: data.hasNext ?? !data.last,
-                page: 0,
+                prevPos: data.prevPos ?? null,
+                nextPos: data.nextPos ?? null,
+                page: data.number ?? 0,
+                first: data.first ?? true,
+                last: data.last ?? true,
             };
 
             const targetUuid = targetUuidRef.current;
@@ -121,94 +124,80 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         }
     }
 
+    console.log(videos);
+
     async function prefetch(direction) {
         if (loading) return;
         setLoading(true);
 
         try {
-            let url, res, data;
+            let url, res;
 
             if (feedModeRef.current.type === 'global') {
-                const { feedId } = feedSessionRef.current;
-                const pos = feedSessionRef.current.baseIndex + currentIndex;
+                const { feedId, nextPos, prevPos } = feedSessionRef.current;
+                const pos = direction === 'next' ? (nextPos ?? 0) : prevPos; // если nextPos null, то берем 0
 
-                url = apiBase +
-                    `/api/streaming/video/feed/session/${feedId}/${direction}` +
-                    `?count=${PAGE_SIZE}&pos=${pos}`;
+                if ((prevPos === null && nextPos === null) || pos === null) {
+                    return; // если страница одна либо pos null - выходим
+                }
+
+                const url =
+                    `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}` +
+                    `?size=${PAGE_SIZE}&pos=${pos}`;
 
                 res = await fetch(url, { headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) } });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                data = await res.json();
-
-                const items = data.items ?? [];
-
-                feedSessionRef.current.baseIndex = data.baseIndex;
-                feedSessionRef.current.hasPrev = data.hasPrev;
-                feedSessionRef.current.hasNext = data.hasNext;
-
-                setVideos((prev) => {
-                    let next;
-                    if (direction === 'next') {
-                        next = prev.concat(items);
-                    } else {
-                        next = items.concat(prev);
-                        setCurrentIndex((i) => i + items.length);
-                    }
-
-                    if (next.length > MAX_WINDOW) {
-                        const overflow = next.length - MAX_WINDOW;
-                        if (direction === 'next') {
-                            next = next.slice(overflow);
-                            setCurrentIndex((i) => Math.max(i - overflow, 0));
-                        } else {
-                            next = next.slice(0, MAX_WINDOW);
-                        }
-                    }
-                    return next;
-                });
             } else {
-                // profile
                 const { userId, sort } = feedModeRef.current;
-                const nextPage =
-                    direction === 'next'
-                        ? feedSessionRef.current.page + 1
-                        : feedSessionRef.current.page - 1;
+                const { page, first, last } = feedSessionRef.current;
 
-                if (nextPage < 0) return;
+                if (first && last) return; // если страница одна - выходим
+
+                let nextPage;
+                if (direction === 'next') {
+                    nextPage = last ? 0 : page + 1;
+                } else {
+                    nextPage = page - 1;
+                }
 
                 url = apiBase +
                     `/api/users/${userId}/videos?page=${nextPage}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
 
                 res = await fetch(url, { headers: authHeaders(token) });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                data = await res.json();
-
-                const parsed = parseVideoListPayload(data);
-
-                feedSessionRef.current.page = parsed.page;
-                feedSessionRef.current.hasNext = !parsed.last;
-                feedSessionRef.current.hasPrev = parsed.page > 0;
-
-                setVideos((prev) => {
-                    let next =
-                        direction === 'next'
-                            ? prev.concat(parsed.items)
-                            : parsed.items.concat(prev);
-
-                    if (direction === 'prev') {
-                        setCurrentIndex((i) => i + parsed.items.length);
-                    }
-
-                    if (next.length > MAX_WINDOW) {
-                        const overflow = next.length - MAX_WINDOW;
-                        next =
-                            direction === 'next'
-                                ? next.slice(overflow)
-                                : next.slice(0, MAX_WINDOW);
-                    }
-                    return next;
-                });
             }
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            const items = data.items ?? data.content ?? [];
+
+            feedSessionRef.current = {
+                feedId: data.feedId ?? null,
+                prevPos: data.prevPos ?? null,
+                nextPos: data.nextPos ?? null,
+                page: data.number ?? 0,
+                first: data.first ?? true,
+                last: data.last ?? true,
+            };
+
+            setVideos((prev) => {
+                let next;
+                if (direction === 'next') {
+                    next = prev.concat(items);
+                } else {
+                    next = items.concat(prev);
+                    setCurrentIndex((i) => i + items.length);
+                }
+
+                if (next.length > MAX_WINDOW) {
+                    const overflow = next.length - MAX_WINDOW;
+                    if (direction === 'next') {
+                        next = next.slice(overflow);
+                        setCurrentIndex((i) => Math.max(i - overflow, 0));
+                    } else {
+                        next = next.slice(0, MAX_WINDOW);
+                    }
+                }
+                return next;
+            });
         } finally {
             setLoading(false);
         }
@@ -318,21 +307,19 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             const nextIdx = currentIndex + 1;
             setCurrentIndex(nextIdx);
 
-            if (
-                feedSessionRef.current.hasNext &&
-                videos.length - 1 - nextIdx <= PREFETCH_DELTA
-            ) {
+            if (videos.length - 1 - nextIdx <= PREFETCH_DELTA) {
                 prefetch('next');
             }
-            return;
-        }
+        } else {
+            const type = feedModeRef.current.type;
+            const { prevPos, nextPos, first, last } = feedSessionRef.current;
 
-        // конец фида → начинаем сначала
-        if (!feedSessionRef.current.hasNext) {
-            await startFeed();
-            setStatusFeed('Начали ленту сначала', 'ok');
+            // Конец окна и одна страница - перемещаемся в начало окна
+            if ((type === 'global' && (prevPos === nextPos)) || (type === 'profile' && (first === last))) {
+                setCurrentIndex(0);
+            }
         }
-    }, [videos, currentIndex]);
+    }, [currentIndex, videos.length]);
 
     const goPrev = useCallback(() => {
         if (!videos.length) return;
@@ -341,16 +328,13 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             const nextIdx = currentIndex - 1;
             setCurrentIndex(nextIdx);
 
-            if (
-                feedSessionRef.current.hasPrev &&
-                nextIdx <= PREFETCH_DELTA
-            ) {
+            if (nextIdx <= PREFETCH_DELTA) {
                 prefetch('prev');
             }
         } else {
             setStatusFeed('Это самое первое видео', 'ok');
         }
-    }, [videos, currentIndex]);
+    }, [currentIndex, videos.length]);
 
     useEffect(() => {
         exposeControls?.({
@@ -360,10 +344,11 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
                 feedSessionRef.current = {
                     feedId: null,
-                    baseIndex: 0,
-                    hasPrev: false,
-                    hasNext: false,
+                    prevPos: null,
+                    nextPos: null,
                     page: 0,
+                    first: true,
+                    last: true,
                 };
 
                 setVideos([]);
@@ -395,10 +380,11 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 // 3. ЖЁСТКО сбрасываем состояние
                 feedSessionRef.current = {
                     feedId: null,
-                    baseIndex: 0,
-                    hasPrev: false,
-                    hasNext: false,
+                    prevPos: null,
+                    nextPos: null,
                     page: 0,
+                    first: true,
+                    last: true,
                 };
 
                 setVideos([]);
@@ -421,7 +407,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             goNext,
             goPrev,
         });
-    }, [exposeControls, videos]);
+    }, [exposeControls, videos, goNext, goPrev]);
 
     useEffect(() => {
         if (!active) return;
