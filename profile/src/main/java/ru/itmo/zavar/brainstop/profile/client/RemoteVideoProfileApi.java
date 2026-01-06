@@ -16,7 +16,7 @@ public class RemoteVideoProfileApi implements VideoProfileApi {
     private final VideoInternalClient videoInternalClient;
 
     @Override
-    public Page<PublicUserVideoDto> findUserVideos(Long uploaderId, Pageable pageable) {
+    public Page<PublicUserVideoDto> findUserVideos(Long uploaderId, Long currentUserId, Pageable pageable) {
         String sortParam = pageable.getSort().isSorted()
                 ? pageable.getSort().iterator().next().getProperty() + "," + pageable.getSort().iterator().next().getDirection().name().toLowerCase()
                 : "uploadedAt,desc";
@@ -24,7 +24,8 @@ public class RemoteVideoProfileApi implements VideoProfileApi {
                 uploaderId,
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
-                sortParam
+                sortParam,
+                currentUserId
         );
         return new PageImpl<>(
                 response.content(),

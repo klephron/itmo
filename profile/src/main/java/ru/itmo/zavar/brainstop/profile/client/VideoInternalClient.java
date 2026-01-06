@@ -14,5 +14,6 @@ public interface VideoInternalClient {
     PageResponse<PublicUserVideoDto> getUserVideos(@PathVariable("uploaderId") Long uploaderId,
                                                    @RequestParam("page") int page,
                                                    @RequestParam("size") int size,
-                                                   @RequestParam(value = "sort", required = false) String sort);
+                                                   @RequestParam(value = "sort", required = false) String sort,
+                                                   @RequestParam(value = "userId", required = false) Long currentUserId);
 }

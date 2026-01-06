@@ -8,7 +8,7 @@ WORKDIR /opt/brainstop
 COPY gradlew ./
 COPY gradle/wrapper ./gradle/wrapper
 
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     ./gradlew --version
 
 
@@ -20,9 +20,9 @@ WORKDIR /opt/brainstop
 
 COPY settings.gradle build.gradle ./
 
-COPY ${MODULE}/build.gradle ./${MODULE}/.
+COPY ${MODULE}/build.gradle ./${MODULE}/build.gradle
 
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     ./gradlew --no-daemon :${MODULE}:dependencies
 
 
@@ -35,7 +35,7 @@ WORKDIR /opt/brainstop
 COPY common ./common
 COPY ${MODULE} ./${MODULE}
 
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     ./gradlew --no-daemon :${MODULE}:bootJar -x test
 
 

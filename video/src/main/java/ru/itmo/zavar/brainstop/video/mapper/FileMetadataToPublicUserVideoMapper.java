@@ -11,7 +11,6 @@ import ru.itmo.zavar.brainstop.video.model.VideoRenditionEntity;
 
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE, imports = {ZoneOffset.class})
@@ -23,10 +22,11 @@ public interface FileMetadataToPublicUserVideoMapper {
             expression = "java(file.getUploadedAt() != null ? "
                     + "file.getUploadedAt().toInstant(ZoneOffset.UTC) : null)")
     @Mapping(target = "availableQualities", expression = "java(mapQualities(file))")
-    @Mapping(target = "uploaderAvatarUrl", expression = "java(resolveAvatar(file, avatarByUserId))")
-    PublicUserVideoDto toDto(FileMetadataEntity file, @Context Map<Long, String> avatarByUserId);
+    @Mapping(target = "likedByMe", expression = "java(isLiked(file, context))")
+    @Mapping(target = "uploaderAvatarUrl", expression = "java(resolveAvatar(file, context))")
+    PublicUserVideoDto toDto(FileMetadataEntity file, @Context PublicUserVideoMapperContext context);
 
-    List<PublicUserVideoDto> toDto(List<FileMetadataEntity> files, @Context Map<Long, String> avatarByUserId);
+    List<PublicUserVideoDto> toDto(List<FileMetadataEntity> files, @Context PublicUserVideoMapperContext context);
 
     default List<Integer> mapQualities(FileMetadataEntity src) {
         if (src == null || src.getRenditions() == null) {
@@ -38,10 +38,17 @@ public interface FileMetadataToPublicUserVideoMapper {
                 .collect(Collectors.toList());
     }
 
-    default String resolveAvatar(FileMetadataEntity file, Map<Long, String> avatarByUserId) {
-        if (file == null || file.getUploaderId() == null || avatarByUserId == null) {
+    default boolean isLiked(FileMetadataEntity file, PublicUserVideoMapperContext context) {
+        if (file == null || file.getId() == null || context == null || context.currentUserId() == null || context.likedVideoIds() == null) {
+            return false;
+        }
+        return context.likedVideoIds().contains(file.getId());
+    }
+
+    default String resolveAvatar(FileMetadataEntity file, PublicUserVideoMapperContext context) {
+        if (file == null || file.getUploaderId() == null || context == null || context.avatarByUserId() == null) {
             return null;
         }
-        return avatarByUserId.get(file.getUploaderId());
+        return context.avatarByUserId().get(file.getUploaderId());
     }
 }

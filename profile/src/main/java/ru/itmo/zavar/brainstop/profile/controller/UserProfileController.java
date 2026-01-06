@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
+import ru.itmo.zavar.brainstop.profile.cache.UserSummaryCache;
 import ru.itmo.zavar.brainstop.profile.dto.PublicUserProfileDto;
 import ru.itmo.zavar.brainstop.profile.dto.response.UserAvatarResponse;
 import ru.itmo.zavar.brainstop.profile.mapper.UserToPublicProfileMapper;
@@ -43,6 +44,7 @@ public class UserProfileController {
     private final VideoObjectStorage videoObjectStorage;
     private final UserToPublicProfileMapper userToPublicProfileMapper;
     private final VideoProfileApi videoProfileApi;
+    private final UserSummaryCache userSummaryCache;
 
     @PostMapping("/me/avatar")
     @Operation(summary = "Загрузить аватар текущего пользователя")
@@ -57,6 +59,7 @@ public class UserProfileController {
             String key = this.videoObjectStorage.uploadAvatar(is, avatar.getSize(), avatar.getContentType(), userId);
             userEntity.setAvatarKey(key);
             this.userRepository.save(userEntity);
+            this.userSummaryCache.evict(userId);
             return ResponseEntity.ok(new UserAvatarResponse(
                     "/api/users/" + userId + "/avatar"
             ));
@@ -91,13 +94,16 @@ public class UserProfileController {
 
     @GetMapping("/{id}/videos")
     @Operation(summary = "Список видео пользователя", description = "Пагинация и безопасная сортировка")
-    public ResponseEntity<Page<PublicUserVideoDto>> getUserVideos(@PathVariable Long id, Pageable pageable) {
+    public ResponseEntity<Page<PublicUserVideoDto>> getUserVideos(@PathVariable Long id,
+                                                                  Pageable pageable,
+                                                                  @AuthenticationPrincipal CurrentUser principal) {
         if (!this.userRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
 
+        Long currentUserId = principal != null ? principal.getId() : null;
         Pageable sanitized = sanitizePageable(pageable);
-        return ResponseEntity.ok(this.videoProfileApi.findUserVideos(id, sanitized));
+        return ResponseEntity.ok(this.videoProfileApi.findUserVideos(id, currentUserId, sanitized));
     }
 
     private Pageable sanitizePageable(Pageable pageable) {

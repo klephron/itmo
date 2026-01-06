@@ -11,6 +11,7 @@ public record PublicUserVideoDto(
         Instant uploadedAt,
         long likesCount,
         long viewsCount,
+        boolean likedByMe,
         Long contentSize,
         Integer defaultHeight,
         List<Integer> availableQualities,

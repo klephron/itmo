@@ -58,6 +58,15 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
+  redis:
+    image: redis:7-alpine
+    container_name: brainstop-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
   discovery:
     build:
       context: .
@@ -120,12 +129,15 @@ services:
       MINIO_ACCESS_KEY: minio_admin
       MINIO_SECRET_KEY: minio_admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       JWT_SECRET: jwt_dev_secret
     depends_on:
       - postgres
       - discovery
       - minio
       - kafka
+      - redis
 
   profile:
     build:
@@ -147,9 +159,12 @@ services:
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
       JWT_SECRET: jwt_dev_secret
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       - postgres
       - discovery
+      - redis
 
   storage:
     build:
@@ -200,10 +215,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: test
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_SECRET: jwt_dev_secret
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       - postgres
       - discovery
       - kafka
+      - redis
 
   admin:
     build:
@@ -289,3 +307,4 @@ volumes:
   pgdata:
   kafka-data:
   minio-data:
+  redis-data:

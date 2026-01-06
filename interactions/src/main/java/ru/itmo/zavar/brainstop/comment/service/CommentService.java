@@ -1,6 +1,10 @@
 package ru.itmo.zavar.brainstop.comment.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.brainstop.comment.dto.CommentDto;
@@ -11,6 +15,7 @@ import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
 import ru.itmo.zavar.brainstop.common.api.profile.UserSummaryDto;
 import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataPublicApi;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -21,18 +26,28 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CommentService {
 
+    private static final Duration COMMENTS_TTL = Duration.ofSeconds(30);
+    private static final String COMMENTS_KEY_PREFIX = "comments:video:";
+
     private final CommentRepository commentRepository;
     private final VideoMetadataPublicApi videoMetadataPublicApi;
     private final UserProfilePublicApi userProfilePublicApi;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<CommentDto> listComments(UUID videoUuid, Long currentUserId) {
         this.videoMetadataPublicApi.getRequired(videoUuid);
 
+        List<CommentDto> cached = readCommentsCache(videoUuid);
+        if (cached != null) {
+            return applyMine(cached, currentUserId);
+        }
+
         List<CommentEntity> comments =
                 this.commentRepository.findByVideoUuidOrderByCreatedAtAsc(videoUuid);
 
-        return comments.stream()
+        List<CommentDto> result = comments.stream()
                 .map(c -> {
                     UserSummaryDto user = c.getAuthorId() == null
                             ? null
@@ -48,6 +63,9 @@ public class CommentService {
                     );
                 })
                 .toList();
+
+        writeCommentsCache(videoUuid, result);
+        return result;
     }
 
     @Transactional
@@ -67,6 +85,7 @@ public class CommentService {
         entity.setCreatedAt(Instant.now());
 
         entity = this.commentRepository.save(entity);
+        evictCommentsCache(videoUuid);
 
         return new CommentDto(
                 entity.getId(),
@@ -93,5 +112,72 @@ public class CommentService {
         }
 
         this.commentRepository.delete(entity);
+        evictCommentsCache(videoUuid);
+    }
+
+    private List<CommentDto> readCommentsCache(UUID videoUuid) {
+        if (videoUuid == null) {
+            return null;
+        }
+        String payload = redisTemplate.opsForValue().get(commentsKey(videoUuid));
+        if (payload == null || payload.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(payload, new TypeReference<List<CommentDto>>() {});
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    private void writeCommentsCache(UUID videoUuid, List<CommentDto> comments) {
+        if (videoUuid == null || comments == null) {
+            return;
+        }
+        List<CommentDto> payload = comments.stream()
+                .map(c -> new CommentDto(
+                        c.id(),
+                        c.authorId(),
+                        c.authorName(),
+                        c.authorAvatarUrl(),
+                        c.text(),
+                        c.createdAt(),
+                        false
+                ))
+                .toList();
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            redisTemplate.opsForValue().set(commentsKey(videoUuid), json, COMMENTS_TTL);
+        } catch (JsonProcessingException e) {
+            return;
+        }
+    }
+
+    private void evictCommentsCache(UUID videoUuid) {
+        if (videoUuid == null) {
+            return;
+        }
+        redisTemplate.delete(commentsKey(videoUuid));
+    }
+
+    private String commentsKey(UUID videoUuid) {
+        return COMMENTS_KEY_PREFIX + videoUuid;
+    }
+
+    private List<CommentDto> applyMine(List<CommentDto> cached, Long currentUserId) {
+        if (cached == null) {
+            return List.of();
+        }
+        return cached.stream()
+                .map(c -> new CommentDto(
+                        c.id(),
+                        c.authorId(),
+                        c.authorName(),
+                        c.authorAvatarUrl(),
+                        c.text(),
+                        c.createdAt(),
+                        Objects.equals(currentUserId, c.authorId())
+                ))
+                .toList();
     }
 }
