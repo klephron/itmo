@@ -60,12 +60,16 @@ docker exec -it brainstop-runner-1 gitlab-runner register --non-interactive \
 
 ### Extras
 
+#### Set number of concurrent jobs
+
 Edit concurrent value in config.toml:
 
 ```sh
 docker exec -it brainstop-runner-1 sed -i 's/concurrent.*/concurrent = 4/' /etc/gitlab-runner/config.toml
 docker exec -it brainstop-runner-1 gitlab-runner restart
 ```
+
+#### Ulimits
 
 Maybe it will require additional ulimit set:
 
