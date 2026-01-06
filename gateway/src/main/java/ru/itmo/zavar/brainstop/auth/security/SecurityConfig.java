@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/streaming/**").permitAll()
                         .pathMatchers("/api/search/**").permitAll()
                         .pathMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
+                        .pathMatchers("/actuator/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth
