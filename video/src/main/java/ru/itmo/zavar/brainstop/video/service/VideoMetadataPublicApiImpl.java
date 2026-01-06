@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataPublicApi;
 import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataSummary;
 import ru.itmo.zavar.brainstop.video.mapper.FileMetadataToVideoMetadataSummaryMapper;
@@ -42,6 +43,42 @@ public class VideoMetadataPublicApiImpl implements VideoMetadataPublicApi {
                 .map(this.videoMetadataSummaryMapper::toSummary);
         summary.ifPresent(this::writeCache);
         return summary;
+    }
+
+    @Override
+    @Transactional
+    public long incrementLikesCount(Long videoId, long delta) {
+        if (videoId == null || delta == 0L) {
+            return -1L;
+        }
+        return this.fileMetadataRepository.findByIdForUpdate(videoId)
+                .map(meta -> {
+                    long current = meta.getLikesCount() != null ? meta.getLikesCount() : 0L;
+                    long updated = Math.max(0L, current + delta);
+                    meta.setLikesCount(updated);
+                    this.fileMetadataRepository.save(meta);
+                    writeCache(this.videoMetadataSummaryMapper.toSummary(meta));
+                    return updated;
+                })
+                .orElse(-1L);
+    }
+
+    @Override
+    @Transactional
+    public long incrementViewsCount(Long videoId, long delta) {
+        if (videoId == null || delta == 0L) {
+            return -1L;
+        }
+        return this.fileMetadataRepository.findByIdForUpdate(videoId)
+                .map(meta -> {
+                    long current = meta.getViewsCount() != null ? meta.getViewsCount() : 0L;
+                    long updated = Math.max(0L, current + delta);
+                    meta.setViewsCount(updated);
+                    this.fileMetadataRepository.save(meta);
+                    writeCache(this.videoMetadataSummaryMapper.toSummary(meta));
+                    return updated;
+                })
+                .orElse(-1L);
     }
 
     @Override

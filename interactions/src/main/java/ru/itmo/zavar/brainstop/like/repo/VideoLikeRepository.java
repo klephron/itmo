@@ -2,6 +2,7 @@ package ru.itmo.zavar.brainstop.like.repo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import ru.itmo.zavar.brainstop.like.model.VideoLikeEntity;
 
@@ -16,6 +17,10 @@ public interface VideoLikeRepository extends JpaRepository<VideoLikeEntity, Long
     boolean existsByVideoIdAndUserId(Long videoId, Long userId);
 
     long countByVideoId(Long videoId);
+
+    @Modifying
+    @Query("delete from VideoLikeEntity v where v.videoId = :videoId and v.userId = :userId")
+    int deleteByVideoIdAndUserId(@Param("videoId") Long videoId, @Param("userId") Long userId);
 
     @Query("""
             select vl.videoId

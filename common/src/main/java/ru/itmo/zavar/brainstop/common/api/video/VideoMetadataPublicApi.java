@@ -9,6 +9,10 @@ public interface VideoMetadataPublicApi {
 
     Optional<VideoMetadataSummary> findByUuid(UUID uuid);
 
+    long incrementLikesCount(Long videoId, long delta);
+
+    long incrementViewsCount(Long videoId, long delta);
+
     void updateLikesCount(Long videoId, long newCount);
 
     void updateViewsCount(Long videoId, long newCount);

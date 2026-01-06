@@ -20,4 +20,10 @@ public interface VideoMetadataInternalClient {
 
     @PostMapping("/{id}/views")
     void updateViews(@PathVariable("id") Long id, @RequestParam("count") long count);
+
+    @PostMapping("/{id}/likes/increment")
+    Long incrementLikes(@PathVariable("id") Long id, @RequestParam("delta") long delta);
+
+    @PostMapping("/{id}/views/increment")
+    Long incrementViews(@PathVariable("id") Long id, @RequestParam("delta") long delta);
 }

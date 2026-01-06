@@ -13,7 +13,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("TickTok Core API")
-                        .description("Core service API (videos, streaming, comments, likes, search, moderation)")
+                        .description("Core service API (videos, streaming, search)")
                         .version("v1"));
     }
 }

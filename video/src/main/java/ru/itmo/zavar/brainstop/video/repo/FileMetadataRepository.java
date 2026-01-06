@@ -3,8 +3,10 @@ package ru.itmo.zavar.brainstop.video.repo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import com.pgvector.PGvector;
@@ -27,6 +29,10 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
     List<FileMetadataEntity> findByUuidIn(Collection<UUID> uuids);
 
     void deleteByUuid(UUID fileUUID);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select f from FileMetadataEntity f where f.id = :id")
+    Optional<FileMetadataEntity> findByIdForUpdate(@Param("id") Long id);
 
     @EntityGraph(attributePaths = "renditions")
     Optional<FileMetadataEntity> findWithRenditionsByUuid(UUID fileUUID);

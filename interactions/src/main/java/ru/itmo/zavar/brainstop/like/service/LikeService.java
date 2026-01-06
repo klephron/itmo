@@ -12,7 +12,6 @@ import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataPublicApi;
 import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataSummary;
 
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -40,8 +39,11 @@ public class LikeService {
         like.setUserId(userId);
         this.videoLikeRepository.save(like);
 
-        long newCount = video.likesCount() + 1;
-        this.videoMetadataPublicApi.updateLikesCount(video.id(), newCount);
+        long newCount = this.videoMetadataPublicApi.incrementLikesCount(video.id(), 1);
+        if (newCount < 0) {
+            newCount = video.likesCount() + 1;
+            this.videoMetadataPublicApi.updateLikesCount(video.id(), newCount);
+        }
 
         this.publishEvent("VIDEO_LIKED", video, userId, newCount);
 
@@ -52,15 +54,16 @@ public class LikeService {
     public long unlikeVideo(UUID videoUuid, Long userId) {
         VideoMetadataSummary video = this.videoMetadataPublicApi.getRequired(videoUuid);
 
-        Optional<VideoLikeEntity> existing = this.videoLikeRepository.findByVideoIdAndUserId(video.id(), userId);
-        if (existing.isEmpty()) {
+        int deleted = this.videoLikeRepository.deleteByVideoIdAndUserId(video.id(), userId);
+        if (deleted <= 0) {
             return video.likesCount();
         }
 
-        this.videoLikeRepository.delete(existing.get());
-
-        long newCount = Math.max(0, video.likesCount() - 1);
-        this.videoMetadataPublicApi.updateLikesCount(video.id(), newCount);
+        long newCount = this.videoMetadataPublicApi.incrementLikesCount(video.id(), -1);
+        if (newCount < 0) {
+            newCount = Math.max(0, video.likesCount() - 1);
+            this.videoMetadataPublicApi.updateLikesCount(video.id(), newCount);
+        }
 
         this.publishEvent("VIDEO_UNLIKED", video, userId, newCount);
 

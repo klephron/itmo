@@ -15,8 +15,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/video-streaming
-    username: test
-    password: test
+    username: ${DB_USER:profile_app}
+    password: ${DB_PASSWORD:profile_app}
     driver-class-name: org.postgresql.Driver
 
   data:

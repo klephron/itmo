@@ -27,6 +27,24 @@ public class VideoMetadataInternalController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/{id}/likes/increment")
+    public ResponseEntity<Long> incrementLikes(@PathVariable Long id, @RequestParam("delta") long delta) {
+        long updated = this.videoMetadataPublicApi.incrementLikesCount(id, delta);
+        if (updated < 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{id}/views/increment")
+    public ResponseEntity<Long> incrementViews(@PathVariable Long id, @RequestParam("delta") long delta) {
+        long updated = this.videoMetadataPublicApi.incrementViewsCount(id, delta);
+        if (updated < 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updated);
+    }
+
     @PostMapping("/{id}/likes")
     public ResponseEntity<Void> updateLikes(@PathVariable Long id, @RequestParam("count") long count) {
         this.videoMetadataPublicApi.updateLikesCount(id, count);

@@ -39,8 +39,11 @@ public class ViewService {
         view.setUserId(userId);
         this.videoViewRepository.save(view);
 
-        long newCount = video.viewsCount() + 1;
-        this.videoMetadataPublicApi.updateViewsCount(video.id(), newCount);
+        long newCount = this.videoMetadataPublicApi.incrementViewsCount(video.id(), 1);
+        if (newCount < 0) {
+            newCount = video.viewsCount() + 1;
+            this.videoMetadataPublicApi.updateViewsCount(video.id(), newCount);
+        }
 
         this.publishEvent(video, userId, newCount);
 

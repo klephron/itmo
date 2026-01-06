@@ -49,6 +49,26 @@ public class VideoMetadataPublicApiImpl implements VideoMetadataPublicApi {
     }
 
     @Override
+    public long incrementLikesCount(Long videoId, long delta) {
+        try {
+            Long updated = videoMetadataInternalClient.incrementLikes(videoId, delta);
+            return updated != null ? updated : -1L;
+        } catch (FeignException.NotFound e) {
+            return -1L;
+        }
+    }
+
+    @Override
+    public long incrementViewsCount(Long videoId, long delta) {
+        try {
+            Long updated = videoMetadataInternalClient.incrementViews(videoId, delta);
+            return updated != null ? updated : -1L;
+        } catch (FeignException.NotFound e) {
+            return -1L;
+        }
+    }
+
+    @Override
     public void updateLikesCount(Long videoId, long newCount) {
         try {
             videoMetadataInternalClient.updateLikes(videoId, newCount);

@@ -8,8 +8,8 @@ spring:
     default: dev
   datasource:
     url: jdbc:postgresql://localhost:5432/video-streaming
-    username: test
-    password: test
+    username: ${DB_USER:interactions_app}
+    password: ${DB_PASSWORD:interactions_app}
     driver-class-name: org.postgresql.Driver
   data:
     redis:
