@@ -32,9 +32,10 @@ public class VideoInternalController {
     public PageResponse<PublicUserVideoDto> getUserVideos(@PathVariable Long uploaderId,
                                                           @RequestParam(defaultValue = "0") int page,
                                                           @RequestParam(defaultValue = "10") int size,
-                                                          @RequestParam(value = "sort", required = false) String sortParam) {
+                                                          @RequestParam(value = "sort", required = false) String sortParam,
+                                                          @RequestParam(value = "userId", required = false) Long currentUserId) {
         Pageable effective = sanitizePageable(page, size, sortParam);
-        Page<PublicUserVideoDto> result = this.videoProfileApi.findUserVideos(uploaderId, effective);
+        Page<PublicUserVideoDto> result = this.videoProfileApi.findUserVideos(uploaderId, currentUserId, effective);
         return new PageResponse<>(
                 result.getContent(),
                 result.getNumber(),

@@ -94,13 +94,16 @@ public class UserProfileController {
 
     @GetMapping("/{id}/videos")
     @Operation(summary = "Список видео пользователя", description = "Пагинация и безопасная сортировка")
-    public ResponseEntity<Page<PublicUserVideoDto>> getUserVideos(@PathVariable Long id, Pageable pageable) {
+    public ResponseEntity<Page<PublicUserVideoDto>> getUserVideos(@PathVariable Long id,
+                                                                  Pageable pageable,
+                                                                  @AuthenticationPrincipal CurrentUser principal) {
         if (!this.userRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
 
+        Long currentUserId = principal != null ? principal.getId() : null;
         Pageable sanitized = sanitizePageable(pageable);
-        return ResponseEntity.ok(this.videoProfileApi.findUserVideos(id, sanitized));
+        return ResponseEntity.ok(this.videoProfileApi.findUserVideos(id, currentUserId, sanitized));
     }
 
     private Pageable sanitizePageable(Pageable pageable) {

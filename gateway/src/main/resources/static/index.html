@@ -1046,8 +1046,9 @@
     let feedMode = { type: 'global' }; // {type: 'global'} | {type: 'profile', userId, sort}
     let feedTargetUuid = null;
     let feedSessionId = null;
-    let feedBaseIndex = 0;
-    let feedPos = -1;
+    let feedPrevPos = null;
+    let feedNextPos = null;
+    let feedEndReached = false;
     let profileCurrentInfo = null;
     let authProfileInfo = null;
 
@@ -2247,7 +2248,7 @@
                     loadVideoPage(feedPage + 1, true);
                 }
             } else {
-                if (!feedLoading && (videos.length - currentIndex) <= 2) {
+                if (!feedLoading && !feedEndReached && feedNextPos !== null && (videos.length - currentIndex) <= 2) {
                     loadVideoPage(0, true);
                 }
             }
@@ -2269,8 +2270,11 @@
                         setStatusFeed('Больше видео пока нет', 'ok');
                     }
                     return;
+                }            } else {
+                if (feedEndReached || feedNextPos === null) {
+                    setStatusFeed('Больше видео пока нет', 'ok');
+                    return;
                 }
-            } else {
                 await loadVideoPage(0, true);
                 if (currentIndex < videos.length - 1) {
                     currentIndex++;
@@ -2315,10 +2319,15 @@
             return;
         }
 
+        if (feedPrevPos === null) {
+            setStatusFeed('Это самое первое видео', 'ok');
+            return;
+        }
+
         feedLoading = true;
         showFeedLoader(true, 'Загружаем видео…');
         try {
-            const pos = feedBaseIndex + currentIndex;
+            const pos = feedPrevPos;
             const url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/prev?count=1&pos=${pos}`;
             const res = await fetch(url, { headers: feedHeaders() });
 
@@ -2341,19 +2350,13 @@
                     Array.isArray(data.content) ? data.content :
                         (Array.isArray(data) ? data : []);
 
+            if (data && 'prevPos' in data) {
+                feedPrevPos = data.prevPos;
+            }
+
             if (items.length === 0) {
                 setStatusFeed('Это самое первое видео', 'ok');
                 return;
-            }
-
-            if (typeof data.baseIndex === 'number') {
-                feedBaseIndex = data.baseIndex;
-            }
-            if (typeof data.pos === 'number') {
-                feedPos = data.pos;
-            }
-            if (typeof data.hasNext === 'boolean') {
-                feedHasNext = data.hasNext;
             }
 
             videos = items.concat(videos);
@@ -2842,12 +2845,17 @@
             } else {
                 if (!append || !feedSessionId) {
                     feedSessionId = null;
-                    feedBaseIndex = 0;
-                    feedPos = -1;
+                    feedPrevPos = null;
+                    feedNextPos = null;
+                    feedEndReached = false;
                     url = apiBase + `/api/streaming/video/feed/session/start?size=${FEED_PAGE_SIZE}`;
                     res = await fetch(url, { method: 'POST', headers: feedHeaders() });
                 } else {
-                    const pos = feedBaseIndex + currentIndex;
+                    if (feedNextPos === null || feedEndReached) {
+                        showFeedLoader(false);
+                        return;
+                    }
+                    const pos = feedNextPos;
                     url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/next?count=${FEED_PAGE_SIZE}&pos=${pos}`;
                     res = await fetch(url, { headers: feedHeaders() });
                 }
@@ -2905,25 +2913,23 @@
 
                 countEl.textContent = total + ' видео';
             } else {
-                const oldBase = feedBaseIndex;
                 if (data && data.feedId) {
                     feedSessionId = data.feedId;
                 }
-                if (typeof data.baseIndex === 'number') {
-                    if (data.baseIndex > oldBase) {
-                        const drop = data.baseIndex - oldBase;
-                        videos = videos.slice(drop);
-                        currentIndex = Math.max(currentIndex - drop, 0);
+                if (!append && data && 'prevPos' in data) {
+                    feedPrevPos = data.prevPos;
+                }
+                if (data && 'nextPos' in data) {
+                    feedNextPos = data.nextPos;
+                }
+                if (append) {
+                    if (items.length === 0) {
+                        feedEndReached = true;
+                    } else {
+                        feedEndReached = false;
                     }
-                    feedBaseIndex = data.baseIndex;
-                }
-                if (typeof data.pos === 'number') {
-                    feedPos = data.pos;
-                }
-                if (typeof data.hasNext === 'boolean') {
-                    feedHasNext = data.hasNext;
                 } else {
-                    feedHasNext = items.length === FEED_PAGE_SIZE;
+                    feedEndReached = items.length === 0;
                 }
                 countEl.textContent = videos.length + ' видео';
             }
@@ -3284,8 +3290,9 @@
         currentIndex = -1;
         feedTargetUuid = targetUuid || null;
         feedSessionId = null;
-        feedBaseIndex = 0;
-        feedPos = -1;
+        feedPrevPos = null;
+        feedNextPos = null;
+        feedEndReached = false;
         loadVideoPage(0, false);
     }
 

@@ -6,5 +6,5 @@ import ru.itmo.zavar.brainstop.common.api.video.dto.PublicUserVideoDto;
 
 public interface VideoProfileApi {
 
-    Page<PublicUserVideoDto> findUserVideos(Long uploaderId, Pageable pageable);
+    Page<PublicUserVideoDto> findUserVideos(Long uploaderId, Long currentUserId, Pageable pageable);
 }

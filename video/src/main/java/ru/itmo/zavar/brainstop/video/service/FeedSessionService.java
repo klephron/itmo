@@ -12,15 +12,21 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.itmo.zavar.brainstop.common.api.like.LikeQueryApi;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FeedVideoDto;
+import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
+import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedSessionResponse;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -40,6 +46,8 @@ public class FeedSessionService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final FeedService feedService;
+    private final FileMetadataRepository fileMetadataRepository;
+    private final LikeQueryApi likeQueryApi;
 
     public FeedSessionResponse startSession(String deviceId, Long userId, int pageSize) {
         int safePageSize = clamp(pageSize, 1, MAX_HISTORY);
@@ -50,6 +58,7 @@ public class FeedSessionService {
 
         Page<FeedVideoDto> page = feedService.getFeed(userId, PageRequest.of(0, safePageSize));
         List<FeedVideoDto> items = page.getContent();
+        items = refreshLikedByMe(userId, items);
 
         if (items != null && !items.isEmpty()) {
             List<String> payloads = new ArrayList<>();
@@ -100,6 +109,7 @@ public class FeedSessionService {
 
         long end = Math.min(start + safeCount - 1, maxIndex);
         List<FeedVideoDto> items = readRange(listKey, meta.baseIndex(), start, end);
+        items = refreshLikedByMe(meta.userId(), items);
 
         meta = meta.withPos(end);
         saveMeta(metaKey(feedId), meta);
@@ -133,6 +143,7 @@ public class FeedSessionService {
         long end = meta.pos() - 1;
         long start = Math.max(baseIndex, meta.pos() - safeCount);
         List<FeedVideoDto> items = readRange(listKey, baseIndex, start, end);
+        items = refreshLikedByMe(meta.userId(), items);
 
         meta = meta.withPos(start);
         saveMeta(metaKey(feedId), meta);
@@ -201,10 +212,95 @@ public class FeedSessionService {
     }
 
     private FeedSessionResponse buildResponse(String feedId, SessionMeta meta, List<FeedVideoDto> items, long fromIndex, long toIndex, long listSize) {
-        long maxIndex = listSize <= 0 ? meta.baseIndex() - 1 : meta.baseIndex() + listSize - 1;
-        boolean hasPrev = meta.pos() > meta.baseIndex();
-        boolean hasNext = meta.pos() < maxIndex;
-        return new FeedSessionResponse(feedId, items, fromIndex, toIndex, meta.pos(), meta.baseIndex(), hasPrev, hasNext);
+        if (listSize <= 0) {
+            return new FeedSessionResponse(feedId, items, null, null);
+        }
+
+        boolean hasItems = items != null && !items.isEmpty();
+        Long prevPos = null;
+        Long nextPos = null;
+
+        if (hasItems) {
+            if (fromIndex > meta.baseIndex()) {
+                prevPos = fromIndex;
+            }
+            nextPos = toIndex >= 0 ? toIndex : null;
+        } else {
+            long currentPos = meta.pos();
+            if (currentPos > meta.baseIndex()) {
+                prevPos = currentPos;
+            }
+            if (currentPos >= 0) {
+                nextPos = currentPos;
+            }
+        }
+
+        return new FeedSessionResponse(feedId, items, prevPos, nextPos);
+    }
+
+
+    private List<FeedVideoDto> refreshLikedByMe(Long userId, List<FeedVideoDto> items) {
+        if (userId == null || items == null || items.isEmpty()) {
+            return items;
+        }
+        List<UUID> uuids = new ArrayList<>();
+        for (FeedVideoDto item : items) {
+            if (item != null && item.uuid() != null) {
+                uuids.add(item.uuid());
+            }
+        }
+        if (uuids.isEmpty()) {
+            return items;
+        }
+        List<FileMetadataEntity> entities = fileMetadataRepository.findByUuidIn(uuids);
+        if (entities == null || entities.isEmpty()) {
+            return items;
+        }
+        Map<UUID, Long> idByUuid = new HashMap<>();
+        for (FileMetadataEntity entity : entities) {
+            if (entity != null && entity.getUuid() != null && entity.getId() != null) {
+                idByUuid.put(entity.getUuid(), entity.getId());
+            }
+        }
+        if (idByUuid.isEmpty()) {
+            return items;
+        }
+        Set<Long> likedIds = new HashSet<>(likeQueryApi.findLikedVideoIds(userId, idByUuid.values()));
+        List<FeedVideoDto> updated = new ArrayList<>(items.size());
+        for (FeedVideoDto item : items) {
+            if (item == null || item.uuid() == null) {
+                updated.add(item);
+                continue;
+            }
+            Long id = idByUuid.get(item.uuid());
+            if (id == null) {
+                updated.add(item);
+                continue;
+            }
+            boolean liked = likedIds.contains(id);
+            if (liked == item.likedByMe()) {
+                updated.add(item);
+                continue;
+            }
+            updated.add(new FeedVideoDto(
+                    item.uuid(),
+                    item.name(),
+                    item.uploaderId(),
+                    item.uploaderName(),
+                    item.uploaderAvatarUrl(),
+                    item.contentSize(),
+                    item.contentType(),
+                    item.uploadedAt(),
+                    item.likesCount(),
+                    item.viewsCount(),
+                    liked,
+                    item.subscribedToAuthor(),
+                    item.defaultHeight(),
+                    item.availableQualities(),
+                    item.description()
+            ));
+        }
+        return updated;
     }
 
     private SessionMeta requireMeta(String feedId) {

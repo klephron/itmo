@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import com.pgvector.PGvector;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,8 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
     Page<FileMetadataEntity> findByUploaderId(Long uploaderId, Pageable pageable);
 
     List<FileMetadataEntity> findByUploaderId(Long uploaderId);
+
+    List<FileMetadataEntity> findByUuidIn(Collection<UUID> uuids);
 
     void deleteByUuid(UUID fileUUID);
 
