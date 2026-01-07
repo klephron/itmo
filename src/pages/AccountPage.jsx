@@ -307,6 +307,12 @@ export default function AccountPage({
                     <button className="full danger small" id="btnLogout" onClick={logout}>
                         Выйти
                     </button>
+
+                    {user?.roles?.some((r) => r === 'ADMIN' || r === 'MODERATOR') && (
+                        <button className="full small" id="btnLogout" onClick={() => onTab("moderation")}>
+                            Модерация
+                        </button>
+                    )}
                 </div>
             ) : null}
 

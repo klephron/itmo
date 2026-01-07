@@ -13,6 +13,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
     const [userDetails, setUserDetails] = useState(null);
     const [userVideos, setUserVideos] = useState([]);
+    const [complaints, setComplaints] = useState([]);
 
     function setStatusModeration(msg = '', type = '') {
         setStatus({ msg, type });
@@ -25,7 +26,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
         }
 
         try {
-            const res = await fetch(apiBase + '/moderation/users', { headers: authHeaders(token) });
+            const res = await fetch(apiBase + '/api/moderation/users', { headers: authHeaders(token) });
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
@@ -42,19 +43,11 @@ export default function ModerationPage({ active, onRequireAuth }) {
         }
     }
 
-    useEffect(() => {
-        if (!active) return;
-        setStatusModeration('');
-        if (!token || !isModerator) return;
-        loadUsers();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [active, token, isModerator]);
-
     async function loadUserDetails(id) {
         if (!token || !isModerator) return;
 
         try {
-            const res = await fetch(apiBase + '/moderation/users/' + id, { headers: authHeaders(token) });
+            const res = await fetch(apiBase + '/api/moderation/users/' + id, { headers: authHeaders(token) });
 
             if (res.status === 404) {
                 setUserDetails(null);
@@ -81,7 +74,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
         if (!token || !isModerator) return;
 
         try {
-            const res = await fetch(apiBase + '/moderation/users/' + id + '/videos', { headers: authHeaders(token) });
+            const res = await fetch(apiBase + '/api/moderation/users/' + id + '/videos', { headers: authHeaders(token) });
 
             if (res.status === 404) {
                 setUserVideos([]);
@@ -103,11 +96,34 @@ export default function ModerationPage({ active, onRequireAuth }) {
         }
     }
 
+    async function loadComplaints() {
+        if (!token || !isModerator) return;
+
+        try {
+            const res = await fetch(apiBase + '/internal/moderation/complaints', {
+                headers: authHeaders(token),
+            });
+
+            if (isUnauthorized(res)) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                onRequireAuth?.();
+                return;
+            }
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            const list = await res.json();
+            setComplaints(Array.isArray(list) ? list : []);
+        } catch (e) {
+            setStatusModeration('Ошибка загрузки жалоб: ' + e.message, 'error');
+        }
+    }
+
     async function toggleBan(u) {
         if (!token || !isModerator) return;
 
         const action = u.enabled ? 'ban' : 'unban';
-        const url = apiBase + `/moderation/users/${u.id}/${action}`;
+        const url = apiBase + `/api/moderation/users/${u.id}/${action}`;
 
         try {
             const res = await fetch(url, { method: 'POST', headers: authHeaders(token) });
@@ -132,7 +148,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
         if (!token || !isAdmin) return;
 
         try {
-            const res = await fetch(apiBase + '/admin/users/' + userId + '/roles', {
+            const res = await fetch(apiBase + '/api/admin/users/' + userId + '/roles', {
                 method: 'POST',
                 headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ roles }),
@@ -159,7 +175,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
         if (!confirm('Перегенерировать превью для всех видео? Это может занять время.')) return;
 
         try {
-            const res = await fetch(apiBase + '/admin/thumbnails/rebuild', {
+            const res = await fetch(apiBase + '/api/admin/thumbnails/rebuild', {
                 method: 'POST',
                 headers: authHeaders(token),
             });
@@ -177,6 +193,43 @@ export default function ModerationPage({ active, onRequireAuth }) {
             setStatusModeration('Ошибка запуска перегенерации: ' + e.message, 'error');
         }
     }
+
+    async function resolveComplaint(id, deleteTarget, reject) {
+        if (!token || !isModerator) return;
+
+        try {
+            const res = await fetch(
+                apiBase + `/api/moderation/complaints/${id}/resolve` +
+                `?deleteTarget=${deleteTarget}&reject=${reject}`,
+                {
+                    method: 'POST',
+                    headers: authHeaders(token),
+                }
+            );
+
+            if (isUnauthorized(res)) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                onRequireAuth?.();
+                return;
+            }
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            setStatusModeration('Жалоба обработана', 'ok');
+            loadComplaints();
+        } catch (e) {
+            setStatusModeration('Ошибка закрытия жалобы: ' + e.message, 'error');
+        }
+    }
+
+    useEffect(() => {
+        if (!active) return;
+        setStatusModeration('');
+        if (!token || !isModerator) return;
+        loadUsers();
+        loadComplaints();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [active, token, isModerator]);
 
     if (!active) return null;
 
@@ -228,6 +281,53 @@ export default function ModerationPage({ active, onRequireAuth }) {
                             </div>
                             <div className="studio-row-meta">
                                 ID: {u.id} · Email: {u.email} · Роли: {(Array.isArray(u.roles) ? u.roles.join(', ') : '—')} · Статус: {u.enabled ? 'активен' : 'забанен'}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            <div className="studio-section-title" style={{ marginTop: 10 }}>
+                Жалобы
+            </div>
+
+            <div className="studio-jobs" style={{ minHeight: 60 }}>
+                {!complaints.length ? (
+                    <div className="studio-row-meta">Нет открытых жалоб</div>
+                ) : (
+                    complaints.map((c) => (
+                        <div key={c.id} className="job-row">
+                            <div className="job-row-header">
+                                <div>
+                                    <b>{c.targetType}</b>{' '}
+                                    {c.videoUuid || ''}
+                                    {c.commentId ? ` / comment ${c.commentId}` : ''}
+                                </div>
+                            </div>
+
+                            <div className="studio-row-meta">{c.reason}</div>
+
+                            <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
+                                <button
+                                    className="small danger"
+                                    onClick={() => resolveComplaint(c.id, true, false)}
+                                >
+                                    Удалить и закрыть
+                                </button>
+
+                                <button
+                                    className="small"
+                                    onClick={() => resolveComplaint(c.id, false, false)}
+                                >
+                                    Закрыть
+                                </button>
+
+                                <button
+                                    className="small secondary"
+                                    onClick={() => resolveComplaint(c.id, false, true)}
+                                >
+                                    Отклонить
+                                </button>
                             </div>
                         </div>
                     ))

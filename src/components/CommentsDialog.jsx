@@ -2,14 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { Avatar, Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
+import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
 
 import { SwipeableDialog } from "./SwipeableDialog";
 import { formatCompactNumber, formatDate } from "../utils/format.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
+import { ComplaintDialog } from "./ComplaintDialog.jsx";
+import { ConfirmDialog } from "./ConfirmDialog.jsx";
 
 export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequireAuth }) {
     const { token, user } = useAuth();
+
+    const [complaintDialogOpen, setComplaintDialogOpen] = useState(false);
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [commentId, setCommentId] = useState(null);
+
     const [cache] = useState(() => new Map());
     const [list, setList] = useState([]);
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -91,7 +99,6 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
             onRequireAuth?.();
             return;
         }
-        if (!confirm('Удалить комментарий?')) return;
 
         try {
             const res = await fetch(apiBase + `/api/videos/${videoUuid}/comments/${commentId}`, {
@@ -124,6 +131,8 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
         }
     }
 
+    const handleConfirm = () => deleteComment(commentId);
+
     if (!videoUuid) return null;
 
     return (
@@ -148,7 +157,6 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                     overflowY: 'auto',
                 }}
             >
-                {/* Список комментариев */}
                 {!list || list.length === 0 ? (
                     <Typography>
                         Комментариев пока нет
@@ -192,7 +200,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                                         c.authorId && onOpenProfile?.(c.authorId)
                                     }
                                 >
-                                    {c.authorName}
+                                    @{c.authorName}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
                                     {formatDate(c.createdAt)}
@@ -201,13 +209,31 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                                     <Button
                                         size="uniSmall"
                                         color="error"
-                                        onClick={() => deleteComment(c.id)}
+                                        onClick={() => {
+                                            setCommentId(c?.id);
+                                            setConfirmDialogOpen(true);
+                                        }}
                                         sx={{
                                             position: 'relative',
                                             top: 2,
                                         }}
                                     >
                                         <DeleteForeverRoundedIcon sx={{ fontSize: 20 }}/>
+                                    </Button>
+                                )}
+                                {user && !c?.mine && (
+                                    <Button
+                                        size="uniSmall"
+                                        onClick={() => {
+                                            setCommentId(c?.id);
+                                            setComplaintDialogOpen(true);
+                                        }}
+                                        sx={{
+                                            position: 'relative',
+                                            top: 2,
+                                        }}
+                                    >
+                                        <FlagRoundedIcon sx={{ fontSize: 20 }}/>
                                     </Button>
                                 )}
                             </Stack>
@@ -258,6 +284,21 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                     </Typography>
                 )}
             </Stack>
+            <ComplaintDialog
+                open={complaintDialogOpen}
+                setOpen={setComplaintDialogOpen}
+                mode="comment"
+                videoUuid={videoUuid}
+                commentId={commentId}
+            />
+            <ConfirmDialog
+                open={confirmDialogOpen}
+                setOpen={setConfirmDialogOpen}
+                title="Подтверждение удаления"
+                text="Вы уверены, что хотите безвозвратно удалить комментарий?"
+                critical
+                onConfirm={handleConfirm}
+            />
         </SwipeableDialog>
     );
 }

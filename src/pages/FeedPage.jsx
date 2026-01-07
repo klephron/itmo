@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { VideoInfoDialog } from "../components/VideoInfoDialog.jsx";
 import { CommentsDialog } from "../components/CommentsDialog.jsx";
 import { QualityDialog } from "../components/QualityDialog.jsx";
+import { ComplaintDialog } from "../components/ComplaintDialog.jsx";
 
 const PAGE_SIZE = 3;
 const MAX_WINDOW = 2 * PAGE_SIZE;
@@ -29,11 +30,12 @@ function getOrCreateDeviceId() {
 }
 
 export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeControls }) {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
     const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
     const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
+    const [complaintDialogOpen, setComplaintDialogOpen] = useState(false);
 
     const playerRef = useRef(null);
     const preload1Ref = useRef(null);
@@ -527,7 +529,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                         >
                             {uploaderName?.[0]?.toUpperCase()}
                         </Avatar>
-                        <Typography sx={{ userSelect: "none" }} fontWeight="medium">{uploaderName}</Typography>
+                        <Typography sx={{ userSelect: "none" }} fontWeight="medium">@{uploaderName}</Typography>
                     </Stack>
                 </Stack>
                 <Stack
@@ -581,14 +583,14 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     >
                         <SettingsOutlinedIcon sx={{ fontSize: 32 }}/>
                     </Button>
-                    <Button
-                        size="uniSmall"
-                        onClick={() => {
-                            /* действие добавишь позже */
-                        }}
-                    >
-                        <OutlinedFlagRoundedIcon sx={{ fontSize: 32 }}/>
-                    </Button>
+                    {user && uploaderId !== user.userId && (
+                        <Button
+                            size="uniSmall"
+                            onClick={() => setComplaintDialogOpen(true)}
+                        >
+                            <OutlinedFlagRoundedIcon sx={{ fontSize: 32 }}/>
+                        </Button>
+                    )}
                 </Stack>
                 <video ref={playerRef} id="player" controls playsInline muted/>
                 <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted preload="auto"/>
@@ -611,6 +613,12 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 setOpen={setQualityDialogOpen}
                 video={currentVideo}
                 onSelect={handleQualitySelect}
+            />
+            <ComplaintDialog
+                open={complaintDialogOpen}
+                setOpen={setComplaintDialogOpen}
+                mode="video"
+                videoUuid={uuid}
             />
         </Stack>
     );
