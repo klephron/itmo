@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
@@ -37,30 +37,11 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
     const feedModeRef = useRef({ type: 'global' }); // { type: 'global' } | { type: 'profile', userId, sort }
     const targetUuidRef = useRef(null);
-
-    const feedSessionRef = useRef({
-        // global
-        feedId: null,
-        prevPos: null,
-        nextPos: null,
-
-        // profile
-        page: 0,
-        first: true,
-        last: true,
-    });
-
     const deviceIdRef = useRef(getOrCreateDeviceId());
 
-    const [videos, setVideos] = useState([]);
-    const [currentIndex, setCurrentIndex] = useState(-1);
-
-    const [loading, setLoading] = useState(false);
-
-    const currentVideo = useMemo(() => {
-        if (currentIndex < 0 || currentIndex >= videos.length) return null;
-        return videos[currentIndex];
-    }, [videos, currentIndex]);
+    const [window, setWindow] = useState({ videos: [], currentIndex: -1 });
+    const { videos, currentIndex } = window;
+    const currentVideo = videos[currentIndex] ?? null;
 
     const {
         uuid,
@@ -72,7 +53,14 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         likedByMe = false,
         viewsCount = 0,
         commentsCount = 0,
+        snapshot = {},
+        localIndex = -1,
     } = currentVideo ?? {};
+
+    const [loading, setLoading] = useState(false);
+
+    const setVideos = (callback) => setWindow((prev) => ({ ...prev, videos: callback(prev.videos) }));
+    const setCurrentIndex = (currentIndex) => setWindow((prev) => ({ ...prev, currentIndex }));
 
     async function startFeed() {
         if (loading) return;
@@ -96,35 +84,36 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            const items = data.items ?? data.content;
 
-            setVideos(items);
-            feedSessionRef.current = {
+            const newSnapshot = {
                 feedId: data.feedId ?? null,
                 prevPos: data.prevPos ?? null,
                 nextPos: data.nextPos ?? null,
-                page: data.number ?? 0,
+                number: data.number ?? 0,
                 first: data.first ?? true,
                 last: data.last ?? true,
             };
+            const newVideos = (data.items ?? data.content ?? []).map((v, index) => ({
+                ...v,
+                snapshot: newSnapshot,
+                localIndex: index,
+            }));
 
+            let newIndex = 0;
             const targetUuid = targetUuidRef.current;
             if (targetUuid) {
-                const idx = items.findIndex(v => v.uuid === targetUuid);
+                const idx = newVideos.findIndex(v => v.uuid === targetUuid);
                 if (idx !== -1) {
-                    setCurrentIndex(idx);
+                    newIndex = idx;
                     targetUuidRef.current = null; // цель достигнута
-                    return;
                 }
             }
 
-            setCurrentIndex(0);
+            setWindow({ videos: newVideos, currentIndex: newIndex });
         } finally {
             setLoading(false);
         }
     }
-
-    console.log(videos);
 
     async function prefetch(direction) {
         if (loading) return;
@@ -134,69 +123,72 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             let url, res;
 
             if (feedModeRef.current.type === 'global') {
-                const { feedId, nextPos, prevPos } = feedSessionRef.current;
+                const { feedId, nextPos, prevPos } = snapshot;
                 const pos = direction === 'next' ? (nextPos ?? 0) : prevPos; // если nextPos null, то берем 0
 
                 if ((prevPos === null && nextPos === null) || pos === null) {
                     return; // если страница одна либо pos null - выходим
                 }
 
-                const url =
-                    `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}` +
-                    `?size=${PAGE_SIZE}&pos=${pos}`;
-
+                url = `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}?size=${PAGE_SIZE}&pos=${pos}`;
                 res = await fetch(url, { headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) } });
             } else {
-                const { userId, sort } = feedModeRef.current;
-                const { page, first, last } = feedSessionRef.current;
-
-                if (first && last) return; // если страница одна - выходим
-
-                let nextPage;
+                const { number, first, last } = snapshot;
+                let page;
                 if (direction === 'next') {
-                    nextPage = last ? 0 : page + 1;
+                    page = last ? 0 : number + 1;
                 } else {
-                    nextPage = page - 1;
+                    page = number - 1;
                 }
 
-                url = apiBase +
-                    `/api/users/${userId}/videos?page=${nextPage}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
+                if ((first && last) || page < 0) {
+                    return; // если страница одна либо номер меньше 0 - выходим
+                }
 
+                const { userId, sort } = feedModeRef.current;
+                url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
                 res = await fetch(url, { headers: authHeaders(token) });
             }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            const items = data.items ?? data.content ?? [];
 
-            feedSessionRef.current = {
+            const newSnapshot = {
                 feedId: data.feedId ?? null,
                 prevPos: data.prevPos ?? null,
                 nextPos: data.nextPos ?? null,
-                page: data.number ?? 0,
+                number: data.number ?? 0,
                 first: data.first ?? true,
                 last: data.last ?? true,
             };
+            const newVideos = (data.items ?? data.content ?? []).map((v, index) => ({
+                ...v,
+                snapshot: newSnapshot,
+                localIndex: index,
+            }));
 
-            setVideos((prev) => {
-                let next;
+            setWindow((prev) => {
+                let nextVideos;
+                let nextIndex = prev.currentIndex;
+
                 if (direction === 'next') {
-                    next = prev.concat(items);
+                    nextVideos = [...prev.videos, ...newVideos];
                 } else {
-                    next = items.concat(prev);
-                    setCurrentIndex((i) => i + items.length);
+                    nextVideos = [...newVideos, ...prev.videos];
                 }
 
-                if (next.length > MAX_WINDOW) {
-                    const overflow = next.length - MAX_WINDOW;
+                if (nextVideos.length > MAX_WINDOW) {
+                    const overflow = nextVideos.length - MAX_WINDOW;
                     if (direction === 'next') {
-                        next = next.slice(overflow);
-                        setCurrentIndex((i) => Math.max(i - overflow, 0));
+                        nextVideos = nextVideos.slice(overflow);
+                        nextIndex = Math.max(prev.currentIndex - overflow, 0);
                     } else {
-                        next = next.slice(0, MAX_WINDOW);
+                        nextVideos = nextVideos.slice(0, MAX_WINDOW);
+                        nextIndex = prev.currentIndex + newVideos.length;
                     }
                 }
-                return next;
+
+                return { videos: nextVideos, currentIndex: nextIndex };
             });
         } finally {
             setLoading(false);
@@ -300,7 +292,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         preloadVideo(index + 2, preload2Ref.current, 'metadata');
     }
 
-    const goNext = useCallback(async () => {
+    const goNext = () => {
         if (!videos.length) return;
 
         if (currentIndex < videos.length - 1) {
@@ -312,17 +304,26 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             }
         } else {
             const type = feedModeRef.current.type;
-            const { prevPos, nextPos, first, last } = feedSessionRef.current;
+            const { prevPos, nextPos, first, last } = snapshot;
 
             // Конец окна и одна страница - перемещаемся в начало окна
-            if ((type === 'global' && (prevPos === nextPos)) || (type === 'profile' && (first === last))) {
+            if ((type === 'global' && prevPos === nextPos) || (type === 'profile' && first === last)) {
                 setCurrentIndex(0);
             }
         }
-    }, [currentIndex, videos.length]);
+    }
 
-    const goPrev = useCallback(() => {
+    const goPrev = () => {
         if (!videos.length) return;
+
+        const type = feedModeRef.current.type;
+        const { prevPos, first } = snapshot;
+
+        // Если нулевой элемент первой страницы - назад идти нельзя!
+        if (localIndex === 0 && ((type === 'global' && prevPos === null) || (type === 'profile' && first))) {
+            setStatusFeed('Это самое первое видео', 'ok');
+            return;
+        }
 
         if (currentIndex > 0) {
             const nextIdx = currentIndex - 1;
@@ -331,28 +332,14 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             if (nextIdx <= PREFETCH_DELTA) {
                 prefetch('prev');
             }
-        } else {
-            setStatusFeed('Это самое первое видео', 'ok');
         }
-    }, [currentIndex, videos.length]);
+    }
 
     useEffect(() => {
         exposeControls?.({
             reloadFeed: () => {
                 feedModeRef.current = { type: 'global' };
                 targetUuidRef.current = null;
-
-                feedSessionRef.current = {
-                    feedId: null,
-                    prevPos: null,
-                    nextPos: null,
-                    page: 0,
-                    first: true,
-                    last: true,
-                };
-
-                setVideos([]);
-                setCurrentIndex(-1);
 
                 const player = playerRef.current;
                 if (player) {
@@ -377,19 +364,6 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 // 2. ставим цель
                 targetUuidRef.current = uuid || null;
 
-                // 3. ЖЁСТКО сбрасываем состояние
-                feedSessionRef.current = {
-                    feedId: null,
-                    prevPos: null,
-                    nextPos: null,
-                    page: 0,
-                    first: true,
-                    last: true,
-                };
-
-                setVideos([]);
-                setCurrentIndex(-1);
-
                 const player = playerRef.current;
                 if (player) {
                     try {
@@ -407,7 +381,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             goNext,
             goPrev,
         });
-    }, [exposeControls, videos, goNext, goPrev]);
+    }, [exposeControls, videos]);
 
     useEffect(() => {
         if (!active) return;
