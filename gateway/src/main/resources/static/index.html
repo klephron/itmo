@@ -1049,6 +1049,7 @@
     let feedPrevPos = null;
     let feedNextPos = null;
     let feedEndReached = false;
+    let feedStartPos = 0;
     let profileCurrentInfo = null;
     let authProfileInfo = null;
 
@@ -2233,6 +2234,26 @@
         });
     }
 
+    function deriveFeedStartPos(data) {
+        const prev = normalizeFeedPos(data ? data.prevPos : null);
+        if (Number.isFinite(prev)) {
+            return prev + FEED_PAGE_SIZE;
+        }
+        const next = normalizeFeedPos(data ? data.nextPos : null);
+        if (Number.isFinite(next)) {
+            return Math.max(0, next - FEED_PAGE_SIZE);
+        }
+        return 0;
+    }
+
+    function normalizeFeedPos(raw) {
+        if (raw === null || raw === undefined) {
+            return null;
+        }
+        const num = Number(raw);
+        return Number.isFinite(num) ? num : null;
+    }
+
     async function goNext() {
         triggerSwipeAnimation('up');
         if (videos.length === 0) return;
@@ -2319,7 +2340,12 @@
             return;
         }
 
-        if (feedPrevPos === null) {
+        const prevPosValue = normalizeFeedPos(feedPrevPos);
+        if (!Number.isFinite(prevPosValue)) {
+            setStatusFeed('Это самое первое видео', 'ok');
+            return;
+        }
+        if (Number.isFinite(feedStartPos) && prevPosValue >= feedStartPos) {
             setStatusFeed('Это самое первое видео', 'ok');
             return;
         }
@@ -2327,8 +2353,8 @@
         feedLoading = true;
         showFeedLoader(true, 'Загружаем видео…');
         try {
-            const pos = feedPrevPos;
-            const url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/prev?count=1&pos=${pos}`;
+            const pos = prevPosValue;
+            const url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/prev?count=${FEED_PAGE_SIZE}&pos=${pos}`;
             const res = await fetch(url, { headers: feedHeaders() });
 
             if (res.status === 401 || res.status === 403) {
@@ -2351,7 +2377,14 @@
                         (Array.isArray(data) ? data : []);
 
             if (data && 'prevPos' in data) {
-                feedPrevPos = data.prevPos;
+                feedPrevPos = normalizeFeedPos(data.prevPos);
+            }
+            if (data && 'nextPos' in data) {
+                feedNextPos = normalizeFeedPos(data.nextPos);
+                feedEndReached = feedNextPos == null;
+            }
+            if (data && data.feedId) {
+                feedSessionId = data.feedId;
             }
 
             if (items.length === 0) {
@@ -2360,6 +2393,7 @@
             }
 
             videos = items.concat(videos);
+            feedStartPos = Number.isFinite(prevPosValue) ? prevPosValue : feedStartPos;
             currentIndex = items.length - 1;
             await playCurrent();
         } catch (e) {
@@ -2848,6 +2882,7 @@
                     feedPrevPos = null;
                     feedNextPos = null;
                     feedEndReached = false;
+                    feedStartPos = 0;
                     url = apiBase + `/api/streaming/video/feed/session/start?size=${FEED_PAGE_SIZE}`;
                     res = await fetch(url, { method: 'POST', headers: feedHeaders() });
                 } else {
@@ -2916,18 +2951,17 @@
                 if (data && data.feedId) {
                     feedSessionId = data.feedId;
                 }
-                if (!append && data && 'prevPos' in data) {
-                    feedPrevPos = data.prevPos;
+                if (data && 'prevPos' in data) {
+                    feedPrevPos = normalizeFeedPos(data.prevPos);
                 }
                 if (data && 'nextPos' in data) {
-                    feedNextPos = data.nextPos;
+                    feedNextPos = normalizeFeedPos(data.nextPos);
                 }
-                if (append) {
-                    if (items.length === 0) {
-                        feedEndReached = true;
-                    } else {
-                        feedEndReached = false;
-                    }
+                if (!append) {
+                    feedStartPos = deriveFeedStartPos(data);
+                }
+                if (data && 'nextPos' in data) {
+                    feedEndReached = feedNextPos == null;
                 } else {
                     feedEndReached = items.length === 0;
                 }
@@ -3293,6 +3327,7 @@
         feedPrevPos = null;
         feedNextPos = null;
         feedEndReached = false;
+        feedStartPos = 0;
         loadVideoPage(0, false);
     }
 
