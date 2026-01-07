@@ -12,6 +12,7 @@ import { formatCompactNumber } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import { VideoInfoDialog } from "../components/VideoInfoDialog.jsx";
 import { CommentsDialog } from "../components/CommentsDialog.jsx";
+import { QualityDialog } from "../components/QualityDialog.jsx";
 
 const PAGE_SIZE = 3;
 const MAX_WINDOW = 2 * PAGE_SIZE;
@@ -32,10 +33,12 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
     const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
+    const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
 
     const playerRef = useRef(null);
     const preload1Ref = useRef(null);
     const preload2Ref = useRef(null);
+    const qualitySwitchRef = useRef(null);
 
     const feedModeRef = useRef({ type: 'global' }); // { type: 'global' } | { type: 'profile', userId, sort }
     const targetUuidRef = useRef(null);
@@ -57,6 +60,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         commentsCount = 0,
         snapshot = {},
         localIndex = -1,
+        selectedQuality = null,
     } = currentVideo ?? {};
 
     const [loading, setLoading] = useState(false);
@@ -274,7 +278,9 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         if (!el) return;
         if (videoIndex < 0 || videoIndex >= videos.length) return;
         const meta = videos[videoIndex];
-        const url = apiBase + '/api/streaming/video/' + meta.uuid
+        const url = meta.selectedQuality
+            ? `${apiBase}/api/streaming/video/${meta.uuid}?quality=${meta.selectedQuality}`
+            : `${apiBase}/api/streaming/video/${meta.uuid}`;
         if (el.src === url) return;
 
         try {
@@ -395,31 +401,52 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         const player = playerRef.current;
         if (!active || !uuid || !player) return;
 
+        const url = selectedQuality
+            ? `${apiBase}/api/streaming/video/${uuid}?quality=${selectedQuality}`
+            : `${apiBase}/api/streaming/video/${uuid}`;
+
+        if (player.src === url) return;
+
+        const isQualitySwitch = qualitySwitchRef.current?.uuid === uuid &&
+            qualitySwitchRef.current.toQuality === selectedQuality;
+        const shouldPlay = isQualitySwitch ? !player.paused : true;
+        const currentTime = isQualitySwitch ? player.currentTime : 0;
+
+        qualitySwitchRef.current = null;
+
         try {
             player.pause();
-            player.removeAttribute('src');
-            player.load();
+            player.src = url;
+            player.currentTime = currentTime;
 
-            player.src = apiBase + '/api/streaming/video/' + uuid;
-            player.load();
-
-            player.play().catch(() => {
-                /* autoplay может быть заблокирован */
-            });
+            if (shouldPlay) {
+                player.play().catch(() => {
+                    /* ignore */
+                });
+            }
         } catch {
-            return;
+            /* ignore */
         }
 
-        preloadAround(currentIndex);
-        registerView(uuid);
-    }, [active, currentIndex, uuid]);
+        if (!isQualitySwitch) {
+            preloadAround(currentIndex);
+            registerView(uuid);
+        }
+    }, [active, uuid, selectedQuality]);
 
     useEffect(() => {
         const player = playerRef.current;
         if (!player) return;
 
         const onEnded = () => {
-            goNext();
+            try {
+                player.currentTime = 0;
+                player.play().catch(() => {
+                    /* ignore */
+                });
+            } catch {
+                /* ignore */
+            }
         };
         const onError = () => {
             setStatusFeed('Ошибка воспроизведения видео', 'error');
@@ -427,12 +454,27 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
         player.addEventListener('ended', onEnded);
         player.addEventListener('error', onError);
+
         return () => {
             player.removeEventListener('ended', onEnded);
             player.removeEventListener('error', onError);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentIndex, videos, loading]);
+    }, []);
+
+    const handleQualitySelect = (quality) => {
+        if (!currentVideo) return;
+
+        qualitySwitchRef.current = { uuid, toQuality: quality };
+
+        setVideos((prev) => {
+            const copy = [...prev];
+            const idx = copy.findIndex(v => v.uuid === uuid);
+            if (idx >= 0) {
+                copy[idx] = { ...copy[idx], selectedQuality: quality };
+            }
+            return copy;
+        });
+    };
 
     if (!active) return null;
 
@@ -535,9 +577,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     </Stack>
                     <Button
                         size="uniSmall"
-                        onClick={() => {
-                            /* действие добавишь позже */
-                        }}
+                        onClick={() => setQualityDialogOpen(true)}
                     >
                         <SettingsOutlinedIcon sx={{ fontSize: 32 }}/>
                     </Button>
@@ -550,14 +590,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                         <OutlinedFlagRoundedIcon sx={{ fontSize: 32 }}/>
                     </Button>
                 </Stack>
-                <video
-                    ref={playerRef}
-                    id="player"
-                    controls
-                    playsInline
-                    muted
-                    autoPlay
-                />
+                <video ref={playerRef} id="player" controls playsInline muted/>
                 <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted preload="auto"/>
                 <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted preload="metadata"/>
             </Box>
@@ -572,6 +605,12 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 videoUuid={uuid}
                 onOpenProfile={onOpenProfile}
                 onRequireAuth={onRequireAuth}
+            />
+            <QualityDialog
+                open={qualityDialogOpen}
+                setOpen={setQualityDialogOpen}
+                video={currentVideo}
+                onSelect={handleQualitySelect}
             />
         </Stack>
     );

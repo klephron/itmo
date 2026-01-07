@@ -7,7 +7,7 @@ const Transition = forwardRef(({ children, ...rest }, ref) => (
     </Slide>
 ));
 
-export function SwipeableDialog({ open, setOpen, title, children }) {
+export function SwipeableDialog({ open, setOpen, height = "70dvh", title, children }) {
     const paperRef = useRef(null);
 
     const startXRef = useRef(null);
@@ -132,7 +132,7 @@ export function SwipeableDialog({ open, setOpen, title, children }) {
                     sx: {
                         width: "100%",
                         maxWidth: 480,
-                        height: "max(70dvh, min(480px, 100dvh))",
+                        height,
                         borderRadius: "16px 16px 0 0",
                         m: "0 auto",
                         display: "flex",
