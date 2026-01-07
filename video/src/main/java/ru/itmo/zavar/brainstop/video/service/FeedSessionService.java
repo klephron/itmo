@@ -73,83 +73,111 @@ public class FeedSessionService {
         long baseIndex = 0;
         long pos = items == null || items.isEmpty() ? -1 : baseIndex;
         SessionMeta meta = new SessionMeta(deviceId, userId, safePageSize, 1, pos, baseIndex);
-        saveMeta(metaKey, meta);
-        touch(feedId);
+        if (items == null || items.isEmpty()) {
+            saveMeta(metaKey, meta);
+            touch(feedId);
+            return buildResponse(feedId, meta, items, -1, safePageSize, 0);
+        }
 
-        long fromIndex = items == null || items.isEmpty() ? -1 : baseIndex;
-        long toIndex = items == null || items.isEmpty() ? -1 : baseIndex + items.size() - 1;
+        meta = ensureItems(feedId, meta, baseIndex + safePageSize);
+        long listSize = listSize(listKey);
 
-        return buildResponse(feedId, meta, items, fromIndex, toIndex, listSize(listKey));
+        return buildResponse(feedId, meta, items, baseIndex, safePageSize, listSize);
     }
 
     public FeedSessionResponse next(String feedId, String deviceId, Long userId, int count, Long pos) {
         SessionMeta meta = requireMeta(feedId);
         validateAccess(meta, deviceId, userId);
+
+        int safeCount = clamp(count, 1, MAX_HISTORY);
         if (pos != null) {
             meta = alignPos(meta, pos);
             saveMeta(metaKey(feedId), meta);
         }
 
-        int safeCount = clamp(count, 1, MAX_HISTORY);
-        meta = ensureItems(feedId, meta, meta.pos() + safeCount);
+        long targetStart;
+        if (pos != null) {
+            targetStart = meta.pos();
+        } else if (meta.pos() >= meta.baseIndex()) {
+            targetStart = meta.pos() + safeCount;
+        } else {
+            targetStart = meta.baseIndex();
+        }
+
+        meta = ensureItems(feedId, meta, targetStart + safeCount);
 
         String listKey = listKey(feedId);
         long size = listSize(listKey);
         if (size <= 0) {
             touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, -1, size);
+            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
         }
 
         long maxIndex = meta.baseIndex() + size - 1;
-        long start = meta.pos() + 1;
-        if (start > maxIndex) {
+        if (targetStart > maxIndex) {
             touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, -1, size);
+            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
         }
 
-        long end = Math.min(start + safeCount - 1, maxIndex);
-        List<FeedVideoDto> items = readRange(listKey, meta.baseIndex(), start, end);
+        long end = Math.min(targetStart + safeCount - 1, maxIndex);
+        List<FeedVideoDto> items = readRange(listKey, meta.baseIndex(), targetStart, end);
         items = refreshLikedByMe(meta.userId(), items);
 
-        meta = meta.withPos(end);
-        saveMeta(metaKey(feedId), meta);
+        if (items != null && !items.isEmpty()) {
+            meta = meta.withPos(targetStart);
+            saveMeta(metaKey(feedId), meta);
+        }
         touch(feedId);
 
-        return buildResponse(feedId, meta, items, start, end, size);
+        return buildResponse(feedId, meta, items, targetStart, safeCount, size);
     }
 
     public FeedSessionResponse prev(String feedId, String deviceId, Long userId, int count, Long pos) {
         SessionMeta meta = requireMeta(feedId);
         validateAccess(meta, deviceId, userId);
+
+        int safeCount = clamp(count, 1, MAX_HISTORY);
         if (pos != null) {
             meta = alignPos(meta, pos);
             saveMeta(metaKey(feedId), meta);
         }
 
-        int safeCount = clamp(count, 1, MAX_HISTORY);
         String listKey = listKey(feedId);
         long size = listSize(listKey);
         if (size <= 0) {
             touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, -1, size);
+            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
         }
 
         long baseIndex = meta.baseIndex();
-        if (meta.pos() <= baseIndex) {
+        if (pos == null && meta.pos() <= baseIndex) {
             touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, -1, size);
+            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
         }
 
-        long end = meta.pos() - 1;
-        long start = Math.max(baseIndex, meta.pos() - safeCount);
-        List<FeedVideoDto> items = readRange(listKey, baseIndex, start, end);
+        long maxIndex = baseIndex + size - 1;
+        long targetStart;
+        if (pos != null) {
+            targetStart = meta.pos();
+        } else {
+            targetStart = Math.max(baseIndex, meta.pos() - safeCount);
+        }
+        long lastPageStart = Math.max(baseIndex, maxIndex - safeCount + 1);
+        if (targetStart > lastPageStart) {
+            targetStart = lastPageStart;
+        }
+
+        long end = Math.min(targetStart + safeCount - 1, maxIndex);
+        List<FeedVideoDto> items = readRange(listKey, baseIndex, targetStart, end);
         items = refreshLikedByMe(meta.userId(), items);
 
-        meta = meta.withPos(start);
-        saveMeta(metaKey(feedId), meta);
+        if (items != null && !items.isEmpty()) {
+            meta = meta.withPos(targetStart);
+            saveMeta(metaKey(feedId), meta);
+        }
         touch(feedId);
 
-        return buildResponse(feedId, meta, items, start, end, size);
+        return buildResponse(feedId, meta, items, targetStart, safeCount, size);
     }
 
     private SessionMeta ensureItems(String feedId, SessionMeta meta, long desiredIndex) {
@@ -199,40 +227,35 @@ public class FeedSessionService {
         listOps().trim(listKey, trim, -1);
         long newBase = meta.baseIndex() + trim;
         long newPos = meta.pos() - trim;
-        if (newPos < newBase - 1) {
-            newPos = newBase - 1;
+        if (newPos < newBase) {
+            newPos = newBase;
         }
         return new SessionMeta(meta.deviceId(), meta.userId(), meta.pageSize(), meta.nextPage(), newPos, newBase);
     }
 
     private SessionMeta alignPos(SessionMeta meta, long pos) {
         long base = meta.baseIndex();
-        long aligned = Math.max(base - 1, pos);
+        long aligned = Math.max(base, pos);
         return meta.withPos(aligned);
     }
 
-    private FeedSessionResponse buildResponse(String feedId, SessionMeta meta, List<FeedVideoDto> items, long fromIndex, long toIndex, long listSize) {
-        if (listSize <= 0) {
+    private FeedSessionResponse buildResponse(String feedId, SessionMeta meta, List<FeedVideoDto> items, long startIndex, int step, long listSize) {
+        if (listSize <= 0 || items == null || items.isEmpty()) {
             return new FeedSessionResponse(feedId, items, null, null);
         }
 
-        boolean hasItems = items != null && !items.isEmpty();
+        long baseIndex = meta.baseIndex();
+        long maxIndex = baseIndex + listSize - 1;
         Long prevPos = null;
         Long nextPos = null;
 
-        if (hasItems) {
-            if (fromIndex > meta.baseIndex()) {
-                prevPos = fromIndex;
-            }
-            nextPos = toIndex >= 0 ? toIndex : null;
-        } else {
-            long currentPos = meta.pos();
-            if (currentPos > meta.baseIndex()) {
-                prevPos = currentPos;
-            }
-            if (currentPos >= 0) {
-                nextPos = currentPos;
-            }
+        long prevCandidate = startIndex - step;
+        long nextCandidate = startIndex + step;
+        if (prevCandidate >= baseIndex) {
+            prevPos = prevCandidate;
+        }
+        if (nextCandidate <= maxIndex) {
+            nextPos = nextCandidate;
         }
 
         return new FeedSessionResponse(feedId, items, prevPos, nextPos);
