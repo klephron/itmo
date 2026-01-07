@@ -9,6 +9,7 @@ const Transition = forwardRef(({ children, ...rest }, ref) => (
 
 export function SwipeableDialog({ open, setOpen, height = "70dvh", title, children }) {
     const paperRef = useRef(null);
+    const contentRef = useRef(null);
 
     const startXRef = useRef(null);
     const startYRef = useRef(null);
@@ -54,9 +55,9 @@ export function SwipeableDialog({ open, setOpen, height = "70dvh", title, childr
                 // вертикальный drag
                 gestureRef.current = "drag";
 
-                document.body.style.userSelect = "none";
-                if (paperRef.current) {
-                    paperRef.current.style.userSelect = "none";
+                if (contentRef.current) {
+                    contentRef.current.style.pointerEvents = "none";
+                    contentRef.current.style.userSelect = "none";
                 }
             } else {
                 // горизонталь → игнор
@@ -75,11 +76,7 @@ export function SwipeableDialog({ open, setOpen, height = "70dvh", title, childr
     };
 
     const end = () => {
-        document.body.style.userSelect = "";
-        if (paperRef.current) {
-            paperRef.current.style.userSelect = "";
-        }
-
+        // если жест не был drag — просто сбрасываем
         if (gestureRef.current !== "drag") {
             reset();
             return;
@@ -104,16 +101,15 @@ export function SwipeableDialog({ open, setOpen, height = "70dvh", title, childr
         startYRef.current = null;
         deltaYRef.current = 0;
         gestureRef.current = "idle";
+
+        if (contentRef.current) {
+            contentRef.current.style.pointerEvents = "";
+            contentRef.current.style.userSelect = "";
+        }
     };
 
     useEffect(() => {
-        if (!open) {
-            document.body.style.userSelect = "";
-            if (paperRef.current) {
-                paperRef.current.style.userSelect = "";
-            }
-            reset();
-        }
+        if (!open) reset();
     }, [open]);
 
     return (
@@ -154,10 +150,12 @@ export function SwipeableDialog({ open, setOpen, height = "70dvh", title, childr
                         move(t.clientX, t.clientY);
                     },
                     onTouchEnd: end,
+                    onDragStart: (e) => e.preventDefault(),
                 },
             }}
         >
             <DialogContent
+                ref={contentRef}
                 sx={{
                     p: 0,
                     position: "relative",
