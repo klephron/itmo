@@ -11,17 +11,23 @@ export function VideoInfoDialog({ open, setOpen, video }) {
             setOpen={setOpen}
             title={video.name || "Без названия"}
         >
-            <Stack direction="row" justifyContent="space-between">
-                <Typography variant="caption" color="text.secondary">
-                    {formatDate(video.uploadedAt)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                    {humanSize(video?.contentSize)}
+            <Stack p={2} pt={0} spacing={1.5} sx={{ overflowX: "hidden", overflowY: "auto" }}>
+                <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="caption" color="text.secondary">
+                        {formatDate(video.uploadedAt)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                        {humanSize(video?.contentSize)}
+                    </Typography>
+                </Stack>
+                <Typography sx={{
+                    whiteSpace: 'pre-wrap',      // сохраняем переносы строк + разрешаем wrap
+                    overflowWrap: 'break-word',  // перенос по словам, если можно
+                    wordBreak: 'break-word',     // перенос по буквам, если слово слишком длинное
+                }}>
+                    {video.description ?? "Описание отсутствует"}
                 </Typography>
             </Stack>
-            <Typography whiteSpace="pre-line">
-                {video.description ?? "Описание отсутствует."}
-            </Typography>
         </SwipeableDialog>
     );
 }

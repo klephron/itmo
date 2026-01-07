@@ -72,7 +72,27 @@ export const theme = createTheme(
             MuiOutlinedInput: {
                 styleOverrides: {
                     root: ({ theme }) => ({
-                        borderRadius: `calc(2 * ${theme.vars.shape.borderRadius})`,
+                        borderRadius: `calc(5 * ${theme.vars.shape.borderRadius})`,
+                        variants: [
+                            {
+                                props: { multiline: true },
+                                style: {
+                                    paddingLeft: theme.spacing(2),
+                                    paddingRight: theme.spacing(2),
+                                },
+                            },
+                        ]
+                    }),
+                    input: ({ theme }) => ({
+                        variants: [
+                            {
+                                props: { multiline: false },
+                                style: {
+                                    paddingLeft: theme.spacing(2),
+                                    paddingRight: theme.spacing(2),
+                                },
+                            },
+                        ]
                     }),
                 },
             },

@@ -159,12 +159,10 @@ export function SwipeableDialog({ open, setOpen, title, children }) {
         >
             <DialogContent
                 sx={{
-                    p: 2,
-                    pt: 3,
+                    p: 0,
                     position: "relative",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 1.5,
                 }}
             >
                 <Box
@@ -181,7 +179,7 @@ export function SwipeableDialog({ open, setOpen, title, children }) {
                     }}
                 />
                 {title && (
-                    <Typography variant="h6" fontWeight="bold">
+                    <Typography variant="h6" fontWeight="bold" px={2} pt={3} pb={1.5}>
                         {title}
                     </Typography>
                 )}

@@ -239,6 +239,7 @@ label,
     margin-left: 6px;
 }
 
+/*
 input[type="text"],
 input[type="password"],
 input[type="email"] {
@@ -250,6 +251,7 @@ input[type="email"] {
     font-size: 13px;
     outline: none;
 }
+ */
 
 input[type="file"] {
     font-size: 12px;

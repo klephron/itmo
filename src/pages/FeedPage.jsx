@@ -11,6 +11,7 @@ import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized } from '../api/ap
 import { formatCompactNumber } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import { VideoInfoDialog } from "../components/VideoInfoDialog.jsx";
+import { CommentsDialog } from "../components/CommentsDialog.jsx";
 
 const PAGE_SIZE = 3;
 const MAX_WINDOW = 2 * PAGE_SIZE;
@@ -30,6 +31,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     const { token } = useAuth();
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
+    const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
 
     const playerRef = useRef(null);
     const preload1Ref = useRef(null);
@@ -130,7 +132,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     return; // если страница одна либо pos null - выходим
                 }
 
-                url = `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}?size=${PAGE_SIZE}&pos=${pos}`;
+                url = `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}?count=${PAGE_SIZE}&pos=${pos}`;
                 res = await fetch(url, { headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) } });
             } else {
                 const { number, first, last } = snapshot;
@@ -479,11 +481,11 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     >
                         <Avatar
                             src={uploaderAvatarUrl ? `${apiBase}${uploaderAvatarUrl}` : null}
-                            sx={{ width: 24, height: 24 }}
+                            sx={{ width: 32, height: 32 }}
                         >
                             {uploaderName?.[0]?.toUpperCase()}
                         </Avatar>
-                        <Typography sx={{ userSelect: "none" }}>{uploaderName}</Typography>
+                        <Typography sx={{ userSelect: "none" }} fontWeight="medium">{uploaderName}</Typography>
                     </Stack>
                 </Stack>
                 <Stack
@@ -523,9 +525,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     <Stack alignItems="center">
                         <Button
                             size="uniSmall"
-                            onClick={() => {
-                                /* действие добавишь позже */
-                            }}
+                            onClick={() => setCommentsDialogOpen(true)}
                         >
                             <CommentOutlined sx={{ fontSize: 32 }}/>
                         </Button>
@@ -561,13 +561,17 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted preload="auto"/>
                 <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted preload="metadata"/>
             </Box>
-            {/*
-            <Comments videoUuid={currentUuid} onOpenProfile={onOpenProfile} onRequireAuth={onRequireAuth}/>
-            */}
             <VideoInfoDialog
                 open={videoInfoDialogOpen}
                 setOpen={setVideoInfoDialogOpen}
                 video={currentVideo}
+            />
+            <CommentsDialog
+                open={commentsDialogOpen}
+                setOpen={setCommentsDialogOpen}
+                videoUuid={uuid}
+                onOpenProfile={onOpenProfile}
+                onRequireAuth={onRequireAuth}
             />
         </Stack>
     );
