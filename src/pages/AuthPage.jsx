@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { apiBase } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import Status from '../components/Status';
+import { Button, Paper, Stack, TextField, Typography } from "@mui/material";
 
 export default function AuthPage({ active, onTab }) {
     const { setAuth } = useAuth();
@@ -51,6 +51,7 @@ export default function AuthPage({ active, onTab }) {
             setAuth(data.token, nextUser);
             setStatusAuth('Успешный вход', 'ok');
 
+            setLogin({ username: '', password: '' });
             onTab("account"); // Переключаем после успешного входа
         } catch (e) {
             setStatusAuth('Ошибка входа: ' + e.message, 'error');
@@ -93,6 +94,7 @@ export default function AuthPage({ active, onTab }) {
             setAuth(data.token, nextUser);
             setStatusAuth('Регистрация прошла успешно', 'ok');
 
+            setReg({ username: '', email: '', displayName: '', password: '' });
             onTab("account"); // Переключаем после успешной регистрации
         } catch (e) {
             setStatusAuth('Ошибка регистрации: ' + e.message, 'error');
@@ -105,99 +107,128 @@ export default function AuthPage({ active, onTab }) {
 
     if (!active) return null;
 
+    const loginDisabled =
+        !login.username.trim() ||
+        !login.password;
+
+    const regDisabled =
+        !reg.username.trim() ||
+        !reg.email.trim() ||
+        !reg.displayName.trim() ||
+        !reg.password;
+
     return (
-        <div className={'card page ' + (active ? 'active' : '')} id="pageAuth">
-            {isLogin ? (
-                <>
-                    <div className="studio-section-title">Вход</div>
-                    <div className="form-row">
-                        <label htmlFor="loginUsername">Логин</label>
-                        <input
-                            id="loginUsername"
-                            type="text"
-                            placeholder="username"
+        <Paper elevation={0} sx={{ flex: 1 }}>
+            <Stack p={2} spacing={2} height={1}>
+                {isLogin ? (
+                    <>
+                        <Typography variant="h6">Вход</Typography>
+                        <TextField
+                            size="small"
+                            placeholder="Логин"
                             value={login.username}
-                            onChange={(e) => setLogin((s) => ({ ...s, username: e.target.value }))}
+                            onChange={(e) =>
+                                setLogin((s) => ({ ...s, username: e.target.value }))
+                            }
+                            autoFocus
                         />
-                    </div>
-                    <div className="form-row">
-                        <label htmlFor="loginPassword">Пароль</label>
-                        <input
-                            id="loginPassword"
+                        <TextField
+                            size="small"
                             type="password"
-                            placeholder="••••••••"
+                            placeholder="Пароль"
                             value={login.password}
-                            onChange={(e) => setLogin((s) => ({ ...s, password: e.target.value }))}
+                            onChange={(e) =>
+                                setLogin((s) => ({ ...s, password: e.target.value }))
+                            }
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') doLogin();
                             }}
                         />
-                    </div>
-                    <button className="full" id="btnLogin" onClick={doLogin}>
-                        Войти
-                    </button>
-                </>
-            ) : (
-                <>
-                    <div className="studio-section-title">Регистрация</div>
-                    <div className="form-row">
-                        <label htmlFor="regUsername">Логин</label>
-                        <input
-                            id="regUsername"
-                            type="text"
-                            placeholder="username"
+                        <Button
+                            variant="contained"
+                            size="large"
+                            sx={{ height: 40 }}
+                            onClick={doLogin}
+                            disabled={loginDisabled}
+                        >
+                            Войти
+                        </Button>
+                        <Stack direction="row" spacing={1} justifyContent="center">
+                            <Typography variant="body2" color="textSecondary">Нет аккаунта?</Typography>
+                            <Typography
+                                variant="body2"
+                                fontWeight="medium"
+                                onClick={toggleForm}
+                                sx={{ cursor: "pointer", userSelect: "none" }}
+                            >
+                                Регистрация
+                            </Typography>
+                        </Stack>
+                    </>
+                ) : (
+                    <>
+                        <Typography variant="h6">Регистрация</Typography>
+                        <TextField
+                            size="small"
+                            placeholder="Логин"
                             value={reg.username}
-                            onChange={(e) => setReg((s) => ({ ...s, username: e.target.value }))}
+                            onChange={(e) =>
+                                setReg((s) => ({ ...s, username: e.target.value }))
+                            }
+                            autoFocus
                         />
-                    </div>
-                    <div className="form-row">
-                        <label htmlFor="regEmail">Email</label>
-                        <input
-                            id="regEmail"
+                        <TextField
+                            size="small"
                             type="email"
-                            placeholder="you@example.com"
+                            placeholder="Email"
                             value={reg.email}
-                            onChange={(e) => setReg((s) => ({ ...s, email: e.target.value }))}
+                            onChange={(e) =>
+                                setReg((s) => ({ ...s, email: e.target.value }))
+                            }
                         />
-                    </div>
-                    <div className="form-row">
-                        <label htmlFor="regDisplayName">Отображаемое имя</label>
-                        <input
-                            id="regDisplayName"
-                            type="text"
+                        <TextField
+                            size="small"
                             placeholder="Как показывать вас в ленте?"
                             value={reg.displayName}
-                            onChange={(e) => setReg((s) => ({ ...s, displayName: e.target.value }))}
+                            onChange={(e) =>
+                                setReg((s) => ({ ...s, displayName: e.target.value }))
+                            }
                         />
-                    </div>
-                    <div className="form-row">
-                        <label htmlFor="regPassword">Пароль</label>
-                        <input
-                            id="regPassword"
+                        <TextField
+                            size="small"
                             type="password"
-                            placeholder="••••••••"
+                            placeholder="Пароль"
                             value={reg.password}
-                            onChange={(e) => setReg((s) => ({ ...s, password: e.target.value }))}
+                            onChange={(e) =>
+                                setReg((s) => ({ ...s, password: e.target.value }))
+                            }
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') doRegister();
                             }}
                         />
-                    </div>
-                    <button className="full secondary" id="btnRegister" onClick={doRegister}>
-                        Зарегистрироваться
-                    </button>
-                </>
-            )}
-
-            <div className="toggle-form">
-                {isLogin ? (
-                    <>Нет аккаунта? <span onClick={toggleForm}>Регистрация</span></>
-                ) : (
-                    <>Есть аккаунт? <span onClick={toggleForm}>Вход</span></>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            sx={{ height: 40 }}
+                            onClick={doRegister}
+                            disabled={regDisabled}
+                        >
+                            Зарегистрироваться
+                        </Button>
+                        <Stack direction="row" spacing={1} justifyContent="center">
+                            <Typography variant="body2" color="textSecondary">Есть аккаунт?</Typography>
+                            <Typography
+                                variant="body2"
+                                fontWeight="medium"
+                                onClick={toggleForm}
+                                sx={{ cursor: "pointer", userSelect: "none" }}
+                            >
+                                Вход
+                            </Typography>
+                        </Stack>
+                    </>
                 )}
-            </div>
-
-            <Status id="statusAuth" message={status.msg} type={status.type}/>
-        </div>
+            </Stack>
+        </Paper>
     );
 }
