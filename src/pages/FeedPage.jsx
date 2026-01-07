@@ -436,7 +436,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
     useEffect(() => {
         const player = playerRef.current;
-        if (!player) return;
+        if (!active || !player) return;
 
         const onEnded = () => {
             try {
@@ -459,7 +459,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             player.removeEventListener('ended', onEnded);
             player.removeEventListener('error', onError);
         };
-    }, []);
+    }, [active]);
 
     const handleQualitySelect = (quality) => {
         if (!currentVideo) return;
