@@ -54,7 +54,10 @@ public class UserProfileController {
         try (InputStream is = avatar.getInputStream()) {
             String key = this.videoObjectStorage.uploadAvatar(is, avatar.getSize(), avatar.getContentType(), userId);
             try {
-                this.authInternalClient.updateAvatar(userId, key);
+                UserAccountDto updated = this.authInternalClient.updateAvatar(userId, key);
+                if (updated == null) {
+                    return ResponseEntity.status(503).build();
+                }
             } catch (FeignException.NotFound e) {
                 return ResponseEntity.notFound().build();
             }
@@ -74,6 +77,9 @@ public class UserProfileController {
         } catch (FeignException.NotFound e) {
             return ResponseEntity.notFound().build();
         }
+        if (user == null) {
+            return ResponseEntity.status(503).build();
+        }
         if (user.avatarKey() == null) {
             return ResponseEntity.notFound().build();
         }
@@ -92,6 +98,9 @@ public class UserProfileController {
             user = this.authInternalClient.getUser(id);
         } catch (FeignException.NotFound e) {
             return ResponseEntity.notFound().build();
+        }
+        if (user == null) {
+            return ResponseEntity.status(503).build();
         }
 
         long followers = this.followService.countFollowers(id);
@@ -120,6 +129,9 @@ public class UserProfileController {
             exists = this.authInternalClient.exists(id);
         } catch (FeignException e) {
             return ResponseEntity.notFound().build();
+        }
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
         }
         if (!Boolean.TRUE.equals(exists)) {
             return ResponseEntity.notFound().build();

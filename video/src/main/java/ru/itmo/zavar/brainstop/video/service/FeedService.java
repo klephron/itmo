@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoCommentsCountDto;
 import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoIdsRequest;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoUuidsRequest;
 import ru.itmo.zavar.brainstop.common.api.interactions.dto.WatchProgressSummaryDto;
 import ru.itmo.zavar.brainstop.common.api.like.LikeQueryApi;
 import ru.itmo.zavar.brainstop.common.api.profile.FollowQueryApi;
@@ -60,6 +62,8 @@ public class FeedService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+        Map<UUID, Long> commentsCountByUuid = resolveCommentsCountByUuid(entities);
+
         Set<Long> likedByMe;
         Set<Long> followingIds;
 
@@ -75,7 +79,8 @@ public class FeedService {
                 currentUserId,
                 avatarByUserId,
                 likedByMe,
-                followingIds
+                followingIds,
+                commentsCountByUuid
         );
 
         List<FeedVideoDto> feedItems = this.mapper.toDto(entities, mapperContext);
@@ -300,6 +305,31 @@ public class FeedService {
             ratios.put(p.videoId(), Math.min(1d, ratio));
         }
         return ratios;
+    }
+
+    private Map<UUID, Long> resolveCommentsCountByUuid(List<FileMetadataEntity> entities) {
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Set<UUID> uuids = entities.stream()
+                .map(FileMetadataEntity::getUuid)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (uuids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<VideoCommentsCountDto> counts = interactionsInternalClient.getCommentsCount(new VideoUuidsRequest(uuids));
+        if (counts == null || counts.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<UUID, Long> result = new HashMap<>();
+        for (VideoCommentsCountDto row : counts) {
+            if (row == null || row.videoUuid() == null) {
+                continue;
+            }
+            result.put(row.videoUuid(), row.commentsCount());
+        }
+        return result;
     }
 
     private record WeightedVector(float[] vector, double weight) {

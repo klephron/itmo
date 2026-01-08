@@ -29,6 +29,9 @@ public class AdminController {
     @Operation(summary = "Пересоздать превью всех видео")
     public ResponseEntity<Map<String, Object>> regenerateThumbnails(@RequestParam(name = "force", defaultValue = "true") boolean force) {
         Map<String, Object> resp = this.videoAdminClient.regenerateThumbnails(force);
+        if (resp != null && "unavailable".equals(resp.get("status"))) {
+            return ResponseEntity.status(503).body(resp);
+        }
         return ResponseEntity.ok(resp);
     }
 
@@ -38,6 +41,9 @@ public class AdminController {
     public ResponseEntity<Set<Role>> getUserRoles(@PathVariable Long id) {
         try {
             ProfileUserDetails details = this.profileAdminClient.findUser(id);
+            if (details == null) {
+                return ResponseEntity.status(503).build();
+            }
             return ResponseEntity.ok(details.roles());
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
@@ -51,6 +57,9 @@ public class AdminController {
                                                      @RequestBody UpdateUserRolesRequest req) {
         try {
             ProfileUserDetails updated = this.profileAdminClient.updateRoles(id, req.roles() == null ? Set.of(Role.USER) : req.roles());
+            if (updated == null) {
+                return ResponseEntity.status(503).build();
+            }
             return ResponseEntity.ok(updated.roles());
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

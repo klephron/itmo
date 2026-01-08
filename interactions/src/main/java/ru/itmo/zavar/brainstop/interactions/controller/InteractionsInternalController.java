@@ -7,7 +7,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.itmo.zavar.brainstop.comment.repo.CommentRepository;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoCommentsCountDto;
 import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoIdsRequest;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoUuidsRequest;
 import ru.itmo.zavar.brainstop.common.api.interactions.dto.WatchProgressSummaryDto;
 import ru.itmo.zavar.brainstop.like.repo.VideoLikeRepository;
 import ru.itmo.zavar.brainstop.like.repo.VideoViewRepository;
@@ -27,6 +30,7 @@ public class InteractionsInternalController {
     private final VideoLikeRepository videoLikeRepository;
     private final VideoViewRepository videoViewRepository;
     private final VideoWatchRepository videoWatchRepository;
+    private final CommentRepository commentRepository;
 
     @PostMapping("/likes/ids")
     @Operation(summary = "Internal: list liked video IDs")
@@ -62,6 +66,22 @@ public class InteractionsInternalController {
         }
         return progress.stream()
                 .map(p -> new WatchProgressSummaryDto(p.getVideoId(), p.getTotalWatchedSeconds(), p.getDurationSeconds()))
+                .toList();
+    }
+
+    @PostMapping("/comments/counts")
+    @Operation(summary = "Internal: list comments counts by video UUID")
+    public List<VideoCommentsCountDto> commentsCounts(@RequestBody VideoUuidsRequest request) {
+        if (request == null || request.videoUuids() == null || request.videoUuids().isEmpty()) {
+            return List.of();
+        }
+        List<CommentRepository.CommentCountView> rows = commentRepository.countByVideoUuidIn(request.videoUuids());
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        return rows.stream()
+                .filter(r -> r != null && r.getVideoUuid() != null)
+                .map(r -> new VideoCommentsCountDto(r.getVideoUuid(), r.getCount()))
                 .toList();
     }
 }

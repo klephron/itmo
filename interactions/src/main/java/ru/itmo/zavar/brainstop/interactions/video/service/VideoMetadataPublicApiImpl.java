@@ -44,6 +44,9 @@ public class VideoMetadataPublicApiImpl implements VideoMetadataPublicApi {
         } catch (FeignException.NotFound e) {
             return Optional.empty();
         }
+        if (summary == null) {
+            return Optional.empty();
+        }
         writeCache(summary);
         return Optional.of(summary);
     }

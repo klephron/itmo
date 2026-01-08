@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
-@FeignClient(name = "video-service", contextId = "videoAdminClient", path = "/internal/admin")
+@FeignClient(name = "video-service", contextId = "videoAdminClient", path = "/internal/admin", fallbackFactory = VideoAdminClientFallbackFactory.class)
 public interface VideoAdminClient {
 
     @PostMapping("/thumbnails/rebuild")

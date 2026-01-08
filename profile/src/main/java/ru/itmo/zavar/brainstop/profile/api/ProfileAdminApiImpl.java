@@ -21,7 +21,11 @@ public class ProfileAdminApiImpl implements ProfileAdminApi {
 
     @Override
     public List<ProfileUserDetails> findAllUsers() {
-        return this.authInternalClient.listUsers().stream()
+        List<UserAccountDto> accounts = this.authInternalClient.listUsers();
+        if (accounts == null) {
+            return List.of();
+        }
+        return accounts.stream()
                 .map(this::toDetails)
                 .toList();
     }
@@ -29,7 +33,7 @@ public class ProfileAdminApiImpl implements ProfileAdminApi {
     @Override
     public Optional<ProfileUserDetails> findUser(Long id) {
         try {
-            return Optional.of(toDetails(this.authInternalClient.getUser(id)));
+            return Optional.ofNullable(toDetails(this.authInternalClient.getUser(id)));
         } catch (FeignException.NotFound e) {
             return Optional.empty();
         }

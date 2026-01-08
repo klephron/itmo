@@ -32,7 +32,11 @@ public class FollowController {
         }
         Long currentUserId = principal.getId();
 
-        if (!userExists(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
 
@@ -48,7 +52,11 @@ public class FollowController {
         }
         Long currentUserId = principal.getId();
 
-        if (!userExists(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
 
@@ -59,7 +67,11 @@ public class FollowController {
     @GetMapping("/{id}/followers")
     @Operation(summary = "Список подписчиков пользователя")
     public ResponseEntity<List<PublicUserShortDto>> followers(@PathVariable Long id) {
-        if (!userExists(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(this.followService.getFollowers(id));
@@ -68,18 +80,22 @@ public class FollowController {
     @GetMapping("/{id}/following")
     @Operation(summary = "Кого читает пользователь")
     public ResponseEntity<List<PublicUserShortDto>> following(@PathVariable Long id) {
-        if (!userExists(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(this.followService.getFollowing(id));
     }
 
 
-    private boolean userExists(Long id) {
+    private Boolean userExists(Long id) {
         try {
-            return Boolean.TRUE.equals(this.authInternalClient.exists(id));
+            return this.authInternalClient.exists(id);
         } catch (FeignException e) {
-            return false;
+            return null;
         }
     }
 }

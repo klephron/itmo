@@ -21,6 +21,7 @@ public interface FileMetadataToFeedMapper {
     @Mapping(target = "likedByMe", expression = "java(isLiked(src, context))")
     @Mapping(target = "subscribedToAuthor", expression = "java(isSubscribed(src, context))")
     @Mapping(target = "availableQualities", expression = "java(mapQualities(src))")
+    @Mapping(target = "commentsCount", expression = "java(resolveCommentsCount(src, context))")
     @Mapping(target = "description", source = "description")
     FeedVideoDto toDto(FileMetadataEntity src, @Context FeedMapperContext context);
 
@@ -55,5 +56,12 @@ public interface FileMetadataToFeedMapper {
             return false;
         }
         return context.followingUserIds().contains(src.getUploaderId());
+    }
+
+    default Long resolveCommentsCount(FileMetadataEntity src, @Context FeedMapperContext context) {
+        if (src == null || src.getUuid() == null || context == null) {
+            return 0L;
+        }
+        return context.commentsCountByUuid().getOrDefault(src.getUuid(), 0L);
     }
 }

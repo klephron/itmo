@@ -687,6 +687,7 @@
             </div>
             <div style="text-align:right;">
                 <div id="videoInfoViews">—</div>
+                <div id="videoInfoComments">—</div>
                 <div id="videoInfoDate">—</div>
             </div>
         </div>
@@ -694,6 +695,7 @@
         <div class="comments">
             <div class="studio-section-title" style="margin-top:0;">Комментарии</div>
             <div id="commentsList" class="comments-list"></div>
+            <button class="small full" id="btnCommentsMore" style="display:none;">Показать ещё</button>
 
             <div id="commentsForm" class="form-row">
                 <input id="commentInput" type="text" placeholder="Напишите комментарий…">
@@ -929,6 +931,7 @@
     const sizeEl = document.getElementById('videoInfoSize');
     const dateEl = document.getElementById('videoInfoDate');
     const viewsEl = document.getElementById('videoInfoViews');
+    const commentsCountEl = document.getElementById('videoInfoComments');
     const statusFeedEl = document.getElementById('statusFeed');
     const statusUploadEl = document.getElementById('statusUpload');
     const statusStudioEl = document.getElementById('statusStudio');
@@ -1012,6 +1015,7 @@
     const videoDescriptionEl = document.getElementById('videoDescription');
 
     const commentsListEl = document.getElementById('commentsList');
+    const btnCommentsMore = document.getElementById('btnCommentsMore');
     const commentsFormEl = document.getElementById('commentsForm');
     const commentInputEl = document.getElementById('commentInput');
     const btnSendComment = document.getElementById('btnSendComment');
@@ -1078,6 +1082,8 @@
 
     // кэш: videoUuid -> массив комментариев
     const commentsCache = new Map();
+    // videoUuid -> {page,size,last,loading}
+    const commentsPaging = new Map();
 
     function setStatusComments(msg, type = '') {
         commentsStatusEl.textContent = msg || '';
@@ -1908,6 +1914,50 @@
         viewsEl.textContent = `· ${safe} просмотров`;
     }
 
+    function renderCommentsCount(count) {
+        if (!commentsCountEl) return;
+        const n = typeof count === 'number' ? count : 0;
+        let label;
+        if (n === 0) {
+            label = 'Нет комментариев';
+        } else if (n === 1) {
+            label = '1 комментарий';
+        } else if (n >= 2 && n <= 4) {
+            label = n + ' комментария';
+        } else {
+            label = n + ' комментариев';
+        }
+        commentsCountEl.textContent = label;
+    }
+
+    function updateCommentsCountForVideo(videoUuid, total) {
+        const idx = videosGlobalIndexByUuid(videoUuid);
+        if (idx !== -1) {
+            videos[idx].commentsCount = total;
+        }
+        if (currentVideoUuid === videoUuid) {
+            renderCommentsCount(total);
+        }
+    }
+
+    function adjustCommentsCount(videoUuid, delta) {
+        const idx = videosGlobalIndexByUuid(videoUuid);
+        const loaded = commentsCache.get(videoUuid)?.length || 0;
+        if (idx !== -1 && typeof videos[idx].commentsCount === 'number') {
+            const next = Math.max(0, Math.max(loaded, videos[idx].commentsCount + delta));
+            updateCommentsCountForVideo(videoUuid, next);
+            return;
+        }
+        updateCommentsCountForVideo(videoUuid, loaded);
+    }
+
+    function updateCommentsLoadMore(videoUuid) {
+        if (!btnCommentsMore) return;
+        const state = commentsPaging.get(videoUuid);
+        const hasMore = state && state.last === false && (state.loading === false || state.loading === undefined);
+        btnCommentsMore.style.display = hasMore ? '' : 'none';
+    }
+
 
     btnLike.addEventListener('click', async () => {
         if (!videos.length || currentIndex < 0 || currentIndex >= videos.length) return;
@@ -2545,9 +2595,11 @@
         // локально известные лайки/просмотры
         const baseLikes = (typeof v.likesCount === 'number') ? v.likesCount : 0;
         const baseViews = (typeof v.viewsCount === 'number') ? v.viewsCount : 0;
+        const baseComments = (typeof v.commentsCount === 'number') ? v.commentsCount : 0;
 
         updateLikeButtonWithCount(baseLikes, false);
         updateViews(baseViews);
+        renderCommentsCount(baseComments);
 
         setStatusFeed('Воспроизведение…', 'ok');
 
@@ -2658,33 +2710,84 @@
         setStatusComments('Загрузка комментариев…', '');
         commentsListEl.innerHTML = '';
 
+        commentsPaging.set(videoUuid, {page: 0, size: 20, last: false, loading: false});
+        updateCommentsLoadMore(videoUuid);
+
         // если уже в кэше — сначала покажем его, а потом тихо обновим
         if (commentsCache.has(videoUuid)) {
             renderComments(videoUuid, commentsCache.get(videoUuid));
         }
 
+        await fetchCommentsPage(videoUuid, true);
+    }
+
+    async function fetchCommentsPage(videoUuid, replace = false) {
+        const state = commentsPaging.get(videoUuid) || {page: 0, size: 20, last: false, loading: false};
+        if (state.loading || state.last) {
+            updateCommentsLoadMore(videoUuid);
+            return;
+        }
+        state.loading = true;
+        commentsPaging.set(videoUuid, state);
+        setStatusComments('Загрузка комментариев…', '');
+
         try {
-            const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/comments', {
-                headers: authHeaders()
-            });
+            const url = apiBase + `/api/videos/${videoUuid}/comments?page=${state.page}&size=${state.size}`;
+            const res = await fetch(url, { headers: authHeaders() });
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
 
-            const data = await res.json(); // List<CommentDto>
-            commentsCache.set(videoUuid, data);
-            renderComments(videoUuid, data);
+            const data = await res.json(); // Page<CommentDto> | List<CommentDto>
+            const pageTotal = typeof data.totalElements === 'number' ? data.totalElements : null;
+            const items = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+
+            if (replace) {
+                commentsCache.set(videoUuid, items);
+                renderComments(videoUuid, items, false);
+            } else {
+                const merged = (commentsCache.get(videoUuid) || []).concat(items);
+                commentsCache.set(videoUuid, merged);
+                renderComments(videoUuid, items, true);
+            }
+
+            const totalCount = pageTotal != null ? pageTotal : (commentsCache.get(videoUuid)?.length || 0);
+            updateCommentsCountForVideo(videoUuid, totalCount);
+
+            const isLast = (data && typeof data.last === 'boolean')
+                ? data.last
+                : (items.length < state.size);
+
+            commentsPaging.set(videoUuid, {
+                page: state.page + 1,
+                size: state.size,
+                last: isLast,
+                loading: false
+            });
+            updateCommentsLoadMore(videoUuid);
             setStatusComments('', '');
         } catch (e) {
             console.error(e);
             setStatusComments('Ошибка загрузки комментариев: ' + e.message, 'error');
+        } finally {
+            const updated = commentsPaging.get(videoUuid) || state;
+            updated.loading = false;
+            commentsPaging.set(videoUuid, updated);
+            updateCommentsLoadMore(videoUuid);
         }
     }
 
-    function renderComments(videoUuid, list) {
-        commentsListEl.innerHTML = '';
+    function renderComments(videoUuid, list, append = false) {
+        if (!append) {
+            commentsListEl.innerHTML = '';
+        }
 
         if (!list || list.length === 0) {
-            commentsListEl.innerHTML = '<div class="studio-row-meta">Комментариев пока нет</div>';
+            if (!append) {
+                commentsListEl.innerHTML = '<div class="studio-row-meta">Комментариев пока нет</div>';
+                if (currentVideoUuid === videoUuid) {
+                    renderCommentsCount(0);
+                }
+            }
             return;
         }
 
@@ -2798,6 +2901,14 @@
         }
     }
 
+    if (btnCommentsMore) {
+        btnCommentsMore.addEventListener('click', () => {
+            if (currentVideoUuid) {
+                fetchCommentsPage(currentVideoUuid, false);
+            }
+        });
+    }
+
     btnSendComment.addEventListener('click', async () => {
         if (!authToken) {
             setStatusComments('Войдите, чтобы комментировать', 'error');
@@ -2842,7 +2953,8 @@
             const list = commentsCache.get(v.uuid) || [];
             list.push(newComment);
             commentsCache.set(v.uuid, list);
-            renderComments(v.uuid, list);
+            renderComments(v.uuid, [newComment], true);
+            adjustCommentsCount(v.uuid, 1);
             setStatusComments('Комментарий отправлен', 'ok');
         } catch (e) {
             console.error(e);
@@ -2876,6 +2988,7 @@
             const list = (commentsCache.get(videoUuid) || []).filter(c => c.id !== commentId);
             commentsCache.set(videoUuid, list);
             renderComments(videoUuid, list);
+            adjustCommentsCount(videoUuid, -1);
             setStatusComments('Комментарий удалён', 'ok');
         } catch (e) {
             console.error(e);
@@ -4067,6 +4180,7 @@
             setStatusUpload('');
             setStatusStudio('');
             setStatusFeed('');
+            await loadVideoPage(0, false);
             await loadAccountProfile();
             await loadActiveJobsFromServer();
         } catch (e) {
@@ -4107,6 +4221,7 @@
             setStatusUpload('');
             setStatusStudio('');
             setStatusFeed('');
+            await loadVideoPage(0, false);
             await loadAccountProfile();
             await loadActiveJobsFromServer();
         } catch (e) {

@@ -69,6 +69,9 @@ public class ProfileInternalController {
     @Operation(summary = "Внутренний: включить/выключить пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> setEnabled(@PathVariable Long id, @RequestParam boolean enabled) {
         ProfileUserDetails updated = this.profileAdminApi.setEnabled(id, enabled);
+        if (updated == null) {
+            return ResponseEntity.status(503).build();
+        }
         return ResponseEntity.ok(updated);
     }
 
@@ -76,6 +79,9 @@ public class ProfileInternalController {
     @Operation(summary = "Внутренний: обновить роли пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> updateRoles(@PathVariable Long id, @RequestBody Set<Role> roles) {
         ProfileUserDetails updated = this.profileAdminApi.updateRoles(id, roles);
+        if (updated == null) {
+            return ResponseEntity.status(503).build();
+        }
         return ResponseEntity.ok(updated);
     }
 }

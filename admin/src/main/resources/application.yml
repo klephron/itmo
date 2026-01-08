@@ -70,6 +70,8 @@ resilience4j:
         slowCallRateThreshold: 50
         slowCallDurationThreshold: 2s
         automaticTransitionFromOpenToHalfOpenEnabled: true
+        ignoreExceptions:
+          - feign.FeignException$NotFound
     instances:
       default:
         baseConfig: default

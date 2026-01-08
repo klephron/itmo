@@ -40,6 +40,9 @@ public class ModerationController {
     public ResponseEntity<UserDetailDto> getUser(@PathVariable Long id) {
         try {
             ProfileUserDetails details = this.profileAdminClient.findUser(id);
+            if (details == null) {
+                return ResponseEntity.status(503).build();
+            }
             return ResponseEntity.ok(this.profileModerationMapper.toDto(details));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
@@ -51,6 +54,9 @@ public class ModerationController {
     @Operation(summary = "Получить видео пользователя")
     public ResponseEntity<List<UserVideoDto>> getUserVideos(@PathVariable Long id) {
         Boolean exists = this.profileAdminClient.exists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
         if (exists != null && !exists) {
             return ResponseEntity.notFound().build();
         }
@@ -63,7 +69,10 @@ public class ModerationController {
     @Operation(summary = "Забанить пользователя")
     public ResponseEntity<Void> banUser(@PathVariable Long id) {
         ProfileUserDetails updated = this.profileAdminClient.setEnabled(id, false);
-        return updated != null ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        if (updated == null) {
+            return ResponseEntity.status(503).build();
+        }
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/users/{id}/unban")
@@ -71,6 +80,9 @@ public class ModerationController {
     @Operation(summary = "Разбанить пользователя")
     public ResponseEntity<Void> unbanUser(@PathVariable Long id) {
         ProfileUserDetails updated = this.profileAdminClient.setEnabled(id, true);
-        return updated != null ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+        if (updated == null) {
+            return ResponseEntity.status(503).build();
+        }
+        return ResponseEntity.ok().build();
     }
 }

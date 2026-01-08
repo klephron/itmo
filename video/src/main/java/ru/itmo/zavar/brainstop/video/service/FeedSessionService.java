@@ -317,6 +317,7 @@ public class FeedSessionService {
                     item.uploadedAt(),
                     item.likesCount(),
                     item.viewsCount(),
+                    item.commentsCount(),
                     liked,
                     item.subscribedToAuthor(),
                     item.defaultHeight(),

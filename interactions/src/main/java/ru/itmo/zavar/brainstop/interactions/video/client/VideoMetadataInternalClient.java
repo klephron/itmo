@@ -9,7 +9,7 @@ import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataSummary;
 
 import java.util.UUID;
 
-@FeignClient(name = "video-service", contextId = "videoMetadataInternalClient", path = "/internal/videos/metadata")
+@FeignClient(name = "video-service", contextId = "videoMetadataInternalClient", path = "/internal/videos/metadata", fallbackFactory = VideoMetadataInternalClientFallbackFactory.class)
 public interface VideoMetadataInternalClient {
 
     @GetMapping("/{uuid}")

@@ -31,6 +31,9 @@ public class UserProfilePublicApiImpl implements UserProfilePublicApi {
         } catch (FeignException.NotFound e) {
             return Optional.empty();
         }
+        if (account == null) {
+            return Optional.empty();
+        }
 
         UserSummaryDto summary = new UserSummaryDto(
                 account.id(),

@@ -13,7 +13,7 @@ import ru.itmo.zavar.brainstop.common.security.Role;
 import java.util.List;
 import java.util.Set;
 
-@FeignClient(name = "brainstop-gateway", path = "/internal/users")
+@FeignClient(name = "brainstop-gateway", path = "/internal/users", fallbackFactory = AuthInternalClientFallbackFactory.class)
 public interface AuthInternalClient {
 
     @GetMapping("/{id}")
