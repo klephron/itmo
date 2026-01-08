@@ -1619,7 +1619,7 @@
     async function loadComplaints() {
         if (!authToken || !isModerator()) return;
         try {
-            const res = await fetch(apiBase + '/internal/moderation/complaints', {
+            const res = await fetch(apiBase + '/api/moderation/complaints/admin', {
                 headers: authHeaders()
             });
             if (res.status === 401 || res.status === 403) {
@@ -1671,7 +1671,7 @@
 
     async function resolveComplaint(id, deleteTarget, reject) {
         try {
-            const res = await fetch(apiBase + `/internal/moderation/complaints/${id}/resolve?deleteTarget=${deleteTarget}&reject=${reject}`, {
+            const res = await fetch(apiBase + `/api/moderation/complaints/admin/${id}/resolve?deleteTarget=${deleteTarget}&reject=${reject}`, {
                 method: 'POST',
                 headers: authHeaders()
             });
