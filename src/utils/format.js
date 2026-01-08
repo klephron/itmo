@@ -20,13 +20,14 @@ export function formatDate(iso) {
     }
 }
 
-export function formatViews(count) {
-    const n = Number.isFinite(count) ? count : 0;
-    if (n === 0) return 'Нет просмотров';
-    if (n === 1) return '1 просмотр';
-    if (n >= 2 && n <= 4) return `${n} просмотра`;
-    return `${n} просмотров`;
+const cases = [2, 0, 1, 1, 1, 2];
+export const pluralizeNum = (n, labels) => {
+    n = Math.abs(n);
+    return Number.isInteger(n) ? labels[(n % 100 > 4 && n % 100 < 20) ? 2 : cases[(n % 10 < 5) ? n % 10 : 5]] : labels[1];
 }
+
+export const formatFollowers = (n) => pluralizeNum(n, ["подписчик", "подписчика", "подписчиков"]);
+export const formatFollowing = (n) => pluralizeNum(n, ["подписка", "подписки", "подписок"]);
 
 /**
  * Форматирует число в компактный вид:

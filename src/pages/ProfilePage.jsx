@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { apiBase, authHeaders, isUnauthorized } from '../api/api';  // Импорт apiBase
+import { useEffect, useMemo, useState } from 'react';
+import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import Status from '../components/Status';
 import ThumbGrid, { ThumbCard } from '../components/ThumbGrid';
+import { Avatar, Box, Button, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
+import { formatCompactNumber, formatFollowers, formatFollowing } from "../utils/format.js";
 
 export default function ProfilePage({
                                         active,
@@ -160,73 +162,86 @@ export default function ProfilePage({
     const followingCount = profile?.followingCount ?? 0;
 
     return (
-        <div className={'card page ' + (active ? 'active' : '')} id="pageProfile">
-            <div className="header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div className="profile-avatar" id="profileAvatar">
-                        {profile?.avatarUrl ? <img src={`${apiBase}${profile?.avatarUrl}`} alt=""/> : null}
-                    </div>
-                    <div>
-                        <div className="title" id="profileDisplayName">
-                            {profile?.displayName || profile?.username || 'Профиль'}
-                        </div>
-                        <div className="studio-row-meta" id="profileUsername">
-                            {profile?.username ? '@' + profile.username : ''}
-                        </div>
-                        <div className="studio-row-meta" id="profileStats">
-                            {totalVideos} видео · {followers} подписчиков · {followingCount} подписок
-                        </div>
-                    </div>
-                </div>
-
-                <button
-                    className="small secondary"
-                    id="btnProfileFollow"
-                    style={{ display: (!isSelf && !!userId) ? '' : 'none' }}
-                    onClick={toggleFollow}
-                >
-                    {profile?.following ? 'Отписаться' : 'Подписаться'}
-                </button>
-            </div>
-
-            <div className="studio-section-title">Видео</div>
-
-            <div style={{ marginTop: 8,  marginBottom: 8 }}>
-                <select
-                    className="feed-select"
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                >
-                    <option value="uploadedAt,desc">Сначала новые</option>
-                    <option value="uploadedAt,asc">Сначала старые</option>
-                    <option value="viewsCount,desc">По просмотрам</option>
-                    <option value="likesCount,desc">По лайкам</option>
-                </select>
-            </div>
-
-            {(!videos || videos.length === 0) ? (
-                <div className="studio-row-meta">Видео пока нет</div>
-            ) : (
-                <ThumbGrid
-                    videos={videos}
-                    renderCard={(v) => (
-                        <ThumbCard
-                            key={v.uuid}
-                            video={v}
-                            showDelete={false}
-                            onOpen={() =>
-                                onGlobalPlayByUuid?.({
-                                    userId,
-                                    sort,
-                                    uuid: v.uuid,
-                                })
-                            }
+        <Stack spacing={1} flex={1}>
+            <Paper elevation={0}>
+                <Stack direction="row" p={1}>
+                    <Typography variant="h6" px={1}>Профиль пользователя</Typography>
+                </Stack>
+            </Paper>
+            <Paper elevation={0} sx={{ flex: 1 }}>
+                <Stack p={2} spacing={1}>
+                    <Stack direction="row" spacing={1} alignItems="flex-start">
+                        <Avatar
+                            src={profile?.avatarUrl ? `${apiBase}${profile.avatarUrl}` : undefined}
+                            sx={{ width: 42, height: 42 }}
+                        >
+                            {profile?.username?.[0]?.toUpperCase()}
+                        </Avatar>
+                        <Box flex={1}>
+                            <Typography variant="body1" fontWeight="bold">
+                                {profile?.displayName}
+                            </Typography>
+                            <Typography component="p" variant="caption" fontWeight="medium">
+                                @{profile?.username}
+                            </Typography>
+                        </Box>
+                        {!isSelf && !!userId && (
+                            <Button
+                                size="large"
+                                variant="contained"
+                                color={profile?.following ? "inherit" : "primary"}
+                                onClick={toggleFollow}
+                            >
+                                {profile?.following ? "Отписаться" : "Подписаться"}
+                            </Button>
+                        )}
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">
+                        {followers} {formatFollowers(followers)} · {followingCount} {formatFollowing(followingCount)}
+                    </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" pb={1}>
+                        <Stack direction="row" spacing={1}>
+                            <Typography variant="h6" fontWeight="bold">Видео</Typography>
+                            <Typography variant="body2" color="text.secondary" pt={1}>
+                                {formatCompactNumber(totalVideos)}
+                            </Typography>
+                        </Stack>
+                        <TextField
+                            select
+                            size="small"
+                            value={sort}
+                            onChange={(e) => setSort(e.target.value)}
+                        >
+                            <MenuItem value="uploadedAt,desc">Сначала новые</MenuItem>
+                            <MenuItem value="uploadedAt,asc">Сначала старые</MenuItem>
+                            <MenuItem value="viewsCount,desc">По просмотрам</MenuItem>
+                            <MenuItem value="likesCount,desc">По лайкам</MenuItem>
+                        </TextField>
+                    </Stack>
+                    {!videos || videos.length === 0 ? (
+                        <Typography>Видео пока нет</Typography>
+                    ) : (
+                        <ThumbGrid
+                            videos={videos}
+                            renderCard={(v) => (
+                                <ThumbCard
+                                    key={v.uuid}
+                                    video={v}
+                                    showDelete={false}
+                                    onOpen={() =>
+                                        onGlobalPlayByUuid?.({
+                                            userId,
+                                            sort,
+                                            uuid: v.uuid,
+                                        })
+                                    }
+                                />
+                            )}
                         />
                     )}
-                />
-            )}
-
-            <Status id="statusProfile" message={status.msg} type={status.type}/>
-        </div>
+                    <Status id="statusProfile" message={status.msg} type={status.type}/>
+                </Stack>
+            </Paper>
+        </Stack>
     );
 }

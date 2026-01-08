@@ -1,4 +1,4 @@
-import { createTheme } from "@mui/material";
+import { createTheme, outlinedInputClasses, selectClasses } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { ruRU } from "@mui/material/locale";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
@@ -79,7 +79,7 @@ export const theme = createTheme(
             MuiMenu: {
                 styleOverrides: {
                     paper: ({ theme }) => ({
-                        borderRadius: `calc(2 * ${theme.vars.shape.borderRadius})`,
+                        borderRadius: `calc(4 * ${theme.vars.shape.borderRadius})`,
                     }),
                 },
             },
@@ -107,6 +107,25 @@ export const theme = createTheme(
                                 },
                             },
                         ]
+                    }),
+                },
+            },
+            MuiTextField: {
+                styleOverrides: {
+                    root: ({ theme }) => ({
+                        variants: [
+                            {
+                                props: { select: true, size: "small" },
+                                style: {
+                                    [`& .${outlinedInputClasses.root} .${outlinedInputClasses.input}.${selectClasses.select}`]: {
+                                        paddingRight: 43,
+                                    },
+                                    [`.${selectClasses.icon}`]: {
+                                        right: 11,
+                                    },
+                                },
+                            },
+                        ],
                     }),
                 },
             },
