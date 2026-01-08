@@ -15,9 +15,9 @@ import { CommentsDialog } from "../components/CommentsDialog.jsx";
 import { QualityDialog } from "../components/QualityDialog.jsx";
 import { ComplaintDialog } from "../components/ComplaintDialog.jsx";
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
-const PREFETCH_DELTA = 1;
+const PREFETCH_DELTA = 2;
 
 function getOrCreateDeviceId() {
     const key = 'feed-device-id';
@@ -92,19 +92,22 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
+            const items = data.items ?? data.content ?? [];
 
             const newSnapshot = {
                 feedId: data.feedId ?? null,
                 prevPos: data.prevPos ?? null,
+                curPos: 0,
                 nextPos: data.nextPos ?? null,
                 number: data.number ?? 0,
                 first: data.first ?? true,
                 last: data.last ?? true,
             };
-            const newVideos = (data.items ?? data.content ?? []).map((v, index) => ({
+            const newVideos = items.map((v, index) => ({
                 ...v,
                 snapshot: newSnapshot,
                 localIndex: index,
+                lastIndex: items.length - 1,
             }));
 
             let newIndex = 0;
@@ -123,16 +126,20 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         }
     }
 
-    async function prefetch(direction) {
+    async function prefetch(direction, snapshot, restoreCurPage = false) {
         if (loading) return;
         setLoading(true);
 
         try {
-            let url, res;
+            let pos, page, url, res;
 
             if (feedModeRef.current.type === 'global') {
-                const { feedId, nextPos, prevPos } = snapshot;
-                const pos = direction === 'next' ? (nextPos ?? 0) : prevPos; // если nextPos null, то берем 0
+                const { feedId, nextPos, curPos, prevPos } = snapshot;
+                if (direction === 'next') {
+                    pos = nextPos ?? 0; // если nextPos null, то берем 0
+                } else {
+                    pos = restoreCurPage ? curPos : prevPos;
+                }
 
                 if ((prevPos === null && nextPos === null) || pos === null) {
                     return; // если страница одна либо pos null - выходим
@@ -142,11 +149,10 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 res = await fetch(url, { headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) } });
             } else {
                 const { number, first, last } = snapshot;
-                let page;
                 if (direction === 'next') {
                     page = last ? 0 : number + 1;
                 } else {
-                    page = number - 1;
+                    page = restoreCurPage ? number : number - 1;
                 }
 
                 if ((first && last) || page < 0) {
@@ -160,10 +166,12 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
+            const items = data.items ?? data.content ?? [];
 
             const newSnapshot = {
                 feedId: data.feedId ?? null,
                 prevPos: data.prevPos ?? null,
+                curPos: pos ?? 0,
                 nextPos: data.nextPos ?? null,
                 number: data.number ?? 0,
                 first: data.first ?? true,
@@ -173,26 +181,36 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 ...v,
                 snapshot: newSnapshot,
                 localIndex: index,
+                lastIndex: items.length - 1,
             }));
 
             setWindow((prev) => {
-                let nextVideos;
-                let nextIndex = prev.currentIndex;
+                let nextVideos, nextIndex;
 
                 if (direction === 'next') {
                     nextVideos = [...prev.videos, ...newVideos];
-                } else {
+                    nextIndex = prev.currentIndex;
+                } else if (!restoreCurPage) {
                     nextVideos = [...newVideos, ...prev.videos];
+                    nextIndex = prev.currentIndex + newVideos.length;
+                } else {
+                    const current = prev.videos[prev.currentIndex];
+                    if (!current) return prev;
+
+                    nextVideos = [
+                        ...newVideos.slice(0, current.localIndex), // все видео левее текущего (на его странице)
+                        ...prev.videos.slice(prev.currentIndex), // все видео правее текущего (в окне)
+                    ];
+                    nextIndex = current.localIndex;
                 }
 
                 if (nextVideos.length > MAX_WINDOW) {
                     const overflow = nextVideos.length - MAX_WINDOW;
                     if (direction === 'next') {
                         nextVideos = nextVideos.slice(overflow);
-                        nextIndex = Math.max(prev.currentIndex - overflow, 0);
+                        nextIndex = Math.max(nextIndex - overflow, 0);
                     } else {
                         nextVideos = nextVideos.slice(0, MAX_WINDOW);
-                        nextIndex = prev.currentIndex + newVideos.length;
                     }
                 }
 
@@ -309,12 +327,20 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             const nextIdx = currentIndex + 1;
             setCurrentIndex(nextIdx);
 
-            if (videos.length - 1 - nextIdx <= PREFETCH_DELTA) {
-                prefetch('next');
+            const nextVideo = videos[nextIdx];
+            if (!nextVideo) return;
+
+            const { snapshot, localIndex, lastIndex } = nextVideo;
+            const distToWindowEnd = videos.length - 1 - nextIdx;
+            const distToPageEnd = lastIndex - localIndex;
+
+            // Подгружаем только если видео находится на последней странице в окне
+            if (distToWindowEnd <= PREFETCH_DELTA && distToWindowEnd <= distToPageEnd) {
+                prefetch('next', snapshot); // тут snapshot следующего видео!
             }
         } else {
             const type = feedModeRef.current.type;
-            const { prevPos, nextPos, first, last } = snapshot;
+            const { prevPos, nextPos, first, last } = snapshot; // тут snapshot текущего видео!
 
             // Конец окна и одна страница - перемещаемся в начало окна
             if ((type === 'global' && prevPos === nextPos) || (type === 'profile' && first === last)) {
@@ -339,8 +365,13 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             const nextIdx = currentIndex - 1;
             setCurrentIndex(nextIdx);
 
+            const nextVideo = videos[nextIdx];
+            if (!nextVideo) return;
+
+            const { snapshot, localIndex } = nextVideo;
+
             if (nextIdx <= PREFETCH_DELTA) {
-                prefetch('prev');
+                prefetch('prev', snapshot, nextIdx < localIndex);
             }
         }
     }
@@ -391,7 +422,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             goNext,
             goPrev,
         });
-    }, [exposeControls, videos]);
+    }, [exposeControls, window]);
 
     useEffect(() => {
         if (!active) return;

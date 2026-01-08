@@ -157,7 +157,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                     overflowY: 'auto',
                 }}
             >
-                {!list || list.length === 0 ? (
+                {true ? (
                     <Typography>
                         Комментариев пока нет
                     </Typography>
