@@ -100,7 +100,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
         if (!token || !isModerator) return;
 
         try {
-            const res = await fetch(apiBase + '/internal/moderation/complaints', {
+            const res = await fetch(apiBase + '/api/moderation/complaints/admin', {
                 headers: authHeaders(token),
             });
 
@@ -199,7 +199,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
         try {
             const res = await fetch(
-                apiBase + `/api/moderation/complaints/${id}/resolve` +
+                apiBase + `/api/moderation/complaints/admin/${id}/resolve` +
                 `?deleteTarget=${deleteTarget}&reject=${reject}`,
                 {
                     method: 'POST',
