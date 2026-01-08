@@ -154,6 +154,7 @@ class FeedSessionServiceTest {
                 null,
                 0L,
                 0L,
+                0L,
                 false,
                 false,
                 720,

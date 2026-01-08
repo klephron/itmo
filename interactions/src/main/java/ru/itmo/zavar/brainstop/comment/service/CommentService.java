@@ -4,6 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,10 +49,26 @@ public class CommentService {
             return applyMine(cached, currentUserId);
         }
 
-        List<CommentEntity> comments =
-                this.commentRepository.findByVideoUuidOrderByCreatedAtAsc(videoUuid);
+        Page<CommentDto> page = listComments(videoUuid, currentUserId, Pageable.unpaged());
+        writeCommentsCache(videoUuid, page.getContent());
+        return page.getContent();
+    }
 
-        List<CommentDto> result = comments.stream()
+    @Transactional(readOnly = true)
+    public Page<CommentDto> listComments(UUID videoUuid, Long currentUserId, Pageable pageable) {
+        this.videoMetadataPublicApi.getRequired(videoUuid);
+
+        Pageable ordered = pageable == null
+                ? PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt"))
+                : PageRequest.of(
+                Math.max(0, pageable.getPageNumber()),
+                Math.max(1, pageable.getPageSize()),
+                Sort.by(Sort.Direction.ASC, "createdAt")
+        );
+
+        Page<CommentEntity> page = this.commentRepository.findByVideoUuid(videoUuid, ordered);
+
+        List<CommentDto> dtos = page.getContent().stream()
                 .map(c -> {
                     UserSummaryDto user = c.getAuthorId() == null
                             ? null
@@ -64,8 +85,7 @@ public class CommentService {
                 })
                 .toList();
 
-        writeCommentsCache(videoUuid, result);
-        return result;
+        return new PageImpl<>(dtos, page.getPageable(), page.getTotalElements());
     }
 
     @Transactional

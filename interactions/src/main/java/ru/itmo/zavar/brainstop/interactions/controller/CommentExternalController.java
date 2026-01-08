@@ -2,6 +2,8 @@ package ru.itmo.zavar.brainstop.interactions.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,9 +33,12 @@ public class CommentExternalController {
 
     @GetMapping
     @Operation(summary = "Получить комментарии видео")
-    public ResponseEntity<List<CommentDto>> list(@PathVariable UUID videoUuid, @AuthenticationPrincipal CurrentUser principal) {
+    public ResponseEntity<Page<CommentDto>> list(@PathVariable UUID videoUuid,
+                                                 @RequestParam(defaultValue = "0") int page,
+                                                 @RequestParam(defaultValue = "20") int size,
+                                                 @AuthenticationPrincipal CurrentUser principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
-        return ResponseEntity.ok(this.commentService.listComments(videoUuid, currentUserId));
+        return ResponseEntity.ok(this.commentService.listComments(videoUuid, currentUserId, PageRequest.of(Math.max(0, page), Math.max(1, size))));
     }
 
     @PostMapping

@@ -17,6 +17,7 @@ public record FeedVideoDto(
 
         Long likesCount,
         Long viewsCount,
+        Long commentsCount,
 
         boolean likedByMe,
         boolean subscribedToAuthor,

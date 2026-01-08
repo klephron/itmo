@@ -15,6 +15,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 @Service
 // MSPLIT: boundary for future Comment Service API
@@ -26,13 +29,12 @@ public class CommentService {
     private final UserProfilePublicApi userProfilePublicApi;
 
     @Transactional(readOnly = true)
-    public List<CommentDto> listComments(UUID videoUuid, Long currentUserId) {
+    public Page<CommentDto> listComments(UUID videoUuid, Long currentUserId, Pageable pageable) {
         this.videoMetadataPublicApi.getRequired(videoUuid);
 
-        List<CommentEntity> comments =
-                this.commentRepository.findByVideoUuidOrderByCreatedAtAsc(videoUuid);
+        Page<CommentEntity> page = this.commentRepository.findByVideoUuid(videoUuid, pageable);
 
-        return comments.stream()
+        List<CommentDto> dtos = page.getContent().stream()
                 .map(c -> {
                     UserSummaryDto user = c.getAuthorId() == null
                             ? null
@@ -48,6 +50,13 @@ public class CommentService {
                     );
                 })
                 .toList();
+
+        return new PageImpl<>(dtos, page.getPageable(), page.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentDto> listComments(UUID videoUuid, Long currentUserId) {
+        return listComments(videoUuid, currentUserId, Pageable.unpaged()).getContent();
     }
 
     @Transactional

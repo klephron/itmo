@@ -1,5 +1,7 @@
 package ru.itmo.zavar.brainstop.comment.repo;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.itmo.zavar.brainstop.comment.model.CommentEntity;
 
@@ -10,6 +12,7 @@ public interface CommentRepository extends JpaRepository<CommentEntity, Long> {
 
     List<CommentEntity> findByVideoUuidOrderByCreatedAtAsc(UUID videoUuid);
 
+    Page<CommentEntity> findByVideoUuid(UUID videoUuid, Pageable pageable);
+
     long countByVideoUuid(UUID videoUuid);
 }
-

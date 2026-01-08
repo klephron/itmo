@@ -9,6 +9,7 @@ import ru.itmo.zavar.brainstop.common.api.profile.FollowQueryApi;
 import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FeedVideoDto;
 import ru.itmo.zavar.brainstop.common.infra.VectorConverter;
+import ru.itmo.zavar.brainstop.comment.repo.CommentRepository;
 import ru.itmo.zavar.brainstop.like.repo.VideoViewRepository;
 import ru.itmo.zavar.brainstop.like.repo.VideoWatchRepository;
 import ru.itmo.zavar.brainstop.like.repo.WatchProgressSummary;
@@ -36,6 +37,7 @@ public class FeedService {
     private final VideoViewRepository videoViewRepository;
     private final VideoWatchRepository videoWatchRepository;
     private final FileMetadataToFeedMapper mapper;
+    private final CommentRepository commentRepository;
     private final VectorConverter vectorConverter = new VectorConverter();
 
     public Page<FeedVideoDto> getFeed(Long currentUserId, Pageable pageable) {
@@ -61,6 +63,8 @@ public class FeedService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+        Map<UUID, Long> commentsCountByUuid = resolveCommentsCount(entities);
+
         Set<Long> likedByMe;
         Set<Long> followingIds;
 
@@ -76,7 +80,8 @@ public class FeedService {
                 currentUserId,
                 avatarByUserId,
                 likedByMe,
-                followingIds
+                followingIds,
+                commentsCountByUuid
         );
 
         List<FeedVideoDto> feedItems = this.mapper.toDto(entities, mapperContext);
@@ -299,6 +304,27 @@ public class FeedService {
             ratios.put(p.getVideoId(), Math.min(1d, ratio));
         }
         return ratios;
+    }
+
+    private Map<UUID, Long> resolveCommentsCount(List<FileMetadataEntity> entities) {
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Set<UUID> uuids = entities.stream()
+                .map(FileMetadataEntity::getUuid)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (uuids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<UUID, Long> counts = new HashMap<>();
+        for (CommentRepository.CommentCountView row : commentRepository.countByVideoUuidIn(uuids)) {
+            if (row == null || row.getVideoUuid() == null) {
+                continue;
+            }
+            counts.put(row.getVideoUuid(), row.getCount());
+        }
+        return counts;
     }
 
     private record WeightedVector(float[] vector, double weight) {
