@@ -288,7 +288,8 @@ public class FeedSessionService {
         if (idByUuid.isEmpty()) {
             return items;
         }
-        Set<Long> likedIds = new HashSet<>(likeQueryApi.findLikedVideoIds(userId, idByUuid.values()));
+        List<Long> likedVideoIds = likeQueryApi.findLikedVideoIds(userId, idByUuid.values());
+        Set<Long> likedIds = likedVideoIds == null ? Collections.emptySet() : new HashSet<>(likedVideoIds);
         List<FeedVideoDto> updated = new ArrayList<>(items.size());
         for (FeedVideoDto item : items) {
             if (item == null || item.uuid() == null) {
