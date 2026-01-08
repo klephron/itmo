@@ -62,6 +62,20 @@ export const theme = createTheme(
                     }),
                 },
             },
+            MuiFab: {
+                styleOverrides: {
+                    root: ({ theme }) => ({
+                        variants: [
+                            {
+                                props: { size: 'small' },
+                                style: {
+                                    padding: theme.spacing(2),
+                                },
+                            },
+                        ]
+                    }),
+                },
+            },
             MuiMenu: {
                 styleOverrides: {
                     paper: ({ theme }) => ({

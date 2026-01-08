@@ -1,8 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
-import { Avatar, Button, Divider, Stack, TextField, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import {
+    Avatar,
+    Box,
+    Button,
+    CircularProgress,
+    Divider,
+    Fab,
+    Skeleton,
+    Stack,
+    TextField,
+    Typography
+} from "@mui/material";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 
 import { SwipeableDialog } from "./SwipeableDialog";
 import { formatCompactNumber, formatDate } from "../utils/format.js";
@@ -11,117 +23,150 @@ import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
 import { ComplaintDialog } from "./ComplaintDialog.jsx";
 import { ConfirmDialog } from "./ConfirmDialog.jsx";
 
+const PAGE_SIZE = 20;
+
 export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequireAuth }) {
     const { token, user } = useAuth();
+
+    const [comments, setComments] = useState([]);
+    const [page, setPage] = useState(0);
+    const [hasNext, setHasNext] = useState(false);
+    const [totalElements, setTotalElements] = useState(0);
+    const [loading, setLoading] = useState(false);
+
+    const [status, setStatus] = useState({ msg: "", type: "" });
+    const [text, setText] = useState("");
 
     const [complaintDialogOpen, setComplaintDialogOpen] = useState(false);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [commentId, setCommentId] = useState(null);
 
-    const [cache] = useState(() => new Map());
-    const [list, setList] = useState([]);
-    const [status, setStatus] = useState({ msg: '', type: '' });
-    const [text, setText] = useState('');
+    const loadPage = async (pageToLoad) => {
+        if (!videoUuid || loading) return;
 
-    const cached = useMemo(() => (videoUuid ? cache.get(videoUuid) : null), [cache, videoUuid]);
+        setLoading(true);
+        setStatus({ msg: "Загрузка комментариев…", type: "" });
 
-    useEffect(() => {
-        if (!videoUuid) return;
-        if (cached) setList(cached);
+        try {
+            const res = await fetch(
+                `${apiBase}/api/videos/${videoUuid}/comments?page=${pageToLoad}&size=${PAGE_SIZE}`,
+                { headers: authHeaders(token) }
+            );
 
-        let aborted = false;
+            if (!res.ok) throw new Error("HTTP " + res.status);
 
-        async function load() {
-            setStatus({ msg: 'Загрузка комментариев…', type: '' });
-            try {
-                const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/comments', {
-                    headers: authHeaders(token),
-                });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const data = await res.json();
-                if (aborted) return;
-                cache.set(videoUuid, data);
-                setList(data);
-                setStatus({ msg: '', type: '' });
-            } catch (e) {
-                if (aborted) return;
-                setStatus({ msg: 'Ошибка загрузки комментариев: ' + e.message, type: 'error' });
-            }
+            const data = await res.json();
+
+            setComments((prev) => [...prev, ...data.content]);
+            setHasNext(!data.last);
+            setTotalElements(data.totalElements);
+            setPage(pageToLoad);
+            setStatus({ msg: "", type: "" });
+        } catch (e) {
+            setStatus({
+                msg: "Ошибка загрузки комментариев: " + e.message,
+                type: "error"
+            });
+        } finally {
+            setLoading(false);
         }
-
-        load();
-        return () => {
-            aborted = true;
-        };
-    }, [videoUuid, token, cache, cached]);
+    }
 
     async function send() {
         if (!token) {
-            setStatus({ msg: 'Войдите, чтобы комментировать', type: 'error' });
+            setStatus({ msg: "Войдите, чтобы комментировать", type: "error" });
             onRequireAuth?.();
             return;
         }
+
         const trimmed = text.trim();
         if (!trimmed) {
-            setStatus({ msg: 'Введите текст комментария', type: 'error' });
+            setStatus({ msg: "Введите текст комментария", type: "error" });
             return;
         }
 
         try {
-            const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/comments', {
-                method: 'POST',
-                headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: trimmed }),
-            });
+            const res = await fetch(
+                `${apiBase}/api/videos/${videoUuid}/comments`,
+                {
+                    method: "POST",
+                    headers: {
+                        ...authHeaders(token),
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ text: trimmed }),
+                }
+            );
 
             if (isUnauthorized(res)) {
-                setStatus({ msg: 'Сессия истекла, войдите снова', type: 'error' });
+                setStatus({
+                    msg: "Сессия истекла, войдите снова",
+                    type: "error",
+                });
                 onRequireAuth?.();
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error("HTTP " + res.status);
 
             const newComment = await res.json();
-            const next = [...(cache.get(videoUuid) || []), newComment];
-            cache.set(videoUuid, next);
-            setList(next);
-            setText('');
-            setStatus({ msg: 'Комментарий отправлен', type: 'ok' });
+            setComments((prev) => [...prev, newComment]);
+            setText("");
+            setStatus({ msg: "Комментарий отправлен", type: "ok" });
         } catch (e) {
-            setStatus({ msg: 'Ошибка отправки: ' + e.message, type: 'error' });
+            setStatus({ msg: "Ошибка отправки: " + e.message, type: "error" });
         }
     }
 
-    async function deleteComment(commentId) {
+    async function deleteComment(id) {
         if (!token) {
-            setStatus({ msg: 'Войдите, чтобы удалять комментарии', type: 'error' });
+            setStatus({
+                msg: "Войдите, чтобы удалять комментарии",
+                type: "error",
+            });
             onRequireAuth?.();
             return;
         }
 
         try {
-            const res = await fetch(apiBase + `/api/videos/${videoUuid}/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: authHeaders(token),
-            });
+            const res = await fetch(
+                `${apiBase}/api/videos/${videoUuid}/comments/${id}`,
+                {
+                    method: "DELETE",
+                    headers: authHeaders(token),
+                }
+            );
 
             if (isUnauthorized(res)) {
-                setStatus({ msg: 'Сессия истекла, войдите снова', type: 'error' });
+                setStatus({
+                    msg: "Сессия истекла, войдите снова",
+                    type: "error",
+                });
                 onRequireAuth?.();
                 return;
             }
 
-            if (!res.ok && res.status !== 204) throw new Error('HTTP ' + res.status);
+            if (!res.ok && res.status !== 204)
+                throw new Error("HTTP " + res.status);
 
-            const next = (cache.get(videoUuid) || []).filter((c) => c.id !== commentId);
-            cache.set(videoUuid, next);
-            setList(next);
-            setStatus({ msg: 'Комментарий удалён', type: 'ok' });
+            setComments((prev) => prev.filter((c) => c.id !== id));
+            setStatus({ msg: "Комментарий удалён", type: "ok" });
         } catch (e) {
-            setStatus({ msg: 'Ошибка удаления: ' + e.message, type: 'error' });
+            setStatus({ msg: "Ошибка удаления: " + e.message, type: "error" });
         }
     }
+
+    useEffect(() => {
+        if (!open || !videoUuid) return;
+
+        setComments([]);
+        setPage(0);
+        setHasNext(false);
+        setTotalElements(0);
+        setStatus({ msg: "", type: "" });
+
+        loadPage(0);
+    }, [open, videoUuid]);
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -131,6 +176,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
         }
     }
 
+    const handleLoadMore = () => loadPage(page + 1);
     const handleConfirm = () => deleteComment(commentId);
 
     if (!videoUuid) return null;
@@ -143,7 +189,14 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                 <Stack direction="row" spacing={2}>
                     <span>Комментарии</span>
                     <Typography component="span" variant="body2" color="textSecondary" pt={1}>
-                        {formatCompactNumber(list?.length)}
+                        {loading && !totalElements ? (
+                            <Skeleton
+                                width={24}
+                                animation="wave"
+                            />
+                        ) : (
+                            formatCompactNumber(totalElements)
+                        )}
                     </Typography>
                 </Stack>
             }
@@ -157,11 +210,34 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                     overflowY: 'auto',
                 }}
             >
-                {true ? (
+                {loading && !comments.length ? Array.from({ length: 3 }, (_, index) => (
+                    <Stack
+                        key={index}
+                        direction="row"
+                        spacing={1.5}
+                        alignItems="flex-start"
+                        pt={index === 0 ? 1 : 0}
+                    >
+                        <Skeleton
+                            variant="circular"
+                            width={32}
+                            height={32}
+                            animation="wave"
+                        />
+                        <Stack spacing={0.5} flex={1}>
+                            <Typography variant="caption" sx={{ position: 'relative', top: -2 }}>
+                                <Skeleton width="30%" animation="wave"/>
+                            </Typography>
+                            <Typography variant="body2">
+                                <Skeleton width="100%" animation="wave"/>
+                            </Typography>
+                        </Stack>
+                    </Stack>
+                )) : !comments.length ? (
                     <Typography>
                         Комментариев пока нет
                     </Typography>
-                ) : list.map((c, index) => (
+                ) : comments.map((c, index) => (
                     <Stack
                         key={c.id}
                         direction="row"
@@ -183,14 +259,14 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                             flex={1}
                             sx={{
                                 position: 'relative',
-                                top: -8,
+                                top: user ? -8 : -2,
                                 overflow: 'hidden',
                             }}
                         >
                             <Stack
                                 direction="row"
                                 spacing={1}
-                                alignItems="flex-end"
+                                alignItems={"flex-end"}
                                 flexWrap="wrap"
                             >
                                 <Typography
@@ -252,7 +328,32 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                 ))}
             </Stack>
             <Divider/>
-            <Stack spacing={1} p={2}>
+            <Box p={2} position="relative">
+                {hasNext && (
+                    <Fab
+                        variant="extended"
+                        size="small"
+                        sx={(theme) => ({
+                            position: 'absolute',
+                            top: 0,
+                            left: "50%",
+                            transform: `translate(-50%, calc(-100% - 1px - ${theme.spacing(2)}))`,
+                        })}
+                        onClick={handleLoadMore}
+                        disabled={loading}
+                    >
+                        Загрузить еще
+                        {loading ? (
+                            <CircularProgress
+                                color="inherit"
+                                size={16}
+                                sx={{ ml: 1, position: 'relative', left: 4 }}
+                            />
+                        ) : (
+                            <ExpandMoreRoundedIcon sx={{ position: 'relative', left: 6 }}/>
+                        )}
+                    </Fab>
+                )}
                 {user ? (
                     <Stack direction="row" spacing={2} alignItems="flex-end">
                         <TextField
@@ -283,7 +384,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                         Войдите в аккаунт, чтобы оставлять комментарии
                     </Typography>
                 )}
-            </Stack>
+            </Box>
             <ComplaintDialog
                 open={complaintDialogOpen}
                 setOpen={setComplaintDialogOpen}

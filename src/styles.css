@@ -150,7 +150,6 @@ button {
     font-weight: 500;
     background: #f5f5f5;
     color: #111;
-    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
 }
 
 button.secondary {
@@ -174,7 +173,6 @@ button.full {
 }
 
 button:active {
-    transform: scale(0.97);
     box-shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
 
