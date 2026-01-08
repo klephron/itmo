@@ -300,28 +300,22 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         console.log(msg, type)
     }
 
-    function preloadVideo(videoIndex, el, mode) {
-        if (!el) return;
-        if (videoIndex < 0 || videoIndex >= videos.length) return;
-        const meta = videos[videoIndex];
-        const url = meta.selectedQuality
-            ? `${apiBase}/api/streaming/video/${meta.uuid}?quality=${meta.selectedQuality}`
-            : `${apiBase}/api/streaming/video/${meta.uuid}`;
+    function preloadVideo(videoIndex, el, mode = 'metadata') {
+        if (!el || videoIndex < 0 || videoIndex >= videos.length) return;
+
+        const video = videos[videoIndex];
+        const url = video.selectedQuality
+            ? `${apiBase}/api/streaming/video/${video.uuid}?quality=${video.selectedQuality}`
+            : `${apiBase}/api/streaming/video/${video.uuid}`;
+
+        // сли уже загружаем это видео — ничего не делаем
         if (el.src === url) return;
 
-        try {
-            el.pause();
-            el.removeAttribute('src');
-            el.load();
-            el.preload = mode || 'auto';
-            el.src = url;
-            el.load();
-        } catch {
-        }
+        el.preload = mode;
+        el.src = url;
     }
 
     function preloadAround(index) {
-        if (videos.length === 0 || index < 0) return;
         preloadVideo(index + 1, preload1Ref.current, 'auto');
         preloadVideo(index + 2, preload2Ref.current, 'metadata');
     }
@@ -419,8 +413,6 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             : `${apiBase}/api/streaming/video/${uuid}`;
 
         if (player.src === url) return;
-
-        console.log(playerStateRef.current);
 
         const saved = playerStateRef.current;
         const isSameVideo = saved?.uuid === uuid;
@@ -613,8 +605,8 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                     )}
                 </Stack>
                 <video ref={playerRef} id="player" controls playsInline muted/>
-                <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted preload="auto"/>
-                <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted preload="metadata"/>
+                <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted/>
+                <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted/>
             </Box>
             <VideoInfoDialog
                 open={videoInfoDialogOpen}
