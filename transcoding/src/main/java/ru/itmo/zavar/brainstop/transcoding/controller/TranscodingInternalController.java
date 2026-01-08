@@ -1,5 +1,6 @@
 package ru.itmo.zavar.brainstop.transcoding.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -22,7 +23,7 @@ public class TranscodingInternalController {
 
     @PostMapping("/jobs")
     @Operation(summary = "Запустить транскодинг")
-    public ResponseEntity<Void> start(@RequestBody TranscodingCommand command) throws Exception {
+    public ResponseEntity<Void> start(@Valid @RequestBody TranscodingCommand command) throws Exception {
         if (command == null || !StringUtils.hasText(command.storageKey()) || command.jobId() == null) {
             return ResponseEntity.badRequest().build();
         }

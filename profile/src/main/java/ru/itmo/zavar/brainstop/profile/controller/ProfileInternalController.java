@@ -1,5 +1,6 @@
 package ru.itmo.zavar.brainstop.profile.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +38,7 @@ public class ProfileInternalController {
 
     @PostMapping("/follow/check")
     @Operation(summary = "Внутренний: проверить подписки в списке candidateIds")
-    public ResponseEntity<Set<Long>> checkFollowing(@RequestBody FollowCheckRequest request) {
+    public ResponseEntity<Set<Long>> checkFollowing(@Valid @RequestBody FollowCheckRequest request) {
         if (request == null || request.followerId() == null || request.candidateIds() == null || request.candidateIds().isEmpty()) {
             return ResponseEntity.ok(Collections.emptySet());
         }

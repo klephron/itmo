@@ -2,6 +2,7 @@ package ru.itmo.zavar.brainstop.interactions.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,7 +35,7 @@ public class InteractionsInternalController {
 
     @PostMapping("/likes/ids")
     @Operation(summary = "Internal: list liked video IDs")
-    public List<Long> likedVideoIds(@RequestBody VideoIdsRequest request) {
+    public List<Long> likedVideoIds(@Valid @RequestBody VideoIdsRequest request) {
         if (request == null || request.userId() == null || request.videoIds() == null || request.videoIds().isEmpty()) {
             return List.of();
         }
@@ -43,7 +44,7 @@ public class InteractionsInternalController {
 
     @PostMapping("/views/ids")
     @Operation(summary = "Internal: list viewed video IDs")
-    public List<Long> viewedVideoIds(@RequestBody VideoIdsRequest request) {
+    public List<Long> viewedVideoIds(@Valid @RequestBody VideoIdsRequest request) {
         if (request == null || request.userId() == null || request.videoIds() == null || request.videoIds().isEmpty()) {
             return List.of();
         }
@@ -56,7 +57,7 @@ public class InteractionsInternalController {
 
     @PostMapping("/watch/progress")
     @Operation(summary = "Internal: list watch progress summaries")
-    public List<WatchProgressSummaryDto> watchProgress(@RequestBody VideoIdsRequest request) {
+    public List<WatchProgressSummaryDto> watchProgress(@Valid @RequestBody VideoIdsRequest request) {
         if (request == null || request.userId() == null || request.videoIds() == null || request.videoIds().isEmpty()) {
             return List.of();
         }
@@ -71,7 +72,7 @@ public class InteractionsInternalController {
 
     @PostMapping("/comments/counts")
     @Operation(summary = "Internal: list comments counts by video UUID")
-    public List<VideoCommentsCountDto> commentsCounts(@RequestBody VideoUuidsRequest request) {
+    public List<VideoCommentsCountDto> commentsCounts(@Valid @RequestBody VideoUuidsRequest request) {
         if (request == null || request.videoUuids() == null || request.videoUuids().isEmpty()) {
             return List.of();
         }

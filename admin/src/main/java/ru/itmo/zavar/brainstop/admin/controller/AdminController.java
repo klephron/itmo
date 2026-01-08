@@ -1,5 +1,6 @@
 package ru.itmo.zavar.brainstop.admin.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,9 +55,9 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Обновить роли пользователя")
     public ResponseEntity<Set<Role>> updateUserRoles(@PathVariable Long id,
-                                                     @RequestBody UpdateUserRolesRequest req) {
+                                                     @Valid @RequestBody UpdateUserRolesRequest req) {
         try {
-            ProfileUserDetails updated = this.profileAdminClient.updateRoles(id, req.roles() == null ? Set.of(Role.USER) : req.roles());
+            ProfileUserDetails updated = this.profileAdminClient.updateRoles(id, req.roles());
             if (updated == null) {
                 return ResponseEntity.status(503).build();
             }
