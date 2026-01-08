@@ -15,7 +15,7 @@ import { CommentsDialog } from "../components/CommentsDialog.jsx";
 import { QualityDialog } from "../components/QualityDialog.jsx";
 import { ComplaintDialog } from "../components/ComplaintDialog.jsx";
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
 const PREFETCH_DELTA = 2;
 
@@ -40,7 +40,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     const playerRef = useRef(null);
     const preload1Ref = useRef(null);
     const preload2Ref = useRef(null);
-    const qualitySwitchRef = useRef(null);
+    const playerStateRef = useRef(null);
 
     const feedModeRef = useRef({ type: 'global' }); // { type: 'global' } | { type: 'profile', userId, sort }
     const targetUuidRef = useRef(null);
@@ -409,6 +409,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         reloadFeed();
     }, [token]);
 
+    /* Изменение состояния плеера */
     useEffect(() => {
         const player = playerRef.current;
         if (!active || !uuid || !player) return;
@@ -419,12 +420,14 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
         if (player.src === url) return;
 
-        const isQualitySwitch = qualitySwitchRef.current?.uuid === uuid &&
-            qualitySwitchRef.current.toQuality === selectedQuality;
-        const shouldPlay = isQualitySwitch ? !player.paused : true;
-        const currentTime = isQualitySwitch ? player.currentTime : 0;
+        console.log(playerStateRef.current);
 
-        qualitySwitchRef.current = null;
+        const saved = playerStateRef.current;
+        const isSameVideo = saved?.uuid === uuid;
+        const shouldPlay = isSameVideo ? saved.shouldPlay : true;
+        const currentTime = isSameVideo ? saved.currentTime : 0;
+
+        playerStateRef.current = null;
 
         try {
             player.pause();
@@ -440,12 +443,13 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             /* ignore */
         }
 
-        if (!isQualitySwitch) {
+        if (!isSameVideo) {
             preloadAround(currentIndex);
             registerView(uuid);
         }
     }, [active, uuid, selectedQuality]);
 
+    /* Назначение / удаление слушателей плеера + сохранение его состояния при уходе со страницы */
     useEffect(() => {
         const player = playerRef.current;
         if (!active || !player) return;
@@ -468,15 +472,21 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         player.addEventListener('error', onError);
 
         return () => {
+            playerStateRef.current = {
+                uuid,
+                shouldPlay: !player.paused,
+                currentTime: player.currentTime || 0,
+            };
             player.removeEventListener('ended', onEnded);
             player.removeEventListener('error', onError);
         };
-    }, [active]);
+    }, [active, uuid]);
 
     const handleQualitySelect = (quality) => {
-        if (!currentVideo) return;
+        const player = playerRef.current;
+        if (!currentVideo || !player) return;
 
-        qualitySwitchRef.current = { uuid, toQuality: quality };
+        playerStateRef.current = { uuid, shouldPlay: !player.paused, currentTime: player.currentTime };
 
         setVideos((prev) => {
             const copy = [...prev];
