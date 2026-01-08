@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import ru.itmo.zavar.brainstop.common.api.like.LikeQueryApi;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FeedVideoDto;
+import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedSessionResponse;
 
@@ -103,6 +104,26 @@ class FeedSessionServiceTest {
         assertThat(prev.items().get(1).uuid()).isEqualTo(second.uuid());
         assertThat(prev.prevPos()).isNull();
         assertThat(prev.nextPos()).isEqualTo(2L);
+    }
+
+    @Test
+    void likedByMeIsHydratedForSessionResponses() {
+        Long userId = 9L;
+        String deviceId = "device-3";
+        FeedVideoDto likedVideo = video("liked");
+
+        stubFeed(userId, List.of(likedVideo), Collections.emptyList());
+
+        FileMetadataEntity entity = new FileMetadataEntity();
+        entity.setId(123L);
+        entity.setUuid(likedVideo.uuid());
+        when(fileMetadataRepository.findByUuidIn(anyCollection())).thenReturn(List.of(entity));
+        when(likeQueryApi.findLikedVideoIds(eq(userId), anyCollection())).thenReturn(List.of(entity.getId()));
+
+        FeedSessionResponse response = service.startSession(deviceId, userId, 1);
+
+        assertThat(response.items()).hasSize(1);
+        assertThat(response.items().get(0).likedByMe()).isTrue();
     }
 
     private void stubFeed(Long userId, List<FeedVideoDto> page0, List<FeedVideoDto> page1) {

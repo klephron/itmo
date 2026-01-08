@@ -1050,6 +1050,7 @@
     let feedNextPos = null;
     let feedEndReached = false;
     let feedStartPos = 0;
+    let feedPrefetch = null;
     let profileCurrentInfo = null;
     let authProfileInfo = null;
 
@@ -2254,49 +2255,52 @@
         return Number.isFinite(num) ? num : null;
     }
 
+    function promotePrefetchToCurrent() {
+        if (!feedPrefetch || !Array.isArray(feedPrefetch.items)) {
+            return false;
+        }
+        videos = feedPrefetch.items;
+        feedPrevPos = normalizeFeedPos(feedPrefetch.prevPos);
+        feedNextPos = normalizeFeedPos(feedPrefetch.nextPos);
+        if (feedPrefetch.feedId) {
+            feedSessionId = feedPrefetch.feedId;
+        }
+        if (Number.isFinite(feedPrefetch.startPos)) {
+            feedStartPos = feedPrefetch.startPos;
+        }
+        feedEndReached = videos.length === 0 || feedNextPos == null || feedPrefetch.isLast === true;
+        feedPrefetch = null;
+        currentIndex = videos.length > 0 ? 0 : -1;
+        return videos.length > 0;
+    }
+
     async function goNext() {
         triggerSwipeAnimation('up');
         if (videos.length === 0) return;
 
-        // 1) Обычный переход вперёд внутри уже загруженного списка
+        const isProfileFeed = feedMode.type === 'profile' && feedMode.userId;
+
+        // 1) Обычный переход вперёд внутри текущей страницы
         if (currentIndex < videos.length - 1) {
             currentIndex++;
             await playCurrent();
 
             // если близко к концу — подгружаем следующую страницу
-            if (feedMode.type === 'profile' && feedMode.userId) {
-                if (feedHasNext && !feedLoading && (videos.length - currentIndex) <= 2) {
-                    loadVideoPage(feedPage + 1, true);
-                }
-            } else {
-                if (!feedLoading && !feedEndReached && feedNextPos !== null && (videos.length - currentIndex) <= 2) {
-                    loadVideoPage(0, true);
-                }
+        if (isProfileFeed) {
+            if (feedHasNext && !feedLoading && (videos.length - currentIndex) <= 2) {
+                loadVideoPage(feedPage + 1, true);
             }
-            return;
+        } else if (!feedLoading && !feedPrefetch && !feedEndReached && (videos.length - currentIndex) <= 2) {
+            loadVideoPage(0, true);
         }
+        return;
+    }
 
-        // 2) Мы на последнем видео текущего списка, но бекенд говорит,
-        //    что есть следующая страница — пробуем её дотянуть и пойти дальше
-        if (!feedLoading) {
-            if (feedMode.type === 'profile' && feedMode.userId) {
-                if (feedHasNext) {
-                    await loadVideoPage(feedPage + 1, true);
+        // 2) Мы на последнем видео
+        if (isProfileFeed) {
+            if (!feedLoading && feedHasNext) {
+                await loadVideoPage(feedPage + 1, true);
 
-                    if (currentIndex < videos.length - 1) {
-                        currentIndex++;
-                        await playCurrent();
-                    } else {
-                        // на всякий случай, если ничего нового не пришло
-                        setStatusFeed('Больше видео пока нет', 'ok');
-                    }
-                    return;
-                }            } else {
-                if (feedEndReached || feedNextPos === null) {
-                    setStatusFeed('Больше видео пока нет', 'ok');
-                    return;
-                }
-                await loadVideoPage(0, true);
                 if (currentIndex < videos.length - 1) {
                     currentIndex++;
                     await playCurrent();
@@ -2305,18 +2309,33 @@
                 }
                 return;
             }
+            setStatusFeed('Больше видео пока нет', 'ok');
+            return;
         }
 
-        // 3) Лента кончилась — делаем её бесконечной: начинаем с начала
-        await loadVideoPage(0, false);   // перезагружаем первую страницу, затирая список
-
-        if (videos.length > 0) {
-            currentIndex = 0;
+        // глобальная лента: страницы не копим, забираем из prefetch
+        if (promotePrefetchToCurrent()) {
             await playCurrent();
-            setStatusFeed('Начали ленту сначала', 'ok');
-        } else {
-            // вдруг вообще нет видео
-            setStatusFeed('Видео ещё нет', 'error');
+            if (!feedEndReached && !feedLoading) {
+                loadVideoPage(0, true);
+            }
+            return;
+        }
+
+        if (feedEndReached || feedNextPos === null) {
+            setStatusFeed('Больше видео пока нет', 'ok');
+            return;
+        }
+
+        await loadVideoPage(0, true);
+
+        if (promotePrefetchToCurrent()) {
+            await playCurrent();
+            if (!feedEndReached && !feedLoading) {
+                loadVideoPage(0, true);
+            }
+        } else if (feedEndReached) {
+            setStatusFeed('Больше видео пока нет', 'ok');
         }
     }
 
@@ -2376,25 +2395,27 @@
                     Array.isArray(data.content) ? data.content :
                         (Array.isArray(data) ? data : []);
 
-            if (data && 'prevPos' in data) {
-                feedPrevPos = normalizeFeedPos(data.prevPos);
-            }
-            if (data && 'nextPos' in data) {
-                feedNextPos = normalizeFeedPos(data.nextPos);
-                feedEndReached = feedNextPos == null;
-            }
-            if (data && data.feedId) {
-                feedSessionId = data.feedId;
-            }
-
             if (items.length === 0) {
                 setStatusFeed('Это самое первое видео', 'ok');
                 return;
             }
 
-            videos = items.concat(videos);
-            feedStartPos = Number.isFinite(prevPosValue) ? prevPosValue : feedStartPos;
-            currentIndex = items.length - 1;
+            if (data && 'prevPos' in data) {
+                feedPrevPos = normalizeFeedPos(data.prevPos);
+            }
+            if (data && 'nextPos' in data) {
+                feedNextPos = normalizeFeedPos(data.nextPos);
+            }
+            if (data && data.feedId) {
+                feedSessionId = data.feedId;
+            }
+
+            feedStartPos = deriveFeedStartPos(data);
+            feedEndReached = items.length === 0;
+            feedPrefetch = null;
+
+            videos = items;
+            currentIndex = videos.length - 1;
             await playCurrent();
         } catch (e) {
             console.error(e);
@@ -2886,12 +2907,12 @@
                     url = apiBase + `/api/streaming/video/feed/session/start?size=${FEED_PAGE_SIZE}`;
                     res = await fetch(url, { method: 'POST', headers: feedHeaders() });
                 } else {
-                    if (feedNextPos === null || feedEndReached) {
+                    if (feedEndReached) {
                         showFeedLoader(false);
                         return;
                     }
-                    const pos = feedNextPos;
-                    url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/next?count=${FEED_PAGE_SIZE}&pos=${pos}`;
+                    const pos = Number.isFinite(feedNextPos) ? feedNextPos : (feedStartPos + videos.length);
+                    url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/next?count=${FEED_PAGE_SIZE}` + (Number.isFinite(pos) ? `&pos=${pos}` : '');
                     res = await fetch(url, { headers: feedHeaders() });
                 }
             }
@@ -2916,13 +2937,13 @@
                     Array.isArray(data.content) ? data.content :       // Page<...>
                         (Array.isArray(data) ? data : []);                 // просто массив
 
-            if (!append) {
-                videos = items;
-            } else {
-                videos = videos.concat(items);
-            }
-
             if (isProfileFeed) {
+                if (!append) {
+                    videos = items;
+                } else {
+                    videos = videos.concat(items);
+                }
+
                 // page / number
                 if (typeof data.page === 'number') {
                     feedPage = data.page;
@@ -2951,21 +2972,36 @@
                 if (data && data.feedId) {
                     feedSessionId = data.feedId;
                 }
-                if (data && 'prevPos' in data) {
-                    feedPrevPos = normalizeFeedPos(data.prevPos);
-                }
-                if (data && 'nextPos' in data) {
-                    feedNextPos = normalizeFeedPos(data.nextPos);
-                }
+                const prevVal = (data && 'prevPos' in data) ? normalizeFeedPos(data.prevPos) : null;
+                const nextVal = (data && 'nextPos' in data) ? normalizeFeedPos(data.nextPos) : null;
+                const startPos = deriveFeedStartPos({ prevPos: prevVal, nextPos: nextVal });
+
                 if (!append) {
-                    feedStartPos = deriveFeedStartPos(data);
-                }
-                if (data && 'nextPos' in data) {
-                    feedEndReached = feedNextPos == null;
-                } else {
+                    feedPrevPos = prevVal;
+                    feedNextPos = nextVal;
+                    feedStartPos = startPos;
                     feedEndReached = items.length === 0;
+                    feedPrefetch = null;
+                    videos = items;
+                } else {
+                    feedPrefetch = {
+                        items,
+                        prevPos: prevVal,
+                        nextPos: nextVal,
+                        startPos,
+                        feedId: data && data.feedId ? data.feedId : feedSessionId,
+                        isLast: nextVal == null && items.length === 0
+                    };
+                    if (items.length === 0) {
+                        feedEndReached = true;
+                    }
                 }
                 countEl.textContent = videos.length + ' видео';
+            }
+
+            if (!isProfileFeed && append) {
+                showFeedLoader(false);
+                return;
             }
 
             if (videos.length === 0) {
@@ -3328,6 +3364,7 @@
         feedNextPos = null;
         feedEndReached = false;
         feedStartPos = 0;
+        feedPrefetch = null;
         loadVideoPage(0, false);
     }
 
