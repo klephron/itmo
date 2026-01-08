@@ -6,14 +6,15 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null); // { userId, username, displayName, roles, avatarUrl }
+    const [authReady, setAuthReady] = useState(false);
 
     const isModerator = useMemo(() => {
         return !!user?.roles?.includes('MODERATOR') || !!user?.roles?.includes('ADMIN');
-    }, [user]);
+    }, [user?.roles]);
 
     const isAdmin = useMemo(() => {
         return !!user?.roles?.includes('ADMIN');
-    }, [user]);
+    }, [user?.roles]);
 
     const setAuth = useCallback((newToken, newUser) => {
         if (newToken && newUser?.userId != null) {
@@ -35,44 +36,54 @@ export function AuthProvider({ children }) {
 
         if (!savedToken) {
             setAuth(null, null);
+            setAuthReady(true);
             return;
         }
 
         setToken(savedToken);
         if (savedUserJson) {
-            try { setUser(JSON.parse(savedUserJson)); } catch { setUser(null); }
+            try {
+                setUser(JSON.parse(savedUserJson));
+            } catch {
+            }
         }
 
         try {
             const res = await fetch(apiBase + '/api/auth/me', { headers: authHeaders(savedToken) });
             if (!res.ok) {
-                if (res.status === 401 || res.status === 403) setAuth(null, null);
+                if (res.status === 401 || res.status === 403) {
+                    setAuth(null, null);
+                }
+                setAuthReady(true);
                 return;
             }
+
             const data = await res.json();
-            const nextUser = {
+            setAuth(savedToken, {
                 userId: data.userId,
                 username: data.username,
                 displayName: data.displayName,
-                roles: Array.isArray(data.roles) ? data.roles : [],
-                avatarUrl: data.avatarUrl ?? null,
-            };
-            setAuth(savedToken, nextUser);
-        } catch {
-            // network errors: keep cached state
+                roles: data.roles ?? [],
+                avatarUrl: data.avatarUrl,
+            });
+        } finally {
+            setAuthReady(true);
         }
     }, [setAuth]);
 
-    useEffect(() => { initAuth(); }, [initAuth]);
+    useEffect(() => {
+        initAuth();
+    }, [initAuth]);
 
     const value = useMemo(() => ({
         token,
         user,
+        authReady,
         isModerator,
         isAdmin,
         setAuth,
         initAuth,
-    }), [token, user, isModerator, isAdmin, setAuth, initAuth]);
+    }), [token, user, isModerator, isAdmin, setAuth, initAuth, authReady]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -15,7 +15,7 @@ import { CommentsDialog } from "../components/CommentsDialog.jsx";
 import { QualityDialog } from "../components/QualityDialog.jsx";
 import { ComplaintDialog } from "../components/ComplaintDialog.jsx";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 3;
 const MAX_WINDOW = 2 * PAGE_SIZE;
 const PREFETCH_DELTA = 2;
 
@@ -30,7 +30,7 @@ function getOrCreateDeviceId() {
 }
 
 export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeControls }) {
-    const { token, user } = useAuth();
+    const { token, user, authReady } = useAuth();
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
     const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
@@ -124,6 +124,12 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         } finally {
             setLoading(false);
         }
+    }
+
+    const reloadFeed = () => {
+        feedModeRef.current = { type: 'global' };
+        targetUuidRef.current = null;
+        startFeed();
     }
 
     async function prefetch(direction, snapshot, restoreCurPage = false) {
@@ -378,43 +384,10 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
 
     useEffect(() => {
         exposeControls?.({
-            reloadFeed: () => {
-                feedModeRef.current = { type: 'global' };
-                targetUuidRef.current = null;
-
-                const player = playerRef.current;
-                if (player) {
-                    try {
-                        player.pause();
-                        player.removeAttribute('src');
-                        player.load();
-                    } catch {
-                    }
-                }
-
-                startFeed();
-            },
+            reloadFeed,
             switchToProfile: (userId, sort, uuid) => {
-                // 1. переключаем режим
-                feedModeRef.current = {
-                    type: 'profile',
-                    userId,
-                    sort,
-                };
-
-                // 2. ставим цель
+                feedModeRef.current = { type: 'profile', userId, sort };
                 targetUuidRef.current = uuid || null;
-
-                const player = playerRef.current;
-                if (player) {
-                    try {
-                        player.pause();
-                        player.removeAttribute('src');
-                        player.load();
-                    } catch {
-                    }
-                }
-
                 startFeed();
             },
             getGlobalIndexByUuid: (uuid) => videos.findIndex((v) => v.uuid === uuid),
@@ -424,11 +397,17 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
         });
     }, [exposeControls, window]);
 
+    /* Старт ленты при первом входе на страницу либо если нет видео */
     useEffect(() => {
-        if (!active) return;
-        if (videos.length === 0) startFeed();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [active]);
+        if (!active || !authReady || videos.length > 0) return;
+        startFeed();
+    }, [active, authReady]);
+
+    /* Перезагрузка ленты, если сменился токен */
+    useEffect(() => {
+        if (!authReady) return;
+        reloadFeed();
+    }, [token]);
 
     useEffect(() => {
         const player = playerRef.current;
