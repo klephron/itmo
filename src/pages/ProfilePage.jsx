@@ -1,124 +1,75 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import Status from '../components/Status';
 import { Avatar, Box, Button, Grid, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
-import { formatCompactNumber, formatFollowers, formatFollowing } from "../utils/format.js";
+import { formatFollowers, formatFollowing } from "../utils/format.js";
 import { ThumbCard } from "../components/ThumbCard.jsx";
 import { LoadMoreButton } from "../components/LoadMoreButton.jsx";
 
-export default function ProfilePage({
-                                        active,
-                                        userId,
-                                        onRequireAuth,
-                                        onGlobalPlayByUuid,
-                                        onLoadMoreRequest,
-                                    }) {
-    // Хуки всегда вызываются, даже если компонент не рендерится
+const PAGE_SIZE = 12;
+
+export default function ProfilePage({ active, userId, onRequireAuth, onGlobalPlayByUuid }) {
     const { token, user } = useAuth();
+
     const [status, setStatus] = useState({ msg: '', type: '' });
     const [profile, setProfile] = useState(null);
     const [videos, setVideos] = useState([]);
-    const [paging, setPaging] = useState({ page: 0, size: 12, last: false, loading: false });
+    const [paging, setPaging] = useState({ page: 0, size: PAGE_SIZE, last: true, loading: false });
     const [sort, setSort] = useState('uploadedAt,desc');
 
     function setStatusProfile(msg = '', type = '') {
         setStatus({ msg, type });
     }
 
-    const isSelf = useMemo(() => user && Number(user.userId) === Number(userId), [user, userId]);
+    const isSelf = user && Number(user.userId) === Number(userId);
 
-    // Загружаем данные профиля при активации компонента
-    useEffect(() => {
-        if (!active || !userId) return;
-
-        let cancelled = false;
-
-        async function load() {
-            setStatusProfile('Загрузка профиля…', 'ok');
-            setVideos([]);
-            setProfile(null);
-            setPaging({ page: 0, size: 12, last: false, loading: false });
-
-            try {
-                const [userRes, videosRes] = await Promise.all([
-                    fetch(`${apiBase}/api/users/${userId}/profile`, { headers: authHeaders(token) }),
-                    fetch(
-                        `${apiBase}/api/users/${userId}/videos?page=0&size=12&sort=${encodeURIComponent(sort)}`,
-                        { headers: authHeaders(token) }
-                    ),
-                ]);
-
-                if (!userRes.ok) throw new Error('user HTTP ' + userRes.status);
-                if (!videosRes.ok) throw new Error('videos HTTP ' + videosRes.status);
-
-                const prof = await userRes.json();
-                const vidsPage = await videosRes.json();
-
-                if (cancelled) return;
-
-                const vids = Array.isArray(vidsPage?.content) ? vidsPage.content : [];
-                const totalVideos = typeof vidsPage?.totalElements === 'number' ? vidsPage.totalElements : vids.length;
-
-                setProfile({ ...prof, totalVideos });
-                setVideos(vids);
-
-                setPaging({
-                    page: (typeof vidsPage?.number === 'number' ? vidsPage.number : 0) + 1,
-                    size: 12,
-                    last: !!vidsPage?.last,
-                    loading: false,
-                });
-
-                setStatusProfile('', '');
-            } catch (e) {
-                if (cancelled) return;
-                setStatusProfile('Ошибка загрузки профиля: ' + e.message, 'error');
-            }
-        }
-
-        load();
-        return () => {
-            cancelled = true;
-        };
-    }, [active, userId, token, sort]);
-
-    // Загрузка дополнительных видео
-    async function loadMore() {
+    async function loadPage(pageNumber, { replace = false } = {}) {
         if (!userId) return;
-        if (paging.loading || paging.last) return;
 
-        setPaging((s) => ({ ...s, loading: true }));
-        setStatusProfile('Загрузка видео…', 'ok');
+        setPaging((prevState) => ({ ...prevState, loading: true }));
 
         try {
             const res = await fetch(
-                `${apiBase}/api/users/${userId}/videos?page=${paging.page}&size=${paging.size}&sort=${encodeURIComponent(sort)}`,
+                `${apiBase}/api/users/${userId}/videos?page=${pageNumber}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`,
                 { headers: authHeaders(token) }
             );
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            const page = await res.json();
-            const vids = page?.content || [];
 
-            setVideos((prev) => prev.concat(vids));
-            setPaging((s) => ({
-                ...s,
-                page: (typeof page?.number === 'number' ? page.number : s.page) + 1,
-                last: page?.last === true,
+            const page = await res.json();
+            const vids = page?.content ?? [];
+
+            setVideos((prev) =>
+                replace ? vids : prev.concat(vids)
+            );
+
+            setPaging({
+                page: page.number,
+                size: PAGE_SIZE,
+                last: page.last,
                 loading: false,
-            }));
-            setStatusProfile('', '');
+            });
         } catch (e) {
             setStatusProfile('Ошибка загрузки видео: ' + e.message, 'error');
-            setPaging((s) => ({ ...s, loading: false }));
+            setPaging((prevState) => ({ ...prevState, loading: false }));
         }
     }
 
-    useEffect(() => {
-        if (!active) return;
-        onLoadMoreRequest?.(() => loadMore());
-    }, [active, paging, userId]);
+    async function loadProfile() {
+        try {
+            const res = await fetch(
+                `${apiBase}/api/users/${userId}/profile`,
+                { headers: authHeaders(token) }
+            );
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const prof = await res.json();
+            setProfile(prof);
+        } catch (e) {
+            setStatusProfile('Ошибка загрузки профиля: ' + e.message, 'error');
+        }
+    }
 
     async function toggleFollow() {
         if (!token) {
@@ -155,10 +106,20 @@ export default function ProfilePage({
         }
     }
 
-    // Возвращаем null, если активная вкладка не "Profile"
+    useEffect(() => {
+        if (!active || !userId) return;
+        loadPage(0, { replace: true });
+    }, [active, userId, sort]);
+
+    useEffect(() => {
+        if (!active || !userId) return;
+        loadProfile();
+    }, [active, userId, token]);
+
+    const handleLoadMore = () => loadPage(paging.page + 1, { replace: false });
+
     if (!active) return null;
 
-    const totalVideos = profile?.totalVideos ?? videos.length;
     const followers = profile?.followersCount ?? 0;
     const followingCount = profile?.followingCount ?? 0;
 
@@ -195,13 +156,13 @@ export default function ProfilePage({
                     )}
                 </Stack>
                 <Typography variant="caption" color="text.secondary">
-                    {followers} {formatFollowers(followers)} · {followingCount} {formatFollowing(followingCount)}
+                    {followers.toLocaleString()} {formatFollowers(followers)} · {followingCount.toLocaleString()} {formatFollowing(followingCount)}
                 </Typography>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" pb={1}>
                     <Stack direction="row" spacing={1}>
                         <Typography variant="h6" fontWeight="bold">Видео</Typography>
                         <Typography variant="body2" color="text.secondary" pt={1}>
-                            {formatCompactNumber(totalVideos)}
+                            {profile?.totalVideos ?? 0}
                         </Typography>
                     </Stack>
                     <TextField
@@ -239,16 +200,18 @@ export default function ProfilePage({
                                 ))}
                             </Grid>
                         </Box>
-                        <LoadMoreButton
-                            sx={(theme) => ({
-                                position: 'absolute',
-                                bottom: theme.spacing(1),
-                                left: "50%",
-                                transform: `translateX(-50%)`,
-                            })}
-                            //onClick={handleLoadMore}
-                            //loading={loading}
-                        />
+                        {!paging.last && (
+                            <LoadMoreButton
+                                sx={(theme) => ({
+                                    position: 'absolute',
+                                    bottom: theme.spacing(1),
+                                    left: "50%",
+                                    transform: `translateX(-50%)`,
+                                })}
+                                onClick={handleLoadMore}
+                                loading={paging.loading}
+                            />
+                        )}
                     </Box>
                 )}
                 <Status id="statusProfile" message={status.msg} type={status.type}/>
