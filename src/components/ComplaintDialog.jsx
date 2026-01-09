@@ -75,10 +75,7 @@ export const ComplaintDialog = ({
 
             setStatus({ msg: 'Жалоба отправлена', type: 'success' });
             onSuccess?.();
-
-            setTimeout(() => {
-                setOpen(false);
-            }, 500);
+            setOpen(false);
         } catch (e) {
             setStatus({
                 msg: 'Ошибка отправки жалобы: ' + e.message,
