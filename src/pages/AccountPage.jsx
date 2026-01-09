@@ -3,8 +3,8 @@ import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import Status from '../components/Status';
-import ThumbGrid from '../components/ThumbGrid';
 import { ThumbCard } from "../components/ThumbCard.jsx";
+import { ThumbGrid } from "../components/ThumbGrid.jsx";
 
 export default function AccountPage({
                                         active,
@@ -415,22 +415,9 @@ export default function AccountPage({
                         <div className="studio-row-meta">Видео пока нет</div>
                     ) : (
                         <ThumbGrid
-                            videos={myVideos}
-                            renderCard={(v) => (
-                                <ThumbCard
-                                    key={v.uuid}
-                                    video={v}
-                                    showDelete
-                                    onDelete={() => deleteVideo(v.uuid)}
-                                    onOpen={() =>
-                                        onGlobalPlayByUuid?.({
-                                            userId: user.userId,
-                                            sort,
-                                            uuid: v.uuid,
-                                        })
-                                    }
-                                />
-                            )}
+                            active={active}
+                            userId={user?.userId}
+                            onOpenVideo={onGlobalPlayByUuid}
                         />
                     )}
                 </div>
