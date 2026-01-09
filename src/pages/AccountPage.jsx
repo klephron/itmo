@@ -3,7 +3,8 @@ import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import Status from '../components/Status';
-import ThumbGrid, { ThumbCard } from '../components/ThumbGrid';
+import ThumbGrid from '../components/ThumbGrid';
+import { ThumbCard } from "../components/ThumbCard.jsx";
 
 export default function AccountPage({
                                         active,

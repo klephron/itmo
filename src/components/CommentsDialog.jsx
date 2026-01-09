@@ -1,20 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-    Avatar,
-    Box,
-    Button,
-    CircularProgress,
-    Divider,
-    Fab,
-    Skeleton,
-    Stack,
-    TextField,
-    Typography
-} from "@mui/material";
+import { Avatar, Box, Button, Divider, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
-import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 
 import { SwipeableDialog } from "./SwipeableDialog";
 import { formatCompactNumber, formatDate } from "../utils/format.js";
@@ -22,6 +10,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
 import { ComplaintDialog } from "./ComplaintDialog.jsx";
 import { ConfirmDialog } from "./ConfirmDialog.jsx";
+import { LoadMoreButton } from "./LoadMoreButton.jsx";
 
 const PAGE_SIZE = 20;
 
@@ -330,29 +319,16 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
             <Divider/>
             <Box p={2} position="relative">
                 {hasNext && (
-                    <Fab
-                        variant="extended"
-                        size="small"
+                    <LoadMoreButton
                         sx={(theme) => ({
                             position: 'absolute',
                             top: 0,
                             left: "50%",
-                            transform: `translate(-50%, calc(-100% - 1px - ${theme.spacing(2)}))`,
+                            transform: `translate(-50%, calc(-100% - 1px - ${theme.spacing(1)}))`,
                         })}
                         onClick={handleLoadMore}
-                        disabled={loading}
-                    >
-                        Загрузить еще
-                        {loading ? (
-                            <CircularProgress
-                                color="inherit"
-                                size={16}
-                                sx={{ ml: 1, position: 'relative', left: 4 }}
-                            />
-                        ) : (
-                            <ExpandMoreRoundedIcon sx={{ position: 'relative', left: 6 }}/>
-                        )}
-                    </Fab>
+                        loading={loading}
+                    />
                 )}
                 {user ? (
                     <Stack direction="row" spacing={2} alignItems="flex-end">

@@ -191,6 +191,7 @@ function AppInner() {
                 width: 1,
                 maxWidth: 480,
                 height: "100dvh",
+                mx: "auto",
             }}
         >
             <FeedPage

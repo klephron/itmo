@@ -130,6 +130,9 @@ export const theme = createTheme(
                 },
             },
             MuiPaper: {
+                defaultProps: {
+                    elevation: 0,
+                },
                 styleOverrides: {
                     root: ({ theme }) => ({
                         borderRadius: `calc(4 * ${theme.vars.shape.borderRadius})`,
