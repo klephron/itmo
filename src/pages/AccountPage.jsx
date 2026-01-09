@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import Avatar from '../components/Avatar';
 import Status from '../components/Status';
-import { ThumbCard } from "../components/ThumbCard.jsx";
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
+import { Avatar, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { formatFollowers, formatFollowing } from "../utils/format.js";
 
 export default function AccountPage({
                                         active,
@@ -15,7 +15,6 @@ export default function AccountPage({
                                         onReloadFeed,
                                         jobsState,
                                         onLoadActiveJobsFromServer,
-                                        onRegisterLoadMore,
                                     }) {
     const { token, user, setAuth } = useAuth();
 
@@ -250,12 +249,6 @@ export default function AccountPage({
         }
     }
 
-    // register load-more handler for parent scroll
-    useEffect(() => {
-        if (!active) return;
-        onRegisterLoadMore?.(() => loadMoreMyVideos());
-    }, [active, myVideosPaging, sort]);
-
     useEffect(() => {
         if (!active) return;
         if (user && token) {
@@ -273,6 +266,187 @@ export default function AccountPage({
     const followers = profile?.followersCount ?? 0;
     const followingCount = profile?.followingCount ?? 0;
     const totalVideos = profile?.totalVideos ?? (myVideos?.length || 0);
+
+    return (
+        <>
+            <Stack component={Paper} direction="row" p={1}>
+                <Typography variant="h6" px={1}>Ваш профиль</Typography>
+            </Stack>
+            <Stack component={Paper} p={2} spacing={1} flex={1} overflow="hidden">
+                <Stack direction="row" spacing={1} alignItems="flex-start">
+                    <Avatar
+                        src={
+                            profile?.avatarUrl
+                                ? `${apiBase}${profile.avatarUrl}`
+                                : user?.avatarUrl
+                                    ? `${apiBase}${user.avatarUrl}`
+                                    : undefined
+                        }
+                        sx={{ width: 42, height: 42 }}
+                    >
+                        {user?.username?.[0]?.toUpperCase()}
+                    </Avatar>
+
+                    <Box flex={1}>
+                        <Typography variant="body1" fontWeight="bold">
+                            {profile?.displayName || user?.displayName || user?.username}
+                        </Typography>
+                        <Typography component="p" variant="caption" fontWeight="medium">
+                            @{profile?.username || user?.username}
+                        </Typography>
+                    </Box>
+                </Stack>
+
+                <Typography variant="caption" color="text.secondary">
+                    {totalVideos} видео ·{" "}
+                    {followers.toLocaleString()} {formatFollowers(followers)} ·{" "}
+                    {followingCount.toLocaleString()} {formatFollowing(followingCount)}
+                </Typography>
+
+                {/* ===== Auth actions ===== */}
+                {user && (
+                    <>
+                        <Stack spacing={1} pt={1}>
+                            <Button
+                                variant="contained"
+                                color="error"
+                                size="small"
+                                onClick={logout}
+                            >
+                                Выйти
+                            </Button>
+
+                            {user.roles?.some((r) => r === "ADMIN" || r === "MODERATOR") && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => onTab("moderation")}
+                                >
+                                    Модерация
+                                </Button>
+                            )}
+                        </Stack>
+                    </>
+                )}
+
+                {/* ===== Avatar upload ===== */}
+                {user && (
+                    <Stack spacing={1} pt={1}>
+                        <Typography variant="subtitle2">Аватар</Typography>
+                        <input
+                            ref={avatarFileRef}
+                            type="file"
+                            accept="image/*"
+                        />
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={uploadAvatar}
+                        >
+                            Обновить аватар
+                        </Button>
+                    </Stack>
+                )}
+
+                {/* ===== Following ===== */}
+                <Typography variant="h6" pt={2}>
+                    Мои подписки
+                </Typography>
+
+                {followingStatus ? (
+                    <Typography variant="caption">{followingStatus}</Typography>
+                ) : following.length === 0 ? (
+                    <Typography variant="caption">Подписок пока нет</Typography>
+                ) : (
+                    <Stack spacing={1}>
+                        {following.map((u) => (
+                            <Paper
+                                key={u.id}
+                                variant="outlined"
+                                sx={{ p: 1, cursor: "pointer" }}
+                                onClick={() => onOpenProfile?.(u.id)}
+                            >
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    <Avatar
+                                        src={u.avatarUrl ? `${apiBase}${u.avatarUrl}` : undefined}
+                                        sx={{ width: 32, height: 32 }}
+                                    />
+                                    <Box>
+                                        <Typography variant="body2">
+                                            {u.displayName || u.username}
+                                        </Typography>
+                                        <Typography variant="caption">@{u.username}</Typography>
+                                    </Box>
+                                </Stack>
+                            </Paper>
+                        ))}
+                    </Stack>
+                )}
+
+                {/* ===== Active uploads ===== */}
+                <Typography variant="h6" pt={2}>
+                    Активные загрузки
+                </Typography>
+
+                {jobsState?.activeJobs?.length ? (
+                    <Stack spacing={1}>
+                        {jobsState.activeJobs.map((job) => {
+                            const st = job.lastStatus || {
+                                stage: "UPLOADING",
+                                percent: 0,
+                                message: "Загрузка…",
+                            };
+
+                            return (
+                                <Paper key={job.jobId} variant="outlined" sx={{ p: 1 }}>
+                                    <Stack spacing={0.5}>
+                                        <Stack direction="row" justifyContent="space-between">
+                                            <Typography variant="body2">
+                                                {job.fileName || "(без названия)"}
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {st.percent ?? 0}%
+                                            </Typography>
+                                        </Stack>
+                                        <Typography variant="caption">
+                                            {st.message || st.stage}
+                                        </Typography>
+                                        <Box
+                                            sx={{
+                                                height: 6,
+                                                borderRadius: 3,
+                                                backgroundColor: "grey.300",
+                                                overflow: "hidden",
+                                            }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    height: "100%",
+                                                    width: `${st.percent ?? 0}%`,
+                                                    backgroundColor: "success.main",
+                                                }}
+                                            />
+                                        </Box>
+                                    </Stack>
+                                </Paper>
+                            );
+                        })}
+                    </Stack>
+                ) : (
+                    <Typography variant="caption">
+                        Нет активных загрузок
+                    </Typography>
+                )}
+                <ThumbGrid
+                    active={active}
+                    userId={user?.userId}
+                    onOpenVideo={onGlobalPlayByUuid}
+                    onDeleteVideo={deleteVideo}
+                    showDelete
+                />
+            </Stack>
+        </>
+    );
 
     return (
         <div className={'card page ' + (active ? 'active' : '')} id="pageAccount">
@@ -398,7 +572,7 @@ export default function AccountPage({
                         <span className="badge" id="studioVideoCount">{totalVideos} видео</span>
                     </div>
 
-                    <div style={{ marginTop: 8,  marginBottom: 8 }}>
+                    <div style={{ marginTop: 8, marginBottom: 8 }}>
                         <select
                             className="feed-select"
                             value={sort}
