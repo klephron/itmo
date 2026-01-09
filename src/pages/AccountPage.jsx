@@ -418,6 +418,8 @@ export default function AccountPage({
                             active={active}
                             userId={user?.userId}
                             onOpenVideo={onGlobalPlayByUuid}
+                            onDeleteVideo={deleteVideo}
+                            showDelete={true}
                         />
                     )}
                 </div>

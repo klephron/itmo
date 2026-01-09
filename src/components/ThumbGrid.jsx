@@ -5,10 +5,10 @@ import { useAuth } from "../context/AuthContext";
 import { ThumbCard } from "./ThumbCard";
 import { LoadMoreButton } from "./LoadMoreButton";
 
-const PAGE_SIZE = 1;
+const PAGE_SIZE = 12;
 const COLUMNS = 3;
 
-export function ThumbGrid({ active, userId, onOpenVideo }) {
+export function ThumbGrid({ active, userId, onOpenVideo, onDeleteVideo, showDelete }) {
     const { token } = useAuth();
 
     const [videos, setVideos] = useState([]);
@@ -48,8 +48,7 @@ export function ThumbGrid({ active, userId, onOpenVideo }) {
                 totalElements: page.totalElements ?? 0,
             });
         } finally {
-            setTimeout(() => setLoading(false), 5000);
-            //setLoading(false);
+            setLoading(false);
         }
     }
 
@@ -147,14 +146,9 @@ export function ThumbGrid({ active, userId, onOpenVideo }) {
                                     >
                                         <ThumbCard
                                             video={v}
-                                            showDelete={false}
-                                            onOpen={() =>
-                                                onOpenVideo?.({
-                                                    userId,
-                                                    sort,
-                                                    uuid: v.uuid,
-                                                })
-                                            }
+                                            showDelete={showDelete}
+                                            onOpen={() => onOpenVideo?.({ userId, sort, uuid: v.uuid })}
+                                            onDelete={() => onDeleteVideo?.(v.uuid)}
                                         />
                                     </Grid>
                                 );
