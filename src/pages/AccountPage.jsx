@@ -21,16 +21,8 @@ export default function AccountPage({
     const [status, setStatus] = useState({ msg: '', type: '' });
 
     const [profile, setProfile] = useState(null);
-    const [myVideos, setMyVideos] = useState([]);
-    const [myVideosPaging, setMyVideosPaging] = useState({ page: 0, size: 12, last: false, loading: false });
-
     const [following, setFollowing] = useState([]);
     const [followingStatus, setFollowingStatus] = useState('');
-
-    /* =========================
-       NEW: sort
-       ========================= */
-    const [sort, setSort] = useState('uploadedAt,desc');
 
     const avatarFileRef = useRef(null);
 
@@ -42,7 +34,6 @@ export default function AccountPage({
         setAuth(null, null);
         setStatusAuth('Вы вышли из аккаунта', 'ok');
         setProfile(null);
-        setMyVideos([]);
         setFollowing([]);
         onTab("auth")
     }
@@ -127,94 +118,24 @@ export default function AccountPage({
         }
     }
 
-    /* =========================
-       LOAD PROFILE + VIDEOS
-       ========================= */
     async function loadAccountProfile(u = user, tokenOverride = token) {
         if (!u || !tokenOverride) {
             setProfile(null);
-            setMyVideos([]);
-            setMyVideosPaging({ page: 0, size: 12, last: false, loading: false });
             return;
         }
 
-        setMyVideosPaging({ page: 0, size: 12, last: false, loading: false });
-
-        try {
-            const [userRes, vidsRes] = await Promise.all([
-                fetch(apiBase + '/api/users/' + u.userId + '/profile', {
-                    headers: authHeaders(tokenOverride),
-                }),
-                fetch(apiBase + `/api/users/${u.userId}/videos?page=0&size=12&sort=${encodeURIComponent(sort)}`, {
-                    headers: authHeaders(tokenOverride)
-                }),
-            ]);
-
-            if (!userRes.ok || !vidsRes.ok) throw new Error('HTTP ' + userRes.status + '/' + vidsRes.status);
-
-            const prof = await userRes.json();
-            const vidsPage = await vidsRes.json();
-
-            const vids = vidsPage?.content || [];
-            const totalVideos =
-                typeof vidsPage?.totalElements === 'number'
-                    ? vidsPage.totalElements
-                    : vids.length;
-
-            setProfile({ ...prof, totalVideos });
-            setMyVideos(vids);
-
-            setMyVideosPaging({
-                page: (vidsPage?.number ?? 0) + 1,
-                size: 12,
-                last: !!vidsPage?.last,
-                loading: false,
-            });
-
-            loadAccountFollowing(u.userId, tokenOverride);
-        } catch {
-            setProfile(null);
-            setMyVideos([]);
-        }
-    }
-
-    async function loadMoreMyVideos() {
-        if (!user || !token) return;
-        if (myVideosPaging.loading || myVideosPaging.last) return;
-
-        setMyVideosPaging((s) => ({ ...s, loading: true }));
-
         try {
             const res = await fetch(
-                apiBase +
-                `/api/users/${user.userId}/videos?page=${myVideosPaging.page}&size=${myVideosPaging.size}&sort=${encodeURIComponent(
-                    sort
-                )}`,
-                { headers: authHeaders(token) }
+                apiBase + '/api/users/' + u.userId + '/profile',
+                { headers: authHeaders(tokenOverride) }
             );
-
-            if (isUnauthorized(res)) {
-                setStatusAuth('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
-                return;
-            }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
 
-            const page = await res.json();
-            const vids = page?.content || [];
-
-            setMyVideos((prev) => prev.concat(vids));
-            setMyVideosPaging((s) => ({
-                ...s,
-                page: (page?.number ?? s.page) + 1,
-                last: page?.last === true,
-                loading: false,
-            }));
-            setStatusAuth('', '');
-        } catch (e) {
-            setStatusAuth('Ошибка загрузки видео: ' + e.message, 'error');
-            setMyVideosPaging((s) => ({ ...s, loading: false }));
+            const prof = await res.json();
+            setProfile(prof);
+        } catch {
+            setProfile(null);
         }
     }
 
@@ -251,21 +172,30 @@ export default function AccountPage({
 
     useEffect(() => {
         if (!active) return;
+
         if (user && token) {
             loadAccountProfile();
             onLoadActiveJobsFromServer?.(token);
         } else {
             setProfile(null);
-            setMyVideos([]);
         }
-    }, [active, user?.userId, token, sort]);
+    }, [active, user?.userId, token]);
+
+    useEffect(() => {
+        if (!active || !user?.userId || !token) {
+            setFollowing([]);
+            setFollowingStatus('');
+            return;
+        }
+
+        loadAccountFollowing(user.userId, token);
+    }, [active, user?.userId, token]);
 
     if (!active) return null;
 
     const userShort = user ? (user.displayName || user.username || 'Пользователь') : 'Гость';
     const followers = profile?.followersCount ?? 0;
     const followingCount = profile?.followingCount ?? 0;
-    const totalVideos = profile?.totalVideos ?? (myVideos?.length || 0);
 
     return (
         <>
@@ -298,7 +228,6 @@ export default function AccountPage({
                 </Stack>
 
                 <Typography variant="caption" color="text.secondary">
-                    {totalVideos} видео ·{" "}
                     {followers.toLocaleString()} {formatFollowers(followers)} ·{" "}
                     {followingCount.toLocaleString()} {formatFollowing(followingCount)}
                 </Typography>
