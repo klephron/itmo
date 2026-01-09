@@ -76,7 +76,7 @@ export function ThumbGrid({ active, userId, onOpenVideo, onDeleteVideo, showDele
 
     return (
         <>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" pb={1}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Stack direction="row" spacing={1}>
                     <Typography variant="h6" fontWeight="bold">Видео</Typography>
                     <Typography variant="body2" color="text.secondary" pt={1}>
@@ -96,9 +96,9 @@ export function ThumbGrid({ active, userId, onOpenVideo, onDeleteVideo, showDele
                 </TextField>
             </Stack>
             {!videos || videos.length === 0 ? (
-                <Typography>Видео пока нет</Typography>
+                <Typography mt={1.5}>Видео пока нет</Typography>
             ) : (
-                <Box sx={{ borderRadius: 3, flex: 1, overflow: "hidden", position: "relative" }}>
+                <Box sx={{ borderRadius: 3, flex: 1, overflow: "hidden", position: "relative", mt: 2 }}>
                     <Box sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
                         <Grid container spacing="1px">
                             {videos.map((v, index) => {
