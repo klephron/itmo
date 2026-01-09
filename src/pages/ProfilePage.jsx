@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import Status from '../components/Status';
 import { Avatar, Box, Button, Grid, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import { ThumbCard } from "../components/ThumbCard.jsx";
@@ -214,7 +213,6 @@ export default function ProfilePage({ active, userId, onRequireAuth, onGlobalPla
                         )}
                     </Box>
                 )}
-                <Status id="statusProfile" message={status.msg} type={status.type}/>
             </Stack>
         </>
     );

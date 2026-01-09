@@ -201,6 +201,7 @@ function AppInner() {
                 exposeControls={(ctl) => {
                     feedControlsRef.current = ctl;
                 }}
+                onTab={onTab}
             />
             <UploadPage
                 active={activeTab === 'upload'}

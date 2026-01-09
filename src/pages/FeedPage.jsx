@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Avatar, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, IconButton, Paper, Stack, Typography } from "@mui/material";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
 import CommentOutlined from "@mui/icons-material/CommentOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 
 import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized } from '../api/api';
 import { formatCompactNumber } from '../utils/format';
@@ -29,7 +30,7 @@ function getOrCreateDeviceId() {
     return id;
 }
 
-export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeControls }) {
+export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeControls, onTab }) {
     const { token, user, authReady } = useAuth();
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
@@ -495,8 +496,11 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     return (
         <Stack spacing={1} flex={1}>
             <Paper elevation={0}>
-                <Stack direction="row" p={1}>
+                <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
                     <Typography variant="h6" px={1}>Рекомендации</Typography>
+                    <IconButton onClick={() => onTab("search")} size="small">
+                        <SearchRoundedIcon/>
+                    </IconButton>
                 </Stack>
             </Paper>
             <Box sx={{
