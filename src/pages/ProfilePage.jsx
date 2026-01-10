@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
 
-export default function ProfilePage({ active, userId, onRequireAuth, onGlobalPlayByUuid }) {
+export default function ProfilePage({ active, userId, onPage, onGlobalPlayByUuid }) {
     const { token, user } = useAuth();
 
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -36,7 +36,7 @@ export default function ProfilePage({ active, userId, onRequireAuth, onGlobalPla
     async function toggleFollow() {
         if (!token) {
             setStatusProfile('Войдите, чтобы подписываться', 'error');
-            onRequireAuth?.();
+            onPage("auth");
             return;
         }
         if (!profile) return;
@@ -51,7 +51,7 @@ export default function ProfilePage({ active, userId, onRequireAuth, onGlobalPla
 
             if (isUnauthorized(res)) {
                 setStatusProfile('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 

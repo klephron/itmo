@@ -3,7 +3,7 @@ import { Box, LinearProgress, Stack, Typography, } from "@mui/material";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
-export function UploadsList({ active, onRequireAuth }) {
+export function UploadsList({ active, onPage }) {
     const { token } = useAuth();
 
     const jobsRef = useRef(new Map());
@@ -45,7 +45,7 @@ export function UploadsList({ active, onRequireAuth }) {
                         clearInterval(job.intervalId);
                         jobsRef.current.delete(jobId);
                         syncJobs();
-                        onRequireAuth?.();
+                        onPage("auth");
                         return;
                     }
 
@@ -68,7 +68,7 @@ export function UploadsList({ active, onRequireAuth }) {
                 }
             }, 1000);
         },
-        [token, syncJobs, onRequireAuth]
+        [token, syncJobs, onPage]
     );
 
     useEffect(() => {

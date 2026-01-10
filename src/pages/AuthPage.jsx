@@ -3,7 +3,7 @@ import { apiBase } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { Button, Paper, Stack, TextField, Typography } from "@mui/material";
 
-export default function AuthPage({ active, onTab }) {
+export default function AuthPage({ active, onPage }) {
     const { setAuth } = useAuth();
 
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -52,7 +52,7 @@ export default function AuthPage({ active, onTab }) {
             setStatusAuth('Успешный вход', 'ok');
 
             setLogin({ username: '', password: '' });
-            onTab("account"); // Переключаем после успешного входа
+            onPage("account"); // Переключаем после успешного входа
         } catch (e) {
             setStatusAuth('Ошибка входа: ' + e.message, 'error');
         }
@@ -95,7 +95,7 @@ export default function AuthPage({ active, onTab }) {
             setStatusAuth('Регистрация прошла успешно', 'ok');
 
             setReg({ username: '', email: '', displayName: '', password: '' });
-            onTab("account"); // Переключаем после успешной регистрации
+            onPage("account"); // Переключаем после успешной регистрации
         } catch (e) {
             setStatusAuth('Ошибка регистрации: ' + e.message, 'error');
         }

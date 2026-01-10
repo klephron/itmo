@@ -15,29 +15,27 @@ import { theme } from "./theme.js";
 function AppInner() {
     const { token, user } = useAuth();
 
-    const [activeTab, setActiveTab] = useState('feed'); // Изначально активен Feed
+    const [activePage, setActivePage] = useState('feed'); // Изначально активен Feed
     const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
+    const [activeAccountTab, setActiveAccountTab] = useState("videos");
 
     const feedControlsRef = useRef(null);
 
-    const onTab = useCallback((tab) => {
-        if (tab === 'upload' && !token) {
-            setActiveTab('auth');
+    const onPage = useCallback((page, { activeAccountTab, profileUserId } = {}) => {
+        if (page === 'upload' && !token) {
+            setActivePage('auth');
             return;
         }
-        setActiveTab(tab);
+
+        if (page === 'account' && activeAccountTab) setActiveAccountTab(activeAccountTab);
+        if (page === 'profile' && profileUserId) setProfileUserId(profileUserId);
+
+        setActivePage(page);
     }, [token]);
-
-    const onRequireAuth = useCallback(() => setActiveTab('auth'), []);  // Переключение на вкладку авторизации
-
-    const onOpenProfile = useCallback((userId) => {
-        setProfileUserId(userId);  // Открытие профиля
-        setActiveTab('profile');  // Переключаем вкладку на профайл
-    }, []);
 
     const onGlobalPlayByUuid = useCallback((payload) => {
         const ctl = feedControlsRef.current;
-        setActiveTab('feed');
+        setActivePage('feed');
         if (!ctl) return;
 
         if (typeof payload === 'string') {
@@ -63,38 +61,35 @@ function AppInner() {
             }}
         >
             <FeedPage
-                active={activeTab === 'feed'}
-                onOpenProfile={onOpenProfile}
-                onRequireAuth={onRequireAuth}
+                active={activePage === 'feed'}
                 exposeControls={(ctl) => {
                     feedControlsRef.current = ctl;
                 }}
-                onTab={onTab}
+                onPage={onPage}
             />
             <UploadPage
-                active={activeTab === 'upload'}
-                onRequireAuth={onRequireAuth}
-                goToPage={onTab}
+                active={activePage === 'upload'}
+                onPage={onPage}
             />
             <ProfilePage
-                active={activeTab === 'profile'}
+                active={activePage === 'profile'}
                 userId={profileUserId}
-                onRequireAuth={onRequireAuth}
+                onPage={onPage}
                 onGlobalPlayByUuid={onGlobalPlayByUuid}
             />
             <AccountPage
-                active={activeTab === 'account'}
-                onTab={onTab}
-                onOpenProfile={onOpenProfile}
-                onRequireAuth={onRequireAuth}
+                active={activePage === 'account'}
+                activeTab={activeAccountTab}
+                setActiveTab={setActiveAccountTab}
+                onPage={onPage}
                 onGlobalPlayByUuid={onGlobalPlayByUuid}
             />
-            <AuthPage active={activeTab === 'auth'} onTab={onTab}/>
-            <ModerationPage active={activeTab === 'moderation'} onRequireAuth={onRequireAuth}/>
-            <SearchPage active={activeTab === 'search'} onGlobalPlayByUuid={onGlobalPlayByUuid}/>
+            <AuthPage active={activePage === 'auth'} onPage={onPage}/>
+            <ModerationPage active={activePage === 'moderation'} onPage={onPage}/>
+            <SearchPage active={activePage === 'search'} onGlobalPlayByUuid={onGlobalPlayByUuid}/>
             <Tabs
-                activeTab={activeTab}  // Передаем активное состояние
-                onTab={onTab}
+                activeTab={activePage}  // Передаем активное состояние
+                onTab={onPage}
                 isAuthenticated={Boolean(user)}
                 feedControlsRef={feedControlsRef}
             />

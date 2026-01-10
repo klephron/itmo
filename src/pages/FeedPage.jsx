@@ -30,7 +30,7 @@ function getOrCreateDeviceId() {
     return id;
 }
 
-export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeControls, onTab }) {
+export default function FeedPage({ active, exposeControls, onPage }) {
     const { token, user, authReady } = useAuth();
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
@@ -265,7 +265,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
     const toggleLike = async () => {
         if (!currentVideo) return;
         if (!token) {
-            onRequireAuth?.();
+            onPage("auth");
             return;
         }
 
@@ -276,7 +276,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             });
 
             if (isUnauthorized(res)) {
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
             if (!res.ok) return;
@@ -498,7 +498,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
             <Paper elevation={0}>
                 <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
                     <Typography variant="h6" px={1}>Рекомендации</Typography>
-                    <IconButton onClick={() => onTab("search")} size="small">
+                    <IconButton onClick={() => onPage("search")} size="small">
                         <SearchRoundedIcon/>
                     </IconButton>
                 </Stack>
@@ -537,7 +537,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                         spacing={1}
                         alignItems="center"
                         sx={{ cursor: 'pointer' }}
-                        onClick={() => uploaderId && onOpenProfile?.(uploaderId)}
+                        onClick={() => uploaderId && onPage("profile", { profileUserId: uploaderId })}
                     >
                         <Avatar
                             src={uploaderAvatarUrl ? `${apiBase}${uploaderAvatarUrl}` : null}
@@ -621,8 +621,7 @@ export default function FeedPage({ active, onOpenProfile, onRequireAuth, exposeC
                 open={commentsDialogOpen}
                 setOpen={setCommentsDialogOpen}
                 videoUuid={uuid}
-                onOpenProfile={onOpenProfile}
-                onRequireAuth={onRequireAuth}
+                onPage={onPage}
             />
             <QualityDialog
                 open={qualityDialogOpen}

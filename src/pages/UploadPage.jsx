@@ -43,7 +43,7 @@ function validateVideo(file, info) {
     return null;
 }
 
-export default function UploadPage({ active, onRequireAuth, goToPage }) {
+export default function UploadPage({ active, onPage }) {
     const { token } = useAuth();
     const inputRef = useRef(null);
 
@@ -109,7 +109,7 @@ export default function UploadPage({ active, onRequireAuth, goToPage }) {
     function startUpload() {
         if (!token) {
             setStatusUpload("Войдите, чтобы загружать видео", "error");
-            onRequireAuth?.();
+            onPage("auth");
             return;
         }
 
@@ -172,7 +172,7 @@ export default function UploadPage({ active, onRequireAuth, goToPage }) {
                 }
             } else if (xhr.status === 401 || xhr.status === 403) {
                 setStatusUpload("Сессия истекла, войдите снова", "error");
-                onRequireAuth?.();
+                onPage("auth");
             } else {
                 setStatusUpload(
                     `Ошибка загрузки: HTTP ${xhr.status}`,
@@ -278,7 +278,11 @@ export default function UploadPage({ active, onRequireAuth, goToPage }) {
                             <Button fullWidth variant="contained" color="inherit" onClick={resetForm}>
                                 Загрузить еще
                             </Button>
-                            <Button fullWidth variant="contained" onClick={() => goToPage("account")}>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                onClick={() => onPage("account", { activeAccountTab: "uploads" })}
+                            >
                                 К списку загрузок
                             </Button>
                         </Stack>

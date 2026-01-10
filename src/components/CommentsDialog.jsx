@@ -14,7 +14,7 @@ import { LoadMoreButton } from "./LoadMoreButton.jsx";
 
 const PAGE_SIZE = 20;
 
-export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequireAuth }) {
+export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
     const { token, user } = useAuth();
 
     const [comments, setComments] = useState([]);
@@ -64,7 +64,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
     async function send() {
         if (!token) {
             setStatus({ msg: "Войдите, чтобы комментировать", type: "error" });
-            onRequireAuth?.();
+            onPage("auth");
             return;
         }
 
@@ -92,7 +92,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                     msg: "Сессия истекла, войдите снова",
                     type: "error",
                 });
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -113,7 +113,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                 msg: "Войдите, чтобы удалять комментарии",
                 type: "error",
             });
-            onRequireAuth?.();
+            onPage("auth");
             return;
         }
 
@@ -131,7 +131,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                     msg: "Сессия истекла, войдите снова",
                     type: "error",
                 });
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -237,9 +237,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                         <Avatar
                             src={c.authorAvatarUrl ? `${apiBase}${c.authorAvatarUrl}` : null}
                             sx={{ width: 32, height: 32, cursor: 'pointer' }}
-                            onClick={() =>
-                                c.authorId && onOpenProfile?.(c.authorId)
-                            }
+                            onClick={() => c.authorId && onPage("profile", { profileUserId: c.authorId })}
                         >
                             {c.authorName?.[0]?.toUpperCase()}
                         </Avatar>
@@ -261,9 +259,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onOpenProfile, onRequ
                                 <Typography
                                     variant="subtitle2"
                                     sx={{ cursor: 'pointer' }}
-                                    onClick={() =>
-                                        c.authorId && onOpenProfile?.(c.authorId)
-                                    }
+                                    onClick={() => c.authorId && onPage("profile", { profileUserId: c.authorId })}
                                 >
                                     @{c.authorName}
                                 </Typography>

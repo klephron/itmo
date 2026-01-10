@@ -12,18 +12,15 @@ import { UploadsList } from "../components/UploadsList.jsx";
 
 export default function AccountPage({
                                         active,
-                                        onTab,
-                                        onOpenProfile,
-                                        onRequireAuth,
+                                        activeTab,
+                                        setActiveTab,
+                                        onPage,
                                         onGlobalPlayByUuid,
                                     }) {
     const { token, user, setAuth } = useAuth();
 
-    const [activeTab, setActiveTab] = useState("videos");
     const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
-
     const [status, setStatus] = useState({ msg: '', type: '' });
-
     const [profile, setProfile] = useState(null);
 
     function setStatusAuth(msg = '', type = '') {
@@ -34,7 +31,7 @@ export default function AccountPage({
         setAuth(null, null);
         setStatusAuth('Вы вышли из аккаунта', 'ok');
         setProfile(null);
-        onTab("auth")
+        onPage("auth")
     }
 
     async function loadAccountProfile(u = user, tokenOverride = token) {
@@ -61,7 +58,7 @@ export default function AccountPage({
     async function deleteVideo(uuid) {
         if (!token) {
             setStatusAuth('Войдите, чтобы удалять видео', 'error');
-            onRequireAuth?.();
+            onPage("auth");
             return;
         }
         if (!confirm('Удалить это видео?')) return;
@@ -75,7 +72,7 @@ export default function AccountPage({
 
             if (isUnauthorized(res)) {
                 setStatusAuth('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -174,7 +171,7 @@ export default function AccountPage({
                         variant="contained"
                         color={activeTab === "moderation" ? "primary" : "inherit"}
                         size="small"
-                        onClick={() => onTab("moderation")}
+                        onClick={() => onPage("moderation")}
                     >
                         Модерация
                     </Button>
@@ -191,12 +188,12 @@ export default function AccountPage({
                 ) : activeTab === "following" ? (
                     <FollowingList
                         active={activeTab === "following"}
-                        onOpenProfile={onOpenProfile}
+                        onPage={onPage}
                     />
                 ) : (
                     <UploadsList
                         active={activeTab === "uploads"}
-                        onRequireAuth={onRequireAuth}
+                        onPage={onPage}
                     />
                 )}
 

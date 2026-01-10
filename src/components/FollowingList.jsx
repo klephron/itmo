@@ -3,7 +3,7 @@ import { Avatar, Box, Card, CardActionArea, Stack, Typography, } from "@mui/mate
 import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
-export function FollowingList({ active, onOpenProfile }) {
+export function FollowingList({ active, onPage }) {
     const { user, token } = useAuth();
 
     const [following, setFollowing] = useState([]);
@@ -71,7 +71,7 @@ export function FollowingList({ active, onOpenProfile }) {
                     <Stack sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
                         {following.map((u) => (
                             <Card key={u.id} sx={{ flexShrink: 0 }}>
-                                <CardActionArea onClick={() => onOpenProfile?.(u.id)}>
+                                <CardActionArea onClick={() => onPage("profile", { profileUserId: u.id })}>
                                     <Stack direction="row" spacing={1} p={1} alignItems="center">
                                         <Avatar
                                             src={u.avatarUrl ? `${apiBase}${u.avatarUrl}` : undefined}

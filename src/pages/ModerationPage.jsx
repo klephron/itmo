@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Status from '../components/Status';
 import { humanSize } from '../utils/format';
 
-export default function ModerationPage({ active, onRequireAuth }) {
+export default function ModerationPage({ active, onPage }) {
     const { token, isModerator, isAdmin } = useAuth();
 
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -30,7 +30,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -56,7 +56,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -83,7 +83,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -106,7 +106,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -130,7 +130,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -156,7 +156,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -182,7 +182,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -209,7 +209,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
 
             if (isUnauthorized(res)) {
                 setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onRequireAuth?.();
+                onPage("auth");
                 return;
             }
 
@@ -272,15 +272,21 @@ export default function ModerationPage({ active, onRequireAuth }) {
                             <div className="studio-row-header">
                                 <div className="studio-row-title">{u.username} ({u.displayName})</div>
                                 <div>
-                                    <button className="small secondary" onClick={() => loadUserDetails(u.id)}>Детали</button>{' '}
-                                    <button className="small secondary" onClick={() => loadUserVideos(u.id)}>Видео</button>{' '}
+                                    <button className="small secondary" onClick={() => loadUserDetails(u.id)}>Детали
+                                    </button>
+                                    {' '}
+                                    <button className="small secondary" onClick={() => loadUserVideos(u.id)}>Видео
+                                    </button>
+                                    {' '}
                                     <button className="small danger" onClick={() => toggleBan(u)}>
                                         {u.enabled ? 'Забанить' : 'Разбанить'}
                                     </button>
                                 </div>
                             </div>
                             <div className="studio-row-meta">
-                                ID: {u.id} · Email: {u.email} · Роли: {(Array.isArray(u.roles) ? u.roles.join(', ') : '—')} · Статус: {u.enabled ? 'активен' : 'забанен'}
+                                ID: {u.id} · Email: {u.email} ·
+                                Роли: {(Array.isArray(u.roles) ? u.roles.join(', ') : '—')} ·
+                                Статус: {u.enabled ? 'активен' : 'забанен'}
                             </div>
                         </div>
                     ))
@@ -339,7 +345,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
                 {!userDetails ? (
                     <div className="studio-row-meta">Выберите пользователя</div>
                 ) : (
-                    <UserDetailsCard user={userDetails} canEditRoles={isAdmin} onSaveRoles={saveRoles} />
+                    <UserDetailsCard user={userDetails} canEditRoles={isAdmin} onSaveRoles={saveRoles}/>
                 )}
             </div>
 
@@ -360,7 +366,7 @@ export default function ModerationPage({ active, onRequireAuth }) {
                 )}
             </div>
 
-            <Status id="statusModeration" message={status.msg} type={status.type} />
+            <Status id="statusModeration" message={status.msg} type={status.type}/>
         </div>
     );
 }
@@ -407,7 +413,8 @@ function UserDetailsCard({ user, canEditRoles, onSaveRoles }) {
                             ))}
                         </div>
 
-                        <button className="small" style={{ marginTop: 4 }} onClick={() => onSaveRoles?.(user.id, Array.from(roles))}>
+                        <button className="small" style={{ marginTop: 4 }}
+                                onClick={() => onSaveRoles?.(user.id, Array.from(roles))}>
                             Сохранить роли
                         </button>
                     </>
