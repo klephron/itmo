@@ -21,7 +21,6 @@ export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated
                 py={1 / 2}
             >
                 <Button
-                    variant="contained"
                     size="uniSmall"
                     color="inherit"
                     onClick={handlePrevClick}
@@ -30,7 +29,7 @@ export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated
                     <ChevronLeftRoundedIcon sx={{ fontSize: 32 }}/>
                 </Button>
                 <Button
-                    variant="contained"
+                    variant={activeTab === "feed" ? "contained" : "text"}
                     size="uniSmall"
                     color={activeTab === "feed" ? "primary" : "inherit"}
                     onClick={() => onTab("feed")}
@@ -47,7 +46,7 @@ export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated
                 </Button>
                 {isAuthenticated ? (
                     <Button
-                        variant="contained"
+                        variant={activeTab === "account" ? "contained" : "text"}
                         size="uniSmall"
                         color={activeTab === "account" ? "primary" : "inherit"}
                         onClick={() => onTab("account")}
@@ -57,7 +56,7 @@ export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated
                     </Button>
                 ) : (
                     <Button
-                        variant="contained"
+                        variant={activeTab === "auth" ? "contained" : "text"}
                         size="uniSmall"
                         color={activeTab === "auth" ? "primary" : "inherit"}
                         onClick={() => onTab("auth")}
@@ -66,7 +65,6 @@ export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated
                     </Button>
                 )}
                 <Button
-                    variant="contained"
                     size="uniSmall"
                     color="inherit"
                     onClick={handleNextClick}

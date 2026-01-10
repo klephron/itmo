@@ -83,8 +83,8 @@ export default function ProfilePage({ active, userId, onRequireAuth, onGlobalPla
             <Stack component={Paper} direction="row" p={1}>
                 <Typography variant="h6" px={1}>Профиль пользователя</Typography>
             </Stack>
-            <Stack component={Paper} p={2} flex={1} overflow="hidden">
-                <Stack direction="row" spacing={1} alignItems="flex-start">
+            <Stack component={Paper} pt={2} flex={1} overflow="hidden">
+                <Stack direction="row" spacing={1} px={2} alignItems="flex-start">
                     <Avatar
                         src={profile?.avatarUrl ? `${apiBase}${profile.avatarUrl}` : undefined}
                         sx={{ width: 42, height: 42 }}
@@ -110,7 +110,7 @@ export default function ProfilePage({ active, userId, onRequireAuth, onGlobalPla
                         </Button>
                     )}
                 </Stack>
-                <Typography variant="caption" color="text.secondary" mt={1} mb={1.5}>
+                <Typography variant="caption" color="text.secondary" mt={1} mb={1.5} px={2}>
                     {followers.toLocaleString()} {formatFollowers(followers)} · {followingCount.toLocaleString()} {formatFollowing(followingCount)}
                 </Typography>
                 <ThumbGrid

@@ -2,7 +2,18 @@ import { useEffect, useState } from 'react';
 import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
-import { Avatar, Box, Button, Grid, Paper, Stack, Typography } from "@mui/material";
+import {
+    Avatar,
+    Box,
+    Button,
+    Card,
+    CardActionArea,
+    Grid,
+    LinearProgress,
+    Paper,
+    Stack,
+    Typography
+} from "@mui/material";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -151,13 +162,32 @@ export default function AccountPage({
     const followers = profile?.followersCount ?? 0;
     const followingCount = profile?.followingCount ?? 0;
 
+    console.log(jobsState);
+
+    const testJobsState = {
+        "activeJobs": [
+            {
+                "jobId": "cf652161-84e0-47ca-a94a-f7defed7169e",
+                "fileName": "1 minute of rally cars jumping at Rally Italy.mp4",
+                "lastStatus": {
+                    "stage": "UPLOADING_TO_MINIO",
+                    "percent": 90,
+                    "message": "Загрузка конвертированных файлов…",
+                    "fileName": "1 minute of rally cars jumping at Rally Italy.mp4",
+                    "userId": 1
+                }
+            }
+        ],
+        "statusStudio": ""
+    }
+
     return (
         <>
             <Stack component={Paper} direction="row" p={1}>
                 <Typography variant="h6" px={1}>Ваш профиль</Typography>
             </Stack>
-            <Stack component={Paper} p={2} flex={1} overflow="hidden">
-                <Stack direction="row" pr={8.5} spacing={1} alignItems="flex-start" position="relative">
+            <Stack component={Paper} pt={2} flex={1} overflow="hidden">
+                <Stack direction="row" px={2} pr={8.5} spacing={1} alignItems="flex-start" position="relative">
                     <Avatar
                         src={
                             profile?.avatarUrl
@@ -178,7 +208,7 @@ export default function AccountPage({
                             @{profile?.username || user?.username}
                         </Typography>
                     </Box>
-                    <Stack spacing={1} direction="row" sx={{ position: "absolute", top: -4, right: -4 }}>
+                    <Stack spacing={1} direction="row" sx={{ position: "absolute", top: -4, right: 12 }}>
                         <Button size="uniSmall" onClick={() => setAvatarDialogOpen(true)}>
                             <SettingsRoundedIcon fontSize="small" sx={{ color: "text.secondary" }}/>
                         </Button>
@@ -188,12 +218,12 @@ export default function AccountPage({
                     </Stack>
                 </Stack>
 
-                <Typography variant="caption" color="text.secondary" mt={1}>
+                <Typography variant="caption" color="text.secondary" mt={1} px={2}>
                     {followers.toLocaleString()} {formatFollowers(followers)} ·{" "}
                     {followingCount.toLocaleString()} {formatFollowing(followingCount)}
                 </Typography>
 
-                <Grid container spacing={1} mt={1.5} mb={2}>
+                <Grid container spacing={1} mt={1.5} mb={2} px={2}>
                     <Button
                         variant="contained"
                         color={activeTab === "videos" ? "primary" : "inherit"}
@@ -237,96 +267,124 @@ export default function AccountPage({
                     />
                 ) : activeTab === "following" ? (
                     <>
-                        <Stack direction="row" spacing={1} py={0.5}>
+                        <Stack direction="row" spacing={1} py={0.5} px={2}>
                             <Typography variant="h6" fontWeight="bold">Ваши подписки</Typography>
                             <Typography variant="body2" color="text.secondary" pt={1}>{following?.length}</Typography>
                         </Stack>
 
                         {!following?.length ? (
-                            <Typography mt={2}>Подписок пока нет</Typography>
+                            <Typography mt={1.5} px={2}>Подписок пока нет</Typography>
                         ) : (
-                            <Stack spacing={1}>
-                                {following.map((u) => (
-                                    <Paper
-                                        key={u.id}
-                                        variant="outlined"
-                                        sx={{ p: 1, cursor: "pointer" }}
-                                        onClick={() => onOpenProfile?.(u.id)}
-                                    >
-                                        <Stack direction="row" spacing={1} alignItems="center">
-                                            <Avatar
-                                                src={u.avatarUrl ? `${apiBase}${u.avatarUrl}` : undefined}
-                                                sx={{ width: 32, height: 32 }}
-                                            />
-                                            <Box>
-                                                <Typography variant="body2">
-                                                    {u.displayName || u.username}
-                                                </Typography>
-                                                <Typography variant="caption">
-                                                    @{u.username}
-                                                </Typography>
-                                            </Box>
-                                        </Stack>
-                                    </Paper>
-                                ))}
-                            </Stack>
+                            <Box sx={{ borderRadius: 3, flex: 1, overflow: "hidden", position: "relative", m: 1 }}>
+                                <Stack sx={{ height: 1, overflowX: "hidden", overflowY: "auto", }}>
+                                    {following.map((u) => (
+                                        <Card key={u.id} sx={{ flexShrink: 0 }}>
+                                            <CardActionArea onClick={() => onOpenProfile?.(u.id)}>
+                                                <Stack direction="row" spacing={1} p={1} alignItems="center">
+                                                    <Avatar
+                                                        src={u.avatarUrl ? `${apiBase}${u.avatarUrl}` : undefined}
+                                                        sx={{ width: 32, height: 32 }}
+                                                    />
+                                                    <Stack spacing={0.5}>
+                                                        <Typography variant="caption" fontWeight="medium"
+                                                                    lineHeight={1}>
+                                                            {u.displayName || u.username}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="textSecondary"
+                                                                    lineHeight={1}>
+                                                            @{u.username}
+                                                        </Typography>
+                                                    </Stack>
+                                                </Stack>
+                                            </CardActionArea>
+                                        </Card>
+                                    ))}
+                                </Stack>
+                            </Box>
                         )}
                     </>
                 ) : (
                     <>
-                        <Stack direction="row" spacing={1} py={0.5}>
-                            <Typography variant="h6" fontWeight="bold">Активные загрузки</Typography>
+                        <Stack direction="row" spacing={1} py={0.5} px={2}>
+                            <Typography variant="h6" fontWeight="bold">
+                                Активные загрузки
+                            </Typography>
                             <Typography variant="body2" color="text.secondary" pt={1}>
-                                {jobsState?.activeJobs?.length}
+                                {jobsState?.activeJobs?.length ?? 0}
                             </Typography>
                         </Stack>
 
-                        {jobsState?.activeJobs?.length ? (
-                            <Stack spacing={1}>
-                                {jobsState.activeJobs.map((job) => {
-                                    const st = job.lastStatus || {
-                                        stage: "UPLOADING",
-                                        percent: 0,
-                                        message: "Загрузка…",
-                                    };
-
-                                    return (
-                                        <Paper key={job.jobId} variant="outlined" sx={{ p: 1 }}>
-                                            <Stack spacing={0.5}>
-                                                <Stack direction="row" justifyContent="space-between">
-                                                    <Typography variant="body2">
-                                                        {job.fileName || "(без названия)"}
-                                                    </Typography>
-                                                    <Typography variant="body2">
-                                                        {st.percent ?? 0}%
-                                                    </Typography>
-                                                </Stack>
-                                                <Typography variant="caption">
-                                                    {st.message || st.stage}
-                                                </Typography>
-                                                <Box
-                                                    sx={{
-                                                        height: 6,
-                                                        borderRadius: 3,
-                                                        backgroundColor: "grey.300",
-                                                        overflow: "hidden",
-                                                    }}
-                                                >
-                                                    <Box
-                                                        sx={{
-                                                            height: "100%",
-                                                            width: `${st.percent ?? 0}%`,
-                                                            backgroundColor: "success.main",
-                                                        }}
-                                                    />
-                                                </Box>
-                                            </Stack>
-                                        </Paper>
-                                    );
-                                })}
-                            </Stack>
+                        {!jobsState?.activeJobs?.length ? (
+                            <Typography mt={1.5} px={2}>
+                                Загрузок пока нет
+                            </Typography>
                         ) : (
-                            <Typography mt={2}>Загрузок пока нет</Typography>
+                            <Box
+                                sx={{
+                                    borderRadius: 3,
+                                    flex: 1,
+                                    overflow: "hidden",
+                                    position: "relative",
+                                    m: 1,
+                                }}
+                            >
+                                <Stack
+                                    sx={{
+                                        height: 1,
+                                        overflowX: "hidden",
+                                        overflowY: "auto",
+                                    }}
+                                    spacing={1}
+                                >
+                                    {jobsState.activeJobs.map((job) => {
+                                        const st = job.lastStatus || {
+                                            stage: "UPLOADING",
+                                            percent: 0,
+                                            message: "Загрузка…",
+                                        };
+
+                                        const percent = st.percent ?? 0;
+
+                                        return (
+                                            <Card key={job.jobId} sx={{ flexShrink: 0 }}>
+                                                <Stack spacing={0.75} p={1}>
+                                                    <Stack
+                                                        direction="row"
+                                                        justifyContent="space-between"
+                                                        alignItems="center"
+                                                    >
+                                                        <Typography
+                                                            variant="body2"
+                                                            fontWeight="medium"
+                                                            noWrap
+                                                        >
+                                                            {job.fileName || "(без названия)"}
+                                                        </Typography>
+                                                        <Typography
+                                                            variant="caption"
+                                                            color="text.secondary"
+                                                        >
+                                                            {percent}%
+                                                        </Typography>
+                                                    </Stack>
+                                                    <Typography
+                                                        variant="caption"
+                                                        color="text.secondary"
+                                                        noWrap
+                                                    >
+                                                        {st.message || st.stage}
+                                                    </Typography>
+                                                    <LinearProgress
+                                                        variant="determinate"
+                                                        value={percent}
+                                                        color="success"
+                                                    />
+                                                </Stack>
+                                            </Card>
+                                        );
+                                    })}
+                                </Stack>
+                            </Box>
                         )}
                     </>
                 )}

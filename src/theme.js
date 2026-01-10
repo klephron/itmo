@@ -144,6 +144,19 @@ export const theme = createTheme(
                     IconComponent: ExpandMoreRoundedIcon
                 },
             },
+            MuiLinearProgress: {
+                styleOverrides: {
+                    root: ({ theme }) => ({
+                        height: theme.spacing(1), // половина spacing
+                        borderRadius: theme.spacing(0.5),
+                        backgroundColor: theme.vars.palette.divider,
+                        overflow: "hidden",
+                    }),
+                    bar: ({ theme }) => ({
+                        borderRadius: theme.spacing(0.5),
+                    }),
+                },
+            },
         },
         typography: {
             fontFamily: 'Rubik Variable',
