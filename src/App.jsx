@@ -8,7 +8,6 @@ import AccountPage from './pages/AccountPage.jsx';
 import ProfilePage from './pages/ProfilePage';
 import ModerationPage from './pages/ModerationPage';
 import AuthPage from './pages/AuthPage.jsx';
-import SearchPage from './pages/SearchPage.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { theme } from "./theme.js";
 
@@ -18,6 +17,7 @@ function AppInner() {
     const [activePage, setActivePage] = useState('feed'); // Изначально активен Feed
     const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
     const [activeAccountTab, setActiveAccountTab] = useState("videos");
+    const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
     const feedControlsRef = useRef(null);
 
@@ -66,6 +66,8 @@ function AppInner() {
                     feedControlsRef.current = ctl;
                 }}
                 onPage={onPage}
+                searchDialogOpen={searchDialogOpen}
+                setSearchDialogOpen={setSearchDialogOpen}
             />
             <UploadPage
                 active={activePage === 'upload'}
@@ -86,7 +88,6 @@ function AppInner() {
             />
             <AuthPage active={activePage === 'auth'} onPage={onPage}/>
             <ModerationPage active={activePage === 'moderation'} onPage={onPage}/>
-            <SearchPage active={activePage === 'search'} onGlobalPlayByUuid={onGlobalPlayByUuid}/>
             <Tabs
                 activeTab={activePage}  // Передаем активное состояние
                 onTab={onPage}

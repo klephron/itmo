@@ -15,6 +15,7 @@ import { VideoInfoDialog } from "../components/VideoInfoDialog.jsx";
 import { CommentsDialog } from "../components/CommentsDialog.jsx";
 import { QualityDialog } from "../components/QualityDialog.jsx";
 import { ComplaintDialog } from "../components/ComplaintDialog.jsx";
+import { SearchDialog } from "../components/SearchDialog.jsx";
 
 const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
@@ -30,7 +31,7 @@ function getOrCreateDeviceId() {
     return id;
 }
 
-export default function FeedPage({ active, exposeControls, onPage }) {
+export default function FeedPage({ active, exposeControls, onPage, searchDialogOpen, setSearchDialogOpen }) {
     const { token, user, authReady } = useAuth();
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
@@ -498,7 +499,7 @@ export default function FeedPage({ active, exposeControls, onPage }) {
             <Paper elevation={0}>
                 <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
                     <Typography variant="h6" px={1}>Рекомендации</Typography>
-                    <IconButton onClick={() => onPage("search")} size="small">
+                    <IconButton onClick={() => setSearchDialogOpen(true)} size="small">
                         <SearchRoundedIcon/>
                     </IconButton>
                 </Stack>
@@ -634,6 +635,10 @@ export default function FeedPage({ active, exposeControls, onPage }) {
                 setOpen={setComplaintDialogOpen}
                 mode="video"
                 videoUuid={uuid}
+            />
+            <SearchDialog
+                open={searchDialogOpen}
+                setOpen={setSearchDialogOpen}
             />
         </Stack>
     );
