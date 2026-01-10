@@ -421,8 +421,10 @@ export default function FeedPage({
 
     /* Старт ленты при смене ее режима */
     useEffect(() => {
+        const isSameFeedMode = Object.keys(feedMode).every((k) => feedMode[k] === feedModeRef.current[k]);
         feedModeRef.current = feedMode;
-        if (!active || !authReady) return; // защита от срабатывания при первом рендере либо в фоне
+
+        if (!active || !authReady || isSameFeedMode) return;
         startFeed();
     }, [feedMode]);
 
@@ -529,39 +531,34 @@ export default function FeedPage({
     if (!active) return null;
 
     return (
-        <Stack spacing={1} flex={1}>
-            <Paper elevation={0}>
+        <>
+            <Stack component={Paper} direction="row" p={1} alignItems="center">
                 {feedMode.type === "global" && (
-                    <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
-                        <Typography variant="h6" px={1}>Рекомендации</Typography>
+                    <>
+                        <Typography variant="h6" noWrap px={1} flex={1}>Рекомендации</Typography>
                         <IconButton onClick={() => setSearchDialogOpen(true)} size="small">
                             <SearchRoundedIcon/>
                         </IconButton>
-                    </Stack>
+                    </>
                 )}
                 {feedMode.type === "user" && (
-                    <Stack direction="row" p={1} alignItems="center">
+                    <>
                         <IconButton onClick={handleBackFromUser} size="small">
                             <ArrowBackRoundedIcon/>
                         </IconButton>
-                        <Typography variant="h6" px={1}>Видео пользователя</Typography>
-                    </Stack>
+                        <Typography variant="h6" noWrap px={1}>Видео пользователя</Typography>
+                    </>
                 )}
                 {feedMode.type === "search" && (
-                    <Stack direction="row" p={1} alignItems="center">
+                    <>
                         <IconButton onClick={handleBackFromSearch} size="small">
                             <ArrowBackRoundedIcon/>
                         </IconButton>
-                        <Typography variant="h6" px={1}>Найденные видео</Typography>
-                    </Stack>
+                        <Typography variant="h6" noWrap px={1}>Найденные видео</Typography>
+                    </>
                 )}
-            </Paper>
-            <Box sx={{
-                position: 'relative',
-                height: 1,
-                borderRadius: 4,
-                overflow: 'hidden',
-            }}>
+            </Stack>
+            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
                 <Stack
                     spacing={1}
                     sx={{
@@ -598,7 +595,7 @@ export default function FeedPage({
                         >
                             {uploaderName?.[0]?.toUpperCase()}
                         </Avatar>
-                        <Typography sx={{ userSelect: "none" }} fontWeight="medium">@{uploaderName}</Typography>
+                        <Typography sx={{ userSelect: "none" }} fontWeight="medium">{uploaderName}</Typography>
                     </Stack>
                 </Stack>
                 <Stack
@@ -636,34 +633,39 @@ export default function FeedPage({
                         </Typography>
                     </Stack>
                     <Stack alignItems="center">
-                        <Button
-                            size="uniSmall"
-                            onClick={() => setCommentsDialogOpen(true)}
-                        >
+                        <Button size="uniSmall" onClick={() => setCommentsDialogOpen(true)}>
                             <CommentOutlined sx={{ fontSize: 32 }}/>
                         </Button>
                         <Typography variant="caption">
                             {formatCompactNumber(commentsCount)}
                         </Typography>
                     </Stack>
-                    <Button
-                        size="uniSmall"
-                        onClick={() => setQualityDialogOpen(true)}
-                    >
+                    <Button size="uniSmall" onClick={() => setQualityDialogOpen(true)}>
                         <SettingsOutlinedIcon sx={{ fontSize: 32 }}/>
                     </Button>
                     {user && uploaderId !== user.userId && (
-                        <Button
-                            size="uniSmall"
-                            onClick={() => setComplaintDialogOpen(true)}
-                        >
+                        <Button size="uniSmall" onClick={() => setComplaintDialogOpen(true)}>
                             <OutlinedFlagRoundedIcon sx={{ fontSize: 32 }}/>
                         </Button>
                     )}
                 </Stack>
-                <video ref={playerRef} id="player" controls playsInline muted/>
-                <video ref={preload1Ref} id="preloadNext1" style={{ display: 'none' }} muted/>
-                <video ref={preload2Ref} id="preloadNext2" style={{ display: 'none' }} muted/>
+                <Box
+                    component="video"
+                    ref={playerRef}
+                    controls
+                    playsInline
+                    muted
+                    sx={{
+                        width: 1,
+                        height: 1,
+                        objectFit: "contain",
+                        bgcolor: "black",
+                        display: "block",
+                        borderRadius: 4,
+                    }}
+                />
+                <Box component="video" display="none" ref={preload1Ref} muted/>
+                <Box component="video" display="none" ref={preload2Ref} muted/>
             </Box>
             <VideoInfoDialog
                 open={videoInfoDialogOpen}
@@ -693,6 +695,6 @@ export default function FeedPage({
                 setOpen={setSearchDialogOpen}
                 onPage={onPage}
             />
-        </Stack>
+        </>
     );
 }

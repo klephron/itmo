@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Avatar, Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, IconButton, Paper, Stack, Typography } from "@mui/material";
 
 import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 export default function ProfilePage({ active, userId, onPage }) {
     const { token, user } = useAuth();
@@ -78,10 +79,15 @@ export default function ProfilePage({ active, userId, onPage }) {
     const followers = profile?.followersCount ?? 0;
     const followingCount = profile?.followingCount ?? 0;
 
+    const handleBack = () => onPage("feed");
+
     return (
         <>
-            <Stack component={Paper} direction="row" p={1}>
-                <Typography variant="h6" px={1}>Профиль пользователя</Typography>
+            <Stack component={Paper} direction="row" p={1} alignItems="center">
+                <IconButton onClick={handleBack} size="small">
+                    <ArrowBackRoundedIcon/>
+                </IconButton>
+                <Typography variant="h6" noWrap px={1}>Профиль пользователя</Typography>
             </Stack>
             <Stack component={Paper} pt={2} flex={1} overflow="hidden">
                 <Stack direction="row" spacing={1} px={2} alignItems="flex-start">
