@@ -126,7 +126,10 @@ export function SearchDialog({ open, setOpen, onPage }) {
     }, [query, runSuggest]);
 
     const handleLoadMore = () => loadPage(paging.page + 1);
-    const handleVideoOpen = (targetUuid) => onPage("feed", { feedMode: { type: "search", query, targetUuid } });
+    const handleVideoOpen = (targetUuid) => {
+        onPage("feed", { feedMode: { type: "search", query, targetUuid } });
+        setOpen(false);
+    }
 
     return (
         <SwipeableDialog open={open} setOpen={setOpen} title="Поиск видео">

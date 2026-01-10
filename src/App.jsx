@@ -78,6 +78,7 @@ function AppInner() {
                 activeTab={activePage}  // Передаем активное состояние
                 onTab={onPage}
                 isAuthenticated={Boolean(user)}
+                feedMode={feedMode}
                 feedControlsRef={feedControlsRef}
             />
         </Stack>

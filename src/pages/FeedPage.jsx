@@ -7,6 +7,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized } from '../api/api';
 import { formatCompactNumber } from '../utils/format';
@@ -448,7 +449,7 @@ export default function FeedPage({
             player.src = url;
             player.currentTime = currentTime;
 
-            if (shouldPlay) {
+            if (shouldPlay && !searchDialogOpen) {
                 player.play().catch(() => {
                     /* ignore */
                 });
@@ -512,6 +513,19 @@ export default function FeedPage({
         });
     };
 
+    const handleBackFromUser = () => {
+        if (feedMode.userId === user?.userId) {
+            onPage("account");
+        } else {
+            onPage("profile", { profileUserId: feedMode.userId });
+        }
+    }
+
+    const handleBackFromSearch = () => {
+        setFeedMode({ type: "global" });
+        setSearchDialogOpen(true);
+    }
+
     if (!active) return null;
 
     return (
@@ -526,12 +540,18 @@ export default function FeedPage({
                     </Stack>
                 )}
                 {feedMode.type === "user" && (
-                    <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" p={1} alignItems="center">
+                        <IconButton onClick={handleBackFromUser} size="small">
+                            <ArrowBackRoundedIcon/>
+                        </IconButton>
                         <Typography variant="h6" px={1}>Видео пользователя</Typography>
                     </Stack>
                 )}
                 {feedMode.type === "search" && (
-                    <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" p={1} alignItems="center">
+                        <IconButton onClick={handleBackFromSearch} size="small">
+                            <ArrowBackRoundedIcon/>
+                        </IconButton>
                         <Typography variant="h6" px={1}>Найденные видео</Typography>
                     </Stack>
                 )}

@@ -6,7 +6,7 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
-export default function Tabs({ activeTab, onTab, isAuthenticated, feedControlsRef }) {
+export default function Tabs({ activeTab, onTab, isAuthenticated, feedMode, feedControlsRef }) {
     const handlePrevClick = () => feedControlsRef.current?.goPrev();
     const handleNextClick = () => feedControlsRef.current?.goNext();
 
@@ -29,10 +29,10 @@ export default function Tabs({ activeTab, onTab, isAuthenticated, feedControlsRe
                     <ChevronLeftRoundedIcon sx={{ fontSize: 32 }}/>
                 </Button>
                 <Button
-                    variant={activeTab === "feed" ? "contained" : "text"}
+                    variant={activeTab === "feed" && feedMode.type === "global" ? "contained" : "text"}
                     size="uniSmall"
-                    color={activeTab === "feed" ? "primary" : "inherit"}
-                    onClick={() => onTab("feed")}
+                    color={activeTab === "feed" && feedMode.type === "global" ? "primary" : "inherit"}
+                    onClick={() => onTab("feed", { feedMode: { type: "global" } })}
                 >
                     <HomeRoundedIcon sx={{ fontSize: 32 }}/>
                 </Button>
