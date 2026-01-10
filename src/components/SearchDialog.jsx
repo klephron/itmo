@@ -7,7 +7,7 @@ import { formatDate, humanSize } from "../utils/format";
 
 const PAGE_SIZE = 20;
 
-export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
+export function SearchDialog({ open, setOpen, onPage }) {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
     const [status, setStatus] = useState("");
@@ -125,21 +125,8 @@ export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
         return () => clearTimeout(suggestTimer.current);
     }, [query, runSuggest]);
 
-    /*
-    useEffect(() => {
-        if (!open) {
-            setHasSearched(false);
-            setResults([]);
-            setPaging({
-                page: 0,
-                size: PAGE_SIZE,
-                last: true,
-                totalElements: 0,
-            });
-            setStatus("");
-        }
-    }, [open]);
-    */
+    const handleLoadMore = () => loadPage(paging.page + 1);
+    const handleVideoOpen = (targetUuid) => onPage("feed", { feedMode: { type: "search", query, targetUuid } });
 
     return (
         <SwipeableDialog open={open} setOpen={setOpen} title="Поиск видео">
@@ -205,7 +192,7 @@ export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
                                 bgcolor: "action.hover",
                                 cursor: "pointer",
                             }}
-                            onClick={() => onGlobalPlayByUuid?.(v.uuid)}
+                            onClick={() => handleVideoOpen(v.uuid)}
                         >
                             <Typography variant="body2">
                                 {v.name || "(без названия)"}
@@ -230,7 +217,7 @@ export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
                             left: "50%",
                             transform: `translateX(-50%)`,
                         })}
-                        onClick={() => loadPage(paging.page + 1)}
+                        onClick={handleLoadMore}
                         loading={loading}
                     />
                 )}

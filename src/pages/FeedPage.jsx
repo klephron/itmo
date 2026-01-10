@@ -671,6 +671,7 @@ export default function FeedPage({
             <SearchDialog
                 open={searchDialogOpen}
                 setOpen={setSearchDialogOpen}
+                onPage={onPage}
             />
         </Stack>
     );
