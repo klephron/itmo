@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
 
-export default function ProfilePage({ active, userId, onPage, onGlobalPlayByUuid }) {
+export default function ProfilePage({ active, userId, onPage }) {
     const { token, user } = useAuth();
 
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -116,7 +116,7 @@ export default function ProfilePage({ active, userId, onPage, onGlobalPlayByUuid
                 <ThumbGrid
                     active={active}
                     userId={userId}
-                    onOpenVideo={onGlobalPlayByUuid}
+                    onPage={onPage}
                 />
             </Stack>
         </>

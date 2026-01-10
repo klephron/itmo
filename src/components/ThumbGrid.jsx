@@ -8,7 +8,7 @@ import { LoadMoreButton } from "./LoadMoreButton";
 const PAGE_SIZE = 12;
 const COLUMNS = 3;
 
-export function ThumbGrid({ active, userId, onOpenVideo, onDeleteVideo, showDelete }) {
+export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage }) {
     const { token } = useAuth();
 
     const [videos, setVideos] = useState([]);
@@ -73,6 +73,7 @@ export function ThumbGrid({ active, userId, onOpenVideo, onDeleteVideo, showDele
     }, [active]);
 
     const handleLoadMore = () => loadPage(paging.page + 1);
+    const handleVideoOpen = (targetUuid) => onPage("feed", { feedMode: { type: "user", userId, sort, targetUuid } });
 
     return (
         <>
@@ -147,7 +148,7 @@ export function ThumbGrid({ active, userId, onOpenVideo, onDeleteVideo, showDele
                                         <ThumbCard
                                             video={v}
                                             showDelete={showDelete}
-                                            onOpen={() => onOpenVideo?.({ userId, sort, uuid: v.uuid })}
+                                            onOpen={() => handleVideoOpen(v.uuid)}
                                             onDelete={() => onDeleteVideo?.(v.uuid)}
                                         />
                                     </Grid>

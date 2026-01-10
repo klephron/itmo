@@ -17,37 +17,23 @@ function AppInner() {
     const [activePage, setActivePage] = useState('feed'); // Изначально активен Feed
     const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
     const [activeAccountTab, setActiveAccountTab] = useState("videos");
+    const [feedMode, setFeedMode] = useState({ type: "global" });
     const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
     const feedControlsRef = useRef(null);
 
-    const onPage = useCallback((page, { activeAccountTab, profileUserId } = {}) => {
+    const onPage = useCallback((page, { activeAccountTab, profileUserId, feedMode } = {}) => {
         if (page === 'upload' && !token) {
             setActivePage('auth');
             return;
         }
 
+        if (page === 'feed' && feedMode) setFeedMode(feedMode);
         if (page === 'account' && activeAccountTab) setActiveAccountTab(activeAccountTab);
         if (page === 'profile' && profileUserId) setProfileUserId(profileUserId);
 
         setActivePage(page);
     }, [token]);
-
-    const onGlobalPlayByUuid = useCallback((payload) => {
-        const ctl = feedControlsRef.current;
-        setActivePage('feed');
-        if (!ctl) return;
-
-        if (typeof payload === 'string') {
-            const idx = ctl.getGlobalIndexByUuid(payload);
-            if (idx !== -1) ctl.playByIndex(idx);
-            else ctl.reloadFeed();
-            return;
-        }
-
-        const { userId, sort, uuid } = payload;
-        ctl.switchToProfile(userId, sort, uuid);
-    }, []);
 
     return (
         <Stack
@@ -62,10 +48,12 @@ function AppInner() {
         >
             <FeedPage
                 active={activePage === 'feed'}
+                onPage={onPage}
+                feedMode={feedMode}
+                setFeedMode={setFeedMode}
                 exposeControls={(ctl) => {
                     feedControlsRef.current = ctl;
                 }}
-                onPage={onPage}
                 searchDialogOpen={searchDialogOpen}
                 setSearchDialogOpen={setSearchDialogOpen}
             />
@@ -77,14 +65,12 @@ function AppInner() {
                 active={activePage === 'profile'}
                 userId={profileUserId}
                 onPage={onPage}
-                onGlobalPlayByUuid={onGlobalPlayByUuid}
             />
             <AccountPage
                 active={activePage === 'account'}
                 activeTab={activeAccountTab}
                 setActiveTab={setActiveAccountTab}
                 onPage={onPage}
-                onGlobalPlayByUuid={onGlobalPlayByUuid}
             />
             <AuthPage active={activePage === 'auth'} onPage={onPage}/>
             <ModerationPage active={activePage === 'moderation'} onPage={onPage}/>

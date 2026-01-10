@@ -31,7 +31,15 @@ function getOrCreateDeviceId() {
     return id;
 }
 
-export default function FeedPage({ active, exposeControls, onPage, searchDialogOpen, setSearchDialogOpen }) {
+export default function FeedPage({
+                                     active,
+                                     onPage,
+                                     feedMode,
+                                     setFeedMode,
+                                     exposeControls,
+                                     searchDialogOpen,
+                                     setSearchDialogOpen
+                                 }) {
     const { token, user, authReady } = useAuth();
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
@@ -44,8 +52,7 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
     const preload2Ref = useRef(null);
     const playerStateRef = useRef(null);
 
-    const feedModeRef = useRef({ type: 'global' }); // { type: 'global' } | { type: 'profile', userId, sort }
-    const targetUuidRef = useRef(null);
+    const feedModeRef = useRef(feedMode);
     const deviceIdRef = useRef(getOrCreateDeviceId());
 
     const [window, setWindow] = useState({ videos: [], currentIndex: -1 });
@@ -78,18 +85,22 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
 
         try {
             let url, res;
+            const { type, userId, sort, query, targetUuid } = feedModeRef.current;
 
-            if (feedModeRef.current.type === 'global') {
-                url = apiBase + `/api/streaming/video/feed/session/start?size=${PAGE_SIZE}`;
+            if (type === "global") {
+                url = `${apiBase}/api/streaming/video/feed/session/start?size=${PAGE_SIZE}`;
                 res = await fetch(url, {
                     method: 'POST',
                     headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
                 });
-            } else {
-                const { userId, sort } = feedModeRef.current;
-                url = apiBase +
-                    `/api/users/${userId}/videos?page=0&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
+            } else if (type === "user") {
+                url = `${apiBase}/api/users/${userId}/videos?page=0&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
                 res = await fetch(url, { headers: authHeaders(token) });
+            } else if (type === "search") {
+                url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=0&size=${PAGE_SIZE}`;
+                res = await fetch(url, { headers: authHeaders(token) });
+            } else {
+                return;
             }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -113,13 +124,9 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
             }));
 
             let newIndex = 0;
-            const targetUuid = targetUuidRef.current;
             if (targetUuid) {
                 const idx = newVideos.findIndex(v => v.uuid === targetUuid);
-                if (idx !== -1) {
-                    newIndex = idx;
-                    targetUuidRef.current = null; // цель достигнута
-                }
+                if (idx !== -1) newIndex = idx;
             }
 
             setWindow({ videos: newVideos, currentIndex: newIndex });
@@ -128,20 +135,15 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
         }
     }
 
-    const reloadFeed = () => {
-        feedModeRef.current = { type: 'global' };
-        targetUuidRef.current = null;
-        startFeed();
-    }
-
     async function prefetch(direction, snapshot, restoreCurPage = false) {
         if (loading) return;
         setLoading(true);
 
         try {
             let pos, page, url, res;
+            const { type, userId, sort, query } = feedModeRef.current;
 
-            if (feedModeRef.current.type === 'global') {
+            if (type === "global") {
                 const { feedId, nextPos, curPos, prevPos } = snapshot;
                 if (direction === 'next') {
                     pos = nextPos ?? 0; // если nextPos null, то берем 0
@@ -155,7 +157,7 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
 
                 url = `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}?count=${PAGE_SIZE}&pos=${pos}`;
                 res = await fetch(url, { headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) } });
-            } else {
+            } else if (type === "user") {
                 const { number, first, last } = snapshot;
                 if (direction === 'next') {
                     page = last ? 0 : number + 1;
@@ -167,9 +169,24 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
                     return; // если страница одна либо номер меньше 0 - выходим
                 }
 
-                const { userId, sort } = feedModeRef.current;
                 url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
                 res = await fetch(url, { headers: authHeaders(token) });
+            } else if (type === "search") {
+                const { number, first, last } = snapshot;
+                if (direction === 'next') {
+                    page = last ? 0 : number + 1;
+                } else {
+                    page = restoreCurPage ? number : number - 1;
+                }
+
+                if ((first && last) || page < 0) {
+                    return; // если страница одна либо номер меньше 0 - выходим
+                }
+
+                url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}`;
+                res = await fetch(url, { headers: authHeaders(token) });
+            } else {
+                return;
             }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -345,7 +362,10 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
             const { prevPos, nextPos, first, last } = snapshot; // тут snapshot текущего видео!
 
             // Конец окна и одна страница - перемещаемся в начало окна
-            if ((type === 'global' && prevPos === nextPos) || (type === 'profile' && first === last)) {
+            if (
+                (type === "global" && prevPos === nextPos) ||
+                ((type === "user" || type === "search") && first === last)
+            ) {
                 setCurrentIndex(0);
             }
         }
@@ -358,7 +378,10 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
         const { prevPos, first } = snapshot;
 
         // Если нулевой элемент первой страницы - назад идти нельзя!
-        if (localIndex === 0 && ((type === 'global' && prevPos === null) || (type === 'profile' && first))) {
+        if (
+            localIndex === 0 &&
+            ((type === "global" && prevPos === null) || ((type === "user" || type === "search") && first))
+        ) {
             setStatusFeed('Это самое первое видео', 'ok');
             return;
         }
@@ -379,18 +402,7 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
     }
 
     useEffect(() => {
-        exposeControls?.({
-            reloadFeed,
-            switchToProfile: (userId, sort, uuid) => {
-                feedModeRef.current = { type: 'profile', userId, sort };
-                targetUuidRef.current = uuid || null;
-                startFeed();
-            },
-            getGlobalIndexByUuid: (uuid) => videos.findIndex((v) => v.uuid === uuid),
-            playByIndex: (idx) => setCurrentIndex(idx),
-            goNext,
-            goPrev,
-        });
+        exposeControls?.({ goNext, goPrev });
     }, [exposeControls, window]);
 
     /* Старт ленты при первом входе на страницу либо если нет видео */
@@ -399,11 +411,19 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
         startFeed();
     }, [active, authReady]);
 
-    /* Перезагрузка ленты, если сменился токен */
+    /* Сброс состояния, если сменился токен */
     useEffect(() => {
         if (!authReady) return;
-        reloadFeed();
+        setFeedMode({ type: "global" });
+        setWindow({ videos: [], currentIndex: -1 });
     }, [token]);
+
+    /* Старт ленты при смене ее режима */
+    useEffect(() => {
+        feedModeRef.current = feedMode;
+        if (!active || !authReady) return; // защита от срабатывания при первом рендере либо в фоне
+        startFeed();
+    }, [feedMode]);
 
     /* Изменение состояния плеера */
     useEffect(() => {
@@ -497,12 +517,24 @@ export default function FeedPage({ active, exposeControls, onPage, searchDialogO
     return (
         <Stack spacing={1} flex={1}>
             <Paper elevation={0}>
-                <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
-                    <Typography variant="h6" px={1}>Рекомендации</Typography>
-                    <IconButton onClick={() => setSearchDialogOpen(true)} size="small">
-                        <SearchRoundedIcon/>
-                    </IconButton>
-                </Stack>
+                {feedMode.type === "global" && (
+                    <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
+                        <Typography variant="h6" px={1}>Рекомендации</Typography>
+                        <IconButton onClick={() => setSearchDialogOpen(true)} size="small">
+                            <SearchRoundedIcon/>
+                        </IconButton>
+                    </Stack>
+                )}
+                {feedMode.type === "user" && (
+                    <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
+                        <Typography variant="h6" px={1}>Видео пользователя</Typography>
+                    </Stack>
+                )}
+                {feedMode.type === "search" && (
+                    <Stack direction="row" p={1} alignItems="center" justifyContent="space-between">
+                        <Typography variant="h6" px={1}>Найденные видео</Typography>
+                    </Stack>
+                )}
             </Paper>
             <Box sx={{
                 position: 'relative',

@@ -10,13 +10,7 @@ import { AvatarUploadDialog } from "../components/AvatarUploadDialog.jsx";
 import { FollowingList } from "../components/FollowingList.jsx";
 import { UploadsList } from "../components/UploadsList.jsx";
 
-export default function AccountPage({
-                                        active,
-                                        activeTab,
-                                        setActiveTab,
-                                        onPage,
-                                        onGlobalPlayByUuid,
-                                    }) {
+export default function AccountPage({ active, activeTab, setActiveTab, onPage }) {
     const { token, user, setAuth } = useAuth();
 
     const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
@@ -181,9 +175,9 @@ export default function AccountPage({
                     <ThumbGrid
                         active={activeTab === "videos"}
                         userId={user?.userId}
-                        onOpenVideo={onGlobalPlayByUuid}
                         onDeleteVideo={deleteVideo}
                         showDelete
+                        onPage={onPage}
                     />
                 ) : activeTab === "following" ? (
                     <FollowingList
