@@ -1,57 +1,86 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { SwipeableDialog } from "./SwipeableDialog";
+import { LoadMoreButton } from "./LoadMoreButton";
 import { apiBase, authHeaders } from "../api/api";
-import { formatCompactNumber, formatDate, humanSize } from "../utils/format";
+import { formatDate, humanSize } from "../utils/format";
+
+const PAGE_SIZE = 20;
 
 export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
-    const [total, setTotal] = useState(null);
     const [status, setStatus] = useState("");
+
+    const [paging, setPaging] = useState({ page: 0, size: PAGE_SIZE, totalElements: 0 });
+    const [loading, setLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+    const last = results.length >= paging.totalElements;
 
     const [suggests, setSuggests] = useState([]);
     const [loadingSuggest, setLoadingSuggest] = useState(false);
 
     const suggestTimer = useRef(null);
 
-    const runSearch = useCallback(async (text) => {
-        const q = text.trim();
-        if (!q) {
-            setStatus("Введите запрос");
-            return;
-        }
+    const loadPage = useCallback(
+        async (pageNumber, { replace = false } = {}) => {
+            const q = query.trim();
+            if (!q || loading) return;
 
-        setStatus("Ищу…");
-        setResults([]);
+            setLoading(true);
+            setStatus("Ищу…");
 
-        try {
-            const res = await fetch(
-                `${apiBase}/api/search/videos?q=${encodeURIComponent(q)}&size=20`,
-                { headers: authHeaders() }
-            );
+            try {
+                const res = await fetch(
+                    `${apiBase}/api/search/videos?q=${encodeURIComponent(q)}&page=${pageNumber}&size=${PAGE_SIZE}`,
+                    { headers: authHeaders() }
+                );
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-            const page = await res.json();
-            const items = Array.isArray(page.content)
-                ? page.content
-                : Array.isArray(page)
-                    ? page
-                    : [];
+                const page = await res.json();
+                const items = page?.content ?? [];
 
-            setTotal(
-                typeof page.totalElements === "number"
-                    ? page.totalElements
-                    : items.length
-            );
+                setResults((prev) =>
+                    replace ? items : prev.concat(items)
+                );
 
-            setResults(items);
-            setStatus(items.length ? "" : "Ничего не найдено");
-        } catch (e) {
-            setStatus("Ошибка поиска: " + e.message);
-        }
-    }, []);
+                setPaging({
+                    page: page.number ?? pageNumber,
+                    size: PAGE_SIZE,
+                    totalElements: page.totalElements ?? items.length,
+                });
+
+                setStatus(items.length ? "" : "Ничего не найдено");
+            } catch (e) {
+                setStatus("Ошибка поиска: " + e.message);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [query, loading]
+    );
+
+    const runSearch = useCallback(
+        (text) => {
+            const q = text.trim();
+            if (!q) {
+                setStatus("Введите запрос");
+                return;
+            }
+
+            setHasSearched(true);
+            setResults([]);
+            setPaging({
+                page: 0,
+                size: PAGE_SIZE,
+                totalElements: 0,
+            });
+
+            loadPage(0, { replace: true });
+        },
+        [loadPage]
+    );
 
     const runSuggest = useCallback(async (q) => {
         setLoadingSuggest(true);
@@ -68,6 +97,15 @@ export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
         } finally {
             setLoadingSuggest(false);
         }
+    }, []);
+
+    const resetSearchState = useCallback(() => {
+        setQuery("");
+        setResults([]);
+        setPaging({ page: 0, size: PAGE_SIZE, totalElements: 0 });
+        setHasSearched(false);
+        setStatus("");
+        setSuggests([]);
     }, []);
 
     useEffect(() => {
@@ -87,55 +125,83 @@ export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
         return () => clearTimeout(suggestTimer.current);
     }, [query, runSuggest]);
 
+    /*
+    useEffect(() => {
+        if (!open) {
+            setHasSearched(false);
+            setResults([]);
+            setPaging({
+                page: 0,
+                size: PAGE_SIZE,
+                last: true,
+                totalElements: 0,
+            });
+            setStatus("");
+        }
+    }, [open]);
+    */
+
     return (
-        <SwipeableDialog
-            open={open}
-            setOpen={setOpen}
-            title="Поиск видео"
-        >
-            <Stack p={2} pt={0} spacing={1.5} sx={{ overflowY: "auto" }}>
-                <Autocomplete
-                    size="small"
-                    freeSolo
-                    inputValue={query}
-                    options={suggests}
-                    filterOptions={(x) => x}
-                    loading={loadingSuggest}
-                    getOptionLabel={(o) => typeof o === "string" ? o : o.name || ""}
-                    onInputChange={(_, value) => setQuery(value)}
-                    onChange={(_, value) => {
-                        const text = typeof value === "string" ? value : value?.name || "";
-                        if (text) {
-                            setQuery(text);
-                            runSearch(text);
-                        }
-                    }}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            e.preventDefault();
-                            runSearch(query);
-                        }
-                    }}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            placeholder="Введите название или описание"
-                        />
-                    )}
-                />
-
-                <Typography variant="caption" color="text.secondary" textAlign="center">
-                    Найдено {total == null ? "—" : `${total} видео`}
+        <SwipeableDialog open={open} setOpen={setOpen} title="Поиск видео">
+            <Autocomplete
+                size="small"
+                freeSolo
+                inputValue={query}
+                options={suggests}
+                filterOptions={(x) => x}
+                loading={loadingSuggest}
+                getOptionLabel={(o) => typeof o === "string" ? o : o.name || ""}
+                onInputChange={(_, value, reason) => {
+                    if (reason === "clear") {
+                        resetSearchState();
+                        return;
+                    }
+                    setQuery(value);
+                }}
+                onChange={(_, value) => {
+                    const text = typeof value === "string" ? value : value?.name || "";
+                    if (text) {
+                        setQuery(text);
+                        runSearch(text);
+                    }
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        runSearch(query);
+                    }
+                }}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        placeholder="Введите название или описание"
+                    />
+                )}
+                slotProps={{ paper: { elevation: 24 } }}
+                sx={{ mx: 2, mb: 1.5 }}
+            />
+            {hasSearched && (
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    textAlign="center"
+                    sx={{ mb: 1.5 }}
+                >
+                    Найдено {paging.totalElements} видео
                 </Typography>
-
-                <Stack spacing={1}>
+            )}
+            <Box flex={1} overflow="hidden" position="relative" mb={2}>
+                <Stack
+                    spacing={1}
+                    sx={{ px: 2, height: 1, overflowX: "hidden", overflowY: "auto", }}
+                >
                     {results.map((v) => (
                         <Stack
                             key={v.uuid}
                             spacing={0.5}
                             sx={{
                                 p: 1,
-                                borderRadius: 1,
+                                borderRadius: 3,
                                 bgcolor: "action.hover",
                                 cursor: "pointer",
                             }}
@@ -156,13 +222,19 @@ export function SearchDialog({ open, setOpen, onGlobalPlayByUuid }) {
                         </Stack>
                     ))}
                 </Stack>
-
-                {status && (
-                    <Typography variant="caption" color="text.secondary">
-                        {status}
-                    </Typography>
+                {!last && (
+                    <LoadMoreButton
+                        sx={(theme) => ({
+                            position: 'absolute',
+                            bottom: theme.spacing(1),
+                            left: "50%",
+                            transform: `translateX(-50%)`,
+                        })}
+                        onClick={() => loadPage(paging.page + 1)}
+                        loading={loading}
+                    />
                 )}
-            </Stack>
+            </Box>
         </SwipeableDialog>
     );
 }
