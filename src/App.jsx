@@ -206,10 +206,7 @@ function AppInner() {
             <UploadPage
                 active={activeTab === 'upload'}
                 onRequireAuth={onRequireAuth}
-                onJobTracked={(jobId, label, initialStatus) => {
-                    trackJob(jobId, label, initialStatus);
-                    setActiveTab('account'); // как в оригинале: прыжок в "Аккаунт"
-                }}
+                goToPage={onTab}
             />
             <ProfilePage
                 active={activeTab === 'profile'}  // Передаем активное состояние для профиля

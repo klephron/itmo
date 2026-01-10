@@ -20,6 +20,18 @@ export function formatDate(iso) {
     }
 }
 
+export function formatDuration(totalSeconds) {
+    if (typeof totalSeconds !== "number" || totalSeconds < 0) {
+        return "0:00";
+    }
+
+    const seconds = Math.floor(totalSeconds);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
 const cases = [2, 0, 1, 1, 1, 2];
 export const pluralizeNum = (n, labels) => {
     n = Math.abs(n);

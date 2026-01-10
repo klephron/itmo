@@ -45,15 +45,15 @@ export function AvatarUploadDialog({ open, setOpen, onSuccess }) {
 
     function validateFile(file, imageInfo) {
         if (!ALLOWED_TYPES.includes(file.type)) {
-            return "Поддерживаются только JPG и PNG";
+            return `Поддерживаются только изображения формата ${ALLOWED_TYPES.join(" / ")}`;
         }
 
         if (file.size > MAX_FILE_SIZE) {
-            return `Размер файла не должен превышать ${humanSize(MAX_FILE_SIZE)}`;
+            return `Размер автара не должен превышать ${humanSize(MAX_FILE_SIZE)}`;
         }
 
         if (imageInfo.width > MAX_DIMENSION || imageInfo.height > MAX_DIMENSION) {
-            return `Максимальное разрешение — ${MAX_DIMENSION}×${MAX_DIMENSION}`;
+            return `Разрешение аватара не должно превышать ${MAX_DIMENSION}×${MAX_DIMENSION}`;
         }
 
         return null;
@@ -153,6 +153,10 @@ export function AvatarUploadDialog({ open, setOpen, onSuccess }) {
     return (
         <SmallDialog open={open} setOpen={setOpen} title="Обновление аватара">
             <Stack p={2} pt={0} spacing={2} alignItems="center">
+                <Typography variant="body2">
+                    Выберите изображение в формате JPG или PNG не более {MAX_DIMENSION}×{MAX_DIMENSION} и не
+                    более {humanSize(MAX_FILE_SIZE)}
+                </Typography>
                 <Button
                     variant="outlined"
                     sx={{
@@ -199,13 +203,12 @@ export function AvatarUploadDialog({ open, setOpen, onSuccess }) {
                         color: "text.secondary",
                     }}
                 >
-                    {file
-                        ? `${file.name} · ${imageInfo?.width}×${imageInfo?.height} · ${humanSize(file.size)}`
-                        : "Файл не выбран"}
-                </Typography>
-                <Typography variant="body2">
-                    Выберите изображение в формате JPG или PNG не более {MAX_DIMENSION}×{MAX_DIMENSION} и не
-                    более {humanSize(MAX_FILE_SIZE)}
+                    &lrm;
+                    {file ? (
+                        `${file.name} · ${imageInfo?.width}×${imageInfo?.height} · ${humanSize(file.size)}`
+                    ) : (
+                        "Файл не выбран"
+                    )}
                 </Typography>
                 {status.msg && (
                     <Typography

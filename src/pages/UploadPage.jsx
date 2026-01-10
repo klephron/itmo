@@ -1,71 +1,153 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { apiBase } from '../api/api';
-import { useAuth } from '../context/AuthContext';
-import Status from '../components/Status';
+import { useRef, useState } from "react";
+import { Button, LinearProgress, Paper, Stack, TextField, Typography, } from "@mui/material";
+import { apiBase } from "../api/api";
+import { useAuth } from "../context/AuthContext";
+import Status from "../components/Status";
+import { formatDuration, humanSize } from "../utils/format.js";
 
-export default function UploadPage({ active, onRequireAuth, onJobTracked }) {
+const MAX_DURATION = 120; // seconds
+const MAX_WIDTH = 1080;
+const MAX_HEIGHT = 1920;
+const MAX_PIXELS = MAX_HEIGHT * MAX_WIDTH;
+
+function readVideoInfo(file) {
+    return new Promise((resolve, reject) => {
+        const video = document.createElement("video");
+        video.preload = "metadata";
+
+        video.onloadedmetadata = () => {
+            URL.revokeObjectURL(video.src);
+            resolve({
+                width: video.videoWidth,
+                height: video.videoHeight,
+                duration: video.duration, // seconds
+            });
+        };
+
+        video.onerror = () => reject("Не удалось прочитать видеофайл");
+        video.src = URL.createObjectURL(file);
+    });
+}
+
+function validateVideo(file, info) {
+    if (!info) return null;
+
+    if (info.duration > MAX_DURATION) {
+        return `Длительность видео не должна превышать ${MAX_DURATION / 60} мин`;
+    }
+
+    if (info.width * info.height > MAX_PIXELS) {
+        return `Разрешение видео не должно превышать ${MAX_WIDTH}×${MAX_HEIGHT}`;
+    }
+
+    return null;
+}
+
+export default function UploadPage({ active, onRequireAuth, goToPage }) {
     const { token } = useAuth();
-    const fileRef = useRef(null);
+    const inputRef = useRef(null);
 
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [progress, setProgress] = useState({ show: false, value: 0 });
-    const [status, setStatus] = useState({ msg: '', type: '' });
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
 
-    function setStatusUpload(msg = '', type = '') {
+    const [file, setFile] = useState(null);
+    const [videoInfo, setVideoInfo] = useState(null);
+
+    const [progress, setProgress] = useState(0);
+    const [uploading, setUploading] = useState(false);
+    const [uploaded, setUploaded] = useState(false);
+
+    const [status, setStatus] = useState({ msg: "", type: "" });
+
+    const canUpload = !!token && !uploading && !uploaded;
+
+    function setStatusUpload(msg = "", type = "") {
         setStatus({ msg, type });
     }
 
-    const canUpload = !!token;
+    function resetForm() {
+        setTitle("");
+        setDescription("");
+        setFile(null);
+        setVideoInfo(null);
+        setProgress(0);
+        setUploading(false);
+        setUploaded(false);
+        setStatus({ msg: "", type: "" });
+        if (inputRef.current) inputRef.current.value = "";
+    }
 
-    const hint = useMemo(() => (
-        <div className="hint">
-            Видео будет автоматически перекодировано в MP4 (H.264), чтобы браузер его точно открыл.
-        </div>
-    ), []);
+    async function handleFileChange(e) {
+        const selected = e.target.files?.[0];
+        if (!selected) return;
+
+        try {
+            const info = await readVideoInfo(selected);
+            const error = validateVideo(selected, info);
+
+            if (error) {
+                setStatusUpload(error, "error");
+                setFile(null);
+                setVideoInfo(null);
+                return;
+            }
+
+            setFile(selected);
+            setVideoInfo(info);
+            setStatus({ msg: "", type: "" });
+        } catch (err) {
+            // если метаданные не удалось прочитать — НЕ блокируем загрузку
+            setFile(selected);
+            setVideoInfo(null);
+            setStatus({
+                msg: "Не удалось проверить параметры видео, файл будет загружен без проверки",
+                type: "ok",
+            });
+        }
+    }
 
     function startUpload() {
         if (!token) {
-            setStatusUpload('Войдите, чтобы загружать видео', 'error');
+            setStatusUpload("Войдите, чтобы загружать видео", "error");
             onRequireAuth?.();
             return;
         }
 
-        const file = fileRef.current?.files?.[0];
-        const videoName = title.trim();
-        const videoDescription = description.trim();
-
         if (!file) {
-            setStatusUpload('Выберите файл видео', 'error');
+            setStatusUpload("Выберите файл видео", "error");
             return;
         }
 
         const formData = new FormData();
-        formData.append('video', file);
-        formData.append('videoName', videoName || file.name);
+        formData.append("video", file);
+        formData.append("videoName", title.trim() || file.name);
 
-        if (videoDescription) {
-            formData.append('description', videoDescription);
+        if (description.trim()) {
+            formData.append("description", description.trim());
         }
 
-        setProgress({ show: true, value: 0 });
-        setStatusUpload('Начинаю загрузку…', 'ok');
+        setUploading(true);
+        setUploaded(false);
+        setProgress(0);
+        setStatusUpload("Начинаю загрузку…", "ok");
 
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', apiBase + '/api/streaming/video/upload', true);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.open("POST", apiBase + "/api/streaming/video/upload", true);
+        xhr.setRequestHeader("Authorization", "Bearer " + token);
 
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
                 const percent = Math.round((e.loaded / e.total) * 100);
-                setProgress({ show: true, value: percent });
-                setStatusUpload(`Загружаю файл… ${percent}%`, 'ok');
+                setProgress(percent);
+                setStatusUpload(`Загрузка файла… ${percent}%`, "ok");
             }
         };
 
-        xhr.upload.onload = () => {
-            setStatusUpload('Файл загружен, идёт обработка…', 'ok');
-            setProgress({ show: true, value: 100 });
+        xhr.onload = () => {
+            setProgress(100);
+            setStatusUpload("Файл загружен, началась обработка", "ok");
+            setUploaded(true);
+            setUploading(false);
         };
 
         xhr.onreadystatechange = () => {
@@ -73,26 +155,36 @@ export default function UploadPage({ active, onRequireAuth, onJobTracked }) {
 
             if (xhr.status >= 200 && xhr.status < 300) {
                 let resp = null;
-                try { resp = JSON.parse(xhr.responseText); } catch {}
-                if (!resp || !resp.jobId) {
-                    setStatusUpload('Сервер не вернул jobId', 'error');
-                    return;
+                try {
+                    resp = JSON.parse(xhr.responseText);
+                } catch {
                 }
 
-                const jobId = resp.jobId;
-                const jobLabel = videoName || file.name;
-
-                setStatusUpload('Идёт обработка видео…', 'ok');
-                onJobTracked?.(jobId, jobLabel, null);
+                if (resp?.jobId) {
+                    /*
+                    onJobTracked?.(
+                        resp.jobId,
+                        title.trim() || file.name,
+                        null
+                    );*/
+                } else {
+                    setStatusUpload("Сервер не вернул jobId", "error");
+                }
             } else if (xhr.status === 401 || xhr.status === 403) {
-                setStatusUpload('Сессия истекла, войдите снова', 'error');
+                setStatusUpload("Сессия истекла, войдите снова", "error");
                 onRequireAuth?.();
             } else {
-                setStatusUpload(`Ошибка загрузки: HTTP ${xhr.status}`, 'error');
+                setStatusUpload(
+                    `Ошибка загрузки: HTTP ${xhr.status}`,
+                    "error"
+                );
             }
         };
 
-        xhr.onerror = () => setStatusUpload('Сетевая ошибка при загрузке', 'error');
+        xhr.onerror = () => {
+            setStatusUpload("Сетевая ошибка при загрузке", "error");
+            setUploading(false);
+        };
 
         xhr.send(formData);
     }
@@ -100,53 +192,99 @@ export default function UploadPage({ active, onRequireAuth, onJobTracked }) {
     if (!active) return null;
 
     return (
-        <div className={'card page ' + (active ? 'active' : '')} id="pageUpload">
-            <div className="header">
-                <div className="title">Загрузка нового видео</div>
-            </div>
+        <>
+            <Stack component={Paper} direction="row" p={1}>
+                <Typography variant="h6" px={1}>
+                    Загрузка видео
+                </Typography>
+            </Stack>
 
-            <div className="form-row">
-                <label htmlFor="uploadTitle">Название видео</label>
+            <Stack component={Paper} p={2} spacing={2} flex={1} overflow="hidden">
+                <Typography variant="body2">
+                    Выберите видео не более {MAX_WIDTH}×{MAX_HEIGHT} и не длиннее {MAX_DURATION / 60} мин.
+                    Оно будет автоматически перекодировано в MP4 (H.264).
+                </Typography>
+
+                <Button
+                    variant="contained"
+                    color="inherit"
+                    disabled={!canUpload}
+                    onClick={() => inputRef.current?.click()}
+                >
+                    {file ? "Выбрать другой файл" : "Выбрать файл"}
+                </Button>
                 <input
-                    id="uploadTitle"
-                    type="text"
-                    placeholder="Как назвать ролик?"
+                    hidden
+                    ref={inputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileChange}
+                />
+
+                <Typography
+                    variant="caption"
+                    noWrap
+                    sx={{
+                        width: 1,
+                        direction: "rtl",
+                        textAlign: "center",
+                        color: "text.secondary",
+                    }}
+                >
+                    &lrm;
+                    {!file ? (
+                        "Видео не выбрано"
+                    ) : videoInfo ? (
+                        `${file.name} · ${videoInfo.width}×${videoInfo.height} · 
+                        ${formatDuration(videoInfo.duration)} · ${humanSize(file.size)}`
+                    ) : `${file.name} · ${humanSize(file.size)}`}
+                </Typography>
+
+                <TextField
+                    placeholder="Как назвать видео?"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     disabled={!canUpload}
+                    size="small"
                 />
-            </div>
 
-            <div className="form-row">
-                <label htmlFor="uploadDescription">Описание (опционально)</label>
-                <input
-                    id="uploadDescription"
-                    type="text"
-                    placeholder="О чём ролик?"
+                <TextField
+                    placeholder="О чем видео?"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     disabled={!canUpload}
+                    size="small"
                 />
-            </div>
 
-            <div className="form-row">
-                <label htmlFor="uploadFile">Файл видео</label>
-                <input id="uploadFile" ref={fileRef} type="file" accept="video/*" disabled={!canUpload} />
-                {hint}
-            </div>
+                <Button
+                    variant="contained"
+                    onClick={startUpload}
+                    disabled={!canUpload || !file}
+                >
+                    Загрузить
+                </Button>
 
-            <button className="full" id="btnUpload" onClick={startUpload} disabled={!canUpload}>
-                ⬆ Загрузить
-            </button>
+                <Status message={status.msg} type={status.type}/>
 
-            <progress
-                id="uploadProgress"
-                value={progress.value}
-                max="100"
-                style={{ width: '100%', marginTop: 6, display: progress.show ? 'block' : 'none' }}
-            />
+                <LinearProgress
+                    variant="determinate"
+                    value={progress}
+                    color="success"
+                />
 
-            <Status id="statusUpload" message={status.msg} type={status.type} />
-        </div>
+                {uploaded && (
+                    <Stack spacing={1}>
+                        <Stack direction="row" spacing={2}>
+                            <Button fullWidth variant="contained" color="inherit" onClick={resetForm}>
+                                Загрузить еще
+                            </Button>
+                            <Button fullWidth variant="contained" onClick={() => goToPage("account")}>
+                                К списку загрузок
+                            </Button>
+                        </Stack>
+                    </Stack>
+                )}
+            </Stack>
+        </>
     );
 }
