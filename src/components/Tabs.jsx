@@ -6,7 +6,7 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
-export default function Tabs({ activeTab, onTab, showModeration, isAuthenticated, feedControlsRef }) {
+export default function Tabs({ activeTab, onTab, isAuthenticated, feedControlsRef }) {
     const handlePrevClick = () => feedControlsRef.current?.goPrev();
     const handleNextClick = () => feedControlsRef.current?.goNext();
 
