@@ -22,6 +22,7 @@ import { objectsAreEqual } from "../utils/compare.js";
 const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
 const PREFETCH_DELTA = 2;
+const WATCH_MILESTONES = [25, 50, 75, 100];
 
 function getOrCreateDeviceId() {
     const key = 'feed-device-id';
@@ -52,7 +53,13 @@ export default function FeedPage({
     const playerRef = useRef(null);
     const preload1Ref = useRef(null);
     const preload2Ref = useRef(null);
-    const playerStateRef = useRef(null);
+    const playerStateRef = useRef({
+        uuid: null,
+        shouldPlay: true,
+        currentTime: 0,
+        viewSent: false,
+        watchSent: new Set(),
+    });
 
     const activeRef = useRef(active);
     const feedModeRef = useRef(feedMode);
@@ -247,7 +254,7 @@ export default function FeedPage({
     }
 
     const registerView = async () => {
-        if (!currentVideo || !token) return;
+        if (!token || !uuid || playerStateRef.current.viewSent) return;
 
         try {
             const res = await fetch(`${apiBase}/api/videos/${uuid}/view`, {
@@ -258,14 +265,9 @@ export default function FeedPage({
             if (!res.ok) return;
 
             const data = await res.json();
-            const viewsCount =
-                typeof data?.viewsCount === 'number'
-                    ? data.viewsCount
-                    : typeof data?.count === 'number'
-                        ? data.count
-                        : null;
+            const viewsCount = data?.viewsCount;
 
-            if (viewsCount == null) return;
+            playerStateRef.current.viewSent = true;
 
             setVideos((prev) => {
                 const copy = [...prev];
@@ -279,6 +281,36 @@ export default function FeedPage({
             // silently ignore — view is not critical
         }
     };
+
+    async function registerWatch(percent, positionSeconds, durationSeconds) {
+        const state = playerStateRef.current;
+        if (!token || !uuid || state.uuid !== uuid || state.watchSent.has(percent)) return;
+
+        try {
+            const res = await fetch(
+                `${apiBase}/api/videos/${uuid}/watch`,
+                {
+                    method: 'POST',
+                    headers: {
+                        ...authHeaders(token),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        percent,
+                        positionSeconds: Math.floor(positionSeconds),
+                        durationSeconds: Math.floor(durationSeconds),
+                    }),
+                }
+            );
+
+            if (!res.ok) return;
+
+            // ТОЛЬКО тут фиксируем успех
+            state.watchSent.add(percent);
+        } catch {
+            // ничего не делаем — будет повтор при следующем timeupdate
+        }
+    }
 
     const toggleLike = async () => {
         if (!currentVideo) return;
@@ -314,6 +346,56 @@ export default function FeedPage({
             // silently ignore — like is non-critical
         }
     };
+
+    async function loadVideoMeta(uuid) {
+        if (!uuid) return;
+
+        try {
+            const headers = authHeaders(token)
+            const [viewsRes, commentsRes, likeRes] = await Promise.all([
+                fetch(`${apiBase}/api/videos/${uuid}/view`, { headers }),
+                fetch(`${apiBase}/api/videos/${uuid}/comments?page=0&size=1`, { headers }),
+                fetch(`${apiBase}/api/videos/${uuid}/like`, { headers }),
+            ]);
+
+            let viewsCount;
+            if (viewsRes.ok) {
+                const data = await viewsRes.json();
+                viewsCount = data?.viewsCount;
+            }
+
+            let commentsCount;
+            if (commentsRes.ok) {
+                const data = await commentsRes.json();
+                commentsCount = data?.totalElements;
+            }
+
+            let likesCount, likedByMe;
+            if (likeRes.ok) {
+                const data = await likeRes.json();
+                likesCount = data?.likesCount;
+                likedByMe = data?.liked;
+            }
+
+            setVideos((prev) => {
+                const copy = [...prev];
+                const idx = copy.findIndex(v => v.uuid === uuid);
+                if (idx === -1) return prev;
+
+                copy[idx] = {
+                    ...copy[idx],
+                    ...(typeof viewsCount === 'number' && { viewsCount }),
+                    ...(typeof commentsCount === 'number' && { commentsCount }),
+                    ...(typeof likesCount === 'number' && { likesCount }),
+                    ...(typeof likedByMe === 'boolean' && { likedByMe }),
+                };
+
+                return copy;
+            });
+        } catch {
+            // мета — не критичная
+        }
+    }
 
     function setStatusFeed(msg = '', type = '') {
         console.log(msg, type)
@@ -396,7 +478,12 @@ export default function FeedPage({
         const player = playerRef.current;
         if (!player) return;
 
-        playerStateRef.current = { uuid, shouldPlay: !player.paused, currentTime: player.currentTime };
+        playerStateRef.current = {
+            ...playerStateRef.current,
+            uuid,
+            shouldPlay: uuid ? !player.paused : true,
+            currentTime: player.currentTime
+        };
     }
 
     useEffect(() => {
@@ -443,12 +530,18 @@ export default function FeedPage({
             ? `${apiBase}/api/streaming/video/${uuid}?quality=${selectedQuality}`
             : `${apiBase}/api/streaming/video/${uuid}`;
 
-        const saved = playerStateRef.current;
-        const isSameVideo = saved?.uuid === uuid;
-        const shouldPlay = isSameVideo ? saved.shouldPlay : true;
-        const currentTime = isSameVideo ? saved.currentTime : 0;
+        const { uuid: savedUuid, shouldPlay, currentTime } = playerStateRef.current;
 
-        playerStateRef.current = null;
+        // Сброс сохраненного состояния плеера, если видео изменилось
+        if (savedUuid !== uuid) {
+            playerStateRef.current = {
+                uuid,
+                shouldPlay: true,
+                currentTime: 0,
+                viewSent: false,
+                watchSent: new Set(),
+            };
+        }
 
         player.pause();
         player.src = url;
@@ -459,10 +552,19 @@ export default function FeedPage({
                 /* ignore */
             });
         }
-
-        preloadAround(currentIndex);
-        registerView(uuid);
     }, [active, uuid, selectedQuality]);
+
+    /* Загрузка актуальной мета-информации видео. Не учитываем токен, т.к. выше есть очистка (которая сменит uuid) */
+    useEffect(() => {
+        if (!uuid) return;
+        loadVideoMeta(uuid);
+    }, [uuid]);
+
+    /* Загрузка следующих видео при любых изменениях в окне либо при открытии страницы */
+    useEffect(() => {
+        if (!active) return;
+        preloadAround(currentIndex);
+    }, [active, window]);
 
     const handleVideoError = () => {
         setStatusFeed('Ошибка воспроизведения видео', 'error');
@@ -478,12 +580,29 @@ export default function FeedPage({
         });
     }
 
+    const handleVideoPlay = () => registerView();
+
+    const handleVideoTimeUpdate = () => {
+        const player = playerRef.current;
+        if (!player) return;
+
+        const currentTime = player.currentTime;
+        const duration = player.duration;
+        if (!duration || !isFinite(duration)) return;
+
+        const percent = Math.floor((currentTime / duration) * 100);
+        for (const m of WATCH_MILESTONES) {
+            if (percent >= m) {
+                registerWatch(m, currentTime, duration);
+            }
+        }
+    };
+
     const handleQualitySelect = (quality) => {
         const player = playerRef.current;
-        if (!currentVideo || !player) return;
+        if (!uuid || !player) return;
 
-        playerStateRef.current = { uuid, shouldPlay: !player.paused, currentTime: player.currentTime };
-
+        savePlayerState();
         setVideos((prev) => {
             const copy = [...prev];
             const idx = copy.findIndex(v => v.uuid === uuid);
@@ -644,6 +763,8 @@ export default function FeedPage({
                     }}
                     onEnded={handleVideoEnded}
                     onError={handleVideoError}
+                    onPlay={handleVideoPlay}
+                    onTimeUpdate={handleVideoTimeUpdate}
                 />
                 <Box component="video" display="none" ref={preload1Ref} muted/>
                 <Box component="video" display="none" ref={preload2Ref} muted/>
