@@ -126,8 +126,8 @@ export function SearchDialog({ open, setOpen, onPage }) {
     }, [query, runSuggest]);
 
     const handleLoadMore = () => loadPage(paging.page + 1);
-    const handleVideoOpen = (targetUuid) => {
-        onPage("feed", { feedMode: { type: "search", query, targetUuid } });
+    const handleVideoOpen = (targetUuid, targetIndex) => {
+        onPage("feed", { feedMode: { type: "search", query, targetUuid, targetIndex } });
         setOpen(false);
     }
 
@@ -185,7 +185,7 @@ export function SearchDialog({ open, setOpen, onPage }) {
                     spacing={1}
                     sx={{ px: 2, height: 1, overflowX: "hidden", overflowY: "auto", }}
                 >
-                    {results.map((v) => (
+                    {results.map((v, index) => (
                         <Stack
                             key={v.uuid}
                             spacing={0.5}
@@ -195,7 +195,7 @@ export function SearchDialog({ open, setOpen, onPage }) {
                                 bgcolor: "action.hover",
                                 cursor: "pointer",
                             }}
-                            onClick={() => handleVideoOpen(v.uuid)}
+                            onClick={() => handleVideoOpen(v.uuid, index)}
                         >
                             <Typography variant="body2">
                                 {v.name || "(без названия)"}

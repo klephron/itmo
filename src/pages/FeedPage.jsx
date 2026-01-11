@@ -89,13 +89,13 @@ export default function FeedPage({
     const setVideos = (callback) => setWindow((prev) => ({ ...prev, videos: callback(prev.videos) }));
     const setCurrentIndex = (currentIndex) => setWindow((prev) => ({ ...prev, currentIndex }));
 
-    async function startFeed() {
+    async function startFeed(jumpToTarget = false) {
         if (loading) return;
         setLoading(true);
 
         try {
             let url, res;
-            const { type, userId, sort, query, targetUuid } = feedModeRef.current;
+            const { type, userId, sort, query, targetUuid, targetIndex } = feedModeRef.current;
 
             if (type === "global") {
                 url = `${apiBase}/api/streaming/video/feed/session/start?size=${PAGE_SIZE}`;
@@ -103,14 +103,15 @@ export default function FeedPage({
                     method: 'POST',
                     headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
                 });
-            } else if (type === "user") {
-                url = `${apiBase}/api/users/${userId}/videos?page=0&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
-                res = await fetch(url, { headers: authHeaders(token) });
-            } else if (type === "search") {
-                url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=0&size=${PAGE_SIZE}`;
-                res = await fetch(url, { headers: authHeaders(token) });
             } else {
-                return;
+                const page = jumpToTarget ? Math.floor(targetIndex / PAGE_SIZE) : 0;
+                if (type === "user") {
+                    url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
+                    res = await fetch(url, { headers: authHeaders(token) });
+                } else {
+                    url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}`;
+                    res = await fetch(url, { headers: authHeaders(token) });
+                }
             }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -134,7 +135,7 @@ export default function FeedPage({
             }));
 
             let newIndex = 0;
-            if (targetUuid) {
+            if (jumpToTarget && targetUuid) {
                 const idx = newVideos.findIndex(v => v.uuid === targetUuid);
                 if (idx !== -1) newIndex = idx;
             }
@@ -422,13 +423,13 @@ export default function FeedPage({
     }
 
     const goNext = () => {
-        // Если видео еще нет - перезапускаем ленту
-        if (!videos.length) {
-            startFeed();
+        // Если видео еще нет либо мы как-то оказались на последнем видео в окне - перезапускаем ленту
+        if (!videos.length || currentIndex === videos.length - 1) {
+            startFeed(false);
             return;
         }
 
-        const nextIdx = Math.min(currentIndex + 1, videos.length - 1);
+        const nextIdx = currentIndex + 1;
         setCurrentIndex(nextIdx);
 
         const nextVideo = videos[nextIdx];
@@ -502,8 +503,10 @@ export default function FeedPage({
         // все вызовы startFeed - только если страница не в фоне и юзер подгружен
         if (!active || !authReady) return;
 
-        if (feedModeChanged || (activeChanged && videos.length === 0) || (!activeChanged)) {
-            startFeed();
+        if (feedModeChanged) {
+            startFeed(true);
+        } else if ((activeChanged && videos.length === 0) || !activeChanged) {
+            startFeed(false);
         }
     }, [active, feedMode, authReady]);
 

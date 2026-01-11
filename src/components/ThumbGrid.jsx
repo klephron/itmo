@@ -73,7 +73,9 @@ export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage })
     }, [active]);
 
     const handleLoadMore = () => loadPage(paging.page + 1);
-    const handleVideoOpen = (targetUuid) => onPage("feed", { feedMode: { type: "user", userId, sort, targetUuid } });
+    const handleVideoOpen = (targetUuid, targetIndex) => (
+        onPage("feed", { feedMode: { type: "user", userId, sort, targetUuid, targetIndex } })
+    );
 
     return (
         <>
@@ -148,7 +150,7 @@ export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage })
                                         <ThumbCard
                                             video={v}
                                             showDelete={showDelete}
-                                            onOpen={() => handleVideoOpen(v.uuid)}
+                                            onOpen={() => handleVideoOpen(v.uuid, index)}
                                             onDelete={() => onDeleteVideo?.(v.uuid)}
                                         />
                                     </Grid>
