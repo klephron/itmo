@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-@FeignClient(name = "profile-service", contextId = "profileAdminClient", path = "/internal/profile/admin")
+@FeignClient(name = "profile-service", contextId = "profileAdminClient", path = "/internal/profile/admin", fallbackFactory = ProfileAdminClientFallbackFactory.class)
 public interface ProfileAdminClient {
 
     @GetMapping("/users")

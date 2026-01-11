@@ -6,6 +6,8 @@ spring:
     name: brainstop-gateway
   profiles:
     default: dev
+  main:
+    allow-bean-definition-overriding: true
   cloud:
     loadbalancer:
       health-check:
@@ -92,8 +94,8 @@ spring:
             - RewritePath=/v3/api-docs/interactions, /v3/api-docs
   datasource:
     url: jdbc:postgresql://localhost:5432/video-streaming
-    username: test
-    password: test
+    username: ${DB_USER:gateway_auth}
+    password: ${DB_PASSWORD:gateway_auth}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

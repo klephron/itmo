@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import ru.itmo.zavar.brainstop.common.api.PageResponse;
 import ru.itmo.zavar.brainstop.common.api.video.dto.PublicUserVideoDto;
 
-@FeignClient(name = "video-service", path = "/internal/videos")
+@FeignClient(name = "video-service", path = "/internal/videos", fallbackFactory = VideoInternalClientFallbackFactory.class)
 public interface VideoInternalClient {
 
     @GetMapping("/users/{uploaderId}")

@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.itmo.zavar.brainstop.common.api.search.dto.EmbeddingResponse;
 
-@FeignClient(name = "search-service", contextId = "searchEmbeddingClient", path = "/internal/embedding")
+@FeignClient(name = "search-service", contextId = "searchEmbeddingClient", path = "/internal/embedding", fallbackFactory = SearchEmbeddingClientFallbackFactory.class)
 public interface SearchEmbeddingClient {
 
     @GetMapping("/vector")

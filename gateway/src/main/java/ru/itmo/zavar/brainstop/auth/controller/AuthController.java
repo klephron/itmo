@@ -1,6 +1,7 @@
 package ru.itmo.zavar.brainstop.auth.controller;
 
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,7 +31,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Регистрация нового пользователя")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest req) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest req) {
         UserEntity user = this.authService.register(req.username(), req.email(), req.displayName(), req.password());
         String token = this.authService.login(req.username(), req.password());
         String avatarUrl = user.getAvatarKey() == null ? null : "/api/users/" + user.getId() + "/avatar";
@@ -46,7 +47,7 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Логин по username/password")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req) {
         String token = this.authService.login(req.username(), req.password());
         UserEntity user = this.userRepository.findByUsername(req.username()).orElseThrow();
         String avatarUrl = user.getAvatarKey() == null ? null : "/api/users/" + user.getId() + "/avatar";

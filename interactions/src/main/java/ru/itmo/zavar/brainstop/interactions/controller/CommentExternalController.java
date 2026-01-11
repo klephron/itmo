@@ -15,7 +15,6 @@ import ru.itmo.zavar.brainstop.common.security.CurrentUser;
 import ru.itmo.zavar.brainstop.common.security.Role;
 import ru.itmo.zavar.brainstop.comment.service.CommentService;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController

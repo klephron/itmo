@@ -1,11 +1,13 @@
 package ru.itmo.zavar.brainstop.profile.api;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.itmo.zavar.brainstop.common.api.profile.UserAccountDto;
 import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
 import ru.itmo.zavar.brainstop.common.api.profile.UserSummaryDto;
 import ru.itmo.zavar.brainstop.profile.cache.UserSummaryCache;
-import ru.itmo.zavar.brainstop.profile.repo.UserRepository;
+import ru.itmo.zavar.brainstop.profile.client.AuthInternalClient;
 
 import java.util.Optional;
 
@@ -13,7 +15,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserProfilePublicApiImpl implements UserProfilePublicApi {
 
-    private final UserRepository userRepository;
+    private final AuthInternalClient authInternalClient;
     private final UserSummaryCache userSummaryCache;
 
     @Override
@@ -23,16 +25,25 @@ public class UserProfilePublicApiImpl implements UserProfilePublicApi {
             return cached;
         }
 
-        Optional<UserSummaryDto> summary = this.userRepository.findById(userId)
-                .map(u -> new UserSummaryDto(
-                        u.getId(),
-                        u.getDisplayName(),
-                        u.getAvatarKey() == null
-                                ? null
-                                : "/api/users/" + u.getId() + "/avatar"
-                ));
+        UserAccountDto account;
+        try {
+            account = this.authInternalClient.getUser(userId);
+        } catch (FeignException.NotFound e) {
+            return Optional.empty();
+        }
+        if (account == null) {
+            return Optional.empty();
+        }
 
-        summary.ifPresent(userSummaryCache::put);
-        return summary;
+        UserSummaryDto summary = new UserSummaryDto(
+                account.id(),
+                account.displayName(),
+                account.avatarKey() == null
+                        ? null
+                        : "/api/users/" + account.id() + "/avatar"
+        );
+
+        userSummaryCache.put(summary);
+        return Optional.of(summary);
     }
 }

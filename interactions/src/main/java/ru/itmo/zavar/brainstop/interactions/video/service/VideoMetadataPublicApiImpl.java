@@ -2,13 +2,13 @@ package ru.itmo.zavar.brainstop.interactions.video.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataPublicApi;
 import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataSummary;
-import ru.itmo.zavar.brainstop.interactions.video.model.VideoMetadataEntity;
-import ru.itmo.zavar.brainstop.interactions.video.repo.VideoMetadataRepository;
+import ru.itmo.zavar.brainstop.interactions.video.client.VideoMetadataInternalClient;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class VideoMetadataPublicApiImpl implements VideoMetadataPublicApi {
     private static final Duration META_TTL = Duration.ofSeconds(30);
     private static final String META_KEY_PREFIX = "video:meta:interactions:";
 
-    private final VideoMetadataRepository videoMetadataRepository;
+    private final VideoMetadataInternalClient videoMetadataInternalClient;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -38,44 +38,55 @@ public class VideoMetadataPublicApiImpl implements VideoMetadataPublicApi {
             return cached;
         }
 
-        Optional<VideoMetadataSummary> summary = videoMetadataRepository.findByUuid(uuid)
-                .map(this::toSummary);
-        summary.ifPresent(this::writeCache);
-        return summary;
+        VideoMetadataSummary summary;
+        try {
+            summary = videoMetadataInternalClient.getByUuid(uuid);
+        } catch (FeignException.NotFound e) {
+            return Optional.empty();
+        }
+        if (summary == null) {
+            return Optional.empty();
+        }
+        writeCache(summary);
+        return Optional.of(summary);
+    }
+
+    @Override
+    public long incrementLikesCount(Long videoId, long delta) {
+        try {
+            Long updated = videoMetadataInternalClient.incrementLikes(videoId, delta);
+            return updated != null ? updated : -1L;
+        } catch (FeignException.NotFound e) {
+            return -1L;
+        }
+    }
+
+    @Override
+    public long incrementViewsCount(Long videoId, long delta) {
+        try {
+            Long updated = videoMetadataInternalClient.incrementViews(videoId, delta);
+            return updated != null ? updated : -1L;
+        } catch (FeignException.NotFound e) {
+            return -1L;
+        }
     }
 
     @Override
     public void updateLikesCount(Long videoId, long newCount) {
-        videoMetadataRepository.findById(videoId)
-                .ifPresent(meta -> {
-                    meta.setLikesCount(newCount);
-                    videoMetadataRepository.save(meta);
-                    writeCache(toSummary(meta));
-                });
+        try {
+            videoMetadataInternalClient.updateLikes(videoId, newCount);
+        } catch (FeignException.NotFound e) {
+            return;
+        }
     }
 
     @Override
     public void updateViewsCount(Long videoId, long newCount) {
-        videoMetadataRepository.findById(videoId)
-                .ifPresent(meta -> {
-                    meta.setViewsCount(newCount);
-                    videoMetadataRepository.save(meta);
-                    writeCache(toSummary(meta));
-                });
-    }
-
-    private VideoMetadataSummary toSummary(VideoMetadataEntity meta) {
-        return new VideoMetadataSummary(
-                meta.getId(),
-                meta.getUuid(),
-                meta.getLikesCount(),
-                meta.getViewsCount(),
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        try {
+            videoMetadataInternalClient.updateViews(videoId, newCount);
+        } catch (FeignException.NotFound e) {
+            return;
+        }
     }
 
     private Optional<VideoMetadataSummary> readCache(UUID uuid) {

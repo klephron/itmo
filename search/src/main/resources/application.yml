@@ -12,6 +12,15 @@ spring:
 #      cache:
 #        enabled: true
 #        ttl: 2s
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 2000
+            readTimeout: 4000
 
 eureka:
   client:
@@ -41,3 +50,36 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    org.springframework.security: INFO
+    io.github.resilience4j.circuitbreaker: INFO
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        ignoreExceptions:
+          - feign.FeignException$NotFound
+    instances:
+      default:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 4s
+        cancelRunningFuture: true
+    instances:
+      default:
+        baseConfig: default

@@ -1,5 +1,6 @@
 package ru.itmo.zavar.brainstop.interactions.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,7 +25,7 @@ public class WatchExternalController {
     @Operation(summary = "Зафиксировать прогресс просмотра")
     public ResponseEntity<Void> watch(@PathVariable UUID uuid,
                                       @AuthenticationPrincipal CurrentUser principal,
-                                      @RequestBody WatchProgressRequest request) {
+                                      @Valid @RequestBody WatchProgressRequest request) {
         Long userId = principal != null ? principal.getId() : null;
         this.watchService.recordProgress(uuid, userId, request);
         return ResponseEntity.noContent().build();

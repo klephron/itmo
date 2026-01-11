@@ -6,8 +6,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import feign.FeignException;
+import ru.itmo.zavar.brainstop.profile.client.AuthInternalClient;
 import ru.itmo.zavar.brainstop.profile.dto.PublicUserShortDto;
-import ru.itmo.zavar.brainstop.profile.repo.UserRepository;
 import ru.itmo.zavar.brainstop.profile.service.FollowService;
 import ru.itmo.zavar.brainstop.common.security.CurrentUser;
 
@@ -21,7 +22,7 @@ import java.util.List;
 public class FollowController {
 
     private final FollowService followService;
-    private final UserRepository userRepository;
+    private final AuthInternalClient authInternalClient;
 
     @PostMapping("/{id}/follow")
     @Operation(summary = "Подписаться на пользователя")
@@ -31,7 +32,11 @@ public class FollowController {
         }
         Long currentUserId = principal.getId();
 
-        if (!this.userRepository.existsById(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
 
@@ -47,7 +52,11 @@ public class FollowController {
         }
         Long currentUserId = principal.getId();
 
-        if (!this.userRepository.existsById(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
 
@@ -58,7 +67,11 @@ public class FollowController {
     @GetMapping("/{id}/followers")
     @Operation(summary = "Список подписчиков пользователя")
     public ResponseEntity<List<PublicUserShortDto>> followers(@PathVariable Long id) {
-        if (!this.userRepository.existsById(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(this.followService.getFollowers(id));
@@ -67,9 +80,22 @@ public class FollowController {
     @GetMapping("/{id}/following")
     @Operation(summary = "Кого читает пользователь")
     public ResponseEntity<List<PublicUserShortDto>> following(@PathVariable Long id) {
-        if (!this.userRepository.existsById(id)) {
+        Boolean exists = userExists(id);
+        if (exists == null) {
+            return ResponseEntity.status(503).build();
+        }
+        if (!exists) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(this.followService.getFollowing(id));
+    }
+
+
+    private Boolean userExists(Long id) {
+        try {
+            return this.authInternalClient.exists(id);
+        } catch (FeignException e) {
+            return null;
+        }
     }
 }

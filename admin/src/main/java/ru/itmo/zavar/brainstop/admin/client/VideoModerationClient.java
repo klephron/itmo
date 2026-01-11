@@ -8,7 +8,7 @@ import ru.itmo.zavar.brainstop.common.api.video.dto.UserVideoDto;
 
 import java.util.List;
 
-@FeignClient(name = "video-service", contextId = "videoModerationClient", path = "/internal/admin")
+@FeignClient(name = "video-service", contextId = "videoModerationClient", path = "/internal/admin", fallbackFactory = VideoModerationClientFallbackFactory.class)
 public interface VideoModerationClient {
 
     @GetMapping("/users/{id}/videos")

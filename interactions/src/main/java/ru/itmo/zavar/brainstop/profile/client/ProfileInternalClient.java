@@ -15,7 +15,7 @@ import ru.itmo.zavar.brainstop.common.security.Role;
 import java.util.List;
 import java.util.Set;
 
-@FeignClient(name = "profile-service", path = "/internal/profile")
+@FeignClient(name = "profile-service", path = "/internal/profile", fallbackFactory = ProfileInternalClientFallbackFactory.class)
 public interface ProfileInternalClient {
 
     @GetMapping("/users/{id}/summary")

@@ -36,7 +36,7 @@ public class InteractionsSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**", "/internal/interactions/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/videos/*/comments/**").permitAll()
                         .requestMatchers("/api/videos/**",
                                 "/api/moderation/complaints/**",

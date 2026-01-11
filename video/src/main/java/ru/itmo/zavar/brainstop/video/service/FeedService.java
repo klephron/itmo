@@ -4,15 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoCommentsCountDto;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoIdsRequest;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoUuidsRequest;
+import ru.itmo.zavar.brainstop.common.api.interactions.dto.WatchProgressSummaryDto;
 import ru.itmo.zavar.brainstop.common.api.like.LikeQueryApi;
 import ru.itmo.zavar.brainstop.common.api.profile.FollowQueryApi;
 import ru.itmo.zavar.brainstop.common.api.profile.UserProfilePublicApi;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FeedVideoDto;
 import ru.itmo.zavar.brainstop.common.infra.VectorConverter;
-import ru.itmo.zavar.brainstop.comment.repo.CommentRepository;
-import ru.itmo.zavar.brainstop.like.repo.VideoViewRepository;
-import ru.itmo.zavar.brainstop.like.repo.VideoWatchRepository;
-import ru.itmo.zavar.brainstop.like.repo.WatchProgressSummary;
+import ru.itmo.zavar.brainstop.interactions.client.InteractionsInternalClient;
 import ru.itmo.zavar.brainstop.video.mapper.FeedMapperContext;
 import ru.itmo.zavar.brainstop.video.mapper.FileMetadataToFeedMapper;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
@@ -34,10 +35,8 @@ public class FeedService {
     private final UserProfilePublicApi userProfilePublicApi;
     private final LikeQueryApi likeQueryApi;
     private final FollowQueryApi followQueryApi;
-    private final VideoViewRepository videoViewRepository;
-    private final VideoWatchRepository videoWatchRepository;
+    private final InteractionsInternalClient interactionsInternalClient;
     private final FileMetadataToFeedMapper mapper;
-    private final CommentRepository commentRepository;
     private final VectorConverter vectorConverter = new VectorConverter();
 
     public Page<FeedVideoDto> getFeed(Long currentUserId, Pageable pageable) {
@@ -63,7 +62,7 @@ public class FeedService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        Map<UUID, Long> commentsCountByUuid = resolveCommentsCount(entities);
+        Map<UUID, Long> commentsCountByUuid = resolveCommentsCountByUuid(entities);
 
         Set<Long> likedByMe;
         Set<Long> followingIds;
@@ -192,10 +191,11 @@ public class FeedService {
         if (ids.isEmpty()) {
             return items;
         }
-        Set<Long> viewed = this.videoViewRepository.findViewedVideoIds(userId, ids);
-        if (viewed == null || viewed.isEmpty()) {
+        List<Long> viewedList = interactionsInternalClient.getViewedVideoIds(new VideoIdsRequest(userId, ids));
+        if (viewedList == null || viewedList.isEmpty()) {
             return items;
         }
+        Set<Long> viewed = new HashSet<>(viewedList);
         return items.stream()
                 .filter(item -> item.getId() == null || !viewed.contains(item.getId()))
                 .toList();
@@ -287,26 +287,27 @@ public class FeedService {
         if (userId == null || videoIds == null || videoIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        List<WatchProgressSummary> progress = videoWatchRepository.findWatchProgress(userId, videoIds);
+        List<WatchProgressSummaryDto> progress = interactionsInternalClient.getWatchProgress(
+                new VideoIdsRequest(userId, videoIds));
         if (progress == null || progress.isEmpty()) {
             return Collections.emptyMap();
         }
         Map<Long, Double> ratios = new HashMap<>();
-        for (WatchProgressSummary p : progress) {
-            if (p == null || p.getVideoId() == null || p.getDurationSeconds() == null || p.getDurationSeconds() <= 0) {
+        for (WatchProgressSummaryDto p : progress) {
+            if (p == null || p.videoId() == null || p.durationSeconds() == null || p.durationSeconds() <= 0) {
                 continue;
             }
-            long total = p.getTotalWatchedSeconds() != null ? p.getTotalWatchedSeconds() : 0L;
-            double ratio = total / (double) p.getDurationSeconds();
+            long total = p.totalWatchedSeconds() != null ? p.totalWatchedSeconds() : 0L;
+            double ratio = total / (double) p.durationSeconds();
             if (ratio <= 0d) {
                 continue;
             }
-            ratios.put(p.getVideoId(), Math.min(1d, ratio));
+            ratios.put(p.videoId(), Math.min(1d, ratio));
         }
         return ratios;
     }
 
-    private Map<UUID, Long> resolveCommentsCount(List<FileMetadataEntity> entities) {
+    private Map<UUID, Long> resolveCommentsCountByUuid(List<FileMetadataEntity> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -317,14 +318,18 @@ public class FeedService {
         if (uuids.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<UUID, Long> counts = new HashMap<>();
-        for (CommentRepository.CommentCountView row : commentRepository.countByVideoUuidIn(uuids)) {
-            if (row == null || row.getVideoUuid() == null) {
+        List<VideoCommentsCountDto> counts = interactionsInternalClient.getCommentsCount(new VideoUuidsRequest(uuids));
+        if (counts == null || counts.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<UUID, Long> result = new HashMap<>();
+        for (VideoCommentsCountDto row : counts) {
+            if (row == null || row.videoUuid() == null) {
                 continue;
             }
-            counts.put(row.getVideoUuid(), row.getCount());
+            result.put(row.videoUuid(), row.commentsCount());
         }
-        return counts;
+        return result;
     }
 
     private record WeightedVector(float[] vector, double weight) {

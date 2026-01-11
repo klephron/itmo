@@ -8,7 +8,7 @@ import ru.itmo.zavar.brainstop.common.api.video.dto.FileMetadataDto;
 
 import java.util.List;
 
-@FeignClient(name = "video-service", contextId = "searchInternalClient", path = "/internal/search")
+@FeignClient(name = "video-service", contextId = "searchInternalClient", path = "/internal/search", fallbackFactory = SearchInternalClientFallbackFactory.class)
 public interface SearchInternalClient {
 
     @GetMapping("/videos")

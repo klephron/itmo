@@ -7,7 +7,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import ru.itmo.zavar.brainstop.common.security.JwtAuthConverter;
 import ru.itmo.zavar.brainstop.common.infra.StorageClientConfiguration;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "ru.itmo.zavar.brainstop")
 @EnableMethodSecurity
 @Import({JwtAuthConverter.class, StorageClientConfiguration.class})
 public class TranscodingApplication {

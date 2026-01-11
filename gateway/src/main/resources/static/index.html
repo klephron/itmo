@@ -1108,41 +1108,6 @@
         viewsEl.textContent = label;
     }
 
-    function renderCommentsCount(count) {
-        if (!commentsCountEl) return;
-        const n = count ?? 0;
-
-        let label;
-        if (n === 0) {
-            label = 'Нет комментариев';
-        } else if (n === 1) {
-            label = '1 комментарий';
-        } else if (n >= 2 && n <= 4) {
-            label = n + ' комментария';
-        } else {
-            label = n + ' комментариев';
-        }
-
-        commentsCountEl.textContent = label;
-    }
-
-    function updateCommentsCountForVideo(videoUuid, total) {
-        const idx = videosGlobalIndexByUuid(videoUuid);
-        if (idx !== -1) {
-            videos[idx].commentsCount = total;
-        }
-        if (currentVideoUuid === videoUuid) {
-            renderCommentsCount(total);
-        }
-    }
-
-    function updateCommentsLoadMore(videoUuid) {
-        if (!btnCommentsMore) return;
-        const state = commentsPaging.get(videoUuid);
-        const hasMore = state && state.last === false && (state.loading === false || state.loading === undefined);
-        btnCommentsMore.style.display = hasMore ? '' : 'none';
-    }
-
     async function registerView(videoUuid) {
         // Сначала пробуем увеличить счётчик (POST)
         try {
@@ -1163,7 +1128,7 @@
                 return;
             }
 
-            throw new Error('HTTP ' + res.status);
+            throw new Error(await readApiError(res));
         } catch (e) {
             console.error('registerView error', e);
             // на ошибке не падаем, просто не обновляем текст
@@ -1177,7 +1142,7 @@
                 headers: authHeaders()
             });
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const data = await res.json(); // { count: long }
             renderViews(data.viewsCount);
@@ -1243,6 +1208,53 @@
         const h = {};
         if (authToken) h['Authorization'] = 'Bearer ' + authToken;
         return h;
+    }
+
+    function formatApiErrorData(data, fallback) {
+        if (!data || typeof data !== 'object') return fallback;
+        let msg = data.message || data.error || fallback;
+        if (Array.isArray(data.fields) && data.fields.length) {
+            const details = data.fields
+                .map((f) => {
+                    if (!f) return null;
+                    const field = f.field ? `${f.field}: ` : '';
+                    return field + (f.message || 'Invalid');
+                })
+                .filter(Boolean)
+                .join(', ');
+            if (details) {
+                msg = msg ? `${msg}: ${details}` : details;
+            }
+        }
+        return msg;
+    }
+
+    async function readApiError(res) {
+        if (!res) return 'Unknown error';
+        const fallback = `HTTP ${res.status}`;
+        try {
+            const data = await res.clone().json();
+            return formatApiErrorData(data, fallback);
+        } catch {
+        }
+        try {
+            const text = await res.clone().text();
+            return text || fallback;
+        } catch {
+            return fallback;
+        }
+    }
+
+    function readXhrError(xhr) {
+        if (!xhr) return 'Unknown error';
+        const fallback = `HTTP ${xhr.status}`;
+        const payload = xhr.responseText;
+        if (!payload) return fallback;
+        try {
+            return formatApiErrorData(JSON.parse(payload), fallback);
+        } catch {
+            return payload;
+        }
     }
 
     function getDeviceId() {
@@ -1311,8 +1323,11 @@
                 })
             ]);
 
-            if (!userRes.ok || !vidsRes.ok) {
-                throw new Error('HTTP ' + userRes.status + '/' + vidsRes.status);
+            if (!userRes.ok) {
+                throw new Error(await readApiError(userRes));
+            }
+            if (!vidsRes.ok) {
+                throw new Error(await readApiError(vidsRes));
             }
 
             const profile = await userRes.json();
@@ -1396,7 +1411,7 @@
             }
 
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
 
             const list = await res.json(); // List<PublicUserShortDto>
@@ -1483,7 +1498,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const page = await res.json(); // Page<PublicUserVideoDto>
             let vids = page.content || [];
@@ -1640,7 +1655,7 @@
                 headers: authHeaders(),
                 body: fd
             });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
             const data = await res.json(); // { url }
             authUser.avatarUrl = data.url;
             localStorage.setItem('authUser', JSON.stringify(authUser));
@@ -1853,7 +1868,7 @@
             }
 
             if (!res.ok && res.status !== 202) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
 
             setStatusModeration('Запущена перегенерация превью (может занять время)', 'ok');
@@ -1949,6 +1964,51 @@
         viewsEl.textContent = `· ${safe} просмотров`;
     }
 
+    function renderCommentsCount(count) {
+        if (!commentsCountEl) return;
+        const n = typeof count === 'number' ? count : 0;
+        let label;
+        if (n === 0) {
+            label = 'Нет комментариев';
+        } else if (n === 1) {
+            label = '1 комментарий';
+        } else if (n >= 2 && n <= 4) {
+            label = n + ' комментария';
+        } else {
+            label = n + ' комментариев';
+        }
+        commentsCountEl.textContent = label;
+    }
+
+    function updateCommentsCountForVideo(videoUuid, total) {
+        const idx = videosGlobalIndexByUuid(videoUuid);
+        if (idx !== -1) {
+            videos[idx].commentsCount = total;
+        }
+        if (currentVideoUuid === videoUuid) {
+            renderCommentsCount(total);
+        }
+    }
+
+    function adjustCommentsCount(videoUuid, delta) {
+        const idx = videosGlobalIndexByUuid(videoUuid);
+        const loaded = commentsCache.get(videoUuid)?.length || 0;
+        if (idx !== -1 && typeof videos[idx].commentsCount === 'number') {
+            const next = Math.max(0, Math.max(loaded, videos[idx].commentsCount + delta));
+            updateCommentsCountForVideo(videoUuid, next);
+            return;
+        }
+        updateCommentsCountForVideo(videoUuid, loaded);
+    }
+
+    function updateCommentsLoadMore(videoUuid) {
+        if (!btnCommentsMore) return;
+        const state = commentsPaging.get(videoUuid);
+        const hasMore = state && state.last === false && (state.loading === false || state.loading === undefined);
+        btnCommentsMore.style.display = hasMore ? '' : 'none';
+    }
+
+
     btnLike.addEventListener('click', async () => {
         if (!videos.length || currentIndex < 0 || currentIndex >= videos.length) return;
 
@@ -1977,7 +2037,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const data = await res.json(); // { likesCount, liked }
 
@@ -2013,7 +2073,7 @@
                     },
                     body: JSON.stringify({ reason })
                 });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
+                if (!res.ok) throw new Error(await readApiError(res));
                 setStatusFeed('Жалоба отправлена', 'ok');
             } catch (e) {
                 setStatusFeed('Ошибка отправки жалобы: ' + e.message, 'error');
@@ -2426,7 +2486,7 @@
             }
 
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
 
             const data = await res.json();
@@ -2615,7 +2675,7 @@
                 } else if (res.status === 401 || res.status === 403) {
                     updateLikeButtonWithCount(v.likesCount, false);
                 } else {
-                    throw new Error('HTTP ' + res.status);
+                    throw new Error(await readApiError(res));
                 }
             } catch (e) {
                 console.error('like status error', e);
@@ -2725,7 +2785,7 @@
             const url = apiBase + `/api/videos/${videoUuid}/comments?page=${state.page}&size=${state.size}`;
             const res = await fetch(url, { headers: authHeaders() });
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const data = await res.json(); // Page<CommentDto> | List<CommentDto>
             const pageTotal = typeof data.totalElements === 'number' ? data.totalElements : null;
@@ -2882,7 +2942,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             setStatusComments('Жалоба отправлена', 'ok');
         } catch (e) {
@@ -2934,7 +2994,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const newComment = await res.json(); // CommentDto
             commentInputEl.value = '';
@@ -2944,7 +3004,7 @@
             list.push(newComment);
             commentsCache.set(v.uuid, list);
             renderComments(v.uuid, [newComment], true);
-            updateCommentsCountForVideo(v.uuid, list.length);
+            adjustCommentsCount(v.uuid, 1);
             setStatusComments('Комментарий отправлен', 'ok');
         } catch (e) {
             console.error(e);
@@ -2973,15 +3033,12 @@
                 return;
             }
 
-            if (!res.ok && res.status !== 204) throw new Error('HTTP ' + res.status);
+            if (!res.ok && res.status !== 204) throw new Error(await readApiError(res));
 
             const list = (commentsCache.get(videoUuid) || []).filter(c => c.id !== commentId);
             commentsCache.set(videoUuid, list);
             renderComments(videoUuid, list);
-            const v = videos[currentIndex];
-            if (v && v.uuid === videoUuid) {
-                updateCommentsCountForVideo(videoUuid, list.length);
-            }
+            adjustCommentsCount(videoUuid, -1);
             setStatusComments('Комментарий удалён', 'ok');
         } catch (e) {
             console.error(e);
@@ -3032,7 +3089,7 @@
             }
 
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
 
             const data = await res.json();
@@ -3156,7 +3213,7 @@
                 return;
             }
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
             setStatusStudio('Видео удалено', 'ok');
             await loadVideoPage(0, true);
@@ -3200,8 +3257,8 @@
                 })
             ]);
 
-            if (!userRes.ok) throw new Error('user HTTP ' + userRes.status);
-            if (!videosRes.ok) throw new Error('videos HTTP ' + videosRes.status);
+            if (!userRes.ok) throw new Error(await readApiError(userRes));
+            if (!videosRes.ok) throw new Error(await readApiError(videosRes));
 
             const profile = await userRes.json();
             const vidsPage = await videosRes.json();
@@ -3283,7 +3340,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             // Предположим, что бэкенд возвращает обновлённый PublicUserProfileDto
             const updated = await res.json();
@@ -3332,7 +3389,7 @@
                     return;
                 }
 
-                if (!res.ok) throw new Error('HTTP ' + res.status);
+                if (!res.ok) throw new Error(await readApiError(res));
 
                 // поменяли состояние локально
                 profile.following = !profile.following;
@@ -3381,7 +3438,7 @@
             const url = apiBase + `/api/users/${state.userId}/videos?page=${state.page}&size=${state.size}&sort=${sort}`;
             const res = await fetch(url, { headers: authHeaders() });
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const page = await res.json(); // Page<PublicUserVideoDto>
             const vids = page.content || [];
@@ -3471,20 +3528,6 @@
         feedEndReached = false;
         feedStartPos = 0;
         feedPrefetch = null;
-        loadVideoPage(0, false);
-    }
-
-    function restartGlobalFeed() {
-        feedMode = { type: 'global' };
-        feedSessionId = null;
-        feedPrevPos = null;
-        feedNextPos = null;
-        feedEndReached = false;
-        feedStartPos = 0;
-        feedPrefetch = null;
-        videos = [];
-        currentIndex = -1;
-        feedTargetUuid = null;
         loadVideoPage(0, false);
     }
 
@@ -3593,7 +3636,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             modUsers = await res.json(); // массив UserSummaryDto
             modUsersCountEl.textContent = modUsers.length + ' пользователей';
@@ -3682,7 +3725,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const u = await res.json(); // UserDetailDto
             modSelectedUserId = u.id;
@@ -3788,7 +3831,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             const videosList = await res.json(); // List<UserVideoDto>
             renderUserVideos(videosList);
@@ -3850,7 +3893,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             setStatusModeration(user.enabled ? 'Пользователь забанен' : 'Пользователь разбанен', 'ok');
             await loadModerationUsers();
@@ -3882,7 +3925,7 @@
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
 
             setStatusModeration('Роли обновлены', 'ok');
 
@@ -3998,7 +4041,8 @@
                     setStatusUpload('Сессия истекла, войдите снова', 'error');
                     activateTab('auth');
                 } else {
-                    setStatusUpload(`Ошибка загрузки: HTTP ${xhr.status}`, 'error');
+                    const msg = readXhrError(xhr);
+                    setStatusUpload(`Ошибка загрузки: ${msg}`, 'error');
                 }
             }
         };
@@ -4038,7 +4082,7 @@
                 }
 
                 if (!res.ok) {
-                    throw new Error('HTTP ' + res.status);
+                    throw new Error(await readApiError(res));
                 }
                 const st = await res.json(); // { stage, percent, message }
 
@@ -4087,7 +4131,7 @@
             }
 
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
             const jobs = await res.json(); // массив UploadJobView
 
@@ -4179,7 +4223,7 @@
             }
 
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
             const data = await res.json(); // { token, userId, username, displayName, roles, avatarUrl }
             setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
@@ -4187,9 +4231,9 @@
             setStatusUpload('');
             setStatusStudio('');
             setStatusFeed('');
+            await loadVideoPage(0, false);
             await loadAccountProfile();
             await loadActiveJobsFromServer();
-            restartGlobalFeed();
         } catch (e) {
             console.error(e);
             setStatusAuth('Ошибка входа: ' + e.message, 'error');
@@ -4220,7 +4264,7 @@
             }
 
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
             const data = await res.json(); // { token, userId, username, displayName, roles, avatarUrl }
             setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
@@ -4228,9 +4272,9 @@
             setStatusUpload('');
             setStatusStudio('');
             setStatusFeed('');
+            await loadVideoPage(0, false);
             await loadAccountProfile();
             await loadActiveJobsFromServer();
-            restartGlobalFeed();
         } catch (e) {
             console.error(e);
             setStatusAuth('Ошибка регистрации: ' + e.message, 'error');
@@ -4241,7 +4285,6 @@
         setAuth(null, null, null, null);
         setStatusAuth('Вы вышли из аккаунта', 'ok');
         clearAccountProfile();
-        restartGlobalFeed();
     });
 
     // Кнопки ленты
@@ -4355,7 +4398,7 @@
             const res = await fetch(apiBase + `/api/search/videos/suggest?q=${encodeURIComponent(query)}`, {
                 headers: authHeaders()
             });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error(await readApiError(res));
             const items = await res.json();
             if (!Array.isArray(items) || items.length === 0) {
                 suggestDropdown.innerHTML = '<div class="suggest-item">Нет подсказок</div>';
@@ -4403,7 +4446,7 @@
                 headers: authHeaders()
             });
             if (!res.ok) {
-                throw new Error('HTTP ' + res.status);
+                throw new Error(await readApiError(res));
             }
             const page = await res.json(); // Page<FileMetadataDto>
             const items = Array.isArray(page.content) ? page.content : (Array.isArray(page) ? page : []);

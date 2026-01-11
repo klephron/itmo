@@ -1,10 +1,17 @@
 package ru.itmo.zavar.brainstop.profile.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ru.itmo.zavar.brainstop.common.api.profile.FollowQueryApi;
 import ru.itmo.zavar.brainstop.common.api.profile.ProfileAdminApi;
 import ru.itmo.zavar.brainstop.common.api.profile.ProfileUserDetails;
@@ -20,7 +27,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/internal/profile")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Profile", description = "Внутренний API профилей (summary, follow-check, админ)")
+@Tag(name = "Internal-Profile", description = "Внутренние эндпоинты профилей (summary, follow-check, админские операции)")
 public class ProfileInternalController {
 
     private final UserProfilePublicApi userProfilePublicApi;
@@ -28,7 +35,7 @@ public class ProfileInternalController {
     private final ProfileAdminApi profileAdminApi;
 
     @GetMapping("/users/{id}/summary")
-    @Operation(summary = "Внутренний: summary пользователя по id")
+    @Operation(summary = "Внутренний: summary профиля по userId")
     public ResponseEntity<UserSummaryDto> getSummary(@PathVariable Long id) {
         return this.userProfilePublicApi.findUserSummary(id)
                 .map(ResponseEntity::ok)
@@ -36,8 +43,8 @@ public class ProfileInternalController {
     }
 
     @PostMapping("/follow/check")
-    @Operation(summary = "Внутренний: проверить подписки в списке candidateIds")
-    public ResponseEntity<Set<Long>> checkFollowing(@RequestBody FollowCheckRequest request) {
+    @Operation(summary = "Внутренний: проверка подписок follower -> candidateIds")
+    public ResponseEntity<Set<Long>> checkFollowing(@Valid @RequestBody FollowCheckRequest request) {
         if (request == null || request.followerId() == null || request.candidateIds() == null || request.candidateIds().isEmpty()) {
             return ResponseEntity.ok(Collections.emptySet());
         }
@@ -52,7 +59,7 @@ public class ProfileInternalController {
     }
 
     @GetMapping("/admin/users/{id}")
-    @Operation(summary = "Внутренний: детали пользователя (админ)")
+    @Operation(summary = "Внутренний: получить пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> findUser(@PathVariable Long id) {
         return this.profileAdminApi.findUser(id)
                 .map(ResponseEntity::ok)
@@ -60,7 +67,7 @@ public class ProfileInternalController {
     }
 
     @GetMapping("/admin/users/{id}/exists")
-    @Operation(summary = "Внутренний: проверить существование пользователя (админ)")
+    @Operation(summary = "Внутренний: проверить наличие пользователя (админ)")
     public ResponseEntity<Boolean> exists(@PathVariable Long id) {
         return ResponseEntity.ok(this.profileAdminApi.existsById(id));
     }
@@ -69,6 +76,9 @@ public class ProfileInternalController {
     @Operation(summary = "Внутренний: включить/выключить пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> setEnabled(@PathVariable Long id, @RequestParam boolean enabled) {
         ProfileUserDetails updated = this.profileAdminApi.setEnabled(id, enabled);
+        if (updated == null) {
+            return ResponseEntity.status(503).build();
+        }
         return ResponseEntity.ok(updated);
     }
 
@@ -76,6 +86,9 @@ public class ProfileInternalController {
     @Operation(summary = "Внутренний: обновить роли пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> updateRoles(@PathVariable Long id, @RequestBody Set<Role> roles) {
         ProfileUserDetails updated = this.profileAdminApi.updateRoles(id, roles);
+        if (updated == null) {
+            return ResponseEntity.status(503).build();
+        }
         return ResponseEntity.ok(updated);
     }
 }
