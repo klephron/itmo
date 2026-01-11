@@ -13,7 +13,7 @@ import { theme } from "./theme.js";
 import { objectsAreEqual } from "./utils/compare.js";
 
 function AppInner() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
 
     const [activePage, setActivePage] = useState('feed'); // Изначально активен Feed
     const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
@@ -80,7 +80,6 @@ function AppInner() {
             <Tabs
                 activeTab={activePage}  // Передаем активное состояние
                 onTab={onPage}
-                isAuthenticated={Boolean(user)}
                 feedMode={feedMode}
                 feedControlsRef={feedControlsRef}
             />

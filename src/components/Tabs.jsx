@@ -1,12 +1,16 @@
-import { Button, Paper, Stack } from "@mui/material";
+import { Avatar, Button, Paper, Stack } from "@mui/material";
 
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
-export default function Tabs({ activeTab, onTab, isAuthenticated, feedMode, feedControlsRef }) {
+import { useAuth } from "../context/AuthContext.jsx";
+import { apiBase } from "../api/api.js";
+
+export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
+    const { user } = useAuth();
+
     const handlePrevClick = () => feedControlsRef.current?.goPrev();
     const handleNextClick = () => feedControlsRef.current?.goNext();
 
@@ -34,7 +38,10 @@ export default function Tabs({ activeTab, onTab, isAuthenticated, feedMode, feed
                 color={activeTab === "feed" && feedMode.type === "global" ? "primary" : "inherit"}
                 onClick={() => onTab("feed", { feedMode: { type: "global" } })}
             >
-                <HomeRoundedIcon sx={{ fontSize: 32 }}/>
+                <HomeRoundedIcon sx={{
+                    fontSize: 32,
+                    color: activeTab === "feed" && feedMode.type === "global" ? "inherit" : "text.secondary"
+                }}/>
             </Button>
             <Button
                 variant="contained"
@@ -44,15 +51,19 @@ export default function Tabs({ activeTab, onTab, isAuthenticated, feedMode, feed
             >
                 <AddRoundedIcon sx={{ fontSize: 40 }}/>
             </Button>
-            {isAuthenticated ? (
+            {user ? (
                 <Button
                     variant={activeTab === "account" ? "contained" : "text"}
                     size="uniSmall"
                     color={activeTab === "account" ? "primary" : "inherit"}
                     onClick={() => onTab("account")}
                 >
-                    {/* TODO: Avatar */}
-                    <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
+                    <Avatar
+                        src={user?.avatarUrl ? `${apiBase}${user?.avatarUrl}` : null}
+                        sx={{ width: 32, height: 32 }}
+                    >
+
+                    </Avatar>
                 </Button>
             ) : (
                 <Button
@@ -61,7 +72,12 @@ export default function Tabs({ activeTab, onTab, isAuthenticated, feedMode, feed
                     color={activeTab === "auth" ? "primary" : "inherit"}
                     onClick={() => onTab("auth")}
                 >
-                    <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
+                    <Avatar sx={{
+                        width: 32,
+                        height: 32,
+                        bgcolor: activeTab === "auth" ? "background.paper" : "text.secondary",
+                        color: activeTab === "auth" ? "text.primary" : "background.paper",
+                    }}/>
                 </Button>
             )}
             <Button

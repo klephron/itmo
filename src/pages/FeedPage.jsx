@@ -822,13 +822,12 @@ export default function FeedPage({
                     <Typography variant="h6">
                         Лента закончилась
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" mt={1}>
+                    <Typography variant="body2" color="text.secondary">
                         Новых видео пока нет
                     </Typography>
                     <Button
                         size="uniSmall"
                         onClick={() => startFeed(false, true)}
-                        sx={{ mt: 1 }}
                         loading={showLoadingAnimation}
                         loadingIndicator={<CircularProgress size={23} color="primary"/>}
                     >
