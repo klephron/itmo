@@ -11,68 +11,67 @@ export default function Tabs({ activeTab, onTab, isAuthenticated, feedMode, feed
     const handleNextClick = () => feedControlsRef.current?.goNext();
 
     return (
-        <Paper elevation={0}>
-            <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                spacing={1}
-                px={1}
-                py={1 / 2}
+        <Stack
+            component={Paper}
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            spacing={1}
+            px={1}
+            py={0.5}
+        >
+            <Button
+                size="uniSmall"
+                color="inherit"
+                onClick={handlePrevClick}
+                disabled={activeTab !== "feed"}
             >
+                <ChevronLeftRoundedIcon sx={{ fontSize: 32 }}/>
+            </Button>
+            <Button
+                variant={activeTab === "feed" && feedMode.type === "global" ? "contained" : "text"}
+                size="uniSmall"
+                color={activeTab === "feed" && feedMode.type === "global" ? "primary" : "inherit"}
+                onClick={() => onTab("feed", { feedMode: { type: "global" } })}
+            >
+                <HomeRoundedIcon sx={{ fontSize: 32 }}/>
+            </Button>
+            <Button
+                variant="contained"
+                size="uniSmall"
+                color={activeTab === "upload" ? "primary" : "inherit"}
+                onClick={() => onTab("upload")}
+            >
+                <AddRoundedIcon sx={{ fontSize: 40 }}/>
+            </Button>
+            {isAuthenticated ? (
                 <Button
+                    variant={activeTab === "account" ? "contained" : "text"}
                     size="uniSmall"
-                    color="inherit"
-                    onClick={handlePrevClick}
-                    disabled={activeTab !== "feed"}
+                    color={activeTab === "account" ? "primary" : "inherit"}
+                    onClick={() => onTab("account")}
                 >
-                    <ChevronLeftRoundedIcon sx={{ fontSize: 32 }}/>
+                    {/* TODO: Avatar */}
+                    <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
                 </Button>
+            ) : (
                 <Button
-                    variant={activeTab === "feed" && feedMode.type === "global" ? "contained" : "text"}
+                    variant={activeTab === "auth" ? "contained" : "text"}
                     size="uniSmall"
-                    color={activeTab === "feed" && feedMode.type === "global" ? "primary" : "inherit"}
-                    onClick={() => onTab("feed", { feedMode: { type: "global" } })}
+                    color={activeTab === "auth" ? "primary" : "inherit"}
+                    onClick={() => onTab("auth")}
                 >
-                    <HomeRoundedIcon sx={{ fontSize: 32 }}/>
+                    <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
                 </Button>
-                <Button
-                    variant="contained"
-                    size="uniSmall"
-                    color={activeTab === "upload" ? "primary" : "inherit"}
-                    onClick={() => onTab("upload")}
-                >
-                    <AddRoundedIcon sx={{ fontSize: 40 }}/>
-                </Button>
-                {isAuthenticated ? (
-                    <Button
-                        variant={activeTab === "account" ? "contained" : "text"}
-                        size="uniSmall"
-                        color={activeTab === "account" ? "primary" : "inherit"}
-                        onClick={() => onTab("account")}
-                    >
-                        {/* TODO: Avatar */}
-                        <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
-                    </Button>
-                ) : (
-                    <Button
-                        variant={activeTab === "auth" ? "contained" : "text"}
-                        size="uniSmall"
-                        color={activeTab === "auth" ? "primary" : "inherit"}
-                        onClick={() => onTab("auth")}
-                    >
-                        <AccountCircleRoundedIcon sx={{ fontSize: 32 }}/>
-                    </Button>
-                )}
-                <Button
-                    size="uniSmall"
-                    color="inherit"
-                    onClick={handleNextClick}
-                    disabled={activeTab !== "feed"}
-                >
-                    <ChevronRightRoundedIcon sx={{ fontSize: 32 }}/>
-                </Button>
-            </Stack>
-        </Paper>
+            )}
+            <Button
+                size="uniSmall"
+                color="inherit"
+                onClick={handleNextClick}
+                disabled={activeTab !== "feed"}
+            >
+                <ChevronRightRoundedIcon sx={{ fontSize: 32 }}/>
+            </Button>
+        </Stack>
     );
 }

@@ -17,6 +17,7 @@ import { CommentsDialog } from "../components/CommentsDialog.jsx";
 import { QualityDialog } from "../components/QualityDialog.jsx";
 import { ComplaintDialog } from "../components/ComplaintDialog.jsx";
 import { SearchDialog } from "../components/SearchDialog.jsx";
+import { objectsAreEqual } from "../utils/compare.js";
 
 const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
@@ -53,6 +54,7 @@ export default function FeedPage({
     const preload2Ref = useRef(null);
     const playerStateRef = useRef(null);
 
+    const activeRef = useRef(active);
     const feedModeRef = useRef(feedMode);
     const deviceIdRef = useRef(getOrCreateDeviceId());
 
@@ -402,42 +404,56 @@ export default function FeedPage({
         }
     }
 
+    const savePlayerState = () => {
+        const player = playerRef.current;
+        if (!player) return;
+
+        playerStateRef.current = { uuid, shouldPlay: !player.paused, currentTime: player.currentTime };
+    }
+
     useEffect(() => {
-        exposeControls?.({ goNext, goPrev });
+        exposeControls?.({ goNext, goPrev, savePlayerState });
     }, [exposeControls, window]);
 
     /* Старт ленты при первом входе на страницу либо если нет видео */
     useEffect(() => {
-        if (!active || !authReady || videos.length > 0) return;
-        startFeed();
-    }, [active, authReady]);
+        const activeChanged = active !== activeRef.current;
+        const feedModeChanged = !objectsAreEqual(feedMode, feedModeRef.current);
 
-    /* Сброс состояния, если сменился токен */
+        // обновляем refs ПОСЛЕ вычислений
+        activeRef.current = active;
+        feedModeRef.current = feedMode;
+
+        // все вызовы startFeed - только если страница не в фоне и юзер подгружен
+        if (!active || !authReady) return;
+
+        if (feedModeChanged || (activeChanged && videos.length === 0) || (!activeChanged)) {
+            startFeed();
+        }
+    }, [active, feedMode, authReady]);
+
+    /* Сброс состояния ленты, если сменился токен */
     useEffect(() => {
         if (!authReady) return;
         setFeedMode({ type: "global" });
         setWindow({ videos: [], currentIndex: -1 });
     }, [token]);
 
-    /* Старт ленты при смене ее режима */
-    useEffect(() => {
-        const isSameFeedMode = Object.keys(feedMode).every((k) => feedMode[k] === feedModeRef.current[k]);
-        feedModeRef.current = feedMode;
-
-        if (!active || !authReady || isSameFeedMode) return;
-        startFeed();
-    }, [feedMode]);
-
     /* Изменение состояния плеера */
     useEffect(() => {
         const player = playerRef.current;
-        if (!active || !uuid || !player) return;
+        if (!player || !active) return;
+
+        if (!uuid) {
+            player.pause();
+            player.removeAttribute("src");
+            player.load();
+            return;
+        }
 
         const url = selectedQuality
             ? `${apiBase}/api/streaming/video/${uuid}?quality=${selectedQuality}`
             : `${apiBase}/api/streaming/video/${uuid}`;
-
-        if (player.src === url) return;
 
         const saved = playerStateRef.current;
         const isSameVideo = saved?.uuid === uuid;
@@ -446,58 +462,33 @@ export default function FeedPage({
 
         playerStateRef.current = null;
 
-        try {
-            player.pause();
-            player.src = url;
-            player.currentTime = currentTime;
+        player.pause();
+        player.src = url;
+        player.currentTime = currentTime;
 
-            if (shouldPlay && !searchDialogOpen) {
-                player.play().catch(() => {
-                    /* ignore */
-                });
-            }
-        } catch {
-            /* ignore */
+        if (shouldPlay && !searchDialogOpen) {
+            player.play().catch(() => {
+                /* ignore */
+            });
         }
 
-        if (!isSameVideo) {
-            preloadAround(currentIndex);
-            registerView(uuid);
-        }
+        preloadAround(currentIndex);
+        registerView(uuid);
     }, [active, uuid, selectedQuality]);
 
-    /* Назначение / удаление слушателей плеера + сохранение его состояния при уходе со страницы */
-    useEffect(() => {
+    const handleVideoError = () => {
+        setStatusFeed('Ошибка воспроизведения видео', 'error');
+    }
+
+    const handleVideoEnded = () => {
         const player = playerRef.current;
-        if (!active || !player) return;
+        if (!player) return;
 
-        const onEnded = () => {
-            try {
-                player.currentTime = 0;
-                player.play().catch(() => {
-                    /* ignore */
-                });
-            } catch {
-                /* ignore */
-            }
-        };
-        const onError = () => {
-            setStatusFeed('Ошибка воспроизведения видео', 'error');
-        };
-
-        player.addEventListener('ended', onEnded);
-        player.addEventListener('error', onError);
-
-        return () => {
-            playerStateRef.current = {
-                uuid,
-                shouldPlay: !player.paused,
-                currentTime: player.currentTime || 0,
-            };
-            player.removeEventListener('ended', onEnded);
-            player.removeEventListener('error', onError);
-        };
-    }, [active, uuid]);
+        player.currentTime = 0;
+        player.play().catch(() => {
+            /* ignore */
+        });
+    }
 
     const handleQualitySelect = (quality) => {
         const player = playerRef.current;
@@ -663,6 +654,8 @@ export default function FeedPage({
                         display: "block",
                         borderRadius: 4,
                     }}
+                    onEnded={handleVideoEnded}
+                    onError={handleVideoError}
                 />
                 <Box component="video" display="none" ref={preload1Ref} muted/>
                 <Box component="video" display="none" ref={preload2Ref} muted/>

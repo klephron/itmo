@@ -10,6 +10,7 @@ import ModerationPage from './pages/ModerationPage';
 import AuthPage from './pages/AuthPage.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { theme } from "./theme.js";
+import { objectsAreEqual } from "./utils/compare.js";
 
 function AppInner() {
     const { token, user } = useAuth();
@@ -22,18 +23,20 @@ function AppInner() {
 
     const feedControlsRef = useRef(null);
 
-    const onPage = useCallback((page, { activeAccountTab, profileUserId, feedMode } = {}) => {
+    const onPage = useCallback((page, params) => {
+        feedControlsRef.current?.savePlayerState();
+
         if (page === 'upload' && !token) {
             setActivePage('auth');
             return;
         }
 
-        if (page === 'feed' && feedMode) setFeedMode(feedMode);
-        if (page === 'account' && activeAccountTab) setActiveAccountTab(activeAccountTab);
-        if (page === 'profile' && profileUserId) setProfileUserId(profileUserId);
+        if (page === 'feed' && params?.feedMode && !objectsAreEqual(feedMode, params?.feedMode)) setFeedMode(params?.feedMode);
+        if (page === 'account' && params?.activeAccountTab) setActiveAccountTab(params?.activeAccountTab);
+        if (page === 'profile' && params?.profileUserId) setProfileUserId(params?.profileUserId);
 
         setActivePage(page);
-    }, [token]);
+    }, [token, feedMode]);
 
     return (
         <Stack
