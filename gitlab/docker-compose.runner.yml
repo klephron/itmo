@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     volumes:
       - runner-1-etc:/etc/gitlab-runner
+      - runner-1-docker:/var/lib/docker
     deploy:
       resources:
         limits:
@@ -14,3 +15,4 @@ services:
 
 volumes:
   runner-1-etc:
+  runner-1-docker:
