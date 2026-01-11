@@ -93,7 +93,7 @@ export default function ProfilePage({ active, userId, onPage }) {
                 <Stack direction="row" spacing={1} px={2} alignItems="flex-start">
                     <Avatar
                         src={profile?.avatarUrl ? `${apiBase}${profile.avatarUrl}` : undefined}
-                        sx={{ width: 42, height: 42 }}
+                        sx={{ width: 42, height: 42, fontSize: 24, fontWeight: "medium" }}
                     >
                         {profile?.username?.[0]?.toUpperCase()}
                     </Avatar>

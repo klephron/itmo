@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
-import { Avatar, Box, Button, Grid, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, Grid, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
+
 import { AvatarUploadDialog } from "../components/AvatarUploadDialog.jsx";
 import { FollowingList } from "../components/FollowingList.jsx";
 import { UploadsList } from "../components/UploadsList.jsx";
 
 export default function AccountPage({ active, activeTab, setActiveTab, onPage }) {
-    const { token, user, setAuth } = useAuth();
+    const { token, user, setAuth, isModerator } = useAuth();
 
     const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -96,11 +98,22 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
 
     return (
         <>
-            <Stack component={Paper} direction="row" p={1}>
-                <Typography variant="h6" px={1}>Ваш профиль</Typography>
+            <Stack component={Paper} direction="row" p={1} spacing={1} alignItems="center">
+                <Typography variant="h6" px={1} flex={1}>Ваш профиль</Typography>
+                {isModerator && (
+                    <IconButton onClick={() => onPage("moderation")} size="small">
+                        <SecurityRoundedIcon/>
+                    </IconButton>
+                )}
+                <IconButton onClick={() => setAvatarDialogOpen(true)} size="small">
+                    <SettingsRoundedIcon/>
+                </IconButton>
+                <IconButton onClick={logout} size="small">
+                    <LogoutRoundedIcon/>
+                </IconButton>
             </Stack>
             <Stack component={Paper} pt={2} flex={1} overflow="hidden">
-                <Stack direction="row" px={2} pr={8.5} spacing={1} alignItems="flex-start" position="relative">
+                <Stack direction="row" px={2} spacing={1} alignItems="flex-start" position="relative">
                     <Avatar
                         src={
                             profile?.avatarUrl
@@ -109,7 +122,7 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
                                     ? `${apiBase}${user.avatarUrl}`
                                     : undefined
                         }
-                        sx={{ width: 42, height: 42 }}
+                        sx={{ width: 42, height: 42, fontSize: 24, fontWeight: "medium" }}
                     >
                         {user?.username?.[0]?.toUpperCase()}
                     </Avatar>
@@ -121,14 +134,6 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
                             @{profile?.username || user?.username}
                         </Typography>
                     </Box>
-                    <Stack spacing={1} direction="row" sx={{ position: "absolute", top: -4, right: 12 }}>
-                        <Button size="uniSmall" onClick={() => setAvatarDialogOpen(true)}>
-                            <SettingsRoundedIcon fontSize="small" sx={{ color: "text.secondary" }}/>
-                        </Button>
-                        <Button size="uniSmall" onClick={logout}>
-                            <LogoutRoundedIcon fontSize="small" sx={{ color: "text.secondary" }}/>
-                        </Button>
-                    </Stack>
                 </Stack>
 
                 <Typography variant="caption" color="text.secondary" mt={1} px={2}>
@@ -160,14 +165,6 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
                         onClick={() => setActiveTab("uploads")}
                     >
                         Загрузки
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color={activeTab === "moderation" ? "primary" : "inherit"}
-                        size="small"
-                        onClick={() => onPage("moderation")}
-                    >
-                        Модерация
                     </Button>
                 </Grid>
 

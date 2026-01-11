@@ -62,7 +62,7 @@ export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
                         src={user?.avatarUrl ? `${apiBase}${user?.avatarUrl}` : null}
                         sx={{ width: 32, height: 32 }}
                     >
-
+                        {user?.username?.[0]?.toUpperCase()}
                     </Avatar>
                 </Button>
             ) : (
