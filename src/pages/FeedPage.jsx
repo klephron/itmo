@@ -481,7 +481,7 @@ export default function FeedPage({
         playerStateRef.current = {
             ...playerStateRef.current,
             uuid,
-            shouldPlay: uuid ? !player.paused : true,
+            shouldPlay: !player.paused,
             currentTime: player.currentTime
         };
     }
@@ -530,10 +530,8 @@ export default function FeedPage({
             ? `${apiBase}/api/streaming/video/${uuid}?quality=${selectedQuality}`
             : `${apiBase}/api/streaming/video/${uuid}`;
 
-        const { uuid: savedUuid, shouldPlay, currentTime } = playerStateRef.current;
-
         // Сброс сохраненного состояния плеера, если видео изменилось
-        if (savedUuid !== uuid) {
+        if (playerStateRef.current.uuid !== uuid) {
             playerStateRef.current = {
                 uuid,
                 shouldPlay: true,
@@ -545,13 +543,7 @@ export default function FeedPage({
 
         player.pause();
         player.src = url;
-        player.currentTime = currentTime;
-
-        if (shouldPlay && !searchDialogOpen) {
-            player.play().catch(() => {
-                /* ignore */
-            });
-        }
+        player.load();
     }, [active, uuid, selectedQuality]);
 
     /* Загрузка актуальной мета-информации видео. Не учитываем токен, т.к. выше есть очистка (которая сменит uuid) */
@@ -580,7 +572,32 @@ export default function FeedPage({
         });
     }
 
-    const handleVideoPlay = () => registerView();
+    const handleVideoPlay = () => {
+        playerStateRef.current.shouldPlay = true;
+        registerView();
+    }
+
+    const handleVideoPause = () => {
+        playerStateRef.current.shouldPlay = false;
+    };
+
+    const handleVideoCanPlay = () => {
+        const player = playerRef.current;
+        const state = playerStateRef.current;
+        if (!player || !state.shouldPlay || searchDialogOpen) return;
+
+        player.play().catch(() => {
+            /* ignore */
+        });
+    };
+
+    const handleVideoLoadedMetadata = () => {
+        const player = playerRef.current;
+        const state = playerStateRef.current;
+        if (!player) return;
+
+        player.currentTime = state.currentTime;
+    };
 
     const handleVideoTimeUpdate = () => {
         const player = playerRef.current;
@@ -764,6 +781,9 @@ export default function FeedPage({
                     onEnded={handleVideoEnded}
                     onError={handleVideoError}
                     onPlay={handleVideoPlay}
+                    onPause={handleVideoPause}
+                    onCanPlay={handleVideoCanPlay}
+                    onLoadedMetadata={handleVideoLoadedMetadata}
                     onTimeUpdate={handleVideoTimeUpdate}
                 />
                 <Box component="video" display="none" ref={preload1Ref} muted/>
