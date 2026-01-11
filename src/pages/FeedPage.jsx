@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Avatar, Box, Button, IconButton, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, CircularProgress, IconButton, Paper, Stack, Typography } from "@mui/material";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
 import CommentOutlined from "@mui/icons-material/CommentOutlined";
@@ -8,6 +8,7 @@ import OutlinedFlagRoundedIcon from "@mui/icons-material/OutlinedFlagRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 
 import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized } from '../api/api';
 import { formatCompactNumber } from '../utils/format';
@@ -23,6 +24,7 @@ const PAGE_SIZE = 10;
 const MAX_WINDOW = 2 * PAGE_SIZE;
 const PREFETCH_DELTA = 2;
 const WATCH_MILESTONES = [25, 50, 75, 100];
+const MIN_LOADING_MS = 400;
 
 function getOrCreateDeviceId() {
     const key = 'feed-device-id';
@@ -85,13 +87,17 @@ export default function FeedPage({
     } = currentVideo ?? {};
 
     const [loading, setLoading] = useState(false);
+    const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
 
     const setVideos = (callback) => setWindow((prev) => ({ ...prev, videos: callback(prev.videos) }));
     const setCurrentIndex = (currentIndex) => setWindow((prev) => ({ ...prev, currentIndex }));
 
-    async function startFeed(jumpToTarget = false) {
+    async function startFeed(jumpToTarget = false, showAnimation = false) {
         if (loading) return;
+
         setLoading(true);
+        if (showAnimation) setShowLoadingAnimation(true);
+        const startTs = performance.now();
 
         try {
             let url, res;
@@ -143,6 +149,17 @@ export default function FeedPage({
             setWindow({ videos: newVideos, currentIndex: newIndex });
         } finally {
             setLoading(false);
+
+            if (showAnimation) {
+                const elapsed = performance.now() - startTs;
+                const delay = Math.max(0, MIN_LOADING_MS - elapsed);
+
+                if (delay > 0) {
+                    setTimeout(() => setShowLoadingAnimation(false), delay);
+                } else {
+                    setShowLoadingAnimation(false);
+                }
+            }
         }
     }
 
@@ -425,7 +442,7 @@ export default function FeedPage({
     const goNext = () => {
         // Если видео еще нет либо мы как-то оказались на последнем видео в окне - перезапускаем ленту
         if (!videos.length || currentIndex === videos.length - 1) {
-            startFeed(false);
+            startFeed(false, true);
             return;
         }
 
@@ -489,7 +506,7 @@ export default function FeedPage({
 
     useEffect(() => {
         exposeControls?.({ goNext, goPrev, savePlayerState });
-    }, [exposeControls, window]);
+    }, [exposeControls, window, loading]);
 
     /* Старт ленты при первом входе на страницу либо если нет видео */
     useEffect(() => {
@@ -504,9 +521,9 @@ export default function FeedPage({
         if (!active || !authReady) return;
 
         if (feedModeChanged) {
-            startFeed(true);
+            startFeed(true, false);
         } else if ((activeChanged && videos.length === 0) || !activeChanged) {
-            startFeed(false);
+            startFeed(false, false);
         }
     }, [active, feedMode, authReady]);
 
@@ -676,122 +693,149 @@ export default function FeedPage({
                     </>
                 )}
             </Stack>
-            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                <Stack
-                    spacing={1}
-                    sx={{
-                        width: 1,
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        zIndex: 1,
-                        filter: 'drop-shadow(1px 1px 1px rgb(0,0,0))',
-                        p: 1,
-                        pt: 1 / 2,
-                        alignItems: 'flex-start',
-                    }}
-                >
-                    <Typography
-                        noWrap
-                        textOverflow="ellipsis"
-                        width={1}
-                        sx={{ userSelect: "none", cursor: "pointer" }}
-                        onClick={() => setVideoInfoDialogOpen(true)}
-                    >
-                        {name}
-                    </Typography>
+            {uuid ? (
+                <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
                     <Stack
-                        direction="row"
                         spacing={1}
-                        alignItems="center"
-                        sx={{ cursor: 'pointer' }}
-                        onClick={() => uploaderId && onPage("profile", { profileUserId: uploaderId })}
+                        sx={{
+                            width: 1,
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            zIndex: 1,
+                            filter: 'drop-shadow(1px 1px 1px rgb(0,0,0))',
+                            p: 1,
+                            pt: 1 / 2,
+                            alignItems: 'flex-start',
+                        }}
                     >
-                        <Avatar
-                            src={uploaderAvatarUrl ? `${apiBase}${uploaderAvatarUrl}` : null}
-                            sx={{ width: 32, height: 32 }}
+                        <Typography
+                            noWrap
+                            textOverflow="ellipsis"
+                            width={1}
+                            sx={{ userSelect: "none", cursor: "pointer" }}
+                            onClick={() => setVideoInfoDialogOpen(true)}
                         >
-                            {uploaderName?.[0]?.toUpperCase()}
-                        </Avatar>
-                        <Typography sx={{ userSelect: "none" }} fontWeight="medium">{uploaderName}</Typography>
+                            {name}
+                        </Typography>
+                        <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                            sx={{ cursor: 'pointer' }}
+                            onClick={() => uploaderId && onPage("profile", { profileUserId: uploaderId })}
+                        >
+                            <Avatar
+                                src={uploaderAvatarUrl ? `${apiBase}${uploaderAvatarUrl}` : null}
+                                sx={{ width: 32, height: 32 }}
+                            >
+                                {uploaderName?.[0]?.toUpperCase()}
+                            </Avatar>
+                            <Typography sx={{ userSelect: "none" }} fontWeight="medium">{uploaderName}</Typography>
+                        </Stack>
                     </Stack>
-                </Stack>
+                    <Stack
+                        spacing={2}
+                        sx={(theme) => ({
+                            position: 'absolute',
+                            right: theme.spacing(1),
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            zIndex: 1,
+                            alignItems: 'center',
+                            filter: 'drop-shadow(2px 2px 2px rgb(0,0,0))',
+                        })}
+                    >
+                        <Stack alignItems="center" spacing={0.5}>
+                            <VisibilityOutlinedIcon sx={{ fontSize: 32 }}/>
+                            <Typography variant="caption">
+                                {formatCompactNumber(viewsCount)}
+                            </Typography>
+                        </Stack>
+                        <Stack alignItems="center">
+                            <Button
+                                size="uniSmall"
+                                color={likedByMe ? "error" : "inherit"}
+                                onClick={toggleLike}
+                            >
+                                {likedByMe ? (
+                                    <FavoriteRoundedIcon sx={{ fontSize: 32 }}/>
+                                ) : (
+                                    <FavoriteBorderRoundedIcon sx={{ fontSize: 32 }}/>
+                                )}
+                            </Button>
+                            <Typography variant="caption">
+                                {formatCompactNumber(likesCount)}
+                            </Typography>
+                        </Stack>
+                        <Stack alignItems="center">
+                            <Button size="uniSmall" onClick={() => setCommentsDialogOpen(true)}>
+                                <CommentOutlined sx={{ fontSize: 32 }}/>
+                            </Button>
+                            <Typography variant="caption">
+                                {formatCompactNumber(commentsCount)}
+                            </Typography>
+                        </Stack>
+                        <Button size="uniSmall" onClick={() => setQualityDialogOpen(true)}>
+                            <SettingsOutlinedIcon sx={{ fontSize: 32 }}/>
+                        </Button>
+                        {user && uploaderId !== user.userId && (
+                            <Button size="uniSmall" onClick={() => setComplaintDialogOpen(true)}>
+                                <OutlinedFlagRoundedIcon sx={{ fontSize: 32 }}/>
+                            </Button>
+                        )}
+                    </Stack>
+                    <Box
+                        component="video"
+                        ref={playerRef}
+                        controls
+                        playsInline
+                        muted
+                        sx={{
+                            width: 1,
+                            height: 1,
+                            objectFit: "contain",
+                            bgcolor: "black",
+                            display: "block",
+                            borderRadius: 4,
+                        }}
+                        onEnded={handleVideoEnded}
+                        onError={handleVideoError}
+                        onPlay={handleVideoPlay}
+                        onPause={handleVideoPause}
+                        onCanPlay={handleVideoCanPlay}
+                        onLoadedMetadata={handleVideoLoadedMetadata}
+                        onTimeUpdate={handleVideoTimeUpdate}
+                    />
+                    <Box component="video" display="none" ref={preload1Ref} muted/>
+                    <Box component="video" display="none" ref={preload2Ref} muted/>
+                </Box>
+            ) : (
                 <Stack
-                    spacing={2}
-                    sx={(theme) => ({
-                        position: 'absolute',
-                        right: theme.spacing(1),
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        zIndex: 1,
-                        alignItems: 'center',
-                        filter: 'drop-shadow(2px 2px 2px rgb(0,0,0))',
-                    })}
+                    component={Paper}
+                    spacing={1}
+                    alignItems="center"
+                    justifyContent="center"
+                    flex={1}
+                    p={2}
                 >
-                    <Stack alignItems="center" spacing={0.5}>
-                        <VisibilityOutlinedIcon sx={{ fontSize: 32 }}/>
-                        <Typography variant="caption">
-                            {formatCompactNumber(viewsCount)}
-                        </Typography>
-                    </Stack>
-                    <Stack alignItems="center">
-                        <Button
-                            size="uniSmall"
-                            color={likedByMe ? "error" : "inherit"}
-                            onClick={toggleLike}
-                        >
-                            {likedByMe ? (
-                                <FavoriteRoundedIcon sx={{ fontSize: 32 }}/>
-                            ) : (
-                                <FavoriteBorderRoundedIcon sx={{ fontSize: 32 }}/>
-                            )}
-                        </Button>
-                        <Typography variant="caption">
-                            {formatCompactNumber(likesCount)}
-                        </Typography>
-                    </Stack>
-                    <Stack alignItems="center">
-                        <Button size="uniSmall" onClick={() => setCommentsDialogOpen(true)}>
-                            <CommentOutlined sx={{ fontSize: 32 }}/>
-                        </Button>
-                        <Typography variant="caption">
-                            {formatCompactNumber(commentsCount)}
-                        </Typography>
-                    </Stack>
-                    <Button size="uniSmall" onClick={() => setQualityDialogOpen(true)}>
-                        <SettingsOutlinedIcon sx={{ fontSize: 32 }}/>
+                    <Typography variant="h6">
+                        Лента закончилась
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                        Новых видео пока нет
+                    </Typography>
+                    <Button
+                        size="uniSmall"
+                        onClick={() => startFeed(false, true)}
+                        sx={{ mt: 1 }}
+                        loading={showLoadingAnimation}
+                        loadingIndicator={<CircularProgress size={23} color="primary"/>}
+                    >
+                        <RefreshRoundedIcon fontSize="large"/>
                     </Button>
-                    {user && uploaderId !== user.userId && (
-                        <Button size="uniSmall" onClick={() => setComplaintDialogOpen(true)}>
-                            <OutlinedFlagRoundedIcon sx={{ fontSize: 32 }}/>
-                        </Button>
-                    )}
                 </Stack>
-                <Box
-                    component="video"
-                    ref={playerRef}
-                    controls
-                    playsInline
-                    muted
-                    sx={{
-                        width: 1,
-                        height: 1,
-                        objectFit: "contain",
-                        bgcolor: "black",
-                        display: "block",
-                        borderRadius: 4,
-                    }}
-                    onEnded={handleVideoEnded}
-                    onError={handleVideoError}
-                    onPlay={handleVideoPlay}
-                    onPause={handleVideoPause}
-                    onCanPlay={handleVideoCanPlay}
-                    onLoadedMetadata={handleVideoLoadedMetadata}
-                    onTimeUpdate={handleVideoTimeUpdate}
-                />
-                <Box component="video" display="none" ref={preload1Ref} muted/>
-                <Box component="video" display="none" ref={preload2Ref} muted/>
-            </Box>
+            )}
             <VideoInfoDialog
                 open={videoInfoDialogOpen}
                 setOpen={setVideoInfoDialogOpen}
