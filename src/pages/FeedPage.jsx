@@ -148,48 +148,45 @@ export default function FeedPage({
 
             if (type === "global") {
                 const { feedId, nextPos, curPos, prevPos } = snapshot;
-                if (direction === 'next') {
-                    pos = nextPos ?? 0; // если nextPos null, то берем 0
+                if (direction === "next") {
+                    pos = nextPos;
+                    if (pos == null) {
+                        url = `${apiBase}/api/streaming/video/feed/session/start?size=${PAGE_SIZE}`;
+                        res = await fetch(url, {
+                            method: 'POST',
+                            headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
+                        });
+                    } else {
+                        url = `${apiBase}/api/streaming/video/feed/session/${feedId}/next?count=${PAGE_SIZE}&pos=${pos}`;
+                        res = await fetch(url, {
+                            headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
+                        });
+                    }
                 } else {
                     pos = restoreCurPage ? curPos : prevPos;
-                }
+                    if (pos == null) return;
 
-                if ((prevPos === null && nextPos === null) || pos === null) {
-                    return; // если страница одна либо pos null - выходим
+                    url = `${apiBase}/api/streaming/video/feed/session/${feedId}/prev?count=${PAGE_SIZE}&pos=${pos}`;
+                    res = await fetch(url, {
+                        headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
+                    });
                 }
-
-                url = `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}?count=${PAGE_SIZE}&pos=${pos}`;
-                res = await fetch(url, { headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) } });
-            } else if (type === "user") {
-                const { number, first, last } = snapshot;
-                if (direction === 'next') {
-                    page = last ? 0 : number + 1;
-                } else {
-                    page = restoreCurPage ? number : number - 1;
-                }
-
-                if ((first && last) || page < 0) {
-                    return; // если страница одна либо номер меньше 0 - выходим
-                }
-
-                url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
-                res = await fetch(url, { headers: authHeaders(token) });
-            } else if (type === "search") {
-                const { number, first, last } = snapshot;
-                if (direction === 'next') {
-                    page = last ? 0 : number + 1;
-                } else {
-                    page = restoreCurPage ? number : number - 1;
-                }
-
-                if ((first && last) || page < 0) {
-                    return; // если страница одна либо номер меньше 0 - выходим
-                }
-
-                url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}`;
-                res = await fetch(url, { headers: authHeaders(token) });
             } else {
-                return;
+                const { number, last } = snapshot;
+                if (direction === 'next') {
+                    page = last ? 0 : number + 1;
+                } else {
+                    page = restoreCurPage ? number : number - 1;
+                }
+                if (page < 0) return;
+
+                if (type === "user") {
+                    url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
+                    res = await fetch(url, { headers: authHeaders(token) });
+                } else {
+                    url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}`;
+                    res = await fetch(url, { headers: authHeaders(token) });
+                }
             }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -343,34 +340,25 @@ export default function FeedPage({
     }
 
     const goNext = () => {
-        if (!videos.length) return;
+        // Если видео еще нет - перезапускаем ленту
+        if (!videos.length) {
+            startFeed();
+            return;
+        }
 
-        if (currentIndex < videos.length - 1) {
-            const nextIdx = currentIndex + 1;
-            setCurrentIndex(nextIdx);
+        const nextIdx = Math.min(currentIndex + 1, videos.length - 1);
+        setCurrentIndex(nextIdx);
 
-            const nextVideo = videos[nextIdx];
-            if (!nextVideo) return;
+        const nextVideo = videos[nextIdx];
+        if (!nextVideo) return;
 
-            const { snapshot, localIndex, lastIndex } = nextVideo;
-            const distToWindowEnd = videos.length - 1 - nextIdx;
-            const distToPageEnd = lastIndex - localIndex;
+        const { snapshot, localIndex, lastIndex } = nextVideo;
+        const distToWindowEnd = videos.length - 1 - nextIdx;
+        const distToPageEnd = lastIndex - localIndex;
 
-            // Подгружаем только если видео находится на последней странице в окне
-            if (distToWindowEnd <= PREFETCH_DELTA && distToWindowEnd <= distToPageEnd) {
-                prefetch('next', snapshot); // тут snapshot следующего видео!
-            }
-        } else {
-            const type = feedModeRef.current.type;
-            const { prevPos, nextPos, first, last } = snapshot; // тут snapshot текущего видео!
-
-            // Конец окна и одна страница - перемещаемся в начало окна
-            if (
-                (type === "global" && prevPos === nextPos) ||
-                ((type === "user" || type === "search") && first === last)
-            ) {
-                setCurrentIndex(0);
-            }
+        // Подгружаем только если видео находится на последней странице в окне
+        if (distToWindowEnd <= PREFETCH_DELTA && distToWindowEnd <= distToPageEnd) {
+            prefetch('next', snapshot); // тут snapshot следующего видео!
         }
     }
 
