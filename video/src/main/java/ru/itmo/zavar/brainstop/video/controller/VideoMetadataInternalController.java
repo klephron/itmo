@@ -1,6 +1,8 @@
 package ru.itmo.zavar.brainstop.video.controller;
 
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,11 +18,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/internal/videos/metadata")
 @RequiredArgsConstructor
+@Tag(name = "Internal-Video-Metadata", description = "Внутренние эндпоинты метаданных видео")
 public class VideoMetadataInternalController {
 
     private final VideoMetadataPublicApi videoMetadataPublicApi;
 
     @GetMapping("/{uuid}")
+    @Operation(summary = "Внутренний: получить summary метаданных по UUID видео")
     public ResponseEntity<VideoMetadataSummary> getSummary(@PathVariable UUID uuid) {
         return this.videoMetadataPublicApi.findByUuid(uuid)
                 .map(ResponseEntity::ok)
@@ -28,6 +32,7 @@ public class VideoMetadataInternalController {
     }
 
     @PostMapping("/{id}/likes/increment")
+    @Operation(summary = "Внутренний: увеличить счётчик лайков на delta")
     public ResponseEntity<Long> incrementLikes(@PathVariable Long id, @RequestParam("delta") long delta) {
         long updated = this.videoMetadataPublicApi.incrementLikesCount(id, delta);
         if (updated < 0) {
@@ -37,6 +42,7 @@ public class VideoMetadataInternalController {
     }
 
     @PostMapping("/{id}/views/increment")
+    @Operation(summary = "Внутренний: увеличить счётчик просмотров на delta")
     public ResponseEntity<Long> incrementViews(@PathVariable Long id, @RequestParam("delta") long delta) {
         long updated = this.videoMetadataPublicApi.incrementViewsCount(id, delta);
         if (updated < 0) {
@@ -46,12 +52,14 @@ public class VideoMetadataInternalController {
     }
 
     @PostMapping("/{id}/likes")
+    @Operation(summary = "Внутренний: установить счётчик лайков")
     public ResponseEntity<Void> updateLikes(@PathVariable Long id, @RequestParam("count") long count) {
         this.videoMetadataPublicApi.updateLikesCount(id, count);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/views")
+    @Operation(summary = "Внутренний: установить счётчик просмотров")
     public ResponseEntity<Void> updateViews(@PathVariable Long id, @RequestParam("count") long count) {
         this.videoMetadataPublicApi.updateViewsCount(id, count);
         return ResponseEntity.ok().build();

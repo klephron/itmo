@@ -25,7 +25,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/internal/interactions")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Interactions", description = "Internal endpoints for interactions data")
+@Tag(name = "Internal-Interactions", description = "Внутренние эндпоинты для данных интеракций")
 public class InteractionsInternalController {
 
     private final VideoLikeRepository videoLikeRepository;
@@ -34,7 +34,7 @@ public class InteractionsInternalController {
     private final CommentRepository commentRepository;
 
     @PostMapping("/likes/ids")
-    @Operation(summary = "Internal: list liked video IDs")
+    @Operation(summary = "Внутренний: список лайкнутых видео пользователя")
     public List<Long> likedVideoIds(@Valid @RequestBody VideoIdsRequest request) {
         if (request == null || request.userId() == null || request.videoIds() == null || request.videoIds().isEmpty()) {
             return List.of();
@@ -43,7 +43,7 @@ public class InteractionsInternalController {
     }
 
     @PostMapping("/views/ids")
-    @Operation(summary = "Internal: list viewed video IDs")
+    @Operation(summary = "Внутренний: список просмотренных видео пользователя")
     public List<Long> viewedVideoIds(@Valid @RequestBody VideoIdsRequest request) {
         if (request == null || request.userId() == null || request.videoIds() == null || request.videoIds().isEmpty()) {
             return List.of();
@@ -56,7 +56,7 @@ public class InteractionsInternalController {
     }
 
     @PostMapping("/watch/progress")
-    @Operation(summary = "Internal: list watch progress summaries")
+    @Operation(summary = "Внутренний: прогресс просмотра по видео")
     public List<WatchProgressSummaryDto> watchProgress(@Valid @RequestBody VideoIdsRequest request) {
         if (request == null || request.userId() == null || request.videoIds() == null || request.videoIds().isEmpty()) {
             return List.of();
@@ -71,7 +71,7 @@ public class InteractionsInternalController {
     }
 
     @PostMapping("/comments/counts")
-    @Operation(summary = "Internal: list comments counts by video UUID")
+    @Operation(summary = "Внутренний: количество комментариев по UUID видео")
     public List<VideoCommentsCountDto> commentsCounts(@Valid @RequestBody VideoUuidsRequest request) {
         if (request == null || request.videoUuids() == null || request.videoUuids().isEmpty()) {
             return List.of();

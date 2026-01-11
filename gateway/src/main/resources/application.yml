@@ -6,6 +6,8 @@ spring:
     name: brainstop-gateway
   profiles:
     default: dev
+  main:
+    allow-bean-definition-overriding: true
   cloud:
     loadbalancer:
       health-check:
