@@ -19,7 +19,9 @@ export const ConfirmDialog = ({ open, setOpen, title, text, critical = false, on
             title={title}
         >
             <Stack p={2} pt={0} spacing={2} sx={{ overflowX: "hidden", overflowY: "auto" }}>
-                <Typography>{text}</Typography>
+                {typeof text === "string" ? (
+                    <Typography whiteSpace="pre-line">{text}</Typography>
+                ) : text}
                 <Stack direction="row" spacing={2}>
                     <Button
                         variant="contained"

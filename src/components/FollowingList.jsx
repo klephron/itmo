@@ -70,13 +70,15 @@ export function FollowingList({ active, onPage }) {
                 <Box sx={{ borderRadius: 3, flex: 1, overflow: "hidden", position: "relative", m: 1 }}>
                     <Stack sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
                         {following.map((u) => (
-                            <Card key={u.id} sx={{ flexShrink: 0 }}>
+                            <Card key={u.id} sx={{ flexShrink: 0, borderRadius: 3 }}>
                                 <CardActionArea onClick={() => onPage("profile", { profileUserId: u.id })}>
                                     <Stack direction="row" spacing={1} p={1} alignItems="center">
                                         <Avatar
                                             src={u.avatarUrl ? `${apiBase}${u.avatarUrl}` : undefined}
                                             sx={{ width: 32, height: 32 }}
-                                        />
+                                        >
+                                            {user?.username?.[0]?.toUpperCase()}
+                                        </Avatar>
                                         <Stack spacing={0.5}>
                                             <Typography variant="caption" fontWeight="medium" lineHeight={1}>
                                                 {u.displayName || u.username}

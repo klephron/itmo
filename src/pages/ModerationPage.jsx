@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import Status from '../components/Status';
-import { humanSize } from '../utils/format';
+import { Box, Button, Grid, IconButton, Paper, Stack, Typography } from "@mui/material";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import { UsersList } from "../components/UsersList.jsx";
+import { ComplaintsList } from "../components/ComplaintsList.jsx";
+import { Service } from "../components/Service.jsx";
 
-export default function ModerationPage({ active, onPage }) {
+export default function ModerationPage({ active, activeTab, setActiveTab, onPage }) {
     const { token, isModerator, isAdmin } = useAuth();
 
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -170,30 +173,6 @@ export default function ModerationPage({ active, onPage }) {
         }
     }
 
-    async function rebuildThumbs() {
-        if (!token || !isAdmin) return;
-        if (!confirm('Перегенерировать превью для всех видео? Это может занять время.')) return;
-
-        try {
-            const res = await fetch(apiBase + '/api/admin/thumbnails/rebuild', {
-                method: 'POST',
-                headers: authHeaders(token),
-            });
-
-            if (isUnauthorized(res)) {
-                setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onPage("auth");
-                return;
-            }
-
-            if (!res.ok && res.status !== 202) throw new Error('HTTP ' + res.status);
-
-            setStatusModeration('Запущена перегенерация превью (может занять время)', 'ok');
-        } catch (e) {
-            setStatusModeration('Ошибка запуска перегенерации: ' + e.message, 'error');
-        }
-    }
-
     async function resolveComplaint(id, deleteTarget, reject) {
         if (!token || !isModerator) return;
 
@@ -235,191 +214,68 @@ export default function ModerationPage({ active, onPage }) {
 
     if (!token || !isModerator) {
         return (
-            <div className={'card page ' + (active ? 'active' : '')} id="pageModeration">
-                <div className="header">
-                    <div className="title">Модерация</div>
-                    <div className="badge" id="modUsersCount">—</div>
-                </div>
-                <div className="studio-row-meta">Нет прав для модерации</div>
-            </div>
+            <Paper sx={{ p: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                    Нет прав для модерации
+                </Typography>
+            </Paper>
         );
     }
 
     return (
-        <div className={'card page ' + (active ? 'active' : '')} id="pageModeration">
-            <div className="header">
-                <div className="title">Модерация</div>
-                <div className="badge" id="modUsersCount">{users.length} пользователей</div>
-            </div>
-
-            <div className="studio-section-title">Сервис</div>
-            <button
-                className="full small"
-                id="btnRebuildThumbs"
-                style={{ marginBottom: 8, display: isAdmin ? '' : 'none' }}
-                onClick={rebuildThumbs}
-            >
-                Перегенерировать превью всех видео
-            </button>
-
-            <div className="studio-section-title">Пользователи</div>
-            <div className="studio-videos" id="modUsersList">
-                {!users.length ? (
-                    <div className="studio-row-meta">Пользователи не найдены</div>
-                ) : (
-                    users.map((u) => (
-                        <div key={u.id} className="studio-row">
-                            <div className="studio-row-header">
-                                <div className="studio-row-title">{u.username} ({u.displayName})</div>
-                                <div>
-                                    <button className="small secondary" onClick={() => loadUserDetails(u.id)}>Детали
-                                    </button>
-                                    {' '}
-                                    <button className="small secondary" onClick={() => loadUserVideos(u.id)}>Видео
-                                    </button>
-                                    {' '}
-                                    <button className="small danger" onClick={() => toggleBan(u)}>
-                                        {u.enabled ? 'Забанить' : 'Разбанить'}
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="studio-row-meta">
-                                ID: {u.id} · Email: {u.email} ·
-                                Роли: {(Array.isArray(u.roles) ? u.roles.join(', ') : '—')} ·
-                                Статус: {u.enabled ? 'активен' : 'забанен'}
-                            </div>
-                        </div>
-                    ))
+        <>
+            <Stack component={Paper} direction="row" p={1} alignItems="center">
+                <IconButton onClick={() => onPage("account")} size="small">
+                    <ArrowBackRoundedIcon/>
+                </IconButton>
+                <Typography variant="h6" noWrap px={1}>Модерация</Typography>
+            </Stack>
+            <Stack component={Paper} pt={2} flex={1} overflow="hidden">
+                <Grid container spacing={1} mb={2} px={2}>
+                    <Button
+                        variant="contained"
+                        color={activeTab === "users" ? "primary" : "inherit"}
+                        size="small"
+                        onClick={() => setActiveTab("users")}
+                    >
+                        Пользователи
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color={activeTab === "complaints" ? "primary" : "inherit"}
+                        size="small"
+                        onClick={() => setActiveTab("complaints")}
+                    >
+                        Жалобы
+                    </Button>
+                    {isAdmin && (
+                        <Button
+                            variant="contained"
+                            color={activeTab === "service" ? "primary" : "inherit"}
+                            size="small"
+                            onClick={() => setActiveTab("service")}
+                        >
+                            Сервис
+                        </Button>
+                    )}
+                </Grid>
+                {activeTab === 'users' ? (
+                    <UsersList
+                        users={users}
+                        onDetails={loadUserDetails}
+                        onVideos={loadUserVideos}
+                        onToggleBan={toggleBan}
+                        onPage={onPage}
+                    />
+                ) : activeTab === 'complaints' ? (
+                    <ComplaintsList
+                        complaints={complaints}
+                        onResolve={resolveComplaint}
+                    />
+                ) : activeTab === 'service' && isAdmin && (
+                    <Service onPage={onPage}/>
                 )}
-            </div>
-
-            <div className="studio-section-title" style={{ marginTop: 10 }}>
-                Жалобы
-            </div>
-
-            <div className="studio-jobs" style={{ minHeight: 60 }}>
-                {!complaints.length ? (
-                    <div className="studio-row-meta">Нет открытых жалоб</div>
-                ) : (
-                    complaints.map((c) => (
-                        <div key={c.id} className="job-row">
-                            <div className="job-row-header">
-                                <div>
-                                    <b>{c.targetType}</b>{' '}
-                                    {c.videoUuid || ''}
-                                    {c.commentId ? ` / comment ${c.commentId}` : ''}
-                                </div>
-                            </div>
-
-                            <div className="studio-row-meta">{c.reason}</div>
-
-                            <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
-                                <button
-                                    className="small danger"
-                                    onClick={() => resolveComplaint(c.id, true, false)}
-                                >
-                                    Удалить и закрыть
-                                </button>
-
-                                <button
-                                    className="small"
-                                    onClick={() => resolveComplaint(c.id, false, false)}
-                                >
-                                    Закрыть
-                                </button>
-
-                                <button
-                                    className="small secondary"
-                                    onClick={() => resolveComplaint(c.id, false, true)}
-                                >
-                                    Отклонить
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            <div className="studio-section-title" style={{ marginTop: 10 }}>Детали пользователя</div>
-            <div className="studio-jobs" id="modUserDetails" style={{ minHeight: 60 }}>
-                {!userDetails ? (
-                    <div className="studio-row-meta">Выберите пользователя</div>
-                ) : (
-                    <UserDetailsCard user={userDetails} canEditRoles={isAdmin} onSaveRoles={saveRoles}/>
-                )}
-            </div>
-
-            <div className="studio-section-title" style={{ marginTop: 10 }}>Видео пользователя</div>
-            <div className="studio-jobs" id="modUserVideos" style={{ minHeight: 60 }}>
-                {!userVideos || userVideos.length === 0 ? (
-                    <div className="studio-row-meta">Видео пользователя будут здесь</div>
-                ) : (
-                    userVideos.map((v) => (
-                        <div key={v.uuid} className="job-row">
-                            <div className="job-row-header">
-                                <div>{v.name || '(без названия)'}</div>
-                                <div>UUID: {v.uuid}</div>
-                            </div>
-                            <div>{humanSize(v.contentSize)} · {v.contentType || ''} · {v.uploadedAt || ''}</div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            <Status id="statusModeration" message={status.msg} type={status.type}/>
-        </div>
-    );
-}
-
-function UserDetailsCard({ user, canEditRoles, onSaveRoles }) {
-    const [roles, setRoles] = useState(() => new Set(user.roles || []));
-
-    useEffect(() => {
-        setRoles(new Set(user.roles || []));
-    }, [user]);
-
-    const allRoles = ['USER', 'MODERATOR', 'ADMIN'];
-
-    return (
-        <div className="job-row">
-            <div className="job-row-header">
-                <div>{user.username} ({user.displayName})</div>
-                <div>ID: {user.id}</div>
-            </div>
-            <div>Email: {user.email} · Статус: {user.enabled ? 'активен' : 'забанен'}</div>
-
-            <div style={{ marginTop: 4 }}>
-                <div>Роли: {(Array.isArray(user.roles) ? user.roles.join(', ') : '—')}</div>
-
-                {canEditRoles ? (
-                    <>
-                        <div style={{ marginTop: 4 }}>
-                            {allRoles.map((r) => (
-                                <label key={r} style={{ fontSize: 11, marginRight: 8 }}>
-                                    <input
-                                        type="checkbox"
-                                        value={r}
-                                        checked={roles.has(r)}
-                                        onChange={(e) => {
-                                            const next = new Set(roles);
-                                            if (e.target.checked) next.add(r);
-                                            else next.delete(r);
-                                            setRoles(next);
-                                        }}
-                                        style={{ marginRight: 3 }}
-                                    />
-                                    {r}
-                                </label>
-                            ))}
-                        </div>
-
-                        <button className="small" style={{ marginTop: 4 }}
-                                onClick={() => onSaveRoles?.(user.id, Array.from(roles))}>
-                            Сохранить роли
-                        </button>
-                    </>
-                ) : null}
-            </div>
-        </div>
+            </Stack>
+        </>
     );
 }

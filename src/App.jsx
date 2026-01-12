@@ -18,6 +18,7 @@ function AppInner() {
     const [activePage, setActivePage] = useState('feed'); // Изначально активен Feed
     const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
     const [activeAccountTab, setActiveAccountTab] = useState("videos");
+    const [activeModerationTab, setActiveModerationTab] = useState("users");
     const [feedMode, setFeedMode] = useState({ type: "global" });
     const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
@@ -76,7 +77,12 @@ function AppInner() {
                 onPage={onPage}
             />
             <AuthPage active={activePage === 'auth'} onPage={onPage}/>
-            <ModerationPage active={activePage === 'moderation'} onPage={onPage}/>
+            <ModerationPage
+                active={activePage === 'moderation'}
+                activeTab={activeModerationTab}
+                setActiveTab={setActiveModerationTab}
+                onPage={onPage}
+            />
             <Tabs
                 activeTab={activePage}  // Передаем активное состояние
                 onTab={onPage}
