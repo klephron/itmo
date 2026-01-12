@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiBase, authHeaders, isUnauthorized } from '../api/api';
+import { apiBase, authHeaders } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
 import { Avatar, Box, Button, Grid, IconButton, Paper, Stack, Typography } from "@mui/material";
@@ -48,36 +48,6 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
             setProfile(prof);
         } catch {
             setProfile(null);
-        }
-    }
-
-    async function deleteVideo(uuid) {
-        if (!token) {
-            setStatusAuth('Войдите, чтобы удалять видео', 'error');
-            onPage("auth");
-            return;
-        }
-        if (!confirm('Удалить это видео?')) return;
-
-        try {
-            setStatusAuth('Удаляю видео…', 'ok');
-            const res = await fetch(apiBase + '/api/streaming/video/delete/' + uuid, {
-                method: 'POST',
-                headers: authHeaders(token),
-            });
-
-            if (isUnauthorized(res)) {
-                setStatusAuth('Сессия истекла, войдите снова', 'error');
-                onPage("auth");
-                return;
-            }
-
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-
-            setStatusAuth('Видео удалено', 'ok');
-            await loadAccountProfile();
-        } catch (e) {
-            setStatusAuth('Ошибка удаления: ' + e.message, 'error');
         }
     }
 
@@ -170,9 +140,8 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
 
                 {activeTab === "videos" ? (
                     <ThumbGrid
-                        active={activeTab === "videos"}
+                        label="Ваши видео"
                         userId={user?.userId}
-                        onDeleteVideo={deleteVideo}
                         showDelete
                         onPage={onPage}
                     />

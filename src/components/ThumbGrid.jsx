@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { Box, Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
+
 import { apiBase, authHeaders } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { ThumbCard } from "./ThumbCard";
 import { LoadMoreButton } from "./LoadMoreButton";
+import { ConfirmDialog } from "./ConfirmDialog.jsx";
 
 const PAGE_SIZE = 12;
 const COLUMNS = 3;
 
-export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage }) {
+export function ThumbGrid({ label = "Видео", userId, showDelete = false, onPage }) {
     const { token } = useAuth();
+
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [selectedId, setSelectedId] = useState(null);
 
     const [videos, setVideos] = useState([]);
     const [paging, setPaging] = useState({
@@ -22,10 +27,8 @@ export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage })
     const [loading, setLoading] = useState(false);
     const [sort, setSort] = useState("uploadedAt,desc");
 
-    // ---------- загрузка страницы ----------
     async function loadPage(pageNumber, { replace = false } = {}) {
         if (!userId || loading) return;
-
         setLoading(true);
 
         try {
@@ -33,7 +36,6 @@ export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage })
                 `${apiBase}/api/users/${userId}/videos?page=${pageNumber}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`,
                 { headers: authHeaders(token) }
             );
-
             if (!res.ok) throw new Error("HTTP " + res.status);
 
             const page = await res.json();
@@ -52,36 +54,57 @@ export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage })
         }
     }
 
-    // ---------- первая загрузка / смена сортировки ----------
-    useEffect(() => {
-        if (!active || !userId) return;
-        loadPage(0, { replace: true });
-    }, [active, userId, sort]);
+    async function reloadUpToCurrentPage() {
+        const pagesToLoad = paging.page + 1;
 
-    // ---------- reset при уходе ----------
-    useEffect(() => {
-        if (!active) {
-            setVideos([]);
-            setPaging({
-                page: 0,
-                size: PAGE_SIZE,
-                last: true,
-                totalElements: 0,
-            });
+        setVideos([]);
+        setPaging(p => ({ ...p, page: 0, last: false }));
+
+        for (let p = 0; p < pagesToLoad; p++) {
+            await loadPage(p, { replace: p === 0 });
+        }
+    }
+
+    async function deleteVideo(uuid) {
+        if (loading) return;
+        setLoading(true);
+
+        try {
+            const res = await fetch(
+                `${apiBase}/api/streaming/video/delete/${uuid}`,
+                { method: "POST", headers: authHeaders(token) }
+            );
+            if (!res.ok) throw new Error("Delete failed");
+
+            await reloadUpToCurrentPage();
+        } finally {
+            setSelectedId(null);
             setLoading(false);
         }
-    }, [active]);
+    }
+
+    // ---------- первая загрузка / смена сортировки ----------
+    useEffect(() => {
+        if (!userId) return;
+        loadPage(0, { replace: true });
+    }, [userId, sort]);
 
     const handleLoadMore = () => loadPage(paging.page + 1);
-    const handleVideoOpen = (targetUuid, targetIndex) => (
+    const handleVideoOpen = (targetUuid, targetIndex) => () => (
         onPage("feed", { feedMode: { type: "user", userId, sort, targetUuid, targetIndex } })
     );
+
+    const handleDeleteVideo = (uuid) => () => {
+        setSelectedId(uuid);
+        setConfirmDialogOpen(true);
+    }
+    const handleConfirm = () => deleteVideo(selectedId);
 
     return (
         <>
             <Stack direction="row" justifyContent="space-between" alignItems="center" px={2}>
                 <Stack direction="row" spacing={1}>
-                    <Typography variant="h6" fontWeight="bold">Видео</Typography>
+                    <Typography variant="h6" fontWeight="bold">{label}</Typography>
                     <Typography variant="body2" color="text.secondary" pt={1}>
                         {paging?.totalElements ?? 0}
                     </Typography>
@@ -150,8 +173,8 @@ export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage })
                                         <ThumbCard
                                             video={v}
                                             showDelete={showDelete}
-                                            onOpen={() => handleVideoOpen(v.uuid, index)}
-                                            onDelete={() => onDeleteVideo?.(v.uuid)}
+                                            onOpen={handleVideoOpen(v.uuid, index)}
+                                            onDelete={handleDeleteVideo(v.uuid)}
                                         />
                                     </Grid>
                                 );
@@ -172,6 +195,14 @@ export function ThumbGrid({ active, userId, onDeleteVideo, showDelete, onPage })
                     )}
                 </Box>
             )}
+            <ConfirmDialog
+                open={confirmDialogOpen}
+                setOpen={setConfirmDialogOpen}
+                title="Подтверждение удаления"
+                text="Вы уверены, что хотите безвозвратно удалить видео?"
+                critical
+                onConfirm={handleConfirm}
+            />
         </>
     );
 }

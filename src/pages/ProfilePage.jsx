@@ -119,11 +119,7 @@ export default function ProfilePage({ active, userId, onPage }) {
                 <Typography variant="caption" color="text.secondary" mt={1} mb={1.5} px={2}>
                     {followers.toLocaleString()} {formatFollowers(followers)} · {followingCount.toLocaleString()} {formatFollowing(followingCount)}
                 </Typography>
-                <ThumbGrid
-                    active={active}
-                    userId={userId}
-                    onPage={onPage}
-                />
+                <ThumbGrid userId={userId} onPage={onPage}/>
             </Stack>
         </>
     );
