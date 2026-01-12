@@ -40,6 +40,8 @@ export const pluralizeNum = (n, labels) => {
 
 export const formatFollowers = (n) => pluralizeNum(n, ["подписчик", "подписчика", "подписчиков"]);
 export const formatFollowing = (n) => pluralizeNum(n, ["подписка", "подписки", "подписок"]);
+export const formatViews = (n) => pluralizeNum(n, ["просмотр", "просмотра", "просмотров"]);
+export const formatLikes = (n) => pluralizeNum(n, ["лайк", "лайка", "лайков"]);
 
 /**
  * Форматирует число в компактный вид:

@@ -1,13 +1,96 @@
-import { Box, Button, Card, Grid, IconButton, Stack, Typography } from "@mui/material";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import { Avatar, Box, Button, Card, CardActionArea, Grid, Stack, TextField, Typography } from "@mui/material";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 
-import { formatDate } from "../utils/format.js";
+import { formatDate, formatLikes, formatViews } from "../utils/format.js";
+import { apiBase } from "../api/api.js";
+
+const CommentCard = ({ user, createdAt, text }) => (
+    <Card
+        variant="outlined"
+        sx={(theme) => ({
+            borderRadius: 3,
+            backgroundImage: theme.vars.overlays[1]
+        })}
+    >
+        <CardActionArea component="div">
+            <Stack direction="row" spacing={1} p={1}>
+                <Avatar
+                    src={user?.authorAvatarUrl ? `${apiBase}${user?.authorAvatarUrl}` : null}
+                    sx={{ width: 32, height: 32, cursor: 'pointer' }}
+                    onClick={() => user?.authorId && onPage("profile", { profileUserId: user?.authorId })}
+                >
+                    {user?.authorName?.[0]?.toUpperCase()}
+                </Avatar>
+                <Stack spacing={1} flex={1} pt={0.25}>
+                    <Stack direction="row" spacing={1}>
+                        <Typography variant="caption" color="text.secondary" lineHeight={1}>
+                            <Typography
+                                component="span"
+                                variant="body2"
+                                fontWeight="medium"
+                                color="textPrimary"
+                                lineHeight={1}
+                            >
+                                {user?.name ?? "User"}
+                            </Typography>
+                            {` · ${formatDate(createdAt)}`}
+                        </Typography>
+                    </Stack>
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            whiteSpace: 'pre-wrap',      // сохраняем переносы строк + разрешаем wrap
+                            overflowWrap: 'break-word',  // перенос по словам, если можно
+                            wordBreak: 'break-word',     // перенос по буквам, если слово слишком длинное
+                        }}
+                    >
+                        {text}
+                    </Typography>
+                </Stack>
+            </Stack>
+        </CardActionArea>
+    </Card>
+);
+
+const VideoCard = ({ video }) => (
+    <Card
+        variant="outlined"
+        sx={(theme) => ({
+            borderRadius: 3,
+            backgroundImage: theme.vars.overlays[1]
+        })}
+    >
+        <CardActionArea component="div">
+            <Stack spacing={0.5} py={1} px={1.5}>
+                <Typography
+                    variant="body2"
+                    sx={{
+                        whiteSpace: 'pre-wrap',      // сохраняем переносы строк + разрешаем wrap
+                        overflowWrap: 'break-word',  // перенос по словам, если можно
+                        wordBreak: 'break-word',     // перенос по буквам, если слово слишком длинное
+                    }}
+                >
+                    {video?.name || "Видео 1 бла бла бла бла"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                    <Typography
+                        variant="caption"
+                        //fontWeight="medium"
+                        lineHeight={1}
+                    >
+                        {video?.user?.name ?? "User"}
+                    </Typography>
+                    {` · ${video?.viewsCount ?? 100} ${formatViews(video?.viewsCount ?? 10)}`}
+                    {` · ${video?.likesCount ?? 10} ${formatLikes(video?.likesCount ?? 10)}`}
+                    {` · 12.01.2026, 03:53:34`}
+                </Typography>
+            </Stack>
+        </CardActionArea>
+    </Card>
+);
 
 export function ComplaintsList({ complaints, onResolve }) {
-    if (!complaints.length) {
-        return <Typography variant="body2">Нет открытых жалоб</Typography>;
-    }
-
     return (
         <>
             <Stack direction="row" spacing={1} py={0.5} px={2}>
@@ -27,58 +110,76 @@ export function ComplaintsList({ complaints, onResolve }) {
                 <Box sx={{ borderRadius: 4, flex: 1, overflow: "hidden", m: 2 }}>
                     <Stack spacing={1.5} sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
                         {complaints.map(c => (
-                            <Card key={c.id} elevation={1} sx={{ flexShrink: 0 }}>
-                                <Stack spacing={1.5} p={2} pt={1.5}>
-                                    <Box>
-                                        <Typography fontWeight="bold" position="relative" pr={6}>
-                                            Жалоба на {c.targetType === "VIDEO" ? "видео" : "комментарий"}
-                                            <IconButton
-                                                size="small"
-                                                sx={{
-                                                    ml: 1.5,
-                                                    fontSize: "inherit",
-                                                    position: "absolute",
-                                                }}
-                                            >
-                                                <OpenInNewRoundedIcon fontSize="inherit"/>
-                                            </IconButton>
+                            <Card key={c.id} elevation={1} sx={{ flexShrink: 0, p: 2 }}>
+                                <Grid container columnSpacing={2} rowSpacing={1}>
+                                    <Stack direction="row" spacing={0.5} alignItems="center">
+                                        <ScheduleRoundedIcon
+                                            sx={{ fontSize: "inherit", color: "text.secondary" }}
+                                        />
+                                        <Typography variant="caption" lineHeight={1}>
+                                            {formatDate(c?.createdAt)}
                                         </Typography>
-                                        <Typography
-                                            component="p"
-                                            variant="caption"
-                                            color="text.secondary"
-                                        >
-                                            {formatDate(c.createdAt)}
+                                    </Stack>
+                                    <Stack direction="row" spacing={0.5} alignItems="center">
+                                        <PersonOutlinedIcon
+                                            sx={{ fontSize: "inherit", color: "text.secondary" }}
+                                        />
+                                        <Typography variant="caption" lineHeight={1}>
+                                            Username
                                         </Typography>
-                                    </Box>
-
-                                    <Typography variant="body2">
-                                        {c.reason}
+                                    </Stack>
+                                </Grid>
+                                <Box mt={3}>
+                                    <Typography variant="body1" fontWeight="bold" mb={1.5}>
+                                        На что пожаловались
                                     </Typography>
-
-                                    <Grid container spacing={1} pt={0.5}>
-                                        <Button
-                                            variant="contained"
-                                            color="inherit"
-                                            onClick={() => onResolve(c.id, false, true)}
-                                        >
-                                            Отклонить
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => onResolve(c.id, false, false)}
-                                        >
-                                            Принять
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            color="error"
-                                            onClick={() => onResolve(c.id, true, false)}
-                                        >
-                                            Удалить {c.targetType === "VIDEO" ? "видео" : "комментарий"}
-                                        </Button>
-                                    </Grid>
-                                </Stack>
+                                    {c.targetType === "VIDEO" ? (
+                                        <VideoCard
+                                        />
+                                    ) : (
+                                        <CommentCard
+                                            createdAt={c?.createdAt}
+                                            text={"Тестовый текст"}
+                                        />
+                                    )}
+                                </Box>
+                                <Box mt={3}>
+                                    <Typography variant="body1" fontWeight="bold" mb={1}>
+                                        Текст жалобы
+                                    </Typography>
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            whiteSpace: 'pre-wrap',
+                                            overflowWrap: 'break-word',
+                                            wordBreak: 'break-word',
+                                        }}
+                                    >
+                                        {c?.reason}
+                                    </Typography>
+                                </Box>
+                                <Grid container spacing={1} mt={3}>
+                                    <Button
+                                        variant="contained"
+                                        color="inherit"
+                                        onClick={() => onResolve(c.id, false, true)}
+                                    >
+                                        Отклонить
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => onResolve(c.id, false, false)}
+                                    >
+                                        Принять
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        onClick={() => onResolve(c.id, true, false)}
+                                    >
+                                        Удалить контент
+                                    </Button>
+                                </Grid>
                             </Card>
                         ))}
                     </Stack>
