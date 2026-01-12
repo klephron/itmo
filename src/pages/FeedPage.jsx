@@ -103,6 +103,34 @@ export default function FeedPage({
             let url, res;
             const { type, userId, sort, query, targetUuid, targetIndex } = feedModeRef.current;
 
+            if (type === "moderation") {
+                /* TODO: uncomment when backend is ready
+                const res = await fetch(
+                    `${apiBase}/api/videos/${targetUuid}`,
+                    { headers: authHeaders(token) }
+                );
+                if (!res.ok) throw new Error("HTTP " + res.status);
+
+                const video = await res.json();
+
+                setWindow({
+                    videos: [{
+                        ...video,
+                        snapshot: {
+                            first: true,
+                            last: true,
+                        },
+                        localIndex: 0,
+                        lastIndex: 0,
+                    }],
+                    currentIndex: 0,
+                });*/
+
+                setWindow({ videos: [{ uuid: targetUuid }], currentIndex: 0 });
+
+                return;
+            }
+
             if (type === "global") {
                 url = `${apiBase}/api/streaming/video/feed/session/start?size=${PAGE_SIZE}`;
                 res = await fetch(url, {
@@ -440,6 +468,9 @@ export default function FeedPage({
     }
 
     const goNext = () => {
+        const type = feedModeRef.current.type;
+        if (type === "moderation") return;
+
         // Если видео еще нет либо мы как-то оказались на последнем видео в окне - перезапускаем ленту
         if (!videos.length || currentIndex === videos.length - 1) {
             startFeed(false, true);
@@ -463,9 +494,9 @@ export default function FeedPage({
     }
 
     const goPrev = () => {
-        if (!videos.length) return;
-
         const type = feedModeRef.current.type;
+        if (!videos.length || type === "moderation") return;
+
         const { prevPos, first } = snapshot;
 
         // Если нулевой элемент первой страницы - назад идти нельзя!
@@ -663,6 +694,8 @@ export default function FeedPage({
         setSearchDialogOpen(true);
     }
 
+    const handleBackFromModeration = () => onPage("moderation");
+
     if (!active) return null;
 
     return (
@@ -690,6 +723,14 @@ export default function FeedPage({
                             <ArrowBackRoundedIcon/>
                         </IconButton>
                         <Typography variant="h6" noWrap px={1}>Найденные видео</Typography>
+                    </>
+                )}
+                {feedMode.type === "moderation" && (
+                    <>
+                        <IconButton onClick={handleBackFromModeration} size="small">
+                            <ArrowBackRoundedIcon/>
+                        </IconButton>
+                        <Typography variant="h6" noWrap px={1}>Видео из жалобы</Typography>
                     </>
                 )}
             </Stack>

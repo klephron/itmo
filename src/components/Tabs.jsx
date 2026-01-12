@@ -28,7 +28,7 @@ export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
                 size="uniSmall"
                 color="inherit"
                 onClick={handlePrevClick}
-                disabled={activeTab !== "feed"}
+                disabled={activeTab !== "feed" || feedMode.type === "moderation"}
             >
                 <ChevronLeftRoundedIcon sx={{ fontSize: 32 }}/>
             </Button>
@@ -84,7 +84,7 @@ export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
                 size="uniSmall"
                 color="inherit"
                 onClick={handleNextClick}
-                disabled={activeTab !== "feed"}
+                disabled={activeTab !== "feed" || feedMode.type === "moderation"}
             >
                 <ChevronRightRoundedIcon sx={{ fontSize: 32 }}/>
             </Button>

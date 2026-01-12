@@ -7,7 +7,7 @@ import { formatDate, formatLikes, formatViews } from "../utils/format.js";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
-const CommentCard = ({ user, createdAt, text }) => (
+const CommentCard = ({ user, createdAt, text, onClick }) => (
     <Card
         variant="outlined"
         sx={(theme) => ({
@@ -15,7 +15,7 @@ const CommentCard = ({ user, createdAt, text }) => (
             backgroundImage: theme.vars.overlays[1]
         })}
     >
-        <CardActionArea component="div">
+        <CardActionArea component="div" onClick={onClick}>
             <Stack direction="row" spacing={1} p={1}>
                 <Avatar
                     src={user?.authorAvatarUrl ? `${apiBase}${user?.authorAvatarUrl}` : null}
@@ -55,7 +55,7 @@ const CommentCard = ({ user, createdAt, text }) => (
     </Card>
 );
 
-const VideoCard = ({ video }) => (
+const VideoCard = ({ video, onClick }) => (
     <Card
         variant="outlined"
         sx={(theme) => ({
@@ -63,7 +63,7 @@ const VideoCard = ({ video }) => (
             backgroundImage: theme.vars.overlays[1]
         })}
     >
-        <CardActionArea component="div">
+        <CardActionArea component="div" onClick={onClick}>
             <Stack spacing={0.5} py={1} px={1.5}>
                 <Typography
                     variant="body2"
@@ -153,6 +153,10 @@ export function ComplaintsList({ onPage }) {
         loadComplaints();
     }, [token, isModerator]);
 
+    const handleTargetClick = (videoUuid) => () => (
+        onPage("feed", { feedMode: { type: "moderation", targetUuid: videoUuid } })
+    );
+
     return (
         <>
             <Stack direction="row" spacing={1} py={0.5} px={2}>
@@ -196,12 +200,15 @@ export function ComplaintsList({ onPage }) {
                                         На что пожаловались
                                     </Typography>
                                     {c.targetType === "VIDEO" ? (
-                                        <VideoCard video={{ name: c?.videoUuid }}
+                                        <VideoCard
+                                            video={{ name: c?.videoUuid }}
+                                            onClick={handleTargetClick(c?.videoUuid)}
                                         />
                                     ) : (
                                         <CommentCard
                                             createdAt={c?.createdAt}
                                             text={c?.commentId}
+                                            onClick={handleTargetClick(c?.videoUuid)}
                                         />
                                     )}
                                 </Box>
