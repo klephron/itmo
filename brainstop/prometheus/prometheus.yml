@@ -7,7 +7,7 @@ scrape_configs:
     metrics_path: /actuator/prometheus
 
     eureka_sd_configs:
-      - server: http://discovery:8099/eureka
+      - server: http://discovery:8761/eureka
 
     relabel_configs:
       - source_labels: [__meta_eureka_app_name]
@@ -21,7 +21,7 @@ scrape_configs:
 
     static_configs:
       - targets:
-          - discovery:8099
+          - discovery:8761
 
     relabel_configs:
       - target_label: application
