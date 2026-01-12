@@ -7,7 +7,7 @@ import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
 import { SwipeableDialog } from "./SwipeableDialog";
 import { formatCompactNumber, formatDate } from "../utils/format.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
+import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api.js";
 import { ComplaintDialog } from "./ComplaintDialog.jsx";
 import { ConfirmDialog } from "./ConfirmDialog.jsx";
 import { LoadMoreButton } from "./LoadMoreButton.jsx";
@@ -235,7 +235,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
                         pt={index === 0 ? 1 : 0}
                     >
                         <Avatar
-                            src={c.authorAvatarUrl ? `${apiBase}${c.authorAvatarUrl}` : null}
+                            src={getAvatarUrl(c?.authorId)}
                             sx={{ width: 32, height: 32, cursor: 'pointer' }}
                             onClick={() => c.authorId && onPage("profile", { profileUserId: c.authorId })}
                         >

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Avatar, Box, Button, IconButton, Paper, Stack, Typography } from "@mui/material";
 
-import { apiBase, authHeaders, isUnauthorized } from "../api/api";
+import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
@@ -92,7 +92,7 @@ export default function ProfilePage({ active, userId, onPage }) {
             <Stack component={Paper} pt={2} flex={1} overflow="hidden">
                 <Stack direction="row" spacing={1} px={2} alignItems="flex-start">
                     <Avatar
-                        src={profile?.avatarUrl ? `${apiBase}${profile.avatarUrl}` : undefined}
+                        src={getAvatarUrl(userId)}
                         sx={{ width: 42, height: 42, fontSize: 24, fontWeight: "medium" }}
                     >
                         {profile?.username?.[0]?.toUpperCase()}

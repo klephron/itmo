@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Avatar, Box, Card, CardActionArea, Stack, Typography, } from "@mui/material";
-import { apiBase, authHeaders, isUnauthorized } from "../api/api";
+import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export function FollowingList({ active, onPage }) {
@@ -74,7 +74,7 @@ export function FollowingList({ active, onPage }) {
                                 <CardActionArea onClick={() => onPage("profile", { profileUserId: u.id })}>
                                     <Stack direction="row" spacing={1} p={1} alignItems="center">
                                         <Avatar
-                                            src={u.avatarUrl ? `${apiBase}${u.avatarUrl}` : undefined}
+                                            src={getAvatarUrl(u?.id)}
                                             sx={{ width: 32, height: 32 }}
                                         >
                                             {user?.username?.[0]?.toUpperCase()}

@@ -85,13 +85,7 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
             <Stack component={Paper} pt={2} flex={1} overflow="hidden">
                 <Stack direction="row" px={2} spacing={1} alignItems="flex-start" position="relative">
                     <Avatar
-                        src={
-                            profile?.avatarUrl
-                                ? `${apiBase}${profile.avatarUrl}`
-                                : user?.avatarUrl
-                                    ? `${apiBase}${user.avatarUrl}`
-                                    : undefined
-                        }
+                        src={user?.avatarUrl}
                         sx={{ width: 42, height: 42, fontSize: 24, fontWeight: "medium" }}
                     >
                         {user?.username?.[0]?.toUpperCase()}

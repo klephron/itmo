@@ -3,7 +3,7 @@ import { Avatar, Box, Button, Stack, Typography } from "@mui/material";
 import AddAPhotoOutlinedIcon from "@mui/icons-material/AddAPhotoOutlined";
 
 import { SmallDialog } from "./SmallDialog.jsx";
-import { apiBase, authHeaders, isUnauthorized } from "../api/api";
+import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { humanSize } from "../utils/format.js";
 
@@ -28,9 +28,7 @@ export function AvatarUploadDialog({ open, setOpen, onSuccess }) {
             setImageInfo(null);
             setStatus({ msg: "", type: "" });
             setLoading(false);
-            setPreviewUrl(
-                user?.avatarUrl ? `${apiBase}${user.avatarUrl}` : null
-            );
+            setPreviewUrl(user?.avatarUrl);
             if (inputRef.current) inputRef.current.value = "";
         }
     }, [open, user]);
@@ -134,8 +132,7 @@ export function AvatarUploadDialog({ open, setOpen, onSuccess }) {
 
             if (!res.ok) throw new Error("HTTP " + res.status);
 
-            const data = await res.json();
-            const avatarUrl = `${data.url}?t=${Date.now()}`;
+            const avatarUrl = getAvatarUrl(user.userId, true);
 
             setAuth(token, { ...user, avatarUrl });
             onSuccess?.(avatarUrl);

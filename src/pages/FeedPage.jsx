@@ -10,7 +10,7 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 
-import { apiBase, authHeaders, deviceIdHeaders, isUnauthorized } from '../api/api';
+import { apiBase, authHeaders, deviceIdHeaders, getAvatarUrl, getOrCreateDeviceId, isUnauthorized } from '../api/api';
 import { formatCompactNumber } from '../utils/format';
 import { useAuth } from '../context/AuthContext';
 import { VideoInfoDialog } from "../components/VideoInfoDialog.jsx";
@@ -25,16 +25,6 @@ const MAX_WINDOW = 2 * PAGE_SIZE;
 const PREFETCH_DELTA = 2;
 const WATCH_MILESTONES = [25, 50, 75, 100];
 const MIN_LOADING_MS = 400;
-
-function getOrCreateDeviceId() {
-    const key = 'feed-device-id';
-    let id = localStorage.getItem(key);
-    if (!id) {
-        id = crypto.randomUUID();
-        localStorage.setItem(key, id);
-    }
-    return id;
-}
 
 export default function FeedPage({
                                      active,
@@ -76,7 +66,6 @@ export default function FeedPage({
         name,
         uploaderId,
         uploaderName,
-        uploaderAvatarUrl,
         likesCount = 0,
         likedByMe = false,
         viewsCount = 0,
@@ -767,7 +756,7 @@ export default function FeedPage({
                             onClick={() => uploaderId && onPage("profile", { profileUserId: uploaderId })}
                         >
                             <Avatar
-                                src={uploaderAvatarUrl ? `${apiBase}${uploaderAvatarUrl}` : null}
+                                src={getAvatarUrl(uploaderId)}
                                 sx={{ width: 32, height: 32 }}
                             >
                                 {uploaderName?.[0]?.toUpperCase()}

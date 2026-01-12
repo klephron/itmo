@@ -6,7 +6,7 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
 import { useAuth } from "../context/AuthContext.jsx";
-import { apiBase } from "../api/api.js";
+import { getAvatarUrl } from "../api/api.js";
 
 export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
     const { user } = useAuth();
@@ -59,10 +59,10 @@ export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
                     onClick={() => onTab("account")}
                 >
                     <Avatar
-                        src={user?.avatarUrl ? `${apiBase}${user?.avatarUrl}` : null}
+                        src={user.avatarUrl}
                         sx={{ width: 32, height: 32 }}
                     >
-                        {user?.username?.[0]?.toUpperCase()}
+                        {user.username?.[0]?.toUpperCase()}
                     </Avatar>
                 </Button>
             ) : (

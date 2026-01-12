@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { apiBase, authHeaders } from '../api/api';
+import { apiBase, authHeaders, getAvatarUrl } from '../api/api';
 
 const AuthContext = createContext(null);
 
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
                 username: data.username,
                 displayName: data.displayName,
                 roles: data.roles ?? [],
-                avatarUrl: data.avatarUrl,
+                avatarUrl: getAvatarUrl(data?.userId),
             });
         } finally {
             setAuthReady(true);

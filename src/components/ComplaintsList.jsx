@@ -4,7 +4,7 @@ import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 
 import { formatDate, formatLikes, formatViews } from "../utils/format.js";
-import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
+import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const CommentCard = ({ user, createdAt, text, onClick }) => (
@@ -18,7 +18,7 @@ const CommentCard = ({ user, createdAt, text, onClick }) => (
         <CardActionArea component="div" onClick={onClick}>
             <Stack direction="row" spacing={1} p={1}>
                 <Avatar
-                    src={user?.authorAvatarUrl ? `${apiBase}${user?.authorAvatarUrl}` : null}
+                    src={getAvatarUrl(user?.authorId)}
                     sx={{ width: 32, height: 32, cursor: 'pointer' }}
                     onClick={() => user?.authorId && onPage("profile", { profileUserId: user?.authorId })}
                 >

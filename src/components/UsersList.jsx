@@ -4,7 +4,7 @@ import AddCircleRoundedIcon from "@mui/icons-material/AddCircleRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
 
-import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
+import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api.js";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { formatDate } from "../utils/format.js";
@@ -174,7 +174,7 @@ export function UsersList({ onPage }) {
                                     <Stack spacing={2} p={2}>
                                         <Stack direction="row" spacing={2} alignItems="flex-start">
                                             <Avatar
-                                                src={u?.id ? `${apiBase}/api/users/${u.id}/avatar` : undefined}
+                                                src={getAvatarUrl(u?.id)}
                                                 sx={{ width: 32, height: 32 }}
                                             >
                                                 {u?.username?.[0]?.toUpperCase()}
