@@ -2,10 +2,12 @@ stages:
   - test-unit
   - test-integration
   - build-and-push
+  - test-coverage
 
 variables:
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
 
 .gradle-base:
   image: eclipse-temurin:17-jdk
@@ -23,22 +25,79 @@ variables:
   stage: test-unit
   tags: [brainstop-docker]
   script:
-    - echo "[$MODULE] Unit tests passed"
+    - echo "[$MODULE] Running unit tests..."
+    - ./gradlew :$MODULE:test --no-daemon --continue || TEST_FAILED=1
+
+    - echo "[$MODULE] Generating coverage report..."
+    - ./gradlew :$MODULE:jacocoTestReport --no-daemon || true
+
+    - echo "[$MODULE] Checking coverage..."
+    - |
+      if [ -f "$MODULE/build/reports/jacoco/test/jacocoTestReport.csv" ]; then
+        echo "=== JaCoCo CSV found ==="
+      
+        # Debug: показать первые 5 строк
+        echo "CSV preview (first 5 lines):"
+        head -n 5 "$MODULE/build/reports/jacoco/test/jacocoTestReport.csv"
+        echo ""
+      
+        # ИСПРАВЛЕНИЕ: Суммируем ВСЕ строки, кроме заголовка
+        # Колонка 4 = INSTRUCTION_MISSED, Колонка 5 = INSTRUCTION_COVERED
+        COVERAGE=$(awk -F',' '
+          NR > 1 { 
+            missed += $4; 
+            covered += $5; 
+          } 
+          END { 
+            total = missed + covered;
+            if (total > 0) {
+              printf "%.2f", (covered / total) * 100
+            } else {
+              print "0.00"
+            }
+          }
+        ' "$MODULE/build/reports/jacoco/test/jacocoTestReport.csv")
+      
+        echo "[$MODULE] Coverage: ${COVERAGE}%"
+      
+        # Проверка порога (60%)
+        THRESHOLD=60
+        COVERAGE_INT=$(echo "$COVERAGE" | awk '{printf "%.0f", $1}')
+      
+        if [ "$COVERAGE_INT" -lt "$THRESHOLD" ]; then
+          echo "[$MODULE] ✗ Coverage below threshold (${COVERAGE}% < ${THRESHOLD}%)"
+          TEST_FAILED=1
+        else
+          echo "[$MODULE] ✓ Coverage OK (${COVERAGE}% >= ${THRESHOLD}%)"
+        fi
+      else
+        echo "[$MODULE] ✗ FAIL: JaCoCo CSV report not found"
+        echo "Checking directory structure:"
+        ls -lah "$MODULE/build/reports/jacoco/" 2>/dev/null || echo "  -> No jacoco reports dir"
+        ls -lah "$MODULE/build/jacoco/" 2>/dev/null || echo "  -> No jacoco exec dir"
+        TEST_FAILED=1
+      fi
+
+    - |
+      if [ -n "$TEST_FAILED" ]; then
+        echo "[$MODULE] Tests or coverage check failed"
+        exit 1
+      fi
+
+  artifacts:
+    when: always
+    reports:
+      junit: $MODULE/build/test-results/test/TEST-*.xml
+    paths:
+      - $MODULE/build/reports/tests/test/
+      - $MODULE/build/reports/jacoco/
+      - $MODULE/build/jacoco/
+    expire_in: 1 week
 
 .integration-test-template:
   extends: .gradle-base
   stage: test-integration
   tags: [brainstop-docker]
-  needs:
-    - unit-test-discovery
-    - unit-test-gateway
-    - unit-test-video
-    - unit-test-profile
-    - unit-test-storage
-    - unit-test-interactions
-    - unit-test-admin
-    - unit-test-search
-    - unit-test-transcoding
   script:
     - echo "[$MODULE] Integration tests passed"
 
@@ -46,16 +105,6 @@ variables:
   stage: build-and-push
   tags: [brainstop-docker]
   image: docker:29
-  needs:
-    - integration-test-discovery
-    - integration-test-gateway
-    - integration-test-video
-    - integration-test-profile
-    - integration-test-storage
-    - integration-test-interactions
-    - integration-test-admin
-    - integration-test-search
-    - integration-test-transcoding
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
   before_script:
@@ -227,3 +276,114 @@ docker-transcoding:
   needs: [integration-test-transcoding]
   variables:
     MODULE: transcoding
+
+########## COVERAGE REPORT ##########
+coverage-report:
+  extends: .gradle-base
+  stage: test-coverage
+  tags: [brainstop-docker]
+  needs:
+    - unit-test-admin
+    - unit-test-discovery
+    - unit-test-gateway
+    - unit-test-video
+    - unit-test-profile
+    - unit-test-storage
+    - unit-test-interactions
+    - unit-test-search
+    - unit-test-transcoding
+  script:
+    - echo "Generating coverage reports..."
+    - ./gradlew jacocoTestReport --no-daemon --continue || true
+    - ./gradlew printCoverageReport --no-daemon || true
+    - |
+      echo ""
+      echo "========================================="
+      echo "       Coverage Report Summary"
+      echo "========================================="
+      OVERALL_PASS=1
+      TOTAL_COVERED=0
+      TOTAL_INSTRUCTIONS=0
+      
+      for MODULE in admin discovery gateway video profile storage interactions search transcoding; do
+        CSV_FILE="${MODULE}/build/reports/jacoco/test/jacocoTestReport.csv"
+      
+        if [ -f "$CSV_FILE" ]; then
+          # ИСПРАВЛЕНИЕ: Суммируем ВСЕ строки (кроме заголовка)
+          COVERAGE_DATA=$(awk -F',' '
+            NR > 1 { 
+              missed += $4; 
+              covered += $5; 
+            } 
+            END { 
+              total = missed + covered;
+              if (total > 0) {
+                coverage = (covered / total) * 100;
+                printf "%d,%d,%.2f", covered, total, coverage
+              } else {
+                print "0,0,0.00"
+              }
+            }
+          ' "$CSV_FILE")
+      
+          COVERED=$(echo "$COVERAGE_DATA" | cut -d',' -f1)
+          TOTAL=$(echo "$COVERAGE_DATA" | cut -d',' -f2)
+          COVERAGE=$(echo "$COVERAGE_DATA" | cut -d',' -f3)
+          COVERAGE_INT=$(echo "$COVERAGE" | awk '{printf "%.0f", $1}')
+      
+          if [ "$TOTAL" -gt 0 ]; then
+            if [ "$COVERAGE_INT" -ge 60 ]; then
+              STATUS="✓ PASS"
+            else
+              STATUS="✗ FAIL"
+              OVERALL_PASS=0
+            fi
+      
+            printf "%-20s %6s%% %s\n" "$MODULE" "$COVERAGE_INT" "$STATUS"
+      
+            TOTAL_COVERED=$((TOTAL_COVERED + COVERED))
+            TOTAL_INSTRUCTIONS=$((TOTAL_INSTRUCTIONS + TOTAL))
+          else
+            printf "%-20s %6s %s\n" "$MODULE" "N/A" "⚠ NO CODE"
+          fi
+        else
+          printf "%-20s %6s %s\n" "$MODULE" "N/A" "⚠ NO REPORT"
+        fi
+      done
+      
+      echo "-----------------------------------------"
+      
+      if [ $TOTAL_INSTRUCTIONS -gt 0 ]; then
+        TOTAL_PERCENT=$(awk "BEGIN {printf \"%.0f\", ($TOTAL_COVERED * 100.0 / $TOTAL_INSTRUCTIONS)}")
+      
+        if [ "$TOTAL_PERCENT" -ge 60 ]; then
+          TOTAL_STATUS="✓ PASS"
+        else
+          TOTAL_STATUS="✗ FAIL"
+          OVERALL_PASS=0
+        fi
+      
+        printf "%-20s %6s%% %s\n" "TOTAL" "$TOTAL_PERCENT" "$TOTAL_STATUS"
+      else
+        echo "No coverage data available"
+        OVERALL_PASS=0
+      fi
+      
+      echo "========================================="
+      echo ""
+      
+      if [ $OVERALL_PASS -eq 0 ]; then
+        echo "❌ Some services failed coverage threshold (>= 60%)"
+        exit 1
+      else
+        echo "✅ All services passed coverage threshold"
+      fi
+
+  artifacts:
+    when: always
+    paths:
+      - "**/build/reports/jacoco/"
+      - "**/build/test-results/"
+      - build/reports/jacoco/aggregate/
+    expire_in: 30 days
+  coverage: '/TOTAL\s+(\d+)%/'

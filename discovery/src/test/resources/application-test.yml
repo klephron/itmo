@@ -1,0 +1,17 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: discovery-service-test
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+logging:
+  level:
+    org.springframework: WARN
+    ru.itmo.zavar: INFO
