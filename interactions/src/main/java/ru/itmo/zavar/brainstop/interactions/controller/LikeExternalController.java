@@ -43,10 +43,8 @@ public class LikeExternalController {
     @GetMapping("/{uuid}/like")
     @Operation(summary = "Проверить статус лайка и число лайков")
     public ResponseEntity<LikeResponse> getLikeStatus(@PathVariable UUID uuid, @AuthenticationPrincipal CurrentUser principal) {
-        if (principal == null) {
-            return ResponseEntity.status(401).build();
-        }
-        boolean liked = likeService.isLikedByUser(uuid, principal.getId());
-        return ResponseEntity.ok(new LikeResponse(null, liked));
+        boolean liked = principal != null && likeService.isLikedByUser(uuid, principal.getId());
+        long count = likeService.getCount(uuid);
+        return ResponseEntity.ok(new LikeResponse(count, liked));
     }
 }

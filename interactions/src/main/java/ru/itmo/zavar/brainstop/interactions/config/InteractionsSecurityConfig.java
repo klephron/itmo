@@ -38,6 +38,8 @@ public class InteractionsSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**", "/internal/interactions/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/videos/*/comments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/videos/*/view").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/videos/*/like").permitAll()
                         .requestMatchers("/api/videos/**",
                                 "/api/moderation/complaints/**",
                                 "/internal/moderation/complaints/**").authenticated()
