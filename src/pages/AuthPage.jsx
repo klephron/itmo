@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiBase } from '../api/api';
+import { apiBase, getAvatarUrl } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { Button, Paper, Stack, TextField, Typography } from "@mui/material";
 
@@ -46,7 +46,7 @@ export default function AuthPage({ active, onPage }) {
                 username: data.username,
                 displayName: data.displayName,
                 roles: Array.isArray(data.roles) ? data.roles : [],
-                avatarUrl: data.avatarUrl ?? null,
+                avatarUrl: getAvatarUrl(data.userId, true),
             };
             setAuth(data.token, nextUser);
             setStatusAuth('Успешный вход', 'ok');
@@ -89,7 +89,7 @@ export default function AuthPage({ active, onPage }) {
                 username: data.username,
                 displayName: data.displayName,
                 roles: Array.isArray(data.roles) ? data.roles : [],
-                avatarUrl: data.avatarUrl ?? null,
+                avatarUrl: getAvatarUrl(data.userId, true),
             };
             setAuth(data.token, nextUser);
             setStatusAuth('Регистрация прошла успешно', 'ok');

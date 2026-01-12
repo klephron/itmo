@@ -93,29 +93,14 @@ export default function FeedPage({
             const { type, userId, sort, query, targetUuid, targetIndex } = feedModeRef.current;
 
             if (type === "moderation") {
-                /* TODO: uncomment when backend is ready
                 const res = await fetch(
-                    `${apiBase}/api/videos/${targetUuid}`,
+                    `${apiBase}/api/streaming/video/metadata/${targetUuid}`,
                     { headers: authHeaders(token) }
                 );
                 if (!res.ok) throw new Error("HTTP " + res.status);
 
                 const video = await res.json();
-
-                setWindow({
-                    videos: [{
-                        ...video,
-                        snapshot: {
-                            first: true,
-                            last: true,
-                        },
-                        localIndex: 0,
-                        lastIndex: 0,
-                    }],
-                    currentIndex: 0,
-                });*/
-
-                setWindow({ videos: [{ uuid: targetUuid }], currentIndex: 0 });
+                setWindow({ videos: [video], currentIndex: 0 });
 
                 return;
             }
