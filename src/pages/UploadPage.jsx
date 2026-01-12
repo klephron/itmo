@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
-import { Button, LinearProgress, Paper, Stack, TextField, Typography, } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import { Box, Button, LinearProgress, Paper, Stack, TextField, Typography, } from "@mui/material";
 import { apiBase } from "../api/api";
 import { useAuth } from "../context/AuthContext";
-import Status from "../components/Status";
 import { formatDuration, humanSize } from "../utils/format.js";
 
 const MAX_DURATION = 120; // seconds
@@ -189,12 +188,18 @@ export default function UploadPage({ active, onPage }) {
         xhr.send(formData);
     }
 
+    useEffect(() => {
+        if (!active) {
+            resetForm();
+        }
+    }, [active]);
+
     if (!active) return null;
 
     return (
         <>
             <Stack component={Paper} direction="row" p={1}>
-                <Typography variant="h6" px={1}>
+                <Typography variant="h6" px={1} py="1px">
                     Загрузка видео
                 </Typography>
             </Stack>
@@ -264,13 +269,19 @@ export default function UploadPage({ active, onPage }) {
                     Загрузить
                 </Button>
 
-                <Status message={status.msg} type={status.type}/>
-
-                <LinearProgress
-                    variant="determinate"
-                    value={progress}
-                    color="success"
-                />
+                {(uploading || uploaded) && (
+                    <Box>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                            {status.msg}
+                        </Typography>
+                        <LinearProgress
+                            variant="determinate"
+                            value={progress}
+                            color="success"
+                            sx={{ mt: 1 }}
+                        />
+                    </Box>
+                )}
 
                 {uploaded && (
                     <Stack spacing={1}>

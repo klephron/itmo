@@ -11,12 +11,11 @@ export const ThumbCard = ({ video, showDelete, onDelete, onOpen }) => {
     return (
         <Card sx={{
             position: "relative",
-            cursor: "pointer",
             aspectRatio: "9 / 16",
             bgcolor: "Skeleton.bg",
             borderRadius: 0,
         }}>
-            <CardActionArea component="div" onClick={onOpen}>
+            <CardActionArea component="div" onClick={onOpen} sx={{ height: 1, width: 1 }}>
                 {thumbnailUrl && (
                     <>
                         <Box
