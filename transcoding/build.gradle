@@ -21,6 +21,10 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
     testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.springframework.kafka:spring-kafka-test"
+    testImplementation "org.testcontainers:testcontainers:1.19.3"
+    testImplementation "org.testcontainers:kafka:1.19.3"
+    testImplementation "org.awaitility:awaitility:4.2.0"
 }
 
 tasks.named("test") {

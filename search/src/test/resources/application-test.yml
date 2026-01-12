@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+app:
+  jwt:
+    secret: "test-secret-key-for-testing-purposes-only"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

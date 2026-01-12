@@ -26,6 +26,13 @@ dependencies {
     implementation "jakarta.annotation:jakarta.annotation-api:2.1.1"
     implementation "jakarta.validation:jakarta.validation-api:3.0.2"
 
+    implementation "org.junit.jupiter:junit-jupiter-api:5.10.1"
+    runtimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.1"
+    implementation "org.assertj:assertj-core:3.24.2"
+
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.springframework.security:spring-security-test"
 }

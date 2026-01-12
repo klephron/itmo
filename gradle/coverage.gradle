@@ -1,0 +1,22 @@
+allprojects {
+    apply plugin: 'jacoco'
+}
+
+task testAll {
+    group = 'verification'
+    description = 'Run all tests in all modules'
+    dependsOn subprojects*.test
+}
+
+task jacocoTestReportAll {
+    group = 'verification'
+    description = 'Generate Jacoco test reports for all modules'
+    dependsOn subprojects*.jacocoTestReport
+    finalizedBy 'printCoverageReport'
+}
+
+task coverageCheck {
+    group = 'verification'
+    description = 'Run tests and check coverage for all modules'
+    dependsOn 'testAll', 'jacocoTestReportAll'
+}

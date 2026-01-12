@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: admin-service-test
+  cloud:
+    discovery:
+      enabled: false
+    openfeign:
+      circuitbreaker:
+        enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+app:
+  jwt:
+    secret: "test-secret-key-for-unit-tests-must-be-long-enough"
+
+logging:
+  level:
+    org.springframework: WARN
+    ru.itmo.zavar: INFO
