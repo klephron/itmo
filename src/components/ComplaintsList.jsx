@@ -1,9 +1,11 @@
-import { Avatar, Box, Button, Card, CardActionArea, Grid, Stack, TextField, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Avatar, Box, Button, Card, CardActionArea, Grid, Stack, Typography } from "@mui/material";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 
 import { formatDate, formatLikes, formatViews } from "../utils/format.js";
-import { apiBase } from "../api/api.js";
+import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const CommentCard = ({ user, createdAt, text }) => (
     <Card
@@ -90,7 +92,67 @@ const VideoCard = ({ video }) => (
     </Card>
 );
 
-export function ComplaintsList({ complaints, onResolve }) {
+export function ComplaintsList({ onPage }) {
+    const { token, isModerator } = useAuth();
+
+    const [complaints, setComplaints] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    async function loadComplaints() {
+        if (!token || !isModerator) return;
+
+        try {
+            const res = await fetch(apiBase + '/api/moderation/complaints/admin', {
+                headers: authHeaders(token),
+            });
+
+            if (isUnauthorized(res)) {
+                //setStatusModeration('Сессия истекла, войдите снова', 'error');
+                onPage("auth");
+                return;
+            }
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            const list = await res.json();
+            setComplaints(Array.isArray(list) ? list : []);
+        } catch (e) {
+            //setStatusModeration('Ошибка загрузки жалоб: ' + e.message, 'error');
+        }
+    }
+
+    async function resolveComplaint(id, deleteTarget, reject) {
+        if (!token || !isModerator) return;
+
+        try {
+            const res = await fetch(
+                apiBase + `/api/moderation/complaints/admin/${id}/resolve` +
+                `?deleteTarget=${deleteTarget}&reject=${reject}`,
+                {
+                    method: 'POST',
+                    headers: authHeaders(token),
+                }
+            );
+
+            if (isUnauthorized(res)) {
+                //setStatusModeration('Сессия истекла, войдите снова', 'error');
+                onPage("auth");
+                return;
+            }
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            //setStatusModeration('Жалоба обработана', 'ok');
+            loadComplaints();
+        } catch (e) {
+            //setStatusModeration('Ошибка закрытия жалобы: ' + e.message, 'error');
+        }
+    }
+
+    useEffect(() => {
+        loadComplaints();
+    }, [token, isModerator]);
+
     return (
         <>
             <Stack direction="row" spacing={1} py={0.5} px={2}>
@@ -134,12 +196,12 @@ export function ComplaintsList({ complaints, onResolve }) {
                                         На что пожаловались
                                     </Typography>
                                     {c.targetType === "VIDEO" ? (
-                                        <VideoCard
+                                        <VideoCard video={{ name: c?.videoUuid }}
                                         />
                                     ) : (
                                         <CommentCard
                                             createdAt={c?.createdAt}
-                                            text={"Тестовый текст"}
+                                            text={c?.commentId}
                                         />
                                     )}
                                 </Box>
@@ -162,20 +224,20 @@ export function ComplaintsList({ complaints, onResolve }) {
                                     <Button
                                         variant="contained"
                                         color="inherit"
-                                        onClick={() => onResolve(c.id, false, true)}
+                                        onClick={() => resolveComplaint(c.id, false, true)}
                                     >
                                         Отклонить
                                     </Button>
                                     <Button
                                         variant="contained"
-                                        onClick={() => onResolve(c.id, false, false)}
+                                        onClick={() => resolveComplaint(c.id, false, false)}
                                     >
                                         Принять
                                     </Button>
                                     <Button
                                         variant="contained"
                                         color="error"
-                                        onClick={() => onResolve(c.id, true, false)}
+                                        onClick={() => resolveComplaint(c.id, true, false)}
                                     >
                                         Удалить контент
                                     </Button>
