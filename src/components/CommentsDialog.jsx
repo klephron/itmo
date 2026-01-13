@@ -15,14 +15,17 @@ import { LoadMoreButton } from "./LoadMoreButton.jsx";
 
 const PAGE_SIZE = 20;
 
-export function CommentsDialog({ open, setOpen, videoUuid }) {
+export function CommentsDialog({ open, setOpen, videoUuid, setTrigger }) {
     const { token, user } = useAuth();
     const navigate = useNavigate();
 
     const [comments, setComments] = useState([]);
-    const [page, setPage] = useState(0);
-    const [hasNext, setHasNext] = useState(false);
-    const [totalElements, setTotalElements] = useState(0);
+    const [paging, setPaging] = useState({
+        page: 0,
+        size: PAGE_SIZE,
+        last: true,
+        totalElements: 0,
+    });
     const [loading, setLoading] = useState(false);
 
     const [status, setStatus] = useState({ msg: "", type: "" });
@@ -32,34 +35,41 @@ export function CommentsDialog({ open, setOpen, videoUuid }) {
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [commentId, setCommentId] = useState(null);
 
-    const loadPage = async (pageToLoad) => {
-        if (!videoUuid || loading) return;
-
+    async function loadPage(pageNumber, { replace = false } = {}) {
+        if (loading) return;
         setLoading(true);
-        setStatus({ msg: "Загрузка комментариев…", type: "" });
 
         try {
             const res = await fetch(
-                `${apiBase}/api/videos/${videoUuid}/comments?page=${pageToLoad}&size=${PAGE_SIZE}`,
+                `${apiBase}/api/videos/${videoUuid}/comments?page=${pageNumber}&size=${PAGE_SIZE}`,
                 { headers: authHeaders(token) }
             );
 
             if (!res.ok) throw new Error("HTTP " + res.status);
 
-            const data = await res.json();
+            const page = await res.json();
+            const list = page?.content ?? [];
 
-            setComments((prev) => [...prev, ...data.content]);
-            setHasNext(!data.last);
-            setTotalElements(data.totalElements);
-            setPage(pageToLoad);
-            setStatus({ msg: "", type: "" });
-        } catch (e) {
-            setStatus({
-                msg: "Ошибка загрузки комментариев: " + e.message,
-                type: "error"
+            setComments(prev => (replace ? list : prev.concat(list)));
+            setPaging({
+                page: page.number,
+                size: PAGE_SIZE,
+                last: !!page.last,
+                totalElements: page.totalElements ?? 0,
             });
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function reloadUpToCurrentPage() {
+        const pagesToLoad = paging.page + 1;
+
+        setComments([]);
+        setPaging(p => ({ ...p, page: 0, last: false }));
+
+        for (let p = 0; p < pagesToLoad; p++) {
+            await loadPage(p, { replace: p === 0 });
         }
     }
 
@@ -100,8 +110,7 @@ export function CommentsDialog({ open, setOpen, videoUuid }) {
 
             if (!res.ok) throw new Error("HTTP " + res.status);
 
-            const newComment = await res.json();
-            setComments((prev) => [...prev, newComment]);
+            await reloadUpToCurrentPage();
             setText("");
             setStatus({ msg: "Комментарий отправлен", type: "ok" });
         } catch (e) {
@@ -140,24 +149,47 @@ export function CommentsDialog({ open, setOpen, videoUuid }) {
             if (!res.ok && res.status !== 204)
                 throw new Error("HTTP " + res.status);
 
-            setComments((prev) => prev.filter((c) => c.id !== id));
+            await reloadUpToCurrentPage();
             setStatus({ msg: "Комментарий удалён", type: "ok" });
         } catch (e) {
             setStatus({ msg: "Ошибка удаления: " + e.message, type: "error" });
         }
     }
 
+    function resetState() {
+        setComments([]);
+        setPaging({
+            page: 0,
+            size: PAGE_SIZE,
+            last: true,
+            totalElements: 0,
+        });
+        setStatus({ msg: "", type: "" });
+        setText("");
+        setCommentId(null);
+        setComplaintDialogOpen(false);
+        setConfirmDialogOpen(false);
+    }
+
     useEffect(() => {
         if (!open || !videoUuid) return;
 
-        setComments([]);
-        setPage(0);
-        setHasNext(false);
-        setTotalElements(0);
-        setStatus({ msg: "", type: "" });
-
-        loadPage(0);
+        loadPage(0, { replace: true });
     }, [open, videoUuid]);
+
+    useEffect(() => {
+        if (open) return;
+
+        setTrigger((t) => t + 1);
+
+        const t = setTimeout(() => {
+            resetState();
+        }, 250); // 200–300мс — оптимально под MUI dialog
+
+        return () => {
+            clearTimeout(t);
+        };
+    }, [open]);
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -167,7 +199,7 @@ export function CommentsDialog({ open, setOpen, videoUuid }) {
         }
     }
 
-    const handleLoadMore = () => loadPage(page + 1);
+    const handleLoadMore = () => loadPage(paging.page + 1);
     const handleConfirm = () => deleteComment(commentId);
 
     if (!videoUuid) return null;
@@ -180,13 +212,13 @@ export function CommentsDialog({ open, setOpen, videoUuid }) {
                 <Stack direction="row" spacing={2}>
                     <span>Комментарии</span>
                     <Typography component="span" variant="body2" color="textSecondary" pt={1}>
-                        {loading && !totalElements ? (
+                        {loading && !paging.totalElements ? (
                             <Skeleton
                                 width={24}
                                 animation="wave"
                             />
                         ) : (
-                            formatCompactNumber(totalElements)
+                            formatCompactNumber(paging.totalElements)
                         )}
                     </Typography>
                 </Stack>
@@ -316,7 +348,7 @@ export function CommentsDialog({ open, setOpen, videoUuid }) {
             </Stack>
             <Divider/>
             <Box p={2} position="relative">
-                {hasNext && (
+                {!paging.last && (
                     <LoadMoreButton
                         sx={(theme) => ({
                             position: 'absolute',

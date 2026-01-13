@@ -46,6 +46,8 @@ export default function FeedPage({
     const [qualityDialogOpen, setQualityDialogOpen] = useState(false);
     const [complaintDialogOpen, setComplaintDialogOpen] = useState(false);
 
+    const [trigger, setTrigger] = useState(0);
+
     const playerRef = useRef(null);
     const preload1Ref = useRef(null);
     const preload2Ref = useRef(null);
@@ -601,13 +603,24 @@ export default function FeedPage({
     useEffect(() => {
         if (!uuid) return;
         loadVideoMeta(uuid);
-    }, [uuid]);
+    }, [uuid, trigger]);
 
     /* Загрузка следующих видео при любых изменениях в окне либо при открытии страницы */
     useEffect(() => {
         if (!active) return;
         preloadAround(currentIndex);
     }, [active, window]);
+
+    /* Сбрасываем ВСЕ диалоги FeedPage */
+    useEffect(() => {
+        if (active) return;
+
+        setVideoInfoDialogOpen(false);
+        setCommentsDialogOpen(false);
+        setQualityDialogOpen(false);
+        setComplaintDialogOpen(false);
+        setSearchDialogOpen(false);
+    }, [active]);
 
     const handleVideoError = () => {
         setStatusFeed('Ошибка воспроизведения видео', 'error');
@@ -866,6 +879,7 @@ export default function FeedPage({
                 open={active && commentsDialogOpen}
                 setOpen={setCommentsDialogOpen}
                 videoUuid={uuid}
+                setTrigger={setTrigger}
             />
             <QualityDialog
                 open={active && qualityDialogOpen}
