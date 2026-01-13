@@ -4,7 +4,7 @@ import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { SwipeableDialog } from "./SwipeableDialog";
 import { LoadMoreButton } from "./LoadMoreButton";
 import { apiBase, authHeaders } from "../api/api";
-import { formatDate, humanSize } from "../utils/format";
+import { VideoCard } from "./VideoCard.jsx";
 
 const PAGE_SIZE = 20;
 
@@ -130,7 +130,7 @@ export function SearchDialog({ open, setOpen }) {
 
     const handleLoadMore = () => loadPage(paging.page + 1);
     const handleVideoOpen = (targetUuid, targetIndex) => {
-        navigate("/feed", { state: { feedMode: { type: "search", query, targetUuid, targetIndex } }});
+        navigate("/feed", { state: { feedMode: { type: "search", query, targetUuid, targetIndex } } });
         setOpen(false);
     }
 
@@ -188,31 +188,13 @@ export function SearchDialog({ open, setOpen }) {
                     spacing={1}
                     sx={{ px: 2, height: 1, overflowX: "hidden", overflowY: "auto", }}
                 >
-                    {results.map((v, index) => (
-                        <Stack
-                            key={v.uuid}
-                            spacing={0.5}
-                            sx={{
-                                p: 1,
-                                borderRadius: 3,
-                                bgcolor: "action.hover",
-                                cursor: "pointer",
-                            }}
-                            onClick={() => handleVideoOpen(v.uuid, index)}
-                        >
-                            <Typography variant="body2">
-                                {v.name || "(без названия)"}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {formatDate(v.uploadedAt)} ·{" "}
-                                {humanSize(v.contentSize)}
-                            </Typography>
-                            {v.description && (
-                                <Typography variant="caption" color="text.secondary">
-                                    {v.description}
-                                </Typography>
-                            )}
-                        </Stack>
+                    {results.map((video, index) => (
+                        <VideoCard
+                            key={video.uuid}
+                            video={video}
+                            onClick={() => handleVideoOpen(video.uuid, index)}
+                            elevation={24}
+                        />
                     ))}
                 </Stack>
                 {!last && (

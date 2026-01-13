@@ -1,20 +1,17 @@
 import { useNavigate } from "react-router";
-import { Card, CardActionArea, Stack, Typography } from "@mui/material";
+import { Card, CardActionArea, Skeleton, Stack, Typography } from "@mui/material";
 import { formatDate, formatLikes, formatViews } from "../utils/format.js";
 
-export const VideoCard = ({ video, onClick }) => {
+export const VideoCard = ({ video, onClick, elevation = 1 }) => {
     const navigate = useNavigate();
-
-    if (!video) {
-        return <Card variant="outlined">Загрузка видео…</Card>;
-    }
 
     return (
         <Card
             variant="outlined"
             sx={(theme) => ({
                 borderRadius: 3,
-                backgroundImage: theme.vars.overlays[1]
+                flexShrink: 0,
+                backgroundImage: theme.vars.overlays[elevation],
             })}
         >
             <CardActionArea component="div" onClick={onClick}>
@@ -27,25 +24,29 @@ export const VideoCard = ({ video, onClick }) => {
                             wordBreak: 'break-word',     // перенос по буквам, если слово слишком длинное
                         }}
                     >
-                        {video.name || video.uuid}
+                        {!video ? <Skeleton animation="wave"/> : video.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                        <Typography
-                            variant="caption"
-                            fontWeight="medium"
-                            lineHeight={1}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/profile/${video.uploaderId}`)
-                            }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            sx={{ ":hover": { color: "text.primary" } }}
-                        >
-                            {video.uploaderName}
-                        </Typography>
-                        {` · ${video.viewsCount} ${formatViews(video.viewsCount)}`}
-                        {` · ${video.likesCount} ${formatLikes(video.likesCount)}`}
-                        {` · ${formatDate(video.uploadedAt)}`}
+                        {!video ? <Skeleton animation="wave" width="70%"/> : (
+                            <>
+                                <Typography
+                                    variant="caption"
+                                    fontWeight="medium"
+                                    lineHeight={1}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/profile/${video.uploaderId}`)
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    sx={{ ":hover": { color: "text.primary" } }}
+                                >
+                                    {video.uploaderName}
+                                </Typography>
+                                {` · ${video.viewsCount} ${formatViews(video.viewsCount)}`}
+                                {` · ${video.likesCount} ${formatLikes(video.likesCount)}`}
+                                {` · ${formatDate(video.uploadedAt)}`}
+                            </>
+                        )}
                     </Typography>
                 </Stack>
             </CardActionArea>

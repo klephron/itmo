@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
-import { Box, Button, Card, Grid, Stack, Typography } from "@mui/material";
+import { Box, Button, Card, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 
@@ -112,7 +112,7 @@ export const ComplaintCard = memo(({
                         sx={{ cursor: "pointer" }}
                         onClick={() => navigate(`/profile/${authorId}`)}
                     >
-                        {author?.displayName ?? "-"}
+                        {!author ? <Skeleton animation="wave" width={75}/> : author.displayName}
                     </Typography>
                 </Stack>
             </Grid>
