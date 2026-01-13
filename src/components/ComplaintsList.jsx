@@ -1,163 +1,47 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useNavigate } from "react-router";
-import { Avatar, Box, Button, Card, CardActionArea, Grid, Stack, Typography } from "@mui/material";
-import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import { Box, Stack, Typography } from "@mui/material";
 
-import { formatDate, formatLikes, formatViews } from "../utils/format.js";
-import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api.js";
+import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
-
-const CommentCard = ({ user, createdAt, text, onClick }) => (
-    <Card
-        variant="outlined"
-        sx={(theme) => ({
-            borderRadius: 3,
-            backgroundImage: theme.vars.overlays[1]
-        })}
-    >
-        <CardActionArea component="div" onClick={onClick}>
-            <Stack direction="row" spacing={1} p={1}>
-                <Avatar
-                    src={getAvatarUrl(user?.authorId)}
-                    sx={{ width: 32, height: 32, cursor: 'pointer' }}
-                    onClick={() => navigate(`/profile/${user?.authorId}`)}
-                >
-                    {user?.authorName?.[0]?.toUpperCase()}
-                </Avatar>
-                <Stack spacing={1} flex={1} pt={0.25}>
-                    <Stack direction="row" spacing={1}>
-                        <Typography variant="caption" color="text.secondary" lineHeight={1}>
-                            <Typography
-                                component="span"
-                                variant="body2"
-                                fontWeight="medium"
-                                color="textPrimary"
-                                lineHeight={1}
-                            >
-                                {user?.name ?? "User"}
-                            </Typography>
-                            {` · ${formatDate(createdAt)}`}
-                        </Typography>
-                    </Stack>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            whiteSpace: 'pre-wrap',      // сохраняем переносы строк + разрешаем wrap
-                            overflowWrap: 'break-word',  // перенос по словам, если можно
-                            wordBreak: 'break-word',     // перенос по буквам, если слово слишком длинное
-                        }}
-                    >
-                        {text}
-                    </Typography>
-                </Stack>
-            </Stack>
-        </CardActionArea>
-    </Card>
-);
-
-const VideoCard = ({ video, onClick }) => (
-    <Card
-        variant="outlined"
-        sx={(theme) => ({
-            borderRadius: 3,
-            backgroundImage: theme.vars.overlays[1]
-        })}
-    >
-        <CardActionArea component="div" onClick={onClick}>
-            <Stack spacing={0.5} py={1} px={1.5}>
-                <Typography
-                    variant="body2"
-                    sx={{
-                        whiteSpace: 'pre-wrap',      // сохраняем переносы строк + разрешаем wrap
-                        overflowWrap: 'break-word',  // перенос по словам, если можно
-                        wordBreak: 'break-word',     // перенос по буквам, если слово слишком длинное
-                    }}
-                >
-                    {video?.name || "Видео 1 бла бла бла бла"}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                    <Typography
-                        variant="caption"
-                        //fontWeight="medium"
-                        lineHeight={1}
-                    >
-                        {video?.user?.name ?? "User"}
-                    </Typography>
-                    {` · ${video?.viewsCount ?? 100} ${formatViews(video?.viewsCount ?? 10)}`}
-                    {` · ${video?.likesCount ?? 10} ${formatLikes(video?.likesCount ?? 10)}`}
-                    {` · 12.01.2026, 03:53:34`}
-                </Typography>
-            </Stack>
-        </CardActionArea>
-    </Card>
-);
+import { ComplaintCard } from "./ComplaintCard.jsx";
 
 export function ComplaintsList() {
     const { token, isModerator } = useAuth();
     const navigate = useNavigate();
 
     const [complaints, setComplaints] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
-    async function loadComplaints() {
-        if (!token || !isModerator) return;
-
-        try {
-            const res = await fetch(apiBase + '/api/moderation/complaints/admin', {
-                headers: authHeaders(token),
-            });
-
-            if (isUnauthorized(res)) {
-                //setStatusModeration('Сессия истекла, войдите снова', 'error');
-                navigate("/auth");
-                return;
-            }
-
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-
-            const list = await res.json();
-            setComplaints(Array.isArray(list) ? list : []);
-        } catch (e) {
-            //setStatusModeration('Ошибка загрузки жалоб: ' + e.message, 'error');
-        }
-    }
-
-    async function resolveComplaint(id, deleteTarget, reject) {
+    const loadComplaints = useCallback(async () => {
         if (!token || !isModerator) return;
 
         try {
             const res = await fetch(
-                apiBase + `/api/moderation/complaints/admin/${id}/resolve` +
-                `?deleteTarget=${deleteTarget}&reject=${reject}`,
-                {
-                    method: 'POST',
-                    headers: authHeaders(token),
-                }
+                apiBase + "/api/moderation/complaints/admin",
+                { headers: authHeaders(token) }
             );
 
             if (isUnauthorized(res)) {
-                //setStatusModeration('Сессия истекла, войдите снова', 'error');
                 navigate("/auth");
                 return;
             }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            if (!res.ok) throw new Error();
 
-            //setStatusModeration('Жалоба обработана', 'ok');
-            loadComplaints();
-        } catch (e) {
-            //setStatusModeration('Ошибка закрытия жалобы: ' + e.message, 'error');
+            const list = await res.json();
+
+            startTransition(() => {
+                setComplaints(Array.isArray(list) ? list : []);
+            });
+        } catch {
+            /* обработка ошибки по желанию */
         }
-    }
+    }, [token, isModerator, navigate]);
 
     useEffect(() => {
         loadComplaints();
-    }, [token, isModerator]);
-
-    const handleTargetClick = (videoUuid) => () => (
-        navigate("/feed", { state: { feedMode: { type: "moderation", targetUuid: videoUuid } } })
-    );
+    }, [loadComplaints]);
 
     return (
         <>
@@ -177,81 +61,18 @@ export function ComplaintsList() {
             ) : (
                 <Box sx={{ borderRadius: 4, flex: 1, overflow: "hidden", m: 2 }}>
                     <Stack spacing={1.5} sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
-                        {complaints.map(c => (
-                            <Card key={c.id} elevation={1} sx={{ flexShrink: 0, p: 2 }}>
-                                <Grid container columnSpacing={2} rowSpacing={1}>
-                                    <Stack direction="row" spacing={0.5} alignItems="center">
-                                        <ScheduleRoundedIcon
-                                            sx={{ fontSize: "inherit", color: "text.secondary" }}
-                                        />
-                                        <Typography variant="caption" lineHeight={1}>
-                                            {formatDate(c?.createdAt)}
-                                        </Typography>
-                                    </Stack>
-                                    <Stack direction="row" spacing={0.5} alignItems="center">
-                                        <PersonOutlinedIcon
-                                            sx={{ fontSize: "inherit", color: "text.secondary" }}
-                                        />
-                                        <Typography variant="caption" lineHeight={1}>
-                                            Username
-                                        </Typography>
-                                    </Stack>
-                                </Grid>
-                                <Box mt={3}>
-                                    <Typography variant="body1" fontWeight="bold" mb={1.5}>
-                                        На что пожаловались
-                                    </Typography>
-                                    {c.targetType === "VIDEO" ? (
-                                        <VideoCard
-                                            video={{ name: c?.videoUuid }}
-                                            onClick={handleTargetClick(c?.videoUuid)}
-                                        />
-                                    ) : (
-                                        <CommentCard
-                                            createdAt={c?.createdAt}
-                                            text={c?.commentId}
-                                            onClick={handleTargetClick(c?.videoUuid)}
-                                        />
-                                    )}
-                                </Box>
-                                <Box mt={3}>
-                                    <Typography variant="body1" fontWeight="bold" mb={1}>
-                                        Текст жалобы
-                                    </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            whiteSpace: 'pre-wrap',
-                                            overflowWrap: 'break-word',
-                                            wordBreak: 'break-word',
-                                        }}
-                                    >
-                                        {c?.reason}
-                                    </Typography>
-                                </Box>
-                                <Grid container spacing={1} mt={3}>
-                                    <Button
-                                        variant="contained"
-                                        color="inherit"
-                                        onClick={() => resolveComplaint(c.id, false, true)}
-                                    >
-                                        Отклонить
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => resolveComplaint(c.id, false, false)}
-                                    >
-                                        Принять
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        color="error"
-                                        onClick={() => resolveComplaint(c.id, true, false)}
-                                    >
-                                        Удалить контент
-                                    </Button>
-                                </Grid>
-                            </Card>
+                        {complaints.map((c) => (
+                            <ComplaintCard
+                                key={c.id}
+                                id={c.id}
+                                createdAt={c.createdAt}
+                                authorId={c.authorId}
+                                targetType={c.targetType}
+                                videoUuid={c.videoUuid}
+                                commentId={c.commentId}
+                                reason={c.reason}
+                                loadComplaints={loadComplaints}
+                            />
                         ))}
                     </Stack>
                 </Box>
