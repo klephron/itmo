@@ -88,6 +88,56 @@ public class FeedService {
         return new PageImpl<>(feedItems, page.getPageable(), page.getTotalElements());
     }
 
+    public Optional<FeedVideoDto> getFeedVideoByUuid(UUID videoUuid, Long currentUserId) {
+        if (videoUuid == null) {
+            return Optional.empty();
+        }
+
+        Optional<FileMetadataEntity> entityOpt = fileMetadataRepository.findByUuid(videoUuid);
+        if (entityOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        FileMetadataEntity entity = entityOpt.get();
+        Long uploaderId = entity.getUploaderId();
+        Long videoId = entity.getId();
+
+        // avatar автора
+        Map<Long, String> avatarByUserId = Collections.emptyMap();
+        if (uploaderId != null) {
+            avatarByUserId = userProfilePublicApi.findUserSummary(uploaderId)
+                    .filter(s -> s.avatarUrl() != null && !s.avatarUrl().isBlank())
+                    .map(s -> Map.of(uploaderId, s.avatarUrl()))
+                    .orElse(Collections.emptyMap());
+        }
+
+        // комментарии
+        Map<UUID, Long> commentsCountByUuid = resolveCommentsCountByUuid(List.of(entity));
+
+        Set<Long> likedByMe;
+        Set<Long> followingIds;
+        if (currentUserId != null && videoId != null) {
+            likedByMe = new HashSet<>(likeQueryApi.findLikedVideoIds(currentUserId, Set.of(videoId)));
+            followingIds = uploaderId != null
+                    ? followQueryApi.getFollowingWithin(currentUserId, Set.of(uploaderId))
+                    : Collections.emptySet();
+        } else {
+            likedByMe = Collections.emptySet();
+            followingIds = Collections.emptySet();
+        }
+
+        FeedMapperContext ctx = new FeedMapperContext(
+                currentUserId,
+                avatarByUserId,
+                likedByMe,
+                followingIds,
+                commentsCountByUuid
+        );
+        FeedVideoDto dto = mapper.toDto(entity, ctx);
+
+        return Optional.of(dto);
+    }
+
     private Page<FileMetadataEntity> resolvePage(Long currentUserId, Pageable pageable) {
         // Anonymous users: simple reverse-chronological feed
         if (currentUserId == null) {

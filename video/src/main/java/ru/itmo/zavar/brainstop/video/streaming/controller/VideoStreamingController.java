@@ -1,5 +1,7 @@
 package ru.itmo.zavar.brainstop.video.streaming.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -14,27 +16,23 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
-import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataPublicApi;
-import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataSummary;
-import ru.itmo.zavar.brainstop.video.streaming.dto.response.UploadStartResponse;
-import ru.itmo.zavar.brainstop.video.streaming.model.StreamChunk;
-import ru.itmo.zavar.brainstop.video.streaming.model.StreamRange;
-import ru.itmo.zavar.brainstop.video.streaming.service.VideoStreamingService;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobRegistry;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobStatus;
+import ru.itmo.zavar.brainstop.common.api.transcoding.dto.UploadJobViewDto;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FeedVideoDto;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FileMetadataDto;
-import ru.itmo.zavar.brainstop.common.api.transcoding.dto.UploadJobViewDto;
+import ru.itmo.zavar.brainstop.common.security.CurrentUser;
 import ru.itmo.zavar.brainstop.video.mapper.FileMetadataMapper;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.brainstop.video.service.FeedService;
 import ru.itmo.zavar.brainstop.video.service.FeedSessionService;
 import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedSessionResponse;
-import ru.itmo.zavar.brainstop.common.security.CurrentUser;
+import ru.itmo.zavar.brainstop.video.streaming.dto.response.UploadStartResponse;
+import ru.itmo.zavar.brainstop.video.streaming.model.StreamChunk;
+import ru.itmo.zavar.brainstop.video.streaming.model.StreamRange;
+import ru.itmo.zavar.brainstop.video.streaming.service.VideoStreamingService;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -58,7 +56,6 @@ public class VideoStreamingController {
     private final FeedService feedService;
     private final FeedSessionService feedSessionService;
     private final VideoObjectStorage videoObjectStorage;
-    private final VideoMetadataPublicApi videoMetadataPublicApi;
 
     @Value("${streaming.chunk.default-size}")
     private long chunkDefaultSize;
@@ -84,9 +81,10 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/metadata/{uuid}")
-    @Operation(summary = "Получить summary метаданных по UUID видео")
-    public ResponseEntity<VideoMetadataSummary> getSummary(@PathVariable UUID uuid) {
-        return this.videoMetadataPublicApi.findByUuid(uuid)
+    @Operation(summary = "Получить метаданные видео для ленты по UUID")
+    public ResponseEntity<FeedVideoDto> getFeedVideo(@PathVariable UUID uuid, @AuthenticationPrincipal CurrentUser principal) {
+        Long userId = principal != null ? principal.getId() : null;
+        return feedService.getFeedVideoByUuid(uuid, userId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

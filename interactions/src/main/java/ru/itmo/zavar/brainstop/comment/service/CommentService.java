@@ -135,6 +135,29 @@ public class CommentService {
         evictCommentsCache(videoUuid);
     }
 
+    @Transactional(readOnly = true)
+    public CommentDto findComment(UUID videoUuid, Long commentId, Long currentUserId) {
+        CommentEntity entity = this.commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+
+        if (!entity.getVideoUuid().equals(videoUuid)) {
+            throw new IllegalArgumentException("Comment does not belong to this video");
+        }
+
+        UserSummaryDto user = entity.getAuthorId() == null
+                ? null
+                : this.userProfilePublicApi.findUserSummary(entity.getAuthorId()).orElse(null);
+        return new CommentDto(
+                entity.getId(),
+                entity.getAuthorId(),
+                entity.getAuthorName(),
+                user != null ? user.avatarUrl() : null,
+                entity.getText(),
+                entity.getCreatedAt(),
+                Objects.equals(currentUserId, entity.getAuthorId())
+        );
+    }
+
     private List<CommentDto> readCommentsCache(UUID videoUuid) {
         if (videoUuid == null) {
             return null;
