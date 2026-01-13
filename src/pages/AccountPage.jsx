@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiBase, authHeaders } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import { ThumbGrid } from "../components/ThumbGrid.jsx";
 import { Avatar, Box, Button, Grid, IconButton, Paper, Stack, Typography } from "@mui/material";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
@@ -9,11 +8,11 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 
 import { AvatarUploadDialog } from "../components/AvatarUploadDialog.jsx";
-import { FollowingList } from "../components/FollowingList.jsx";
-import { UploadsList } from "../components/UploadsList.jsx";
+import { NavLink, Outlet, useNavigate } from "react-router";
 
-export default function AccountPage({ active, activeTab, setActiveTab, onPage }) {
+export default function AccountPage() {
     const { token, user, setAuth, isModerator } = useAuth();
+    const navigate = useNavigate();
 
     const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
     const [status, setStatus] = useState({ msg: '', type: '' });
@@ -27,7 +26,7 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
         setAuth(null, null);
         setStatusAuth('Вы вышли из аккаунта', 'ok');
         setProfile(null);
-        onPage("auth")
+        navigate("/auth");
     }
 
     async function loadAccountProfile(u = user, tokenOverride = token) {
@@ -52,16 +51,12 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
     }
 
     useEffect(() => {
-        if (!active) return;
-
         if (user && token) {
             loadAccountProfile();
         } else {
             setProfile(null);
         }
-    }, [active, user?.userId, token]);
-
-    if (!active) return null;
+    }, [user?.userId, token]);
 
     const followers = profile?.followersCount ?? 0;
     const followingCount = profile?.followingCount ?? 0;
@@ -71,7 +66,7 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
             <Stack component={Paper} direction="row" p={1} spacing={1} alignItems="center">
                 <Typography variant="h6" px={1} flex={1}>Ваш профиль</Typography>
                 {isModerator && (
-                    <IconButton onClick={() => onPage("moderation")} size="small">
+                    <IconButton onClick={() => navigate("/moderation/users")} size="small">
                         <SecurityRoundedIcon/>
                     </IconButton>
                 )}
@@ -106,50 +101,42 @@ export default function AccountPage({ active, activeTab, setActiveTab, onPage })
                 </Typography>
 
                 <Grid container spacing={1} mt={1.5} mb={2} px={2}>
-                    <Button
-                        variant="contained"
-                        color={activeTab === "videos" ? "primary" : "inherit"}
-                        size="small"
-                        onClick={() => setActiveTab("videos")}
-                    >
-                        Видео
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color={activeTab === "following" ? "primary" : "inherit"}
-                        size="small"
-                        onClick={() => setActiveTab("following")}
-                    >
-                        Подписки
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color={activeTab === "uploads" ? "primary" : "inherit"}
-                        size="small"
-                        onClick={() => setActiveTab("uploads")}
-                    >
-                        Загрузки
-                    </Button>
+                    <NavLink to="videos" replace style={{ textDecoration: "none", color: "inherit" }}>
+                        {({ isActive }) => (
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color={isActive ? "primary" : "inherit"}
+                            >
+                                Видео
+                            </Button>
+                        )}
+                    </NavLink>
+                    <NavLink to="following" replace style={{ textDecoration: "none", color: "inherit" }}>
+                        {({ isActive }) => (
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color={isActive ? "primary" : "inherit"}
+                            >
+                                Подписки
+                            </Button>
+                        )}
+                    </NavLink>
+                    <NavLink to="uploads" replace style={{ textDecoration: "none", color: "inherit" }}>
+                        {({ isActive }) => (
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color={isActive ? "primary" : "inherit"}
+                            >
+                                Загрузки
+                            </Button>
+                        )}
+                    </NavLink>
                 </Grid>
 
-                {activeTab === "videos" ? (
-                    <ThumbGrid
-                        label="Ваши видео"
-                        userId={user?.userId}
-                        showDelete
-                        onPage={onPage}
-                    />
-                ) : activeTab === "following" ? (
-                    <FollowingList
-                        active={activeTab === "following"}
-                        onPage={onPage}
-                    />
-                ) : (
-                    <UploadsList
-                        active={activeTab === "uploads"}
-                        onPage={onPage}
-                    />
-                )}
+                <Outlet context={{ userId: user?.userId }}/>
 
                 <AvatarUploadDialog
                     open={avatarDialogOpen}

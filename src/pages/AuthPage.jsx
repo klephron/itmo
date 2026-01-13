@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { apiBase, getAvatarUrl } from '../api/api';
-import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
+import { useNavigate } from "react-router";
 import { Button, Paper, Stack, TextField, Typography } from "@mui/material";
 
-export default function AuthPage({ active, onPage }) {
+import { apiBase, getAvatarUrl } from '../api/api';
+import { useAuth } from '../context/AuthContext';
+
+export default function AuthPage() {
     const { setAuth } = useAuth();
+    const navigate = useNavigate();
 
     const [status, setStatus] = useState({ msg: '', type: '' });
 
@@ -52,7 +55,7 @@ export default function AuthPage({ active, onPage }) {
             setStatusAuth('Успешный вход', 'ok');
 
             setLogin({ username: '', password: '' });
-            onPage("account"); // Переключаем после успешного входа
+            navigate("/account/videos");
         } catch (e) {
             setStatusAuth('Ошибка входа: ' + e.message, 'error');
         }
@@ -95,7 +98,7 @@ export default function AuthPage({ active, onPage }) {
             setStatusAuth('Регистрация прошла успешно', 'ok');
 
             setReg({ username: '', email: '', displayName: '', password: '' });
-            onPage("account"); // Переключаем после успешной регистрации
+            navigate("/account/videos");
         } catch (e) {
             setStatusAuth('Ошибка регистрации: ' + e.message, 'error');
         }
@@ -104,8 +107,6 @@ export default function AuthPage({ active, onPage }) {
     const toggleForm = () => {
         setIsLogin(!isLogin); // Переключаем форму
     };
-
-    if (!active) return null;
 
     const loginDisabled =
         !login.username.trim() ||

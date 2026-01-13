@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { SwipeableDialog } from "./SwipeableDialog";
 import { LoadMoreButton } from "./LoadMoreButton";
@@ -7,7 +8,9 @@ import { formatDate, humanSize } from "../utils/format";
 
 const PAGE_SIZE = 20;
 
-export function SearchDialog({ open, setOpen, onPage }) {
+export function SearchDialog({ open, setOpen }) {
+    const navigate = useNavigate();
+
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
     const [status, setStatus] = useState("");
@@ -127,7 +130,7 @@ export function SearchDialog({ open, setOpen, onPage }) {
 
     const handleLoadMore = () => loadPage(paging.page + 1);
     const handleVideoOpen = (targetUuid, targetIndex) => {
-        onPage("feed", { feedMode: { type: "search", query, targetUuid, targetIndex } });
+        navigate("/feed", { state: { feedMode: { type: "search", query, targetUuid, targetIndex } }});
         setOpen(false);
     }
 

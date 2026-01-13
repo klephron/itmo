@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+
 import { Avatar, Box, Button, Card, CardActionArea, Chip, Grid, Stack, Typography } from "@mui/material";
 import RemoveCircleRoundedIcon from "@mui/icons-material/RemoveCircleRounded";
 import AddCircleRoundedIcon from "@mui/icons-material/AddCircleRounded";
@@ -5,7 +8,6 @@ import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
 
 import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api.js";
-import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { formatDate } from "../utils/format.js";
 
@@ -15,8 +17,9 @@ const roleMap = {
     "ADMIN": { label: "Администратор", color: "success" }
 }
 
-export function UsersList({ onPage }) {
+export function UsersList() {
     const { token, isModerator, isAdmin } = useAuth();
+    const navigate = useNavigate();
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -149,7 +152,7 @@ export function UsersList({ onPage }) {
     }
 
     const handleMouseDown = (e) => e.stopPropagation();
-    const handleAreaClick = (userId) => () => onPage("profile", { profileUserId: userId });
+    const handleAreaClick = (userId) => () => navigate(`/profile/${userId}`);
 
     return (
         <>

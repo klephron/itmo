@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Avatar, Box, Card, CardActionArea, Stack, Typography, } from "@mui/material";
+
 import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
-export function FollowingList({ active, onPage }) {
+export function FollowingList() {
     const { user, token } = useAuth();
+    const navigate = useNavigate();
 
     const [following, setFollowing] = useState([]);
     const [status, setStatus] = useState("");
 
     useEffect(() => {
-        if (!active) return;
-
         if (!user || !token) {
             setFollowing([]);
             setStatus("Войдите, чтобы видеть подписки");
@@ -49,7 +50,7 @@ export function FollowingList({ active, onPage }) {
         return () => {
             cancelled = true;
         };
-    }, [active, user?.userId, token]);
+    }, [user?.userId, token]);
 
     return (
         <>
@@ -71,7 +72,7 @@ export function FollowingList({ active, onPage }) {
                     <Stack sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
                         {following.map((u) => (
                             <Card key={u.id} sx={{ flexShrink: 0, borderRadius: 3 }}>
-                                <CardActionArea onClick={() => onPage("profile", { profileUserId: u.id })}>
+                                <CardActionArea onClick={() => navigate(`/profile/${u.id}`)}>
                                     <Stack direction="row" spacing={1} p={1} alignItems="center">
                                         <Avatar
                                             src={getAvatarUrl(u?.id)}

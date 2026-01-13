@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Outlet, useNavigate, useParams } from "react-router";
 import { Avatar, Box, Button, IconButton, Paper, Stack, Typography } from "@mui/material";
 
 import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api";
@@ -7,8 +8,10 @@ import { formatFollowers, formatFollowing } from "../utils/format.js";
 import { ThumbGrid } from "../components/ThumbGrid.jsx";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
-export default function ProfilePage({ active, userId, onPage }) {
+export default function ProfilePage() {
     const { token, user } = useAuth();
+    const { userId } = useParams();
+    const navigate = useNavigate();
 
     const [status, setStatus] = useState({ msg: '', type: '' });
     const [profile, setProfile] = useState(null);
@@ -37,7 +40,7 @@ export default function ProfilePage({ active, userId, onPage }) {
     async function toggleFollow() {
         if (!token) {
             setStatusProfile('Войдите, чтобы подписываться', 'error');
-            onPage("auth");
+            navigate("/auth");
             return;
         }
         if (!profile) return;
@@ -52,7 +55,7 @@ export default function ProfilePage({ active, userId, onPage }) {
 
             if (isUnauthorized(res)) {
                 setStatusProfile('Сессия истекла, войдите снова', 'error');
-                onPage("auth");
+                navigate("/auth");
                 return;
             }
 
@@ -70,21 +73,17 @@ export default function ProfilePage({ active, userId, onPage }) {
     }
 
     useEffect(() => {
-        if (!active || !userId) return;
+        if (!userId) return;
         loadProfile();
-    }, [active, userId, token]);
-
-    if (!active) return null;
+    }, [userId, token]);
 
     const followers = profile?.followersCount ?? 0;
     const followingCount = profile?.followingCount ?? 0;
 
-    const handleBack = () => onPage("feed");
-
     return (
         <>
             <Stack component={Paper} direction="row" p={1} alignItems="center">
-                <IconButton onClick={handleBack} size="small">
+                <IconButton onClick={() => navigate(-1)} size="small">
                     <ArrowBackRoundedIcon/>
                 </IconButton>
                 <Typography variant="h6" noWrap px={1}>Профиль пользователя</Typography>
@@ -119,7 +118,7 @@ export default function ProfilePage({ active, userId, onPage }) {
                 <Typography variant="caption" color="text.secondary" mt={1} mb={1.5} px={2}>
                     {followers.toLocaleString()} {formatFollowers(followers)} · {followingCount.toLocaleString()} {formatFollowing(followingCount)}
                 </Typography>
-                <ThumbGrid userId={userId} onPage={onPage}/>
+                <Outlet context={{ userId }}/>
             </Stack>
         </>
     );

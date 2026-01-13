@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { Box, Button, LinearProgress, Paper, Stack, TextField, Typography, } from "@mui/material";
+
 import { apiBase } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { formatDuration, humanSize } from "../utils/format.js";
@@ -42,8 +44,10 @@ function validateVideo(file, info) {
     return null;
 }
 
-export default function UploadPage({ active, onPage }) {
+export default function UploadPage() {
     const { token } = useAuth();
+    const navigate = useNavigate();
+
     const inputRef = useRef(null);
 
     const [title, setTitle] = useState("");
@@ -108,7 +112,7 @@ export default function UploadPage({ active, onPage }) {
     function startUpload() {
         if (!token) {
             setStatusUpload("Войдите, чтобы загружать видео", "error");
-            onPage("auth");
+            navigate("/auth");
             return;
         }
 
@@ -171,7 +175,7 @@ export default function UploadPage({ active, onPage }) {
                 }
             } else if (xhr.status === 401 || xhr.status === 403) {
                 setStatusUpload("Сессия истекла, войдите снова", "error");
-                onPage("auth");
+                navigate("/auth");
             } else {
                 setStatusUpload(
                     `Ошибка загрузки: HTTP ${xhr.status}`,
@@ -187,14 +191,6 @@ export default function UploadPage({ active, onPage }) {
 
         xhr.send(formData);
     }
-
-    useEffect(() => {
-        if (!active) {
-            resetForm();
-        }
-    }, [active]);
-
-    if (!active) return null;
 
     return (
         <>
@@ -292,7 +288,7 @@ export default function UploadPage({ active, onPage }) {
                             <Button
                                 fullWidth
                                 variant="contained"
-                                onClick={() => onPage("account", { activeAccountTab: "uploads" })}
+                                onClick={() => navigate("/account/uploads")}
                             >
                                 К списку загрузок
                             </Button>

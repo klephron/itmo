@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { Box, LinearProgress, Stack, Typography, } from "@mui/material";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
-export function UploadsList({ active, onPage }) {
+export function UploadsList({ active }) {
     const { token } = useAuth();
+    const navigate = useNavigate();
 
     const jobsRef = useRef(new Map());
     const [jobs, setJobs] = useState([]);
@@ -19,57 +21,54 @@ export function UploadsList({ active, onPage }) {
         );
     }, []);
 
-    const trackJob = useCallback(
-        (jobId, fileName, initialStatus) => {
-            if (jobsRef.current.has(jobId)) return;
+    const trackJob = useCallback((jobId, fileName, initialStatus) => {
+        if (jobsRef.current.has(jobId)) return;
 
-            const job = {
-                jobId,
-                fileName,
-                lastStatus: initialStatus,
-                intervalId: null,
-            };
-            jobsRef.current.set(jobId, job);
-            syncJobs();
+        const job = {
+            jobId,
+            fileName,
+            lastStatus: initialStatus,
+            intervalId: null,
+        };
+        jobsRef.current.set(jobId, job);
+        syncJobs();
 
-            job.intervalId = setInterval(async () => {
-                try {
-                    const res = await fetch(
-                        apiBase +
-                        "/api/streaming/video/upload/status/" +
-                        jobId,
-                        { headers: authHeaders(token) }
-                    );
+        job.intervalId = setInterval(async () => {
+            try {
+                const res = await fetch(
+                    apiBase +
+                    "/api/streaming/video/upload/status/" +
+                    jobId,
+                    { headers: authHeaders(token) }
+                );
 
-                    if (isUnauthorized(res)) {
-                        clearInterval(job.intervalId);
+                if (isUnauthorized(res)) {
+                    clearInterval(job.intervalId);
+                    jobsRef.current.delete(jobId);
+                    syncJobs();
+                    navigate("/auth");
+                    return;
+                }
+
+                if (!res.ok) throw new Error("HTTP " + res.status);
+
+                const st = await res.json();
+                job.lastStatus = st;
+                syncJobs();
+
+                if (st.stage === "DONE" || st.stage === "ERROR") {
+                    clearInterval(job.intervalId);
+
+                    setTimeout(() => {
                         jobsRef.current.delete(jobId);
                         syncJobs();
-                        onPage("auth");
-                        return;
-                    }
-
-                    if (!res.ok) throw new Error("HTTP " + res.status);
-
-                    const st = await res.json();
-                    job.lastStatus = st;
-                    syncJobs();
-
-                    if (st.stage === "DONE" || st.stage === "ERROR") {
-                        clearInterval(job.intervalId);
-
-                        setTimeout(() => {
-                            jobsRef.current.delete(jobId);
-                            syncJobs();
-                        }, 1000);
-                    }
-                } catch {
-                    // тихо, без спама
+                    }, 1000);
                 }
-            }, 1000);
-        },
-        [token, syncJobs, onPage]
-    );
+            } catch {
+                // тихо, без спама
+            }
+        }, 1000);
+    }, [token, syncJobs, navigate]);
 
     useEffect(() => {
         if (!active || !token) return;

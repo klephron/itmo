@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Avatar, Box, Button, Card, CardActionArea, Grid, Stack, Typography } from "@mui/material";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -20,7 +21,7 @@ const CommentCard = ({ user, createdAt, text, onClick }) => (
                 <Avatar
                     src={getAvatarUrl(user?.authorId)}
                     sx={{ width: 32, height: 32, cursor: 'pointer' }}
-                    onClick={() => user?.authorId && onPage("profile", { profileUserId: user?.authorId })}
+                    onClick={() => navigate(`/profile/${user?.authorId}`)}
                 >
                     {user?.authorName?.[0]?.toUpperCase()}
                 </Avatar>
@@ -92,8 +93,9 @@ const VideoCard = ({ video, onClick }) => (
     </Card>
 );
 
-export function ComplaintsList({ onPage }) {
+export function ComplaintsList() {
     const { token, isModerator } = useAuth();
+    const navigate = useNavigate();
 
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -108,7 +110,7 @@ export function ComplaintsList({ onPage }) {
 
             if (isUnauthorized(res)) {
                 //setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onPage("auth");
+                navigate("/auth");
                 return;
             }
 
@@ -136,7 +138,7 @@ export function ComplaintsList({ onPage }) {
 
             if (isUnauthorized(res)) {
                 //setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onPage("auth");
+                navigate("/auth");
                 return;
             }
 
@@ -154,7 +156,7 @@ export function ComplaintsList({ onPage }) {
     }, [token, isModerator]);
 
     const handleTargetClick = (videoUuid) => () => (
-        onPage("feed", { feedMode: { type: "moderation", targetUuid: videoUuid } })
+        navigate("/feed", { state: { feedMode: { type: "moderation", targetUuid: videoUuid } } })
     );
 
     return (

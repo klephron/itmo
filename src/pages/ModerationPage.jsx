@@ -1,15 +1,12 @@
-import { useAuth } from '../context/AuthContext';
+import { NavLink, Outlet, useNavigate } from "react-router";
 import { Button, Grid, IconButton, Paper, Stack, Typography } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
-import { UsersList } from "../components/UsersList.jsx";
-import { ComplaintsList } from "../components/ComplaintsList.jsx";
-import { Service } from "../components/Service.jsx";
+import { useAuth } from '../context/AuthContext';
 
-export default function ModerationPage({ active, activeTab, setActiveTab, onPage }) {
+export default function ModerationPage() {
     const { token, isModerator, isAdmin } = useAuth();
-
-    if (!active) return null;
+    const navigate = useNavigate();
 
     if (!token || !isModerator) {
         return (
@@ -24,47 +21,50 @@ export default function ModerationPage({ active, activeTab, setActiveTab, onPage
     return (
         <>
             <Stack component={Paper} direction="row" p={1} alignItems="center">
-                <IconButton onClick={() => onPage("account")} size="small">
+                <IconButton onClick={() => navigate(-1)} size="small">
                     <ArrowBackRoundedIcon/>
                 </IconButton>
                 <Typography variant="h6" noWrap px={1}>Модерация</Typography>
             </Stack>
             <Stack component={Paper} pt={2} flex={1} overflow="hidden">
                 <Grid container spacing={1} mb={2} px={2}>
-                    <Button
-                        variant="contained"
-                        color={activeTab === "users" ? "primary" : "inherit"}
-                        size="small"
-                        onClick={() => setActiveTab("users")}
-                    >
-                        Пользователи
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color={activeTab === "complaints" ? "primary" : "inherit"}
-                        size="small"
-                        onClick={() => setActiveTab("complaints")}
-                    >
-                        Жалобы
-                    </Button>
+                    <NavLink to="users" replace style={{ textDecoration: "none", color: "inherit" }}>
+                        {({ isActive }) => (
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color={isActive ? "primary" : "inherit"}
+                            >
+                                Пользователи
+                            </Button>
+                        )}
+                    </NavLink>
+                    <NavLink to="complaints" replace style={{ textDecoration: "none", color: "inherit" }}>
+                        {({ isActive }) => (
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color={isActive ? "primary" : "inherit"}
+                            >
+                                Жалобы
+                            </Button>
+                        )}
+                    </NavLink>
                     {isAdmin && (
-                        <Button
-                            variant="contained"
-                            color={activeTab === "service" ? "primary" : "inherit"}
-                            size="small"
-                            onClick={() => setActiveTab("service")}
-                        >
-                            Сервис
-                        </Button>
+                        <NavLink to="service" replace style={{ textDecoration: "none", color: "inherit" }}>
+                            {({ isActive }) => (
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    color={isActive ? "primary" : "inherit"}
+                                >
+                                    Сервис
+                                </Button>
+                            )}
+                        </NavLink>
                     )}
                 </Grid>
-                {activeTab === 'users' ? (
-                    <UsersList onPage={onPage}/>
-                ) : activeTab === 'complaints' ? (
-                    <ComplaintsList onPage={onPage}/>
-                ) : activeTab === 'service' && isAdmin && (
-                    <Service onPage={onPage}/>
-                )}
+                <Outlet/>
             </Stack>
         </>
     );

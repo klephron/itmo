@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from "react-router";
+
 import { Avatar, Box, Button, CircularProgress, IconButton, Paper, Stack, Typography } from "@mui/material";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
@@ -27,8 +29,6 @@ const WATCH_MILESTONES = [25, 50, 75, 100];
 const MIN_LOADING_MS = 400;
 
 export default function FeedPage({
-                                     active,
-                                     onPage,
                                      feedMode,
                                      setFeedMode,
                                      exposeControls,
@@ -36,6 +36,10 @@ export default function FeedPage({
                                      setSearchDialogOpen
                                  }) {
     const { token, user, authReady } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const active = location.pathname === "/feed";
+    const feedModeFromLocation = location.state?.feedMode;
 
     const [videoInfoDialogOpen, setVideoInfoDialogOpen] = useState(false);
     const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
@@ -53,7 +57,6 @@ export default function FeedPage({
         watchSent: new Set(),
     });
 
-    const activeRef = useRef(active);
     const feedModeRef = useRef(feedMode);
     const deviceIdRef = useRef(getOrCreateDeviceId());
 
@@ -335,7 +338,7 @@ export default function FeedPage({
     const toggleLike = async () => {
         if (!currentVideo) return;
         if (!token) {
-            onPage("auth");
+            navigate("/auth");
             return;
         }
 
@@ -346,7 +349,7 @@ export default function FeedPage({
             });
 
             if (isUnauthorized(res)) {
-                onPage("auth");
+                navigate("/auth");
                 return;
             }
             if (!res.ok) return;
@@ -513,24 +516,21 @@ export default function FeedPage({
         exposeControls?.({ goNext, goPrev, savePlayerState });
     }, [exposeControls, window, loading]);
 
-    /* Старт ленты при первом входе на страницу либо если нет видео */
+    /* Старт ленты при первом входе на страницу, смене режима или если нет видео */
     useEffect(() => {
-        const activeChanged = active !== activeRef.current;
-        const feedModeChanged = !objectsAreEqual(feedMode, feedModeRef.current);
-
-        // обновляем refs ПОСЛЕ вычислений
-        activeRef.current = active;
-        feedModeRef.current = feedMode;
-
-        // все вызовы startFeed - только если страница не в фоне и юзер подгружен
         if (!active || !authReady) return;
 
-        if (feedModeChanged) {
+        if (!objectsAreEqual(feedMode, feedModeFromLocation)) {
+            feedModeRef.current = feedModeFromLocation;
+            setFeedMode(feedModeFromLocation);
             startFeed(true, false);
-        } else if ((activeChanged && videos.length === 0) || !activeChanged) {
+            return;
+        }
+
+        if (videos.length === 0) {
             startFeed(false, false);
         }
-    }, [active, feedMode, authReady]);
+    }, [location, authReady]);
 
     /* Сброс состояния ленты, если сменился токен */
     useEffect(() => {
@@ -542,7 +542,7 @@ export default function FeedPage({
     /* Изменение состояния плеера */
     useEffect(() => {
         const player = playerRef.current;
-        if (!player || !active) return;
+        if (!player) return;
 
         if (!uuid) {
             player.pause();
@@ -555,8 +555,11 @@ export default function FeedPage({
             ? `${apiBase}/api/streaming/video/${uuid}?quality=${selectedQuality}`
             : `${apiBase}/api/streaming/video/${uuid}`;
 
+        const isSameUuid = playerStateRef.current.uuid !== uuid;
+        const isSameUrl = player.src !== url
+
         // Сброс сохраненного состояния плеера, если видео изменилось
-        if (playerStateRef.current.uuid !== uuid) {
+        if (!isSameUuid) {
             playerStateRef.current = {
                 uuid,
                 shouldPlay: true,
@@ -566,9 +569,25 @@ export default function FeedPage({
             };
         }
 
-        player.pause();
-        player.src = url;
-        player.load();
+        if (isSameUrl) {
+            // Остановка видео при потере уходе со страницы
+            if (active) {
+                // TODO: тут где-то забыто про shouldPlay и т.п.
+                player.play().catch(() => {
+                    /* ignore */
+                });
+            } else {
+                player.pause();
+            }
+            return;
+        }
+
+        // Замена src, если url новый
+        if (!isSameUrl) {
+            player.pause();
+            player.src = url;
+            player.load();
+        }
     }, [active, uuid, selectedQuality]);
 
     /* Загрузка актуальной мета-информации видео. Не учитываем токен, т.к. выше есть очистка (которая сменит uuid) */
@@ -603,6 +622,7 @@ export default function FeedPage({
     }
 
     const handleVideoPause = () => {
+        if (!active) return;
         playerStateRef.current.shouldPlay = false;
     };
 
@@ -655,61 +675,51 @@ export default function FeedPage({
         });
     };
 
-    const handleBackFromUser = () => {
-        if (feedMode.userId === user?.userId) {
-            onPage("account");
-        } else {
-            onPage("profile", { profileUserId: feedMode.userId });
-        }
-    }
-
-    const handleBackFromSearch = () => {
-        setFeedMode({ type: "global" });
-        setSearchDialogOpen(true);
-    }
-
-    const handleBackFromModeration = () => onPage("moderation");
-
-    if (!active) return null;
-
     return (
         <>
-            <Stack component={Paper} direction="row" p={1} alignItems="center">
-                {feedMode.type === "global" && (
-                    <>
-                        <Typography variant="h6" noWrap px={1} flex={1}>Рекомендации</Typography>
-                        <IconButton onClick={() => setSearchDialogOpen(true)} size="small">
-                            <SearchRoundedIcon/>
-                        </IconButton>
-                    </>
-                )}
-                {feedMode.type === "user" && (
-                    <>
-                        <IconButton onClick={handleBackFromUser} size="small">
-                            <ArrowBackRoundedIcon/>
-                        </IconButton>
-                        <Typography variant="h6" noWrap px={1}>Видео пользователя</Typography>
-                    </>
-                )}
-                {feedMode.type === "search" && (
-                    <>
-                        <IconButton onClick={handleBackFromSearch} size="small">
-                            <ArrowBackRoundedIcon/>
-                        </IconButton>
-                        <Typography variant="h6" noWrap px={1}>Найденные видео</Typography>
-                    </>
-                )}
-                {feedMode.type === "moderation" && (
-                    <>
-                        <IconButton onClick={handleBackFromModeration} size="small">
-                            <ArrowBackRoundedIcon/>
-                        </IconButton>
-                        <Typography variant="h6" noWrap px={1}>Видео из жалобы</Typography>
-                    </>
-                )}
-            </Stack>
+            {active && (
+                <Stack component={Paper} direction="row" p={1} alignItems="center">
+                    {feedMode.type === "global" && (
+                        <>
+                            <Typography variant="h6" noWrap px={1} flex={1}>Рекомендации</Typography>
+                            <IconButton onClick={() => setSearchDialogOpen(true)} size="small">
+                                <SearchRoundedIcon/>
+                            </IconButton>
+                        </>
+                    )}
+                    {feedMode.type === "user" && (
+                        <>
+                            <IconButton onClick={() => navigate(-1)} size="small">
+                                <ArrowBackRoundedIcon/>
+                            </IconButton>
+                            <Typography variant="h6" noWrap px={1}>Видео пользователя</Typography>
+                        </>
+                    )}
+                    {feedMode.type === "search" && (
+                        <>
+                            <IconButton onClick={() => navigate(-1)} size="small">
+                                <ArrowBackRoundedIcon/>
+                            </IconButton>
+                            <Typography variant="h6" noWrap px={1}>Найденные видео</Typography>
+                        </>
+                    )}
+                    {feedMode.type === "moderation" && (
+                        <>
+                            <IconButton onClick={() => navigate(-1)} size="small">
+                                <ArrowBackRoundedIcon/>
+                            </IconButton>
+                            <Typography variant="h6" noWrap px={1}>Видео из жалобы</Typography>
+                        </>
+                    )}
+                </Stack>
+            )}
             {uuid ? (
-                <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                <Box sx={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    display: active ? "block" : "none",
+                }}>
                     <Stack
                         spacing={1}
                         sx={{
@@ -738,7 +748,7 @@ export default function FeedPage({
                             spacing={1}
                             alignItems="center"
                             sx={{ cursor: 'pointer' }}
-                            onClick={() => uploaderId && onPage("profile", { profileUserId: uploaderId })}
+                            onClick={() => navigate(`/profile/${uploaderId}`)}
                         >
                             <Avatar
                                 src={getAvatarUrl(uploaderId)}
@@ -825,7 +835,7 @@ export default function FeedPage({
                     <Box component="video" display="none" ref={preload1Ref} muted/>
                     <Box component="video" display="none" ref={preload2Ref} muted/>
                 </Box>
-            ) : (
+            ) : active && (
                 <Stack
                     component={Paper}
                     spacing={1}
@@ -851,32 +861,30 @@ export default function FeedPage({
                 </Stack>
             )}
             <VideoInfoDialog
-                open={videoInfoDialogOpen}
+                open={active && videoInfoDialogOpen}
                 setOpen={setVideoInfoDialogOpen}
                 video={currentVideo}
             />
             <CommentsDialog
-                open={commentsDialogOpen}
+                open={active && commentsDialogOpen}
                 setOpen={setCommentsDialogOpen}
                 videoUuid={uuid}
-                onPage={onPage}
             />
             <QualityDialog
-                open={qualityDialogOpen}
+                open={active && qualityDialogOpen}
                 setOpen={setQualityDialogOpen}
                 video={currentVideo}
                 onSelect={handleQualitySelect}
             />
             <ComplaintDialog
-                open={complaintDialogOpen}
+                open={active && complaintDialogOpen}
                 setOpen={setComplaintDialogOpen}
                 mode="video"
                 videoUuid={uuid}
             />
             <SearchDialog
-                open={searchDialogOpen}
+                open={active && searchDialogOpen}
                 setOpen={setSearchDialogOpen}
-                onPage={onPage}
             />
         </>
     );

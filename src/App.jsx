@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { MemoryRouter, Navigate, Route, Routes, useLocation } from "react-router";
 import { CssBaseline, Stack, ThemeProvider } from "@mui/material";
 
 import Tabs from './components/Tabs';
@@ -8,36 +9,33 @@ import AccountPage from './pages/AccountPage.jsx';
 import ProfilePage from './pages/ProfilePage';
 import ModerationPage from './pages/ModerationPage';
 import AuthPage from './pages/AuthPage.jsx';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { theme } from "./theme.js";
 import { objectsAreEqual } from "./utils/compare.js";
+import { ThumbGrid } from "./components/ThumbGrid.jsx";
+import { FollowingList } from "./components/FollowingList.jsx";
+import { UploadsList } from "./components/UploadsList.jsx";
+import { UsersList } from "./components/UsersList.jsx";
+import { ComplaintsList } from "./components/ComplaintsList.jsx";
+import { Service } from "./components/Service.jsx";
 
 function AppInner() {
-    const { token } = useAuth();
+    const location = useLocation();
 
-    const [activePage, setActivePage] = useState('feed'); // Изначально активен Feed
-    const [profileUserId, setProfileUserId] = useState(null); // Идентификатор профиля
-    const [activeAccountTab, setActiveAccountTab] = useState("videos");
     const [activeModerationTab, setActiveModerationTab] = useState("users");
     const [feedMode, setFeedMode] = useState({ type: "global" });
     const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
     const feedControlsRef = useRef(null);
 
-    const onPage = useCallback((page, params) => {
-        feedControlsRef.current?.savePlayerState();
+    /* Синхронизируем состояние фида с роутером */
+    useEffect(() => {
+        const newFeedMode = location.state?.feedMode;
+        //console.log(newFeedMode);
+        if (location.pathname !== "/feed" || !newFeedMode || objectsAreEqual(feedMode, newFeedMode)) return;
 
-        if (page === 'upload' && !token) {
-            setActivePage('auth');
-            return;
-        }
-
-        if (page === 'feed' && params?.feedMode && !objectsAreEqual(feedMode, params?.feedMode)) setFeedMode(params?.feedMode);
-        if (page === 'account' && params?.activeAccountTab) setActiveAccountTab(params?.activeAccountTab);
-        if (page === 'profile' && params?.profileUserId) setProfileUserId(params?.profileUserId);
-
-        setActivePage(page);
-    }, [token, feedMode]);
+        //setFeedMode(newFeedMode);
+    }, [location.key]);
 
     return (
         <Stack
@@ -50,9 +48,28 @@ function AppInner() {
                 mx: "auto",
             }}
         >
+            <Routes>
+                <Route path="/feed" element={null}/>
+                <Route path="/upload" element={<UploadPage/>}/>
+                <Route path="/profile/:userId" element={<ProfilePage/>}>
+                    <Route index element={<ThumbGrid/>}/>
+                </Route>
+                <Route path="/account" element={<AccountPage/>}>
+                    <Route index element={<Navigate to="videos" replace/>}/>
+                    <Route path="videos" element={<ThumbGrid label="Ваши видео" showDelete/>}/>
+                    <Route path="following" element={<FollowingList/>}/>
+                    <Route path="uploads" element={<UploadsList/>}/>
+                </Route>
+                <Route path="/auth" element={<AuthPage/>}/>
+                <Route path="/moderation" element={<ModerationPage/>}>
+                    <Route index element={<Navigate to="users" replace/>}/>
+                    <Route path="users" element={<UsersList/>}/>
+                    <Route path="complaints" element={<ComplaintsList/>}/>
+                    <Route path="service" element={<Service/>}/>
+                </Route>
+            </Routes>
             <FeedPage
-                active={activePage === 'feed'}
-                onPage={onPage}
+                active={location.pathname === "/feed"}
                 feedMode={feedMode}
                 setFeedMode={setFeedMode}
                 exposeControls={(ctl) => {
@@ -61,34 +78,7 @@ function AppInner() {
                 searchDialogOpen={searchDialogOpen}
                 setSearchDialogOpen={setSearchDialogOpen}
             />
-            <UploadPage
-                active={activePage === 'upload'}
-                onPage={onPage}
-            />
-            <ProfilePage
-                active={activePage === 'profile'}
-                userId={profileUserId}
-                onPage={onPage}
-            />
-            <AccountPage
-                active={activePage === 'account'}
-                activeTab={activeAccountTab}
-                setActiveTab={setActiveAccountTab}
-                onPage={onPage}
-            />
-            <AuthPage active={activePage === 'auth'} onPage={onPage}/>
-            <ModerationPage
-                active={activePage === 'moderation'}
-                activeTab={activeModerationTab}
-                setActiveTab={setActiveModerationTab}
-                onPage={onPage}
-            />
-            <Tabs
-                activeTab={activePage}  // Передаем активное состояние
-                onTab={onPage}
-                feedMode={feedMode}
-                feedControlsRef={feedControlsRef}
-            />
+            <Tabs feedMode={feedMode} feedControlsRef={feedControlsRef}/>
         </Stack>
     );
 }
@@ -98,7 +88,9 @@ export default function App() {
         <ThemeProvider theme={theme} defaultMode="dark" noSsr>
             <CssBaseline/>
             <AuthProvider>
-                <AppInner/>
+                <MemoryRouter initialEntries={[{ pathname: "/feed", state: { feedMode: { type: "global" } } }]}>
+                    <AppInner/>
+                </MemoryRouter>
             </AuthProvider>
         </ThemeProvider>
     );

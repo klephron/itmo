@@ -1,15 +1,16 @@
-import { Avatar, Button, Paper, Stack } from "@mui/material";
+import { NavLink, useLocation } from "react-router";
 
+import { Avatar, Button, Paper, Stack } from "@mui/material";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
 import { useAuth } from "../context/AuthContext.jsx";
-import { getAvatarUrl } from "../api/api.js";
 
-export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
+export default function Tabs({ feedMode, feedControlsRef }) {
     const { user } = useAuth();
+    const location = useLocation();
 
     const handlePrevClick = () => feedControlsRef.current?.goPrev();
     const handleNextClick = () => feedControlsRef.current?.goNext();
@@ -28,63 +29,80 @@ export default function Tabs({ activeTab, onTab, feedMode, feedControlsRef }) {
                 size="uniSmall"
                 color="inherit"
                 onClick={handlePrevClick}
-                disabled={activeTab !== "feed" || feedMode.type === "moderation"}
+                disabled={location.pathname !== "/feed" || feedMode.type === "moderation"}
             >
                 <ChevronLeftRoundedIcon sx={{ fontSize: 32 }}/>
             </Button>
-            <Button
-                variant={activeTab === "feed" && feedMode.type === "global" ? "contained" : "text"}
-                size="uniSmall"
-                color={activeTab === "feed" && feedMode.type === "global" ? "primary" : "inherit"}
-                onClick={() => onTab("feed", { feedMode: { type: "global" } })}
+            <NavLink
+                to="/feed"
+                style={{ textDecoration: "none", color: "inherit" }}
+                draggable={false}
+                state={{ feedMode: { type: "global" } }}
             >
-                <HomeRoundedIcon sx={{
-                    fontSize: 32,
-                    color: activeTab === "feed" && feedMode.type === "global" ? "inherit" : "text.secondary"
-                }}/>
-            </Button>
-            <Button
-                variant="contained"
-                size="uniSmall"
-                color={activeTab === "upload" ? "primary" : "inherit"}
-                onClick={() => onTab("upload")}
-            >
-                <AddRoundedIcon sx={{ fontSize: 40 }}/>
-            </Button>
-            {user ? (
-                <Button
-                    variant={activeTab === "account" ? "contained" : "text"}
-                    size="uniSmall"
-                    color={activeTab === "account" ? "primary" : "inherit"}
-                    onClick={() => onTab("account")}
-                >
-                    <Avatar
-                        src={user.avatarUrl}
-                        sx={{ width: 32, height: 32 }}
+                {({ isActive }) => (
+                    <Button
+                        variant={isActive && feedMode.type === "global" ? "contained" : "text"}
+                        size="uniSmall"
+                        color={isActive && feedMode.type === "global" ? "primary" : "inherit"}
                     >
-                        {user.username?.[0]?.toUpperCase()}
-                    </Avatar>
-                </Button>
+                        <HomeRoundedIcon sx={{
+                            fontSize: 32,
+                            color: isActive && feedMode.type === "global" ? "inherit" : "text.secondary"
+                        }}/>
+                    </Button>
+                )}
+            </NavLink>
+            <NavLink to="/upload" style={{ textDecoration: "none", color: "inherit" }} draggable={false}>
+                {({ isActive }) => (
+                    <Button
+                        variant="contained"
+                        size="uniSmall"
+                        color={isActive ? "primary" : "inherit"}
+                    >
+                        <AddRoundedIcon sx={{ fontSize: 40 }}/>
+                    </Button>
+                )}
+            </NavLink>
+            {user ? (
+                <NavLink to="/account" style={{ textDecoration: "none", color: "inherit" }}>
+                    {({ isActive }) => (
+                        <Button
+                            variant={isActive ? "contained" : "text"}
+                            size="uniSmall"
+                            color={isActive ? "primary" : "inherit"}
+                        >
+                            <Avatar
+                                src={user.avatarUrl}
+                                sx={{ width: 32, height: 32 }}
+                            >
+                                {user.username?.[0]?.toUpperCase()}
+                            </Avatar>
+                        </Button>
+                    )}
+                </NavLink>
             ) : (
-                <Button
-                    variant={activeTab === "auth" ? "contained" : "text"}
-                    size="uniSmall"
-                    color={activeTab === "auth" ? "primary" : "inherit"}
-                    onClick={() => onTab("auth")}
-                >
-                    <Avatar sx={{
-                        width: 32,
-                        height: 32,
-                        bgcolor: activeTab === "auth" ? "background.paper" : "text.secondary",
-                        color: activeTab === "auth" ? "text.primary" : "background.paper",
-                    }}/>
-                </Button>
+                <NavLink to="/auth" style={{ textDecoration: "none", color: "inherit" }}>
+                    {({ isActive }) => (
+                        <Button
+                            variant={isActive ? "contained" : "text"}
+                            size="uniSmall"
+                            color={isActive ? "primary" : "inherit"}
+                        >
+                            <Avatar sx={{
+                                width: 32,
+                                height: 32,
+                                bgcolor: isActive ? "background.paper" : "text.secondary",
+                                color: isActive ? "text.primary" : "background.paper",
+                            }}/>
+                        </Button>
+                    )}
+                </NavLink>
             )}
             <Button
                 size="uniSmall"
                 color="inherit"
                 onClick={handleNextClick}
-                disabled={activeTab !== "feed" || feedMode.type === "moderation"}
+                disabled={location.pathname !== "/feed" || feedMode.type === "moderation"}
             >
                 <ChevronRightRoundedIcon sx={{ fontSize: 32 }}/>
             </Button>

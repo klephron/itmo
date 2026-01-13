@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useNavigate, useOutletContext } from "react-router";
 import { Box, Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
 
 import { apiBase, authHeaders } from "../api/api";
@@ -10,8 +11,12 @@ import { ConfirmDialog } from "./ConfirmDialog.jsx";
 const PAGE_SIZE = 12;
 const COLUMNS = 3;
 
-export function ThumbGrid({ label = "Видео", userId, showDelete = false, onPage }) {
+export function ThumbGrid({ label = "Видео", showDelete = false }) {
     const { token } = useAuth();
+    const { userId } = useOutletContext();
+    const navigate = useNavigate();
+
+    const [isPending, startTransition] = useTransition();
 
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
@@ -28,30 +33,26 @@ export function ThumbGrid({ label = "Видео", userId, showDelete = false, on
     const [sort, setSort] = useState("uploadedAt,desc");
 
     async function loadPage(pageNumber, { replace = false } = {}) {
-        if (!userId || loading) return;
-        setLoading(true);
+        if (!userId) return;
 
-        try {
-            const res = await fetch(
-                `${apiBase}/api/users/${userId}/videos?page=${pageNumber}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`,
-                { headers: authHeaders(token) }
-            );
-            if (!res.ok) throw new Error("HTTP " + res.status);
+        const res = await fetch(
+            `${apiBase}/api/users/${userId}/videos?page=${pageNumber}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`,
+            { headers: authHeaders(token) }
+        );
+        if (!res.ok) throw new Error("HTTP " + res.status);
 
-            const page = await res.json();
-            const vids = page?.content ?? [];
+        const page = await res.json();
+        const vids = page?.content ?? [];
 
-            setVideos((prev) => (replace ? vids : prev.concat(vids)));
-
+        startTransition(() => {
+            setVideos(prev => (replace ? vids : prev.concat(vids)));
             setPaging({
                 page: page.number,
                 size: PAGE_SIZE,
                 last: !!page.last,
                 totalElements: page.totalElements ?? 0,
             });
-        } finally {
-            setLoading(false);
-        }
+        });
     }
 
     async function reloadUpToCurrentPage() {
@@ -91,7 +92,7 @@ export function ThumbGrid({ label = "Видео", userId, showDelete = false, on
 
     const handleLoadMore = () => loadPage(paging.page + 1);
     const handleVideoOpen = (targetUuid, targetIndex) => () => (
-        onPage("feed", { feedMode: { type: "user", userId, sort, targetUuid, targetIndex } })
+        navigate("/feed", { state: { feedMode: { type: "user", userId, sort, targetUuid, targetIndex } } })
     );
 
     const handleDeleteVideo = (uuid) => () => {

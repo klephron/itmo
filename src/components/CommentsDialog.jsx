@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Avatar, Box, Button, Divider, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
@@ -14,8 +15,9 @@ import { LoadMoreButton } from "./LoadMoreButton.jsx";
 
 const PAGE_SIZE = 20;
 
-export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
+export function CommentsDialog({ open, setOpen, videoUuid }) {
     const { token, user } = useAuth();
+    const navigate = useNavigate();
 
     const [comments, setComments] = useState([]);
     const [page, setPage] = useState(0);
@@ -64,7 +66,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
     async function send() {
         if (!token) {
             setStatus({ msg: "Войдите, чтобы комментировать", type: "error" });
-            onPage("auth");
+            navigate("/auth");
             return;
         }
 
@@ -92,7 +94,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
                     msg: "Сессия истекла, войдите снова",
                     type: "error",
                 });
-                onPage("auth");
+                navigate("/auth");
                 return;
             }
 
@@ -113,7 +115,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
                 msg: "Войдите, чтобы удалять комментарии",
                 type: "error",
             });
-            onPage("auth");
+            navigate("/auth");
             return;
         }
 
@@ -131,7 +133,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
                     msg: "Сессия истекла, войдите снова",
                     type: "error",
                 });
-                onPage("auth");
+                navigate("/auth");
                 return;
             }
 
@@ -237,7 +239,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
                         <Avatar
                             src={getAvatarUrl(c?.authorId)}
                             sx={{ width: 32, height: 32, cursor: 'pointer' }}
-                            onClick={() => c.authorId && onPage("profile", { profileUserId: c.authorId })}
+                            onClick={() => navigate(`/profile/${c.authorId}`)}
                         >
                             {c.authorName?.[0]?.toUpperCase()}
                         </Avatar>
@@ -259,7 +261,7 @@ export function CommentsDialog({ open, setOpen, videoUuid, onPage }) {
                                 <Typography
                                     variant="subtitle2"
                                     sx={{ cursor: 'pointer' }}
-                                    onClick={() => c.authorId && onPage("profile", { profileUserId: c.authorId })}
+                                    onClick={() => navigate(`/profile/${c.authorId}`)}
                                 >
                                     @{c.authorName}
                                 </Typography>

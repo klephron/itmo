@@ -1,11 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { ConfirmDialog } from "./ConfirmDialog.jsx";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
-export function Service({ onPage }) {
+export function Service() {
     const { token, isAdmin } = useAuth();
+    const navigate = useNavigate();
 
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
@@ -20,7 +22,7 @@ export function Service({ onPage }) {
 
             if (isUnauthorized(res)) {
                 //setStatusModeration('Сессия истекла, войдите снова', 'error');
-                onPage("auth");
+                navigate("/auth");
                 return;
             }
 
