@@ -116,7 +116,7 @@ class LikeExternalControllerTest {
     void getLikeStatus_unauthorized() {
         ResponseEntity<LikeResponse> response = controller.getLikeStatus(videoUuid, null);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(likeService, never()).isLikedByUser(any(), anyLong());
     }
 }

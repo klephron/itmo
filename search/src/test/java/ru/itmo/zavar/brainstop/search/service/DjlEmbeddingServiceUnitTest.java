@@ -52,7 +52,11 @@ class DjlEmbeddingServiceUnitTest {
 
         float[] result = service.embed("test");
 
-        assertThat(result).isEqualTo(expected);
+        float norm = (float) Math.sqrt(0.1f * 0.1f + 0.2f * 0.2f + 0.3f * 0.3f);
+        float[] expectedNormalized = new float[]{expected[0] / norm, expected[1] / norm, expected[2] / norm};
+        assertThat(result[0]).isCloseTo(expectedNormalized[0], org.assertj.core.data.Offset.offset(1e-6f));
+        assertThat(result[1]).isCloseTo(expectedNormalized[1], org.assertj.core.data.Offset.offset(1e-6f));
+        assertThat(result[2]).isCloseTo(expectedNormalized[2], org.assertj.core.data.Offset.offset(1e-6f));
         verify(predictor).predict("test");
         verify(predictor).close();
     }
@@ -67,7 +71,7 @@ class DjlEmbeddingServiceUnitTest {
         float[] result = service.embed("test");
 
         assertThat(result).isNotNull();
-        assertThat(result).hasSize(256);
+        assertThat(result).hasSize(384);
     }
 
     @Test
@@ -81,7 +85,7 @@ class DjlEmbeddingServiceUnitTest {
         float[] result = service.embed("test");
 
         assertThat(result).isNotNull();
-        assertThat(result).hasSize(256);
+        assertThat(result).hasSize(384);
     }
 
     @Test

@@ -1,6 +1,10 @@
 server:
   port: ${PORT:0}
 
+transcoder:
+  ffprobe-path: "C:/ffmpeg/bin/ffprobe.exe"
+  ffmpeg-path: "C:/ffmpeg/bin/ffmpeg.exe"
+
 spring:
   application:
     name: transcoding-service

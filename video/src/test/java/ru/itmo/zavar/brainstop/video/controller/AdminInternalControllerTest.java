@@ -108,4 +108,17 @@ class AdminInternalControllerTest {
 
         assertThat(response.getBody()).containsEntry("updated", 100);
     }
+
+    @Test
+    @TestType(TestType.Type.BASIC)
+    @DisplayName("BE-UNIT-CTRL-ADMIN-09: rebuildEmbeddings вызывает VideoAdminApi")
+    void rebuildEmbeddings_callsApi() {
+        when(videoAdminApi.rebuildEmbeddings()).thenReturn(7);
+
+        ResponseEntity<Map<String, Object>> response = controller.rebuildEmbeddings();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsEntry("updated", 7);
+        verify(videoAdminApi).rebuildEmbeddings();
+    }
 }

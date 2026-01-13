@@ -896,6 +896,9 @@
         <button class="full small" id="btnRebuildThumbs" style="margin-bottom:8px; display:none;">
             Перегенерировать превью всех видео
         </button>
+        <button class="full small" id="btnRebuildEmbeddings" style="margin-bottom:8px; display:none;">
+            Пересчитать эмбеддинги для всех видео
+        </button>
         <div class="studio-section-title">Пользователи</div>
         <div class="studio-videos" id="modUsersList"></div>
 
@@ -938,6 +941,7 @@
     const statusAuthEl = document.getElementById('statusAuth');
     const statusSearchEl = document.getElementById('statusSearch');
     const btnRebuildThumbs = document.getElementById('btnRebuildThumbs');
+    const btnRebuildEmbeddings = document.getElementById('btnRebuildEmbeddings');
 
     const btnNext = document.getElementById('btnNext');
     const btnPrev = document.getElementById('btnPrev');
@@ -1831,6 +1835,11 @@
         } else {
             btnRebuildThumbs.style.display = 'none';
         }
+        if (authUser && isModerator()) {
+            btnRebuildEmbeddings.style.display = '';
+        } else {
+            btnRebuildEmbeddings.style.display = 'none';
+        }
 
         // комментарии: форма только для залогиненных
         if (authUser) {
@@ -1875,6 +1884,31 @@
         } catch (e) {
             console.error(e);
             setStatusModeration('Ошибка запуска перегенерации: ' + e.message, 'error');
+        }
+    });
+
+    btnRebuildEmbeddings.addEventListener('click', async () => {
+        if (!authToken || !isModerator()) return;
+        if (!confirm('Пересчитать эмбеддинги для всех видео? Это может занять время.')) {
+            return;
+        }
+        try {
+            const res = await fetch(apiBase + '/api/moderation/videos/reembed', {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+            if (!res.ok && res.status !== 202) {
+                throw new Error(await readApiError(res));
+            }
+            setStatusModeration('Запущена пересборка эмбеддингов', 'ok');
+        } catch (e) {
+            console.error(e);
+            setStatusModeration('Ошибка запуска пересборки эмбеддингов: ' + e.message, 'error');
         }
     });
 

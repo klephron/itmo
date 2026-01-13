@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class VideoStreamingService {
 
+    private static final int EMBEDDING_DIM = 384;
     private static final List<Integer> DEFAULT_TARGET_HEIGHTS = List.of(144, 240, 360, 480, 720, 1080);
 
     private final FileMetadataRepository fileMetadataRepository;
@@ -272,6 +274,23 @@ public class VideoStreamingService {
         return new float[0];
     }
 
+    private float[] normalizeEmbedding(float[] vec) {
+        float[] safe = vec == null ? new float[EMBEDDING_DIM] : Arrays.copyOf(vec, EMBEDDING_DIM);
+        double norm = 0.0;
+        for (float v : safe) {
+            norm += v * v;
+        }
+        norm = Math.sqrt(norm);
+        if (norm == 0.0) {
+            return safe;
+        }
+        float[] out = new float[safe.length];
+        for (int i = 0; i < safe.length; i++) {
+            out[i] = (float) (safe[i] / norm);
+        }
+        return out;
+    }
+
     // --- Streaming / read path ---
 
     public StreamChunk fetchChunk(UUID uuid, StreamRange range, Integer quality) throws Exception {
@@ -353,6 +372,28 @@ public class VideoStreamingService {
             }
         }
         log.info("Thumbnail regeneration finished, updated = {}", updated);
+        return updated;
+    }
+
+    public int rebuildEmbeddings() {
+        List<FileMetadataEntity> all = this.fileMetadataRepository.findAll();
+        int updated = 0;
+        for (FileMetadataEntity meta : all) {
+            try {
+                float[] title = normalizeEmbedding(fetchEmbedding(meta.getName()));
+                float[] desc = normalizeEmbedding(fetchEmbedding(meta.getDescription()));
+                String combinedText = (meta.getName() == null ? "" : meta.getName()) + " " + (meta.getDescription() == null ? "" : meta.getDescription());
+                float[] combined = normalizeEmbedding(fetchEmbedding(combinedText));
+                meta.setTitleEmbedding(title);
+                meta.setDescriptionEmbedding(desc);
+                meta.setCombinedEmbedding(combined);
+                this.fileMetadataRepository.save(meta);
+                updated++;
+            } catch (Exception e) {
+                log.warn("Failed to rebuild embeddings for {}", meta.getUuid(), e);
+            }
+        }
+        log.info("Embedding rebuild finished, updated = {}", updated);
         return updated;
     }
 

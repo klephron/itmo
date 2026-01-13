@@ -26,4 +26,9 @@ public class VideoAdminApiImpl implements VideoAdminApi {
             throw new RuntimeException("Failed to delete video " + uuid, e);
         }
     }
+
+    @Override
+    public int rebuildEmbeddings() {
+        return this.videoStreamingService.rebuildEmbeddings();
+    }
 }

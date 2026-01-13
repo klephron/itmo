@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoCommentsCountDto;
 import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoIdsRequest;
 import ru.itmo.zavar.brainstop.common.api.interactions.dto.VideoUuidsRequest;
@@ -38,6 +39,8 @@ public class FeedService {
     private final InteractionsInternalClient interactionsInternalClient;
     private final FileMetadataToFeedMapper mapper;
     private final VectorConverter vectorConverter = new VectorConverter();
+    @Value("${search.embedding.max-distance:0.6}")
+    private double maxEmbeddingDistance;
 
     public Page<FeedVideoDto> getFeed(Long currentUserId, Pageable pageable) {
 
@@ -162,7 +165,9 @@ public class FeedService {
 
         String literal = vectorConverter.convertToDatabaseColumn(preference);
         // fetch a ranked sample, then re-rank with engagement signals and paginate manually
-        Page<FileMetadataEntity> sample = fileMetadataRepository.searchByEmbedding(literal,
+        Page<FileMetadataEntity> sample = fileMetadataRepository.searchByEmbedding(
+                literal,
+                maxEmbeddingDistance,
                 PageRequest.of(0, 200));
 
         List<FileMetadataEntity> ranked = new ArrayList<>(sample.getContent());

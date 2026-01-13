@@ -69,6 +69,9 @@ spring:
 streaming:
   chunk:
     default-size: 2621440 # 2.5 MB
+search:
+  embedding:
+    max-distance: 0.6
 
 storage:
   client:

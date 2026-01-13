@@ -38,6 +38,13 @@ public class AdminInternalController {
         ));
     }
 
+    @PostMapping("/embeddings/rebuild")
+    @Operation(summary = "РџРµСЂРµРїРёСЃР°С‚СЊ СЌРјР±РµРґРґРёРЅРіРё РґР»СЏ РІРёРґРµРѕ")
+    public ResponseEntity<Map<String, Object>> rebuildEmbeddings() {
+        int updated = this.videoAdminApi.rebuildEmbeddings();
+        return ResponseEntity.ok(Map.of("updated", updated));
+    }
+
     @GetMapping("/users/{id}/videos")
     @Operation(summary = "Внутренний: получить видео пользователя для модерации")
     public ResponseEntity<List<UserVideoDto>> getUserVideos(@PathVariable Long id) {

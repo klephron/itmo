@@ -14,6 +14,7 @@ import ru.itmo.zavar.brainstop.common.api.profile.ProfileUserDetails;
 import ru.itmo.zavar.brainstop.common.api.video.dto.UserVideoDto;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/moderation")
@@ -62,6 +63,14 @@ public class ModerationController {
         }
         List<UserVideoDto> videos = this.videoModerationClient.getUserVideos(id);
         return ResponseEntity.ok(videos);
+    }
+
+    @PostMapping("/videos/reembed")
+    @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
+    @Operation(summary = "РџРµСЂРµРїРёСЃР°С‚СЊ СЌРјР±РµРґРґРёРЅРіРё РІРёРґРµРѕ (РјРѕРґРµСЂР°С†РёСЏ)")
+    public ResponseEntity<Map<String, Object>> reembedVideos() {
+        Map<String, Object> response = this.videoModerationClient.rebuildEmbeddings();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/users/{id}/ban")

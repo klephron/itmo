@@ -39,11 +39,15 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
 
     @Query(
             value = "select * from file_meta where combined_embedding is not null " +
-                    "order by combined_embedding <-> CAST(?1 AS vector)",
-            countQuery = "select count(*) from file_meta where combined_embedding is not null",
+                    "and combined_embedding <=> CAST(:vec AS vector) <= :maxDistance " +
+                    "order by combined_embedding <=> CAST(:vec AS vector)",
+            countQuery = "select count(*) from file_meta where combined_embedding is not null " +
+                    "and combined_embedding <=> CAST(:vec AS vector) <= :maxDistance",
             nativeQuery = true
     )
-    Page<FileMetadataEntity> searchByEmbedding(String queryVecLiteral, Pageable pageable);
+    Page<FileMetadataEntity> searchByEmbedding(@Param("vec") String queryVecLiteral,
+                                               @Param("maxDistance") double maxDistance,
+                                               Pageable pageable);
 
     Page<FileMetadataEntity> findByCombinedEmbeddingIsNotNull(Pageable pageable);
 }

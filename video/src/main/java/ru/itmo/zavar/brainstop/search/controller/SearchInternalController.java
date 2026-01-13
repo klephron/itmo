@@ -1,6 +1,7 @@
 package ru.itmo.zavar.brainstop.search.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,8 @@ public class SearchInternalController {
 
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataMapper fileMetadataMapper;
+    @Value("${search.embedding.max-distance:0.6}")
+    private double maxEmbeddingDistance;
 
     @GetMapping("/videos")
     @Operation(summary = "Внутренний поиск видео")
@@ -33,7 +36,7 @@ public class SearchInternalController {
                                                       @RequestParam(defaultValue = "0") int page,
                                                       @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<FileMetadataEntity> result = this.fileMetadataRepository.searchByEmbedding(queryVecLiteral, pageable);
+        Page<FileMetadataEntity> result = this.fileMetadataRepository.searchByEmbedding(queryVecLiteral, maxEmbeddingDistance, pageable);
         return new PageResponse<>(
                 result.getContent().stream().map(fileMetadataMapper::toDto).toList(),
                 result.getNumber(),
@@ -46,7 +49,7 @@ public class SearchInternalController {
     @Operation(summary = "Внутренние подсказки поиска")
     public List<FileMetadataDto> suggest(@RequestParam("vec") String queryVecLiteral,
                                          @RequestParam(defaultValue = "5") int limit) {
-        Page<FileMetadataEntity> page = this.fileMetadataRepository.searchByEmbedding(queryVecLiteral, PageRequest.of(0, limit));
+        Page<FileMetadataEntity> page = this.fileMetadataRepository.searchByEmbedding(queryVecLiteral, maxEmbeddingDistance, PageRequest.of(0, limit));
         return page.getContent().stream().map(fileMetadataMapper::toDto).toList();
     }
 }

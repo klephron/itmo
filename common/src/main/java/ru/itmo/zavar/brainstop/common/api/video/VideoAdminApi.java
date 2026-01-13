@@ -5,4 +5,6 @@ public interface VideoAdminApi {
     int regenerateThumbnails(boolean force);
 
     void deleteVideo(java.util.UUID uuid);
+
+    int rebuildEmbeddings();
 }
