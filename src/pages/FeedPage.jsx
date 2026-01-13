@@ -542,8 +542,20 @@ export default function FeedPage({
     /* Изменение состояния плеера */
     useEffect(() => {
         const player = playerRef.current;
-        if (!player || !active) return;
+        if (!player) return;
 
+        /* Ушли со страницы - сохраняем состояние и останавливаем плеер */
+        if (!active) {
+            playerStateRef.current = {
+                ...playerStateRef.current,
+                shouldPlay: !player.paused,
+                currentTime: player.currentTime,
+            };
+            player.pause();
+            return;
+        }
+
+        /* Нет видео - на всякий случай сбрасываем плеер */
         if (!uuid) {
             player.pause();
             player.removeAttribute("src");
@@ -555,11 +567,11 @@ export default function FeedPage({
             ? `${apiBase}/api/streaming/video/${uuid}?quality=${selectedQuality}`
             : `${apiBase}/api/streaming/video/${uuid}`;
 
-        const isSameUuid = playerStateRef.current.uuid !== uuid;
-        const isSameUrl = player.src !== url
+        const isNewVideo = playerStateRef.current.uuid !== uuid;
+        const isNewUrl = player.src !== url;
 
-        // Сброс сохраненного состояния плеера, если видео изменилось
-        if (!isSameUuid) {
+        /* Сброс сохраненного состояния плеера, если видео изменилось */
+        if (isNewVideo) {
             playerStateRef.current = {
                 uuid,
                 shouldPlay: true,
@@ -569,9 +581,20 @@ export default function FeedPage({
             };
         }
 
-        player.pause();
-        player.src = url;
-        player.load();
+        /* Меняем src ТОЛЬКО если он реально изменился */
+        if (isNewUrl) {
+            player.pause();
+            player.src = url;
+            player.load();
+            return;
+        }
+
+        /* Если видео осталось старое, но мы вернулись на страницу - восстанавливаем состояние здесь */
+        if (playerStateRef.current.shouldPlay && player.paused) {
+            player.play().catch(() => {
+                /* ignore */
+            });
+        }
     }, [active, uuid, selectedQuality]);
 
     /* Загрузка актуальной мета-информации видео. Не учитываем токен, т.к. выше есть очистка (которая сменит uuid) */
@@ -600,16 +623,7 @@ export default function FeedPage({
         });
     }
 
-    const handleVideoPlay = () => {
-        playerStateRef.current.shouldPlay = true;
-        registerView();
-    }
-
-    const handleVideoPause = () => {
-        if (!active) return;
-        playerStateRef.current.shouldPlay = false;
-    };
-
+    const handleVideoPlay = () => registerView();
     const handleVideoCanPlay = () => {
         const player = playerRef.current;
         const state = playerStateRef.current;
@@ -811,7 +825,6 @@ export default function FeedPage({
                         onEnded={handleVideoEnded}
                         onError={handleVideoError}
                         onPlay={handleVideoPlay}
-                        onPause={handleVideoPause}
                         onCanPlay={handleVideoCanPlay}
                         onLoadedMetadata={handleVideoLoadedMetadata}
                         onTimeUpdate={handleVideoTimeUpdate}
