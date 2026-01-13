@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { MemoryRouter, Navigate, Route, Routes, useLocation } from "react-router";
+import { useRef, useState } from 'react';
+import { MemoryRouter, Navigate, Route, Routes } from "react-router";
 import { CssBaseline, Stack, ThemeProvider } from "@mui/material";
 
 import Tabs from './components/Tabs';
@@ -11,7 +11,6 @@ import ModerationPage from './pages/ModerationPage';
 import AuthPage from './pages/AuthPage.jsx';
 import { AuthProvider } from './context/AuthContext';
 import { theme } from "./theme.js";
-import { objectsAreEqual } from "./utils/compare.js";
 import { ThumbGrid } from "./components/ThumbGrid.jsx";
 import { FollowingList } from "./components/FollowingList.jsx";
 import { UploadsList } from "./components/UploadsList.jsx";
@@ -20,22 +19,10 @@ import { ComplaintsList } from "./components/ComplaintsList.jsx";
 import { Service } from "./components/Service.jsx";
 
 function AppInner() {
-    const location = useLocation();
-
-    const [activeModerationTab, setActiveModerationTab] = useState("users");
     const [feedMode, setFeedMode] = useState({ type: "global" });
     const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
     const feedControlsRef = useRef(null);
-
-    /* Синхронизируем состояние фида с роутером */
-    useEffect(() => {
-        const newFeedMode = location.state?.feedMode;
-        //console.log(newFeedMode);
-        if (location.pathname !== "/feed" || !newFeedMode || objectsAreEqual(feedMode, newFeedMode)) return;
-
-        //setFeedMode(newFeedMode);
-    }, [location.key]);
 
     return (
         <Stack
@@ -69,7 +56,6 @@ function AppInner() {
                 </Route>
             </Routes>
             <FeedPage
-                active={location.pathname === "/feed"}
                 feedMode={feedMode}
                 setFeedMode={setFeedMode}
                 exposeControls={(ctl) => {

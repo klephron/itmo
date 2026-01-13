@@ -4,7 +4,7 @@ import { Box, LinearProgress, Stack, Typography, } from "@mui/material";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
-export function UploadsList({ active }) {
+export function UploadsList() {
     const { token } = useAuth();
     const navigate = useNavigate();
 
@@ -71,7 +71,7 @@ export function UploadsList({ active }) {
     }, [token, syncJobs, navigate]);
 
     useEffect(() => {
-        if (!active || !token) return;
+        if (!token) return;
 
         let cancelled = false;
 
@@ -105,7 +105,7 @@ export function UploadsList({ active }) {
             jobsRef.current.clear();
         };
 
-    }, [active, token, trackJob]);
+    }, [token, trackJob]);
 
     return (
         <>

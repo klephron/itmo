@@ -542,7 +542,7 @@ export default function FeedPage({
     /* Изменение состояния плеера */
     useEffect(() => {
         const player = playerRef.current;
-        if (!player) return;
+        if (!player || !active) return;
 
         if (!uuid) {
             player.pause();
@@ -569,25 +569,9 @@ export default function FeedPage({
             };
         }
 
-        if (isSameUrl) {
-            // Остановка видео при потере уходе со страницы
-            if (active) {
-                // TODO: тут где-то забыто про shouldPlay и т.п.
-                player.play().catch(() => {
-                    /* ignore */
-                });
-            } else {
-                player.pause();
-            }
-            return;
-        }
-
-        // Замена src, если url новый
-        if (!isSameUrl) {
-            player.pause();
-            player.src = url;
-            player.load();
-        }
+        player.pause();
+        player.src = url;
+        player.load();
     }, [active, uuid, selectedQuality]);
 
     /* Загрузка актуальной мета-информации видео. Не учитываем токен, т.к. выше есть очистка (которая сменит uuid) */
