@@ -17,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
+import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataPublicApi;
+import ru.itmo.zavar.brainstop.common.api.video.VideoMetadataSummary;
 import ru.itmo.zavar.brainstop.video.streaming.dto.response.UploadStartResponse;
 import ru.itmo.zavar.brainstop.video.streaming.model.StreamChunk;
 import ru.itmo.zavar.brainstop.video.streaming.model.StreamRange;
@@ -56,6 +58,7 @@ public class VideoStreamingController {
     private final FeedService feedService;
     private final FeedSessionService feedSessionService;
     private final VideoObjectStorage videoObjectStorage;
+    private final VideoMetadataPublicApi videoMetadataPublicApi;
 
     @Value("${streaming.chunk.default-size}")
     private long chunkDefaultSize;
@@ -78,6 +81,14 @@ public class VideoStreamingController {
         headers.add(CONTENT_RANGE, getContentRangeHeader(parsedRange, fileSize));
 
         return new ResponseEntity<>(streamChunk.chunk(), headers, HttpStatus.PARTIAL_CONTENT);
+    }
+
+    @GetMapping("/metadata/{uuid}")
+    @Operation(summary = "Получить summary метаданных по UUID видео")
+    public ResponseEntity<VideoMetadataSummary> getSummary(@PathVariable UUID uuid) {
+        return this.videoMetadataPublicApi.findByUuid(uuid)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/thumbnail/{uuid}")

@@ -70,6 +70,12 @@ public class LikeService {
         return newCount;
     }
 
+    public long getCount(UUID videoUuid) {
+        return this.videoMetadataPublicApi.findByUuid(videoUuid)
+                .map(v -> this.videoLikeRepository.countByVideoId(v.id()))
+                .orElse(0L);
+    }
+
     public boolean isLikedByUser(UUID videoUuid, Long userId) {
         return this.videoMetadataPublicApi.findByUuid(videoUuid)
                 .map(v -> this.videoLikeRepository.existsByVideoIdAndUserId(v.id(), userId))
