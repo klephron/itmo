@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useRef, useState } from "react";
+import { Navigate, useNavigate } from "react-router";
 import { Box, Button, LinearProgress, Paper, Stack, TextField, Typography, } from "@mui/material";
 
 import { apiBase } from "../api/api";
@@ -15,18 +15,24 @@ function readVideoInfo(file) {
     return new Promise((resolve, reject) => {
         const video = document.createElement("video");
         video.preload = "metadata";
+        video.muted = true;
 
         video.onloadedmetadata = () => {
             URL.revokeObjectURL(video.src);
             resolve({
                 width: video.videoWidth,
                 height: video.videoHeight,
-                duration: video.duration, // seconds
+                duration: video.duration,
             });
         };
 
-        video.onerror = () => reject("Не удалось прочитать видеофайл");
+        video.onerror = () => {
+            URL.revokeObjectURL(video.src);
+            reject(new Error("metadata read failed"));
+        };
+
         video.src = URL.createObjectURL(file);
+        video.load();
     });
 }
 
@@ -60,13 +66,10 @@ export default function UploadPage() {
     const [uploading, setUploading] = useState(false);
     const [uploaded, setUploaded] = useState(false);
 
-    const [status, setStatus] = useState({ msg: "", type: "" });
+    const [fileError, setFileError] = useState("");
+    const [uploadStatus, setUploadStatus] = useState("");
 
     const canUpload = !!token && !uploading && !uploaded;
-
-    function setStatusUpload(msg = "", type = "") {
-        setStatus({ msg, type });
-    }
 
     function resetForm() {
         setTitle("");
@@ -76,7 +79,8 @@ export default function UploadPage() {
         setProgress(0);
         setUploading(false);
         setUploaded(false);
-        setStatus({ msg: "", type: "" });
+        setFileError("");
+        setUploadStatus("");
         if (inputRef.current) inputRef.current.value = "";
     }
 
@@ -89,35 +93,33 @@ export default function UploadPage() {
             const error = validateVideo(selected, info);
 
             if (error) {
-                setStatusUpload(error, "error");
+                setFileError(error);
                 setFile(null);
                 setVideoInfo(null);
+                if (inputRef.current) inputRef.current.value = "";
                 return;
             }
 
             setFile(selected);
             setVideoInfo(info);
-            setStatus({ msg: "", type: "" });
-        } catch (err) {
-            // если метаданные не удалось прочитать — НЕ блокируем загрузку
+            setFileError("");
+            setUploadStatus("");
+        } catch {
+            setFileError("Не удалось проверить параметры видео");
             setFile(selected);
             setVideoInfo(null);
-            setStatus({
-                msg: "Не удалось проверить параметры видео, файл будет загружен без проверки",
-                type: "ok",
-            });
         }
     }
 
     function startUpload() {
         if (!token) {
-            setStatusUpload("Войдите, чтобы загружать видео", "error");
+            setFileError("Войдите, чтобы загружать видео");
             navigate("/auth");
             return;
         }
 
         if (!file) {
-            setStatusUpload("Выберите файл видео", "error");
+            setFile("Выберите файл видео");
             return;
         }
 
@@ -132,7 +134,7 @@ export default function UploadPage() {
         setUploading(true);
         setUploaded(false);
         setProgress(0);
-        setStatusUpload("Начинаю загрузку…", "ok");
+        setUploadStatus("Начинаю загрузку…");
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", apiBase + "/api/streaming/video/upload", true);
@@ -142,13 +144,13 @@ export default function UploadPage() {
             if (e.lengthComputable) {
                 const percent = Math.round((e.loaded / e.total) * 100);
                 setProgress(percent);
-                setStatusUpload(`Загрузка файла… ${percent}%`, "ok");
+                setUploadStatus(`Загрузка файла… ${percent}%`);
             }
         };
 
         xhr.onload = () => {
             setProgress(100);
-            setStatusUpload("Файл загружен, началась обработка", "ok");
+            setUploadStatus("Файл загружен, началась обработка");
             setUploaded(true);
             setUploading(false);
         };
@@ -171,26 +173,25 @@ export default function UploadPage() {
                         null
                     );*/
                 } else {
-                    setStatusUpload("Сервер не вернул jobId", "error");
+                    setFileError("Сервер не вернул jobId");
                 }
             } else if (xhr.status === 401 || xhr.status === 403) {
-                setStatusUpload("Сессия истекла, войдите снова", "error");
+                setFileError("Сессия истекла, войдите снова");
                 navigate("/auth");
             } else {
-                setStatusUpload(
-                    `Ошибка загрузки: HTTP ${xhr.status}`,
-                    "error"
-                );
+                setFileError(`Ошибка загрузки: HTTP ${xhr.status}`,);
             }
         };
 
         xhr.onerror = () => {
-            setStatusUpload("Сетевая ошибка при загрузке", "error");
+            setFileError("Сетевая ошибка при загрузке");
             setUploading(false);
         };
 
         xhr.send(formData);
     }
+
+    if (!token) return <Navigate to="/auth" replace/>;
 
     return (
         <>
@@ -260,7 +261,7 @@ export default function UploadPage() {
                 <Button
                     variant="contained"
                     onClick={startUpload}
-                    disabled={!canUpload || !file}
+                    disabled={!canUpload || !file || fileError}
                 >
                     Загрузить
                 </Button>
@@ -268,7 +269,7 @@ export default function UploadPage() {
                 {(uploading || uploaded) && (
                     <Box>
                         <Typography variant="caption" color="text.secondary" noWrap>
-                            {status.msg}
+                            {uploadStatus}
                         </Typography>
                         <LinearProgress
                             variant="determinate"
@@ -294,6 +295,12 @@ export default function UploadPage() {
                             </Button>
                         </Stack>
                     </Stack>
+                )}
+
+                {fileError && (
+                    <Typography variant="caption" color="error" textAlign="center">
+                        {fileError}
+                    </Typography>
                 )}
             </Stack>
         </>
