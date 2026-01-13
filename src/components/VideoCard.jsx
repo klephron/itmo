@@ -42,7 +42,7 @@ export const VideoCard = ({ video, onClick, elevation = 1 }) => {
                                 >
                                     {video.uploaderName}
                                 </Typography>
-                                {` · ${video.viewsCount} ${formatViews(video.viewsCount)}`}
+                                {video.viewsCount && ` · ${video.viewsCount} ${formatViews(video.viewsCount)}`}
                                 {` · ${video.likesCount} ${formatLikes(video.likesCount)}`}
                                 {` · ${formatDate(video.uploadedAt)}`}
                             </>
