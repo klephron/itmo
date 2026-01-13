@@ -49,22 +49,23 @@ public class CommentService {
             return applyMine(cached, currentUserId);
         }
 
-        Page<CommentDto> page = listComments(videoUuid, currentUserId, Pageable.unpaged());
+        Page<CommentDto> page = listComments(videoUuid, currentUserId, Pageable.unpaged(), Sort.Direction.DESC);
         writeCommentsCache(videoUuid, page.getContent());
         return page.getContent();
     }
 
     @Transactional(readOnly = true)
-    public Page<CommentDto> listComments(UUID videoUuid, Long currentUserId, Pageable pageable) {
+    public Page<CommentDto> listComments(UUID videoUuid, Long currentUserId, Pageable pageable, Sort.Direction direction) {
         this.videoMetadataPublicApi.getRequired(videoUuid);
 
+        Sort.Direction dir = direction == null ? Sort.Direction.DESC : direction;
         Pageable ordered = pageable == null
-                ? PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt"))
+                ? PageRequest.of(0, 20, Sort.by(dir, "createdAt"))
                 : PageRequest.of(
-                Math.max(0, pageable.getPageNumber()),
-                Math.max(1, pageable.getPageSize()),
-                Sort.by(Sort.Direction.ASC, "createdAt")
-        );
+                        Math.max(0, pageable.getPageNumber()),
+                        Math.max(1, pageable.getPageSize()),
+                        Sort.by(dir, "createdAt")
+                );
 
         Page<CommentEntity> page = this.commentRepository.findByVideoUuid(videoUuid, ordered);
 

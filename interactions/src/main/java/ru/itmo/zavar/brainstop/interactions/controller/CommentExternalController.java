@@ -35,9 +35,11 @@ public class CommentExternalController {
     public ResponseEntity<Page<CommentDto>> list(@PathVariable UUID videoUuid,
                                                  @RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "20") int size,
+                                                 @RequestParam(name = "sort", defaultValue = "desc") String sort,
                                                  @AuthenticationPrincipal CurrentUser principal) {
         Long currentUserId = principal != null ? principal.getId() : null;
-        return ResponseEntity.ok(this.commentService.listComments(videoUuid, currentUserId, PageRequest.of(Math.max(0, page), Math.max(1, size))));
+        org.springframework.data.domain.Sort.Direction direction = org.springframework.data.domain.Sort.Direction.fromOptionalString(sort).orElse(org.springframework.data.domain.Sort.Direction.DESC);
+        return ResponseEntity.ok(this.commentService.listComments(videoUuid, currentUserId, PageRequest.of(Math.max(0, page), Math.max(1, size)), direction));
     }
 
     @GetMapping("/{commentId}")

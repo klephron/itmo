@@ -124,7 +124,7 @@ class CommentServiceTest {
         when(commentRepository.findByVideoUuid(any(UUID.class), any())).thenReturn(page);
         when(userProfilePublicApi.findUserSummary(anyLong())).thenReturn(Optional.of(author));
 
-        Page<CommentDto> result = commentService.listComments(videoUuid, 100L, PageRequest.of(0, 20));
+        Page<CommentDto> result = commentService.listComments(videoUuid, 100L, PageRequest.of(0, 20), org.springframework.data.domain.Sort.Direction.DESC);
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).text()).isEqualTo("Great video!");

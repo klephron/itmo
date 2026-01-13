@@ -58,14 +58,14 @@ class CommentExternalControllerTest {
     @DisplayName("BE-UNIT-COMM-CTL-01: Получение списка комментариев")
     void list_success() {
         Page<CommentDto> page = new PageImpl<>(List.of(testComment));
-        when(commentService.listComments(any(UUID.class), anyLong(), any())).thenReturn(page);
+        when(commentService.listComments(any(UUID.class), anyLong(), any(), any())).thenReturn(page);
 
-        ResponseEntity<Page<CommentDto>> response = controller.list(videoUuid, 0, 20, currentUser);
+        ResponseEntity<Page<CommentDto>> response = controller.list(videoUuid, 0, 20, "desc", currentUser);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getContent()).hasSize(1);
-        verify(commentService).listComments(eq(videoUuid), eq(100L), any());
+        verify(commentService).listComments(eq(videoUuid), eq(100L), any(), any());
     }
 
     @Test
@@ -73,12 +73,12 @@ class CommentExternalControllerTest {
     @DisplayName("BE-UNIT-COMM-CTL-02: Получение комментариев анонимом")
     void list_anonymous() {
         Page<CommentDto> page = new PageImpl<>(List.of(testComment));
-        when(commentService.listComments(any(UUID.class), any(), any())).thenReturn(page);
+        when(commentService.listComments(any(UUID.class), any(), any(), any())).thenReturn(page);
 
-        ResponseEntity<Page<CommentDto>> response = controller.list(videoUuid, 0, 20, null);
+        ResponseEntity<Page<CommentDto>> response = controller.list(videoUuid, 0, 20, "asc", null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(commentService).listComments(eq(videoUuid), eq(null), any());
+        verify(commentService).listComments(eq(videoUuid), eq(null), any(), any());
     }
 
     @Test
