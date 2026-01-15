@@ -37,6 +37,7 @@ public class FeedSessionService {
     private static final int MAX_HISTORY = 100;
     private static final int MAX_PAGE_ATTEMPTS = 5;
     private static final int MAX_REFRESH_ATTEMPTS = 2;
+    private static final int PREFETCH_PAGES = 3;
     private static final Duration SESSION_TTL = Duration.ofMinutes(30);
 
     private static final String META_DEVICE = "deviceId";
@@ -66,11 +67,12 @@ public class FeedSessionService {
         SessionMeta meta = new SessionMeta(deviceId, userId, safePageSize, 0, 0, 0L, false);
         PageLoad load = fetchItems(userId, seenKey, safePageSize, 0, safePageSize, MAX_PAGE_ATTEMPTS);
         List<FeedVideoDto> items = load.items();
+        List<FeedVideoDto> buffered = load.buffered();
         meta = meta.withNextPage(load.nextPage()).withExhausted(load.exhausted());
 
         if (!items.isEmpty()) {
-            pushPage(listKey, items);
-            meta = meta.withTotal(items.size()).withCursor(0);
+            appendPages(listKey, items, buffered, safePageSize);
+            meta = meta.withTotal(items.size() + buffered.size()).withCursor(0);
         } else {
             meta = meta.withCursor(0);
         }
@@ -111,12 +113,14 @@ public class FeedSessionService {
         String seenKey = seenKey(feedId);
         PageLoad load = fetchItems(meta.userId(), seenKey, pageSize, meta.nextPage(), pageSize, MAX_PAGE_ATTEMPTS);
         List<FeedVideoDto> items = load.items();
+        List<FeedVideoDto> buffered = load.buffered();
         int nextPage = load.nextPage();
 
         if (items.isEmpty()) {
             PageLoad refresh = fetchItems(meta.userId(), seenKey, pageSize, 0, pageSize, MAX_REFRESH_ATTEMPTS);
             if (!refresh.items().isEmpty()) {
                 items = refresh.items();
+                buffered = refresh.buffered();
                 nextPage = refresh.nextPage();
                 meta = meta.withExhausted(refresh.exhausted());
             } else {
@@ -129,9 +133,10 @@ public class FeedSessionService {
         meta = meta.withNextPage(nextPage);
 
         if (!items.isEmpty()) {
-            pushPage(listKey, items);
+            long pageCountBefore = pageCount;
+            appendPages(listKey, items, buffered, pageSize);
             pageCount = listSize(listKey);
-            meta = meta.withCursor((int) pageCount - 1).withTotal(meta.total() + items.size());
+            meta = meta.withCursor((int) pageCountBefore).withTotal(meta.total() + items.size() + buffered.size());
         }
 
         meta = trimHistory(feedId, meta);
@@ -176,8 +181,11 @@ public class FeedSessionService {
         int attempts = 0;
         boolean exhausted = false;
         List<FeedVideoDto> items = new ArrayList<>();
-        while (items.size() < count && attempts < maxAttempts) {
-            Page<FeedVideoDto> sample = feedService.getFeed(userId, PageRequest.of(page, pageSize));
+        List<FeedVideoDto> buffered = new ArrayList<>();
+        int batchSize = Math.min(pageSize * PREFETCH_PAGES, MAX_HISTORY);
+        int prefetchCapacity = Math.max(0, batchSize - count);
+        while ((items.size() < count || buffered.size() < prefetchCapacity) && attempts < maxAttempts) {
+            Page<FeedVideoDto> sample = feedService.getFeed(userId, PageRequest.of(page, batchSize));
             page++;
             List<FeedVideoDto> content = sample.getContent();
             if (content == null || content.isEmpty()) {
@@ -186,15 +194,19 @@ public class FeedSessionService {
             }
             for (FeedVideoDto dto : content) {
                 if (addSeen(seenKey, dto)) {
-                    items.add(dto);
-                    if (items.size() >= count) {
+                    if (items.size() < count) {
+                        items.add(dto);
+                    } else if (buffered.size() < prefetchCapacity) {
+                        buffered.add(dto);
+                    }
+                    if (items.size() >= count && buffered.size() >= prefetchCapacity) {
                         break;
                     }
                 }
             }
             attempts++;
         }
-        return new PageLoad(items, page, exhausted);
+        return new PageLoad(items, buffered, page, exhausted);
     }
 
     private SessionMeta trimHistory(String feedId, SessionMeta meta) {
@@ -239,11 +251,29 @@ public class FeedSessionService {
         }
     }
 
-    private void pushPage(String listKey, List<FeedVideoDto> items) {
-        if (items == null || items.isEmpty()) {
+    private void appendPages(String listKey,
+                             List<FeedVideoDto> items,
+                             List<FeedVideoDto> buffered,
+                             int pageSize) {
+        if ((items == null || items.isEmpty()) && (buffered == null || buffered.isEmpty())) {
             return;
         }
-        listOps().rightPushAll(listKey, List.of(toJson(items)));
+        List<String> payloads = new ArrayList<>();
+        if (items != null && !items.isEmpty()) {
+            payloads.add(toJson(items));
+        }
+        if (buffered != null && !buffered.isEmpty()) {
+            for (int i = 0; i < buffered.size(); i += pageSize) {
+                int to = Math.min(i + pageSize, buffered.size());
+                List<FeedVideoDto> page = buffered.subList(i, to);
+                if (!page.isEmpty()) {
+                    payloads.add(toJson(page));
+                }
+            }
+        }
+        if (!payloads.isEmpty()) {
+            listOps().rightPushAll(listKey, payloads);
+        }
     }
 
     private List<FeedVideoDto> readPage(String listKey, int index) {
@@ -485,6 +515,9 @@ public class FeedSessionService {
         }
     }
 
-    private record PageLoad(List<FeedVideoDto> items, int nextPage, boolean exhausted) {
+    private record PageLoad(List<FeedVideoDto> items,
+                            List<FeedVideoDto> buffered,
+                            int nextPage,
+                            boolean exhausted) {
     }
 }
