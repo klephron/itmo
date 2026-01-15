@@ -72,14 +72,14 @@ streaming:
 search:
   embedding:
     max-distance: 0.6
+    relaxed-max-distance: 0.9
 
 storage:
   client:
     base-url: http://storage-service
 
 transcoder:
-  ffmpeg-path: /usr/bin/ffmpeg
-  ffprobe-path: /usr/bin/ffprobe
+  # ffmpeg/ffprobe paths now provided via container ENV or OS-specific profile (application-windows.yml)
 
 app:
   jwt:
@@ -94,6 +94,7 @@ logging:
   level:
     org.springframework.security: INFO
     io.github.resilience4j.circuitbreaker: INFO
+    ru.itmo.zavar.brainstop.video.service.FeedService: DEBUG
 
 management:
   endpoints:

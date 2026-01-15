@@ -31,6 +31,7 @@ public class FeedService {
     private static final double WATCH_THRESHOLD = 0.5;
     private static final double WATCH_SCORE_WEIGHT = 0.2;
     private static final int DEBUG_SCORE_LIMIT = 20;
+    private static final int CANDIDATE_SAMPLE_SIZE = 200;
 
     private final FileMetadataRepository fileMetadataRepository;
     private final UserProfilePublicApi userProfilePublicApi;
@@ -41,12 +42,22 @@ public class FeedService {
     private final VectorConverter vectorConverter = new VectorConverter();
     @Value("${search.embedding.max-distance:0.6}")
     private double maxEmbeddingDistance;
+    @Value("${search.embedding.relaxed-max-distance:0.9}")
+    private double relaxedMaxEmbeddingDistance;
 
     public Page<FeedVideoDto> getFeed(Long currentUserId, Pageable pageable) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Feed request userId={}, pageNumber={}, pageSize={}", currentUserId, pageable.getPageNumber(), pageable.getPageSize());
+        }
 
         Page<FileMetadataEntity> page = resolvePage(currentUserId, pageable);
 
         List<FileMetadataEntity> entities = page.getContent();
+        if (log.isDebugEnabled()) {
+            log.debug("Feed raw page content (after resolvePage) size={} ids={}", entities.size(),
+                    entities.stream().map(FileMetadataEntity::getId).toList());
+        }
 
         Set<Long> uploaderIds = entities.stream()
                 .map(FileMetadataEntity::getUploaderId)
@@ -56,6 +67,11 @@ public class FeedService {
         Set<Long> videoIds = entities.stream()
                 .map(FileMetadataEntity::getId)
                 .collect(Collectors.toSet());
+        if (log.isDebugEnabled()) {
+            log.debug("Feed entities after resolvePage (ids={}, uuids={})",
+                    entities.stream().map(FileMetadataEntity::getId).toList(),
+                    entities.stream().map(FileMetadataEntity::getUuid).toList());
+        }
 
         Map<Long, String> avatarByUserId = uploaderIds.stream()
                 .map(id -> userProfilePublicApi.findUserSummary(id)
@@ -144,6 +160,9 @@ public class FeedService {
     private Page<FileMetadataEntity> resolvePage(Long currentUserId, Pageable pageable) {
         // Anonymous users: simple reverse-chronological feed
         if (currentUserId == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Feed resolve: anonymous user, chronological order");
+            }
             return fileMetadataRepository.findAll(PageRequest.of(
                     pageable.getPageNumber(),
                     pageable.getPageSize(),
@@ -152,7 +171,7 @@ public class FeedService {
 
         // Take a larger sample of embedded videos to infer interests from likes + followings
         Page<FileMetadataEntity> recentEmbedded = fileMetadataRepository.findByCombinedEmbeddingIsNotNull(
-                PageRequest.of(0, 200, Sort.by(Sort.Direction.DESC, "uploadedAt")));
+                PageRequest.of(0, CANDIDATE_SAMPLE_SIZE, Sort.by(Sort.Direction.DESC, "uploadedAt")));
 
         Set<Long> candidateUploaderIds = recentEmbedded.getContent().stream()
                 .map(FileMetadataEntity::getUploaderId)
@@ -165,6 +184,11 @@ public class FeedService {
         Set<Long> followingIds = followQueryApi.getFollowingWithin(currentUserId, candidateUploaderIds);
         Set<Long> likedRecent = new HashSet<>(likeQueryApi.findLikedVideoIds(currentUserId, candidateVideoIds));
         Map<Long, Double> watchRatios = resolveWatchRatios(currentUserId, candidateVideoIds);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Feed signals userId={}, recentEmbedded={}, following={}, liked={}, watched={}",
+                    currentUserId, recentEmbedded.getTotalElements(), followingIds.size(), likedRecent.size(), watchRatios.size());
+        }
 
         List<WeightedVector> preferenceVectors = recentEmbedded.getContent().stream()
                 .map(f -> {
@@ -190,15 +214,7 @@ public class FeedService {
         float[] preference = weightedAverage(preferenceVectors);
         if (preference == null) {
             // fallback to chronological if no signal
-            Page<FileMetadataEntity> page = fileMetadataRepository.findAll(PageRequest.of(
-                    pageable.getPageNumber(),
-                    pageable.getPageSize(),
-                    Sort.by(Sort.Direction.DESC, "uploadedAt")));
-            List<FileMetadataEntity> filtered = excludeViewed(currentUserId, page.getContent());
-            if (log.isDebugEnabled()) {
-                log.debug("Feed scoring: no preference vectors for user {}, using chronological fallback", currentUserId);
-            }
-            return new PageImpl<>(filtered, page.getPageable(), page.getTotalElements());
+            return buildChronologicalPage(currentUserId, pageable, "no preference vectors");
         }
 
         List<WeightedVector> watchVectors = recentEmbedded.getContent().stream()
@@ -212,27 +228,155 @@ public class FeedService {
                 .filter(Objects::nonNull)
                 .toList();
         float[] watchPreference = weightedAverage(watchVectors);
+        if (log.isDebugEnabled()) {
+            log.debug("Feed signals: preferenceVectors={}, watchVectors={}, preferenceNull={}, watchPreferenceNull={}",
+                    preferenceVectors.size(), watchVectors.size(), preference == null, watchPreference == null);
+        }
 
         String literal = vectorConverter.convertToDatabaseColumn(preference);
-        // fetch a ranked sample, then re-rank with engagement signals and paginate manually
-        Page<FileMetadataEntity> sample = fileMetadataRepository.searchByEmbedding(
+        Page<FileMetadataEntity> primarySample = fileMetadataRepository.searchByEmbedding(
                 literal,
                 maxEmbeddingDistance,
-                PageRequest.of(0, 200));
+                PageRequest.of(0, CANDIDATE_SAMPLE_SIZE));
+        List<FileMetadataEntity> primaryRanked = rankSample(currentUserId, preference, watchPreference, primarySample, "primary");
+
+        Page<FileMetadataEntity> relaxedSample = fileMetadataRepository.searchByEmbedding(
+                literal,
+                relaxedMaxEmbeddingDistance,
+                PageRequest.of(0, CANDIDATE_SAMPLE_SIZE));
+        List<FileMetadataEntity> relaxedRanked = rankSample(currentUserId, preference, watchPreference, relaxedSample, "relaxed");
+
+        List<FileMetadataEntity> chronological = buildChronologicalList(currentUserId, pageable, "combined");
+        List<FileMetadataEntity> ranked = mergeStages(primaryRanked, relaxedRanked, chronological);
+
+        if (ranked.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        int from = (int) pageable.getOffset();
+        int to = Math.min(from + pageable.getPageSize(), ranked.size());
+        if (log.isDebugEnabled()) {
+            log.debug("Feed paging: rankedSize={}, from={}, to={}, pageNumber={}, pageSize={}",
+                    ranked.size(), from, to, pageable.getPageNumber(), pageable.getPageSize());
+        }
+        if (from >= ranked.size()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, ranked.size());
+        }
+        List<FileMetadataEntity> slice = ranked.subList(from, to);
+        if (log.isDebugEnabled()) {
+            log.debug("Feed final slice ids={} uuids={}",
+                    slice.stream().map(FileMetadataEntity::getId).toList(),
+                    slice.stream().map(FileMetadataEntity::getUuid).toList());
+        }
+        return new PageImpl<>(slice, pageable, ranked.size());
+    }
+
+    private List<FileMetadataEntity> rankSample(Long currentUserId,
+                                                float[] preference,
+                                                float[] watchPreference,
+                                                Page<FileMetadataEntity> sample,
+                                                String stage) {
+        if (log.isDebugEnabled()) {
+            log.debug("Feed candidate distances (stage={}, userId={}) size={}", stage, currentUserId, sample.getTotalElements());
+            for (FileMetadataEntity e : sample) {
+                double sim = cosineSimilarity(preference, e.getCombinedEmbedding());
+                double watchSim = cosineSimilarity(watchPreference, e.getCombinedEmbedding());
+                double dist = 1.0 - sim;
+                double watchDist = 1.0 - watchSim;
+                log.debug("Candidate videoId={} uuid={} sim={} dist={} watchSim={} watchDist={}",
+                        e.getId(),
+                        e.getUuid(),
+                        String.format(Locale.ROOT, "%.4f", sim),
+                        String.format(Locale.ROOT, "%.4f", dist),
+                        String.format(Locale.ROOT, "%.4f", watchSim),
+                        String.format(Locale.ROOT, "%.4f", watchDist));
+            }
+        }
+
+        if (sample.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Feed ranking stage={} is empty for user {}", stage, currentUserId);
+            }
+            return Collections.emptyList();
+        }
 
         List<FileMetadataEntity> ranked = new ArrayList<>(sample.getContent());
+        if (log.isDebugEnabled()) {
+            log.debug("Feed sample before rerank (stage={}) ids={} uuids={}",
+                    stage,
+                    ranked.stream().map(FileMetadataEntity::getId).toList(),
+                    ranked.stream().map(FileMetadataEntity::getUuid).toList());
+        }
         ranked.sort(Comparator.comparingDouble((FileMetadataEntity e) ->
                         score(preference, watchPreference, e))
                 .reversed());
 
         ranked = excludeViewed(currentUserId, ranked);
-        logScoreDebug(currentUserId, preference, watchPreference, ranked);
-        int from = (int) pageable.getOffset();
-        int to = Math.min(from + pageable.getPageSize(), ranked.size());
-        if (from >= ranked.size()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, ranked.size());
+        if (ranked.isEmpty() && log.isDebugEnabled()) {
+            log.debug("Feed scoring: ranked list empty after excluding viewed for user {}, stage={}, sampleSize={}",
+                    currentUserId, stage, sample.getTotalElements());
         }
-        return new PageImpl<>(ranked.subList(from, to), pageable, ranked.size());
+        logScoreDebug(currentUserId, preference, watchPreference, ranked);
+        return ranked;
+    }
+
+    private Page<FileMetadataEntity> buildChronologicalPage(Long currentUserId, Pageable pageable, String reason) {
+        List<FileMetadataEntity> filtered = buildChronologicalList(currentUserId, pageable, reason);
+        int from = (int) pageable.getOffset();
+        int to = Math.min(from + pageable.getPageSize(), filtered.size());
+        List<FileMetadataEntity> slice = from >= filtered.size()
+                ? Collections.emptyList()
+                : filtered.subList(from, to);
+        return new PageImpl<>(slice, pageable, filtered.size());
+    }
+
+    private List<FileMetadataEntity> buildChronologicalList(Long currentUserId, Pageable pageable, String reason) {
+        int needed = (pageable.getPageNumber() + 1) * pageable.getPageSize();
+        int fetchSize = Math.max(needed + pageable.getPageSize(), CANDIDATE_SAMPLE_SIZE);
+        Page<FileMetadataEntity> page = fileMetadataRepository.findAll(PageRequest.of(
+                0,
+                fetchSize,
+                Sort.by(Sort.Direction.DESC, "uploadedAt")));
+        List<FileMetadataEntity> filtered = excludeViewed(currentUserId, page.getContent());
+        if (log.isDebugEnabled()) {
+            log.debug("Feed chronological (reason={}): total={}, afterViewed={}",
+                    reason, page.getTotalElements(), filtered.size());
+        }
+        return filtered;
+    }
+
+    private List<FileMetadataEntity> mergeStages(List<FileMetadataEntity> primary,
+                                                 List<FileMetadataEntity> relaxed,
+                                                 List<FileMetadataEntity> chronological) {
+        Map<String, FileMetadataEntity> merged = new LinkedHashMap<>();
+        appendStage(merged, primary);
+        appendStage(merged, relaxed);
+        appendStage(merged, chronological);
+        if (log.isDebugEnabled()) {
+            log.debug("Feed merge: primary={}, relaxed={}, chronological={}, merged={}",
+                    primary.size(), relaxed.size(), chronological.size(), merged.size());
+        }
+        return new ArrayList<>(merged.values());
+    }
+
+    private void appendStage(Map<String, FileMetadataEntity> merged, List<FileMetadataEntity> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (FileMetadataEntity entity : items) {
+            if (entity == null) {
+                continue;
+            }
+            String key;
+            if (entity.getId() != null) {
+                key = "id:" + entity.getId();
+            } else if (entity.getUuid() != null) {
+                key = "uuid:" + entity.getUuid();
+            } else {
+                continue;
+            }
+            merged.putIfAbsent(key, entity);
+        }
     }
 
     private List<FileMetadataEntity> excludeViewed(Long userId, List<FileMetadataEntity> items) {
@@ -248,12 +392,20 @@ public class FeedService {
         }
         List<Long> viewedList = interactionsInternalClient.getViewedVideoIds(new VideoIdsRequest(userId, ids));
         if (viewedList == null || viewedList.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Feed scoring: no viewed data for user {}, keeping all {} items", userId, items.size());
+            }
             return items;
         }
         Set<Long> viewed = new HashSet<>(viewedList);
-        return items.stream()
+        List<FileMetadataEntity> result = items.stream()
                 .filter(item -> item.getId() == null || !viewed.contains(item.getId()))
                 .toList();
+        if (log.isDebugEnabled()) {
+            log.debug("Feed scoring: excluded viewed items for user {}: {} removed of {}, viewedIds={}",
+                    userId, items.size() - result.size(), items.size(), viewed);
+        }
+        return result;
     }
 
     private float[] weightedAverage(List<WeightedVector> vectors) {
@@ -314,23 +466,30 @@ public class FeedService {
             return;
         }
         int limit = Math.min(DEBUG_SCORE_LIMIT, ranked.size());
+        log.debug("Feed rerank top{} ids={} uuids={}", limit,
+                ranked.stream().limit(limit).map(FileMetadataEntity::getId).toList(),
+                ranked.stream().limit(limit).map(FileMetadataEntity::getUuid).toList());
         for (int i = 0; i < limit; i++) {
             FileMetadataEntity entity = ranked.get(i);
             double sim = cosineSimilarity(preference, entity.getCombinedEmbedding());
             double watchSim = cosineSimilarity(watchPreference, entity.getCombinedEmbedding());
+            double dist = 1.0 - sim;
+            double watchDist = 1.0 - watchSim;
             long likesCount = entity.getLikesCount() != null ? entity.getLikesCount() : 0L;
             long viewsCount = entity.getViewsCount() != null ? entity.getViewsCount() : 0L;
             double likes = Math.log1p(likesCount);
             double views = Math.log1p(viewsCount);
             double score = sim + WATCH_SCORE_WEIGHT * watchSim + 0.3 * likes + 0.2 * views;
             log.debug(
-                    "Feed score user={} rank={} videoId={} uuid={} sim={} watchSim={} likes={} views={} score={}",
+                    "Feed score user={} rank={} videoId={} uuid={} sim={} dist={} watchSim={} watchDist={} likes={} views={} score={}",
                     userId,
                     i,
                     entity.getId(),
                     entity.getUuid(),
                     String.format(Locale.ROOT, "%.4f", sim),
+                    String.format(Locale.ROOT, "%.4f", dist),
                     String.format(Locale.ROOT, "%.4f", watchSim),
+                    String.format(Locale.ROOT, "%.4f", watchDist),
                     String.format(Locale.ROOT, "%.4f", likes),
                     String.format(Locale.ROOT, "%.4f", views),
                     String.format(Locale.ROOT, "%.4f", score)

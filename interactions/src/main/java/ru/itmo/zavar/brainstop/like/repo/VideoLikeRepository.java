@@ -19,6 +19,14 @@ public interface VideoLikeRepository extends JpaRepository<VideoLikeEntity, Long
     long countByVideoId(Long videoId);
 
     @Modifying
+    @Query(value = """
+            insert into video_likes (video_id, user_id, created_at)
+            values (:videoId, :userId, CURRENT_TIMESTAMP)
+            on conflict (video_id, user_id) do nothing
+            """, nativeQuery = true)
+    int insertIgnore(@Param("videoId") Long videoId, @Param("userId") Long userId);
+
+    @Modifying
     @Query("delete from VideoLikeEntity v where v.videoId = :videoId and v.userId = :userId")
     int deleteByVideoIdAndUserId(@Param("videoId") Long videoId, @Param("userId") Long userId);
 
@@ -31,4 +39,3 @@ public interface VideoLikeRepository extends JpaRepository<VideoLikeEntity, Long
     List<Long> findLikedVideoIdsByUserIdAndVideoIdIn(@Param("userId") Long userId,
                                                      @Param("videoIds") Collection<Long> videoIds);
 }
-

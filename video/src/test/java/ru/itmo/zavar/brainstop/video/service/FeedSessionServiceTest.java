@@ -71,8 +71,9 @@ class FeedSessionServiceTest {
 
         assertThat(response.items()).hasSize(1);
         assertThat(response.items().get(0).uuid()).isEqualTo(first.uuid());
-        assertThat(response.prevPos()).isNull();
-        assertThat(response.nextPos()).isNull();
+        assertThat(response.hasPrev()).isFalse();
+        assertThat(response.hasNext()).isFalse();
+        assertThat(response.total()).isEqualTo(1L);
     }
 
     @Test
@@ -87,23 +88,25 @@ class FeedSessionServiceTest {
 
         FeedSessionResponse start = service.startSession(deviceId, userId, 2);
 
-        assertThat(start.prevPos()).isNull();
-        assertThat(start.nextPos()).isEqualTo(2L);
+        assertThat(start.hasPrev()).isFalse();
+        assertThat(start.hasNext()).isTrue();
 
-        FeedSessionResponse next = service.next(start.feedId(), deviceId, userId, 2, null);
+        FeedSessionResponse next = service.next(start.feedId(), deviceId, userId, 2);
 
         assertThat(next.items()).hasSize(1);
         assertThat(next.items().get(0).uuid()).isEqualTo(third.uuid());
-        assertThat(next.prevPos()).isEqualTo(0L);
-        assertThat(next.nextPos()).isNull();
+        assertThat(next.hasPrev()).isTrue();
+        assertThat(next.hasNext()).isFalse();
+        assertThat(next.total()).isEqualTo(3L);
 
-        FeedSessionResponse prev = service.prev(start.feedId(), deviceId, userId, 2, null);
+        FeedSessionResponse prev = service.prev(start.feedId(), deviceId, userId);
 
         assertThat(prev.items()).hasSize(2);
         assertThat(prev.items().get(0).uuid()).isEqualTo(first.uuid());
         assertThat(prev.items().get(1).uuid()).isEqualTo(second.uuid());
-        assertThat(prev.prevPos()).isNull();
-        assertThat(prev.nextPos()).isEqualTo(2L);
+        assertThat(prev.hasPrev()).isFalse();
+        assertThat(prev.hasNext()).isTrue();
+        assertThat(prev.total()).isEqualTo(3L);
     }
 
     @Test
@@ -124,6 +127,7 @@ class FeedSessionServiceTest {
 
         assertThat(response.items()).hasSize(1);
         assertThat(response.items().get(0).likedByMe()).isTrue();
+        assertThat(response.total()).isEqualTo(1L);
     }
 
     private void stubFeed(Long userId, List<FeedVideoDto> page0, List<FeedVideoDto> page1) {

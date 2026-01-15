@@ -14,7 +14,6 @@ import ru.itmo.zavar.brainstop.common.test.FR;
 import ru.itmo.zavar.brainstop.common.test.Layer;
 import ru.itmo.zavar.brainstop.common.test.TestLayer;
 import ru.itmo.zavar.brainstop.common.test.TestType;
-import ru.itmo.zavar.brainstop.like.model.VideoLikeEntity;
 import ru.itmo.zavar.brainstop.like.repo.VideoLikeRepository;
 import ru.itmo.zavar.brainstop.like.service.LikeService;
 
@@ -67,13 +66,13 @@ class LikeServiceTest {
     @DisplayName("BE-UNIT-LIKE-01: Добавление лайка увеличивает счетчик")
     void likeVideo_success() {
         when(videoMetadataPublicApi.getRequired(any(UUID.class))).thenReturn(videoMeta);
-        when(videoLikeRepository.existsByVideoIdAndUserId(anyLong(), anyLong())).thenReturn(false);
+        when(videoLikeRepository.insertIgnore(anyLong(), anyLong())).thenReturn(1);
         when(videoMetadataPublicApi.incrementLikesCount(anyLong(), anyLong())).thenReturn(6L);
 
         long result = likeService.likeVideo(videoUuid, 100L);
 
         assertThat(result).isEqualTo(6L);
-        verify(videoLikeRepository).save(any(VideoLikeEntity.class));
+        verify(videoLikeRepository).insertIgnore(1L, 100L);
         verify(videoMetadataPublicApi).incrementLikesCount(1L, 1L);
     }
 
@@ -82,12 +81,12 @@ class LikeServiceTest {
     @DisplayName("BE-UNIT-LIKE-02: Повторный лайк не изменяет счетчик")
     void likeVideo_alreadyExists() {
         when(videoMetadataPublicApi.getRequired(any(UUID.class))).thenReturn(videoMeta);
-        when(videoLikeRepository.existsByVideoIdAndUserId(anyLong(), anyLong())).thenReturn(true);
+        when(videoLikeRepository.insertIgnore(anyLong(), anyLong())).thenReturn(0);
 
         long result = likeService.likeVideo(videoUuid, 100L);
 
         assertThat(result).isEqualTo(5L);
-        verify(videoLikeRepository, never()).save(any(VideoLikeEntity.class));
+        verify(videoMetadataPublicApi, never()).incrementLikesCount(anyLong(), anyLong());
     }
 
     @Test

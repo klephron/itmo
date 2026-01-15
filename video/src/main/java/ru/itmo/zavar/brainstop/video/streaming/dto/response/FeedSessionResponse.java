@@ -7,7 +7,8 @@ import java.util.List;
 public record FeedSessionResponse(
         String feedId,
         List<FeedVideoDto> items,
-        Long prevPos,
-        Long nextPos
+        boolean hasPrev,
+        boolean hasNext,
+        Long total
 ) {
 }

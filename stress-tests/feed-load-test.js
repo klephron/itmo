@@ -119,7 +119,7 @@ function testFeedSession() {
 
     // Создать сессию
     const startRes = http.post(
-        `${BASE_URL}/api/streaming/video/feed/session/start?size=10`,
+        `${BASE_URL}/api/streaming/video/feed/session/start?count=10`,
         null,
         { headers: { 'X-Device-Id': deviceId } }
     );
@@ -168,7 +168,7 @@ function testFeedSession() {
     // Иногда скролим назад
     if (Math.random() < 0.3) {
         const prevRes = http.get(
-            `${BASE_URL}/api/streaming/video/feed/session/${feedSession.feedId}/prev?count=1`,
+            `${BASE_URL}/api/streaming/video/feed/session/${feedSession.feedId}/prev`,
             { headers: { 'X-Device-Id': deviceId } }
         );
 
