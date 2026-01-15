@@ -71,7 +71,7 @@ class DjlEmbeddingServiceUnitTest {
         float[] result = service.embed("test");
 
         assertThat(result).isNotNull();
-        assertThat(result).hasSize(384);
+        assertThat(result).hasSize(1024);
     }
 
     @Test
@@ -85,7 +85,7 @@ class DjlEmbeddingServiceUnitTest {
         float[] result = service.embed("test");
 
         assertThat(result).isNotNull();
-        assertThat(result).hasSize(384);
+        assertThat(result).hasSize(1024);
     }
 
     @Test
@@ -94,7 +94,7 @@ class DjlEmbeddingServiceUnitTest {
     void embed_emptyString_returnsZeroVector() {
         float[] result = service.embed("");
 
-        assertThat(result).hasSize(384);
+        assertThat(result).hasSize(1024);
         assertThat(result).containsOnly(0.0f);
     }
 
@@ -104,7 +104,7 @@ class DjlEmbeddingServiceUnitTest {
     void embed_nullString_returnsZeroVector() {
         float[] result = service.embed(null);
 
-        assertThat(result).hasSize(384);
+        assertThat(result).hasSize(1024);
         assertThat(result).containsOnly(0.0f);
     }
 
@@ -114,7 +114,7 @@ class DjlEmbeddingServiceUnitTest {
     void embed_blankString_returnsZeroVector() {
         float[] result = service.embed("   \t\n");
 
-        assertThat(result).hasSize(384);
+        assertThat(result).hasSize(1024);
         assertThat(result).containsOnly(0.0f);
     }
 

@@ -97,9 +97,9 @@ class VideoStreamingServiceEmbeddingTest {
             assertThat(meta.getDescriptionEmbedding()).isNotNull();
             assertThat(meta.getCombinedEmbedding()).isNotNull();
 
-            assertThat(meta.getTitleEmbedding().length).isEqualTo(384);
-            assertThat(meta.getDescriptionEmbedding().length).isEqualTo(384);
-            assertThat(meta.getCombinedEmbedding().length).isEqualTo(384);
+            assertThat(meta.getTitleEmbedding().length).isEqualTo(1024);
+            assertThat(meta.getDescriptionEmbedding().length).isEqualTo(1024);
+            assertThat(meta.getCombinedEmbedding().length).isEqualTo(1024);
 
             double norm = 0.0;
             for (float v : meta.getCombinedEmbedding()) {

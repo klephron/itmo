@@ -14,6 +14,48 @@ BEGIN
                 WITH (lists = 100);
         END IF;
 
+        CREATE INDEX IF NOT EXISTS idx_file_meta_search_tsv
+            ON public.file_meta
+            USING gin (
+                to_tsvector('simple',
+                    coalesce(name, '') || ' ' ||
+                    coalesce(description, '') || ' ' ||
+                    coalesce(uploader_name, '')
+                )
+            );
+
+        CREATE INDEX IF NOT EXISTS idx_file_meta_search_tsv_ru
+            ON public.file_meta
+            USING gin (
+                to_tsvector('russian',
+                    coalesce(name, '') || ' ' ||
+                    coalesce(description, '') || ' ' ||
+                    coalesce(uploader_name, '')
+                )
+            );
+
+        CREATE INDEX IF NOT EXISTS idx_file_meta_search_tsv_multi
+            ON public.file_meta
+            USING gin (
+                (
+                    to_tsvector('russian',
+                        coalesce(name, '') || ' ' ||
+                        coalesce(description, '') || ' ' ||
+                        coalesce(uploader_name, '')
+                    ) ||
+                    to_tsvector('english',
+                        coalesce(name, '') || ' ' ||
+                        coalesce(description, '') || ' ' ||
+                        coalesce(uploader_name, '')
+                    ) ||
+                    to_tsvector('simple',
+                        coalesce(name, '') || ' ' ||
+                        coalesce(description, '') || ' ' ||
+                        coalesce(uploader_name, '')
+                    )
+                )
+            );
+
         ANALYZE public.file_meta;
     END IF;
 END $$;

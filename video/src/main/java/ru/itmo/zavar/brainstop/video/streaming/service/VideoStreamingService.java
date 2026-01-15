@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class VideoStreamingService {
 
-    private static final int EMBEDDING_DIM = 384;
+    private static final int EMBEDDING_DIM = 1024;
     private static final List<Integer> DEFAULT_TARGET_HEIGHTS = List.of(144, 240, 360, 480, 720, 1080);
 
     private final FileMetadataRepository fileMetadataRepository;
@@ -377,6 +377,10 @@ public class VideoStreamingService {
 
     public int rebuildEmbeddings() {
         List<FileMetadataEntity> all = this.fileMetadataRepository.findAll();
+        int total = all.size();
+        int processed = 0;
+        int logEvery = Math.max(1, total / 20);
+        log.info("Embedding rebuild started, total={}", total);
         int updated = 0;
         for (FileMetadataEntity meta : all) {
             try {
@@ -391,6 +395,11 @@ public class VideoStreamingService {
                 updated++;
             } catch (Exception e) {
                 log.warn("Failed to rebuild embeddings for {}", meta.getUuid(), e);
+            }
+            processed++;
+            if (processed % logEvery == 0 || processed == total) {
+                int percent = total == 0 ? 100 : (int) Math.round((processed * 100.0) / total);
+                log.info("Embedding rebuild progress: {}/{} ({}%)", processed, total, percent);
             }
         }
         log.info("Embedding rebuild finished, updated = {}", updated);
