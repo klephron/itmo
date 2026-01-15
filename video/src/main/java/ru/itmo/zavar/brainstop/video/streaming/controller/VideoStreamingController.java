@@ -124,44 +124,41 @@ public class VideoStreamingController {
 
     @PostMapping("/feed/session/start")
     @Operation(summary = "Start feed session")
-    public ResponseEntity<FeedSessionResponse> startFeedSession(@RequestParam(defaultValue = "10") int size,
+    public ResponseEntity<FeedSessionResponse> startFeedSession(@RequestParam(defaultValue = "10") int count,
                                                                 @RequestHeader("X-Device-Id") String deviceId,
                                                                 @AuthenticationPrincipal CurrentUser principal) {
         if (deviceId == null || deviceId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Device-Id header is required");
         }
         Long userId = principal != null ? principal.getId() : null;
-        FeedSessionResponse response = this.feedSessionService.startSession(deviceId, userId, size);
+        FeedSessionResponse response = this.feedSessionService.startSession(deviceId, userId, count);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/feed/session/{feedId}/next")
     @Operation(summary = "Next feed session items")
     public ResponseEntity<FeedSessionResponse> nextFeedItems(@PathVariable String feedId,
-                                                             @RequestParam(defaultValue = "1") int count,
-                                                             @RequestParam(required = false) Long pos,
+                                                             @RequestParam(defaultValue = "10") int count,
                                                              @RequestHeader("X-Device-Id") String deviceId,
                                                              @AuthenticationPrincipal CurrentUser principal) {
         if (deviceId == null || deviceId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Device-Id header is required");
         }
         Long userId = principal != null ? principal.getId() : null;
-        FeedSessionResponse response = this.feedSessionService.next(feedId, deviceId, userId, count, pos);
+        FeedSessionResponse response = this.feedSessionService.next(feedId, deviceId, userId, count);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/feed/session/{feedId}/prev")
     @Operation(summary = "Previous feed session items")
     public ResponseEntity<FeedSessionResponse> prevFeedItems(@PathVariable String feedId,
-                                                             @RequestParam(defaultValue = "1") int count,
-                                                             @RequestParam(required = false) Long pos,
                                                              @RequestHeader("X-Device-Id") String deviceId,
                                                              @AuthenticationPrincipal CurrentUser principal) {
         if (deviceId == null || deviceId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "X-Device-Id header is required");
         }
         Long userId = principal != null ? principal.getId() : null;
-        FeedSessionResponse response = this.feedSessionService.prev(feedId, deviceId, userId, count, pos);
+        FeedSessionResponse response = this.feedSessionService.prev(feedId, deviceId, userId);
         return ResponseEntity.ok(response);
     }
 

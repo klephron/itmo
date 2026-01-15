@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -1050,14 +1050,13 @@
     let feedPage = 0;
     const FEED_PAGE_SIZE = 10;
     let feedHasNext = false;
+    let feedHasPrev = false;
     let feedLoading = false;
     let feedMode = { type: 'global' }; // {type: 'global'} | {type: 'profile', userId, sort}
     let feedTargetUuid = null;
     let feedSessionId = null;
-    let feedPrevPos = null;
-    let feedNextPos = null;
     let feedEndReached = false;
-    let feedStartPos = 0;
+    let feedTotal = null;
     let feedPrefetch = null;
     let profileCurrentInfo = null;
     let authProfileInfo = null;
@@ -2369,40 +2368,20 @@
         });
     }
 
-    function deriveFeedStartPos(data) {
-        const prev = normalizeFeedPos(data ? data.prevPos : null);
-        if (Number.isFinite(prev)) {
-            return prev + FEED_PAGE_SIZE;
-        }
-        const next = normalizeFeedPos(data ? data.nextPos : null);
-        if (Number.isFinite(next)) {
-            return Math.max(0, next - FEED_PAGE_SIZE);
-        }
-        return 0;
-    }
-
-    function normalizeFeedPos(raw) {
-        if (raw === null || raw === undefined) {
-            return null;
-        }
-        const num = Number(raw);
-        return Number.isFinite(num) ? num : null;
-    }
-
     function promotePrefetchToCurrent() {
         if (!feedPrefetch || !Array.isArray(feedPrefetch.items)) {
             return false;
         }
         videos = feedPrefetch.items;
-        feedPrevPos = normalizeFeedPos(feedPrefetch.prevPos);
-        feedNextPos = normalizeFeedPos(feedPrefetch.nextPos);
+        feedHasPrev = !!feedPrefetch.hasPrev;
+        feedHasNext = !!feedPrefetch.hasNext;
         if (feedPrefetch.feedId) {
             feedSessionId = feedPrefetch.feedId;
         }
-        if (Number.isFinite(feedPrefetch.startPos)) {
-            feedStartPos = feedPrefetch.startPos;
+        if (Number.isFinite(feedPrefetch.total)) {
+            feedTotal = feedPrefetch.total;
         }
-        feedEndReached = videos.length === 0 || feedNextPos == null || feedPrefetch.isLast === true;
+        feedEndReached = videos.length === 0 || !feedHasNext;
         feedPrefetch = null;
         currentIndex = videos.length > 0 ? 0 : -1;
         return videos.length > 0;
@@ -2410,25 +2389,44 @@
 
     async function goNext() {
         triggerSwipeAnimation('up');
-        if (videos.length === 0) return;
-
         const isProfileFeed = feedMode.type === 'profile' && feedMode.userId;
+        if (videos.length === 0) {
+            if (isProfileFeed) {
+                setStatusFeed('Больше видео пока нет', 'ok');
+                return;
+            }
+            if (feedLoading) {
+                return;
+            }
+            if (!feedSessionId) {
+                await loadVideoPage(0, false);
+            } else {
+                await loadVideoPage(0, true);
+            }
+            if (promotePrefetchToCurrent()) {
+                await playCurrent();
+            } else if (videos.length > 0) {
+                currentIndex = 0;
+                await playCurrent();
+            } else {
+                setStatusFeed('No more videos', 'ok');
+            }
+            return;
+        }
 
         // 1) Обычный переход вперёд внутри текущей страницы
         if (currentIndex < videos.length - 1) {
             currentIndex++;
             await playCurrent();
 
-            // если близко к концу — подгружаем следующую страницу
-        if (isProfileFeed) {
-            if (feedHasNext && !feedLoading && (videos.length - currentIndex) <= 2) {
-                loadVideoPage(feedPage + 1, true);
+            // если близко к концу - подгружаем следующую страницу (только профиль)
+            if (isProfileFeed) {
+                if (feedHasNext && !feedLoading && (videos.length - currentIndex) <= 2) {
+                    loadVideoPage(feedPage + 1, true);
+                }
             }
-        } else if (!feedLoading && !feedPrefetch && !feedEndReached && (videos.length - currentIndex) <= 2) {
-            loadVideoPage(0, true);
+            return;
         }
-        return;
-    }
 
         // 2) Мы на последнем видео
         if (isProfileFeed) {
@@ -2450,26 +2448,16 @@
         // глобальная лента: страницы не копим, забираем из prefetch
         if (promotePrefetchToCurrent()) {
             await playCurrent();
-            if (!feedEndReached && !feedLoading) {
-                loadVideoPage(0, true);
-            }
             return;
         }
-
-        if (feedEndReached || feedNextPos === null) {
-            setStatusFeed('Больше видео пока нет', 'ok');
+        if (feedLoading) {
             return;
         }
-
         await loadVideoPage(0, true);
-
         if (promotePrefetchToCurrent()) {
             await playCurrent();
-            if (!feedEndReached && !feedLoading) {
-                loadVideoPage(0, true);
-            }
-        } else if (feedEndReached) {
-            setStatusFeed('Больше видео пока нет', 'ok');
+        } else {
+            setStatusFeed('No more videos', 'ok');
         }
     }
 
@@ -2493,21 +2481,14 @@
             return;
         }
 
-        const prevPosValue = normalizeFeedPos(feedPrevPos);
-        if (!Number.isFinite(prevPosValue)) {
+        if (!feedHasPrev) {
             setStatusFeed('Это самое первое видео', 'ok');
             return;
         }
-        if (Number.isFinite(feedStartPos) && prevPosValue >= feedStartPos) {
-            setStatusFeed('Это самое первое видео', 'ok');
-            return;
-        }
-
         feedLoading = true;
         showFeedLoader(true, 'Загружаем видео…');
         try {
-            const pos = prevPosValue;
-            const url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/prev?count=${FEED_PAGE_SIZE}&pos=${pos}`;
+            const url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/prev`;
             const res = await fetch(url, { headers: feedHeaders() });
 
             if (res.status === 401 || res.status === 403) {
@@ -2534,18 +2515,20 @@
                 return;
             }
 
-            if (data && 'prevPos' in data) {
-                feedPrevPos = normalizeFeedPos(data.prevPos);
+            if (data && typeof data.hasPrev === 'boolean') {
+                feedHasPrev = data.hasPrev;
             }
-            if (data && 'nextPos' in data) {
-                feedNextPos = normalizeFeedPos(data.nextPos);
+            if (data && typeof data.hasNext === 'boolean') {
+                feedHasNext = data.hasNext;
             }
             if (data && data.feedId) {
                 feedSessionId = data.feedId;
             }
+            if (data && Number.isFinite(data.total)) {
+                feedTotal = data.total;
+            }
 
-            feedStartPos = deriveFeedStartPos(data);
-            feedEndReached = items.length === 0;
+            feedEndReached = !feedHasNext;
             feedPrefetch = null;
 
             videos = items;
@@ -2577,13 +2560,41 @@
                 videoPosterEl.style.backgroundImage = `url('${poster}')`;
                 videoPosterEl.classList.remove('hidden');
             }
-        } else {
-            player.removeAttribute('poster');
-            if (videoPosterEl) {
-                videoPosterEl.style.backgroundImage = 'none';
-                videoPosterEl.classList.remove('hidden');
-            }
+            return poster;
         }
+
+        player.removeAttribute('poster');
+        if (videoPosterEl) {
+            videoPosterEl.style.backgroundImage = 'none';
+            videoPosterEl.classList.remove('hidden');
+        }
+        return null;
+    }
+
+    function waitForPoster(posterUrl, timeoutMs = 250) {
+        return new Promise((resolve) => {
+            if (!posterUrl) {
+                resolve();
+                return;
+            }
+            const img = new Image();
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                resolve();
+            };
+            const timer = setTimeout(finish, timeoutMs);
+            img.onload = () => {
+                clearTimeout(timer);
+                finish();
+            };
+            img.onerror = () => {
+                clearTimeout(timer);
+                finish();
+            };
+            img.src = posterUrl;
+        });
     }
 
     function hidePoster() {
@@ -2641,7 +2652,11 @@
         currentVideoUuid = v.uuid;
         resetWatchProgress(currentVideoUuid);
 
-        setPlayerPoster(v);
+        const posterUrl = setPlayerPoster(v);
+        if (videoPosterEl) {
+            videoPosterEl.offsetHeight;
+        }
+        await waitForPoster(posterUrl);
         applyQualitySelector(v);
         const selectedQuality = resolveQuality(v);
         const preloadedEl = pickPreloadedElement(v.uuid);
@@ -2674,7 +2689,8 @@
         dateEl.textContent = formatDate(v.uploadedAt);
 
         // если total приходит с бэка — можешь использовать его, пока считаем длину массива
-        countEl.textContent = videos.length + ' видео';
+        const displayTotal = Number.isFinite(feedTotal) ? feedTotal : videos.length;
+        countEl.textContent = displayTotal + ' видео';
 
         // локально известные лайки/просмотры
         const baseLikes = (typeof v.likesCount === 'number') ? v.likesCount : 0;
@@ -3097,19 +3113,14 @@
             } else {
                 if (!append || !feedSessionId) {
                     feedSessionId = null;
-                    feedPrevPos = null;
-                    feedNextPos = null;
+                    feedHasPrev = false;
+                    feedHasNext = false;
                     feedEndReached = false;
-                    feedStartPos = 0;
-                    url = apiBase + `/api/streaming/video/feed/session/start?size=${FEED_PAGE_SIZE}`;
+                    feedTotal = null;
+                    url = apiBase + `/api/streaming/video/feed/session/start?count=${FEED_PAGE_SIZE}`;
                     res = await fetch(url, { method: 'POST', headers: feedHeaders() });
                 } else {
-                    if (feedEndReached) {
-                        showFeedLoader(false);
-                        return;
-                    }
-                    const pos = Number.isFinite(feedNextPos) ? feedNextPos : (feedStartPos + videos.length);
-                    url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/next?count=${FEED_PAGE_SIZE}` + (Number.isFinite(pos) ? `&pos=${pos}` : '');
+                    url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/next?count=${FEED_PAGE_SIZE}`;
                     res = await fetch(url, { headers: feedHeaders() });
                 }
             }
@@ -3169,31 +3180,42 @@
                 if (data && data.feedId) {
                     feedSessionId = data.feedId;
                 }
-                const prevVal = (data && 'prevPos' in data) ? normalizeFeedPos(data.prevPos) : null;
-                const nextVal = (data && 'nextPos' in data) ? normalizeFeedPos(data.nextPos) : null;
-                const startPos = deriveFeedStartPos({ prevPos: prevVal, nextPos: nextVal });
+                const total =
+                    typeof data.total === 'number' ? data.total :
+                        typeof data.totalElements === 'number' ? data.totalElements :
+                            null;
+                if (Number.isFinite(total)) {
+                    feedTotal = total;
+                }
+                const hasPrev = data && typeof data.hasPrev === 'boolean' ? data.hasPrev : false;
+                const hasNext = data && typeof data.hasNext === 'boolean'
+                    ? data.hasNext
+                    : items.length === FEED_PAGE_SIZE;
 
                 if (!append) {
-                    feedPrevPos = prevVal;
-                    feedNextPos = nextVal;
-                    feedStartPos = startPos;
-                    feedEndReached = items.length === 0;
+                    feedHasPrev = hasPrev;
+                    feedHasNext = hasNext;
+                    feedEndReached = !hasNext;
                     feedPrefetch = null;
                     videos = items;
                 } else {
-                    feedPrefetch = {
-                        items,
-                        prevPos: prevVal,
-                        nextPos: nextVal,
-                        startPos,
-                        feedId: data && data.feedId ? data.feedId : feedSessionId,
-                        isLast: nextVal == null && items.length === 0
-                    };
-                    if (items.length === 0) {
-                        feedEndReached = true;
+                    // глобальная лента: держим текущую страницу, следующую складываем в prefetch
+                    if (items.length > 0) {
+                        feedPrefetch = {
+                            items,
+                            hasPrev,
+                            hasNext,
+                            feedId: (data && data.feedId) ? data.feedId : feedSessionId,
+                            total: feedTotal
+                        };
+                    } else {
+                        feedPrefetch = null;
+                        feedHasNext = hasNext;
+                        feedEndReached = !hasNext;
                     }
                 }
-                countEl.textContent = videos.length + ' видео';
+                const displayTotal = Number.isFinite(feedTotal) ? feedTotal : videos.length;
+                countEl.textContent = displayTotal + ' видео';
             }
 
             if (!isProfileFeed && append) {
@@ -3250,7 +3272,7 @@
                 throw new Error(await readApiError(res));
             }
             setStatusStudio('Видео удалено', 'ok');
-            await loadVideoPage(0, true);
+        await loadVideoPage(0, true);
             if (authUser) {
                 await loadAccountProfile();
             }
@@ -3553,14 +3575,13 @@
         feedMode = { type: 'profile', userId, sort: sort || 'uploadedAt,desc' };
         feedPage = 0;
         feedHasNext = false;
+        feedHasPrev = false;
         videos = [];
         currentIndex = -1;
         feedTargetUuid = targetUuid || null;
         feedSessionId = null;
-        feedPrevPos = null;
-        feedNextPos = null;
         feedEndReached = false;
-        feedStartPos = 0;
+        feedTotal = null;
         feedPrefetch = null;
         loadVideoPage(0, false);
     }
@@ -4128,7 +4149,7 @@
                     activeJobs.delete(jobId);
                     renderStudioJobs();
                     setStatusUpload('Видео готово!', 'ok');
-                    await loadVideoPage(0, true);
+        await loadVideoPage(0, true);
                     if (authUser) {
                         await loadAccountProfile();
                     }
@@ -4546,3 +4567,4 @@
 </script>
 </body>
 </html>
+

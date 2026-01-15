@@ -1,9 +1,8 @@
 server:
   port: ${PORT:0}
 
-transcoder:
-  ffprobe-path: "C:/ffmpeg/bin/ffprobe.exe"
-  ffmpeg-path: "C:/ffmpeg/bin/ffmpeg.exe"
+# ffmpeg/ffprobe paths are provided via env (TRANSCODER_FFMPEG_PATH/TRANSCODER_FFPROBE_PATH)
+# or OS-specific profile (see application-windows.yml)
 
 spring:
   application:

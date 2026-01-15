@@ -64,6 +64,8 @@ services:
       JWT_SECRET: jwt_dev_secret
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      TRANSCODER_FFMPEG_PATH: /usr/bin/ffmpeg
+      TRANSCODER_FFPROBE_PATH: /usr/bin/ffprobe
     depends_on:
       - postgres
       - discovery
@@ -229,6 +231,8 @@ services:
       MINIO_SECRET_KEY: minio_admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JWT_SECRET: jwt_dev_secret
+      TRANSCODER_FFMPEG_PATH: /usr/bin/ffmpeg
+      TRANSCODER_FFPROBE_PATH: /usr/bin/ffprobe
     depends_on:
       - postgres
       - discovery

@@ -1,6 +1,7 @@
 package ru.itmo.zavar.brainstop.video.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,14 +35,20 @@ import java.util.UUID;
 public class FeedSessionService {
 
     private static final int MAX_HISTORY = 100;
+    private static final int MAX_PAGE_ATTEMPTS = 5;
+    private static final int MAX_REFRESH_ATTEMPTS = 2;
     private static final Duration SESSION_TTL = Duration.ofMinutes(30);
 
     private static final String META_DEVICE = "deviceId";
     private static final String META_USER = "userId";
     private static final String META_PAGE_SIZE = "pageSize";
+    private static final String META_CURSOR = "cursor";
     private static final String META_NEXT_PAGE = "nextPage";
-    private static final String META_POS = "pos";
-    private static final String META_BASE_INDEX = "baseIndex";
+    private static final String META_TOTAL = "total";
+    private static final String META_EXHAUSTED = "exhausted";
+
+    private static final TypeReference<List<FeedVideoDto>> FEED_LIST_TYPE = new TypeReference<>() {
+    };
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -56,211 +63,214 @@ public class FeedSessionService {
         String metaKey = metaKey(feedId);
         String seenKey = seenKey(feedId);
 
-        Page<FeedVideoDto> page = feedService.getFeed(userId, PageRequest.of(0, safePageSize));
-        List<FeedVideoDto> items = page.getContent();
+        SessionMeta meta = new SessionMeta(deviceId, userId, safePageSize, 0, 0, 0L, false);
+        PageLoad load = fetchItems(userId, seenKey, safePageSize, 0, safePageSize, MAX_PAGE_ATTEMPTS);
+        List<FeedVideoDto> items = load.items();
+        meta = meta.withNextPage(load.nextPage()).withExhausted(load.exhausted());
+
+        if (!items.isEmpty()) {
+            pushPage(listKey, items);
+            meta = meta.withTotal(items.size()).withCursor(0);
+        } else {
+            meta = meta.withCursor(0);
+        }
+
+        meta = trimHistory(feedId, meta);
+        saveMeta(metaKey, meta);
+        touch(feedId);
+
+        long pageCount = listSize(listKey);
         items = refreshLikedByMe(userId, items);
 
-        if (items != null && !items.isEmpty()) {
-            List<String> payloads = new ArrayList<>();
-            for (FeedVideoDto dto : items) {
-                String json = toJson(dto);
-                payloads.add(json);
-                addSeen(seenKey, dto);
-            }
-            listOps().rightPushAll(listKey, payloads);
-        }
-
-        long baseIndex = 0;
-        long pos = items == null || items.isEmpty() ? -1 : baseIndex;
-        SessionMeta meta = new SessionMeta(deviceId, userId, safePageSize, 1, pos, baseIndex);
-        if (items == null || items.isEmpty()) {
-            saveMeta(metaKey, meta);
-            touch(feedId);
-            return buildResponse(feedId, meta, items, -1, safePageSize, 0);
-        }
-
-        meta = ensureItems(feedId, meta, baseIndex + safePageSize);
-        long listSize = listSize(listKey);
-
-        return buildResponse(feedId, meta, items, baseIndex, safePageSize, listSize);
+        return buildResponse(feedId, meta, items, pageCount);
     }
 
-    public FeedSessionResponse next(String feedId, String deviceId, Long userId, int count, Long pos) {
+    public FeedSessionResponse next(String feedId, String deviceId, Long userId, int count) {
         SessionMeta meta = requireMeta(feedId);
         validateAccess(meta, deviceId, userId);
 
         int safeCount = clamp(count, 1, MAX_HISTORY);
-        if (pos != null) {
-            meta = alignPos(meta, pos);
-            saveMeta(metaKey(feedId), meta);
-        }
-
-        long targetStart;
-        if (pos != null) {
-            targetStart = meta.pos();
-        } else if (meta.pos() >= meta.baseIndex()) {
-            targetStart = meta.pos() + safeCount;
-        } else {
-            targetStart = meta.baseIndex();
-        }
-
-        meta = ensureItems(feedId, meta, targetStart + safeCount);
-
-        String listKey = listKey(feedId);
-        long size = listSize(listKey);
-        if (size <= 0) {
-            touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
-        }
-
-        long maxIndex = meta.baseIndex() + size - 1;
-        if (targetStart > maxIndex) {
-            touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
-        }
-
-        long end = Math.min(targetStart + safeCount - 1, maxIndex);
-        List<FeedVideoDto> items = readRange(listKey, meta.baseIndex(), targetStart, end);
-        items = refreshLikedByMe(meta.userId(), items);
-
-        if (items != null && !items.isEmpty()) {
-            meta = meta.withPos(targetStart);
-            saveMeta(metaKey(feedId), meta);
-        }
-        touch(feedId);
-
-        return buildResponse(feedId, meta, items, targetStart, safeCount, size);
-    }
-
-    public FeedSessionResponse prev(String feedId, String deviceId, Long userId, int count, Long pos) {
-        SessionMeta meta = requireMeta(feedId);
-        validateAccess(meta, deviceId, userId);
-
-        int safeCount = clamp(count, 1, MAX_HISTORY);
-        if (pos != null) {
-            meta = alignPos(meta, pos);
-            saveMeta(metaKey(feedId), meta);
+        int pageSize = meta.pageSize() > 0 ? meta.pageSize() : safeCount;
+        if (meta.pageSize() <= 0) {
+            meta = meta.withPageSize(pageSize);
         }
 
         String listKey = listKey(feedId);
-        long size = listSize(listKey);
-        if (size <= 0) {
-            touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
-        }
+        long pageCount = listSize(listKey);
 
-        long baseIndex = meta.baseIndex();
-        if (pos == null && meta.pos() <= baseIndex) {
-            touch(feedId);
-            return buildResponse(feedId, meta, Collections.emptyList(), -1, safeCount, size);
-        }
-
-        long maxIndex = baseIndex + size - 1;
-        long targetStart;
-        if (pos != null) {
-            targetStart = meta.pos();
-        } else {
-            targetStart = Math.max(baseIndex, meta.pos() - safeCount);
-        }
-        long lastPageStart = Math.max(baseIndex, maxIndex - safeCount + 1);
-        if (targetStart > lastPageStart) {
-            targetStart = lastPageStart;
-        }
-
-        long end = Math.min(targetStart + safeCount - 1, maxIndex);
-        List<FeedVideoDto> items = readRange(listKey, baseIndex, targetStart, end);
-        items = refreshLikedByMe(meta.userId(), items);
-
-        if (items != null && !items.isEmpty()) {
-            meta = meta.withPos(targetStart);
+        if (pageCount > 0 && meta.cursor() + 1 < pageCount) {
+            int nextCursor = meta.cursor() + 1;
+            List<FeedVideoDto> items = readPage(listKey, nextCursor);
+            items = refreshLikedByMe(meta.userId(), items);
+            meta = meta.withCursor(nextCursor);
             saveMeta(metaKey(feedId), meta);
+            touch(feedId);
+            return buildResponse(feedId, meta, items, pageCount);
         }
-        touch(feedId);
 
-        return buildResponse(feedId, meta, items, targetStart, safeCount, size);
-    }
-
-    private SessionMeta ensureItems(String feedId, SessionMeta meta, long desiredIndex) {
-        String listKey = listKey(feedId);
         String seenKey = seenKey(feedId);
-        long size = listSize(listKey);
-        long maxIndex = size <= 0 ? meta.baseIndex() - 1 : meta.baseIndex() + size - 1;
+        PageLoad load = fetchItems(meta.userId(), seenKey, pageSize, meta.nextPage(), pageSize, MAX_PAGE_ATTEMPTS);
+        List<FeedVideoDto> items = load.items();
+        int nextPage = load.nextPage();
 
-        int attempts = 0;
-        while (maxIndex < desiredIndex && attempts < 5) {
-            Page<FeedVideoDto> page = feedService.getFeed(meta.userId(), PageRequest.of(meta.nextPage(), meta.pageSize()));
-            meta = meta.withNextPage(meta.nextPage() + 1);
-            List<FeedVideoDto> items = page.getContent();
-            if (items != null && !items.isEmpty()) {
-                List<String> payloads = new ArrayList<>();
-                for (FeedVideoDto dto : items) {
-                    if (addSeen(seenKey, dto)) {
-                        payloads.add(toJson(dto));
-                    }
-                }
-                if (!payloads.isEmpty()) {
-                    listOps().rightPushAll(listKey, payloads);
-                    size = listSize(listKey);
-                    maxIndex = meta.baseIndex() + size - 1;
-                }
+        if (items.isEmpty()) {
+            PageLoad refresh = fetchItems(meta.userId(), seenKey, pageSize, 0, pageSize, MAX_REFRESH_ATTEMPTS);
+            if (!refresh.items().isEmpty()) {
+                items = refresh.items();
+                nextPage = refresh.nextPage();
+                meta = meta.withExhausted(refresh.exhausted());
+            } else {
+                meta = meta.withExhausted(true);
             }
-            if (items == null || items.isEmpty()) {
-                break;
-            }
-            attempts++;
+        } else {
+            meta = meta.withExhausted(load.exhausted());
+        }
+
+        meta = meta.withNextPage(nextPage);
+
+        if (!items.isEmpty()) {
+            pushPage(listKey, items);
+            pageCount = listSize(listKey);
+            meta = meta.withCursor((int) pageCount - 1).withTotal(meta.total() + items.size());
         }
 
         meta = trimHistory(feedId, meta);
         saveMeta(metaKey(feedId), meta);
         touch(feedId);
 
-        return meta;
+        items = refreshLikedByMe(meta.userId(), items);
+        pageCount = listSize(listKey);
+
+        return buildResponse(feedId, meta, items, pageCount);
+    }
+
+    public FeedSessionResponse prev(String feedId, String deviceId, Long userId) {
+        SessionMeta meta = requireMeta(feedId);
+        validateAccess(meta, deviceId, userId);
+
+        String listKey = listKey(feedId);
+        long pageCount = listSize(listKey);
+        if (pageCount <= 0 || meta.cursor() <= 0) {
+            touch(feedId);
+            return buildResponse(feedId, meta, Collections.emptyList(), pageCount);
+        }
+
+        int prevCursor = meta.cursor() - 1;
+        List<FeedVideoDto> items = readPage(listKey, prevCursor);
+        items = refreshLikedByMe(meta.userId(), items);
+        meta = meta.withCursor(prevCursor);
+
+        saveMeta(metaKey(feedId), meta);
+        touch(feedId);
+
+        return buildResponse(feedId, meta, items, pageCount);
+    }
+
+    private PageLoad fetchItems(Long userId,
+                                String seenKey,
+                                int pageSize,
+                                int startPage,
+                                int count,
+                                int maxAttempts) {
+        int page = startPage;
+        int attempts = 0;
+        boolean exhausted = false;
+        List<FeedVideoDto> items = new ArrayList<>();
+        while (items.size() < count && attempts < maxAttempts) {
+            Page<FeedVideoDto> sample = feedService.getFeed(userId, PageRequest.of(page, pageSize));
+            page++;
+            List<FeedVideoDto> content = sample.getContent();
+            if (content == null || content.isEmpty()) {
+                exhausted = true;
+                break;
+            }
+            for (FeedVideoDto dto : content) {
+                if (addSeen(seenKey, dto)) {
+                    items.add(dto);
+                    if (items.size() >= count) {
+                        break;
+                    }
+                }
+            }
+            attempts++;
+        }
+        return new PageLoad(items, page, exhausted);
     }
 
     private SessionMeta trimHistory(String feedId, SessionMeta meta) {
-        String listKey = listKey(feedId);
-        long size = listSize(listKey);
-        if (size <= MAX_HISTORY) {
+        if (meta.total() <= MAX_HISTORY) {
             return meta;
         }
-        long trim = size - MAX_HISTORY;
-        listOps().trim(listKey, trim, -1);
-        long newBase = meta.baseIndex() + trim;
-        long newPos = meta.pos() - trim;
-        if (newPos < newBase) {
-            newPos = newBase;
+        String listKey = listKey(feedId);
+        List<String> pages = listOps().range(listKey, 0, -1);
+        if (pages == null || pages.isEmpty()) {
+            return meta.withTotal(0L).withCursor(0);
         }
-        return new SessionMeta(meta.deviceId(), meta.userId(), meta.pageSize(), meta.nextPage(), newPos, newBase);
+        long total = meta.total();
+        int cursor = meta.cursor();
+        int trimCount = 0;
+        for (String payload : pages) {
+            if (total <= MAX_HISTORY) {
+                break;
+            }
+            total -= pageSize(payload);
+            trimCount++;
+            cursor--;
+        }
+        if (trimCount <= 0) {
+            return meta;
+        }
+        listOps().trim(listKey, trimCount, -1);
+        if (cursor < 0) {
+            cursor = 0;
+        }
+        return meta.withCursor(cursor).withTotal(Math.max(total, 0));
     }
 
-    private SessionMeta alignPos(SessionMeta meta, long pos) {
-        long base = meta.baseIndex();
-        long aligned = Math.max(base, pos);
-        return meta.withPos(aligned);
+    private int pageSize(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return 0;
+        }
+        try {
+            FeedVideoDto[] items = objectMapper.readValue(payload, FeedVideoDto[].class);
+            return items.length;
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to parse feed session page", e);
+        }
     }
 
-    private FeedSessionResponse buildResponse(String feedId, SessionMeta meta, List<FeedVideoDto> items, long startIndex, int step, long listSize) {
-        if (listSize <= 0 || items == null || items.isEmpty()) {
-            return new FeedSessionResponse(feedId, items, null, null);
+    private void pushPage(String listKey, List<FeedVideoDto> items) {
+        if (items == null || items.isEmpty()) {
+            return;
         }
-
-        long baseIndex = meta.baseIndex();
-        long maxIndex = baseIndex + listSize - 1;
-        Long prevPos = null;
-        Long nextPos = null;
-
-        long prevCandidate = startIndex - step;
-        long nextCandidate = startIndex + step;
-        if (prevCandidate >= baseIndex) {
-            prevPos = prevCandidate;
-        }
-        if (nextCandidate <= maxIndex) {
-            nextPos = nextCandidate;
-        }
-
-        return new FeedSessionResponse(feedId, items, prevPos, nextPos);
+        listOps().rightPushAll(listKey, List.of(toJson(items)));
     }
 
+    private List<FeedVideoDto> readPage(String listKey, int index) {
+        List<String> payloads = listOps().range(listKey, index, index);
+        if (payloads == null || payloads.isEmpty()) {
+            return Collections.emptyList();
+        }
+        String payload = payloads.get(0);
+        if (payload == null || payload.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            return objectMapper.readValue(payload, FEED_LIST_TYPE);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to parse feed session page", e);
+        }
+    }
+
+    private FeedSessionResponse buildResponse(String feedId,
+                                              SessionMeta meta,
+                                              List<FeedVideoDto> items,
+                                              long pageCount) {
+        List<FeedVideoDto> safeItems = items == null ? Collections.emptyList() : items;
+        boolean hasPrev = pageCount > 0 && meta.cursor() > 0;
+        boolean hasNext = pageCount > 0 && (meta.cursor() + 1 < pageCount || !meta.exhausted());
+        return new FeedSessionResponse(feedId, safeItems, hasPrev, hasNext, meta.total());
+    }
 
     private List<FeedVideoDto> refreshLikedByMe(Long userId, List<FeedVideoDto> items) {
         if (userId == null || items == null || items.isEmpty()) {
@@ -337,10 +347,11 @@ public class FeedSessionService {
         String userRaw = metaMap.get(META_USER);
         Long userId = (userRaw == null || userRaw.isBlank()) ? null : Long.valueOf(userRaw);
         int pageSize = parseInt(metaMap.get(META_PAGE_SIZE), 10);
-        int nextPage = parseInt(metaMap.get(META_NEXT_PAGE), 1);
-        long pos = parseLong(metaMap.get(META_POS), -1);
-        long baseIndex = parseLong(metaMap.get(META_BASE_INDEX), 0);
-        return new SessionMeta(deviceId, userId, pageSize, nextPage, pos, baseIndex);
+        int cursor = parseInt(metaMap.get(META_CURSOR), 0);
+        int nextPage = parseInt(metaMap.get(META_NEXT_PAGE), 0);
+        long total = parseLong(metaMap.get(META_TOTAL), 0L);
+        boolean exhausted = parseBoolean(metaMap.get(META_EXHAUSTED), false);
+        return new SessionMeta(deviceId, userId, pageSize, cursor, nextPage, total, exhausted);
     }
 
     private void validateAccess(SessionMeta meta, String deviceId, Long userId) {
@@ -356,9 +367,10 @@ public class FeedSessionService {
         hashOps().put(metaKey, META_DEVICE, meta.deviceId());
         hashOps().put(metaKey, META_USER, meta.userId() == null ? "" : String.valueOf(meta.userId()));
         hashOps().put(metaKey, META_PAGE_SIZE, String.valueOf(meta.pageSize()));
+        hashOps().put(metaKey, META_CURSOR, String.valueOf(meta.cursor()));
         hashOps().put(metaKey, META_NEXT_PAGE, String.valueOf(meta.nextPage()));
-        hashOps().put(metaKey, META_POS, String.valueOf(meta.pos()));
-        hashOps().put(metaKey, META_BASE_INDEX, String.valueOf(meta.baseIndex()));
+        hashOps().put(metaKey, META_TOTAL, String.valueOf(meta.total()));
+        hashOps().put(metaKey, META_EXHAUSTED, String.valueOf(meta.exhausted()));
     }
 
     private void touch(String feedId) {
@@ -375,35 +387,11 @@ public class FeedSessionService {
         return added != null && added > 0;
     }
 
-    private List<FeedVideoDto> readRange(String listKey, long baseIndex, long startIndex, long endIndex) {
-        long from = startIndex - baseIndex;
-        long to = endIndex - baseIndex;
-        if (from < 0 || to < 0 || to < from) {
-            return Collections.emptyList();
-        }
-        List<String> raw = listOps().range(listKey, from, to);
-        if (raw == null || raw.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<FeedVideoDto> result = new ArrayList<>();
-        for (String payload : raw) {
-            if (payload == null || payload.isBlank()) {
-                continue;
-            }
-            try {
-                result.add(objectMapper.readValue(payload, FeedVideoDto.class));
-            } catch (JsonProcessingException e) {
-                throw new IllegalStateException("Failed to parse feed session item", e);
-            }
-        }
-        return result;
-    }
-
-    private String toJson(FeedVideoDto dto) {
+    private String toJson(List<FeedVideoDto> items) {
         try {
-            return objectMapper.writeValueAsString(dto);
+            return objectMapper.writeValueAsString(items);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize feed session item", e);
+            throw new IllegalStateException("Failed to serialize feed session page", e);
         }
     }
 
@@ -427,6 +415,13 @@ public class FeedSessionService {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    private boolean parseBoolean(String raw, boolean fallback) {
+        if (raw == null || raw.isBlank()) {
+            return fallback;
+        }
+        return Boolean.parseBoolean(raw);
     }
 
     private int clamp(int value, int min, int max) {
@@ -455,20 +450,41 @@ public class FeedSessionService {
     }
 
     private String listKey(String feedId) {
-        return "feed:session:" + feedId + ":list";
+        return "feed:session:" + feedId + ":pages";
     }
 
     private String seenKey(String feedId) {
         return "feed:session:" + feedId + ":seen";
     }
 
-    private record SessionMeta(String deviceId, Long userId, int pageSize, int nextPage, long pos, long baseIndex) {
-        SessionMeta withPos(long newPos) {
-            return new SessionMeta(deviceId, userId, pageSize, nextPage, newPos, baseIndex);
+    private record SessionMeta(String deviceId,
+                               Long userId,
+                               int pageSize,
+                               int cursor,
+                               int nextPage,
+                               long total,
+                               boolean exhausted) {
+        SessionMeta withCursor(int newCursor) {
+            return new SessionMeta(deviceId, userId, pageSize, newCursor, nextPage, total, exhausted);
         }
 
         SessionMeta withNextPage(int newNextPage) {
-            return new SessionMeta(deviceId, userId, pageSize, newNextPage, pos, baseIndex);
+            return new SessionMeta(deviceId, userId, pageSize, cursor, newNextPage, total, exhausted);
         }
+
+        SessionMeta withTotal(long newTotal) {
+            return new SessionMeta(deviceId, userId, pageSize, cursor, nextPage, newTotal, exhausted);
+        }
+
+        SessionMeta withExhausted(boolean newExhausted) {
+            return new SessionMeta(deviceId, userId, pageSize, cursor, nextPage, total, newExhausted);
+        }
+
+        SessionMeta withPageSize(int newPageSize) {
+            return new SessionMeta(deviceId, userId, newPageSize, cursor, nextPage, total, exhausted);
+        }
+    }
+
+    private record PageLoad(List<FeedVideoDto> items, int nextPage, boolean exhausted) {
     }
 }

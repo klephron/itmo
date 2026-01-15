@@ -232,7 +232,7 @@ class VideoStreamingControllerTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-CTRL-STREAM-11: startFeedSession создает сессию")
     void startFeedSession_createsSession() {
-        FeedSessionResponse sessionResponse = new FeedSessionResponse("feed-id", List.of(), null, 0L);
+        FeedSessionResponse sessionResponse = new FeedSessionResponse("feed-id", List.of(), false, false, 0L);
         when(feedSessionService.startSession(eq("device-1"), eq(1L), eq(10)))
                 .thenReturn(sessionResponse);
         when(currentUser.getId()).thenReturn(1L);
@@ -256,34 +256,34 @@ class VideoStreamingControllerTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-CTRL-STREAM-13: nextFeedItems возвращает следующие элементы")
     void nextFeedItems_returnsNextItems() {
-        FeedSessionResponse response = new FeedSessionResponse("feed-id", List.of(), 0L, 2L);
-        when(feedSessionService.next(eq("feed-id"), eq("device-1"), eq(1L), eq(1), eq(null)))
+        FeedSessionResponse response = new FeedSessionResponse("feed-id", List.of(), true, false, 0L);
+        when(feedSessionService.next(eq("feed-id"), eq("device-1"), eq(1L), eq(1)))
                 .thenReturn(response);
         when(currentUser.getId()).thenReturn(1L);
 
         ResponseEntity<FeedSessionResponse> result = controller.nextFeedItems(
-                "feed-id", 1, null, "device-1", currentUser
+                "feed-id", 1, "device-1", currentUser
         );
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(feedSessionService).next("feed-id", "device-1", 1L, 1, null);
+        verify(feedSessionService).next("feed-id", "device-1", 1L, 1);
     }
 
     @Test
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-CTRL-STREAM-14: prevFeedItems возвращает предыдущие элементы")
     void prevFeedItems_returnsPrevItems() {
-        FeedSessionResponse response = new FeedSessionResponse("feed-id", List.of(), 0L, null);
-        when(feedSessionService.prev(eq("feed-id"), eq("device-1"), eq(1L), eq(1), eq(null)))
+        FeedSessionResponse response = new FeedSessionResponse("feed-id", List.of(), false, false, 0L);
+        when(feedSessionService.prev(eq("feed-id"), eq("device-1"), eq(1L)))
                 .thenReturn(response);
         when(currentUser.getId()).thenReturn(1L);
 
         ResponseEntity<FeedSessionResponse> result = controller.prevFeedItems(
-                "feed-id", 1, null, "device-1", currentUser
+                "feed-id", "device-1", currentUser
         );
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(feedSessionService).prev("feed-id", "device-1", 1L, 1, null);
+        verify(feedSessionService).prev("feed-id", "device-1", 1L);
     }
 
     @Test
@@ -386,7 +386,7 @@ class VideoStreamingControllerTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-CTRL-STREAM-25: startFeedSession для анонимного пользователя")
     void startFeedSession_forAnonymousUser() {
-        FeedSessionResponse sessionResponse = new FeedSessionResponse("feed-id", List.of(), null, 0L);
+        FeedSessionResponse sessionResponse = new FeedSessionResponse("feed-id", List.of(), false, false, 0L);
         when(feedSessionService.startSession(eq("device-1"), eq(null), eq(10)))
                 .thenReturn(sessionResponse);
 
