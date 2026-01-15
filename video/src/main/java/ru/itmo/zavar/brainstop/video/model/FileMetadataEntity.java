@@ -74,17 +74,17 @@ public class FileMetadataEntity {
     private List<VideoRenditionEntity> renditions = new ArrayList<>();
 
     @Convert(converter = VectorConverter.class)
-    @Column(name = "title_embedding", columnDefinition = "vector(384)")
+    @Column(name = "title_embedding", columnDefinition = "vector(1024)")
     @ColumnTransformer(write = "?::vector")
     private float[] titleEmbedding;
 
     @Convert(converter = VectorConverter.class)
-    @Column(name = "description_embedding", columnDefinition = "vector(384)")
+    @Column(name = "description_embedding", columnDefinition = "vector(1024)")
     @ColumnTransformer(write = "?::vector")
     private float[] descriptionEmbedding;
 
     @Convert(converter = VectorConverter.class)
-    @Column(name = "combined_embedding", columnDefinition = "vector(384)")
+    @Column(name = "combined_embedding", columnDefinition = "vector(1024)")
     @ColumnTransformer(write = "?::vector")
     private float[] combinedEmbedding;
 

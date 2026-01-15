@@ -49,5 +49,159 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
                                                @Param("maxDistance") double maxDistance,
                                                Pageable pageable);
 
+    @Query(
+            value = """
+                    select *
+                    from file_meta
+                    where :query <> ''
+                      and (
+                          to_tsvector('russian',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('english',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('simple',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          )
+                      ) @@ (
+                          plainto_tsquery('russian', :query) ||
+                          plainto_tsquery('english', :query) ||
+                          plainto_tsquery('simple', :query)
+                      )
+                    order by ts_rank_cd(
+                          to_tsvector('russian',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('english',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('simple',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ),
+                          plainto_tsquery('russian', :query) ||
+                          plainto_tsquery('english', :query) ||
+                          plainto_tsquery('simple', :query)
+                    ) desc
+                    """,
+            countQuery = """
+                    select count(*)
+                    from file_meta
+                    where :query <> ''
+                      and (
+                          to_tsvector('russian',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('english',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('simple',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          )
+                      ) @@ (
+                          plainto_tsquery('russian', :query) ||
+                          plainto_tsquery('english', :query) ||
+                          plainto_tsquery('simple', :query)
+                      )
+                    """,
+            nativeQuery = true
+    )
+    Page<FileMetadataEntity> searchByText(@Param("query") String query, Pageable pageable);
+
+    @Query(
+            value = """
+                    select *
+                    from file_meta
+                    where :tsQuery <> ''
+                      and (
+                          to_tsvector('russian',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('english',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('simple',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          )
+                      ) @@ (
+                          to_tsquery('russian', :tsQuery) ||
+                          to_tsquery('english', :tsQuery) ||
+                          to_tsquery('simple', :tsQuery)
+                      )
+                    order by ts_rank_cd(
+                          to_tsvector('russian',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('english',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('simple',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ),
+                          to_tsquery('russian', :tsQuery) ||
+                          to_tsquery('english', :tsQuery) ||
+                          to_tsquery('simple', :tsQuery)
+                    ) desc
+                    """,
+            countQuery = """
+                    select count(*)
+                    from file_meta
+                    where :tsQuery <> ''
+                      and (
+                          to_tsvector('russian',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('english',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          ) ||
+                          to_tsvector('simple',
+                              coalesce(name, '') || ' ' ||
+                              coalesce(description, '') || ' ' ||
+                              coalesce(uploader_name, '')
+                          )
+                      ) @@ (
+                          to_tsquery('russian', :tsQuery) ||
+                          to_tsquery('english', :tsQuery) ||
+                          to_tsquery('simple', :tsQuery)
+                      )
+                    """,
+            nativeQuery = true
+    )
+    Page<FileMetadataEntity> searchByTextPrefix(@Param("tsQuery") String tsQuery, Pageable pageable);
+
     Page<FileMetadataEntity> findByCombinedEmbeddingIsNotNull(Pageable pageable);
 }

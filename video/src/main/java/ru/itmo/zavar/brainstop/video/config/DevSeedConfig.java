@@ -60,7 +60,7 @@ public class DevSeedConfig {
     }
 
     private float[] randomEmbedding(RandomGenerator rnd) {
-        float[] vector = new float[384];
+        float[] vector = new float[1024];
         for (int i = 0; i < vector.length; i++) {
             vector[i] = (float) (rnd.nextDouble(-1.0, 1.0));
         }

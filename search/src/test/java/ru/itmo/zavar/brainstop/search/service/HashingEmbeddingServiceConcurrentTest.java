@@ -84,7 +84,7 @@ class HashingEmbeddingServiceConcurrentTest {
 
         for (int i = 0; i < 5; i++) {
             assertThat(results[i]).isNotNull();
-            assertThat(results[i]).hasSize(384);
+            assertThat(results[i]).hasSize(1024);
         }
     }
 

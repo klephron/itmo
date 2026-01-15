@@ -4,6 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ru.itmo.zavar.brainstop.common.api.PageResponse;
+import ru.itmo.zavar.brainstop.common.api.search.dto.SearchSuggestRequest;
+import ru.itmo.zavar.brainstop.common.api.search.dto.SearchVideosRequest;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FileMetadataDto;
 import ru.itmo.zavar.brainstop.common.test.FR;
 import ru.itmo.zavar.brainstop.common.test.Layer;
@@ -31,7 +33,8 @@ class SearchInternalClientFallbackFactoryTest {
     void fallback_searchVideos() {
         SearchInternalClient fallback = factory.create(new RuntimeException("test"));
 
-        PageResponse<FileMetadataDto> result = fallback.searchVideos("[0.1,0.2]", 0, 10);
+        PageResponse<FileMetadataDto> result = fallback.searchVideos(
+                new SearchVideosRequest("[0.1,0.2]", "q", 0, 10));
 
         assertThat(result.content()).isEmpty();
         assertThat(result.page()).isEqualTo(0);
@@ -45,7 +48,8 @@ class SearchInternalClientFallbackFactoryTest {
     void fallback_suggest() {
         SearchInternalClient fallback = factory.create(new RuntimeException("test"));
 
-        List<FileMetadataDto> result = fallback.suggest("[0.1,0.2]", 5);
+        List<FileMetadataDto> result = fallback.suggest(
+                new SearchSuggestRequest("[0.1,0.2]", "q", 5));
 
         assertThat(result).isEmpty();
     }
@@ -56,7 +60,8 @@ class SearchInternalClientFallbackFactoryTest {
     void fallback_nullCause() {
         SearchInternalClient fallback = factory.create(null);
 
-        PageResponse<FileMetadataDto> result = fallback.searchVideos("[0.1,0.2]", 0, 10);
+        PageResponse<FileMetadataDto> result = fallback.searchVideos(
+                new SearchVideosRequest("[0.1,0.2]", "q", 0, 10));
 
         assertThat(result).isNotNull();
         assertThat(result.content()).isEmpty();
@@ -68,7 +73,8 @@ class SearchInternalClientFallbackFactoryTest {
     void fallback_differentPageParams() {
         SearchInternalClient fallback = factory.create(new RuntimeException("test"));
 
-        PageResponse<FileMetadataDto> result = fallback.searchVideos("[0.1,0.2]", 2, 20);
+        PageResponse<FileMetadataDto> result = fallback.searchVideos(
+                new SearchVideosRequest("[0.1,0.2]", "q", 2, 20));
 
         assertThat(result.page()).isEqualTo(2);
         assertThat(result.size()).isEqualTo(20);

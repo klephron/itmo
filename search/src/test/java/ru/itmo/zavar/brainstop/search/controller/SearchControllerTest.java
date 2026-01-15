@@ -10,6 +10,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import ru.itmo.zavar.brainstop.common.api.PageResponse;
+import ru.itmo.zavar.brainstop.common.api.search.dto.SearchSuggestRequest;
+import ru.itmo.zavar.brainstop.common.api.search.dto.SearchVideosRequest;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FileMetadataDto;
 import ru.itmo.zavar.brainstop.common.test.FR;
 import ru.itmo.zavar.brainstop.common.test.Layer;
@@ -50,7 +52,7 @@ class SearchControllerTest {
     @DisplayName("BE-UNIT-SEARCH-CTL-02: Поиск с пагинацией")
     void searchVideos_withPagination() {
         PageResponse<FileMetadataDto> pageResponse = new PageResponse<>(List.of(), 2, 20, 0);
-        when(searchInternalClient.searchVideos(anyString(), eq(2), eq(20)))
+        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(pageResponse);
 
         ResponseEntity<PageResponse<FileMetadataDto>> response =
@@ -66,7 +68,7 @@ class SearchControllerTest {
     @DisplayName("BE-UNIT-SEARCH-CTL-04: Пустой результат поиска")
     void searchVideos_emptyResults() {
         PageResponse<FileMetadataDto> pageResponse = new PageResponse<>(List.of(), 0, 10, 0);
-        when(searchInternalClient.searchVideos(anyString(), anyInt(), anyInt()))
+        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(pageResponse);
 
         ResponseEntity<PageResponse<FileMetadataDto>> response =
@@ -80,11 +82,12 @@ class SearchControllerTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-SEARCH-CTL-05: Suggest с кастомным лимитом")
     void suggestVideos_customLimit() {
-        when(searchInternalClient.suggest(anyString(), eq(3)))
+        when(searchInternalClient.suggest(any(SearchSuggestRequest.class)))
                 .thenReturn(List.of());
 
         controller.suggestVideos("query", 3);
 
-        verify(searchInternalClient).suggest(anyString(), eq(3));
+        verify(searchInternalClient).suggest(argThat(req ->
+                req != null && "query".equals(req.q()) && Integer.valueOf(3).equals(req.limit())));
     }
 }

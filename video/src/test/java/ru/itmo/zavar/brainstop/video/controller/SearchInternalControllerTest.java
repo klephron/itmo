@@ -55,7 +55,7 @@ class SearchInternalControllerTest {
         Page<FileMetadataEntity> page = new PageImpl<>(List.of(), PageRequest.of(1, 5), 20);
         when(fileMetadataRepository.searchByEmbedding(anyString(), anyDouble(), any())).thenReturn(page);
 
-        PageResponse<FileMetadataDto> response = controller.searchVideos("[0.1,0.2]", 1, 5);
+        PageResponse<FileMetadataDto> response = controller.searchVideos("[0.1,0.2]", "", 1, 5);
 
         assertThat(response.page()).isEqualTo(1);
         assertThat(response.size()).isEqualTo(5);
@@ -69,7 +69,7 @@ class SearchInternalControllerTest {
         Page<FileMetadataEntity> page = new PageImpl<>(List.of());
         when(fileMetadataRepository.searchByEmbedding(anyString(), anyDouble(), any())).thenReturn(page);
 
-        PageResponse<FileMetadataDto> response = controller.searchVideos("[0.1]", 0, 10);
+        PageResponse<FileMetadataDto> response = controller.searchVideos("[0.1]", "", 0, 10);
 
         assertThat(response.content()).isEmpty();
     }
@@ -81,7 +81,7 @@ class SearchInternalControllerTest {
         Page<FileMetadataEntity> page = new PageImpl<>(List.of());
         when(fileMetadataRepository.searchByEmbedding(anyString(), anyDouble(), any())).thenReturn(page);
 
-        controller.suggest("[0.1]", 3);
+        controller.suggest("[0.1]", "", 3);
 
         verify(fileMetadataRepository).searchByEmbedding(anyString(), eq(1.0d), eq(PageRequest.of(0, 3)));
     }
@@ -93,7 +93,7 @@ class SearchInternalControllerTest {
         Page<FileMetadataEntity> page = new PageImpl<>(List.of());
         when(fileMetadataRepository.searchByEmbedding(anyString(), anyDouble(), any())).thenReturn(page);
 
-        controller.suggest("[0.1]", 5);
+        controller.suggest("[0.1]", "", 5);
 
         verify(fileMetadataRepository).searchByEmbedding(anyString(), eq(1.0d), eq(PageRequest.of(0, 5)));
     }
@@ -106,7 +106,7 @@ class SearchInternalControllerTest {
         Page<FileMetadataEntity> page = new PageImpl<>(List.of());
         when(fileMetadataRepository.searchByEmbedding(anyString(), anyDouble(), any())).thenReturn(page);
 
-        controller.searchVideos(vector, 0, 10);
+        controller.searchVideos(vector, "", 0, 10);
 
         verify(fileMetadataRepository).searchByEmbedding(eq(vector), eq(1.0d), any());
     }

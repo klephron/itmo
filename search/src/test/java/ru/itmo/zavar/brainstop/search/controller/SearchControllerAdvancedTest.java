@@ -9,6 +9,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import ru.itmo.zavar.brainstop.common.api.PageResponse;
+import ru.itmo.zavar.brainstop.common.api.search.dto.SearchSuggestRequest;
+import ru.itmo.zavar.brainstop.common.api.search.dto.SearchVideosRequest;
 import ru.itmo.zavar.brainstop.common.api.video.dto.FileMetadataDto;
 import ru.itmo.zavar.brainstop.common.test.FR;
 import ru.itmo.zavar.brainstop.common.test.Layer;
@@ -49,7 +51,7 @@ class SearchControllerAdvancedTest {
     @DisplayName("BE-UNIT-SEARCH-ADV-01: Поиск с большой страницей")
     void searchVideos_largePage() {
         PageResponse<FileMetadataDto> response = new PageResponse<>(List.of(), 100, 50, 5000);
-        when(searchInternalClient.searchVideos(anyString(), eq(100), eq(50)))
+        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(response);
 
         var result = controller.searchVideos("query", 100, 50);
@@ -64,7 +66,7 @@ class SearchControllerAdvancedTest {
     @DisplayName("BE-UNIT-SEARCH-ADV-02: Поиск с нулевым размером страницы")
     void searchVideos_zeroSize() {
         PageResponse<FileMetadataDto> response = new PageResponse<>(List.of(), 0, 0, 0);
-        when(searchInternalClient.searchVideos(anyString(), eq(0), eq(0)))
+        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(response);
 
         var result = controller.searchVideos("query", 0, 0);
@@ -77,7 +79,7 @@ class SearchControllerAdvancedTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-SEARCH-ADV-03: Поиск по unicode запросу")
     void searchVideos_unicodeQuery() {
-        when(searchInternalClient.searchVideos(anyString(), anyInt(), anyInt()))
+        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(new PageResponse<>(List.of(), 0, 10, 0));
 
         controller.searchVideos("机器学习视频", 0, 10);
@@ -99,7 +101,7 @@ class SearchControllerAdvancedTest {
     @DisplayName("BE-UNIT-SEARCH-ADV-05: Поиск с очень длинным запросом")
     void searchVideos_veryLongQuery() {
         String longQuery = "word ".repeat(100);
-        when(searchInternalClient.searchVideos(anyString(), anyInt(), anyInt()))
+        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(new PageResponse<>(List.of(), 0, 10, 0));
 
         controller.searchVideos(longQuery, 0, 10);
@@ -111,7 +113,7 @@ class SearchControllerAdvancedTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-SEARCH-ADV-06: Suggest с нулевым лимитом")
     void suggestVideos_zeroLimit() {
-        when(searchInternalClient.suggest(anyString(), eq(0)))
+        when(searchInternalClient.suggest(any(SearchSuggestRequest.class)))
                 .thenReturn(List.of());
 
         var result = controller.suggestVideos("query", 0);
@@ -123,12 +125,13 @@ class SearchControllerAdvancedTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-SEARCH-ADV-07: Suggest с большим лимитом")
     void suggestVideos_largeLimit() {
-        when(searchInternalClient.suggest(anyString(), eq(100)))
+        when(searchInternalClient.suggest(any(SearchSuggestRequest.class)))
                 .thenReturn(List.of());
 
         controller.suggestVideos("query", 100);
 
-        verify(searchInternalClient).suggest(anyString(), eq(100));
+        verify(searchInternalClient).suggest(argThat(req ->
+                req != null && "query".equals(req.q()) && Integer.valueOf(100).equals(req.limit())));
     }
 
     @Test
@@ -136,7 +139,7 @@ class SearchControllerAdvancedTest {
     @DisplayName("BE-UNIT-SEARCH-ADV-10: Множественные вызовы с одним запросом")
     void searchVideos_multipleCallsSameQuery() {
         PageResponse<FileMetadataDto> response = new PageResponse<>(List.of(), 0, 10, 0);
-        when(searchInternalClient.searchVideos(anyString(), anyInt(), anyInt()))
+        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(response);
 
         for (int i = 0; i < 5; i++) {

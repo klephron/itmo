@@ -19,6 +19,7 @@ dependencies {
     implementation platform("ai.djl:bom:${djlVersion}")
     implementation "ai.djl:api"
     implementation "ai.djl.pytorch:pytorch-engine"
+    implementation "ai.djl.pytorch:pytorch-model-zoo"
     implementation "ai.djl.huggingface:tokenizers:${djlVersion}"
 
     implementation "org.springframework.boot:spring-boot-starter-actuator"
