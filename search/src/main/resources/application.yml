@@ -41,6 +41,43 @@ app:
   jwt:
     secret: "super-secret-key-change-me-to-long-random-string"
 
+llm:
+  openrouter:
+    enabled: true
+    base-url: https://openrouter.ai/api/v1
+    api-key: ${OPENROUTER_API_KEY:}
+    models:
+      - mistralai/mistral-7b-instruct:free
+      - qwen/qwen2.5-7b-instruct:free
+    timeout: 8s
+    temperature: 0.2
+    top-p: 0.9
+    max-tokens: 256
+    stream-log: false
+    referer: ${OPENROUTER_REFERER:}
+    title: ${OPENROUTER_TITLE:brainstop-search}
+  search:
+    enabled: true
+    rewrite-enabled: false
+    expansion-enabled: true
+    expansion-count: 10
+    min-query-length: 3
+    pool-multiplier: 2
+    max-pool-size: 60
+    suggest-multiplier: 2
+    rewrite-max-tokens: 80
+    expansion-max-tokens: 256
+    filter-enabled: true
+    filter-max-tokens: 120
+    filter-max-items: 0
+    filter-max-chars: 2000
+    filter-max-field-length: 140
+    cache-ttl: 30m
+    rag-enabled: false
+    rag-max-items: 20
+    rag-max-chars: 2000
+    rag-max-field-length: 140
+
 management:
   endpoints:
     web:
@@ -55,6 +92,7 @@ logging:
   level:
     org.springframework.security: INFO
     io.github.resilience4j.circuitbreaker: INFO
+    ru.itmo.zavar.brainstop.search.llm: DEBUG
 
 resilience4j:
   circuitbreaker:

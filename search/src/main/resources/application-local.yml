@@ -1,0 +1,23 @@
+llm:
+  openrouter:
+    enabled: true
+    base-url: http://localhost:11434/v1
+    api-key: local
+    models:
+      - qwen2.5:1.5b
+    timeout: 30s
+    max-tokens: 128
+    stream-log: true
+    title: brainstop-search-local
+  search:
+    enabled: true
+    rewrite-enabled: false
+    expansion-enabled: true
+    expansion-count: 10
+    expansion-max-tokens: 256
+    rag-enabled: false
+    filter-enabled: true
+    filter-max-tokens: 80
+    filter-max-items: 0
+    filter-max-chars: 1000
+    filter-max-field-length: 80

@@ -537,6 +537,31 @@
             color: #888;
         }
 
+        .ai-stream {
+            margin-top: 8px;
+            background: #0e0e0e;
+            border: 1px solid #222;
+            border-radius: 10px;
+            padding: 8px;
+            font-size: 11px;
+            color: #c8f7c8;
+            white-space: pre-wrap;
+            min-height: 52px;
+        }
+
+        .ai-details summary {
+            font-size: 11px;
+            color: #888;
+            cursor: pointer;
+        }
+
+        .ai-context {
+            margin-top: 6px;
+            font-size: 10px;
+            color: #9a9a9a;
+            white-space: pre-wrap;
+        }
+
 
         .comments {
             margin-top: 8px;
@@ -756,10 +781,25 @@
                 <div id="suggestDropdown" class="suggest-dropdown"></div>
             </div>
         </div>
+        <div class="form-row" style="margin-top:4px;flex-direction:row;align-items:center;gap:8px;">
+            <input id="searchAiToggle" type="checkbox" checked>
+            <label for="searchAiToggle" style="margin:0;">Использовать ИИ для поиска</label>
+        </div>
         <div class="controls" style="margin-top:6px;">
             <button class="full" id="btnSearchGo">Искать</button>
         </div>
         <div class="studio-videos" id="searchResults" style="margin-top:8px; max-height:320px; overflow-y:auto;"></div>
+        <div class="controls" id="searchPagingControls" style="margin-top:8px; align-items:center; display:none;">
+            <button class="secondary small" id="searchPrevBtn" disabled>Назад</button>
+            <div class="badge" id="searchPageInfo">-</div>
+            <button class="secondary small" id="searchNextBtn" disabled>Вперёд</button>
+        </div>
+        <div class="studio-section-title" style="margin-top:10px;">ИИ прогресс</div>
+        <div id="searchAiStream" class="ai-stream"></div>
+        <details class="ai-details" id="searchAiContextWrap" style="margin-top:6px;">
+            <summary>Контекст LLM</summary>
+            <div id="searchAiContext" class="ai-context"></div>
+        </details>
         <div class="status" id="statusSearch"></div>
     </div>
 
@@ -972,10 +1012,19 @@
     const studioVideoCountEl = document.getElementById('studioVideoCount');
     const studioJobsEl = document.getElementById('studioJobs');
     const searchInputEl = document.getElementById('searchInput');
+    const searchAiToggle = document.getElementById('searchAiToggle');
     const btnSearchGo = document.getElementById('btnSearchGo');
     const searchResultsEl = document.getElementById('searchResults');
     const suggestDropdown = document.getElementById('suggestDropdown');
+    const searchInputWrapper = suggestDropdown ? suggestDropdown.closest('.search-input-wrapper') : null;
+    const searchPagingControls = document.getElementById('searchPagingControls');
+    const searchPrevBtn = document.getElementById('searchPrevBtn');
+    const searchNextBtn = document.getElementById('searchNextBtn');
+    const searchPageInfoEl = document.getElementById('searchPageInfo');
     const searchCountEl = document.getElementById('searchCount');
+    const searchAiStreamEl = document.getElementById('searchAiStream');
+    const searchAiContextEl = document.getElementById('searchAiContext');
+    const searchAiContextWrap = document.getElementById('searchAiContextWrap');
 
     // auth DOM
     const authUserShortEl = document.getElementById('authUserShort');
@@ -1046,6 +1095,18 @@
 
     let currentVideoUuid = null;
     let authLoading = false;
+    let searchAiSource = null;
+    let searchAiPhase = '';
+    let searchAiOutput = { rewrite: '', expand: '' };
+    const SEARCH_PAGE_SIZE = 20;
+    const SEARCH_AI_WAIT_MS = 20000;
+    let searchPaging = {
+        query: '',
+        page: 0,
+        size: SEARCH_PAGE_SIZE,
+        total: 0,
+        loading: false
+    };
 
     let feedPage = 0;
     const FEED_PAGE_SIZE = 10;
@@ -4419,6 +4480,20 @@
         btnSearchGo.addEventListener('click', () => runSearch());
     }
 
+    if (searchAiToggle) {
+        const saved = localStorage.getItem('searchUseAi');
+        if (saved !== null) {
+            searchAiToggle.checked = saved === 'true';
+        }
+        searchAiToggle.addEventListener('change', () => {
+            localStorage.setItem('searchUseAi', searchAiToggle.checked ? 'true' : 'false');
+            if (!searchAiToggle.checked) {
+                closeSearchAiStream();
+                resetSearchAiStream();
+            }
+        });
+    }
+
     if (searchInputEl) {
         searchInputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -4437,6 +4512,28 @@
             suggestTimer = setTimeout(() => runSuggest(q), 250);
         });
     }
+    if (searchPrevBtn) {
+        searchPrevBtn.addEventListener('click', () => {
+            if (searchPaging.loading || searchPaging.page <= 0) return;
+            loadSearchPage(searchPaging.page - 1);
+        });
+    }
+    if (searchNextBtn) {
+        searchNextBtn.addEventListener('click', () => {
+            const totalPages = searchTotalPages();
+            if (searchPaging.loading || totalPages === 0) return;
+            const nextPage = searchPaging.page + 1;
+            if (nextPage >= totalPages) return;
+            loadSearchPage(nextPage);
+        });
+    }
+    if (suggestDropdown && searchInputWrapper) {
+        document.addEventListener('click', (e) => {
+            if (!suggestDropdown.classList.contains('visible')) return;
+            if (searchInputWrapper.contains(e.target)) return;
+            clearSuggestDropdown();
+        });
+    }
 
     function clearSuggestDropdown() {
         if (suggestDropdown) {
@@ -4445,12 +4542,193 @@
         }
     }
 
+    function searchTotalPages() {
+        if (!searchPaging.size || !searchPaging.total) return 0;
+        return Math.max(1, Math.ceil(searchPaging.total / searchPaging.size));
+    }
+
+    function updateSearchPagingControls() {
+        if (!searchPagingControls || !searchPrevBtn || !searchNextBtn || !searchPageInfoEl) return;
+        const totalPages = searchTotalPages();
+        if (totalPages <= 1) {
+            searchPagingControls.style.display = 'none';
+            searchPrevBtn.disabled = true;
+            searchNextBtn.disabled = true;
+            searchPageInfoEl.textContent = '-';
+            return;
+        }
+        const current = Math.min(searchPaging.page + 1, totalPages);
+        searchPagingControls.style.display = 'flex';
+        searchPageInfoEl.textContent = current + ' / ' + totalPages;
+        searchPrevBtn.disabled = searchPaging.loading || searchPaging.page <= 0;
+        searchNextBtn.disabled = searchPaging.loading || current >= totalPages;
+    }
+
+    function isSearchAiEnabled() {
+        return !searchAiToggle || searchAiToggle.checked;
+    }
+
+    function closeSearchAiStream() {
+        if (searchAiSource) {
+            searchAiSource.close();
+            searchAiSource = null;
+        }
+    }
+
+    function resetSearchAiStream() {
+        searchAiOutput = { rewrite: '', expand: '' };
+        searchAiPhase = '';
+        if (searchAiStreamEl) {
+            searchAiStreamEl.textContent = '';
+        }
+        if (searchAiContextEl) {
+            searchAiContextEl.textContent = '';
+        }
+        if (searchAiContextWrap) {
+            searchAiContextWrap.open = false;
+        }
+    }
+
+    function renderSearchAiStream() {
+        if (!searchAiStreamEl) return;
+        const parts = [];
+        if (searchAiOutput.rewrite) {
+            parts.push('rewrite: ' + searchAiOutput.rewrite);
+        }
+        if (searchAiOutput.expand) {
+            parts.push('expand: ' + searchAiOutput.expand);
+        }
+        if (parts.length) {
+            searchAiStreamEl.textContent = parts.join('\n\n');
+            return;
+        }
+        if (searchAiPhase) {
+            searchAiStreamEl.textContent = searchAiPhase;
+            return;
+        }
+        searchAiStreamEl.textContent = 'Ожидание ответа от модели...';
+    }
+
+    function startSearchAiStream(query) {
+        closeSearchAiStream();
+        resetSearchAiStream();
+        let doneResolve;
+        const donePromise = new Promise((resolve) => {
+            doneResolve = resolve;
+        });
+        let finished = false;
+        let timeoutId = null;
+        const finish = () => {
+            if (finished) return;
+            finished = true;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            doneResolve();
+        };
+        if (!searchAiStreamEl || !query || !isSearchAiEnabled()) {
+            finish();
+            return donePromise;
+        }
+        searchAiPhase = 'Запрашиваем модель...';
+        renderSearchAiStream();
+        const useAi = isSearchAiEnabled();
+        const streamPage = Number.isFinite(searchPaging.page) ? searchPaging.page : 0;
+        const streamSize = Number.isFinite(searchPaging.size) ? searchPaging.size : SEARCH_PAGE_SIZE;
+        const url = apiBase + `/api/search/llm/stream?q=${encodeURIComponent(query)}&ai=${useAi}&page=${streamPage}&size=${streamSize}`;
+        const source = new EventSource(url);
+        searchAiSource = source;
+        timeoutId = setTimeout(() => {
+            searchAiPhase = 'LLM: ответ задерживается';
+            renderSearchAiStream();
+        }, SEARCH_AI_WAIT_MS);
+
+        source.addEventListener('status', (e) => {
+            const value = (e.data || '').trim();
+            if (!value) return;
+            if (value === 'rewrite:start') {
+                searchAiPhase = 'LLM: rewrite...';
+            } else if (value === 'rewrite:done') {
+                searchAiPhase = 'LLM: rewrite готово';
+            } else if (value === 'expand:start') {
+                searchAiPhase = 'LLM: expand...';
+            } else if (value === 'expand:done') {
+                searchAiPhase = 'LLM: expand готово';
+            } else if (value === 'too_short') {
+                searchAiPhase = 'LLM: запрос слишком короткий';
+                closeSearchAiStream();
+                finish();
+            } else if (value.startsWith('llm:disabled')) {
+                searchAiPhase = 'LLM: отключена';
+                closeSearchAiStream();
+                finish();
+            } else if (value === 'disabled') {
+                searchAiPhase = 'LLM: выключена';
+                closeSearchAiStream();
+                finish();
+            } else if (value === 'skip:short') {
+                searchAiPhase = 'LLM: пропуск';
+                closeSearchAiStream();
+                finish();
+            } else {
+                searchAiPhase = 'LLM: ' + value;
+            }
+            renderSearchAiStream();
+        });
+
+        source.addEventListener('context', (e) => {
+            if (searchAiContextEl) {
+                searchAiContextEl.textContent = e.data || '';
+            }
+        });
+
+        source.addEventListener('rewrite', (e) => {
+            searchAiOutput.rewrite += e.data || '';
+            renderSearchAiStream();
+        });
+
+        source.addEventListener('expand', (e) => {
+            searchAiOutput.expand += e.data || '';
+            renderSearchAiStream();
+        });
+
+        source.addEventListener('expand-final', (e) => {
+            const payload = (e.data || '').trim();
+            if (payload) {
+                searchAiOutput.expand = payload;
+                renderSearchAiStream();
+            }
+        });
+
+        source.addEventListener('done', () => {
+            searchAiPhase = 'LLM: готово';
+            renderSearchAiStream();
+            closeSearchAiStream();
+            finish();
+        });
+
+        source.addEventListener('llm-error', (e) => {
+            searchAiPhase = 'LLM: ошибка ' + (e.data || '');
+            renderSearchAiStream();
+            closeSearchAiStream();
+            finish();
+        });
+
+        source.onerror = () => {
+            searchAiPhase = 'LLM: ошибка подключения';
+            renderSearchAiStream();
+            closeSearchAiStream();
+            finish();
+        };
+        return donePromise;
+    }
+
     async function runSuggest(query) {
         if (!suggestDropdown) return;
         suggestDropdown.innerHTML = '<div class="suggest-item">Ищу подсказки…</div>';
         suggestDropdown.classList.add('visible');
         try {
-            const res = await fetch(apiBase + `/api/search/videos/suggest?q=${encodeURIComponent(query)}`, {
+            const res = await fetch(apiBase + `/api/search/videos/suggest?q=${encodeURIComponent(query)}&ai=false`, {
                 headers: authHeaders()
             });
             if (!res.ok) throw new Error(await readApiError(res));
@@ -4486,33 +4764,52 @@
         }
     }
 
-    async function runSearch() {
-        const q = (searchInputEl.value || '').trim();
+    async function loadSearchPage(page) {
+        const q = searchPaging.query || (searchInputEl ? (searchInputEl.value || '').trim() : '');
         if (!q) {
-            setStatusSearch('Введите запрос', 'error');
+            setStatusSearch('\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u0430\u043f\u0440\u043e\u0441', 'error');
             return;
         }
-        setStatusSearch('Ищу…', 'ok');
+        if (!searchResultsEl) return;
+        searchPaging.loading = true;
+        if (btnSearchGo) {
+            btnSearchGo.disabled = true;
+        }
+        updateSearchPagingControls();
+        setStatusSearch('\u0418\u0449\u0443\u2026', 'ok');
         searchResultsEl.innerHTML = '';
-        clearSuggestDropdown();
-
         try {
-            const res = await fetch(apiBase + `/api/search/videos?q=${encodeURIComponent(q)}&size=20`, {
-                headers: authHeaders()
-            });
+            const useAi = isSearchAiEnabled();
+            const res = await fetch(
+                apiBase + `/api/search/videos?q=${encodeURIComponent(q)}&page=${page}&size=${searchPaging.size}&ai=${useAi}`,
+                { headers: authHeaders() }
+            );
             if (!res.ok) {
                 throw new Error(await readApiError(res));
             }
-            const page = await res.json(); // Page<FileMetadataDto>
-            const items = Array.isArray(page.content) ? page.content : (Array.isArray(page) ? page : []);
+            const pageData = await res.json(); // Page<FileMetadataDto>
+            const items = Array.isArray(pageData.content)
+                ? pageData.content
+                : (Array.isArray(pageData) ? pageData : []);
+            const pageNumber = typeof pageData.page === 'number'
+                ? pageData.page
+                : (typeof pageData.number === 'number' ? pageData.number : page);
+            const pageSize = typeof pageData.size === 'number' ? pageData.size : searchPaging.size;
+            const total = typeof pageData.totalElements === 'number'
+                ? pageData.totalElements
+                : (typeof pageData.total === 'number' ? pageData.total : items.length);
+
+            searchPaging.page = pageNumber;
+            searchPaging.size = pageSize;
+            searchPaging.total = total;
+            updateSearchPagingControls();
 
             if (searchCountEl) {
-                searchCountEl.textContent =
-                    (typeof page.totalElements === 'number' ? page.totalElements : items.length) + ' видео';
+                searchCountEl.textContent = total + ' \u0432\u0438\u0434\u0435\u043e';
             }
 
             if (!items.length) {
-                searchResultsEl.innerHTML = '<div class="studio-row-meta">Ничего не найдено</div>';
+                searchResultsEl.innerHTML = '<div class="studio-row-meta">\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e</div>';
                 setStatusSearch('', '');
                 return;
             }
@@ -4525,12 +4822,12 @@
                 header.className = 'studio-row-header';
                 const title = document.createElement('div');
                 title.className = 'studio-row-title';
-                title.textContent = v.name || '(без названия)';
+                title.textContent = v.name || '(\u0431\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f)';
                 header.appendChild(title);
 
                 const meta = document.createElement('div');
                 meta.className = 'studio-row-meta';
-                meta.textContent = `${formatDate(v.uploadedAt)} · ${humanSize(v.contentSize)}`;
+                meta.textContent = `${formatDate(v.uploadedAt)} \u00b7 ${humanSize(v.contentSize)}`;
 
                 const desc = document.createElement('div');
                 desc.className = 'studio-row-meta';
@@ -4554,9 +4851,48 @@
             setStatusSearch('', '');
         } catch (e) {
             console.error(e);
-            setStatusSearch('Ошибка поиска: ' + e.message, 'error');
+            setStatusSearch('\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u043e\u0438\u0441\u043a\u0430: ' + e.message, 'error');
+        } finally {
+            searchPaging.loading = false;
+            if (btnSearchGo) {
+                btnSearchGo.disabled = false;
+            }
+            updateSearchPagingControls();
         }
     }
+
+    async function runSearch() {
+        const q = (searchInputEl ? (searchInputEl.value || '') : '').trim();
+        if (!q) {
+            setStatusSearch('\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u0430\u043f\u0440\u043e\u0441', 'error');
+            if (btnSearchGo) {
+                btnSearchGo.disabled = false;
+            }
+            return;
+        }
+        if (searchPaging.loading) {
+            return;
+        }
+        closeSearchAiStream();
+        resetSearchAiStream();
+        if (searchResultsEl) {
+            searchResultsEl.innerHTML = '';
+        }
+        if (btnSearchGo) {
+            btnSearchGo.disabled = true;
+        }
+        searchPaging.loading = true;
+        searchPaging.query = q;
+        searchPaging.page = 0;
+        searchPaging.size = SEARCH_PAGE_SIZE;
+        searchPaging.total = 0;
+        updateSearchPagingControls();
+        clearSuggestDropdown();
+        const aiStreamPromise = startSearchAiStream(q);
+        await loadSearchPage(0);
+        await aiStreamPromise;
+    }
+
 
     // старт
     initAuth();
@@ -4567,4 +4903,3 @@
 </script>
 </body>
 </html>
-

@@ -58,17 +58,20 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
                           to_tsvector('russian',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('english',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('simple',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           )
                       ) @@ (
                           plainto_tsquery('russian', :query) ||
@@ -79,17 +82,20 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
                           to_tsvector('russian',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('english',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('simple',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ),
                           plainto_tsquery('russian', :query) ||
                           plainto_tsquery('english', :query) ||
@@ -104,17 +110,20 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
                           to_tsvector('russian',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('english',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('simple',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           )
                       ) @@ (
                           plainto_tsquery('russian', :query) ||
@@ -135,17 +144,20 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
                           to_tsvector('russian',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('english',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('simple',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           )
                       ) @@ (
                           to_tsquery('russian', :tsQuery) ||
@@ -156,17 +168,20 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
                           to_tsvector('russian',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('english',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('simple',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ),
                           to_tsquery('russian', :tsQuery) ||
                           to_tsquery('english', :tsQuery) ||
@@ -181,17 +196,20 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
                           to_tsvector('russian',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('english',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           ) ||
                           to_tsvector('simple',
                               coalesce(name, '') || ' ' ||
                               coalesce(description, '') || ' ' ||
-                              coalesce(uploader_name, '')
+                              coalesce(uploader_name, '') || ' ' ||
+                              coalesce(llm_tags, '')
                           )
                       ) @@ (
                           to_tsquery('russian', :tsQuery) ||

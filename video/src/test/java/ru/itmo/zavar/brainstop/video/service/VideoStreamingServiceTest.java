@@ -17,6 +17,7 @@ import ru.itmo.zavar.brainstop.common.test.Layer;
 import ru.itmo.zavar.brainstop.common.test.TestLayer;
 import ru.itmo.zavar.brainstop.common.test.TestType;
 import ru.itmo.zavar.brainstop.search.client.SearchEmbeddingClient;
+import ru.itmo.zavar.brainstop.video.llm.VideoLlmService;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.model.VideoRenditionEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
@@ -57,6 +58,9 @@ class VideoStreamingServiceTest {
 
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Mock
+    private VideoLlmService videoLlmService;
 
     @InjectMocks
     private VideoStreamingService videoStreamingService;

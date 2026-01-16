@@ -13,6 +13,7 @@ import ru.itmo.zavar.brainstop.common.api.infra.VideoObjectStorage;
 import ru.itmo.zavar.brainstop.common.api.search.dto.EmbeddingResponse;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobRegistry;
 import ru.itmo.zavar.brainstop.search.client.SearchEmbeddingClient;
+import ru.itmo.zavar.brainstop.video.llm.VideoLlmService;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.brainstop.video.transcoding.repo.UploadJobRepository;
@@ -39,6 +40,8 @@ class VideoStreamingServiceEmbeddingTest {
     private SearchEmbeddingClient embeddingClient;
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
+    @Mock
+    private VideoLlmService videoLlmService;
 
     @InjectMocks
     private VideoStreamingService service;
@@ -51,7 +54,8 @@ class VideoStreamingServiceEmbeddingTest {
                 jobRegistry,
                 uploadJobRepository,
                 embeddingClient,
-                kafkaTemplate
+                kafkaTemplate,
+                videoLlmService
         );
     }
 

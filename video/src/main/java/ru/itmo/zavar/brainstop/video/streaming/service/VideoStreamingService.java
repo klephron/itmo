@@ -17,6 +17,8 @@ import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingJobStatus;
 import ru.itmo.zavar.brainstop.common.api.transcoding.TranscodingResult;
 import ru.itmo.zavar.brainstop.search.client.SearchEmbeddingClient;
 import ru.itmo.zavar.brainstop.transcoding.config.TranscodingKafkaConfig;
+import ru.itmo.zavar.brainstop.video.llm.VideoLlmResult;
+import ru.itmo.zavar.brainstop.video.llm.VideoLlmService;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.model.VideoRenditionEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
@@ -54,6 +56,7 @@ public class VideoStreamingService {
     private final UploadJobRepository uploadJobRepository;
     private final SearchEmbeddingClient embeddingClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final VideoLlmService videoLlmService;
 
     @Value("${transcoder.ffmpeg-path:ffmpeg}")
     private String ffmpegPath;
@@ -214,6 +217,23 @@ public class VideoStreamingService {
             meta.setTitleEmbedding(titleVec);
             meta.setDescriptionEmbedding(descVec);
             meta.setCombinedEmbedding(combined);
+
+            try {
+                VideoLlmResult llmResult = videoLlmService.enrich(meta.getName(), meta.getDescription());
+                if (llmResult != null) {
+                    String tagsText = llmResult.tagsText();
+                    if (!tagsText.isBlank()) {
+                        meta.setLlmTags(tagsText);
+                    }
+                    meta.setLlmFlagged(llmResult.flagged());
+                    String flagsText = llmResult.categoriesText();
+                    if (!flagsText.isBlank()) {
+                        meta.setLlmFlags(flagsText);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("LLM enrichment failed for {}", meta.getUuid(), e);
+            }
 
             List<VideoRenditionEntity> renditionEntities = renditions.stream()
                     .sorted(Comparator.comparingInt(TranscodedRenditionMetadata::height))

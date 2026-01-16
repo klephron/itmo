@@ -1,0 +1,13 @@
+llm:
+  openrouter:
+    enabled: true
+    base-url: http://localhost:11434/v1
+    api-key: local
+    models:
+      - qwen2.5:1.5b
+    timeout: 30s
+    max-tokens: 128
+    stream-log: true
+    title: brainstop-video-local
+  video:
+    enabled: true
