@@ -221,5 +221,31 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadataEntity
     )
     Page<FileMetadataEntity> searchByTextPrefix(@Param("tsQuery") String tsQuery, Pageable pageable);
 
+    @Query(
+            value = """
+                    select *
+                    from file_meta
+                    where :term <> ''
+                      and (
+                          coalesce(name, '') ilike concat('%', :term, '%')
+                          or coalesce(description, '') ilike concat('%', :term, '%')
+                          or coalesce(uploader_name, '') ilike concat('%', :term, '%')
+                      )
+                    order by uploaded_at desc, id desc
+                    """,
+            countQuery = """
+                    select count(*)
+                    from file_meta
+                    where :term <> ''
+                      and (
+                          coalesce(name, '') ilike concat('%', :term, '%')
+                          or coalesce(description, '') ilike concat('%', :term, '%')
+                          or coalesce(uploader_name, '') ilike concat('%', :term, '%')
+                      )
+                    """,
+            nativeQuery = true
+    )
+    Page<FileMetadataEntity> searchByTopicTerm(@Param("term") String term, Pageable pageable);
+
     Page<FileMetadataEntity> findByCombinedEmbeddingIsNotNull(Pageable pageable);
 }

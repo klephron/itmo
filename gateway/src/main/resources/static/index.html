@@ -277,7 +277,8 @@
 
         input[type="text"],
         input[type="password"],
-        input[type="email"] {
+        input[type="email"],
+        input[type="number"] {
             border-radius: 999px;
             border: 1px solid #333;
             padding: 6px 10px;
@@ -340,6 +341,22 @@
             max-height: 160px;
             overflow-y: auto;
             padding-right: 4px;
+        }
+
+        .feed-topic-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .feed-topic-row input[type="text"] {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feed-topic-row input[type="number"] {
+            width: 90px;
         }
 
         .job-row {
@@ -866,6 +883,43 @@
                 </div>
             </div>
 
+            <div class="studio-section-title" style="margin-top:8px;">Предпочтения ленты</div>
+            <div class="form-row" style="margin-top:4px;">
+                <label for="feedPrefLikeWeight">Вес лайков</label>
+                <input id="feedPrefLikeWeight" type="number" min="0" step="0.1" placeholder="1.0">
+            </div>
+            <div class="form-row">
+                <label for="feedPrefFollowWeight">Вес подписок</label>
+                <input id="feedPrefFollowWeight" type="number" min="0" step="0.1" placeholder="1.0">
+            </div>
+            <div class="form-row">
+                <label for="feedPrefWatchWeight">Вес просмотров</label>
+                <input id="feedPrefWatchWeight" type="number" min="0" step="0.1" placeholder="1.0">
+            </div>
+            <div class="form-row">
+                <label for="feedPrefWatchThreshold">Порог просмотра (0..1)</label>
+                <input id="feedPrefWatchThreshold" type="number" min="0" max="1" step="0.05" placeholder="0.5">
+            </div>
+            <div class="controls" style="margin-top:6px;">
+                <button class="full small" id="btnFeedPreferencesSave">Сохранить</button>
+            </div>
+            <div class="status" id="feedPreferencesStatus"></div>
+            <details class="ai-details" id="feedPreferencesStatsWrap" style="margin-top:6px;">
+                <summary>Диагностика предпочтений</summary>
+                <div id="feedPreferencesStats" class="ai-context"></div>
+            </details>
+
+            <div class="studio-section-title" style="margin-top:8px;">Темы для корректировки</div>
+            <div class="studio-row-meta">
+                Добавьте слова или фразы, которые усиливают или ослабляют ленту. Вес может быть отрицательным.
+            </div>
+            <div class="studio-jobs" id="feedTopicsList" style="max-height:180px;"></div>
+            <div class="controls" style="margin-top:6px;">
+                <button class="secondary small" id="btnFeedTopicsAdd">Добавить тему</button>
+                <button class="full small" id="btnFeedTopicsSave">Сохранить темы</button>
+            </div>
+            <div class="status" id="feedTopicsStatus"></div>
+
             <div class="studio-section-title" style="margin-top:8px;">Мои подписки</div>
             <div class="studio-videos" id="authFollowingList"></div>
 
@@ -1087,6 +1141,18 @@
     const profileFollowStatsEl = document.getElementById('profileFollowStats');
     const authFollowingListEl = document.getElementById('authFollowingList');
     const authProfileStatsEl = document.getElementById('authProfileStats');
+    const feedPrefLikeWeightEl = document.getElementById('feedPrefLikeWeight');
+    const feedPrefFollowWeightEl = document.getElementById('feedPrefFollowWeight');
+    const feedPrefWatchWeightEl = document.getElementById('feedPrefWatchWeight');
+    const feedPrefWatchThresholdEl = document.getElementById('feedPrefWatchThreshold');
+    const btnFeedPreferencesSave = document.getElementById('btnFeedPreferencesSave');
+    const feedPreferencesStatusEl = document.getElementById('feedPreferencesStatus');
+    const feedPreferencesStatsEl = document.getElementById('feedPreferencesStats');
+    const feedPreferencesStatsWrapEl = document.getElementById('feedPreferencesStatsWrap');
+    const feedTopicsListEl = document.getElementById('feedTopicsList');
+    const feedTopicsStatusEl = document.getElementById('feedTopicsStatus');
+    const btnFeedTopicsAdd = document.getElementById('btnFeedTopicsAdd');
+    const btnFeedTopicsSave = document.getElementById('btnFeedTopicsSave');
 
     const profileStatsEl = document.getElementById('profileStats');
     const btnProfileFollow = document.getElementById('btnProfileFollow');
@@ -1349,6 +1415,7 @@
         authProfileDisplayNameEl.textContent = '';
         authProfileUsernameEl.textContent = '';
         authProfileVideosEl.innerHTML = '';
+        resetFeedPreferencesUI();
 
         authProfileVideosPaging = {
             userId: null,
@@ -1359,6 +1426,328 @@
             sort: 'uploadedAt,desc'
         };
         authProfileInfo = null;
+    }
+
+    function resetFeedPreferencesUI() {
+        resetFeedTopicsUI();
+        if (!feedPrefLikeWeightEl) {
+            return;
+        }
+        feedPrefLikeWeightEl.value = '';
+        feedPrefFollowWeightEl.value = '';
+        feedPrefWatchWeightEl.value = '';
+        feedPrefWatchThresholdEl.value = '';
+        if (feedPreferencesStatusEl) {
+            feedPreferencesStatusEl.textContent = '';
+            feedPreferencesStatusEl.className = 'status';
+        }
+        if (feedPreferencesStatsEl) {
+            feedPreferencesStatsEl.textContent = '';
+        }
+        if (feedPreferencesStatsWrapEl) {
+            feedPreferencesStatsWrapEl.style.display = 'none';
+        }
+    }
+
+    function resetFeedTopicsUI() {
+        if (!feedTopicsListEl) {
+            return;
+        }
+        feedTopicsListEl.innerHTML = '';
+        if (feedTopicsStatusEl) {
+            feedTopicsStatusEl.textContent = '';
+            feedTopicsStatusEl.className = 'status';
+        }
+    }
+
+    function setFeedPreferencesStatus(message, kind) {
+        if (!feedPreferencesStatusEl) return;
+        feedPreferencesStatusEl.textContent = message || '';
+        feedPreferencesStatusEl.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function setFeedTopicsStatus(message, kind) {
+        if (!feedTopicsStatusEl) return;
+        feedTopicsStatusEl.textContent = message || '';
+        feedTopicsStatusEl.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function formatVectorSample(values) {
+        if (!Array.isArray(values) || values.length === 0) {
+            return '[]';
+        }
+        const items = values.slice(0, 8).map(v => Number(v).toFixed(4));
+        return `[${items.join(', ')}]`;
+    }
+
+    function renderFeedPreferencesStats(prefs) {
+        if (!feedPreferencesStatsEl || !feedPreferencesStatsWrapEl) return;
+        if (!prefs) {
+            feedPreferencesStatsEl.textContent = '';
+            feedPreferencesStatsWrapEl.style.display = 'none';
+            return;
+        }
+        const lines = [];
+        lines.push(`Сигналы: liked=${prefs.likedCount ?? 0}, following=${prefs.followingCount ?? 0}, watched=${prefs.watchedCount ?? 0}, embedded=${prefs.recentEmbedded ?? 0}`);
+        lines.push(`Векторы: preference=${prefs.preferenceVectors ?? 0}, watch=${prefs.watchVectors ?? 0}, topics=${prefs.topicVectors ?? 0}`);
+        lines.push(`Preference null=${prefs.preferenceNull ?? false}, Watch null=${prefs.watchPreferenceNull ?? false}`);
+        if (prefs.preferenceSample && prefs.preferenceSample.length) {
+            lines.push(`Preference sample: ${formatVectorSample(prefs.preferenceSample)}`);
+        }
+        if (prefs.watchPreferenceSample && prefs.watchPreferenceSample.length) {
+            lines.push(`Watch sample: ${formatVectorSample(prefs.watchPreferenceSample)}`);
+        }
+        feedPreferencesStatsEl.textContent = lines.join('\n');
+        feedPreferencesStatsWrapEl.style.display = '';
+    }
+
+    function renderFeedPreferences(prefs) {
+        if (!feedPrefLikeWeightEl || !prefs) return;
+        feedPrefLikeWeightEl.value = Number(prefs.likeWeight ?? 0).toFixed(2);
+        feedPrefFollowWeightEl.value = Number(prefs.followWeight ?? 0).toFixed(2);
+        feedPrefWatchWeightEl.value = Number(prefs.watchWeight ?? 0).toFixed(2);
+        feedPrefWatchThresholdEl.value = Number(prefs.watchThreshold ?? 0).toFixed(2);
+        renderFeedPreferencesStats(prefs);
+    }
+
+    function renderFeedTopics(topics) {
+        if (!feedTopicsListEl) return;
+        feedTopicsListEl.innerHTML = '';
+        if (!Array.isArray(topics) || topics.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'studio-row-meta feed-topic-placeholder';
+            empty.textContent = 'Темы не заданы';
+            feedTopicsListEl.appendChild(empty);
+            return;
+        }
+        topics.forEach((topic) => {
+            appendFeedTopicRow(topic?.term ?? '', topic?.weight);
+        });
+    }
+
+    function appendFeedTopicRow(term, weight) {
+        if (!feedTopicsListEl) return;
+        const placeholder = feedTopicsListEl.querySelector('.feed-topic-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        const row = document.createElement('div');
+        row.className = 'feed-topic-row';
+
+        const termInput = document.createElement('input');
+        termInput.type = 'text';
+        termInput.placeholder = 'машины';
+        termInput.value = term || '';
+
+        const weightInput = document.createElement('input');
+        weightInput.type = 'number';
+        weightInput.step = '0.1';
+        weightInput.placeholder = '1.0';
+        if (Number.isFinite(weight)) {
+            weightInput.value = Number(weight).toFixed(2);
+        }
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'small danger';
+        removeBtn.textContent = 'Удалить';
+        removeBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            row.remove();
+            if (feedTopicsListEl.children.length === 0) {
+                renderFeedTopics([]);
+            }
+        });
+
+        row.appendChild(termInput);
+        row.appendChild(weightInput);
+        row.appendChild(removeBtn);
+        feedTopicsListEl.appendChild(row);
+    }
+
+    function collectFeedTopics() {
+        if (!feedTopicsListEl) return [];
+        const rows = Array.from(feedTopicsListEl.querySelectorAll('.feed-topic-row'));
+        const topics = [];
+        for (const row of rows) {
+            const inputs = row.querySelectorAll('input');
+            const termInput = inputs[0];
+            const weightInput = inputs[1];
+            const term = termInput ? termInput.value.trim() : '';
+            if (!term) {
+                continue;
+            }
+            let weight = 1;
+            if (weightInput) {
+                const raw = String(weightInput.value ?? '').trim();
+                if (raw !== '') {
+                    weight = Number(raw);
+                    if (!Number.isFinite(weight)) {
+                        throw new Error(`Некорректный вес для темы "${term}"`);
+                    }
+                }
+            }
+            topics.push({ term, weight });
+        }
+        return topics;
+    }
+
+    async function loadFeedTopics() {
+        if (!authUser || !authToken || !feedTopicsListEl) {
+            resetFeedTopicsUI();
+            return;
+        }
+        try {
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences/topics', {
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedTopicsStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const topics = await res.json();
+            renderFeedTopics(topics);
+            setFeedTopicsStatus('', '');
+        } catch (e) {
+            console.error('loadFeedTopics error', e);
+            setFeedTopicsStatus('Ошибка загрузки тем: ' + e.message, 'error');
+        }
+    }
+
+    async function saveFeedTopics() {
+        if (!authUser || !authToken || !feedTopicsListEl) {
+            return;
+        }
+        try {
+            setFeedTopicsStatus('Сохраняем...', '');
+            if (btnFeedTopicsSave) {
+                btnFeedTopicsSave.disabled = true;
+            }
+            const topics = collectFeedTopics();
+            const payload = { topics };
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences/topics', {
+                method: 'PUT',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedTopicsStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const topicsResponse = await res.json();
+            renderFeedTopics(topicsResponse);
+            setFeedTopicsStatus('Сохранено', 'ok');
+        } catch (e) {
+            console.error('saveFeedTopics error', e);
+            setFeedTopicsStatus('Ошибка сохранения: ' + e.message, 'error');
+        } finally {
+            if (btnFeedTopicsSave) {
+                btnFeedTopicsSave.disabled = false;
+            }
+        }
+    }
+
+    async function loadFeedPreferences() {
+        if (!authUser || !authToken || !feedPrefLikeWeightEl) {
+            resetFeedPreferencesUI();
+            return;
+        }
+        try {
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences', {
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedPreferencesStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const prefs = await res.json();
+            renderFeedPreferences(prefs);
+            setFeedPreferencesStatus('', '');
+        } catch (e) {
+            console.error('loadFeedPreferences error', e);
+            setFeedPreferencesStatus('Ошибка загрузки предпочтений: ' + e.message, 'error');
+        }
+    }
+
+    async function saveFeedPreferences() {
+        if (!authUser || !authToken || !feedPrefLikeWeightEl) {
+            return;
+        }
+        const parseNumber = (value, label) => {
+            const trimmed = String(value ?? '').trim();
+            if (trimmed === '') {
+                return null;
+            }
+            const num = Number(trimmed);
+            if (!Number.isFinite(num)) {
+                throw new Error(`Некорректное значение: ${label}`);
+            }
+            return num;
+        };
+        try {
+            setFeedPreferencesStatus('Сохраняем...', '');
+            if (btnFeedPreferencesSave) {
+                btnFeedPreferencesSave.disabled = true;
+            }
+            const likeWeight = parseNumber(feedPrefLikeWeightEl.value, 'вес лайков');
+            const followWeight = parseNumber(feedPrefFollowWeightEl.value, 'вес подписок');
+            const watchWeight = parseNumber(feedPrefWatchWeightEl.value, 'вес просмотров');
+            const watchThreshold = parseNumber(feedPrefWatchThresholdEl.value, 'порог просмотра');
+            if (likeWeight != null && likeWeight < 0) {
+                throw new Error('Вес лайков должен быть >= 0');
+            }
+            if (followWeight != null && followWeight < 0) {
+                throw new Error('Вес подписок должен быть >= 0');
+            }
+            if (watchWeight != null && watchWeight < 0) {
+                throw new Error('Вес просмотров должен быть >= 0');
+            }
+            if (watchThreshold != null && (watchThreshold < 0 || watchThreshold > 1)) {
+                throw new Error('Порог просмотра должен быть в диапазоне 0..1');
+            }
+            const payload = {
+                likeWeight,
+                followWeight,
+                watchWeight,
+                watchThreshold
+            };
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences', {
+                method: 'PUT',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedPreferencesStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const prefs = await res.json();
+            renderFeedPreferences(prefs);
+            setFeedPreferencesStatus('Сохранено', 'ok');
+        } catch (e) {
+            console.error('saveFeedPreferences error', e);
+            setFeedPreferencesStatus('Ошибка сохранения: ' + e.message, 'error');
+        } finally {
+            if (btnFeedPreferencesSave) {
+                btnFeedPreferencesSave.disabled = false;
+            }
+        }
     }
 
     async function loadAccountProfile() {
@@ -1424,6 +1813,8 @@
 
             // блок подписок
             loadAccountFollowing();
+            await loadFeedPreferences();
+            await loadFeedTopics();
 
             authProfileBlockEl.style.display = '';
             authProfileInfo = {
@@ -1976,6 +2367,27 @@
         profileVideosSortSelect.addEventListener('change', () => {
             profileVideosPaging.sort = profileVideosSortSelect.value;
             reloadProfileVideos();
+        });
+    }
+
+    if (btnFeedPreferencesSave) {
+        btnFeedPreferencesSave.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveFeedPreferences();
+        });
+    }
+
+    if (btnFeedTopicsAdd) {
+        btnFeedTopicsAdd.addEventListener('click', (event) => {
+            event.preventDefault();
+            appendFeedTopicRow('', '');
+        });
+    }
+
+    if (btnFeedTopicsSave) {
+        btnFeedTopicsSave.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveFeedTopics();
         });
     }
 

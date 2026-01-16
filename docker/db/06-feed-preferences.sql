@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS public.user_feed_preferences (
+    user_id BIGINT PRIMARY KEY,
+    like_weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+    follow_weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+    watch_weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+    watch_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.5,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
