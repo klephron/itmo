@@ -28,6 +28,13 @@ import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
 import ru.itmo.zavar.brainstop.video.service.FeedService;
 import ru.itmo.zavar.brainstop.video.service.FeedSessionService;
+import ru.itmo.zavar.brainstop.video.service.UserFeedPreferencesService;
+import ru.itmo.zavar.brainstop.video.service.UserFeedTopicService;
+import ru.itmo.zavar.brainstop.video.streaming.dto.request.FeedPreferencesUpdateRequest;
+import ru.itmo.zavar.brainstop.video.streaming.dto.request.FeedTopicUpdateRequest;
+import ru.itmo.zavar.brainstop.video.streaming.dto.request.FeedTopicsUpdateRequest;
+import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedPreferencesResponse;
+import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedTopicDto;
 import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedSessionResponse;
 import ru.itmo.zavar.brainstop.video.streaming.dto.response.UploadStartResponse;
 import ru.itmo.zavar.brainstop.video.streaming.model.StreamChunk;
@@ -55,6 +62,8 @@ public class VideoStreamingController {
     private final FileMetadataMapper fileMetadataMapper;
     private final FeedService feedService;
     private final FeedSessionService feedSessionService;
+    private final UserFeedPreferencesService preferencesService;
+    private final UserFeedTopicService topicService;
     private final VideoObjectStorage videoObjectStorage;
 
     @Value("${streaming.chunk.default-size}")
@@ -213,6 +222,54 @@ public class VideoStreamingController {
         return ResponseEntity.ok(jobs);
     }
 
+    @GetMapping("/feed/preferences")
+    @Operation(summary = "Get feed preferences")
+    public ResponseEntity<FeedPreferencesResponse> getFeedPreferences(@AuthenticationPrincipal CurrentUser principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.ok(feedService.getPreferencesSnapshot(principal.getId()));
+    }
+
+    @PutMapping("/feed/preferences")
+    @Operation(summary = "Update feed preferences")
+    public ResponseEntity<FeedPreferencesResponse> updateFeedPreferences(@RequestBody FeedPreferencesUpdateRequest request,
+                                                                         @AuthenticationPrincipal CurrentUser principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        validatePreferences(request);
+        preferencesService.updatePreferences(principal.getId(), request);
+        return ResponseEntity.ok(feedService.getPreferencesSnapshot(principal.getId()));
+    }
+
+    @GetMapping("/feed/preferences/topics")
+    @Operation(summary = "Get feed preference topics")
+    public ResponseEntity<List<FeedTopicDto>> getFeedPreferenceTopics(@AuthenticationPrincipal CurrentUser principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        List<FeedTopicDto> topics = topicService.getTopics(principal.getId()).stream()
+                .map(t -> new FeedTopicDto(t.getTerm(), t.getWeight() != null ? t.getWeight() : 0d))
+                .toList();
+        return ResponseEntity.ok(topics);
+    }
+
+    @PutMapping("/feed/preferences/topics")
+    @Operation(summary = "Replace feed preference topics")
+    public ResponseEntity<List<FeedTopicDto>> updateFeedPreferenceTopics(@RequestBody FeedTopicsUpdateRequest request,
+                                                                         @AuthenticationPrincipal CurrentUser principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        validateTopics(request);
+        List<FeedTopicDto> topics = topicService.replaceTopics(principal.getId(), request == null ? null : request.topics())
+                .stream()
+                .map(t -> new FeedTopicDto(t.getTerm(), t.getWeight() != null ? t.getWeight() : 0d))
+                .toList();
+        return ResponseEntity.ok(topics);
+    }
+
 
     private String getContentLengthHeader(StreamRange range, long fileSize) {
         long end = range.getRangeEnd(fileSize);
@@ -222,5 +279,43 @@ public class VideoStreamingController {
     private String getContentRangeHeader(StreamRange range, long fileSize) {
         long end = range.getRangeEnd(fileSize);
         return "bytes " + range.getRangeStart() + "-" + end + "/" + fileSize;
+    }
+
+    private void validatePreferences(FeedPreferencesUpdateRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        validateWeight(request.likeWeight(), "likeWeight");
+        validateWeight(request.followWeight(), "followWeight");
+        validateWeight(request.watchWeight(), "watchWeight");
+        Double watchThreshold = request.watchThreshold();
+        if (watchThreshold != null && (!Double.isFinite(watchThreshold) || watchThreshold < 0d || watchThreshold > 1d)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "watchThreshold must be between 0 and 1");
+        }
+    }
+
+    private void validateWeight(Double value, String name) {
+        if (value != null && (!Double.isFinite(value) || value < 0d)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, name + " must be >= 0");
+        }
+    }
+
+    private void validateTopics(FeedTopicsUpdateRequest request) {
+        if (request == null) {
+            return;
+        }
+        List<FeedTopicUpdateRequest> topics = request.topics();
+        if (topics == null) {
+            return;
+        }
+        for (FeedTopicUpdateRequest topic : topics) {
+            if (topic == null) {
+                continue;
+            }
+            Double weight = topic.weight();
+            if (weight != null && !Double.isFinite(weight)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "topic weight must be finite");
+            }
+        }
     }
 }

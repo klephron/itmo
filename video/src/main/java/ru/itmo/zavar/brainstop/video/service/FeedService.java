@@ -18,7 +18,9 @@ import ru.itmo.zavar.brainstop.interactions.client.InteractionsInternalClient;
 import ru.itmo.zavar.brainstop.video.mapper.FeedMapperContext;
 import ru.itmo.zavar.brainstop.video.mapper.FileMetadataToFeedMapper;
 import ru.itmo.zavar.brainstop.video.model.FileMetadataEntity;
+import ru.itmo.zavar.brainstop.video.model.UserFeedTopicEntity;
 import ru.itmo.zavar.brainstop.video.repo.FileMetadataRepository;
+import ru.itmo.zavar.brainstop.video.streaming.dto.response.FeedPreferencesResponse;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,10 +30,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FeedService {
 
-    private static final double WATCH_THRESHOLD = 0.5;
     private static final double WATCH_SCORE_WEIGHT = 0.2;
     private static final int DEBUG_SCORE_LIMIT = 20;
     private static final int CANDIDATE_SAMPLE_SIZE = 200;
+    private static final int VECTOR_SAMPLE_SIZE = 8;
+    private static final int TOPIC_LEXICAL_PER_TERM = 30;
+    private static final int TOPIC_LEXICAL_TOTAL = 150;
+    private static final int TOPIC_MIN_TERM_LENGTH = 2;
 
     private final FileMetadataRepository fileMetadataRepository;
     private final UserProfilePublicApi userProfilePublicApi;
@@ -39,6 +44,8 @@ public class FeedService {
     private final FollowQueryApi followQueryApi;
     private final InteractionsInternalClient interactionsInternalClient;
     private final FileMetadataToFeedMapper mapper;
+    private final UserFeedPreferencesService preferencesService;
+    private final UserFeedTopicService topicService;
     private final VectorConverter vectorConverter = new VectorConverter();
     @Value("${search.embedding.max-distance:0.6}")
     private double maxEmbeddingDistance;
@@ -157,6 +164,82 @@ public class FeedService {
         return Optional.of(dto);
     }
 
+    public FeedPreferencesResponse getPreferencesSnapshot(Long currentUserId) {
+        if (currentUserId == null) {
+            return new FeedPreferencesResponse(
+                    UserFeedPreferencesService.DEFAULT_LIKE_WEIGHT,
+                    UserFeedPreferencesService.DEFAULT_FOLLOW_WEIGHT,
+                    UserFeedPreferencesService.DEFAULT_WATCH_WEIGHT,
+                    UserFeedPreferencesService.DEFAULT_WATCH_THRESHOLD,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    true,
+                    true,
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    0
+            );
+        }
+
+        UserFeedPreferencesService.FeedPreferences preferences = preferencesService.getPreferences(currentUserId);
+        Page<FileMetadataEntity> recentEmbedded = fileMetadataRepository.findByCombinedEmbeddingIsNotNull(
+                PageRequest.of(0, CANDIDATE_SAMPLE_SIZE, Sort.by(Sort.Direction.DESC, "uploadedAt")));
+
+        Set<Long> candidateUploaderIds = recentEmbedded.getContent().stream()
+                .map(FileMetadataEntity::getUploaderId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Set<Long> candidateVideoIds = recentEmbedded.getContent().stream()
+                .map(FileMetadataEntity::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Set<Long> followingIds = followQueryApi.getFollowingWithin(currentUserId, candidateUploaderIds);
+        Set<Long> likedRecent = new HashSet<>(likeQueryApi.findLikedVideoIds(currentUserId, candidateVideoIds));
+        Map<Long, Double> watchRatios = resolveWatchRatios(currentUserId, candidateVideoIds);
+
+        List<WeightedVector> preferenceVectors = new ArrayList<>(buildPreferenceVectors(
+                recentEmbedded.getContent(),
+                likedRecent,
+                followingIds,
+                watchRatios,
+                preferences
+        ));
+        List<UserFeedTopicEntity> topics = topicService.getTopics(currentUserId);
+        List<WeightedVector> topicVectors = buildTopicVectors(topics);
+        preferenceVectors.addAll(topicVectors);
+        float[] preference = weightedAverage(preferenceVectors);
+
+        List<WeightedVector> watchVectors = buildWatchVectors(
+                recentEmbedded.getContent(),
+                watchRatios,
+                preferences
+        );
+        float[] watchPreference = weightedAverage(watchVectors);
+
+        return new FeedPreferencesResponse(
+                preferences.likeWeight(),
+                preferences.followWeight(),
+                preferences.watchWeight(),
+                preferences.watchThreshold(),
+                recentEmbedded.getTotalElements(),
+                followingIds.size(),
+                likedRecent.size(),
+                watchRatios.size(),
+                preferenceVectors.size(),
+                watchVectors.size(),
+                preference == null,
+                watchPreference == null,
+                sampleVector(preference),
+                sampleVector(watchPreference),
+                topicVectors.size()
+        );
+    }
+
     private Page<FileMetadataEntity> resolvePage(Long currentUserId, Pageable pageable) {
         // Anonymous users: simple reverse-chronological feed
         if (currentUserId == null) {
@@ -168,6 +251,11 @@ public class FeedService {
                     pageable.getPageSize(),
                     Sort.by(Sort.Direction.DESC, "uploadedAt")));
         }
+
+        UserFeedPreferencesService.FeedPreferences preferences = preferencesService.getPreferences(currentUserId);
+        double watchThreshold = preferences.watchThreshold();
+        double watchWeight = preferences.watchWeight();
+        double watchScoreWeight = WATCH_SCORE_WEIGHT * watchWeight;
 
         // Take a larger sample of embedded videos to infer interests from likes + followings
         Page<FileMetadataEntity> recentEmbedded = fileMetadataRepository.findByCombinedEmbeddingIsNotNull(
@@ -190,26 +278,16 @@ public class FeedService {
                     currentUserId, recentEmbedded.getTotalElements(), followingIds.size(), likedRecent.size(), watchRatios.size());
         }
 
-        List<WeightedVector> preferenceVectors = recentEmbedded.getContent().stream()
-                .map(f -> {
-                    double weight = 0d;
-                    if (likedRecent.contains(f.getId())) {
-                        weight += 1d;
-                    }
-                    if (followingIds.contains(f.getUploaderId())) {
-                        weight += 1d;
-                    }
-                    Double watchRatio = watchRatios.get(f.getId());
-                    if (watchRatio != null && watchRatio >= WATCH_THRESHOLD) {
-                        weight += watchRatio;
-                    }
-                    if (weight <= 0d || f.getCombinedEmbedding() == null) {
-                        return null;
-                    }
-                    return new WeightedVector(f.getCombinedEmbedding(), weight);
-                })
-                .filter(Objects::nonNull)
-                .toList();
+        List<WeightedVector> preferenceVectors = new ArrayList<>(buildPreferenceVectors(
+                recentEmbedded.getContent(),
+                likedRecent,
+                followingIds,
+                watchRatios,
+                preferences
+        ));
+        List<UserFeedTopicEntity> topics = topicService.getTopics(currentUserId);
+        List<WeightedVector> topicVectors = buildTopicVectors(topics);
+        preferenceVectors.addAll(topicVectors);
 
         float[] preference = weightedAverage(preferenceVectors);
         if (preference == null) {
@@ -217,34 +295,39 @@ public class FeedService {
             return buildChronologicalPage(currentUserId, pageable, "no preference vectors");
         }
 
-        List<WeightedVector> watchVectors = recentEmbedded.getContent().stream()
-                .map(f -> {
-                    Double watchRatio = watchRatios.get(f.getId());
-                    if (watchRatio == null || watchRatio < WATCH_THRESHOLD || f.getCombinedEmbedding() == null) {
-                        return null;
-                    }
-                    return new WeightedVector(f.getCombinedEmbedding(), watchRatio);
-                })
-                .filter(Objects::nonNull)
-                .toList();
+        List<WeightedVector> watchVectors = buildWatchVectors(
+                recentEmbedded.getContent(),
+                watchRatios,
+                preferences
+        );
         float[] watchPreference = weightedAverage(watchVectors);
         if (log.isDebugEnabled()) {
-            log.debug("Feed signals: preferenceVectors={}, watchVectors={}, preferenceNull={}, watchPreferenceNull={}",
-                    preferenceVectors.size(), watchVectors.size(), preference == null, watchPreference == null);
+            log.debug("Feed signals: preferenceVectors={}, topicVectors={}, watchVectors={}, preferenceNull={}, watchPreferenceNull={}",
+                    preferenceVectors.size(), topicVectors.size(), watchVectors.size(), preference == null, watchPreference == null);
         }
+
+        List<FileMetadataEntity> topicCandidates = resolveTopicCandidates(topics);
 
         String literal = vectorConverter.convertToDatabaseColumn(preference);
         Page<FileMetadataEntity> primarySample = fileMetadataRepository.searchByEmbedding(
                 literal,
                 maxEmbeddingDistance,
                 PageRequest.of(0, CANDIDATE_SAMPLE_SIZE));
-        List<FileMetadataEntity> primaryRanked = rankSample(currentUserId, preference, watchPreference, primarySample, "primary");
+        List<FileMetadataEntity> primaryCandidates = mergeCandidates(primarySample.getContent(), topicCandidates);
+        Page<FileMetadataEntity> primaryMerged = primaryCandidates.isEmpty()
+                ? Page.empty()
+                : new PageImpl<>(primaryCandidates, PageRequest.of(0, primaryCandidates.size()), primaryCandidates.size());
+        List<FileMetadataEntity> primaryRanked = rankSample(currentUserId, preference, watchPreference, primaryMerged, "primary", watchScoreWeight);
 
         Page<FileMetadataEntity> relaxedSample = fileMetadataRepository.searchByEmbedding(
                 literal,
                 relaxedMaxEmbeddingDistance,
                 PageRequest.of(0, CANDIDATE_SAMPLE_SIZE));
-        List<FileMetadataEntity> relaxedRanked = rankSample(currentUserId, preference, watchPreference, relaxedSample, "relaxed");
+        List<FileMetadataEntity> relaxedCandidates = mergeCandidates(relaxedSample.getContent(), topicCandidates);
+        Page<FileMetadataEntity> relaxedMerged = relaxedCandidates.isEmpty()
+                ? Page.empty()
+                : new PageImpl<>(relaxedCandidates, PageRequest.of(0, relaxedCandidates.size()), relaxedCandidates.size());
+        List<FileMetadataEntity> relaxedRanked = rankSample(currentUserId, preference, watchPreference, relaxedMerged, "relaxed", watchScoreWeight);
 
         List<FileMetadataEntity> chronological = buildChronologicalList(currentUserId, pageable, "combined");
         List<FileMetadataEntity> ranked = mergeStages(primaryRanked, relaxedRanked, chronological);
@@ -275,7 +358,8 @@ public class FeedService {
                                                 float[] preference,
                                                 float[] watchPreference,
                                                 Page<FileMetadataEntity> sample,
-                                                String stage) {
+                                                String stage,
+                                                double watchScoreWeight) {
         if (log.isDebugEnabled()) {
             log.debug("Feed candidate distances (stage={}, userId={}) size={}", stage, currentUserId, sample.getTotalElements());
             for (FileMetadataEntity e : sample) {
@@ -308,7 +392,7 @@ public class FeedService {
                     ranked.stream().map(FileMetadataEntity::getUuid).toList());
         }
         ranked.sort(Comparator.comparingDouble((FileMetadataEntity e) ->
-                        score(preference, watchPreference, e))
+                        score(preference, watchPreference, e, watchScoreWeight))
                 .reversed());
 
         ranked = excludeViewed(currentUserId, ranked);
@@ -316,7 +400,7 @@ public class FeedService {
             log.debug("Feed scoring: ranked list empty after excluding viewed for user {}, stage={}, sampleSize={}",
                     currentUserId, stage, sample.getTotalElements());
         }
-        logScoreDebug(currentUserId, preference, watchPreference, ranked);
+        logScoreDebug(currentUserId, preference, watchPreference, ranked, watchScoreWeight);
         return ranked;
     }
 
@@ -416,10 +500,13 @@ public class FeedService {
         float[] sum = new float[len];
         double weightSum = 0d;
         for (WeightedVector v : vectors) {
-            if (v == null || v.vector() == null || v.vector().length != len || v.weight() <= 0d) {
+            if (v == null || v.vector() == null || v.vector().length != len) {
                 continue;
             }
-            weightSum += v.weight();
+            if (!Double.isFinite(v.weight()) || v.weight() == 0d) {
+                continue;
+            }
+            weightSum += Math.abs(v.weight());
             for (int i = 0; i < len; i++) {
                 sum[i] += v.vector()[i] * v.weight();
             }
@@ -434,13 +521,13 @@ public class FeedService {
         return avg;
     }
 
-    private double score(float[] preference, float[] watchPreference, FileMetadataEntity entity) {
+    private double score(float[] preference, float[] watchPreference, FileMetadataEntity entity, double watchScoreWeight) {
         double sim = cosineSimilarity(preference, entity.getCombinedEmbedding());
         double watchSim = cosineSimilarity(watchPreference, entity.getCombinedEmbedding());
         double likes = Math.log1p(entity.getLikesCount());
         double views = Math.log1p(entity.getViewsCount());
         // tuneable weights for engagement
-        return sim + WATCH_SCORE_WEIGHT * watchSim + 0.3 * likes + 0.2 * views;
+        return sim + watchScoreWeight * watchSim + 0.3 * likes + 0.2 * views;
     }
 
     private double cosineSimilarity(float[] a, float[] b) {
@@ -461,7 +548,7 @@ public class FeedService {
         return dot / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
-    private void logScoreDebug(Long userId, float[] preference, float[] watchPreference, List<FileMetadataEntity> ranked) {
+    private void logScoreDebug(Long userId, float[] preference, float[] watchPreference, List<FileMetadataEntity> ranked, double watchScoreWeight) {
         if (!log.isDebugEnabled()) {
             return;
         }
@@ -479,7 +566,7 @@ public class FeedService {
             long viewsCount = entity.getViewsCount() != null ? entity.getViewsCount() : 0L;
             double likes = Math.log1p(likesCount);
             double views = Math.log1p(viewsCount);
-            double score = sim + WATCH_SCORE_WEIGHT * watchSim + 0.3 * likes + 0.2 * views;
+            double score = sim + watchScoreWeight * watchSim + 0.3 * likes + 0.2 * views;
             log.debug(
                     "Feed score user={} rank={} videoId={} uuid={} sim={} dist={} watchSim={} watchDist={} likes={} views={} score={}",
                     userId,
@@ -495,6 +582,148 @@ public class FeedService {
                     String.format(Locale.ROOT, "%.4f", score)
             );
         }
+    }
+
+    private List<WeightedVector> buildPreferenceVectors(List<FileMetadataEntity> recentEmbedded,
+                                                        Set<Long> likedRecent,
+                                                        Set<Long> followingIds,
+                                                        Map<Long, Double> watchRatios,
+                                                        UserFeedPreferencesService.FeedPreferences preferences) {
+        if (recentEmbedded == null || recentEmbedded.isEmpty()) {
+            return Collections.emptyList();
+        }
+        double watchThreshold = preferences.watchThreshold();
+        double watchWeight = preferences.watchWeight();
+
+        return recentEmbedded.stream()
+                .map(f -> {
+                    double weight = 0d;
+                    if (f.getId() != null && likedRecent.contains(f.getId())) {
+                        weight += preferences.likeWeight();
+                    }
+                    if (f.getUploaderId() != null && followingIds.contains(f.getUploaderId())) {
+                        weight += preferences.followWeight();
+                    }
+                    Double watchRatio = f.getId() != null ? watchRatios.get(f.getId()) : null;
+                    if (watchRatio != null && watchRatio >= watchThreshold) {
+                        weight += watchRatio * watchWeight;
+                    }
+                    if (weight <= 0d || f.getCombinedEmbedding() == null) {
+                        return null;
+                    }
+                    return new WeightedVector(f.getCombinedEmbedding(), weight);
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<WeightedVector> buildWatchVectors(List<FileMetadataEntity> recentEmbedded,
+                                                   Map<Long, Double> watchRatios,
+                                                   UserFeedPreferencesService.FeedPreferences preferences) {
+        if (recentEmbedded == null || recentEmbedded.isEmpty()) {
+            return Collections.emptyList();
+        }
+        double watchThreshold = preferences.watchThreshold();
+        double watchWeight = preferences.watchWeight();
+        return recentEmbedded.stream()
+                .map(f -> {
+                    Double watchRatio = f.getId() != null ? watchRatios.get(f.getId()) : null;
+                    if (watchRatio == null || watchRatio < watchThreshold || f.getCombinedEmbedding() == null) {
+                        return null;
+                    }
+                    return new WeightedVector(f.getCombinedEmbedding(), watchRatio * watchWeight);
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<WeightedVector> buildTopicVectors(List<UserFeedTopicEntity> topics) {
+        if (topics == null || topics.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return topics.stream()
+                .map(topic -> {
+                    if (topic == null || topic.getEmbedding() == null) {
+                        return null;
+                    }
+                    Double weight = topic.getWeight();
+                    if (weight == null || !Double.isFinite(weight) || weight == 0d) {
+                        return null;
+                    }
+                    return new WeightedVector(topic.getEmbedding(), weight);
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<FileMetadataEntity> resolveTopicCandidates(List<UserFeedTopicEntity> topics) {
+        if (topics == null || topics.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<String, FileMetadataEntity> merged = new LinkedHashMap<>();
+        Set<String> seenTerms = new HashSet<>();
+        int remaining = TOPIC_LEXICAL_TOTAL;
+        for (UserFeedTopicEntity topic : topics) {
+            if (topic == null) {
+                continue;
+            }
+            Double weight = topic.getWeight();
+            if (weight == null || !Double.isFinite(weight) || weight <= 0d) {
+                continue;
+            }
+            String term = normalizeTopicTerm(topic.getTerm());
+            if (term.isBlank() || term.length() < TOPIC_MIN_TERM_LENGTH) {
+                continue;
+            }
+            String normalizedKey = term.toLowerCase(Locale.ROOT);
+            if (!seenTerms.add(normalizedKey)) {
+                continue;
+            }
+            if (remaining <= 0) {
+                break;
+            }
+            int perTerm = Math.min(TOPIC_LEXICAL_PER_TERM, remaining);
+            Page<FileMetadataEntity> page = fileMetadataRepository.searchByTopicTerm(
+                    term,
+                    PageRequest.of(0, perTerm));
+            appendStage(merged, page.getContent());
+            remaining = TOPIC_LEXICAL_TOTAL - merged.size();
+        }
+        List<FileMetadataEntity> candidates = new ArrayList<>(merged.values());
+        if (log.isDebugEnabled()) {
+            log.debug("Feed topic lexical candidates: topics={}, candidates={}", topics.size(), candidates.size());
+        }
+        return candidates;
+    }
+
+    private String normalizeTopicTerm(String term) {
+        if (term == null) {
+            return "";
+        }
+        String normalized = term.trim();
+        while (normalized.startsWith("#")) {
+            normalized = normalized.substring(1).trim();
+        }
+        return normalized;
+    }
+
+    private List<FileMetadataEntity> mergeCandidates(List<FileMetadataEntity> base, List<FileMetadataEntity> extra) {
+        Map<String, FileMetadataEntity> merged = new LinkedHashMap<>();
+        appendStage(merged, base);
+        appendStage(merged, extra);
+        return new ArrayList<>(merged.values());
+    }
+
+    private List<Float> sampleVector(float[] vector) {
+        if (vector == null || vector.length == 0) {
+            return Collections.emptyList();
+        }
+        int limit = Math.min(VECTOR_SAMPLE_SIZE, vector.length);
+        List<Float> sample = new ArrayList<>(limit);
+        for (int i = 0; i < limit; i++) {
+            sample.add(vector[i]);
+        }
+        return sample;
     }
 
     private Map<Long, Double> resolveWatchRatios(Long userId, Set<Long> videoIds) {

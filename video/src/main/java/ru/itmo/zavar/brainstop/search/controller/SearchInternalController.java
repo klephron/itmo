@@ -42,6 +42,14 @@ public class SearchInternalController {
     private static final int HYBRID_MAX_CANDIDATES = 200;
     private static final double VECTOR_WEIGHT = 0.6;
     private static final double TEXT_WEIGHT = 0.4;
+    private static final int SHORT_QUERY_MAX_LEN = 4;
+    private static final double SHORT_VECTOR_WEIGHT = 0.35;
+    private static final double SHORT_TEXT_WEIGHT = 0.65;
+    private static final double SHORT_TOKEN_NAME_BOOST = 0.25;
+    private static final double SHORT_TOKEN_DESC_BOOST = 0.15;
+    private static final double SHORT_TOKEN_UPLOADER_BOOST = 0.1;
+    private static final double SHORT_TOKEN_PREFIX_RATIO = 0.7;
+    private static final int SHORT_TOKEN_PREFIX_MAX_EXTRA = 2;
     private static final double EXACT_MATCH_BOOST = 0.4;
     private static final double PREFIX_MATCH_BOOST = 0.2;
     private static final double NAME_MATCH_BOOST = 0.1;
@@ -234,6 +242,9 @@ public class SearchInternalController {
         int vectorSize = vectorList.size();
         int textSize = textList.size();
         String normalized = normalizeQuery(query);
+        boolean shortQuery = normalized.length() > 0 && normalized.length() <= SHORT_QUERY_MAX_LEN;
+        double vectorWeight = shortQuery ? SHORT_VECTOR_WEIGHT : VECTOR_WEIGHT;
+        double textWeight = shortQuery ? SHORT_TEXT_WEIGHT : TEXT_WEIGHT;
 
         List<ScoredEntity> scored = new ArrayList<>();
         for (Map.Entry<String, FileMetadataEntity> entry : merged.entrySet()) {
@@ -241,8 +252,8 @@ public class SearchInternalController {
             FileMetadataEntity entity = entry.getValue();
             double vectorScore = rankScore(vectorRanks.get(key), vectorSize);
             double textScore = rankScore(textRanks.get(key), textSize);
-            double boost = boostScore(entity, normalized);
-            double score = VECTOR_WEIGHT * vectorScore + TEXT_WEIGHT * textScore + boost;
+            double boost = boostScore(entity, normalized, shortQuery);
+            double score = vectorWeight * vectorScore + textWeight * textScore + boost;
             scored.add(new ScoredEntity(entity, score, vectorScore));
         }
         scored.sort(Comparator.comparingDouble(ScoredEntity::score)
@@ -346,7 +357,7 @@ public class SearchInternalController {
         return 1d - (rank / (double) total);
     }
 
-    private double boostScore(FileMetadataEntity entity, String query) {
+    private double boostScore(FileMetadataEntity entity, String query, boolean shortQuery) {
         if (entity == null || query == null || query.isBlank()) {
             return 0d;
         }
@@ -369,7 +380,43 @@ public class SearchInternalController {
         if (!uploader.isEmpty() && uploader.contains(query)) {
             boost += UPLOADER_MATCH_BOOST;
         }
+        if (shortQuery) {
+            String queryToken = firstToken(query);
+            if (!queryToken.isBlank()) {
+                boost += tokenMatchBoost(name, queryToken, SHORT_TOKEN_NAME_BOOST);
+                boost += tokenMatchBoost(description, queryToken, SHORT_TOKEN_DESC_BOOST);
+                boost += tokenMatchBoost(uploader, queryToken, SHORT_TOKEN_UPLOADER_BOOST);
+            }
+        }
         return boost;
+    }
+
+    private double tokenMatchBoost(String text, String queryToken, double weight) {
+        if (text == null || text.isBlank() || queryToken == null || queryToken.isBlank()) {
+            return 0d;
+        }
+        List<String> tokens = tokenize(text);
+        if (tokens.isEmpty()) {
+            return 0d;
+        }
+        for (String token : tokens) {
+            if (token.equals(queryToken)) {
+                return weight;
+            }
+            if (token.startsWith(queryToken)
+                    && token.length() <= queryToken.length() + SHORT_TOKEN_PREFIX_MAX_EXTRA) {
+                return weight * SHORT_TOKEN_PREFIX_RATIO;
+            }
+        }
+        return 0d;
+    }
+
+    private String firstToken(String query) {
+        List<String> tokens = tokenize(query);
+        if (tokens.isEmpty()) {
+            return "";
+        }
+        return tokens.get(0);
     }
 
     private String normalizeQuery(String query) {
