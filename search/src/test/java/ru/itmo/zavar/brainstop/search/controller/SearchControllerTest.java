@@ -19,6 +19,7 @@ import ru.itmo.zavar.brainstop.common.test.TestLayer;
 import ru.itmo.zavar.brainstop.common.test.TestType;
 import ru.itmo.zavar.brainstop.search.client.SearchInternalClient;
 import ru.itmo.zavar.brainstop.search.embedding.EmbeddingService;
+import ru.itmo.zavar.brainstop.search.llm.SearchLlmService;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,12 +40,22 @@ class SearchControllerTest {
     @Mock
     private EmbeddingService embeddingService;
 
+    @Mock
+    private SearchLlmService searchLlmService;
+
     @InjectMocks
     private SearchController controller;
 
     @BeforeEach
     void setUp() {
         when(embeddingService.embed(anyString())).thenReturn(new float[]{0.1f, 0.2f, 0.3f});
+        when(searchLlmService.isRagEnabled()).thenReturn(false);
+        when(searchLlmService.buildQueryVariants(anyString(), anyString()))
+                .thenAnswer(invocation -> List.of(invocation.getArgument(0)));
+        when(searchLlmService.suggestPoolSize(anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(searchLlmService.poolSize(anyInt(), anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     @Test
@@ -56,7 +67,7 @@ class SearchControllerTest {
                 .thenReturn(pageResponse);
 
         ResponseEntity<PageResponse<FileMetadataDto>> response =
-                controller.searchVideos("query", 2, 20);
+                controller.searchVideos("query", 2, 20, true);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().page()).isEqualTo(2);
@@ -72,7 +83,7 @@ class SearchControllerTest {
                 .thenReturn(pageResponse);
 
         ResponseEntity<PageResponse<FileMetadataDto>> response =
-                controller.searchVideos("nonexistent", 0, 10);
+                controller.searchVideos("nonexistent", 0, 10, true);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().content()).isEmpty();
@@ -85,7 +96,7 @@ class SearchControllerTest {
         when(searchInternalClient.suggest(any(SearchSuggestRequest.class)))
                 .thenReturn(List.of());
 
-        controller.suggestVideos("query", 3);
+        controller.suggestVideos("query", 3, true);
 
         verify(searchInternalClient).suggest(argThat(req ->
                 req != null && "query".equals(req.q()) && Integer.valueOf(3).equals(req.limit())));

@@ -66,12 +66,19 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       TRANSCODER_FFMPEG_PATH: /usr/bin/ffmpeg
       TRANSCODER_FFPROBE_PATH: /usr/bin/ffprobe
+      LLM_OPENROUTER_ENABLED: "true"
+      LLM_VIDEO_ENABLED: "true"
+      LLM_OPENROUTER_BASE_URL: http://ollama:11434/v1
+      LLM_OPENROUTER_MODELS: "qwen2.5:1.5b"
+      OPENROUTER_API_KEY: local
+      OPENROUTER_TITLE: brainstop-video
     depends_on:
       - postgres
       - discovery
       - minio
       - kafka
       - redis
+      - ollama
 
   profile:
     build:
@@ -201,9 +208,16 @@ services:
       SPRING_DATASOURCE_USERNAME: search_app
       SPRING_DATASOURCE_PASSWORD: search_app
       JWT_SECRET: jwt_dev_secret
+      LLM_OPENROUTER_ENABLED: "true"
+      LLM_SEARCH_ENABLED: "true"
+      LLM_OPENROUTER_BASE_URL: http://ollama:11434/v1
+      LLM_OPENROUTER_MODELS: "qwen2.5:1.5b"
+      OPENROUTER_API_KEY: local
+      OPENROUTER_TITLE: brainstop-search
     depends_on:
       - postgres
       - discovery
+      - ollama
     volumes:
       - ./djl-cache:/root/.djl.ai
 
@@ -303,8 +317,37 @@ services:
     volumes:
       - redis-data:/data
 
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    volumes:
+      - ollama-data:/root/.ollama
+    entrypoint: [ "sh", "-c", "ollama pull qwen2.5:1.5b" ]
+    restart: "no"
+
 volumes:
   pgdata:
   kafka-data:
   minio-data:
   redis-data:
+  ollama-data:

@@ -70,6 +70,15 @@ public class FileMetadataEntity {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
+    @Column(name = "llm_tags", columnDefinition = "text")
+    private String llmTags;
+
+    @Column(name = "llm_flagged")
+    private Boolean llmFlagged = false;
+
+    @Column(name = "llm_flags", columnDefinition = "text")
+    private String llmFlags;
+
     @OneToMany(mappedBy = "file", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VideoRenditionEntity> renditions = new ArrayList<>();
 

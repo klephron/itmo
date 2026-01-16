@@ -18,6 +18,7 @@ import ru.itmo.zavar.brainstop.common.test.TestLayer;
 import ru.itmo.zavar.brainstop.common.test.TestType;
 import ru.itmo.zavar.brainstop.search.client.SearchInternalClient;
 import ru.itmo.zavar.brainstop.search.embedding.EmbeddingService;
+import ru.itmo.zavar.brainstop.search.llm.SearchLlmService;
 
 import java.time.Instant;
 import java.util.List;
@@ -38,12 +39,22 @@ class SearchControllerAdvancedTest {
     @Mock
     private EmbeddingService embeddingService;
 
+    @Mock
+    private SearchLlmService searchLlmService;
+
     @InjectMocks
     private SearchController controller;
 
     @BeforeEach
     void setUp() {
         when(embeddingService.embed(anyString())).thenReturn(new float[]{0.1f, 0.2f, 0.3f});
+        when(searchLlmService.isRagEnabled()).thenReturn(false);
+        when(searchLlmService.buildQueryVariants(anyString(), anyString()))
+                .thenAnswer(invocation -> List.of(invocation.getArgument(0)));
+        when(searchLlmService.suggestPoolSize(anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(searchLlmService.poolSize(anyInt(), anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     @Test
@@ -54,7 +65,7 @@ class SearchControllerAdvancedTest {
         when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(response);
 
-        var result = controller.searchVideos("query", 100, 50);
+        var result = controller.searchVideos("query", 100, 50, true);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody().page()).isEqualTo(100);
@@ -69,7 +80,7 @@ class SearchControllerAdvancedTest {
         when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(response);
 
-        var result = controller.searchVideos("query", 0, 0);
+        var result = controller.searchVideos("query", 0, 0, true);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody().content()).isEmpty();
@@ -82,7 +93,7 @@ class SearchControllerAdvancedTest {
         when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(new PageResponse<>(List.of(), 0, 10, 0));
 
-        controller.searchVideos("机器学习视频", 0, 10);
+        controller.searchVideos("机器学习视频", 0, 10, true);
 
         verify(embeddingService).embed("机器学习视频");
     }
@@ -91,7 +102,7 @@ class SearchControllerAdvancedTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-SEARCH-ADV-04: Поиск с emoji")
     void searchVideos_emojiQuery() {
-        controller.searchVideos("test 😀 🎥", 0, 10);
+        controller.searchVideos("test 😀 🎥", 0, 10, true);
 
         verify(embeddingService).embed("test 😀 🎥");
     }
@@ -104,7 +115,7 @@ class SearchControllerAdvancedTest {
         when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
                 .thenReturn(new PageResponse<>(List.of(), 0, 10, 0));
 
-        controller.searchVideos(longQuery, 0, 10);
+        controller.searchVideos(longQuery, 0, 10, true);
 
         verify(embeddingService).embed(longQuery);
     }
@@ -116,7 +127,7 @@ class SearchControllerAdvancedTest {
         when(searchInternalClient.suggest(any(SearchSuggestRequest.class)))
                 .thenReturn(List.of());
 
-        var result = controller.suggestVideos("query", 0);
+        var result = controller.suggestVideos("query", 0, true);
 
         assertThat(result.getBody()).isEmpty();
     }
@@ -128,7 +139,7 @@ class SearchControllerAdvancedTest {
         when(searchInternalClient.suggest(any(SearchSuggestRequest.class)))
                 .thenReturn(List.of());
 
-        controller.suggestVideos("query", 100);
+        controller.suggestVideos("query", 100, true);
 
         verify(searchInternalClient).suggest(argThat(req ->
                 req != null && "query".equals(req.q()) && Integer.valueOf(100).equals(req.limit())));
@@ -143,7 +154,7 @@ class SearchControllerAdvancedTest {
                 .thenReturn(response);
 
         for (int i = 0; i < 5; i++) {
-            controller.searchVideos("same query", 0, 10);
+            controller.searchVideos("same query", 0, 10, true);
         }
 
         verify(embeddingService, times(5)).embed("same query");
@@ -153,7 +164,7 @@ class SearchControllerAdvancedTest {
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-SEARCH-ADV-11: Поиск с пробелами по краям")
     void searchVideos_queryWithWhitespace() {
-        controller.searchVideos("  test query  ", 0, 10);
+        controller.searchVideos("  test query  ", 0, 10, true);
 
         verify(embeddingService).embed("  test query  ");
     }

@@ -71,7 +71,8 @@ streaming:
     default-size: 2621440 # 2.5 MB
 search:
   embedding:
-    max-distance: 0.6
+    max-distance: 0.4
+    strict-max-distance: 0.35
     relaxed-max-distance: 0.9
 
 storage:
@@ -90,11 +91,36 @@ app:
   views:
     exchange: video.views
 
+llm:
+  openrouter:
+    enabled: true
+    base-url: https://openrouter.ai/api/v1
+    api-key: ${OPENROUTER_API_KEY:}
+    models:
+      - mistralai/mistral-7b-instruct:free
+      - qwen/qwen2.5-7b-instruct:free
+    timeout: 8s
+    temperature: 0.2
+    top-p: 0.9
+    max-tokens: 256
+    stream-log: false
+    referer: ${OPENROUTER_REFERER:}
+    title: ${OPENROUTER_TITLE:brainstop-video}
+  video:
+    enabled: true
+    tagging-enabled: true
+    moderation-enabled: true
+    tag-count: 8
+    tag-max-tokens: 120
+    moderation-max-tokens: 120
+    cache-ttl: 6h
+
 logging:
   level:
     org.springframework.security: INFO
     io.github.resilience4j.circuitbreaker: INFO
     ru.itmo.zavar.brainstop.video.service.FeedService: DEBUG
+    ru.itmo.zavar.brainstop.video.llm: DEBUG
 
 management:
   endpoints:

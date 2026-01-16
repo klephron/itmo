@@ -26,9 +26,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/internal/search")
@@ -38,18 +40,25 @@ public class SearchInternalController {
 
     private static final int HYBRID_MULTIPLIER = 3;
     private static final int HYBRID_MAX_CANDIDATES = 200;
-    private static final double VECTOR_WEIGHT = 0.7;
-    private static final double TEXT_WEIGHT = 0.3;
+    private static final double VECTOR_WEIGHT = 0.6;
+    private static final double TEXT_WEIGHT = 0.4;
     private static final double EXACT_MATCH_BOOST = 0.4;
     private static final double PREFIX_MATCH_BOOST = 0.2;
     private static final double NAME_MATCH_BOOST = 0.1;
     private static final double DESCRIPTION_MATCH_BOOST = 0.05;
     private static final double UPLOADER_MATCH_BOOST = 0.05;
+    private static final int MAX_TSQUERY_TOKENS = 5;
+    private static final Map<String, List<String>> SYNONYMS = Map.ofEntries(
+            Map.entry("volkswagen", List.of("vw")),
+            Map.entry("vw", List.of("volkswagen"))
+    );
 
     private final FileMetadataRepository fileMetadataRepository;
     private final FileMetadataMapper fileMetadataMapper;
     @Value("${search.embedding.max-distance:0.6}")
     private double maxEmbeddingDistance;
+    @Value("${search.embedding.strict-max-distance:0.35}")
+    private double strictEmbeddingDistance;
 
     @GetMapping("/videos")
     @Operation(summary = "Р'Р?С?С'С?РчР?Р?РёР№ РїР?РёС?Рє Р?РёР?РчР?")
@@ -75,15 +84,16 @@ public class SearchInternalController {
                                                                String query,
                                                                int page,
                                                                int size) {
-        if (queryVecLiteral == null || queryVecLiteral.isBlank()) {
-            return new PageResponse<>(List.of(), page, size, 0);
-        }
         if (size <= 0) {
             return new PageResponse<>(List.of(), page, size, 0);
         }
 
-        String normalized = normalizeQuery(query);
+        ExpandedQuery expanded = expandQuery(query);
+        String normalized = expanded.base();
         if (normalized.isBlank()) {
+            if (queryVecLiteral == null || queryVecLiteral.isBlank()) {
+                return new PageResponse<>(List.of(), page, size, 0);
+            }
             Pageable pageable = PageRequest.of(page, size);
             Page<FileMetadataEntity> result = this.fileMetadataRepository.searchByEmbedding(queryVecLiteral, maxEmbeddingDistance, pageable);
             return new PageResponse<>(
@@ -93,8 +103,18 @@ public class SearchInternalController {
                     result.getTotalElements()
             );
         }
+        if (queryVecLiteral == null || queryVecLiteral.isBlank()) {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<FileMetadataEntity> result = searchByText(expanded, pageable, true);
+            return new PageResponse<>(
+                    result.getContent().stream().map(fileMetadataMapper::toDto).toList(),
+                    result.getNumber(),
+                    result.getSize(),
+                    result.getTotalElements()
+            );
+        }
 
-        HybridResult hybrid = searchHybrid(queryVecLiteral, normalized, page, size);
+        HybridResult hybrid = searchHybrid(queryVecLiteral, expanded, page, size);
         return new PageResponse<>(
                 hybrid.items().stream().map(fileMetadataMapper::toDto).toList(),
                 page,
@@ -127,7 +147,8 @@ public class SearchInternalController {
         if (limit <= 0) {
             return List.of();
         }
-        String normalized = normalizeQuery(query);
+        ExpandedQuery expanded = expandQuery(query);
+        String normalized = expanded.base();
         if (normalized.isBlank()) {
             if (queryVecLiteral == null || queryVecLiteral.isBlank()) {
                 return List.of();
@@ -135,7 +156,7 @@ public class SearchInternalController {
             Page<FileMetadataEntity> page = this.fileMetadataRepository.searchByEmbedding(queryVecLiteral, maxEmbeddingDistance, PageRequest.of(0, limit));
             return page.getContent().stream().map(fileMetadataMapper::toDto).toList();
         }
-        String tsQuery = buildPrefixTsQuery(normalized);
+        String tsQuery = buildTsQuery(expanded, true);
         if (tsQuery.isBlank()) {
             return List.of();
         }
@@ -143,7 +164,7 @@ public class SearchInternalController {
         return textPage.getContent().stream().map(fileMetadataMapper::toDto).toList();
     }
 
-    private HybridResult searchHybrid(String queryVecLiteral, String query, int page, int size) {
+    private HybridResult searchHybrid(String queryVecLiteral, ExpandedQuery expanded, int page, int size) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.max(size, 1);
         int candidateLimit = Math.min((safePage + 1) * safeSize * HYBRID_MULTIPLIER, HYBRID_MAX_CANDIDATES);
@@ -151,18 +172,46 @@ public class SearchInternalController {
                 queryVecLiteral,
                 maxEmbeddingDistance,
                 PageRequest.of(0, candidateLimit));
-        Page<FileMetadataEntity> textPage = this.fileMetadataRepository.searchByText(
-                query,
-                PageRequest.of(0, candidateLimit));
+        Page<FileMetadataEntity> textPage = searchByText(expanded, PageRequest.of(0, candidateLimit), true);
+        if (textPage.getTotalElements() == 0) {
+            double strictDistance = Math.min(maxEmbeddingDistance, strictEmbeddingDistance);
+            if (strictDistance <= 0) {
+                return new HybridResult(List.of(), 0);
+            }
+            Page<FileMetadataEntity> strictVectorPage = this.fileMetadataRepository.searchByEmbedding(
+                    queryVecLiteral,
+                    strictDistance,
+                    PageRequest.of(0, candidateLimit));
+            List<FileMetadataEntity> ranked = filterByMinimalText(strictVectorPage.getContent(), expanded);
+            if (ranked.isEmpty()) {
+                return new HybridResult(List.of(), 0);
+            }
+            int from = safePage * safeSize;
+            int to = Math.min(from + safeSize, ranked.size());
+            List<FileMetadataEntity> slice = from >= ranked.size()
+                    ? Collections.emptyList()
+                    : ranked.subList(from, to);
+            return new HybridResult(slice, ranked.size());
+        }
 
-        List<FileMetadataEntity> ranked = mergeAndRank(vectorPage.getContent(), textPage.getContent(), query);
+        List<FileMetadataEntity> ranked = mergeAndRank(vectorPage.getContent(), textPage.getContent(), expanded.base());
         int from = safePage * safeSize;
         int to = Math.min(from + safeSize, ranked.size());
         List<FileMetadataEntity> slice = from >= ranked.size()
                 ? Collections.emptyList()
                 : ranked.subList(from, to);
-        long total = Math.max(vectorPage.getTotalElements(), textPage.getTotalElements());
+        long total = textPage.getTotalElements() > 0
+                ? textPage.getTotalElements()
+                : vectorPage.getTotalElements();
         return new HybridResult(slice, total);
+    }
+
+    private Page<FileMetadataEntity> searchByText(ExpandedQuery expanded, Pageable pageable, boolean prefix) {
+        String tsQuery = buildTsQuery(expanded, prefix);
+        if (tsQuery.isBlank()) {
+            return Page.empty(pageable);
+        }
+        return this.fileMetadataRepository.searchByTextPrefix(tsQuery, pageable);
     }
 
     private List<FileMetadataEntity> mergeAndRank(List<FileMetadataEntity> vectorHits,
@@ -171,11 +220,14 @@ public class SearchInternalController {
         List<FileMetadataEntity> vectorList = vectorHits == null ? List.of() : vectorHits;
         List<FileMetadataEntity> textList = textHits == null ? List.of() : textHits;
         Map<String, FileMetadataEntity> merged = new LinkedHashMap<>();
-        for (FileMetadataEntity entity : vectorList) {
-            putIfPresent(merged, entity);
-        }
-        for (FileMetadataEntity entity : textList) {
-            putIfPresent(merged, entity);
+        if (!textList.isEmpty()) {
+            for (FileMetadataEntity entity : textList) {
+                putIfPresent(merged, entity);
+            }
+        } else {
+            for (FileMetadataEntity entity : vectorList) {
+                putIfPresent(merged, entity);
+            }
         }
         Map<String, Integer> vectorRanks = buildRankMap(vectorList);
         Map<String, Integer> textRanks = buildRankMap(textList);
@@ -202,6 +254,58 @@ public class SearchInternalController {
             result.add(item.entity());
         }
         return result;
+    }
+
+    private List<FileMetadataEntity> filterByMinimalText(List<FileMetadataEntity> candidates, ExpandedQuery expanded) {
+        if (candidates == null || candidates.isEmpty() || expanded == null) {
+            return List.of();
+        }
+        String base = expanded.base();
+        List<List<String>> groups = expanded.groups();
+        if ((base == null || base.isBlank()) && (groups == null || groups.isEmpty())) {
+            return List.copyOf(candidates);
+        }
+        List<FileMetadataEntity> filtered = new ArrayList<>();
+        for (FileMetadataEntity entity : candidates) {
+            if (matchesAnyToken(entity, base, groups)) {
+                filtered.add(entity);
+            }
+        }
+        return filtered;
+    }
+
+    private boolean matchesAnyToken(FileMetadataEntity entity, String base, List<List<String>> groups) {
+        if (entity == null) {
+            return false;
+        }
+        String combined = String.join(" ",
+                safeLower(entity.getName()),
+                safeLower(entity.getDescription()),
+                safeLower(entity.getUploaderName()));
+        if (base != null && !base.isBlank() && combined.contains(base)) {
+            return true;
+        }
+        if (groups == null || groups.isEmpty()) {
+            return false;
+        }
+        for (List<String> group : groups) {
+            if (group == null) {
+                continue;
+            }
+            for (String token : group) {
+                if (token == null) {
+                    continue;
+                }
+                String trimmed = token.trim();
+                if (trimmed.length() < 2) {
+                    continue;
+                }
+                if (combined.contains(trimmed)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void putIfPresent(Map<String, FileMetadataEntity> merged, FileMetadataEntity entity) {
@@ -275,26 +379,87 @@ public class SearchInternalController {
         return query.trim().toLowerCase(Locale.ROOT);
     }
 
-    private String buildPrefixTsQuery(String query) {
+    private ExpandedQuery expandQuery(String query) {
+        String base = normalizeQuery(query);
+        if (base.isBlank()) {
+            return new ExpandedQuery("", List.of());
+        }
+        List<String> tokens = tokenize(base);
+        if (tokens.isEmpty()) {
+            return new ExpandedQuery(base, List.of());
+        }
+        if (tokens.size() > MAX_TSQUERY_TOKENS) {
+            tokens = tokens.subList(0, MAX_TSQUERY_TOKENS);
+        }
+        List<List<String>> groups = new ArrayList<>();
+        for (String token : tokens) {
+            if (token.isBlank()) {
+                continue;
+            }
+            Set<String> group = new LinkedHashSet<>();
+            group.add(token);
+            List<String> synonyms = SYNONYMS.get(token);
+            if (synonyms != null) {
+                group.addAll(synonyms);
+            }
+            groups.add(new ArrayList<>(group));
+        }
+        return new ExpandedQuery(base, groups);
+    }
+
+    private List<String> tokenize(String query) {
         if (query == null || query.isBlank()) {
-            return "";
+            return List.of();
         }
         String cleaned = query.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim();
         if (cleaned.isBlank()) {
-            return "";
+            return List.of();
         }
         String[] parts = cleaned.split("\\s+");
-        int maxParts = Math.min(parts.length, 5);
+        List<String> tokens = new ArrayList<>(parts.length);
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                tokens.add(part);
+            }
+        }
+        return tokens;
+    }
+
+    private String buildTsQuery(ExpandedQuery expanded, boolean prefix) {
+        if (expanded == null || expanded.groups().isEmpty()) {
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < maxParts; i++) {
-            String token = parts[i];
-            if (token.isBlank()) {
+        for (List<String> group : expanded.groups()) {
+            if (group == null || group.isEmpty()) {
                 continue;
             }
             if (sb.length() > 0) {
                 sb.append(" & ");
             }
-            sb.append(token).append(":*");
+            if (group.size() == 1) {
+                sb.append(group.get(0));
+                if (prefix) {
+                    sb.append(":*");
+                }
+                continue;
+            }
+            sb.append("(");
+            boolean first = true;
+            for (String token : group) {
+                if (token == null || token.isBlank()) {
+                    continue;
+                }
+                if (!first) {
+                    sb.append(" | ");
+                }
+                sb.append(token);
+                if (prefix) {
+                    sb.append(":*");
+                }
+                first = false;
+            }
+            sb.append(")");
         }
         return sb.toString();
     }
@@ -310,5 +475,8 @@ public class SearchInternalController {
     }
 
     private record ScoredEntity(FileMetadataEntity entity, double score, double vectorScore) {
+    }
+
+    private record ExpandedQuery(String base, List<List<String>> groups) {
     }
 }
