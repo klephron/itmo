@@ -12,7 +12,7 @@ public class OpenApiConfig {
     public OpenAPI coreOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TickTok API ядра")
+                        .title("BrainStop API ядра")
                         .description("API ядра сервиса (видео, стриминг, поиск)")
                         .version("v1"));
     }

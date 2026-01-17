@@ -12,7 +12,7 @@ public class OpenApiConfig {
     public OpenAPI storageOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TickTok API хранилища")
+                        .title("BrainStop API хранилища")
                         .description("Внутренний фасад хранилища (processed-видео, превью, аватары)")
                         .version("v1"));
     }

@@ -12,7 +12,7 @@ public class OpenApiConfig {
     public OpenAPI profileOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TickTok API профиля")
+                        .title("BrainStop API профиля")
                         .description("API сервиса профиля (пользователи, подписки, роли, аватары)")
                         .version("v1"));
     }

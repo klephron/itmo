@@ -12,7 +12,7 @@ public class OpenApiConfig {
     public OpenAPI gatewayOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TickTok API шлюза")
+                        .title("BrainStop API шлюза")
                         .description("Шлюз API (маршрутизация, авторизация) и агрегированный Swagger UI")
                         .version("v1"));
     }
