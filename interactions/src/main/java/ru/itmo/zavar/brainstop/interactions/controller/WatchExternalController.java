@@ -16,13 +16,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/videos")
 @RequiredArgsConstructor
-@Tag(name = "Watch", description = "Прогресс просмотра (interactions-service)")
+@Tag(name = "Прогресс просмотра", description = "Прогресс просмотра видео (interactions-service)")
 public class WatchExternalController {
 
     private final WatchService watchService;
 
     @PostMapping("/{uuid}/watch")
-    @Operation(summary = "Зафиксировать прогресс просмотра")
+    @Operation(summary = "Сохранить прогресс просмотра видео")
     public ResponseEntity<Void> watch(@PathVariable UUID uuid,
                                       @AuthenticationPrincipal CurrentUser principal,
                                       @Valid @RequestBody WatchProgressRequest request) {

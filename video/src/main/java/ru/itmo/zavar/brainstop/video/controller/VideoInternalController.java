@@ -22,13 +22,13 @@ import java.util.Set;
 @RestController
 @RequestMapping("/internal/videos")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Videos", description = "Внутренний API для профилей (список видео пользователя)")
+@Tag(name = "Видео (внутреннее)", description = "Внутренний API видео для профиля (список видео пользователя)")
 public class VideoInternalController {
 
     private final VideoProfileApi videoProfileApi;
 
     @GetMapping("/users/{uploaderId}")
-    @Operation(summary = "Внутренний список видео пользователя")
+    @Operation(summary = "Список видео пользователя")
     public PageResponse<PublicUserVideoDto> getUserVideos(@PathVariable Long uploaderId,
                                                           @RequestParam(defaultValue = "0") int page,
                                                           @RequestParam(defaultValue = "10") int size,

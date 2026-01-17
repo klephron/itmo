@@ -19,7 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/moderation")
 @RequiredArgsConstructor
-@Tag(name = "Moderation", description = "Модерация пользователей и их видео (отдельный сервис)")
+@Tag(name = "Модерация", description = "Модерация пользователей и их видео (отдельный сервис)")
 public class ModerationController {
 
     private final ProfileAdminClient profileAdminClient;
@@ -67,7 +67,7 @@ public class ModerationController {
 
     @PostMapping("/videos/reembed")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
-    @Operation(summary = "РџРµСЂРµРїРёСЃР°С‚СЊ СЌРјР±РµРґРґРёРЅРіРё РІРёРґРµРѕ (РјРѕРґРµСЂР°С†РёСЏ)")
+    @Operation(summary = "Пересчитать эмбеддинги видео для поиска")
     public ResponseEntity<Map<String, Object>> reembedVideos() {
         Map<String, Object> response = this.videoModerationClient.rebuildEmbeddings();
         return ResponseEntity.ok(response);
@@ -75,7 +75,7 @@ public class ModerationController {
 
     @PostMapping("/users/{id}/ban")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
-    @Operation(summary = "Забанить пользователя")
+    @Operation(summary = "Заблокировать пользователя")
     public ResponseEntity<Void> banUser(@PathVariable Long id) {
         ProfileUserDetails updated = this.profileAdminClient.setEnabled(id, false);
         if (updated == null) {
@@ -86,7 +86,7 @@ public class ModerationController {
 
     @PostMapping("/users/{id}/unban")
     @PreAuthorize("hasAnyRole('MODERATOR','ADMIN')")
-    @Operation(summary = "Разбанить пользователя")
+    @Operation(summary = "Разблокировать пользователя")
     public ResponseEntity<Void> unbanUser(@PathVariable Long id) {
         ProfileUserDetails updated = this.profileAdminClient.setEnabled(id, true);
         if (updated == null) {

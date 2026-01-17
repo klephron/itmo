@@ -15,13 +15,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/videos")
 @RequiredArgsConstructor
-@Tag(name = "Views", description = "Просмотры (interactions-service)")
+@Tag(name = "Просмотры", description = "Просмотры видео (interactions-service)")
 public class ViewExternalController {
 
     private final ViewService viewService;
 
     @PostMapping("/{uuid}/view")
-    @Operation(summary = "Отметить просмотр видео")
+    @Operation(summary = "Зафиксировать просмотр видео")
     public ResponseEntity<ViewResponse> view(@PathVariable UUID uuid, @AuthenticationPrincipal CurrentUser principal) {
         Long userId = principal != null ? principal.getId() : null;
         long count = this.viewService.viewVideo(uuid, userId);
@@ -29,7 +29,7 @@ public class ViewExternalController {
     }
 
     @GetMapping("/{uuid}/view")
-    @Operation(summary = "Получить число просмотров")
+    @Operation(summary = "Получить количество просмотров")
     public ResponseEntity<ViewResponse> getViews(@PathVariable UUID uuid) {
         long count = this.viewService.getViews(uuid);
         return ResponseEntity.ok(new ViewResponse(count));

@@ -35,7 +35,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/internal/search")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Search", description = "Р'Р?С?С'С?РчР?Р?РёР№ API Р?Р>С? РїР?РёС?РєР° (РёС?РїР?Р>С?Р·С?РчС'С?С? search-service)")
+@Tag(name = "Поиск видео (внутренний)", description = "Внутренний API поиска видео (используется search-service)")
 public class SearchInternalController {
 
     private static final int HYBRID_MULTIPLIER = 3;
@@ -69,7 +69,7 @@ public class SearchInternalController {
     private double strictEmbeddingDistance;
 
     @GetMapping("/videos")
-    @Operation(summary = "Р'Р?С?С'С?РчР?Р?РёР№ РїР?РёС?Рє Р?РёР?РчР?")
+    @Operation(summary = "Внутренний поиск видео")
     public PageResponse<FileMetadataDto> searchVideos(@RequestParam("vec") String queryVecLiteral,
                                                       @RequestParam(value = "q", defaultValue = "") String query,
                                                       @RequestParam(defaultValue = "0") int page,
@@ -78,7 +78,7 @@ public class SearchInternalController {
     }
 
     @PostMapping("/videos")
-    @Operation(summary = "Internal search videos (POST)")
+    @Operation(summary = "Внутренний поиск видео (POST)")
     public PageResponse<FileMetadataDto> searchVideosPost(@RequestBody SearchVideosRequest request) {
         if (request == null) {
             return new PageResponse<>(List.of(), 0, 0, 0);
@@ -132,7 +132,7 @@ public class SearchInternalController {
     }
 
     @GetMapping("/videos/suggest")
-    @Operation(summary = "Р'Р?С?С'С?РчР?Р?РёРч РїР?Р?С?РєР°Р·РєРё РїР?РёС?РєР°")
+    @Operation(summary = "Внутренние подсказки поиска")
     public List<FileMetadataDto> suggest(@RequestParam("vec") String queryVecLiteral,
                                          @RequestParam(value = "q", defaultValue = "") String query,
                                          @RequestParam(defaultValue = "5") int limit) {
@@ -140,7 +140,7 @@ public class SearchInternalController {
     }
 
     @PostMapping("/videos/suggest")
-    @Operation(summary = "Internal suggest (POST)")
+    @Operation(summary = "Внутренние подсказки поиска (POST)")
     public List<FileMetadataDto> suggestPost(@RequestBody SearchSuggestRequest request) {
         if (request == null) {
             return List.of();

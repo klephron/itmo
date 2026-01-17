@@ -15,14 +15,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/internal/transcoding")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Transcoding", description = "Внутренний API транскодинга")
+@Tag(name = "Транскодирование (внутреннее)", description = "Внутренний API транскодирования")
 public class TranscodingInternalController {
 
     private final VideoTranscodingService transcoder;
     private final TranscodingJobRegistry jobRegistry;
 
     @PostMapping("/jobs")
-    @Operation(summary = "Запустить транскодинг")
+    @Operation(summary = "Запустить транскодирование")
     public ResponseEntity<Void> start(@Valid @RequestBody TranscodingCommand command) throws Exception {
         if (command == null || !StringUtils.hasText(command.storageKey()) || command.jobId() == null) {
             return ResponseEntity.badRequest().build();
@@ -33,7 +33,7 @@ public class TranscodingInternalController {
     }
 
     @GetMapping("/jobs/{jobId}")
-    @Operation(summary = "Статус job")
+    @Operation(summary = "Статус задачи")
     public ResponseEntity<TranscodingJobStatus> status(@PathVariable UUID jobId) {
         return jobRegistry.get(jobId)
                 .map(ResponseEntity::ok)

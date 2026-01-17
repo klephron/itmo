@@ -12,8 +12,8 @@ public class OpenApiConfig {
     public OpenAPI storageOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TickTok Storage API")
-                        .description("Internal storage facade API (processed video, thumbnails, avatars)")
+                        .title("TickTok API хранилища")
+                        .description("Внутренний фасад хранилища (processed-видео, превью, аватары)")
                         .version("v1"));
     }
 }

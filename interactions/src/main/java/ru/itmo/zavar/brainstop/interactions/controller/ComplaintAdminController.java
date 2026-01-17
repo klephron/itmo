@@ -18,7 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/internal/moderation/complaints")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Complaints", description = "Модерация жалоб (interactions-service)")
+@Tag(name = "Жалобы (внутренние)", description = "Внутренние операции по жалобам (interactions-service)")
 public class ComplaintAdminController {
 
     private final ComplaintService complaintService;

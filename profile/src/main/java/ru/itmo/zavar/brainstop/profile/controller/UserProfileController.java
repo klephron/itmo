@@ -33,7 +33,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@Tag(name = "Users", description = "Профиль, аватар и видео пользователя")
+@Tag(name = "Пользователи", description = "Профиль, аватар и видео пользователя")
 // MSPLIT: HTTP API that will move to User Profile Service
 public class UserProfileController {
 

@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 @RestController
 @RequestMapping("/api/search")
 @RequiredArgsConstructor
-@Tag(name = "Search", description = "Поиск видео по тексту/эмбеддингам (отдельный сервис)")
+@Tag(name = "Поиск", description = "Поиск видео по тексту и эмбеддингам (отдельный сервис)")
 public class SearchController {
 
     private final SearchInternalClient searchInternalClient;
@@ -64,7 +64,7 @@ public class SearchController {
     }
 
     @GetMapping(value = "/llm/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @Operation(summary = "LLM stream", description = "Stream LLM rewrite/expand output for debugging.")
+    @Operation(summary = "SSE-поток LLM", description = "Отладочный поток для перефразирования и расширения запроса.")
     public SseEmitter streamLlm(@RequestParam("q") String query,
                                 @RequestParam(name = "ai", defaultValue = "true") boolean ai,
                                 @RequestParam(defaultValue = "0") int page,

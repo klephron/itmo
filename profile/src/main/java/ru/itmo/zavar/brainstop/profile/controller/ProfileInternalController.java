@@ -27,7 +27,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/internal/profile")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Profile", description = "Внутренние эндпоинты профилей (summary, follow-check, админские операции)")
+@Tag(name = "Профиль (внутренний)", description = "Внутренние эндпоинты профиля: сводка, проверка подписок, админские операции")
 public class ProfileInternalController {
 
     private final UserProfilePublicApi userProfilePublicApi;
@@ -35,7 +35,7 @@ public class ProfileInternalController {
     private final ProfileAdminApi profileAdminApi;
 
     @GetMapping("/users/{id}/summary")
-    @Operation(summary = "Внутренний: summary профиля по userId")
+    @Operation(summary = "Сводка профиля по id пользователя")
     public ResponseEntity<UserSummaryDto> getSummary(@PathVariable Long id) {
         return this.userProfilePublicApi.findUserSummary(id)
                 .map(ResponseEntity::ok)
@@ -43,7 +43,7 @@ public class ProfileInternalController {
     }
 
     @PostMapping("/follow/check")
-    @Operation(summary = "Внутренний: проверка подписок follower -> candidateIds")
+    @Operation(summary = "Проверка подписок по списку кандидатов")
     public ResponseEntity<Set<Long>> checkFollowing(@Valid @RequestBody FollowCheckRequest request) {
         if (request == null || request.followerId() == null || request.candidateIds() == null || request.candidateIds().isEmpty()) {
             return ResponseEntity.ok(Collections.emptySet());
@@ -53,13 +53,13 @@ public class ProfileInternalController {
     }
 
     @GetMapping("/admin/users")
-    @Operation(summary = "Внутренний: список пользователей (админ)")
+    @Operation(summary = "Список пользователей (админ)")
     public List<ProfileUserDetails> findAllUsers() {
         return this.profileAdminApi.findAllUsers();
     }
 
     @GetMapping("/admin/users/{id}")
-    @Operation(summary = "Внутренний: получить пользователя (админ)")
+    @Operation(summary = "Получить пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> findUser(@PathVariable Long id) {
         return this.profileAdminApi.findUser(id)
                 .map(ResponseEntity::ok)
@@ -67,13 +67,13 @@ public class ProfileInternalController {
     }
 
     @GetMapping("/admin/users/{id}/exists")
-    @Operation(summary = "Внутренний: проверить наличие пользователя (админ)")
+    @Operation(summary = "Проверить наличие пользователя (админ)")
     public ResponseEntity<Boolean> exists(@PathVariable Long id) {
         return ResponseEntity.ok(this.profileAdminApi.existsById(id));
     }
 
     @PostMapping("/admin/users/{id}/enabled")
-    @Operation(summary = "Внутренний: включить/выключить пользователя (админ)")
+    @Operation(summary = "Включить/выключить пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> setEnabled(@PathVariable Long id, @RequestParam boolean enabled) {
         ProfileUserDetails updated = this.profileAdminApi.setEnabled(id, enabled);
         if (updated == null) {
@@ -83,7 +83,7 @@ public class ProfileInternalController {
     }
 
     @PostMapping("/admin/users/{id}/roles")
-    @Operation(summary = "Внутренний: обновить роли пользователя (админ)")
+    @Operation(summary = "Обновить роли пользователя (админ)")
     public ResponseEntity<ProfileUserDetails> updateRoles(@PathVariable Long id, @RequestBody Set<Role> roles) {
         ProfileUserDetails updated = this.profileAdminApi.updateRoles(id, roles);
         if (updated == null) {

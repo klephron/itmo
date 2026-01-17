@@ -52,7 +52,7 @@ import static org.springframework.http.HttpHeaders.*;
 @RestController
 @RequestMapping("/api/streaming/video")
 @RequiredArgsConstructor
-@Tag(name = "Streaming", description = "Стриминг и загрузка видео")
+@Tag(name = "Стриминг", description = "Стриминг и загрузка видео")
 // MSPLIT: HTTP API that will move to Streaming service
 public class VideoStreamingController {
 
@@ -70,7 +70,7 @@ public class VideoStreamingController {
     private long chunkDefaultSize;
 
     @GetMapping("/{uuid}")
-    @Operation(summary = "Отдать чанк видео по Range", description = "Возвращает 206 Partial Content для указанного видео и качества")
+    @Operation(summary = "Получить фрагмент видео по Range", description = "Возвращает 206 Partial Content для указанного видео и качества")
     public ResponseEntity<byte[]> fetchChunk(@RequestHeader(value = RANGE, required = false) String range,
                                              @PathVariable UUID uuid,
                                              @RequestParam(value = "quality", required = false) Integer quality) throws Exception {
@@ -132,7 +132,7 @@ public class VideoStreamingController {
     }
 
     @PostMapping("/feed/session/start")
-    @Operation(summary = "Start feed session")
+    @Operation(summary = "Начать сессию ленты")
     public ResponseEntity<FeedSessionResponse> startFeedSession(@RequestParam(defaultValue = "10") int count,
                                                                 @RequestHeader("X-Device-Id") String deviceId,
                                                                 @AuthenticationPrincipal CurrentUser principal) {
@@ -145,7 +145,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/feed/session/{feedId}/next")
-    @Operation(summary = "Next feed session items")
+    @Operation(summary = "Следующая порция ленты")
     public ResponseEntity<FeedSessionResponse> nextFeedItems(@PathVariable String feedId,
                                                              @RequestParam(defaultValue = "10") int count,
                                                              @RequestHeader("X-Device-Id") String deviceId,
@@ -159,7 +159,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/feed/session/{feedId}/prev")
-    @Operation(summary = "Previous feed session items")
+    @Operation(summary = "Предыдущая порция ленты")
     public ResponseEntity<FeedSessionResponse> prevFeedItems(@PathVariable String feedId,
                                                              @RequestHeader("X-Device-Id") String deviceId,
                                                              @AuthenticationPrincipal CurrentUser principal) {
@@ -195,7 +195,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/upload/status/{jobId}")
-    @Operation(summary = "Статус загрузки/транскода")
+    @Operation(summary = "Статус загрузки/транскодирования")
     public ResponseEntity<TranscodingJobStatus> getUploadStatus(@PathVariable UUID jobId) {
         return this.jobRegistry.get(jobId)
                 .map(ResponseEntity::ok)
@@ -223,7 +223,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/feed/preferences")
-    @Operation(summary = "Get feed preferences")
+    @Operation(summary = "Получить настройки ленты")
     public ResponseEntity<FeedPreferencesResponse> getFeedPreferences(@AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -232,7 +232,7 @@ public class VideoStreamingController {
     }
 
     @PutMapping("/feed/preferences")
-    @Operation(summary = "Update feed preferences")
+    @Operation(summary = "Обновить настройки ленты")
     public ResponseEntity<FeedPreferencesResponse> updateFeedPreferences(@RequestBody FeedPreferencesUpdateRequest request,
                                                                          @AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
@@ -244,7 +244,7 @@ public class VideoStreamingController {
     }
 
     @GetMapping("/feed/preferences/topics")
-    @Operation(summary = "Get feed preference topics")
+    @Operation(summary = "Получить темы предпочтений ленты")
     public ResponseEntity<List<FeedTopicDto>> getFeedPreferenceTopics(@AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -256,7 +256,7 @@ public class VideoStreamingController {
     }
 
     @PutMapping("/feed/preferences/topics")
-    @Operation(summary = "Replace feed preference topics")
+    @Operation(summary = "Заменить темы предпочтений ленты")
     public ResponseEntity<List<FeedTopicDto>> updateFeedPreferenceTopics(@RequestBody FeedTopicsUpdateRequest request,
                                                                          @AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {

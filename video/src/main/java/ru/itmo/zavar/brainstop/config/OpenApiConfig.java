@@ -12,8 +12,8 @@ public class OpenApiConfig {
     public OpenAPI coreOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TickTok Core API")
-                        .description("Core service API (videos, streaming, search)")
+                        .title("TickTok API ядра")
+                        .description("API ядра сервиса (видео, стриминг, поиск)")
                         .version("v1"));
     }
 }

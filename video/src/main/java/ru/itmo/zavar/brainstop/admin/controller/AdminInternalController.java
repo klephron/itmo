@@ -22,14 +22,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/internal/admin")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Admin", description = "Внутренние операции для админ/модерации сервиса")
+@Tag(name = "Администрирование видео (внутреннее)", description = "Внутренние операции администрирования и модерации видео")
 public class AdminInternalController {
 
     private final VideoAdminApi videoAdminApi;
     private final VideoModerationApi videoModerationApi;
 
     @PostMapping("/thumbnails/rebuild")
-    @Operation(summary = "Внутренний: пересоздать превью всех видео")
+    @Operation(summary = "Пересоздать превью всех видео")
     public ResponseEntity<Map<String, Object>> regenerateThumbnails(@RequestParam(name = "force", defaultValue = "true") boolean force) {
         int updated = this.videoAdminApi.regenerateThumbnails(force);
         return ResponseEntity.ok(Map.of(
@@ -39,20 +39,20 @@ public class AdminInternalController {
     }
 
     @PostMapping("/embeddings/rebuild")
-    @Operation(summary = "РџРµСЂРµРїРёСЃР°С‚СЊ СЌРјР±РµРґРґРёРЅРіРё РґР»СЏ РІРёРґРµРѕ")
+    @Operation(summary = "Пересчитать эмбеддинги видео")
     public ResponseEntity<Map<String, Object>> rebuildEmbeddings() {
         int updated = this.videoAdminApi.rebuildEmbeddings();
         return ResponseEntity.ok(Map.of("updated", updated));
     }
 
     @GetMapping("/users/{id}/videos")
-    @Operation(summary = "Внутренний: получить видео пользователя для модерации")
+    @Operation(summary = "Список видео пользователя для модерации")
     public ResponseEntity<List<UserVideoDto>> getUserVideos(@PathVariable Long id) {
         return ResponseEntity.ok(this.videoModerationApi.findByUploaderId(id));
     }
 
     @DeleteMapping("/videos/{uuid}")
-    @Operation(summary = "Внутренний: удалить видео (для модерации)")
+    @Operation(summary = "Удалить видео (для модерации)")
     public ResponseEntity<Void> deleteVideo(@PathVariable UUID uuid) {
         this.videoAdminApi.deleteVideo(uuid);
         return ResponseEntity.noContent().build();

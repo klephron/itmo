@@ -12,8 +12,8 @@ public class OpenApiConfig {
     public OpenAPI profileOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TickTok Profile API")
-                        .description("Profile service API (users, follows, roles, avatars)")
+                        .title("TickTok API профиля")
+                        .description("API сервиса профиля (пользователи, подписки, роли, аватары)")
                         .version("v1"));
     }
 }

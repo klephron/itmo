@@ -23,7 +23,7 @@ import ru.itmo.zavar.brainstop.user.UserRepository;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "Регистрация, логин, текущий пользователь")
+@Tag(name = "Аутентификация", description = "Регистрация, вход и получение текущего пользователя")
 public class AuthController {
 
     private final AuthService authService;
@@ -46,7 +46,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Логин по username/password")
+    @Operation(summary = "Вход по логину и паролю")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req) {
         String token = this.authService.login(req.username(), req.password());
         UserEntity user = this.userRepository.findByUsername(req.username()).orElseThrow();

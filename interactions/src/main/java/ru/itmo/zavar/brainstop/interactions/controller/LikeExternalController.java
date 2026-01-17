@@ -15,7 +15,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/videos")
 @RequiredArgsConstructor
-@Tag(name = "Likes", description = "Лайки (interactions-service)")
+@Tag(name = "Лайки", description = "Лайки к видео (interactions-service)")
 public class LikeExternalController {
 
     private final LikeService likeService;
@@ -31,7 +31,7 @@ public class LikeExternalController {
     }
 
     @DeleteMapping("/{uuid}/like")
-    @Operation(summary = "Снять лайк видео")
+    @Operation(summary = "Убрать лайк с видео")
     public ResponseEntity<LikeResponse> unlike(@PathVariable UUID uuid, @AuthenticationPrincipal CurrentUser principal) {
         if (principal == null) {
             return ResponseEntity.status(401).build();
@@ -41,7 +41,7 @@ public class LikeExternalController {
     }
 
     @GetMapping("/{uuid}/like")
-    @Operation(summary = "Проверить статус лайка и число лайков")
+    @Operation(summary = "Получить статус лайка и количество лайков")
     public ResponseEntity<LikeResponse> getLikeStatus(@PathVariable UUID uuid, @AuthenticationPrincipal CurrentUser principal) {
         boolean liked = principal != null && likeService.isLikedByUser(uuid, principal.getId());
         long count = likeService.getCount(uuid);

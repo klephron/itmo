@@ -23,7 +23,7 @@ import java.io.InputStream;
 @RestController
 @RequestMapping("/internal/storage")
 @RequiredArgsConstructor
-@Tag(name = "Storage", description = "Внутренний фасад над MinIO")
+@Tag(name = "Хранилище", description = "Внутренний фасад над MinIO")
 public class StorageController {
 
     private final VideoObjectStorage storage;
@@ -80,7 +80,7 @@ public class StorageController {
     }
 
     @PostMapping(value = "/thumbnails", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @Operation(summary = "Загрузить thumbnail")
+    @Operation(summary = "Загрузить превью")
     public ResponseEntity<ObjectKeyResponse> uploadThumbnail(@RequestParam("key") String key, HttpServletRequest request) throws Exception {
         long size = resolveSize(request);
         String storedKey = this.storage.uploadThumbnail(key, request.getInputStream(), size);
@@ -88,7 +88,7 @@ public class StorageController {
     }
 
     @GetMapping(value = "/thumbnails", produces = MediaType.IMAGE_JPEG_VALUE)
-    @Operation(summary = "Получить thumbnail")
+    @Operation(summary = "Получить превью")
     public ResponseEntity<Resource> openThumbnail(@RequestParam("key") String key) throws Exception {
         try {
             InputStream is = this.storage.openThumbnail(key);

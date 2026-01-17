@@ -19,7 +19,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@Tag(name = "Admin", description = "Админские операции (вынесены в отдельный сервис)")
+@Tag(name = "Администрирование", description = "Админские операции (отдельный сервис)")
 public class AdminController {
 
     private final VideoAdminClient videoAdminClient;

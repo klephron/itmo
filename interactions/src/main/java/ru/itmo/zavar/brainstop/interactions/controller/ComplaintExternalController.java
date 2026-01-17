@@ -25,7 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/moderation/complaints")
 @RequiredArgsConstructor
-@Tag(name = "Complaints", description = "Жалобы от пользователей (interactions-service)")
+@Tag(name = "Жалобы", description = "Жалобы от пользователей (interactions-service)")
 public class ComplaintExternalController {
 
     private final ComplaintService complaintService;
@@ -36,7 +36,7 @@ public class ComplaintExternalController {
     }
 
     @PostMapping("/videos/{videoUuid}")
-    @Operation(summary = "Пожаловаться на видео")
+    @Operation(summary = "Создать жалобу на видео")
     public ResponseEntity<Void> complainVideo(@PathVariable UUID videoUuid,
                                               @Valid @RequestBody CreateComplaintRequest req,
                                               @AuthenticationPrincipal CurrentUser principal) {
@@ -48,7 +48,7 @@ public class ComplaintExternalController {
     }
 
     @PostMapping("/videos/{videoUuid}/comments/{commentId}")
-    @Operation(summary = "Пожаловаться на комментарий")
+    @Operation(summary = "Создать жалобу на комментарий")
     public ResponseEntity<Void> complainComment(@PathVariable UUID videoUuid,
                                                 @PathVariable Long commentId,
                                                 @Valid @RequestBody CreateComplaintRequest req,
@@ -61,7 +61,7 @@ public class ComplaintExternalController {
     }
 
     @GetMapping("/admin")
-    @Operation(summary = "Получить список открытых жалоб (для модераторов)")
+    @Operation(summary = "Список открытых жалоб (для модераторов)")
     public ResponseEntity<List<ComplaintDto>> listOpen(@AuthenticationPrincipal CurrentUser principal) {
         if (!isModerator(principal)) {
             return ResponseEntity.status(403).build();

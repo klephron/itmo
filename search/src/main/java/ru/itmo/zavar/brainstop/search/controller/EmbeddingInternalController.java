@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/internal/embedding")
 @RequiredArgsConstructor
-@Tag(name = "Internal-Embedding", description = "Векторизация текста (для внутренних вызовов)")
+@Tag(name = "Эмбеддинги (внутренние)", description = "Векторизация текста для внутренних вызовов")
 public class EmbeddingInternalController {
 
     private final EmbeddingService embeddingService;

@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/videos/{videoUuid}/comments")
 @RequiredArgsConstructor
-@Tag(name = "Comments", description = "Комментарии (interactions-service)")
+@Tag(name = "Комментарии", description = "Комментарии к видео (interactions-service)")
 public class CommentExternalController {
 
     private final CommentService commentService;
@@ -31,7 +31,7 @@ public class CommentExternalController {
     }
 
     @GetMapping
-    @Operation(summary = "Получить комментарии видео")
+    @Operation(summary = "Список комментариев к видео")
     public ResponseEntity<Page<CommentDto>> list(@PathVariable UUID videoUuid,
                                                  @RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "20") int size,
