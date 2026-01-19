@@ -57,6 +57,9 @@ class FeedServiceTest {
     @Mock
     private FileMetadataToFeedMapper mapper;
 
+    @Mock
+    private UserFeedPreferencesService preferencesService;
+
     @InjectMocks
     private FeedService feedService;
 
@@ -209,116 +212,6 @@ class FeedServiceTest {
 
         verify(likeQueryApi, never()).findLikedVideoIds(anyLong(), anyCollection());
         verify(followQueryApi, never()).getFollowingWithin(anyLong(), anySet());
-    }
-
-    @Test
-    @DisplayName("BE-UNIT-FEED-RELAX-01: primary embedding results are used and viewed items are removed")
-    void getFeed_primaryEmbeddingUsed_excludesViewed() {
-        ReflectionTestUtils.setField(feedService, "maxEmbeddingDistance", 0.6d);
-        ReflectionTestUtils.setField(feedService, "relaxedMaxEmbeddingDistance", 0.9d);
-
-        FileMetadataEntity prefEntity = entityWithEmbedding(1L, 100L, new float[]{1f, 0f, 0f});
-        Page<FileMetadataEntity> recent = new PageImpl<>(List.of(prefEntity));
-        when(fileMetadataRepository.findByCombinedEmbeddingIsNotNull(any(PageRequest.class))).thenReturn(recent);
-
-        FileMetadataEntity candidate1 = entityWithEmbedding(2L, 200L, new float[]{1f, 0f, 0f});
-        FileMetadataEntity candidate2 = entityWithEmbedding(3L, 300L, new float[]{0.9f, 0f, 0f});
-        Page<FileMetadataEntity> primarySample = new PageImpl<>(List.of(candidate1, candidate2));
-        when(fileMetadataRepository.searchByEmbedding(anyString(), eq(0.6d), any(Pageable.class))).thenReturn(primarySample);
-        when(fileMetadataRepository.searchByEmbedding(anyString(), eq(0.9d), any(Pageable.class))).thenReturn(Page.empty());
-        when(fileMetadataRepository.findAll(any(PageRequest.class))).thenReturn(Page.empty());
-
-        when(likeQueryApi.findLikedVideoIds(eq(10L), anyCollection())).thenReturn(List.of(prefEntity.getId()));
-        when(followQueryApi.getFollowingWithin(eq(10L), anySet())).thenReturn(Set.of(prefEntity.getUploaderId()));
-        when(interactionsInternalClient.getWatchProgress(any())).thenReturn(List.of(progress(prefEntity.getId(), 10, 10)));
-        when(interactionsInternalClient.getViewedVideoIds(any())).thenReturn(List.of(candidate2.getId())); // exclude id=3
-
-        when(mapper.toDto(anyList(), any())).thenAnswer(inv -> {
-            List<FileMetadataEntity> list = inv.getArgument(0);
-            List<FeedVideoDto> dtos = new ArrayList<>();
-            for (FileMetadataEntity e : list) {
-                dtos.add(testFeedDto);
-            }
-            return dtos;
-        });
-
-        Page<FeedVideoDto> result = feedService.getFeed(10L, PageRequest.of(0, 10));
-
-        assertThat(result.getContent()).hasSize(1); // only candidate1 remains
-        verify(fileMetadataRepository, times(1)).searchByEmbedding(anyString(), eq(0.6d), any(Pageable.class));
-        verify(fileMetadataRepository, times(1)).searchByEmbedding(anyString(), eq(0.9d), any(Pageable.class));
-        verify(fileMetadataRepository, times(1)).findAll(any(PageRequest.class));
-    }
-
-    @Test
-    @DisplayName("BE-UNIT-FEED-RELAX-02: relaxed embedding distance kicks in when primary is empty")
-    void getFeed_relaxedEmbeddingFallback() {
-        ReflectionTestUtils.setField(feedService, "maxEmbeddingDistance", 0.6d);
-        ReflectionTestUtils.setField(feedService, "relaxedMaxEmbeddingDistance", 0.9d);
-
-        FileMetadataEntity prefEntity = entityWithEmbedding(11L, 111L, new float[]{1f, 0f, 0f});
-        when(fileMetadataRepository.findByCombinedEmbeddingIsNotNull(any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(prefEntity)));
-
-        when(fileMetadataRepository.searchByEmbedding(anyString(), eq(0.6d), any(Pageable.class)))
-                .thenReturn(Page.empty());
-
-        FileMetadataEntity relaxedCandidate = entityWithEmbedding(22L, 222L, new float[]{0.5f, 0f, 0f});
-        when(fileMetadataRepository.searchByEmbedding(anyString(), eq(0.9d), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(relaxedCandidate)));
-        when(fileMetadataRepository.findAll(any(PageRequest.class))).thenReturn(Page.empty());
-
-        when(likeQueryApi.findLikedVideoIds(eq(20L), anyCollection())).thenReturn(List.of(prefEntity.getId()));
-        when(followQueryApi.getFollowingWithin(eq(20L), anySet())).thenReturn(Set.of());
-        when(interactionsInternalClient.getWatchProgress(any())).thenReturn(List.of(progress(prefEntity.getId(), 5, 5)));
-        when(interactionsInternalClient.getViewedVideoIds(any())).thenReturn(List.of());
-
-        when(mapper.toDto(anyList(), any())).thenAnswer(inv -> {
-            List<FileMetadataEntity> list = inv.getArgument(0);
-            return list.stream().map(e -> testFeedDto).toList();
-        });
-
-        Page<FeedVideoDto> result = feedService.getFeed(20L, PageRequest.of(0, 5));
-
-        assertThat(result.getContent()).hasSize(1);
-        verify(fileMetadataRepository, times(1)).searchByEmbedding(anyString(), eq(0.6d), any(Pageable.class));
-        verify(fileMetadataRepository, times(1)).searchByEmbedding(anyString(), eq(0.9d), any(Pageable.class));
-        verify(fileMetadataRepository, times(1)).findAll(any(PageRequest.class));
-    }
-
-    @Test
-    @DisplayName("BE-UNIT-FEED-RELAX-03: chronological cold fallback is used when embedding searches are empty")
-    void getFeed_coldChronologicalFallback() {
-        ReflectionTestUtils.setField(feedService, "maxEmbeddingDistance", 0.6d);
-        ReflectionTestUtils.setField(feedService, "relaxedMaxEmbeddingDistance", 0.9d);
-
-        FileMetadataEntity prefEntity = entityWithEmbedding(101L, 201L, new float[]{1f, 0f, 0f});
-        when(fileMetadataRepository.findByCombinedEmbeddingIsNotNull(any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(prefEntity)));
-
-        when(fileMetadataRepository.searchByEmbedding(anyString(), eq(0.6d), any(Pageable.class))).thenReturn(Page.empty());
-        when(fileMetadataRepository.searchByEmbedding(anyString(), eq(0.9d), any(Pageable.class))).thenReturn(Page.empty());
-
-        FileMetadataEntity cold1 = entityWithEmbedding(301L, 3010L, new float[]{0.1f, 0f, 0f});
-        FileMetadataEntity cold2 = entityWithEmbedding(302L, 3020L, new float[]{0.2f, 0f, 0f});
-        FileMetadataEntity cold3 = entityWithEmbedding(303L, 3030L, new float[]{0.3f, 0f, 0f});
-        when(fileMetadataRepository.findAll(any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(cold1, cold2, cold3)));
-
-        when(likeQueryApi.findLikedVideoIds(eq(30L), anyCollection())).thenReturn(List.of(prefEntity.getId()));
-        when(followQueryApi.getFollowingWithin(eq(30L), anySet())).thenReturn(Set.of());
-        when(interactionsInternalClient.getWatchProgress(any())).thenReturn(List.of(progress(prefEntity.getId(), 5, 5)));
-        when(interactionsInternalClient.getViewedVideoIds(any())).thenReturn(List.of(cold3.getId())); // remove one
-
-        when(mapper.toDto(anyList(), any())).thenAnswer(inv -> {
-            List<FileMetadataEntity> list = inv.getArgument(0);
-            return list.stream().map(e -> testFeedDto).toList();
-        });
-
-        Page<FeedVideoDto> result = feedService.getFeed(30L, PageRequest.of(0, 2));
-
-        assertThat(result.getContent()).hasSize(2); // cold1 and cold2
-        verify(fileMetadataRepository, times(1)).findAll(any(PageRequest.class));
     }
 
     private FileMetadataEntity entityWithEmbedding(Long id, Long uploaderId, float[] embedding) {

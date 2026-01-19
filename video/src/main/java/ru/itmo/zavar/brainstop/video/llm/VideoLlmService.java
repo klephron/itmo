@@ -31,7 +31,7 @@ public class VideoLlmService {
     private LlmCache<ModerationResult> moderationCache;
 
     @PostConstruct
-    void init() {
+    public void init() {
         tagCache = new LlmCache<>(properties.getCacheTtl());
         moderationCache = new LlmCache<>(properties.getCacheTtl());
     }

@@ -29,7 +29,7 @@ public class OpenRouterClient {
     private RestClient restClient;
 
     @PostConstruct
-    void init() {
+    public void init() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         Duration timeout = properties.getTimeout();
         int timeoutMs = timeout == null ? 8000 : Math.toIntExact(Math.min(timeout.toMillis(), Integer.MAX_VALUE));
