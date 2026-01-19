@@ -48,24 +48,13 @@ class SearchControllerTest {
 
     @BeforeEach
     void setUp() {
-        when(embeddingService.embed(anyString())).thenReturn(new float[]{0.1f, 0.2f, 0.3f});
-        when(searchLlmService.isRagEnabled()).thenReturn(false);
-        when(searchLlmService.buildQueryVariants(anyString(), anyString()))
-                .thenAnswer(invocation -> List.of(invocation.getArgument(0)));
-        when(searchLlmService.suggestPoolSize(anyInt()))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(searchLlmService.poolSize(anyInt(), anyInt()))
-                .thenAnswer(invocation -> invocation.getArgument(1));
+
     }
 
     @Test
     @TestType(TestType.Type.BASIC)
     @DisplayName("BE-UNIT-SEARCH-CTL-02: Поиск с пагинацией")
     void searchVideos_withPagination() {
-        PageResponse<FileMetadataDto> pageResponse = new PageResponse<>(List.of(), 2, 20, 0);
-        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
-                .thenReturn(pageResponse);
-
         ResponseEntity<PageResponse<FileMetadataDto>> response =
                 controller.searchVideos("query", 2, 20, true);
 
@@ -79,8 +68,6 @@ class SearchControllerTest {
     @DisplayName("BE-UNIT-SEARCH-CTL-04: Пустой результат поиска")
     void searchVideos_emptyResults() {
         PageResponse<FileMetadataDto> pageResponse = new PageResponse<>(List.of(), 0, 10, 0);
-        when(searchInternalClient.searchVideos(any(SearchVideosRequest.class)))
-                .thenReturn(pageResponse);
 
         ResponseEntity<PageResponse<FileMetadataDto>> response =
                 controller.searchVideos("nonexistent", 0, 10, true);

@@ -67,7 +67,7 @@ public class SearchLlmService {
     private LlmCache<String> translationCache;
 
     @PostConstruct
-    void init() {
+    public void init() {
         rewriteCache = new LlmCache<>(properties.getCacheTtl());
         expansionCache = new LlmCache<>(properties.getCacheTtl());
         filterCache = new LlmCache<>(properties.getCacheTtl());
