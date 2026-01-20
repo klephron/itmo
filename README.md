@@ -101,6 +101,8 @@ No installation required. Use server url to build frontend application. For exam
 > https://rnvlk-77-234-196-15.a.free.pinggy.link
 > ```
 
+If deploying on `helios.se.ifmo.ru` does not work then port forward and deploy proxy from localhost.
+
 > See Backend and Frontend for additional details.
 
 ## Backend
