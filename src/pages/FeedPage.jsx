@@ -23,7 +23,6 @@ import { SearchDialog } from "../components/SearchDialog.jsx";
 import { objectsAreEqual } from "../utils/compare.js";
 
 const PAGE_SIZE = 10;
-const MAX_WINDOW = 2 * PAGE_SIZE;
 const PREFETCH_DELTA = 2;
 const WATCH_MILESTONES = [25, 50, 75, 100];
 const MIN_LOADING_MS = 400;
@@ -65,6 +64,7 @@ export default function FeedPage({
     const [window, setWindow] = useState({ videos: [], currentIndex: -1 });
     const { videos, currentIndex } = window;
     const currentVideo = videos[currentIndex] ?? null;
+    const prefetchedPageRef = useRef(null);
 
     const {
         uuid,
@@ -75,8 +75,6 @@ export default function FeedPage({
         likedByMe = false,
         viewsCount = 0,
         commentsCount = 0,
-        snapshot = {},
-        localIndex = -1,
         selectedQuality = null,
     } = currentVideo ?? {};
 
@@ -111,7 +109,7 @@ export default function FeedPage({
             }
 
             if (type === "global") {
-                url = `${apiBase}/api/streaming/video/feed/session/start?size=${PAGE_SIZE}`;
+                url = `${apiBase}/api/streaming/video/feed/session/start?count=${PAGE_SIZE}`;
                 res = await fetch(url, {
                     method: 'POST',
                     headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
@@ -129,31 +127,22 @@ export default function FeedPage({
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            const items = data.items ?? data.content ?? [];
 
-            const newSnapshot = {
-                feedId: data.feedId ?? null,
-                prevPos: data.prevPos ?? null,
-                curPos: 0,
-                nextPos: data.nextPos ?? null,
-                number: data.number ?? 0,
-                first: data.first ?? true,
-                last: data.last ?? true,
-            };
-            const newVideos = items.map((v, index) => ({
-                ...v,
-                snapshot: newSnapshot,
-                localIndex: index,
-                lastIndex: items.length - 1,
-            }));
-
+            const newVideos = data.items ?? data.content ?? [];
             let newIndex = 0;
             if (jumpToTarget && targetUuid) {
                 const idx = newVideos.findIndex(v => v.uuid === targetUuid);
                 if (idx !== -1) newIndex = idx;
             }
 
-            setWindow({ videos: newVideos, currentIndex: newIndex });
+            setWindow({
+                videos: newVideos,
+                currentIndex: newIndex,
+                hasNext: data.hasNext ?? !data.last,
+                hasPrev: data.hasPrev ?? !data.first,
+                feedId: data.feedId ?? null,
+                number: data.number ?? null,
+            });
         } finally {
             setLoading(false);
 
@@ -170,109 +159,49 @@ export default function FeedPage({
         }
     }
 
-    async function prefetch(direction, snapshot, restoreCurPage = false) {
-        if (loading) return;
+    async function prefetch(direction) {
+        if (loading || prefetchedPageRef.current?.direction === direction) return;
+
+        const { type, userId, sort, query } = feedModeRef.current;
+        const { feedId, hasNext, hasPrev, number } = window;
+
+        if (type === "global") {
+            if (direction === "prev" && hasPrev === false) return;
+        } else {
+            if (direction === "next" && hasNext === false) return;
+            if (direction === "prev" && hasPrev === false) return;
+        }
+
+        let url, res;
         setLoading(true);
 
         try {
-            let pos, page, url, res;
-            const { type, userId, sort, query } = feedModeRef.current;
-
             if (type === "global") {
-                const { feedId, nextPos, curPos, prevPos } = snapshot;
-                if (direction === "next") {
-                    pos = nextPos;
-                    if (pos == null) {
-                        url = `${apiBase}/api/streaming/video/feed/session/start?size=${PAGE_SIZE}`;
-                        res = await fetch(url, {
-                            method: 'POST',
-                            headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
-                        });
-                    } else {
-                        url = `${apiBase}/api/streaming/video/feed/session/${feedId}/next?count=${PAGE_SIZE}&pos=${pos}`;
-                        res = await fetch(url, {
-                            headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
-                        });
-                    }
-                } else {
-                    pos = restoreCurPage ? curPos : prevPos;
-                    if (pos == null) return;
-
-                    url = `${apiBase}/api/streaming/video/feed/session/${feedId}/prev?count=${PAGE_SIZE}&pos=${pos}`;
-                    res = await fetch(url, {
-                        headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) }
-                    });
-                }
+                url = `${apiBase}/api/streaming/video/feed/session/${feedId}/${direction}?count=${PAGE_SIZE}`
             } else {
-                const { number, last } = snapshot;
-                if (direction === 'next') {
-                    page = last ? 0 : number + 1;
-                } else {
-                    page = restoreCurPage ? number : number - 1;
-                }
-                if (page < 0) return;
-
+                const page = direction === "next" ? number + 1 : number - 1;
                 if (type === "user") {
                     url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
-                    res = await fetch(url, { headers: authHeaders(token) });
                 } else {
                     url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}`;
-                    res = await fetch(url, { headers: authHeaders(token) });
                 }
             }
 
+            res = await fetch(url, {
+                headers: { ...authHeaders(token), ...deviceIdHeaders(deviceIdRef.current) },
+            });
+
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
-            const items = data.items ?? data.content ?? [];
 
-            const newSnapshot = {
+            prefetchedPageRef.current = {
+                direction,
+                videos: data.items ?? data.content,
+                hasNext: data.hasNext ?? !data.last,
+                hasPrev: data.hasPrev ?? !data.first,
                 feedId: data.feedId ?? null,
-                prevPos: data.prevPos ?? null,
-                curPos: pos ?? 0,
-                nextPos: data.nextPos ?? null,
-                number: data.number ?? 0,
-                first: data.first ?? true,
-                last: data.last ?? true,
+                number: data.number ?? null,
             };
-            const newVideos = (data.items ?? data.content ?? []).map((v, index) => ({
-                ...v,
-                snapshot: newSnapshot,
-                localIndex: index,
-                lastIndex: items.length - 1,
-            }));
-
-            setWindow((prev) => {
-                let nextVideos, nextIndex;
-
-                if (direction === 'next') {
-                    nextVideos = [...prev.videos, ...newVideos];
-                    nextIndex = prev.currentIndex;
-                } else if (!restoreCurPage) {
-                    nextVideos = [...newVideos, ...prev.videos];
-                    nextIndex = prev.currentIndex + newVideos.length;
-                } else {
-                    const current = prev.videos[prev.currentIndex];
-                    if (!current) return prev;
-
-                    nextVideos = [
-                        ...newVideos.slice(0, current.localIndex), // все видео левее текущего (на его странице)
-                        ...prev.videos.slice(prev.currentIndex), // все видео правее текущего (в окне)
-                    ];
-                    nextIndex = current.localIndex;
-                }
-
-                if (nextVideos.length > MAX_WINDOW) {
-                    const overflow = nextVideos.length - MAX_WINDOW;
-                    if (direction === 'next') {
-                        nextVideos = nextVideos.slice(overflow);
-                        nextIndex = Math.max(nextIndex - overflow, 0);
-                    } else {
-                        nextVideos = nextVideos.slice(0, MAX_WINDOW);
-                    }
-                }
-
-                return { videos: nextVideos, currentIndex: nextIndex };
-            });
         } finally {
             setLoading(false);
         }
@@ -446,61 +375,65 @@ export default function FeedPage({
         preloadVideo(index + 2, preload2Ref.current, 'metadata');
     }
 
-    const goNext = () => {
+    const goNext = async () => {
         const type = feedModeRef.current.type;
         if (type === "moderation") return;
 
-        // Если видео еще нет либо мы как-то оказались на последнем видео в окне - перезапускаем ленту
-        if (!videos.length || currentIndex === videos.length - 1) {
-            startFeed(false, true);
+        if (currentIndex < videos.length - 1) {
+            const nextIdx = currentIndex + 1;
+            setCurrentIndex(nextIdx);
+
+            if (videos.length - 1 - nextIdx <= PREFETCH_DELTA) {
+                prefetch("next"); // асинхронный вызов
+            }
             return;
         }
 
-        const nextIdx = currentIndex + 1;
-        setCurrentIndex(nextIdx);
+        await prefetch("next"); // синхронный вызов загрузки на последнем видео страницы
 
-        const nextVideo = videos[nextIdx];
-        if (!nextVideo) return;
+        const prefetchedPage = prefetchedPageRef.current;
+        if (prefetchedPage && prefetchedPage.direction === "next") {
+            prefetchedPageRef.current = null;
 
-        const { snapshot, localIndex, lastIndex } = nextVideo;
-        const distToWindowEnd = videos.length - 1 - nextIdx;
-        const distToPageEnd = lastIndex - localIndex;
-
-        // Подгружаем только если видео находится на последней странице в окне
-        if (distToWindowEnd <= PREFETCH_DELTA && distToWindowEnd <= distToPageEnd) {
-            prefetch('next', snapshot); // тут snapshot следующего видео!
+            // Если пришли видео, то подменяем страницу
+            if (prefetchedPage.videos?.length) {
+                setWindow({ ...prefetchedPage, currentIndex: 0 });
+                return;
+            }
         }
-    }
 
-    const goPrev = () => {
+        setStatusFeed('Больше видео пока нет', 'ok');
+    };
+
+    const goPrev = async () => {
         const type = feedModeRef.current.type;
         if (!videos.length || type === "moderation") return;
 
-        const { prevPos, first } = snapshot;
+        if (currentIndex > 0) {
+            const prevIdx = currentIndex - 1;
+            setCurrentIndex(prevIdx);
 
-        // Если нулевой элемент первой страницы - назад идти нельзя!
-        if (
-            localIndex === 0 &&
-            ((type === "global" && prevPos === null) || ((type === "user" || type === "search") && first))
-        ) {
-            setStatusFeed('Это самое первое видео', 'ok');
+            if (prevIdx <= PREFETCH_DELTA) {
+                prefetch("prev");
+            }
             return;
         }
 
-        if (currentIndex > 0) {
-            const nextIdx = currentIndex - 1;
-            setCurrentIndex(nextIdx);
+        await prefetch("prev"); // синхронный вызов загрузки на первом видео страницы
 
-            const nextVideo = videos[nextIdx];
-            if (!nextVideo) return;
+        const prefetchedPage = prefetchedPageRef.current;
+        if (prefetchedPage && prefetchedPage.direction === "prev") {
+            prefetchedPageRef.current = null;
 
-            const { snapshot, localIndex } = nextVideo;
-
-            if (nextIdx <= PREFETCH_DELTA) {
-                prefetch('prev', snapshot, nextIdx < localIndex);
+            // Если пришли видео, то подменяем страницу
+            if (prefetchedPage.videos?.length) {
+                setWindow({ ...prefetchedPage, currentIndex: prefetchedPage.videos.length - 1 });
+                return;
             }
         }
-    }
+
+        setStatusFeed('Это самое первое видео', 'ok');
+    };
 
     const savePlayerState = () => {
         const player = playerRef.current;
@@ -522,7 +455,7 @@ export default function FeedPage({
     useEffect(() => {
         if (!active || !authReady) return;
 
-        if (!objectsAreEqual(feedMode, feedModeFromLocation)) {
+        if (!objectsAreEqual(feedMode, feedModeFromLocation) || uuid !== feedModeFromLocation.targetUuid) {
             feedModeRef.current = feedModeFromLocation;
             setFeedMode(feedModeFromLocation);
             startFeed(true, false);
