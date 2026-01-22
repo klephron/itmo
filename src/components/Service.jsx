@@ -9,7 +9,8 @@ export function Service() {
     const { token, isAdmin } = useAuth();
     const navigate = useNavigate();
 
-    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [confirmThumbsOpen, setConfirmThumbsOpen] = useState(false);
+    const [confirmEmbeddingsOpen, setConfirmEmbeddingsOpen] = useState(false);
 
     async function rebuildThumbs() {
         if (!token || !isAdmin) return;
@@ -34,24 +35,54 @@ export function Service() {
         }
     }
 
+    async function rebuildEmbeddings() {
+        if (!token || !isAdmin) return;
+
+        try {
+            const res = await fetch(apiBase + "/api/moderation/videos/reembed", {
+                method: "POST",
+                headers: authHeaders(token),
+            });
+
+            if (isUnauthorized(res)) {
+                navigate("/auth");
+                return;
+            }
+
+            if (!res.ok && res.status !== 202) {
+                throw new Error("HTTP " + res.status);
+            }
+        } catch (e) {
+            // опционально: статус / snackbar
+        }
+    }
+
     return (
         <>
             <Typography variant="h6" fontWeight="bold" py={0.5} px={2}>
                 Служебные действия
             </Typography>
-            <Box p={2}>
+            <Stack p={2} spacing={2}>
                 <Button
                     fullWidth
                     variant="contained"
                     color="warning"
-                    onClick={() => setConfirmDialogOpen(true)}
+                    onClick={() => setConfirmThumbsOpen(true)}
                 >
                     Перегенерировать превью всех видео
                 </Button>
-            </Box>
+                <Button
+                    fullWidth
+                    variant="contained"
+                    color="error"
+                    onClick={() => setConfirmEmbeddingsOpen(true)}
+                >
+                    Пересчитать эмбединги всех видео
+                </Button>
+            </Stack>
             <ConfirmDialog
-                open={confirmDialogOpen}
-                setOpen={setConfirmDialogOpen}
+                open={confirmThumbsOpen}
+                setOpen={setConfirmThumbsOpen}
                 title="Подтверждение операции"
                 text={
                     <Stack spacing={1.5}>
@@ -66,6 +97,24 @@ export function Service() {
                 }
                 critical
                 onConfirm={rebuildThumbs}
+            />
+            <ConfirmDialog
+                open={confirmEmbeddingsOpen}
+                setOpen={setConfirmEmbeddingsOpen}
+                title="Подтверждение операции"
+                text={
+                    <Stack spacing={1.5}>
+                        <Typography>
+                            Вы действительно хотите пересчитать эмбединги для всех видео? Это может занять некоторое
+                            время.
+                        </Typography>
+                        <Typography>
+                            Операцию нельзя отменить.
+                        </Typography>
+                    </Stack>
+                }
+                critical
+                onConfirm={rebuildEmbeddings}
             />
         </>
     );
