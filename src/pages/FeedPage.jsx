@@ -93,7 +93,7 @@ export default function FeedPage({
 
         try {
             let url, res;
-            const { type, userId, sort, query, targetUuid, targetIndex } = feedModeRef.current;
+            const { type, userId, sort, query, aiEnabled, targetUuid, targetIndex } = feedModeRef.current;
 
             if (type === "moderation") {
                 const res = await fetch(
@@ -120,7 +120,7 @@ export default function FeedPage({
                     url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
                     res = await fetch(url, { headers: authHeaders(token) });
                 } else {
-                    url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}`;
+                    url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}&ai=${aiEnabled}`;
                     res = await fetch(url, { headers: authHeaders(token) });
                 }
             }
@@ -135,13 +135,25 @@ export default function FeedPage({
                 if (idx !== -1) newIndex = idx;
             }
 
+            let hasNext, hasPrev;
+            if (type === "global") {
+                hasNext = data.hasNext;
+                hasPrev = data.hasPrev;
+            } else if (type === "user") {
+                hasNext = !data.last;
+                hasPrev = !data.first;
+            } else {
+                hasNext = newVideos.length < data.totalElements;
+                hasPrev = data.page !== 0;
+            }
+
             setWindow({
                 videos: newVideos,
                 currentIndex: newIndex,
-                hasNext: data.hasNext ?? !data.last,
-                hasPrev: data.hasPrev ?? !data.first,
+                hasNext,
+                hasPrev,
                 feedId: data.feedId ?? null,
-                number: data.number ?? null,
+                number: data.number ?? data.page ?? null,
             });
         } finally {
             setLoading(false);
@@ -162,7 +174,7 @@ export default function FeedPage({
     async function prefetch(direction) {
         if (loading || prefetchedPageRef.current?.direction === direction) return;
 
-        const { type, userId, sort, query } = feedModeRef.current;
+        const { type, userId, sort, query, aiEnabled } = feedModeRef.current;
         const { feedId, hasNext, hasPrev, number } = window;
 
         if (type === "global") {
@@ -183,7 +195,7 @@ export default function FeedPage({
                 if (type === "user") {
                     url = `${apiBase}/api/users/${userId}/videos?page=${page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`;
                 } else {
-                    url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}`;
+                    url = `${apiBase}/api/search/videos?q=${encodeURIComponent(query)}&page=${page}&size=${PAGE_SIZE}&ai=${aiEnabled}`;
                 }
             }
 
@@ -194,13 +206,27 @@ export default function FeedPage({
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
 
+            const newVideos = data.items ?? data.content ?? [];
+
+            let hasNext, hasPrev;
+            if (type === "global") {
+                hasNext = data.hasNext;
+                hasPrev = data.hasPrev;
+            } else if (type === "user") {
+                hasNext = !data.last;
+                hasPrev = !data.first;
+            } else {
+                hasNext = newVideos.length < data.totalElements;
+                hasPrev = data.page !== 0;
+            }
+
             prefetchedPageRef.current = {
                 direction,
-                videos: data.items ?? data.content,
-                hasNext: data.hasNext ?? !data.last,
-                hasPrev: data.hasPrev ?? !data.first,
+                videos: newVideos,
+                hasNext,
+                hasPrev,
                 feedId: data.feedId ?? null,
-                number: data.number ?? null,
+                number: data.number ?? data.page ?? null,
             };
         } finally {
             setLoading(false);
@@ -455,7 +481,9 @@ export default function FeedPage({
     useEffect(() => {
         if (!active || !authReady) return;
 
-        if (!objectsAreEqual(feedMode, feedModeFromLocation) || uuid !== feedModeFromLocation.targetUuid) {
+        if (!objectsAreEqual(feedMode, feedModeFromLocation) ||
+            ((feedMode.type === "user" || feedMode.type === "search") && uuid !== feedModeFromLocation.targetUuid)
+        ) {
             feedModeRef.current = feedModeFromLocation;
             setFeedMode(feedModeFromLocation);
             startFeed(true, false);

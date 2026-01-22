@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Checkbox, Divider, FormControlLabel, Stack, TextField, Typography, } from "@mui/material";
+
 import { SwipeableDialog } from "./SwipeableDialog";
 import { LoadMoreButton } from "./LoadMoreButton";
 import { apiBase, authHeaders } from "../api/api";
@@ -8,82 +9,160 @@ import { VideoCard } from "./VideoCard.jsx";
 
 const PAGE_SIZE = 20;
 
+const initialAiState = {
+    running: false,
+    phase: "",
+    rewrite: "",
+    expand: "",
+    context: "",
+    finalQuery: null,
+};
+
 export function SearchDialog({ open, setOpen }) {
     const navigate = useNavigate();
 
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
-    const [status, setStatus] = useState("");
-
     const [paging, setPaging] = useState({ page: 0, size: PAGE_SIZE, totalElements: 0 });
-    const [loading, setLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    const [loading, setLoading] = useState(false);
     const last = results.length >= paging.totalElements;
+
+    const [ai, setAi] = useState(initialAiState);
+    const [aiEnabled, setAiEnabled] = useState(true);
+    const [aiDebugEnabled, setAiDebugEnabled] = useState(false);
+    const aiSourceRef = useRef(null);
 
     const [suggests, setSuggests] = useState([]);
     const [loadingSuggest, setLoadingSuggest] = useState(false);
-
     const suggestTimer = useRef(null);
 
-    const loadPage = useCallback(
-        async (pageNumber, { replace = false } = {}) => {
-            const q = query.trim();
-            if (!q || loading) return;
+    const isSearchBusy = loading || ai.running;
 
-            setLoading(true);
-            setStatus("Ищу…");
+    const loadPage = useCallback(async (pageNumber, { replace = false } = {}) => {
+        const q = query.trim();
+        if (!q) return;
 
-            try {
-                const res = await fetch(
-                    `${apiBase}/api/search/videos?q=${encodeURIComponent(q)}&page=${pageNumber}&size=${PAGE_SIZE}`,
-                    { headers: authHeaders() }
-                );
+        setLoading(true);
 
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        try {
+            const res = await fetch(
+                `${apiBase}/api/search/videos?q=${encodeURIComponent(q)}&page=${pageNumber}&size=${PAGE_SIZE}&ai=${aiEnabled}`,
+                { headers: authHeaders() }
+            );
 
-                const page = await res.json();
-                const items = page?.content ?? [];
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-                setResults((prev) =>
-                    replace ? items : prev.concat(items)
-                );
+            const data = await res.json();
+            const items = data?.content ?? [];
 
-                setPaging({
-                    page: page.number ?? pageNumber,
-                    size: PAGE_SIZE,
-                    totalElements: page.totalElements ?? items.length,
-                });
-
-                setStatus(items.length ? "" : "Ничего не найдено");
-            } catch (e) {
-                setStatus("Ошибка поиска: " + e.message);
-            } finally {
-                setLoading(false);
-            }
-        },
-        [query, loading]
-    );
-
-    const runSearch = useCallback(
-        (text) => {
-            const q = text.trim();
-            if (!q) {
-                setStatus("Введите запрос");
-                return;
-            }
-
-            setHasSearched(true);
-            setResults([]);
+            setResults((prev) => replace ? items : prev.concat(items));
             setPaging({
-                page: 0,
+                page: data.page ?? pageNumber,
                 size: PAGE_SIZE,
-                totalElements: 0,
+                totalElements: data.totalElements ?? items.length,
             });
+        } catch (e) {
+            //setStatus("Ошибка поиска: " + e.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [aiEnabled, query]);
 
-            loadPage(0, { replace: true });
-        },
-        [loadPage]
-    );
+    const startAiStream = useCallback(async (q, page) => {
+        if (!aiEnabled || !q) return;
+
+        aiSourceRef.current?.close();
+        setAi({ ...initialAiState, running: true, phase: "LLM: запрашиваем модель…" });
+
+        const src = new EventSource(`${apiBase}/api/search/llm/stream?q=${encodeURIComponent(q)}&ai=true&page=${page}&size=${PAGE_SIZE}`);
+        aiSourceRef.current = src;
+
+        src.addEventListener("status", (e) => {
+            const value = (e.data || "").trim();
+            if (!value) return;
+
+            setAi(prev => {
+                if (value === "rewrite:start") {
+                    return { ...prev, phase: "LLM: rewrite…" };
+                }
+                if (value === "rewrite:done") {
+                    return { ...prev, phase: "LLM: rewrite готово" };
+                }
+                if (value === "expand:start") {
+                    return { ...prev, phase: "LLM: expand…" };
+                }
+                if (value === "expand:done") {
+                    return { ...prev, phase: "LLM: expand готово" };
+                }
+                if (value === "too_short") {
+                    src.close();
+                    return { ...prev, running: false, phase: "LLM: запрос слишком короткий" };
+                }
+                if (value.startsWith("llm:disabled")) {
+                    src.close();
+                    return { ...prev, running: false, phase: "LLM: отключена" };
+                }
+                if (value === "disabled") {
+                    src.close();
+                    return { ...prev, running: false, phase: "LLM: выключена" };
+                }
+                if (value === "skip:short") {
+                    src.close();
+                    return { ...prev, running: false, phase: "LLM: пропуск" };
+                }
+
+                // fallback
+                return { ...prev, phase: "LLM: " + value };
+            });
+        });
+
+        src.addEventListener("context", (e) => {
+            setAi(prev => ({ ...prev, context: e.data || "" }));
+        });
+
+        src.addEventListener("rewrite", (e) => {
+            setAi(prev => ({ ...prev, rewrite: prev.rewrite + (e.data || "") }));
+        });
+
+        src.addEventListener("expand", (e) => {
+            setAi(prev => ({ ...prev, expand: prev.expand + (e.data || "") }));
+        });
+
+        src.addEventListener("expand-final", (e) => {
+            const payload = (e.data || "").trim();
+            if (!payload) return;
+            setAi(prev => ({ ...prev, expand: payload }));
+        });
+
+        src.addEventListener("done", () => {
+            setAi(prev => ({ ...prev, running: false, phase: "LLM: готово" }));
+            src.close();
+        });
+
+        src.addEventListener("llm-error", (e) => {
+            setAi(prev => ({ ...prev, running: false, phase: "LLM: ошибка " + (e.data || "") }));
+            src.close();
+        });
+
+        src.onerror = () => {
+            setAi(prev => ({ ...prev, running: false, phase: "LLM: ошибка подключения" }));
+            src.close();
+        };
+    }, [aiEnabled]);
+
+    const runSearch = useCallback(async (text) => {
+        const q = text.trim();
+        if (isSearchBusy || !q) return;
+
+        setResults([]);
+        setPaging({ page: 0, size: PAGE_SIZE, totalElements: 0 });
+
+        if (aiEnabled) await startAiStream(q, 0);
+        await loadPage(0, { replace: true });
+
+        setHasSearched(true);
+    }, [aiEnabled, startAiStream, loadPage]);
 
     const runSuggest = useCallback(async (q) => {
         setLoadingSuggest(true);
@@ -107,8 +186,10 @@ export function SearchDialog({ open, setOpen }) {
         setResults([]);
         setPaging({ page: 0, size: PAGE_SIZE, totalElements: 0 });
         setHasSearched(false);
-        setStatus("");
+        setLoading(false);
+        setAi(initialAiState);
         setSuggests([]);
+        setLoadingSuggest(false);
     }, []);
 
     useEffect(() => {
@@ -130,7 +211,7 @@ export function SearchDialog({ open, setOpen }) {
 
     const handleLoadMore = () => loadPage(paging.page + 1);
     const handleVideoOpen = (targetUuid, targetIndex) => {
-        navigate("/feed", { state: { feedMode: { type: "search", query, targetUuid, targetIndex } } });
+        navigate("/feed", { state: { feedMode: { type: "search", query, aiEnabled, targetUuid, targetIndex } } });
         setOpen(false);
     }
 
@@ -139,6 +220,7 @@ export function SearchDialog({ open, setOpen }) {
             <Autocomplete
                 size="small"
                 freeSolo
+                disabled={isSearchBusy}
                 inputValue={query}
                 options={suggests}
                 filterOptions={(x) => x}
@@ -171,31 +253,66 @@ export function SearchDialog({ open, setOpen }) {
                     />
                 )}
                 slotProps={{ paper: { elevation: 24 } }}
-                sx={{ mx: 2, mb: 1.5 }}
+                sx={{ mx: 2, mb: 2 }}
             />
-            {hasSearched && (
-                <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    textAlign="center"
-                    sx={{ mb: 1.5 }}
-                >
-                    Найдено {paging.totalElements} видео
-                </Typography>
-            )}
+            <Stack
+                direction="row"
+                spacing={2}
+                px={2}
+                mb={1.5}
+                justifyContent="space-between"
+            >
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            size="small"
+                            checked={aiEnabled}
+                            disabled={isSearchBusy}
+                            onChange={(e) => setAiEnabled(e.target.checked)}
+                            sx={{ p: 0, mr: 1 }}
+                        />
+                    }
+                    label="Использовать ИИ"
+                />
+                {aiEnabled && (
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                size="small"
+                                checked={aiDebugEnabled}
+                                onChange={(e) => setAiDebugEnabled(e.target.checked)}
+                                sx={{ p: 0, mr: 1 }}
+                            />
+                        }
+                        label="Диагностика ИИ"
+                    />
+                )}
+            </Stack>
+            <Typography variant="caption" color="text.secondary" textAlign="center" mb={1.5}>
+                {isSearchBusy ? (
+                    "Ищем видео..."
+                ) : hasSearched ? (
+                    `Найдено ${paging.totalElements} видео`
+                ) : "Запустите поиск"}
+            </Typography>
             <Box flex={1} overflow="hidden" position="relative" mb={2}>
                 <Stack
                     spacing={1}
                     sx={{ px: 2, height: 1, overflowX: "hidden", overflowY: "auto", }}
                 >
-                    {results.map((video, index) => (
+                    {results?.length ? results.map((video, index) => (
                         <VideoCard
                             key={video.uuid}
                             video={video}
                             onClick={() => handleVideoOpen(video.uuid, index)}
                             elevation={24}
                         />
-                    ))}
+                    )) : isSearchBusy && (
+                        <>
+                            <VideoCard elevation={24}/>
+                            <VideoCard elevation={24}/>
+                        </>
+                    )}
                 </Stack>
                 {!last && (
                     <LoadMoreButton
@@ -210,6 +327,17 @@ export function SearchDialog({ open, setOpen }) {
                     />
                 )}
             </Box>
+            {aiEnabled && aiDebugEnabled && (
+                <>
+                    <Divider/>
+                    <Stack spacing={1.5} px={2} py={1.5}>
+                        <Typography fontWeight="bold" mb={1.5}>Диагностика ИИ</Typography>
+                        {ai.phase && <Typography variant="body2">{ai.phase}</Typography>}
+                        {ai.rewrite && <Typography variant="body2">Rewrite: {ai.rewrite}</Typography>}
+                        {ai.expand && <Typography variant="body2">Expand: {ai.expand}</Typography>}
+                    </Stack>
+                </>
+            )}
         </SwipeableDialog>
     );
 }
