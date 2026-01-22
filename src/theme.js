@@ -1,4 +1,4 @@
-import { createTheme, outlinedInputClasses, selectClasses } from "@mui/material";
+import { createTheme, inputLabelClasses, outlinedInputClasses, selectClasses } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { ruRU } from "@mui/material/locale";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
@@ -125,6 +125,12 @@ export const theme = createTheme(
                                 },
                             },
                         ],
+                        [`& .${inputLabelClasses.root}`]: {
+                            marginLeft: 2,
+                        },
+                        [`& .${outlinedInputClasses.notchedOutline} legend`]: {
+                            marginLeft: 2,
+                        },
                     }),
                 },
             },

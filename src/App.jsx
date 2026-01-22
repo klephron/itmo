@@ -17,6 +17,7 @@ import { UploadsList } from "./components/UploadsList.jsx";
 import { UsersList } from "./components/UsersList.jsx";
 import { ComplaintsList } from "./components/ComplaintsList.jsx";
 import { Service } from "./components/Service.jsx";
+import { Preferences } from "./components/Preferences.jsx";
 
 function AppInner() {
     const [feedMode, setFeedMode] = useState({ type: "global" });
@@ -46,6 +47,7 @@ function AppInner() {
                     <Route path="videos" element={<ThumbGrid label="Ваши видео" showDelete/>}/>
                     <Route path="following" element={<FollowingList/>}/>
                     <Route path="uploads" element={<UploadsList/>}/>
+                    <Route path="preferences" element={<Preferences/>}/>
                 </Route>
                 <Route path="/auth" element={<AuthPage/>}/>
                 <Route path="/moderation" element={<ModerationPage/>}>

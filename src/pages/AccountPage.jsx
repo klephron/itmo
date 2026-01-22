@@ -134,6 +134,17 @@ export default function AccountPage() {
                             </Button>
                         )}
                     </NavLink>
+                    <NavLink to="preferences" replace style={{ textDecoration: "none", color: "inherit" }}>
+                        {({ isActive }) => (
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color={isActive ? "primary" : "inherit"}
+                            >
+                                Настройки ленты
+                            </Button>
+                        )}
+                    </NavLink>
                 </Grid>
 
                 <Outlet context={{ userId: user?.userId }}/>
