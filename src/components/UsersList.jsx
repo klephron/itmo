@@ -19,7 +19,7 @@ const roleMap = {
 }
 
 export function UsersList() {
-    const { token, isModerator, isAdmin, setAuth } = useAuth();
+    const { token, isModerator, isAdmin, setAuth, user } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
@@ -200,15 +200,17 @@ export function UsersList() {
                                                     @{u.username} · #{u.id}
                                                 </Typography>
                                             </Stack>
-                                            <Button
-                                                size="small"
-                                                variant="contained"
-                                                color={u.enabled ? "error" : "primary"}
-                                                onClick={handleBanClick(u)}
-                                                onMouseDown={handleMouseDown}
-                                            >
-                                                {u.enabled ? 'Забанить' : 'Разбанить'}
-                                            </Button>
+                                            {u.id !== user.userId && (
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    color={u.enabled ? "error" : "primary"}
+                                                    onClick={handleBanClick(u)}
+                                                    onMouseDown={handleMouseDown}
+                                                >
+                                                    {u.enabled ? 'Забанить' : 'Разбанить'}
+                                                </Button>
+                                            )}
                                         </Stack>
                                         <Grid container spacing={1}>
                                             {isAdmin ? Object.entries(roleMap).map(([role, { label, color }]) => {

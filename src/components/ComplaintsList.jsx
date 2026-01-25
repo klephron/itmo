@@ -64,11 +64,7 @@ export function ComplaintsList() {
             ) : (
                 <Box sx={{ borderRadius: 4, flex: 1, overflow: "hidden", m: 2 }}>
                     <Stack spacing={1.5} sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
-                        {isPending ? (
-                            <Skeleton animation="wave">
-                                <ComplaintCard/>
-                            </Skeleton>
-                        ) : complaints.map((c) => (
+                        {complaints.map((c) => (
                             <ComplaintCard
                                 key={c.id}
                                 id={c.id}
