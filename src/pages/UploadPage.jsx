@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { Box, Button, LinearProgress, Paper, Stack, TextField, Typography, } from "@mui/material";
+import { useSnackbar } from "notistack";
 
 import { apiBase } from "../api/api";
 import { useAuth } from "../context/AuthContext";
@@ -52,6 +53,7 @@ function validateVideo(file, info) {
 
 export default function UploadPage() {
     const { token } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const inputRef = useRef(null);
@@ -191,7 +193,10 @@ export default function UploadPage() {
         xhr.send(formData);
     }
 
-    if (!token) return <Navigate to="/auth" replace/>;
+    if (!token) {
+        enqueueSnackbar("Войдите для загрузки видео", { variant: "info" });
+        return <Navigate to="/auth" replace/>;
+    }
 
     return (
         <>

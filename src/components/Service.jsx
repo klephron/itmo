@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
+import { useSnackbar } from "notistack";
+
 import { ConfirmDialog } from "./ConfirmDialog.jsx";
 import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export function Service() {
-    const { token, isAdmin } = useAuth();
+    const { token, isAdmin, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const [confirmThumbsOpen, setConfirmThumbsOpen] = useState(false);
@@ -22,16 +25,17 @@ export function Service() {
             });
 
             if (isUnauthorized(res)) {
-                //setStatusModeration('Сессия истекла, войдите снова', 'error');
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
                 navigate("/auth");
+                setAuth(null, null);
                 return;
             }
 
             if (!res.ok && res.status !== 202) throw new Error('HTTP ' + res.status);
 
-            //setStatusModeration('Запущена перегенерация превью (может занять время)', 'ok');
+            enqueueSnackbar("Перегенерация превью запущена (может занять время)", { variant: "success" });
         } catch (e) {
-            //setStatusModeration('Ошибка запуска перегенерации: ' + e.message, 'error');
+            enqueueSnackbar("Ошибка запуска перегенерации: " + e.message, { variant: "error" });
         }
     }
 
@@ -45,15 +49,19 @@ export function Service() {
             });
 
             if (isUnauthorized(res)) {
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
                 navigate("/auth");
+                setAuth(null, null);
                 return;
             }
 
             if (!res.ok && res.status !== 202) {
                 throw new Error("HTTP " + res.status);
             }
+
+            enqueueSnackbar("Пересчет эмбедингов запущен (может занять время)", { variant: "success" });
         } catch (e) {
-            // опционально: статус / snackbar
+            enqueueSnackbar("Ошибка запуска пересчета: " + e.message, { variant: "error" });
         }
     }
 

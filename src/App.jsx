@@ -37,6 +37,8 @@ function AppInner() {
                 mx: "auto",
                 ".notistack-SnackbarContainer": {
                     bottom: 74,
+                    maxWidth: `480px !important`,
+                    px: 2,
                 },
                 ".notistack-MuiContent": {
                     px: 1.5,

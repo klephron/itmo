@@ -30,3 +30,52 @@ export function getOrCreateDeviceId() {
     }
     return id;
 }
+
+export async function throwError(res) {
+    const fallback = `HTTP ${res.status}`;
+
+    // 1. Пробуем JSON
+    try {
+        const data = await res.clone().json();
+
+        if (data && typeof data === 'object') {
+            let message = data.message || data.error || fallback;
+
+            // 2. Ошибки валидации
+            if (Array.isArray(data.fields) && data.fields.length > 0) {
+                const details = data.fields
+                    .map((f) => {
+                        if (!f) return null;
+                        return `${f.field} - ${f.message || 'неверно'}`;
+                    })
+                    .filter(Boolean)
+                    .join(', ');
+
+                if (details) message += ` (${details})`;
+            }
+
+            throw new Error(message);
+        }
+    } catch (e) {
+        // важно: если это уже Error — пробрасываем дальше
+        if (e instanceof Error) {
+            throw e;
+        }
+        // иначе — это ошибка JSON.parse, идём дальше
+    }
+
+    // 3. Пробуем text/plain
+    try {
+        const text = await res.clone().text();
+        if (text) {
+            throw new Error(text);
+        }
+    } catch (e) {
+        if (e instanceof Error) {
+            throw e;
+        }
+    }
+
+    // 4. Только код ошибки
+    throw new Error(fallback);
+}

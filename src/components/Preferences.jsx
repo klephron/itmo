@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { Button, Paper, Stack, TextField, Typography, } from "@mui/material";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import { useSnackbar } from "notistack";
+import { useNavigate } from "react-router";
 
 import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
 export function Preferences() {
-    const { user, token } = useAuth();
+    const { user, token, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
+    const navigate = useNavigate();
 
     const [prefs, setPrefs] = useState({
         likeWeight: "",
@@ -16,22 +20,20 @@ export function Preferences() {
     });
     const [topics, setTopics] = useState([]);
 
-    const [status, setStatus] = useState("");
-
     useEffect(() => {
-        if (!user || !token) {
-            setStatus("Войдите, чтобы настраивать рекомендации");
-            return;
-        }
+        if (!user || !token) return;
 
         let cancelled = false;
-        setStatus("Загрузка настроек…");
-
         fetch(apiBase + "/api/streaming/video/feed/preferences", {
             headers: authHeaders(token),
         })
             .then((res) => {
-                if (isUnauthorized(res)) throw new Error("unauthorized");
+                if (isUnauthorized(res)) {
+                    enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                    navigate("/auth");
+                    setAuth(null, null);
+                    return;
+                }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.json();
             })
@@ -43,15 +45,10 @@ export function Preferences() {
                     watchWeight: data.watchWeight ?? "",
                     watchThreshold: data.watchThreshold ?? "",
                 });
-                setStatus("");
             })
             .catch((e) => {
                 if (cancelled) return;
-                setStatus(
-                    e.message === "unauthorized"
-                        ? "Сессия истекла, войдите снова"
-                        : "Ошибка загрузки настроек"
-                );
+                enqueueSnackbar("Ошибка загрузки весов: " + e.message, { variant: "error" });
             });
 
         return () => {
@@ -60,8 +57,6 @@ export function Preferences() {
     }, [user?.userId, token]);
 
     const save = () => {
-        setStatus("Сохраняем…");
-
         const payload = {
             likeWeight: prefs.likeWeight === "" ? null : Number(prefs.likeWeight),
             followWeight: prefs.followWeight === "" ? null : Number(prefs.followWeight),
@@ -78,7 +73,12 @@ export function Preferences() {
             body: JSON.stringify(payload),
         })
             .then((res) => {
-                if (isUnauthorized(res)) throw new Error("unauthorized");
+                if (isUnauthorized(res)) {
+                    enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                    navigate("/auth");
+                    setAuth(null, null);
+                    return;
+                }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.json();
             })
@@ -89,14 +89,10 @@ export function Preferences() {
                     watchWeight: data.watchWeight ?? "",
                     watchThreshold: data.watchThreshold ?? "",
                 });
-                setStatus("Сохранено");
+                enqueueSnackbar("Весы сохранены", { variant: "success" });
             })
             .catch((e) => {
-                setStatus(
-                    e.message === "unauthorized"
-                        ? "Сессия истекла, войдите снова"
-                        : "Ошибка сохранения"
-                );
+                enqueueSnackbar("Ошибка сохранения весов: " + e.message, { variant: "error" });
             });
     };
 
@@ -109,7 +105,12 @@ export function Preferences() {
             headers: authHeaders(token),
         })
             .then((res) => {
-                if (isUnauthorized(res)) throw new Error("unauthorized");
+                if (isUnauthorized(res)) {
+                    enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                    navigate("/auth");
+                    setAuth(null, null);
+                    return;
+                }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.json();
             })
@@ -117,8 +118,9 @@ export function Preferences() {
                 if (cancelled) return;
                 setTopics(topics ?? []);
             })
-            .catch(() => {
+            .catch((e) => {
                 if (cancelled) return;
+                enqueueSnackbar("Ошибка загрузки тем: " + e.message, { variant: "error" });
             });
 
         return () => {
@@ -127,8 +129,6 @@ export function Preferences() {
     }, [user?.userId, token]);
 
     const saveTopics = () => {
-        setStatus("Сохраняем темы…");
-
         fetch(apiBase + "/api/streaming/video/feed/preferences/topics", {
             method: "PUT",
             headers: {
@@ -138,20 +138,21 @@ export function Preferences() {
             body: JSON.stringify({ topics }),
         })
             .then((res) => {
-                if (isUnauthorized(res)) throw new Error("unauthorized");
+                if (isUnauthorized(res)) {
+                    enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                    navigate("/auth");
+                    setAuth(null, null);
+                    return;
+                }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.json();
             })
             .then((topics) => {
                 setTopics(topics ?? []);
-                setStatus("Темы сохранены");
+                enqueueSnackbar("Темы сохранены", { variant: "success" });
             })
             .catch((e) => {
-                setStatus(
-                    e.message === "unauthorized"
-                        ? "Сессия истекла, войдите снова"
-                        : "Ошибка сохранения тем"
-                );
+                enqueueSnackbar("Ошибка сохранения тем: " + e.message, { variant: "error" });
             });
     };
 

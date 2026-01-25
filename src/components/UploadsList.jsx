@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Box, LinearProgress, Stack, Typography, } from "@mui/material";
+import { useSnackbar } from "notistack";
+
 import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export function UploadsList() {
-    const { token } = useAuth();
+    const { token, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const jobsRef = useRef(new Map());
@@ -46,7 +49,9 @@ export function UploadsList() {
                     clearInterval(job.intervalId);
                     jobsRef.current.delete(jobId);
                     syncJobs();
+                    enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
                     navigate("/auth");
+                    setAuth(null, null);
                     return;
                 }
 
@@ -68,7 +73,7 @@ export function UploadsList() {
                 // тихо, без спама
             }
         }, 1000);
-    }, [token, syncJobs, navigate]);
+    }, [token, syncJobs, navigate, enqueueSnackbar, setAuth]);
 
     useEffect(() => {
         if (!token) return;
@@ -79,8 +84,13 @@ export function UploadsList() {
             headers: authHeaders(token),
         })
             .then((res) => {
-                if (isUnauthorized(res)) throw new Error("unauthorized");
-                if (!res.ok) throw new Error();
+                if (isUnauthorized(res)) {
+                    enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                    navigate("/auth");
+                    setAuth(null, null);
+                    return;
+                }
+                if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.json();
             })
             .then((list) => {
@@ -94,7 +104,8 @@ export function UploadsList() {
                     })
                 );
             })
-            .catch(() => {
+            .catch((e) => {
+                enqueueSnackbar("Ошибка при получении списка загрузок: " + e.message, { variant: "error" });
             });
 
         return () => {

@@ -1,8 +1,9 @@
 import { useEffect, useState, useTransition } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 import { Box, Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { useSnackbar } from "notistack";
 
-import { apiBase, authHeaders } from "../api/api";
+import { apiBase, authHeaders, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { ThumbCard } from "./ThumbCard";
 import { LoadMoreButton } from "./LoadMoreButton";
@@ -12,7 +13,8 @@ const PAGE_SIZE = 12;
 const COLUMNS = 3;
 
 export function ThumbGrid({ label = "Видео", showDelete = false }) {
-    const { token } = useAuth();
+    const { token, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const { userId } = useOutletContext();
     const navigate = useNavigate();
 
@@ -35,24 +37,35 @@ export function ThumbGrid({ label = "Видео", showDelete = false }) {
     async function loadPage(pageNumber, { replace = false } = {}) {
         if (!userId) return;
 
-        const res = await fetch(
-            `${apiBase}/api/users/${userId}/videos?page=${pageNumber}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`,
-            { headers: authHeaders(token) }
-        );
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        try {
+            const res = await fetch(
+                `${apiBase}/api/users/${userId}/videos?page=${pageNumber}&size=${PAGE_SIZE}&sort=${encodeURIComponent(sort)}`,
+                { headers: authHeaders(token) }
+            );
 
-        const page = await res.json();
-        const vids = page?.content ?? [];
+            if (isUnauthorized(res)) {
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                navigate("/auth");
+                setAuth(null, null);
+                return;
+            }
+            if (!res.ok) throw new Error("HTTP " + res.status);
 
-        startTransition(() => {
-            setVideos(prev => (replace ? vids : prev.concat(vids)));
-            setPaging({
-                page: page.number,
-                size: PAGE_SIZE,
-                last: !!page.last,
-                totalElements: page.totalElements ?? 0,
+            const page = await res.json();
+            const vids = page?.content ?? [];
+
+            startTransition(() => {
+                setVideos(prev => (replace ? vids : prev.concat(vids)));
+                setPaging({
+                    page: page.number,
+                    size: PAGE_SIZE,
+                    last: !!page.last,
+                    totalElements: page.totalElements ?? 0,
+                });
             });
-        });
+        } catch (e) {
+            enqueueSnackbar("Ошибка загрузки списка видео: " + e.message, { variant: "error" });
+        }
     }
 
     async function reloadUpToCurrentPage() {
@@ -75,9 +88,20 @@ export function ThumbGrid({ label = "Видео", showDelete = false }) {
                 `${apiBase}/api/streaming/video/delete/${uuid}`,
                 { method: "POST", headers: authHeaders(token) }
             );
-            if (!res.ok) throw new Error("Delete failed");
+
+            if (isUnauthorized(res)) {
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                navigate("/auth");
+                setAuth(null, null);
+                return;
+            }
+            if (!res.ok) throw new Error("HTTP " + res.status);
 
             await reloadUpToCurrentPage();
+
+            enqueueSnackbar("Видео удалено", { variant: "success" });
+        } catch (e) {
+            enqueueSnackbar("Ошибка при удалении видео: " + e.message, { variant: "error" });
         } finally {
             setSelectedId(null);
             setLoading(false);

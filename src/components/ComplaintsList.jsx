@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useNavigate } from "react-router";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Skeleton, Stack, Typography } from "@mui/material";
+import { useSnackbar } from "notistack";
 
 import { apiBase, authHeaders, isUnauthorized } from "../api/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ComplaintCard } from "./ComplaintCard.jsx";
 
 export function ComplaintsList() {
-    const { token, isModerator } = useAuth();
+    const { token, isModerator, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const [complaints, setComplaints] = useState([]);
@@ -23,21 +25,23 @@ export function ComplaintsList() {
             );
 
             if (isUnauthorized(res)) {
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
                 navigate("/auth");
+                setAuth(null, null);
                 return;
             }
 
-            if (!res.ok) throw new Error();
+            if (!res.ok) throw new Error('HTTP ' + res.status);
 
             const list = await res.json();
 
             startTransition(() => {
                 setComplaints(Array.isArray(list) ? list : []);
             });
-        } catch {
-            /* обработка ошибки по желанию */
+        } catch (e) {
+            enqueueSnackbar("Ошибка загрузки жалоб: " + e.message, { variant: "error" });
         }
-    }, [token, isModerator, navigate]);
+    }, [token, isModerator, navigate, enqueueSnackbar, setAuth]);
 
     useEffect(() => {
         loadComplaints();
@@ -50,18 +54,21 @@ export function ComplaintsList() {
                     Жалобы
                 </Typography>
                 <Typography variant="body2" color="text.secondary" pt={1}>
-                    {complaints.length}
+                    {isPending ? <Skeleton width={24} animation="wave"/> : complaints.length}
                 </Typography>
             </Stack>
-
-            {!complaints.length ? (
+            {!complaints.length && !isPending ? (
                 <Typography mt={1.5} px={2}>
                     Нет открытых жалоб
                 </Typography>
             ) : (
                 <Box sx={{ borderRadius: 4, flex: 1, overflow: "hidden", m: 2 }}>
                     <Stack spacing={1.5} sx={{ height: 1, overflowX: "hidden", overflowY: "auto" }}>
-                        {complaints.map((c) => (
+                        {isPending ? (
+                            <Skeleton animation="wave">
+                                <ComplaintCard/>
+                            </Skeleton>
+                        ) : complaints.map((c) => (
                             <ComplaintCard
                                 key={c.id}
                                 id={c.id}

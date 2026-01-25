@@ -1,33 +1,31 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Avatar, Box, Card, CardActionArea, Stack, Typography, } from "@mui/material";
+import { useSnackbar } from "notistack";
 
 import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export function FollowingList() {
-    const { user, token } = useAuth();
+    const { user, token, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const [following, setFollowing] = useState([]);
-    const [status, setStatus] = useState("");
 
     useEffect(() => {
-        if (!user || !token) {
-            setFollowing([]);
-            setStatus("Войдите, чтобы видеть подписки");
-            return;
-        }
+        if (!user || !token) return;
 
         let cancelled = false;
-        setStatus("Загрузка подписок…");
-
         fetch(apiBase + `/api/users/${user.userId}/following`, {
             headers: authHeaders(token),
         })
             .then((res) => {
                 if (isUnauthorized(res)) {
-                    throw new Error("unauthorized");
+                    enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                    navigate("/auth");
+                    setAuth(null, null);
+                    return;
                 }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.json();
@@ -35,16 +33,11 @@ export function FollowingList() {
             .then((list) => {
                 if (cancelled) return;
                 setFollowing(list || []);
-                setStatus("");
             })
             .catch((e) => {
                 if (cancelled) return;
                 setFollowing([]);
-                setStatus(
-                    e.message === "unauthorized"
-                        ? "Сессия истекла, войдите снова"
-                        : "Ошибка загрузки подписок"
-                );
+                enqueueSnackbar("Ошибка загрузки подписок: " + e.message, { variant: "error" });
             });
 
         return () => {

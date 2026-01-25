@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useSnackbar } from "notistack";
 
 import { Avatar, Box, Button, Card, CardActionArea, Chip, Grid, Stack, Typography } from "@mui/material";
 import RemoveCircleRoundedIcon from "@mui/icons-material/RemoveCircleRounded";
@@ -7,7 +8,7 @@ import AddCircleRoundedIcon from "@mui/icons-material/AddCircleRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
 
-import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api.js";
+import { apiBase, authHeaders, getAvatarUrl, isUnauthorized, throwError } from "../api/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { formatDate } from "../utils/format.js";
 
@@ -18,23 +19,21 @@ const roleMap = {
 }
 
 export function UsersList() {
-    const { token, isModerator, isAdmin } = useAuth();
+    const { token, isModerator, isAdmin, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
 
     async function loadUsers() {
         if (!token || !isModerator) {
             setUsers([]);
             return;
         }
-
         if (loading) return;
 
         setLoading(true);
-        setError("");
 
         try {
             const res = await fetch(
@@ -43,17 +42,17 @@ export function UsersList() {
             );
 
             if (isUnauthorized(res)) {
-                throw new Error("Сессия истекла");
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                navigate("/auth");
+                setAuth(null, null);
+                return;
             }
-            if (!res.ok) {
-                throw new Error("Ошибка загрузки пользователей");
-            }
+            if (!res.ok) await throwError(res);
 
             const list = await res.json();
             setUsers(Array.isArray(list) ? list : []);
         } catch (e) {
-            console.error(e);
-            setError(e.message || "Ошибка загрузки");
+            enqueueSnackbar("Ошибка загрузки списка пользователей: " + e.message, { variant: "error" });
             setUsers([]);
         } finally {
             setLoading(false);
@@ -79,11 +78,17 @@ export function UsersList() {
                 headers: authHeaders(token),
             });
 
-            if (isUnauthorized(res) || !res.ok) {
-                throw new Error("Ошибка изменения статуса");
+            if (isUnauthorized(res)) {
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                navigate("/auth");
+                setAuth(null, null);
+                return;
             }
+            if (!res.ok) await throwError(res);
         } catch (e) {
-            console.error(e);
+            const msg = `Ошибка при ${action === "ban" ? "блокировке" : "разблокировке"}: ${e.message}`;
+            enqueueSnackbar(msg, { variant: "error" });
+
             // rollback
             setUsers(prev =>
                 prev.map(u =>
@@ -123,11 +128,16 @@ export function UsersList() {
                 }
             );
 
-            if (isUnauthorized(res) || !res.ok) {
-                throw new Error("Ошибка сохранения ролей");
+            if (isUnauthorized(res)) {
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                navigate("/auth");
+                setAuth(null, null);
+                return;
             }
+            if (!res.ok) await throwError(res);
         } catch (e) {
-            console.error(e);
+            enqueueSnackbar(`Ошибка при изменении ролей: ${e.message}`, { variant: "error" });
+
             // rollback
             setUsers(prev =>
                 prev.map(u =>

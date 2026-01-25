@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
 
 export default function ProfilePage() {
-    const { token, user } = useAuth();
+    const { token, user, setAuth } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
     const { userId } = useParams();
     const navigate = useNavigate();
@@ -51,6 +51,7 @@ export default function ProfilePage() {
             if (isUnauthorized(res)) {
                 enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
                 navigate("/auth");
+                setAuth(null, null);
                 return;
             }
 

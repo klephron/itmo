@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from "react-router";
 import { Button, Stack, TextField } from '@mui/material';
+import { useSnackbar } from "notistack";
+
 import { SmallDialog } from './SmallDialog.jsx';
 import { apiBase, authHeaders, isUnauthorized } from '../api/api';
 import { useAuth } from '../context/AuthContext';
@@ -12,50 +15,30 @@ export const ComplaintDialog = ({
                                     commentId,
                                     onSuccess,
                                 }) => {
-    const { token } = useAuth();
+    const { token, setAuth } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
+    const navigate = useNavigate();
 
     const [reason, setReason] = useState('');
-    const [status, setStatus] = useState({ msg: '', type: '' });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (open) {
             setReason('');
-            setStatus({ msg: '', type: '' });
             setLoading(false);
         }
     }, [open]);
 
     async function submit() {
-        if (!token) {
-            setStatus({ msg: 'Войдите, чтобы отправить жалобу', type: 'error' });
-            return;
-        }
-
-        if (!reason.trim()) {
-            setStatus({ msg: 'Укажите причину жалобы', type: 'error' });
-            return;
-        }
-
         let url;
-
         if (mode === 'comment') {
-            if (!videoUuid || !commentId) {
-                setStatus({ msg: 'Некорректные данные комментария', type: 'error' });
-                return;
-            }
             url = `${apiBase}/api/moderation/complaints/videos/${videoUuid}/comments/${commentId}`;
         } else {
-            if (!videoUuid) {
-                setStatus({ msg: 'Некорректные данные видео', type: 'error' });
-                return;
-            }
             url = `${apiBase}/api/moderation/complaints/videos/${videoUuid}`;
         }
 
         try {
             setLoading(true);
-            setStatus({ msg: '', type: '' });
 
             const res = await fetch(url, {
                 method: 'POST',
@@ -67,20 +50,19 @@ export const ComplaintDialog = ({
             });
 
             if (isUnauthorized(res)) {
-                setStatus({ msg: 'Сессия истекла, войдите снова', type: 'error' });
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
+                navigate("/auth");
+                setAuth(null, null);
                 return;
             }
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
 
-            setStatus({ msg: 'Жалоба отправлена', type: 'success' });
+            enqueueSnackbar("Жалоба отправлена", { variant: "success" });
             onSuccess?.();
             setOpen(false);
         } catch (e) {
-            setStatus({
-                msg: 'Ошибка отправки жалобы: ' + e.message,
-                type: 'error',
-            });
+            enqueueSnackbar("Ошибка отправки жалобы: " + e.message, { variant: "error" });
         } finally {
             setLoading(false);
         }
@@ -109,8 +91,9 @@ export const ComplaintDialog = ({
                     fullWidth
                     disabled={!reason.trim()}
                     onClick={submit}
+                    loading={loading}
                 >
-                    {loading ? 'Отправка…' : 'Отправить жалобу'}
+                    Отправить жалобу
                 </Button>
             </Stack>
         </SmallDialog>
