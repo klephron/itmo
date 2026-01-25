@@ -17,22 +17,19 @@ export function AuthProvider({ children }) {
     }, [user?.roles]);
 
     const setAuth = useCallback((newToken, newUser) => {
-        if (newToken && newUser?.userId != null) {
+        if (newToken) {
             setToken(newToken);
-            setUser(newUser);
+            setUser(newUser ?? null);
             localStorage.setItem('authToken', newToken);
-            localStorage.setItem('authUser', JSON.stringify(newUser));
         } else {
             setToken(null);
             setUser(null);
             localStorage.removeItem('authToken');
-            localStorage.removeItem('authUser');
         }
     }, []);
 
     const initAuth = useCallback(async () => {
         const savedToken = localStorage.getItem('authToken');
-        const savedUserJson = localStorage.getItem('authUser');
 
         if (!savedToken) {
             setAuth(null, null);
@@ -41,30 +38,26 @@ export function AuthProvider({ children }) {
         }
 
         setToken(savedToken);
-        if (savedUserJson) {
-            try {
-                setUser(JSON.parse(savedUserJson));
-            } catch {
-            }
-        }
 
         try {
-            const res = await fetch(apiBase + '/api/auth/me', { headers: authHeaders(savedToken) });
+            const res = await fetch(apiBase + '/api/auth/me', {
+                headers: authHeaders(savedToken)
+            });
+
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
                     setAuth(null, null);
                 }
-                setAuthReady(true);
                 return;
             }
 
             const data = await res.json();
-            setAuth(savedToken, {
+            setUser({
                 userId: data.userId,
                 username: data.username,
                 displayName: data.displayName,
                 roles: data.roles ?? [],
-                avatarUrl: getAvatarUrl(data?.userId),
+                avatarUrl: getAvatarUrl(data.userId),
             });
         } finally {
             setAuthReady(true);
