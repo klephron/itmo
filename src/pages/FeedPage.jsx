@@ -102,7 +102,11 @@ export default function FeedPage({
                     `${apiBase}/api/streaming/video/metadata/${targetUuid}`,
                     { headers: authHeaders(token) }
                 );
-                if (!res.ok) throw new Error("HTTP " + res.status);
+
+                if (!res.ok) {
+                    setWindow({ videos: [null], currentIndex: -1 });
+                    return;
+                }
 
                 const video = await res.json();
                 setWindow({ videos: [video], currentIndex: 0 });
@@ -253,7 +257,7 @@ export default function FeedPage({
 
             setVideos((prev) => {
                 const copy = [...prev];
-                const idx = copy.findIndex(v => v.uuid === uuid);
+                const idx = copy.findIndex(v => v?.uuid === uuid);
                 if (idx >= 0) {
                     copy[idx] = { ...copy[idx], viewsCount };
                 }
@@ -318,7 +322,7 @@ export default function FeedPage({
 
             setVideos((prev) => {
                 const copy = [...prev];
-                const idx = copy.findIndex(v => v.uuid === uuid);
+                const idx = copy.findIndex(v => v?.uuid === uuid);
                 if (idx >= 0) {
                     copy[idx] = { ...copy[idx], likesCount, likedByMe: liked };
                 }
@@ -333,45 +337,27 @@ export default function FeedPage({
         if (!uuid) return;
 
         try {
-            const headers = authHeaders(token)
-            const [viewsRes, commentsRes, likeRes] = await Promise.all([
-                fetch(`${apiBase}/api/videos/${uuid}/view`, { headers }),
-                fetch(`${apiBase}/api/videos/${uuid}/comments?page=0&size=1`, { headers }),
-                fetch(`${apiBase}/api/videos/${uuid}/like`, { headers }),
-            ]);
+            const res = await fetch(`${apiBase}/api/streaming/video/metadata/${uuid}`, { headers: authHeaders(token) });
 
-            let viewsCount;
-            if (viewsRes.ok) {
-                const data = await viewsRes.json();
-                viewsCount = data?.viewsCount;
+            if (res.status === 404) {
+                setVideos((prev) => {
+                    const copy = [...prev];
+                    const idx = copy.findIndex(v => v?.uuid === uuid);
+                    if (idx === -1) return prev;
+
+                    copy[idx] = null;
+                    return copy;
+                });
+                return;
             }
 
-            let commentsCount;
-            if (commentsRes.ok) {
-                const data = await commentsRes.json();
-                commentsCount = data?.totalElements;
-            }
-
-            let likesCount, likedByMe;
-            if (likeRes.ok) {
-                const data = await likeRes.json();
-                likesCount = data?.likesCount;
-                likedByMe = data?.liked;
-            }
-
+            const data = await res.json();
             setVideos((prev) => {
                 const copy = [...prev];
-                const idx = copy.findIndex(v => v.uuid === uuid);
+                const idx = copy.findIndex(v => v?.uuid === uuid);
                 if (idx === -1) return prev;
 
-                copy[idx] = {
-                    ...copy[idx],
-                    ...(typeof viewsCount === 'number' && { viewsCount }),
-                    ...(typeof commentsCount === 'number' && { commentsCount }),
-                    ...(typeof likesCount === 'number' && { likesCount }),
-                    ...(typeof likedByMe === 'boolean' && { likedByMe }),
-                };
-
+                copy[idx] = { ...copy[idx], ...data };
                 return copy;
             });
         } catch {
@@ -387,6 +373,8 @@ export default function FeedPage({
         if (!el || videoIndex < 0 || videoIndex >= videos.length) return;
 
         const video = videos[videoIndex];
+        if (!video) return;
+
         const url = video.selectedQuality
             ? `${apiBase}/api/streaming/video/${video.uuid}?quality=${video.selectedQuality}`
             : `${apiBase}/api/streaming/video/${video.uuid}`;
@@ -640,7 +628,7 @@ export default function FeedPage({
         savePlayerState();
         setVideos((prev) => {
             const copy = [...prev];
-            const idx = copy.findIndex(v => v.uuid === uuid);
+            const idx = copy.findIndex(v => v?.uuid === uuid);
             if (idx >= 0) {
                 copy[idx] = { ...copy[idx], selectedQuality: quality };
             }
@@ -807,6 +795,19 @@ export default function FeedPage({
                     <Box component="video" display="none" ref={preload1Ref} muted/>
                     <Box component="video" display="none" ref={preload2Ref} muted/>
                 </Box>
+            ) : videos?.length ? active && (
+                <Stack
+                    component={Paper}
+                    spacing={1}
+                    alignItems="center"
+                    justifyContent="center"
+                    flex={1}
+                    p={2}
+                >
+                    <Typography variant="h6">
+                        Это видео недоступно
+                    </Typography>
+                </Stack>
             ) : active && (
                 <Stack
                     component={Paper}
