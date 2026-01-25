@@ -21,6 +21,7 @@ import { QualityDialog } from "../components/QualityDialog.jsx";
 import { ComplaintDialog } from "../components/ComplaintDialog.jsx";
 import { SearchDialog } from "../components/SearchDialog.jsx";
 import { objectsAreEqual } from "../utils/compare.js";
+import { useSnackbar } from "notistack";
 
 const PAGE_SIZE = 10;
 const PREFETCH_DELTA = 2;
@@ -35,6 +36,7 @@ export default function FeedPage({
                                      setSearchDialogOpen
                                  }) {
     const { token, user, authReady } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
     const location = useLocation();
     const active = location.pathname === "/feed";
@@ -428,7 +430,7 @@ export default function FeedPage({
             }
         }
 
-        setStatusFeed('Больше видео пока нет', 'ok');
+        enqueueSnackbar("Больше видео пока нет", { variant: "info" });
     };
 
     const goPrev = async () => {
@@ -458,7 +460,7 @@ export default function FeedPage({
             }
         }
 
-        setStatusFeed('Это самое первое видео', 'ok');
+        enqueueSnackbar("Это самое первое видео", { variant: "info" });
     };
 
     const savePlayerState = () => {
@@ -498,7 +500,6 @@ export default function FeedPage({
     /* Сброс состояния ленты, если сменился токен */
     useEffect(() => {
         if (!authReady) return;
-        setFeedMode({ type: "global" });
         setWindow({ videos: [], currentIndex: -1 });
     }, [token]);
 
