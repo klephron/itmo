@@ -1,25 +1,20 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { Avatar, Box, Button, IconButton, Paper, Stack, Typography } from "@mui/material";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import { useSnackbar } from "notistack";
 
 import { apiBase, authHeaders, getAvatarUrl, isUnauthorized } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { formatFollowers, formatFollowing } from "../utils/format.js";
-import { ThumbGrid } from "../components/ThumbGrid.jsx";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 
 export default function ProfilePage() {
     const { token, user } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const { userId } = useParams();
     const navigate = useNavigate();
 
-    const [status, setStatus] = useState({ msg: '', type: '' });
     const [profile, setProfile] = useState(null);
-
-    function setStatusProfile(msg = '', type = '') {
-        setStatus({ msg, type });
-    }
-
     const isSelf = user && Number(user.userId) === Number(userId);
 
     async function loadProfile() {
@@ -33,13 +28,13 @@ export default function ProfilePage() {
             const prof = await res.json();
             setProfile(prof);
         } catch (e) {
-            setStatusProfile('Ошибка загрузки профиля: ' + e.message, 'error');
+            enqueueSnackbar("Ошибка загрузки профиля: " + e.message, { variant: "error" });
         }
     }
 
     async function toggleFollow() {
         if (!token) {
-            setStatusProfile('Войдите, чтобы подписываться', 'error');
+            enqueueSnackbar("Войдите, чтобы подписываться", { variant: "info" });
             navigate("/auth");
             return;
         }
@@ -54,7 +49,7 @@ export default function ProfilePage() {
             });
 
             if (isUnauthorized(res)) {
-                setStatusProfile('Сессия истекла, войдите снова', 'error');
+                enqueueSnackbar("Сессия истекла, войдите снова", { variant: "error" });
                 navigate("/auth");
                 return;
             }
@@ -65,10 +60,8 @@ export default function ProfilePage() {
                 ...prevProfile,
                 following: !prevProfile.following,  // Меняем статус подписки
             }));
-
-            setStatusProfile(profile.following ? 'Отписались от пользователя' : 'Подписались на пользователя', 'ok');
         } catch (e) {
-            setStatusProfile('Ошибка изменения подписки: ' + e.message, 'error');
+            enqueueSnackbar("Ошибка изменения подписки: " + e.message, { variant: "error" });
         }
     }
 

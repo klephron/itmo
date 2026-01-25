@@ -9,24 +9,20 @@ import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 
 import { AvatarUploadDialog } from "../components/AvatarUploadDialog.jsx";
 import { NavLink, Outlet, useNavigate } from "react-router";
+import { useSnackbar } from "notistack";
 
 export default function AccountPage() {
     const { token, user, setAuth, isModerator } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
     const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
-    const [status, setStatus] = useState({ msg: '', type: '' });
     const [profile, setProfile] = useState(null);
 
-    function setStatusAuth(msg = '', type = '') {
-        setStatus({ msg, type });
-    }
-
     function logout() {
-        setAuth(null, null);
-        setStatusAuth('Вы вышли из аккаунта', 'ok');
-        setProfile(null);
         navigate("/auth");
+        setAuth(null, null);
+        enqueueSnackbar("Вы вышли из аккаунта", { variant: "success" });
     }
 
     async function loadAccountProfile(u = user, tokenOverride = token) {
@@ -45,8 +41,8 @@ export default function AccountPage() {
 
             const prof = await res.json();
             setProfile(prof);
-        } catch {
-            setProfile(null);
+        } catch (e) {
+            enqueueSnackbar("Ошибка загрузки профиля: " + e.message, { variant: "error" });
         }
     }
 
