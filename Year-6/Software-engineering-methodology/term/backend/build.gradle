@@ -1,0 +1,138 @@
+plugins {
+  id("io.micronaut.application") version "4.5.3"
+  id("io.micronaut.openapi")     version "4.5.3"
+  id("com.gradleup.shadow") version "8.3.6"
+  id("io.micronaut.aot") version "4.5.3"
+  id("com.diffplug.spotless") version '7.0.3'
+  id("io.freefair.lombok") version "8.13.1"
+  id("jacoco")
+}
+
+version = "0.1"
+group = "ru.itmopai.backend"
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compileOnly         "org.projectlombok:lombok:1.18.32"
+  annotationProcessor "org.projectlombok:lombok:1.18.32"
+  implementation("io.micronaut.serde:micronaut-serde-jackson")
+  compileOnly("io.micronaut:micronaut-http-client")
+  runtimeOnly("ch.qos.logback:logback-classic")
+  testImplementation("io.micronaut:micronaut-http-client")
+  runtimeOnly("org.yaml:snakeyaml")
+  implementation("io.micronaut.validation:micronaut-validation")
+  implementation("io.micronaut.security:micronaut-security-jwt")
+  implementation("io.micronaut.security:micronaut-security-annotations")
+  implementation("io.micronaut.security:micronaut-security")
+  runtimeOnly("io.jsonwebtoken:jjwt-api")
+  runtimeOnly("io.jsonwebtoken:jjwt-impl")
+  runtimeOnly("io.jsonwebtoken:jjwt-jackson")
+  implementation("io.micronaut:micronaut-jackson-databind")
+  implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
+  implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+  runtimeOnly("org.postgresql:postgresql")
+  runtimeOnly("io.netty:netty-handler")
+  implementation "org.springframework.security:spring-security-crypto:5.2.1.RELEASE"
+  implementation("io.micronaut:micronaut-http-server-netty")
+  implementation("jakarta.annotation:jakarta.annotation-api")
+  implementation("io.swagger.core.v3:swagger-annotations-jakarta:2.2.23")
+  implementation("commons-logging:commons-logging:1.2")
+  implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+
+  compileOnly("io.micronaut.openapi:micronaut-openapi-annotations")
+  annotationProcessor("io.micronaut.openapi:micronaut-openapi")
+
+  implementation 'org.mapstruct:mapstruct:1.6.3'
+  annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+  annotationProcessor("io.micronaut.data:micronaut-data-processor")
+  annotationProcessor("io.micronaut:micronaut-http-validation")
+  annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+
+  // Testing dependencies
+  testImplementation("org.mockito:mockito-core:5.8.0")
+  testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+  testImplementation("org.testcontainers:testcontainers:1.19.3")
+  testImplementation("org.testcontainers:postgresql:1.19.3")
+  testImplementation("org.testcontainers:junit-jupiter:1.19.3")
+  testRuntimeOnly("com.h2database:h2")
+}
+
+application {
+  mainClass = "ru.itmopai.backend.Application"
+}
+
+java {
+  sourceCompatibility = JavaVersion.toVersion("21")
+  targetCompatibility = JavaVersion.toVersion("21")
+}
+
+graalvmNative.toolchainDetection = false
+
+micronaut {
+  runtime("netty")
+  testRuntime("junit5")
+  processing {
+      incremental(true)
+      annotations "ru.itmopai.backend.*"
+  }
+  aot {
+    // Please review carefully the optimizations enabled below
+    // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+    optimizeServiceLoading = false
+    convertYamlToJava = false
+    precomputeOperations = true
+    cacheEnvironment = true
+    optimizeClassLoading = true
+    deduceEnvironment = true
+    optimizeNetty = true
+    replaceLogbackXml = true
+  }
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.compilerArgs += [
+    '-Amicronaut.openapi.views.spec=swagger-ui.enabled=true,swagger-ui.theme=flattop'
+  ]
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.compilerArgs += "-Amicronaut.openapi.views.spec=swagger-ui.enabled=true,swagger-ui.persistAuthorization=true"
+}
+
+tasks.named("dockerfileNative") {
+  jdkVersion = "21"
+}
+
+spotless {
+  java {
+    target "src/main/java/**/*.java", "src/test/java/**/*.java"
+    eclipse().configFile('.settings/org.eclipse.jdt.core.prefs')
+    removeUnusedImports()
+    trimTrailingWhitespace()
+  }
+
+  yaml {
+    target "src/**/*.yaml", "src/**/*.yml"
+    prettier().configFile(".prettierrc.yaml")
+  }
+}
+
+jacoco {
+  toolVersion = "0.8.12"
+}
+
+tasks.jacocoTestReport {
+  dependsOn test
+  reports {
+    xml.required = true
+    html.required = true
+  }
+}
+
+test {
+  finalizedBy jacocoTestReport
+}

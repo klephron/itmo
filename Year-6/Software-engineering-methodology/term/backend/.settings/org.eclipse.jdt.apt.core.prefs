@@ -1,0 +1,9 @@
+eclipse.preferences.version=1
+org.eclipse.jdt.apt.aptEnabled=true
+org.eclipse.jdt.apt.genSrcDir=bin/generated-sources/annotations
+org.eclipse.jdt.apt.genTestSrcDir=bin/generated-test-sources/annotations
+org.eclipse.jdt.apt.processorOptions/micronaut.openapi.views.spec=swagger-ui.enabled\=true,swagger-ui.persistAuthorization\=true
+org.eclipse.jdt.apt.processorOptions/micronaut.processing.annotations=ru.itmopai.backend.*
+org.eclipse.jdt.apt.processorOptions/micronaut.processing.group=ru.itmopai.backend
+org.eclipse.jdt.apt.processorOptions/micronaut.processing.incremental=true
+org.eclipse.jdt.apt.processorOptions/micronaut.processing.module=backend

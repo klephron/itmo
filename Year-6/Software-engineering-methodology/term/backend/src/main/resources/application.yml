@@ -1,0 +1,94 @@
+micronaut:
+  serde:
+    serialization:
+      inclusion: ALWAYS
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+      swagger-ui:
+        paths: classpath:META-INF/swagger/views/swagger-ui
+        mapping: /swagger-ui/**
+  security:
+    enabled: true
+    intercept-url-map:
+      - pattern: /swagger/**
+        http-method: GET
+        access:
+          - isAnonymous()
+      - pattern: /swagger-ui/**
+        http-method: GET
+        access:
+          - isAnonymous()
+      - pattern: /swagger-ui
+        http-method: GET
+        access:
+          - isAnonymous()
+    token:
+      jwt:
+        enabled: true
+        generator:
+          access-token:
+            expiration: 604800
+        signatures:
+          secret:
+            generator:
+              secret: "zavar-zubrailx-mpi-labs-jwt-spring-account-password-key"
+    endpoints:
+      login:
+        enabled: false
+    authentication: bearer
+  application:
+    name: backend
+  server:
+    cors:
+      enabled: true
+      configurations:
+        all:
+          # allowed-origins:
+          #   - "http://localhost:5173"
+          allowed-origins-regex: "^.*$"
+          allowed-methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          allowed-headers:
+            - Content-Type
+            - Authorization
+          allow-credentials: false
+    netty:
+      access-logger:
+        enabled: true
+        log-format: common
+    default-charset: UTF-8
+    port: 8081
+    context-path: /api
+
+logger:
+  levels:
+    io.micronaut.security: TRACE
+    io.netty.handler.logging.LoggingHandler: DEBUG
+
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: me
+    password: me
+    driverClassName: org.postgresql.Driver
+jpa:
+  default:
+    entity-scan:
+      packages:
+        - ru.itmopai.backend.entity
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        hbm2ddl:
+          auto: update
+        show_sql: true
+        # id:
+        #   db_structure_naming_strategy: standard
