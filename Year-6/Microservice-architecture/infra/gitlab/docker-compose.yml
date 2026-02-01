@@ -1,0 +1,24 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ee:18.7.0-ee.0
+    restart: unless-stopped
+    ports:
+      - "6080:80"
+      - "6443:443"
+      - "6022:22"
+      - "6929:8929"
+    shm_size: "256m"
+    volumes:
+      - "gitlab-config:/etc/gitlab"
+      - "gitlab-logs:/var/log/gitlab"
+      - "gitlab-data:/var/opt/gitlab"
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: "7000MiB"
+
+volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:

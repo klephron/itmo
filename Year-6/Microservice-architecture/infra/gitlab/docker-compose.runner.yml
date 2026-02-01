@@ -1,0 +1,18 @@
+services:
+  runner-1:
+    build: runner
+    container_name: "brainstop-runner-1"
+    runtime: sysbox-runc
+    restart: unless-stopped
+    volumes:
+      - runner-1-etc:/etc/gitlab-runner
+      - runner-1-docker:/var/lib/docker
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "4"
+    #       memory: "4000MiB"
+
+volumes:
+  runner-1-etc:
+  runner-1-docker:
