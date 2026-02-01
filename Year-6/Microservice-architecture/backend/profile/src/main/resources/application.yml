@@ -1,0 +1,102 @@
+server:
+  port: ${PORT:0}
+
+spring:
+  application:
+    name: profile-service
+  profiles:
+    default: dev
+  #  cloud:
+  #    loadbalancer:
+  #      configurations: round_robin
+  #      cache:
+  #        enabled: true
+  #        ttl: 2s
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 2000
+            readTimeout: 4000
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/video-streaming
+    username: ${DB_USER:profile_app}
+    password: ${DB_PASSWORD:profile_app}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database: POSTGRESQL
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${random.uuid}
+
+app:
+  jwt:
+    secret: "super-secret-key-change-me-to-long-random-string"
+
+storage:
+  client:
+    base-url: http://storage-service
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.security: INFO
+    io.github.resilience4j.circuitbreaker: INFO
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        ignoreExceptions:
+          - feign.FeignException$NotFound
+    instances:
+      default:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 4s
+        cancelRunningFuture: true
+    instances:
+      default:
+        baseConfig: default

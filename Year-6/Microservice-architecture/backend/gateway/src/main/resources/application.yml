@@ -1,0 +1,158 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: brainstop-gateway
+  profiles:
+    default: dev
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    loadbalancer:
+      health-check:
+        enabled: true
+        interval: 3s
+      #      configurations: round_robin
+      cache:
+        enabled: true
+        ttl: 1s
+      retry:
+        enabled: true
+    gateway:
+      httpclient:
+        connect-timeout: 10000
+        response-timeout: 300s
+      default-filters:
+        - name: Retry
+          args:
+            retries: 3
+            methods: GET,POST,PUT,DELETE
+            statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+      routes:
+        - id: interactions
+          uri: lb://interactions-service
+          predicates:
+            - Path=/api/videos/*/comments/**,/api/videos/*/like,/api/videos/*/view,/api/videos/*/watch,/api/moderation/complaints/**
+        - id: interactions-admin-complaints
+          uri: lb://interactions-service
+          predicates:
+            - Path=/api/moderation/admin/complaints/**
+          filters:
+            - RewritePath=/api/moderation/admin/complaints/(?<segment>.*), /internal/moderation/complaints/${segment}
+        - id: video
+          uri: lb://video-service
+          predicates:
+            - Path=/api/videos/**,/api/streaming/**
+        - id: profile
+          uri: lb://profile-service
+          predicates:
+            - Path=/api/users/**
+        - id: admin
+          uri: lb://admin-service
+          predicates:
+            - Path=/api/admin/**,/api/moderation/**
+        - id: search
+          uri: lb://search-service
+          predicates:
+            - Path=/api/search/**
+        - id: openapi-video
+          uri: lb://video-service
+          predicates:
+            - Path=/v3/api-docs/video
+          filters:
+            - RewritePath=/v3/api-docs/video, /v3/api-docs
+        - id: openapi-profile
+          uri: lb://profile-service
+          predicates:
+            - Path=/v3/api-docs/profile
+          filters:
+            - RewritePath=/v3/api-docs/profile, /v3/api-docs
+        - id: openapi-storage
+          uri: lb://storage-service
+          predicates:
+            - Path=/v3/api-docs/storage
+          filters:
+            - RewritePath=/v3/api-docs/storage, /v3/api-docs
+        - id: openapi-admin
+          uri: lb://admin-service
+          predicates:
+            - Path=/v3/api-docs/admin
+          filters:
+            - RewritePath=/v3/api-docs/admin, /v3/api-docs
+        - id: openapi-search
+          uri: lb://search-service
+          predicates:
+            - Path=/v3/api-docs/search
+          filters:
+            - RewritePath=/v3/api-docs/search, /v3/api-docs
+        - id: openapi-interactions
+          uri: lb://interactions-service
+          predicates:
+            - Path=/v3/api-docs/interactions
+          filters:
+            - RewritePath=/v3/api-docs/interactions, /v3/api-docs
+  datasource:
+    url: jdbc:postgresql://localhost:5432/video-streaming
+    username: ${DB_USER:gateway_auth}
+    password: ${DB_PASSWORD:gateway_auth}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database: POSTGRESQL
+
+logging:
+  level:
+    org.springframework.security: INFO
+
+eureka:
+  client:
+    registry-fetch-interval-seconds: 3
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    lease-renewal-interval-in-seconds: 3
+    lease-expiration-duration-in-seconds: 9
+    instance-id: ${spring.application.name}:${random.uuid}
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: gateway
+        url: /v3/api-docs
+      - name: video-service
+        url: /v3/api-docs/video
+      - name: profile-service
+        url: /v3/api-docs/profile
+      - name: storage-service
+        url: /v3/api-docs/storage
+      - name: admin-service
+        url: /v3/api-docs/admin
+      - name: search-service
+        url: /v3/api-docs/search
+      - name: interactions-service
+        url: /v3/api-docs/interactions
+    urls-primary-name: gateway
+    display-request-duration: true
+
+app:
+  jwt:
+    secret: "super-secret-key-change-me-to-long-random-string"
+    expiration-ms: 3600000
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

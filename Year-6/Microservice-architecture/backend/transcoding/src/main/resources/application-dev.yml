@@ -1,0 +1,6 @@
+spring:
+  kafka:
+    listener:
+      ack-mode: record
+    consumer:
+      auto-offset-reset: earliest

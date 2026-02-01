@@ -1,0 +1,38 @@
+plugins {
+    id "org.springframework.boot"
+    id "io.spring.dependency-management"
+    id "java"
+}
+
+dependencies {
+    implementation project(":common")
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    implementation "org.springframework.boot:spring-boot-starter-validation"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client"
+    implementation "org.springframework.cloud:spring-cloud-starter-openfeign"
+    implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdocVersion}"
+    implementation "com.pgvector:pgvector:0.1.3"
+    def djlVersion = "0.25.0"
+    implementation platform("ai.djl:bom:${djlVersion}")
+    implementation "ai.djl:api"
+    implementation "ai.djl.pytorch:pytorch-engine"
+    implementation "ai.djl.pytorch:pytorch-model-zoo"
+    implementation "ai.djl.huggingface:tokenizers:${djlVersion}"
+
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "io.micrometer:micrometer-registry-prometheus"
+
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "com.h2database:h2:2.2.224"
+    testImplementation "io.projectreactor:reactor-test"
+}
+
+tasks.named("test") {
+    useJUnitPlatform()
+}

@@ -1,0 +1,2 @@
+rootProject.name = "brainstop-platform"
+include("common", "video", "gateway", "profile", "discovery", "storage", "admin", "search", "interactions", "transcoding")

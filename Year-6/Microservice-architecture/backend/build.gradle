@@ -1,0 +1,338 @@
+plugins {
+    id "org.springframework.boot" version "3.4.2" apply false
+    id "io.spring.dependency-management" version "1.1.6" apply false
+    id "jacoco"
+}
+
+ext {
+    mapstructVersion = "1.6.3"
+    lombokVersion = "1.18.36"
+    springCloudVersion = "2024.0.0"
+    springdocVersion = "2.8.15"
+    jacocoVersion = "0.8.12"
+}
+
+allprojects {
+    group = "ru.itmo.zavar"
+    version = "0.0.1-SNAPSHOT"
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: "java"
+    apply plugin: "io.spring.dependency-management"
+    apply plugin: "jacoco"
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    jacoco {
+        toolVersion = project.jacocoVersion
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
+
+        jvmArgs = [
+                '--add-opens=java.base/java.lang=ALL-UNNAMED',
+                '--add-opens=java.base/java.util=ALL-UNNAMED'
+        ]
+
+        systemProperty 'user.language', 'en'
+        systemProperty 'user.country', 'US'
+
+        testLogging {
+            events "passed", "skipped", "failed"
+            exceptionFormat "full"
+            showStandardStreams = false
+        }
+    }
+
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            xml.required = true
+            html.required = true
+            csv.required = true
+        }
+
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                        '**/config/**',
+                        '**/dto/**',
+                        '**/model/**',
+                        '**/*Application.class',
+                        '**/*Config.class',
+                        '**/*Properties.class',
+                        '**/*Factory.class',
+                        '**/*Repository.class',
+                        '**/*Entity.class',
+                        '**/*Mapper.class',
+                        '**/*Context.class',
+                        '**/mapper/**',
+                        '**/repo/**',
+                        '**/listener/**',
+                        '**/client/**',
+                        '**/common/**',
+                        '**/resources/**',
+                        '**/*VideoTranscodingService.class'
+                ])
+            }))
+        }
+    }
+
+    jacocoTestCoverageVerification {
+        violationRules {
+            rule {
+                limit {
+                    minimum = 0.60
+                }
+            }
+        }
+
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                        '**/config/**',
+                        '**/dto/**',
+                        '**/model/**',
+                        '**/*Application.class',
+                        '**/*Config.class',
+                        '**/*Properties.class',
+                        '**/*Factory.class',
+                        '**/*Repository.class',
+                        '**/*Entity.class',
+                        '**/*Mapper.class',
+                        '**/*Context.class',
+                        '**/mapper/**',
+                        '**/repo/**',
+                        '**/listener/**',
+                        '**/client/**',
+                        '**/common/**',
+                        '**/resources/**',
+                        '**/*VideoTranscodingService.class'
+                ])
+            }))
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+}
+
+task jacocoRootReport(type: JacocoReport) {
+    dependsOn subprojects*.test
+
+    subprojects.each { subproject ->
+        if (subproject.pluginManager.hasPlugin('jacoco')) {
+            sourceSets subproject.sourceSets.main
+            executionData subproject.tasks.withType(Test)
+        }
+    }
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/aggregate')
+    }
+
+    doLast {
+        def reportFile = reports.html.outputLocation.get().asFile
+        println "\n========================================="
+        println "Aggregated Jacoco Report:"
+        println "file://${reportFile}/index.html"
+        println "=========================================\n"
+    }
+}
+
+task printCoverageReport {
+    dependsOn subprojects*.test, subprojects*.jacocoTestReport
+
+    doLast {
+        println "\n========================================="
+        println "Test Coverage Report by Service:"
+        println "=========================================\n"
+
+        def totalInstructions = 0
+        def totalCovered = 0
+        def servicesWithReports = 0
+
+        subprojects.each { subproject ->
+            def xmlPath = subproject.layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml").get().asFile
+            def csvPath = subproject.layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.csv").get().asFile
+
+            if (xmlPath.exists()) {
+                try {
+                    // Используем Groovy XmlSlurper с отключенной проверкой DOCTYPE
+                    def parser = new XmlSlurper()
+                    parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
+                    parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+
+                    def xml = parser.parse(xmlPath)
+                    def counter = xml.counter.find { it.@type == 'INSTRUCTION' }
+
+                    if (counter) {
+                        def missed = counter.@missed.toInteger()
+                        def covered = counter.@covered.toInteger()
+                        def total = missed + covered
+
+                        if (total > 0) {
+                            def percent = (covered * 100.0 / total).round(2)
+                            def status = percent >= 60 ? "✓ PASS" : "✗ FAIL"
+
+                            println String.format("%-25s %6.2f%% %s", subproject.name, percent, status)
+
+                            totalInstructions += total
+                            totalCovered += covered
+                            servicesWithReports++
+                        } else {
+                            println String.format("%-25s %6s %s", subproject.name, "N/A", "⚠ NO CODE")
+                        }
+                    } else {
+                        println String.format("%-25s %6s %s", subproject.name, "N/A", "⚠ NO COUNTER")
+                    }
+                } catch (Exception e) {
+                    // Fallback to CSV if XML fails
+                    if (csvPath.exists()) {
+                        try {
+                            def lines = csvPath.readLines()
+                            if (lines.size() > 1) {
+                                def lastLine = lines.last()
+                                def parts = lastLine.split(',')
+                                if (parts.length >= 6) {
+                                    def missed = parts[3].toInteger()
+                                    def covered = parts[4].toInteger()
+                                    def total = missed + covered
+
+                                    if (total > 0) {
+                                        def percent = (covered * 100.0 / total).round(2)
+                                        def status = percent >= 60 ? "✓ PASS" : "✗ FAIL"
+
+                                        println String.format("%-25s %6.2f%% %s", subproject.name, percent, status)
+
+                                        totalInstructions += total
+                                        totalCovered += covered
+                                        servicesWithReports++
+                                    }
+                                }
+                            }
+                        } catch (Exception csvEx) {
+                            println String.format("%-25s %6s %s", subproject.name, "ERR", "⚠ PARSE ERROR: ${csvEx.message}")
+                        }
+                    } else {
+                        println String.format("%-25s %6s %s", subproject.name, "ERR", "⚠ PARSE ERROR: ${e.message}")
+                    }
+                }
+            } else if (csvPath.exists()) {
+                try {
+                    def lines = csvPath.readLines()
+                    if (lines.size() > 1) {
+                        def lastLine = lines.last()
+                        def parts = lastLine.split(',')
+                        if (parts.length >= 6) {
+                            def missed = parts[3].toInteger()
+                            def covered = parts[4].toInteger()
+                            def total = missed + covered
+
+                            if (total > 0) {
+                                def percent = (covered * 100.0 / total).round(2)
+                                def status = percent >= 60 ? "✓ PASS" : "✗ FAIL"
+
+                                println String.format("%-25s %6.2f%% %s", subproject.name, percent, status)
+
+                                totalInstructions += total
+                                totalCovered += covered
+                                servicesWithReports++
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    println String.format("%-25s %6s %s", subproject.name, "ERR", "⚠ CSV PARSE ERROR")
+                }
+            } else {
+                println String.format("%-25s %6s %s", subproject.name, "N/A", "⚠ NO REPORT")
+            }
+        }
+
+        if (totalInstructions > 0 && servicesWithReports > 0) {
+            println "-----------------------------------------"
+            def totalPercent = (totalCovered * 100.0 / totalInstructions).round(2)
+            def totalStatus = totalPercent >= 60 ? "✓ PASS" : "✗ FAIL"
+            println String.format("%-25s %6.2f%% %s", "TOTAL (all services)", totalPercent, totalStatus)
+        }
+
+        println "\n========================================="
+
+        if (servicesWithReports > 0) {
+            println "Reports generated for ${servicesWithReports} service(s)"
+        } else {
+            println "⚠ No coverage reports found"
+            println "Run './gradlew test jacocoTestReport' first"
+        }
+        println "========================================="
+    }
+}
+
+task coverageCheck {
+    group = 'verification'
+    description = 'Run tests and check coverage for all modules'
+    dependsOn subprojects*.test
+    dependsOn subprojects*.jacocoTestReport
+    finalizedBy 'printCoverageReport'
+}
+
+task testWithCoverage {
+    group = 'verification'
+    description = 'Run tests, generate reports and print coverage'
+    dependsOn 'test', 'jacocoTestReport', 'printCoverageReport'
+}
+
+task quickCoverage {
+    group = 'verification'
+    description = 'Quick coverage report for services with tests'
+
+    doLast {
+        println "\n========================================="
+        println "Quick Coverage Check:"
+        println "=========================================\n"
+
+        def modules = ['admin', 'discovery', 'gateway', 'video', 'profile',
+                       'storage', 'interactions', 'search', 'transcoding']
+
+        modules.each { moduleName ->
+            def csvFile = file("${moduleName}/build/reports/jacoco/test/jacocoTestReport.csv")
+            if (csvFile.exists()) {
+                def lines = csvFile.readLines()
+                if (lines.size() > 1) {
+                    def parts = lines.last().split(',')
+                    if (parts.length >= 6) {
+                        def missed = parts[3].toInteger()
+                        def covered = parts[4].toInteger()
+                        def total = missed + covered
+
+                        if (total > 0) {
+                            def percent = (covered * 100.0 / total).round(2)
+                            def status = percent >= 60 ? "✓" : "✗"
+                            println String.format("%-20s %6.2f%% %s", moduleName, percent, status)
+                        }
+                    }
+                }
+            }
+        }
+        println "=========================================\n"
+    }
+}
+
+dependencies {
+}

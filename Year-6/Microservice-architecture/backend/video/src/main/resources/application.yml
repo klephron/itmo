@@ -1,0 +1,174 @@
+server:
+  port: ${PORT:0}
+  tomcat:
+    max-swallow-size: -1
+    max-http-form-post-size: -1
+    connection-timeout: 300s
+
+spring:
+  application:
+    name: video-service
+  profiles:
+    default: dev
+  #  cloud:
+  #    loadbalancer:
+  #      configurations: round_robin
+  #      cache:
+  #        enabled: true
+  #        ttl: 2s
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 2000
+            readTimeout: 4000
+
+  servlet:
+    multipart:
+      max-file-size: 10000MB
+      max-request-size: 10000MB
+      resolve-lazily: true
+
+  mvc:
+    async:
+      request-timeout: 300s
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/video-streaming
+    username: ${DB_USER:video_app}
+    password: ${DB_PASSWORD:video_app}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+
+  jpa:
+    hibernate:
+      ddl-auto: update # ??? ? ??????
+    show-sql: false
+    database: POSTGRESQL
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "ru.itmo.zavar.brainstop.*"
+
+streaming:
+  chunk:
+    default-size: 2621440 # 2.5 MB
+search:
+  embedding:
+    max-distance: 0.4
+    strict-max-distance: 0.35
+    relaxed-max-distance: 0.9
+
+storage:
+  client:
+    base-url: http://storage-service
+
+transcoder:
+  # ffmpeg/ffprobe paths now provided via container ENV or OS-specific profile (application-windows.yml)
+
+app:
+  jwt:
+    secret: "super-secret-key-change-me-to-long-random-string"
+    expiration-ms: 3600000
+  likes:
+    exchange: video.likes
+  views:
+    exchange: video.views
+
+llm:
+  openrouter:
+    enabled: true
+    base-url: https://openrouter.ai/api/v1
+    api-key: ${OPENROUTER_API_KEY:}
+    models:
+      - mistralai/mistral-7b-instruct:free
+      - qwen/qwen2.5-7b-instruct:free
+    timeout: 8s
+    temperature: 0.2
+    top-p: 0.9
+    max-tokens: 256
+    stream-log: false
+    referer: ${OPENROUTER_REFERER:}
+    title: ${OPENROUTER_TITLE:brainstop-video}
+  video:
+    enabled: true
+    tagging-enabled: true
+    moderation-enabled: true
+    tag-count: 8
+    tag-max-tokens: 120
+    moderation-max-tokens: 120
+    cache-ttl: 6h
+
+logging:
+  level:
+    org.springframework.security: INFO
+    io.github.resilience4j.circuitbreaker: INFO
+    ru.itmo.zavar.brainstop.video.service.FeedService: DEBUG
+    ru.itmo.zavar.brainstop.video.llm: DEBUG
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    registry-fetch-interval-seconds: 3
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    lease-renewal-interval-in-seconds: 3
+    lease-expiration-duration-in-seconds: 9
+    instance-id: ${spring.application.name}:${random.uuid}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        ignoreExceptions:
+          - feign.FeignException$NotFound
+    instances:
+      default:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 4s
+        cancelRunningFuture: true
+    instances:
+      default:
+        baseConfig: default

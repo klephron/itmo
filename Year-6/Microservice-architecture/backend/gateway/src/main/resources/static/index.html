@@ -1,0 +1,5317 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Mini TikTok</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color-scheme: dark;
+        }
+
+        body {
+            margin: 0;
+            background: #050505;
+            color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            background: #181818;
+            color: #aaa;
+            transition: background .15s ease, color .15s ease, transform .1s ease;
+        }
+
+        #profileStats,
+        #authProfileStats {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .tab-btn.active {
+            background: #f5f5f5;
+            color: #111;
+        }
+
+        .tab-btn:active {
+            transform: scale(0.97);
+        }
+
+        .card {
+            background: #111;
+            border-radius: 16px;
+            padding: 12px 12px 16px 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .title {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #222;
+            color: #bbb;
+        }
+
+        .video-wrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .feed-loader {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4));
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+            pointer-events: none;
+            gap: 8px;
+            font-size: 14px;
+            color: #f5f5f5;
+        }
+
+        .feed-loader.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .video-wrapper.swipe-up {
+            animation: swipeUp 220ms ease;
+        }
+
+        .video-wrapper.swipe-down {
+            animation: swipeDown 220ms ease;
+        }
+
+        @keyframes swipeUp {
+            from { transform: translateY(18px); opacity: 0.9; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes swipeDown {
+            from { transform: translateY(-18px); opacity: 0.9; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .video-poster {
+            position: absolute;
+            inset: 0;
+            background: #000 center center / cover no-repeat;
+            opacity: 1;
+            transition: opacity 0.15s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .video-poster.hidden {
+            opacity: 0;
+        }
+
+        video {
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            background: #000;
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+
+        .swipe-hint {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            pointer-events: none;
+            padding-bottom: 8px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        button {
+            border-radius: 999px;
+            border: none;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            background: #f5f5f5;
+            color: #111;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+        }
+
+        button.secondary {
+            background: #222;
+            color: #eee;
+        }
+
+        button.danger {
+            background: #ff4d4f;
+            color: #fff;
+        }
+
+        button.small {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+
+        button.full {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        button:active {
+            transform: scale(0.97);
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+            min-height: 16px;
+        }
+
+        .status.error {
+            color: #ff6b81;
+        }
+
+        .status.ok {
+            color: #8be38b;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="number"] {
+            border-radius: 999px;
+            border: 1px solid #333;
+            padding: 6px 10px;
+            background: #151515;
+            color: #f5f5f5;
+            font-size: 13px;
+            outline: none;
+        }
+
+        input[type="file"] {
+            font-size: 12px;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #777;
+        }
+
+        /* Студийные стили (используются в аккаунте и модерации) */
+        .studio-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .studio-videos {
+            max-height: 260px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .studio-row {
+            border-radius: 10px;
+            background: #181818;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 6px;
+        }
+
+        .studio-row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .studio-row-title {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .studio-row-meta {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .studio-jobs {
+            max-height: 160px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .feed-topic-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .feed-topic-row input[type="text"] {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feed-topic-row input[type="number"] {
+            width: 90px;
+        }
+
+        .job-row {
+            border-radius: 10px;
+            background: #181818;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 6px;
+            font-size: 12px;
+        }
+
+        .job-row-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .job-progress-bar {
+            width: 100%;
+            height: 4px;
+            border-radius: 999px;
+            background: #333;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .job-progress-fill {
+            height: 100%;
+            width: 0;
+            background: #4caf50;
+            transition: width .2s ease-out;
+        }
+
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #222;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-mini {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #222;
+            overflow: hidden;
+        }
+
+        .avatar-mini img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #videoAuthorName {
+            font-size: 11px;
+            color: #888;
+            cursor: pointer;
+        }
+
+        #videoAuthorName:hover {
+            text-decoration: underline;
+        }
+
+        .thumb-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .thumb-card {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            cursor: pointer;
+        }
+
+        .thumb-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            aspect-ratio: 9 / 16;
+        }
+
+        .thumb-card-overlay {
+            position: absolute;
+            right: 4px;
+            top: 4px;
+            font-size: 9px;
+            padding: 2px 4px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .thumb-card-likes {
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            font-size: 9px;
+            padding: 2px 4px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .thumb-card-views {
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            font-size: 9px;
+            padding: 2px 4px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .thumb-card-delete {
+            position: absolute;
+            left: 4px;
+            bottom: 4px;
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+        }
+
+        .thumb-card-delete:hover {
+            background: rgba(255, 77, 79, 0.9);
+        }
+
+        .thumb-card-meta {
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            font-size: 9px;
+            padding: 2px 4px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .suggest-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 30;
+            display: none;
+        }
+
+        .suggest-dropdown.visible {
+            display: block;
+        }
+
+        .suggest-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #1a1a1a;
+            cursor: pointer;
+        }
+
+        .suggest-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggest-item:hover {
+            background: #1f1f1f;
+        }
+
+        .suggest-meta {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .ai-stream {
+            margin-top: 8px;
+            background: #0e0e0e;
+            border: 1px solid #222;
+            border-radius: 10px;
+            padding: 8px;
+            font-size: 11px;
+            color: #c8f7c8;
+            white-space: pre-wrap;
+            min-height: 52px;
+        }
+
+        .ai-details summary {
+            font-size: 11px;
+            color: #888;
+            cursor: pointer;
+        }
+
+        .ai-context {
+            margin-top: 6px;
+            font-size: 10px;
+            color: #9a9a9a;
+            white-space: pre-wrap;
+        }
+
+
+        .comments {
+            margin-top: 8px;
+            border-top: 1px solid #222;
+            padding-top: 6px;
+        }
+
+        .comments-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 6px;
+        }
+
+        .comment-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .comment-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #222;
+            overflow: hidden;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .comment-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .comment-body {
+            flex: 1;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            margin-right: 4px;
+            cursor: pointer;
+        }
+
+        .comment-author:hover {
+            text-decoration: underline;
+        }
+
+        .comment-meta {
+            color: #777;
+            margin-left: 4px;
+        }
+
+        .comment-text {
+            margin-top: 1px;
+        }
+
+        .comment-delete {
+            font-size: 10px;
+            color: #f88;
+            cursor: pointer;
+            margin-left: 6px;
+        }
+
+        .comment-delete:hover {
+            text-decoration: underline;
+        }
+
+        .quality-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .quality-row label {
+            margin: 0;
+            color: #aaa;
+        }
+
+        .quality-select {
+            flex: 1;
+            border-radius: 999px;
+            border: 1px solid #333;
+            background: #181818;
+            color: #f5f5f5;
+            padding: 6px 10px;
+            font-size: 12px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="tabs">
+        <button class="tab-btn active" id="tabFeed">Лента</button>
+        <button class="tab-btn" id="tabUpload">Загрузка</button>
+        <button class="tab-btn" id="tabSearch">Поиск</button>
+        <button class="tab-btn" id="tabModeration" style="display:none;">Модерация</button>
+        <button class="tab-btn" id="tabAuth">Аккаунт</button>
+    </div>
+
+    <!-- Лента -->
+    <div class="card page active" id="pageFeed">
+        <div class="header">
+            <div>
+                <div class="title" id="videoTitle">Загрузка списка видео…</div>
+                <div class="studio-row-meta" id="videoAuthorName"></div>
+                <div class="studio-row-meta" id="videoDescription" style="color:#ccc;"></div>
+            </div>
+            <div class="badge" id="videoCount">0 видео</div>
+        </div>
+
+        <div class="video-wrapper" id="videoWrapper">
+            <div class="feed-loader" id="feedLoader">
+                <div class="spinner"></div>
+                <span id="feedLoaderText">Загружаем видео…</span>
+            </div>
+            <div class="video-poster" id="videoPoster"></div>
+            <video id="player" controls playsinline muted autoplay preload="auto"></video>
+            <div class="swipe-hint">Свайп вверх/вниз или кнопки ниже</div>
+
+            <!-- Скрытые видео для предзагрузки -->
+            <video id="preloadNext1" style="display:none" muted playsinline preload="auto"></video>
+            <video id="preloadNext2" style="display:none" muted playsinline preload="auto"></video>
+        </div>
+
+        <div class="controls">
+            <button class="secondary" id="btnPrev">⏮ Предыдущее</button>
+            <button id="btnNext">▶ Следующее</button>
+            <button class="secondary" id="btnLike">♡ 0</button>
+            <button class="secondary" id="btnReportVideo" style="display:none;">Пожаловаться</button>
+        </div>
+
+        <div class="quality-row" id="qualityRow" style="display:none;">
+            <label for="qualitySelect">Качество</label>
+            <select class="quality-select" id="qualitySelect"></select>
+        </div>
+
+        <div class="meta">
+            <div style="display:flex;align-items:center;gap:6px;">
+                <div class="avatar-mini" id="videoAuthorAvatar"></div>
+                <span id="videoInfoSize">—</span>
+            </div>
+            <div style="text-align:right;">
+                <div id="videoInfoViews">—</div>
+                <div id="videoInfoComments">—</div>
+                <div id="videoInfoDate">—</div>
+            </div>
+        </div>
+
+        <div class="comments">
+            <div class="studio-section-title" style="margin-top:0;">Комментарии</div>
+            <div id="commentsList" class="comments-list"></div>
+            <button class="small full" id="btnCommentsMore" style="display:none;">Показать ещё</button>
+
+            <div id="commentsForm" class="form-row">
+                <input id="commentInput" type="text" placeholder="Напишите комментарий…">
+                <button class="small full" id="btnSendComment">Отправить</button>
+            </div>
+            <div class="hint" id="commentsHint" style="display:none;">
+                Войдите в аккаунт, чтобы оставлять комментарии
+            </div>
+
+            <div class="status" id="commentsStatus"></div>
+        </div>
+
+        <div class="status" id="statusFeed"></div>
+    </div>
+
+    <!-- Загрузка -->
+    <div class="card page" id="pageUpload">
+        <div class="header">
+            <div class="title">Загрузка нового видео</div>
+        </div>
+
+        <div class="form-row">
+            <label for="uploadTitle">Название видео</label>
+            <input id="uploadTitle" type="text" placeholder="Как назвать ролик?">
+        </div>
+
+        <div class="form-row">
+            <label for="uploadDescription">Описание (опционально)</label>
+            <input id="uploadDescription" type="text" placeholder="О чём ролик?">
+        </div>
+
+        <div class="form-row">
+            <label for="uploadFile">Файл видео</label>
+            <input id="uploadFile" type="file" accept="video/*">
+            <div class="hint">
+                Видео будет автоматически перекодировано в MP4 (H.264), чтобы браузер его точно открыл.
+            </div>
+        </div>
+
+        <button class="full" id="btnUpload">⬆ Загрузить</button>
+
+        <progress id="uploadProgress" value="0" max="100"
+                  style="width:100%; margin-top:6px; display:none;"></progress>
+
+        <div class="status" id="statusUpload"></div>
+    </div>
+
+    <!-- Поиск -->
+    <div class="card page" id="pageSearch">
+        <div class="header">
+            <div class="title">Поиск</div>
+            <div class="badge" id="searchCount">—</div>
+        </div>
+        <div class="form-row">
+            <label for="searchInput">Запрос</label>
+            <div class="search-input-wrapper">
+                <input id="searchInput" type="text" placeholder="Название или описание">
+                <div id="suggestDropdown" class="suggest-dropdown"></div>
+            </div>
+        </div>
+        <div class="form-row" style="margin-top:4px;flex-direction:row;align-items:center;gap:8px;">
+            <input id="searchAiToggle" type="checkbox" checked>
+            <label for="searchAiToggle" style="margin:0;">Использовать ИИ для поиска</label>
+        </div>
+        <div class="controls" style="margin-top:6px;">
+            <button class="full" id="btnSearchGo">Искать</button>
+        </div>
+        <div class="studio-videos" id="searchResults" style="margin-top:8px; max-height:320px; overflow-y:auto;"></div>
+        <div class="controls" id="searchPagingControls" style="margin-top:8px; align-items:center; display:none;">
+            <button class="secondary small" id="searchPrevBtn" disabled>Назад</button>
+            <div class="badge" id="searchPageInfo">-</div>
+            <button class="secondary small" id="searchNextBtn" disabled>Вперёд</button>
+        </div>
+        <div class="studio-section-title" style="margin-top:10px;">ИИ прогресс</div>
+        <div id="searchAiStream" class="ai-stream"></div>
+        <details class="ai-details" id="searchAiContextWrap" style="margin-top:6px;">
+            <summary>Контекст LLM</summary>
+            <div id="searchAiContext" class="ai-context"></div>
+        </details>
+        <div class="status" id="statusSearch"></div>
+    </div>
+
+    <!-- Профиль (чужой / из ленты) -->
+    <div class="card page" id="pageProfile">
+        <div class="header">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="profile-avatar" id="profileAvatar"></div>
+                <div>
+                    <div class="title" id="profileDisplayName">Профиль</div>
+                    <div class="studio-row-meta" id="profileUsername"></div>
+                    <!-- 🔽 новый блок статистики чужого профиля -->
+                    <div class="studio-row-meta" id="profileStats"></div>
+                </div>
+            </div>
+            <!-- 🔽 кнопка подписки -->
+            <button class="small secondary" id="btnProfileFollow" style="display:none;">
+                Подписаться
+            </button>
+        </div>
+
+        <div class="studio-section-title">Видео</div>
+        <div class="form-row" style="margin-top:4px;flex-direction:row;align-items:center;gap:8px;">
+            <label for="profileVideosSort" style="margin:0;">Сортировка</label>
+            <select id="profileVideosSort" class="quality-select" style="flex:1;">
+                <option value="uploadedAt,desc">Новые</option>
+                <option value="likesCount,desc">Лайки</option>
+                <option value="viewsCount,desc">Просмотры</option>
+            </select>
+        </div>
+        <div class="thumb-grid" id="profileVideos"></div>
+
+        <div class="status" id="statusProfile"></div>
+    </div>
+
+    <!-- Аккаунт -->
+    <div class="card page" id="pageAuth">
+        <div id="authAvatar" class="profile-avatar" style="display:none;"></div>
+
+        <div class="form-row" id="avatarUploadRow" style="display:none;">
+            <label for="avatarFile">Аватар</label>
+            <input id="avatarFile" type="file" accept="image/*">
+            <button class="full small" id="btnAvatarUpload">Обновить аватар</button>
+        </div>
+
+        <div class="header">
+            <div class="title">Аккаунт</div>
+            <div class="badge" id="authUserShort">Гость</div>
+        </div>
+
+        <div id="authLoggedBlock" style="display:none;">
+            <div class="status ok" id="authWelcome">Вы вошли</div>
+            <button class="full danger small" id="btnLogout">Выйти</button>
+        </div>
+
+        <div id="authProfileBlock" style="display:none; margin-top:12px;">
+            <div class="studio-section-title">Ваш профиль</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                <div class="profile-avatar" id="authProfileAvatar"></div>
+                <div>
+                    <div class="title" id="authProfileDisplayName"></div>
+                    <div class="studio-row-meta" id="authProfileUsername"></div>
+                    <div class="studio-row-meta" id="authProfileStats"></div>
+                </div>
+            </div>
+
+            <div class="studio-section-title" style="margin-top:8px;">Предпочтения ленты</div>
+            <div class="form-row" style="margin-top:4px;">
+                <label for="feedPrefLikeWeight">Вес лайков</label>
+                <input id="feedPrefLikeWeight" type="number" min="0" step="0.1" placeholder="1.0">
+            </div>
+            <div class="form-row">
+                <label for="feedPrefFollowWeight">Вес подписок</label>
+                <input id="feedPrefFollowWeight" type="number" min="0" step="0.1" placeholder="1.0">
+            </div>
+            <div class="form-row">
+                <label for="feedPrefWatchWeight">Вес просмотров</label>
+                <input id="feedPrefWatchWeight" type="number" min="0" step="0.1" placeholder="1.0">
+            </div>
+            <div class="form-row">
+                <label for="feedPrefWatchThreshold">Порог просмотра (0..1)</label>
+                <input id="feedPrefWatchThreshold" type="number" min="0" max="1" step="0.05" placeholder="0.5">
+            </div>
+            <div class="controls" style="margin-top:6px;">
+                <button class="full small" id="btnFeedPreferencesSave">Сохранить</button>
+            </div>
+            <div class="status" id="feedPreferencesStatus"></div>
+            <details class="ai-details" id="feedPreferencesStatsWrap" style="margin-top:6px;">
+                <summary>Диагностика предпочтений</summary>
+                <div id="feedPreferencesStats" class="ai-context"></div>
+            </details>
+
+            <div class="studio-section-title" style="margin-top:8px;">Темы для корректировки</div>
+            <div class="studio-row-meta">
+                Добавьте слова или фразы, которые усиливают или ослабляют ленту. Вес может быть отрицательным.
+            </div>
+            <div class="studio-jobs" id="feedTopicsList" style="max-height:180px;"></div>
+            <div class="controls" style="margin-top:6px;">
+                <button class="secondary small" id="btnFeedTopicsAdd">Добавить тему</button>
+                <button class="full small" id="btnFeedTopicsSave">Сохранить темы</button>
+            </div>
+            <div class="status" id="feedTopicsStatus"></div>
+
+            <div class="studio-section-title" style="margin-top:8px;">Мои подписки</div>
+            <div class="studio-videos" id="authFollowingList"></div>
+
+            <div class="studio-section-title" style="margin-top:8px;">Активные загрузки</div>
+            <div class="studio-jobs" id="studioJobs"></div>
+            <!-- статус для операций с видео / джобами (бывшая "студия") -->
+            <div class="status" id="statusStudio"></div>
+
+            <div class="studio-section-title"
+                 style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                <span>Ваши видео</span>
+                <span class="badge" id="studioVideoCount">0 видео</span>
+            </div>
+            <div class="form-row" style="margin-top:4px;flex-direction:row;align-items:center;gap:8px;">
+                <label for="authVideosSort" style="margin:0;">Сортировка</label>
+                <select id="authVideosSort" class="quality-select" style="flex:1;">
+                    <option value="uploadedAt,desc">Новые</option>
+                    <option value="likesCount,desc">Лайки</option>
+                    <option value="viewsCount,desc">Просмотры</option>
+                </select>
+            </div>
+            <div class="thumb-grid" id="authProfileVideos"></div>
+
+        </div>
+
+        <div id="authFormsBlock">
+            <div class="studio-section-title">Вход</div>
+            <div class="form-row">
+                <label for="loginUsername">Логин</label>
+                <input id="loginUsername" type="text" placeholder="username">
+            </div>
+            <div class="form-row">
+                <label for="loginPassword">Пароль</label>
+                <input id="loginPassword" type="password" placeholder="••••••••">
+            </div>
+            <button class="full" id="btnLogin">Войти</button>
+
+            <div class="studio-section-title" style="margin-top:12px;">Регистрация</div>
+            <div class="form-row">
+                <label for="regUsername">Логин</label>
+                <input id="regUsername" type="text" placeholder="username">
+            </div>
+            <div class="form-row">
+                <label for="regEmail">Email</label>
+                <input id="regEmail" type="email" placeholder="you@example.com">
+            </div>
+            <div class="form-row">
+                <label for="regDisplayName">Отображаемое имя</label>
+                <input id="regDisplayName" type="text" placeholder="Как показывать вас в ленте?">
+            </div>
+            <div class="form-row">
+                <label for="regPassword">Пароль</label>
+                <input id="regPassword" type="password" placeholder="••••••••">
+            </div>
+            <button class="full secondary" id="btnRegister">Зарегистрироваться</button>
+        </div>
+        <div class="status" id="statusAuth"></div>
+    </div>
+
+    <!-- Модерация -->
+    <div class="card page" id="pageModeration">
+        <div class="header">
+            <div class="title">Модерация</div>
+            <div class="badge" id="modUsersCount">—</div>
+        </div>
+
+        <div class="studio-section-title">Сервис</div>
+        <button class="full small" id="btnRebuildThumbs" style="margin-bottom:8px; display:none;">
+            Перегенерировать превью всех видео
+        </button>
+        <button class="full small" id="btnRebuildEmbeddings" style="margin-bottom:8px; display:none;">
+            Пересчитать эмбеддинги для всех видео
+        </button>
+        <div class="studio-section-title">Пользователи</div>
+        <div class="studio-videos" id="modUsersList"></div>
+
+        <div class="studio-section-title" style="margin-top:10px;">Жалобы</div>
+        <div class="studio-jobs" id="modComplaints" style="min-height:60px;"></div>
+
+        <div class="studio-section-title" style="margin-top:10px;">Детали пользователя</div>
+        <div class="studio-jobs" id="modUserDetails" style="min-height:60px;"></div>
+
+        <div class="studio-section-title" style="margin-top:10px;">Видео пользователя</div>
+        <div class="studio-jobs" id="modUserVideos" style="min-height:60px;"></div>
+
+        <div class="status" id="statusModeration"></div>
+    </div>
+</div>
+
+<script>
+    const apiBase = ''; // тот же origin
+
+    let videos = [];
+    let currentIndex = -1;
+
+    // auth state
+    let authToken = null;
+    let authUser = null; // { userId, username, displayName, roles, avatarUrl }
+
+    const preload1 = document.getElementById('preloadNext1');
+    const preload2 = document.getElementById('preloadNext2');
+
+    const player = document.getElementById('player');
+    const titleEl = document.getElementById('videoTitle');
+    const countEl = document.getElementById('videoCount');
+    const sizeEl = document.getElementById('videoInfoSize');
+    const dateEl = document.getElementById('videoInfoDate');
+    const viewsEl = document.getElementById('videoInfoViews');
+    const commentsCountEl = document.getElementById('videoInfoComments');
+    const statusFeedEl = document.getElementById('statusFeed');
+    const statusUploadEl = document.getElementById('statusUpload');
+    const statusStudioEl = document.getElementById('statusStudio');
+    const statusAuthEl = document.getElementById('statusAuth');
+    const statusSearchEl = document.getElementById('statusSearch');
+    const btnRebuildThumbs = document.getElementById('btnRebuildThumbs');
+    const btnRebuildEmbeddings = document.getElementById('btnRebuildEmbeddings');
+
+    const btnNext = document.getElementById('btnNext');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnLike = document.getElementById('btnLike');
+    const btnReportVideo = document.getElementById('btnReportVideo');
+    const qualityRow = document.getElementById('qualityRow');
+    const qualitySelect = document.getElementById('qualitySelect');
+    const feedLoader = document.getElementById('feedLoader');
+    const feedLoaderText = document.getElementById('feedLoaderText');
+
+    const tabFeed = document.getElementById('tabFeed');
+    const tabUpload = document.getElementById('tabUpload');
+    const tabAuth = document.getElementById('tabAuth');
+    const tabSearch = document.getElementById('tabSearch');
+    const videoWrapper = document.getElementById('videoWrapper');
+
+    const pageFeed = document.getElementById('pageFeed');
+    const pageUpload = document.getElementById('pageUpload');
+    const pageAuth = document.getElementById('pageAuth');
+    const pageSearch = document.getElementById('pageSearch');
+
+    const uploadTitleInput = document.getElementById('uploadTitle');
+    const uploadFileInput = document.getElementById('uploadFile');
+    const uploadDescriptionInput = document.getElementById('uploadDescription');
+    const btnUpload = document.getElementById('btnUpload');
+    const uploadProgressEl = document.getElementById('uploadProgress');
+
+    const studioVideoCountEl = document.getElementById('studioVideoCount');
+    const studioJobsEl = document.getElementById('studioJobs');
+    const searchInputEl = document.getElementById('searchInput');
+    const searchAiToggle = document.getElementById('searchAiToggle');
+    const btnSearchGo = document.getElementById('btnSearchGo');
+    const searchResultsEl = document.getElementById('searchResults');
+    const suggestDropdown = document.getElementById('suggestDropdown');
+    const searchInputWrapper = suggestDropdown ? suggestDropdown.closest('.search-input-wrapper') : null;
+    const searchPagingControls = document.getElementById('searchPagingControls');
+    const searchPrevBtn = document.getElementById('searchPrevBtn');
+    const searchNextBtn = document.getElementById('searchNextBtn');
+    const searchPageInfoEl = document.getElementById('searchPageInfo');
+    const searchCountEl = document.getElementById('searchCount');
+    const searchAiStreamEl = document.getElementById('searchAiStream');
+    const searchAiContextEl = document.getElementById('searchAiContext');
+    const searchAiContextWrap = document.getElementById('searchAiContextWrap');
+
+    // auth DOM
+    const authUserShortEl = document.getElementById('authUserShort');
+    const authLoggedBlock = document.getElementById('authLoggedBlock');
+    const authFormsBlock = document.getElementById('authFormsBlock');
+    const authWelcomeEl = document.getElementById('authWelcome');
+    const pageProfile = document.getElementById('pageProfile');
+    const profileAvatarEl = document.getElementById('profileAvatar');
+    const profileDisplayNameEl = document.getElementById('profileDisplayName');
+    const profileUsernameEl = document.getElementById('profileUsername');
+    const profileVideosEl = document.getElementById('profileVideos');
+    const statusProfileEl = document.getElementById('statusProfile');
+
+    const loginUsernameInput = document.getElementById('loginUsername');
+    const loginPasswordInput = document.getElementById('loginPassword');
+    const btnLogin = document.getElementById('btnLogin');
+
+    const regUsernameInput = document.getElementById('regUsername');
+    const regEmailInput = document.getElementById('regEmail');
+    const regDisplayNameInput = document.getElementById('regDisplayName');
+    const regPasswordInput = document.getElementById('regPassword');
+    const btnRegister = document.getElementById('btnRegister');
+
+    const tabModeration = document.getElementById('tabModeration');
+    const pageModeration = document.getElementById('pageModeration');
+
+    const modUsersListEl = document.getElementById('modUsersList');
+    const modUsersCountEl = document.getElementById('modUsersCount');
+    const modUserDetailsEl = document.getElementById('modUserDetails');
+    const modUserVideosEl = document.getElementById('modUserVideos');
+    const modComplaintsEl = document.getElementById('modComplaints');
+    const statusModerationEl = document.getElementById('statusModeration');
+
+    const authAvatarEl = document.getElementById('authAvatar');
+    const avatarFileInput = document.getElementById('avatarFile');
+    const btnAvatarUpload = document.getElementById('btnAvatarUpload');
+
+    const videoAuthorNameEl = document.getElementById('videoAuthorName');
+    const videoAuthorAvatarEl = document.getElementById('videoAuthorAvatar');
+    const videoPosterEl = document.getElementById('videoPoster');
+    const videoDescriptionEl = document.getElementById('videoDescription');
+
+    const commentsListEl = document.getElementById('commentsList');
+    const btnCommentsMore = document.getElementById('btnCommentsMore');
+    const commentsFormEl = document.getElementById('commentsForm');
+    const commentInputEl = document.getElementById('commentInput');
+    const btnSendComment = document.getElementById('btnSendComment');
+    const commentsStatusEl = document.getElementById('commentsStatus');
+    const commentsHintEl = document.getElementById('commentsHint');
+
+    const avatarUploadRow = document.getElementById('avatarUploadRow');
+
+    const authProfileBlockEl = document.getElementById('authProfileBlock');
+    const authProfileAvatarEl = document.getElementById('authProfileAvatar');
+    const authProfileDisplayNameEl = document.getElementById('authProfileDisplayName');
+    const authProfileUsernameEl = document.getElementById('authProfileUsername');
+    const authProfileVideosEl = document.getElementById('authProfileVideos');
+
+    const profileFollowBtn = document.getElementById('profileFollowBtn');
+    const profileFollowStatsEl = document.getElementById('profileFollowStats');
+    const authFollowingListEl = document.getElementById('authFollowingList');
+    const authProfileStatsEl = document.getElementById('authProfileStats');
+    const feedPrefLikeWeightEl = document.getElementById('feedPrefLikeWeight');
+    const feedPrefFollowWeightEl = document.getElementById('feedPrefFollowWeight');
+    const feedPrefWatchWeightEl = document.getElementById('feedPrefWatchWeight');
+    const feedPrefWatchThresholdEl = document.getElementById('feedPrefWatchThreshold');
+    const btnFeedPreferencesSave = document.getElementById('btnFeedPreferencesSave');
+    const feedPreferencesStatusEl = document.getElementById('feedPreferencesStatus');
+    const feedPreferencesStatsEl = document.getElementById('feedPreferencesStats');
+    const feedPreferencesStatsWrapEl = document.getElementById('feedPreferencesStatsWrap');
+    const feedTopicsListEl = document.getElementById('feedTopicsList');
+    const feedTopicsStatusEl = document.getElementById('feedTopicsStatus');
+    const btnFeedTopicsAdd = document.getElementById('btnFeedTopicsAdd');
+    const btnFeedTopicsSave = document.getElementById('btnFeedTopicsSave');
+
+    const profileStatsEl = document.getElementById('profileStats');
+    const btnProfileFollow = document.getElementById('btnProfileFollow');
+    const profileVideosSortSelect = document.getElementById('profileVideosSort');
+    const authVideosSortSelect = document.getElementById('authVideosSort');
+
+    let currentVideoUuid = null;
+    let authLoading = false;
+    let searchAiSource = null;
+    let searchAiPhase = '';
+    let searchAiOutput = { rewrite: '', expand: '' };
+    const SEARCH_PAGE_SIZE = 20;
+    const SEARCH_AI_WAIT_MS = 20000;
+    let searchPaging = {
+        query: '',
+        page: 0,
+        size: SEARCH_PAGE_SIZE,
+        total: 0,
+        loading: false
+    };
+
+    let feedPage = 0;
+    const FEED_PAGE_SIZE = 10;
+    let feedHasNext = false;
+    let feedHasPrev = false;
+    let feedLoading = false;
+    let feedMode = { type: 'global' }; // {type: 'global'} | {type: 'profile', userId, sort}
+    let feedTargetUuid = null;
+    let feedSessionId = null;
+    let feedEndReached = false;
+    let feedTotal = null;
+    let feedPrefetch = null;
+    let profileCurrentInfo = null;
+    let authProfileInfo = null;
+
+
+    let profileVideosPaging = {
+        userId: null,
+        page: 0,
+        size: 12,
+        last: false,
+        loading: false,
+        sort: 'uploadedAt,desc'
+    };
+    let currentProfileVideosList = [];
+
+    let authProfileVideosPaging = {
+        userId: null,
+        page: 0,
+        size: 12,
+        last: false,
+        loading: false,
+        sort: 'uploadedAt,desc'
+    };
+    let authProfileVideosList = [];
+
+
+    // кэш: videoUuid -> массив комментариев
+    const commentsCache = new Map();
+    // videoUuid -> {page,size,last,loading}
+    const commentsPaging = new Map();
+
+    function setStatusComments(msg, type = '') {
+        commentsStatusEl.textContent = msg || '';
+        commentsStatusEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function renderViews(count) {
+        if (!viewsEl) return;
+        const n = count ?? 0;
+
+        let label;
+        if (n === 0) {
+            label = 'Нет просмотров';
+        } else if (n === 1) {
+            label = '1 просмотр';
+        } else if (n >= 2 && n <= 4) {
+            label = n + ' просмотра';
+        } else {
+            label = n + ' просмотров';
+        }
+
+        viewsEl.textContent = label;
+    }
+
+    async function registerView(videoUuid) {
+        // Сначала пробуем увеличить счётчик (POST)
+        try {
+            const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/view', {
+                method: 'POST',
+                headers: authHeaders()
+            });
+
+            if (res.ok) {
+                const data = await res.json(); // { count: long }
+                renderViews(data.viewsCount);
+                return;
+            }
+
+            // если вдруг 401/403 или другая ошибка — пробуем просто получить число просмотров
+            if (res.status === 401 || res.status === 403) {
+                await loadViews(videoUuid);
+                return;
+            }
+
+            throw new Error(await readApiError(res));
+        } catch (e) {
+            console.error('registerView error', e);
+            // на ошибке не падаем, просто не обновляем текст
+        }
+    }
+
+    async function loadViews(videoUuid) {
+        try {
+            const res = await fetch(apiBase + '/api/videos/' + videoUuid + '/view', {
+                method: 'GET',
+                headers: authHeaders()
+            });
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const data = await res.json(); // { count: long }
+            renderViews(data.viewsCount);
+        } catch (e) {
+            console.error('loadViews error', e);
+        }
+    }
+
+    const WATCH_MILESTONES = [25, 50, 75, 100];
+    const watchMilestonesSent = new Map(); // uuid -> Set<percent>
+
+    function resetWatchProgress(videoUuid) {
+        if (!videoUuid) return;
+        watchMilestonesSent.set(videoUuid, new Set());
+    }
+
+    async function sendWatchProgress(videoUuid, percent, positionSeconds, durationSeconds) {
+        if (!authToken || !videoUuid) return;
+        try {
+            await fetch(apiBase + '/api/videos/' + videoUuid + '/watch', {
+                method: 'POST',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    positionSeconds: positionSeconds,
+                    durationSeconds: durationSeconds,
+                    percent: percent
+                })
+            });
+        } catch (e) {
+            console.error('watch progress error', e);
+        }
+    }
+
+    function handleWatchProgress() {
+        if (!authToken || !currentVideoUuid) return;
+        const duration = Math.floor(player.duration || 0);
+        if (!duration || !Number.isFinite(duration)) return;
+        const position = Math.floor(player.currentTime || 0);
+        const percent = Math.floor((position / duration) * 100);
+
+        const sent = watchMilestonesSent.get(currentVideoUuid) || new Set();
+        for (const milestone of WATCH_MILESTONES) {
+            if (percent >= milestone && !sent.has(milestone)) {
+                sent.add(milestone);
+                watchMilestonesSent.set(currentVideoUuid, sent);
+                sendWatchProgress(currentVideoUuid, milestone, position, duration);
+            }
+        }
+    }
+
+
+    let currentProfileUserId = null;
+
+    let modUsers = [];
+    let modSelectedUserId = null;
+    // активные джобы (jobId -> { fileName, intervalId, lastStatus })
+    const activeJobs = new Map();
+
+    function authHeaders() {
+        const h = {};
+        if (authToken) h['Authorization'] = 'Bearer ' + authToken;
+        return h;
+    }
+
+    function formatApiErrorData(data, fallback) {
+        if (!data || typeof data !== 'object') return fallback;
+        let msg = data.message || data.error || fallback;
+        if (Array.isArray(data.fields) && data.fields.length) {
+            const details = data.fields
+                .map((f) => {
+                    if (!f) return null;
+                    const field = f.field ? `${f.field}: ` : '';
+                    return field + (f.message || 'Invalid');
+                })
+                .filter(Boolean)
+                .join(', ');
+            if (details) {
+                msg = msg ? `${msg}: ${details}` : details;
+            }
+        }
+        return msg;
+    }
+
+    async function readApiError(res) {
+        if (!res) return 'Unknown error';
+        const fallback = `HTTP ${res.status}`;
+        try {
+            const data = await res.clone().json();
+            return formatApiErrorData(data, fallback);
+        } catch {
+        }
+        try {
+            const text = await res.clone().text();
+            return text || fallback;
+        } catch {
+            return fallback;
+        }
+    }
+
+    function readXhrError(xhr) {
+        if (!xhr) return 'Unknown error';
+        const fallback = `HTTP ${xhr.status}`;
+        const payload = xhr.responseText;
+        if (!payload) return fallback;
+        try {
+            return formatApiErrorData(JSON.parse(payload), fallback);
+        } catch {
+            return payload;
+        }
+    }
+
+    function getDeviceId() {
+        const key = 'deviceId';
+        let id = localStorage.getItem(key);
+        if (!id) {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                id = window.crypto.randomUUID();
+            } else {
+                id = 'dev-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            }
+            localStorage.setItem(key, id);
+        }
+        return id;
+    }
+
+    const deviceId = getDeviceId();
+
+    function feedHeaders() {
+        const h = authHeaders();
+        h['X-Device-Id'] = deviceId;
+        return h;
+    }
+
+    function clearAccountProfile() {
+        authProfileBlockEl.style.display = 'none';
+        authProfileAvatarEl.innerHTML = '';
+        authProfileDisplayNameEl.textContent = '';
+        authProfileUsernameEl.textContent = '';
+        authProfileVideosEl.innerHTML = '';
+        resetFeedPreferencesUI();
+
+        authProfileVideosPaging = {
+            userId: null,
+            page: 0,
+            size: 12,
+            last: false,
+            loading: false,
+            sort: 'uploadedAt,desc'
+        };
+        authProfileInfo = null;
+    }
+
+    function resetFeedPreferencesUI() {
+        resetFeedTopicsUI();
+        if (!feedPrefLikeWeightEl) {
+            return;
+        }
+        feedPrefLikeWeightEl.value = '';
+        feedPrefFollowWeightEl.value = '';
+        feedPrefWatchWeightEl.value = '';
+        feedPrefWatchThresholdEl.value = '';
+        if (feedPreferencesStatusEl) {
+            feedPreferencesStatusEl.textContent = '';
+            feedPreferencesStatusEl.className = 'status';
+        }
+        if (feedPreferencesStatsEl) {
+            feedPreferencesStatsEl.textContent = '';
+        }
+        if (feedPreferencesStatsWrapEl) {
+            feedPreferencesStatsWrapEl.style.display = 'none';
+        }
+    }
+
+    function resetFeedTopicsUI() {
+        if (!feedTopicsListEl) {
+            return;
+        }
+        feedTopicsListEl.innerHTML = '';
+        if (feedTopicsStatusEl) {
+            feedTopicsStatusEl.textContent = '';
+            feedTopicsStatusEl.className = 'status';
+        }
+    }
+
+    function setFeedPreferencesStatus(message, kind) {
+        if (!feedPreferencesStatusEl) return;
+        feedPreferencesStatusEl.textContent = message || '';
+        feedPreferencesStatusEl.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function setFeedTopicsStatus(message, kind) {
+        if (!feedTopicsStatusEl) return;
+        feedTopicsStatusEl.textContent = message || '';
+        feedTopicsStatusEl.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function formatVectorSample(values) {
+        if (!Array.isArray(values) || values.length === 0) {
+            return '[]';
+        }
+        const items = values.slice(0, 8).map(v => Number(v).toFixed(4));
+        return `[${items.join(', ')}]`;
+    }
+
+    function renderFeedPreferencesStats(prefs) {
+        if (!feedPreferencesStatsEl || !feedPreferencesStatsWrapEl) return;
+        if (!prefs) {
+            feedPreferencesStatsEl.textContent = '';
+            feedPreferencesStatsWrapEl.style.display = 'none';
+            return;
+        }
+        const lines = [];
+        lines.push(`Сигналы: liked=${prefs.likedCount ?? 0}, following=${prefs.followingCount ?? 0}, watched=${prefs.watchedCount ?? 0}, embedded=${prefs.recentEmbedded ?? 0}`);
+        lines.push(`Векторы: preference=${prefs.preferenceVectors ?? 0}, watch=${prefs.watchVectors ?? 0}, topics=${prefs.topicVectors ?? 0}`);
+        lines.push(`Preference null=${prefs.preferenceNull ?? false}, Watch null=${prefs.watchPreferenceNull ?? false}`);
+        if (prefs.preferenceSample && prefs.preferenceSample.length) {
+            lines.push(`Preference sample: ${formatVectorSample(prefs.preferenceSample)}`);
+        }
+        if (prefs.watchPreferenceSample && prefs.watchPreferenceSample.length) {
+            lines.push(`Watch sample: ${formatVectorSample(prefs.watchPreferenceSample)}`);
+        }
+        feedPreferencesStatsEl.textContent = lines.join('\n');
+        feedPreferencesStatsWrapEl.style.display = '';
+    }
+
+    function renderFeedPreferences(prefs) {
+        if (!feedPrefLikeWeightEl || !prefs) return;
+        feedPrefLikeWeightEl.value = Number(prefs.likeWeight ?? 0).toFixed(2);
+        feedPrefFollowWeightEl.value = Number(prefs.followWeight ?? 0).toFixed(2);
+        feedPrefWatchWeightEl.value = Number(prefs.watchWeight ?? 0).toFixed(2);
+        feedPrefWatchThresholdEl.value = Number(prefs.watchThreshold ?? 0).toFixed(2);
+        renderFeedPreferencesStats(prefs);
+    }
+
+    function renderFeedTopics(topics) {
+        if (!feedTopicsListEl) return;
+        feedTopicsListEl.innerHTML = '';
+        if (!Array.isArray(topics) || topics.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'studio-row-meta feed-topic-placeholder';
+            empty.textContent = 'Темы не заданы';
+            feedTopicsListEl.appendChild(empty);
+            return;
+        }
+        topics.forEach((topic) => {
+            appendFeedTopicRow(topic?.term ?? '', topic?.weight);
+        });
+    }
+
+    function appendFeedTopicRow(term, weight) {
+        if (!feedTopicsListEl) return;
+        const placeholder = feedTopicsListEl.querySelector('.feed-topic-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        const row = document.createElement('div');
+        row.className = 'feed-topic-row';
+
+        const termInput = document.createElement('input');
+        termInput.type = 'text';
+        termInput.placeholder = 'машины';
+        termInput.value = term || '';
+
+        const weightInput = document.createElement('input');
+        weightInput.type = 'number';
+        weightInput.step = '0.1';
+        weightInput.placeholder = '1.0';
+        if (Number.isFinite(weight)) {
+            weightInput.value = Number(weight).toFixed(2);
+        }
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'small danger';
+        removeBtn.textContent = 'Удалить';
+        removeBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            row.remove();
+            if (feedTopicsListEl.children.length === 0) {
+                renderFeedTopics([]);
+            }
+        });
+
+        row.appendChild(termInput);
+        row.appendChild(weightInput);
+        row.appendChild(removeBtn);
+        feedTopicsListEl.appendChild(row);
+    }
+
+    function collectFeedTopics() {
+        if (!feedTopicsListEl) return [];
+        const rows = Array.from(feedTopicsListEl.querySelectorAll('.feed-topic-row'));
+        const topics = [];
+        for (const row of rows) {
+            const inputs = row.querySelectorAll('input');
+            const termInput = inputs[0];
+            const weightInput = inputs[1];
+            const term = termInput ? termInput.value.trim() : '';
+            if (!term) {
+                continue;
+            }
+            let weight = 1;
+            if (weightInput) {
+                const raw = String(weightInput.value ?? '').trim();
+                if (raw !== '') {
+                    weight = Number(raw);
+                    if (!Number.isFinite(weight)) {
+                        throw new Error(`Некорректный вес для темы "${term}"`);
+                    }
+                }
+            }
+            topics.push({ term, weight });
+        }
+        return topics;
+    }
+
+    async function loadFeedTopics() {
+        if (!authUser || !authToken || !feedTopicsListEl) {
+            resetFeedTopicsUI();
+            return;
+        }
+        try {
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences/topics', {
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedTopicsStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const topics = await res.json();
+            renderFeedTopics(topics);
+            setFeedTopicsStatus('', '');
+        } catch (e) {
+            console.error('loadFeedTopics error', e);
+            setFeedTopicsStatus('Ошибка загрузки тем: ' + e.message, 'error');
+        }
+    }
+
+    async function saveFeedTopics() {
+        if (!authUser || !authToken || !feedTopicsListEl) {
+            return;
+        }
+        try {
+            setFeedTopicsStatus('Сохраняем...', '');
+            if (btnFeedTopicsSave) {
+                btnFeedTopicsSave.disabled = true;
+            }
+            const topics = collectFeedTopics();
+            const payload = { topics };
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences/topics', {
+                method: 'PUT',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedTopicsStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const topicsResponse = await res.json();
+            renderFeedTopics(topicsResponse);
+            setFeedTopicsStatus('Сохранено', 'ok');
+        } catch (e) {
+            console.error('saveFeedTopics error', e);
+            setFeedTopicsStatus('Ошибка сохранения: ' + e.message, 'error');
+        } finally {
+            if (btnFeedTopicsSave) {
+                btnFeedTopicsSave.disabled = false;
+            }
+        }
+    }
+
+    async function loadFeedPreferences() {
+        if (!authUser || !authToken || !feedPrefLikeWeightEl) {
+            resetFeedPreferencesUI();
+            return;
+        }
+        try {
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences', {
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedPreferencesStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const prefs = await res.json();
+            renderFeedPreferences(prefs);
+            setFeedPreferencesStatus('', '');
+        } catch (e) {
+            console.error('loadFeedPreferences error', e);
+            setFeedPreferencesStatus('Ошибка загрузки предпочтений: ' + e.message, 'error');
+        }
+    }
+
+    async function saveFeedPreferences() {
+        if (!authUser || !authToken || !feedPrefLikeWeightEl) {
+            return;
+        }
+        const parseNumber = (value, label) => {
+            const trimmed = String(value ?? '').trim();
+            if (trimmed === '') {
+                return null;
+            }
+            const num = Number(trimmed);
+            if (!Number.isFinite(num)) {
+                throw new Error(`Некорректное значение: ${label}`);
+            }
+            return num;
+        };
+        try {
+            setFeedPreferencesStatus('Сохраняем...', '');
+            if (btnFeedPreferencesSave) {
+                btnFeedPreferencesSave.disabled = true;
+            }
+            const likeWeight = parseNumber(feedPrefLikeWeightEl.value, 'вес лайков');
+            const followWeight = parseNumber(feedPrefFollowWeightEl.value, 'вес подписок');
+            const watchWeight = parseNumber(feedPrefWatchWeightEl.value, 'вес просмотров');
+            const watchThreshold = parseNumber(feedPrefWatchThresholdEl.value, 'порог просмотра');
+            if (likeWeight != null && likeWeight < 0) {
+                throw new Error('Вес лайков должен быть >= 0');
+            }
+            if (followWeight != null && followWeight < 0) {
+                throw new Error('Вес подписок должен быть >= 0');
+            }
+            if (watchWeight != null && watchWeight < 0) {
+                throw new Error('Вес просмотров должен быть >= 0');
+            }
+            if (watchThreshold != null && (watchThreshold < 0 || watchThreshold > 1)) {
+                throw new Error('Порог просмотра должен быть в диапазоне 0..1');
+            }
+            const payload = {
+                likeWeight,
+                followWeight,
+                watchWeight,
+                watchThreshold
+            };
+            const res = await fetch(apiBase + '/api/streaming/video/feed/preferences', {
+                method: 'PUT',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (res.status === 401 || res.status === 403) {
+                setFeedPreferencesStatus('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const prefs = await res.json();
+            renderFeedPreferences(prefs);
+            setFeedPreferencesStatus('Сохранено', 'ok');
+        } catch (e) {
+            console.error('saveFeedPreferences error', e);
+            setFeedPreferencesStatus('Ошибка сохранения: ' + e.message, 'error');
+        } finally {
+            if (btnFeedPreferencesSave) {
+                btnFeedPreferencesSave.disabled = false;
+            }
+        }
+    }
+
+    async function loadAccountProfile() {
+        if (!authUser) {
+            clearAccountProfile();
+            return;
+        }
+
+        // настраиваем состояние пагинации для своих видео
+        authProfileVideosPaging = {
+            userId: authUser.userId,
+            page: 0,
+            size: 12,   // первая пачка "Ваших видео"
+            last: false,
+            loading: false,
+            sort: authProfileVideosPaging.sort || 'uploadedAt,desc'
+        };
+
+        try {
+            const [userRes, vidsRes] = await Promise.all([
+                fetch(apiBase + '/api/users/' + authUser.userId + '/profile', {
+                    headers: authHeaders()
+                }),
+                fetch(apiBase + `/api/users/${authUser.userId}/videos?page=0&size=${authProfileVideosPaging.size}&sort=${encodeURIComponent(authProfileVideosPaging.sort)}`, {
+                    headers: authHeaders()
+                })
+            ]);
+
+            if (!userRes.ok) {
+                throw new Error(await readApiError(userRes));
+            }
+            if (!vidsRes.ok) {
+                throw new Error(await readApiError(vidsRes));
+            }
+
+            const profile = await userRes.json();
+            const vidsPage = await vidsRes.json();
+
+            const vids = Array.isArray(vidsPage.content) ? vidsPage.content : vidsPage;
+            const totalVideos = typeof vidsPage.totalElements === 'number'
+                ? vidsPage.totalElements
+                : vids.length;
+
+            // заголовок и аватар
+            authProfileDisplayNameEl.textContent = profile.displayName || profile.username;
+            authProfileUsernameEl.textContent = '@' + profile.username;
+            authProfileAvatarEl.innerHTML = profile.avatarUrl
+                ? `<img src="${profile.avatarUrl}" alt="">`
+                : '';
+
+            // статистика профиля
+            if (authProfileStatsEl) {
+                const followers = profile.followersCount ?? 0;
+                const following = profile.followingCount ?? 0;
+                authProfileStatsEl.textContent =
+                    `${totalVideos} видео · ${followers} подписчиков · ${following} подписок`;
+            }
+
+            // счётчик "Ваши видео"
+            if (studioVideoCountEl) {
+                studioVideoCountEl.textContent = totalVideos + ' видео';
+            }
+
+            // блок подписок
+            loadAccountFollowing();
+            await loadFeedPreferences();
+            await loadFeedTopics();
+
+            authProfileBlockEl.style.display = '';
+            authProfileInfo = {
+                id: authUser.userId,
+                displayName: profile.displayName || profile.username,
+                username: profile.username,
+                avatarUrl: profile.avatarUrl || null
+            };
+
+            // очищаем грид "Ваши видео" и рисуем только первую страницу
+            authProfileVideosEl.innerHTML = '';
+
+            if (!vids || vids.length === 0) {
+                authProfileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
+                authProfileVideosPaging.last = true;
+            } else {
+                appendAuthProfileVideos(vids);
+
+                // настраиваем paging
+                const pageNumber = typeof vidsPage.number === 'number' ? vidsPage.number : 0;
+                authProfileVideosPaging.page = pageNumber + 1; // следующая страница
+                authProfileVideosPaging.last = !!vidsPage.last;
+            }
+
+        } catch (e) {
+            console.error('loadAccountProfile error', e);
+            clearAccountProfile();
+        }
+    }
+
+    async function loadAccountFollowing() {
+        if (!authUser || !authToken) {
+            if (authFollowingListEl) {
+                authFollowingListEl.innerHTML = '<div class="studio-row-meta">Войдите, чтобы видеть подписки</div>';
+            }
+            return;
+        }
+
+        try {
+            const res = await fetch(apiBase + `/api/users/${authUser.userId}/following`, {
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                if (authFollowingListEl) {
+                    authFollowingListEl.innerHTML = '<div class="studio-row-meta">Сессия истекла, войдите снова</div>';
+                }
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+
+            const list = await res.json(); // List<PublicUserShortDto>
+            renderAccountFollowing(list);
+        } catch (e) {
+            console.error(e);
+            if (authFollowingListEl) {
+                authFollowingListEl.innerHTML = '<div class="studio-row-meta">Ошибка загрузки подписок: ' + e.message + '</div>';
+            }
+        }
+    }
+
+    function renderAccountFollowing(list) {
+        if (!authFollowingListEl) return;
+
+        authFollowingListEl.innerHTML = '';
+
+        if (!list || list.length === 0) {
+            authFollowingListEl.innerHTML = '<div class="studio-row-meta">Подписок пока нет</div>';
+            return;
+        }
+
+        list.forEach(u => {
+            const row = document.createElement('div');
+            row.className = 'studio-row';
+            row.style.cursor = 'pointer';
+
+            const header = document.createElement('div');
+            header.className = 'studio-row-header';
+
+            const left = document.createElement('div');
+            left.className = 'studio-row-title';
+            left.textContent = u.displayName || u.username;
+
+            const meta = document.createElement('div');
+            meta.className = 'studio-row-meta';
+            meta.textContent = '@' + u.username;
+
+            header.appendChild(left);
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar-mini';
+            if (u.avatarUrl) {
+                avatar.innerHTML = `<img src="${u.avatarUrl}" alt="">`;
+            }
+            header.appendChild(avatar);
+
+            row.appendChild(header);
+            row.appendChild(meta);
+
+            row.addEventListener('click', () => {
+                openProfilePage(u.id);
+            });
+
+            authFollowingListEl.appendChild(row);
+        });
+    }
+
+
+    async function loadMoreAuthProfileVideos(reset = false) {
+        const state = authProfileVideosPaging;
+
+        if (!authUser || !state.userId || state.loading) return;
+        if (state.last && !reset) return;
+
+        if (reset) {
+            state.page = 0;
+            state.last = false;
+            authProfileVideosEl.innerHTML = '';
+        }
+
+        state.loading = true;
+        setStatusAuth('Загрузка ваших видео…', 'ok');
+
+        try {
+            const sort = encodeURIComponent(state.sort || 'uploadedAt,desc');
+            const url = apiBase + `/api/users/${state.userId}/videos?page=${state.page}&size=${state.size}&sort=${sort}`;
+            const res = await fetch(url, {
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusAuth('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const page = await res.json(); // Page<PublicUserVideoDto>
+            let vids = page.content || [];
+            vids = sortVideosClient(vids, state.sort);
+            if (authProfileInfo) {
+                vids = vids.map(v => ({
+                    ...v,
+                    uploaderId: authProfileInfo.id,
+                    uploaderName: authProfileInfo.displayName || authProfileInfo.username,
+                    uploaderAvatarUrl: authProfileInfo.avatarUrl
+                }));
+            }
+
+            if (studioVideoCountEl) {
+                const total = typeof page.totalElements === 'number'
+                    ? page.totalElements
+                    : vids.length;
+                studioVideoCountEl.textContent = total + ' видео';
+            }
+
+            if (state.page === 0 && vids.length === 0) {
+                authProfileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
+                setStatusAuth('', '');
+                state.last = true;
+                state.loading = false;
+                return;
+            }
+
+            appendAuthProfileVideos(vids);
+
+            state.page = (typeof page.number === 'number' ? page.number : state.page) + 1;
+            state.last = page.last === true;
+            setStatusAuth('', '');
+        } catch (e) {
+            console.error('loadMoreAuthProfileVideos error', e);
+            setStatusAuth('Ошибка загрузки видео: ' + e.message, 'error');
+        } finally {
+            authProfileVideosPaging.loading = false;
+        }
+    }
+
+
+    function appendAuthProfileVideos(videosChunk) {
+        if (!videosChunk || videosChunk.length === 0) return;
+
+        videosChunk.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'thumb-card';
+
+            const img = document.createElement('img');
+            img.src = v.thumbnailUrl;
+            img.alt = v.name || '';
+
+            // дата поверх
+            const overlayDate = document.createElement('div');
+            overlayDate.className = 'thumb-card-overlay';
+            overlayDate.textContent = formatDate(v.uploadedAt);
+
+            const likesVal = (typeof v.likesCount === 'number')
+                ? v.likesCount
+                : (typeof v.likes === 'number' ? v.likes : 0);
+
+            const viewsVal = (typeof v.viewsCount === 'number')
+                ? v.viewsCount
+                : (typeof v.views === 'number' ? v.views : 0);
+
+            const meta = document.createElement('div');
+            meta.className = 'thumb-card-meta';
+            meta.textContent = `♥ ${likesVal} · 👁 ${viewsVal}`;
+
+            // кнопка удаления
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'thumb-card-delete';
+            deleteBtn.textContent = '🗑';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!authToken) {
+                    setStatusAuth('Войдите, чтобы удалять видео', 'error');
+                    activateTab('auth');
+                    return;
+                }
+                if (confirm('Удалить это видео?')) {
+                    deleteVideo(v.uuid);
+                }
+            });
+
+            card.appendChild(img);
+            card.appendChild(overlayDate);
+            card.appendChild(meta);
+            card.appendChild(deleteBtn);
+
+            // клик по карточке — открыть в общей ленте
+            card.addEventListener('click', () => {
+                switchFeedToProfile(authProfileVideosPaging.userId, authProfileVideosPaging.sort, v.uuid);
+                activateTab('feed');
+            });
+
+            authProfileVideosEl.appendChild(card);
+        });
+    }
+
+    window.addEventListener('scroll', () => {
+        const nearBottom =
+            window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+
+        if (!nearBottom) return;
+
+        // если активна страница чужого профиля
+        if (pageProfile.classList.contains('active')) {
+            loadMoreProfileVideos();
+        }
+
+        // если активна страница аккаунта
+        if (pageAuth.classList.contains('active')) {
+            loadMoreAuthProfileVideos();
+        }
+    });
+
+
+
+    function updateAccountAvatar() {
+        if (authUser) {
+            authAvatarEl.style.display = '';
+            avatarUploadRow.style.display = '';
+
+            if (authUser.avatarUrl) {
+                authAvatarEl.innerHTML = `<img src="${authUser.avatarUrl}" alt="">`;
+            } else {
+                authAvatarEl.innerHTML = '';
+            }
+        } else {
+            authAvatarEl.style.display = 'none';
+            avatarUploadRow.style.display = 'none';
+            authAvatarEl.innerHTML = '';
+        }
+    }
+
+    function setStatusProfile(msg, type = '') {
+        statusProfileEl.textContent = msg || '';
+        statusProfileEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    btnAvatarUpload.addEventListener('click', async () => {
+        const file = avatarFileInput.files[0];
+        if (!file) {
+            setStatusAuth('Выберите файл аватара', 'error');
+            return;
+        }
+        const fd = new FormData();
+        fd.append('avatar', file);
+        try {
+            const res = await fetch(apiBase + '/api/users/me/avatar', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: fd
+            });
+            if (!res.ok) throw new Error(await readApiError(res));
+            const data = await res.json(); // { url }
+            authUser.avatarUrl = data.url;
+            localStorage.setItem('authUser', JSON.stringify(authUser));
+            updateAuthUI();
+            setStatusAuth('Аватар обновлён', 'ok');
+        } catch (e) {
+            console.error(e);
+            setStatusAuth('Ошибка загрузки аватара: ' + e.message, 'error');
+        }
+    });
+
+    function setStatusModeration(msg, type = '') {
+        statusModerationEl.textContent = msg || '';
+        statusModerationEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    async function loadComplaints() {
+        if (!authToken || !isModerator()) return;
+        try {
+            const res = await fetch(apiBase + '/api/moderation/complaints/admin', {
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                return;
+            }
+            const list = await res.json();
+            if (!Array.isArray(list)) {
+                setStatusModeration('Некорректный ответ по жалобам', 'error');
+                return;
+            }
+            renderComplaints(list);
+        } catch (e) {
+            setStatusModeration('Ошибка загрузки жалоб: ' + e.message, 'error');
+        }
+    }
+
+    function renderComplaints(list) {
+        modComplaintsEl.innerHTML = '';
+        if (!list || !Array.isArray(list) || list.length === 0) {
+            modComplaintsEl.innerHTML = '<div class="studio-row-meta">Нет открытых жалоб</div>';
+            return;
+        }
+        list.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'job';
+            row.innerHTML = `
+                <div>
+                    <div><b>${c.targetType}</b> ${c.videoUuid || ''}${c.commentId ? ' / comment ' + c.commentId : ''}</div>
+                    <div class="job-sub">${c.reason}</div>
+                </div>
+                <div class="job-actions">
+                    <button class="small danger" data-id="${c.id}" data-delete="true">Удалить и закрыть</button>
+                    <button class="small" data-id="${c.id}" data-delete="false">Закрыть</button>
+                    <button class="small secondary" data-id="${c.id}" data-reject="true">Отклонить</button>
+                </div>
+            `;
+            row.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.getAttribute('data-id');
+                    const del = btn.getAttribute('data-delete') === 'true';
+                    const reject = btn.getAttribute('data-reject') === 'true';
+                    await resolveComplaint(id, del, reject);
+                });
+            });
+            modComplaintsEl.appendChild(row);
+        });
+    }
+
+    async function resolveComplaint(id, deleteTarget, reject) {
+        try {
+            const res = await fetch(apiBase + `/api/moderation/complaints/admin/${id}/resolve?deleteTarget=${deleteTarget}&reject=${reject}`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (!res.ok) {
+                setStatusModeration('Ошибка закрытия жалобы', 'error');
+                return;
+            }
+            await loadComplaints();
+            setStatusModeration('Жалоба обработана', 'ok');
+        } catch (e) {
+            setStatusModeration('Ошибка: ' + e.message, 'error');
+        }
+    }
+    function userHasRole(role) {
+        return authUser
+            && Array.isArray(authUser.roles)
+            && authUser.roles.includes(role);
+    }
+
+    function isModerator() {
+        return userHasRole('MODERATOR') || userHasRole('ADMIN');
+    }
+
+    function isAdmin() {
+        return userHasRole('ADMIN');
+    }
+
+    function setAuth(token, userId, username, displayName, roles, avatarUrl) {
+        authToken = token || null;
+        if (token && userId != null) {
+            authUser = {
+                userId,
+                username,
+                displayName,
+                roles: Array.isArray(roles) ? roles : [],
+                avatarUrl: avatarUrl || null,
+            };
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('authUser', JSON.stringify(authUser));
+        } else {
+            authUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('authUser');
+        }
+        updateAuthUI();
+    }
+
+    function updateAuthUI() {
+        if (authLoading) {
+            authUserShortEl.textContent = '';
+            authWelcomeEl.textContent = 'Проверяем сессию…';
+            authLoggedBlock.style.display = '';
+            authFormsBlock.style.display = 'none';
+            authAvatarEl.style.display = 'none';
+            avatarUploadRow.style.display = 'none';
+            return;
+        }
+
+        if (authUser) {
+            authUserShortEl.textContent = authUser.displayName || authUser.username || 'Пользователь';
+            authWelcomeEl.textContent = `Вы вошли как ${authUser.displayName || authUser.username}`;
+            authLoggedBlock.style.display = '';
+            authFormsBlock.style.display = 'none';
+
+            // аватар в аккаунте
+        authAvatarEl.style.display = '';
+        avatarUploadRow.style.display = '';
+        authAvatarEl.innerHTML = authUser.avatarUrl
+            ? `<img src="${authUser.avatarUrl}" alt="">`
+            : '';
+        if (profileAvatarEl) {
+            if (authUser.avatarUrl) {
+                profileAvatarEl.src = authUser.avatarUrl;
+                profileAvatarEl.style.display = '';
+            } else {
+                profileAvatarEl.style.display = 'none';
+            }
+        }
+        } else {
+            authUserShortEl.textContent = 'Гость';
+            authLoggedBlock.style.display = 'none';
+            authFormsBlock.style.display = '';
+
+            authAvatarEl.style.display = 'none';
+            avatarUploadRow.style.display = 'none';
+            authAvatarEl.innerHTML = '';
+        }
+
+        // модерация / админ
+        if (authUser && isModerator()) {
+            tabModeration.style.display = '';
+        } else {
+            tabModeration.style.display = 'none';
+            if (pageModeration.classList.contains('active')) {
+                activateTab('feed');
+            }
+        }
+
+        if (authUser && isAdmin()) {
+            btnRebuildThumbs.style.display = '';
+        } else {
+            btnRebuildThumbs.style.display = 'none';
+        }
+        if (authUser && isModerator()) {
+            btnRebuildEmbeddings.style.display = '';
+        } else {
+            btnRebuildEmbeddings.style.display = 'none';
+        }
+
+        // комментарии: форма только для залогиненных
+        if (authUser) {
+            commentsFormEl.style.display = '';
+            commentsHintEl.style.display = 'none';
+        } else {
+            commentsFormEl.style.display = 'none';
+            commentsHintEl.style.display = '';
+        }
+
+        if (authUser) {
+            loadAccountProfile();
+        } else {
+            clearAccountProfile();
+        }
+    }
+
+    btnRebuildThumbs.addEventListener('click', async () => {
+        if (!authToken || !isAdmin()) return;
+
+        if (!confirm('Перегенерировать превью для всех видео? Это может занять время.')) {
+            return;
+        }
+
+        try {
+            const res = await fetch(apiBase + '/api/admin/thumbnails/rebuild', {
+                method: 'POST',
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok && res.status !== 202) {
+                throw new Error(await readApiError(res));
+            }
+
+            setStatusModeration('Запущена перегенерация превью (может занять время)', 'ok');
+        } catch (e) {
+            console.error(e);
+            setStatusModeration('Ошибка запуска перегенерации: ' + e.message, 'error');
+        }
+    });
+
+    btnRebuildEmbeddings.addEventListener('click', async () => {
+        if (!authToken || !isModerator()) return;
+        if (!confirm('Пересчитать эмбеддинги для всех видео? Это может занять время.')) {
+            return;
+        }
+        try {
+            const res = await fetch(apiBase + '/api/moderation/videos/reembed', {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+            if (!res.ok && res.status !== 202) {
+                throw new Error(await readApiError(res));
+            }
+            setStatusModeration('Запущена пересборка эмбеддингов', 'ok');
+        } catch (e) {
+            console.error(e);
+            setStatusModeration('Ошибка запуска пересборки эмбеддингов: ' + e.message, 'error');
+        }
+    });
+
+    if (profileVideosSortSelect) {
+        profileVideosSortSelect.addEventListener('change', () => {
+            profileVideosPaging.sort = profileVideosSortSelect.value;
+            reloadProfileVideos();
+        });
+    }
+
+    if (btnFeedPreferencesSave) {
+        btnFeedPreferencesSave.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveFeedPreferences();
+        });
+    }
+
+    if (btnFeedTopicsAdd) {
+        btnFeedTopicsAdd.addEventListener('click', (event) => {
+            event.preventDefault();
+            appendFeedTopicRow('', '');
+        });
+    }
+
+    if (btnFeedTopicsSave) {
+        btnFeedTopicsSave.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveFeedTopics();
+        });
+    }
+
+    if (authVideosSortSelect) {
+        authVideosSortSelect.addEventListener('change', () => {
+            authProfileVideosPaging.sort = authVideosSortSelect.value;
+            reloadAuthVideos();
+        });
+    }
+
+    async function initAuth() {
+        const savedToken = localStorage.getItem('authToken');
+        const savedUserJson = localStorage.getItem('authUser');
+
+        if (!savedToken) {
+            setAuth(null, null, null, null);
+            return;
+        }
+
+        authLoading = true;
+        updateAuthUI();
+
+        // сначала используем токен локально
+        authToken = savedToken;
+
+        if (savedUserJson) {
+            try {
+                authUser = JSON.parse(savedUserJson);
+            } catch {
+                authUser = null;
+            }
+        }
+        // теперь — пробуем проверить токен
+        try {
+            const res = await fetch(apiBase + '/api/auth/me', {
+                headers: authHeaders()
+            });
+
+            if (!res.ok) {
+                // не трогаем localStorage на 401/403 — покажем форму, но не чистим токен
+                console.warn("/api/auth/me →", res.status);
+                if (res.status === 401) {
+                    // если токен недействителен — разлогиниваемся
+                    setAuth(null, null, null, null);
+                }
+            } else {
+                const data = await res.json();
+                // сохраняем результат
+                setAuth(savedToken, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
+            }
+
+        } catch (e) {
+            console.error("auth/me fetch error:", e);
+            // сетевые ошибки не должны приводить к logout
+            if (authUser) {
+                setAuth(savedToken, authUser.userId, authUser.username, authUser.displayName, authUser.roles, authUser.avatarUrl);
+            }
+        } finally {
+            authLoading = false;
+            updateAuthUI();
+        }
+    }
+
+    function updateLikeButton(videoMeta, liked) {
+        const cnt = typeof videoMeta.likesCount === 'number'
+            ? videoMeta.likesCount
+            : 0;
+        updateLikeButtonWithCount(cnt, liked);
+    }
+
+    function updateLikeButtonWithCount(count, liked) {
+        const safeCount = typeof count === 'number' ? count : 0;
+        btnLike.textContent = (liked ? '♥ ' : '♡ ') + safeCount;
+        btnLike.dataset.liked = liked ? 'true' : 'false';
+        btnLike.dataset.count = String(safeCount);
+    }
+
+    function updateViews(count) {
+        const safe = typeof count === 'number' ? count : 0;
+        viewsEl.textContent = `· ${safe} просмотров`;
+    }
+
+    function renderCommentsCount(count) {
+        if (!commentsCountEl) return;
+        const n = typeof count === 'number' ? count : 0;
+        let label;
+        if (n === 0) {
+            label = 'Нет комментариев';
+        } else if (n === 1) {
+            label = '1 комментарий';
+        } else if (n >= 2 && n <= 4) {
+            label = n + ' комментария';
+        } else {
+            label = n + ' комментариев';
+        }
+        commentsCountEl.textContent = label;
+    }
+
+    function updateCommentsCountForVideo(videoUuid, total) {
+        const idx = videosGlobalIndexByUuid(videoUuid);
+        if (idx !== -1) {
+            videos[idx].commentsCount = total;
+        }
+        if (currentVideoUuid === videoUuid) {
+            renderCommentsCount(total);
+        }
+    }
+
+    function adjustCommentsCount(videoUuid, delta) {
+        const idx = videosGlobalIndexByUuid(videoUuid);
+        const loaded = commentsCache.get(videoUuid)?.length || 0;
+        if (idx !== -1 && typeof videos[idx].commentsCount === 'number') {
+            const next = Math.max(0, Math.max(loaded, videos[idx].commentsCount + delta));
+            updateCommentsCountForVideo(videoUuid, next);
+            return;
+        }
+        updateCommentsCountForVideo(videoUuid, loaded);
+    }
+
+    function updateCommentsLoadMore(videoUuid) {
+        if (!btnCommentsMore) return;
+        const state = commentsPaging.get(videoUuid);
+        const hasMore = state && state.last === false && (state.loading === false || state.loading === undefined);
+        btnCommentsMore.style.display = hasMore ? '' : 'none';
+    }
+
+
+    btnLike.addEventListener('click', async () => {
+        if (!videos.length || currentIndex < 0 || currentIndex >= videos.length) return;
+
+        if (!authToken) {
+            setStatusFeed('Войдите, чтобы ставить лайки', 'error');
+            activateTab('auth');
+            return;
+        }
+
+        const v = videos[currentIndex];
+        const liked = btnLike.dataset.liked === 'true';
+        const method = liked ? 'DELETE' : 'POST';
+
+        try {
+            const res = await fetch(apiBase + '/api/videos/' + v.uuid + '/like', {
+                method,
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusFeed('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const data = await res.json(); // { likesCount, liked }
+
+            // обновляем локальную модель
+            v.likesCount = typeof data.likesCount === 'number' ? data.likesCount : v.likesCount;
+            v.likedByMe = data.liked;
+
+            // применяем в UI
+            updateLikeButtonWithCount(v.likesCount, data.liked);
+        } catch (e) {
+            console.error(e);
+            setStatusFeed('Ошибка лайка: ' + e.message, 'error');
+        }
+    });
+
+    if (btnReportVideo) {
+        btnReportVideo.addEventListener('click', async () => {
+            if (!authToken) {
+                setStatusFeed('Войдите, чтобы пожаловаться', 'error');
+                activateTab('auth');
+                return;
+            }
+            if (!videos.length || currentIndex < 0 || currentIndex >= videos.length) return;
+            const v = videos[currentIndex];
+            const reason = prompt('Укажите причину жалобы на видео');
+            if (!reason) return;
+            try {
+                const res = await fetch(apiBase + `/api/moderation/complaints/videos/${v.uuid}`, {
+                    method: 'POST',
+                    headers: {
+                        ...authHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                if (!res.ok) throw new Error(await readApiError(res));
+                setStatusFeed('Жалоба отправлена', 'ok');
+            } catch (e) {
+                setStatusFeed('Ошибка отправки жалобы: ' + e.message, 'error');
+            }
+        });
+    }
+
+    function getVideoUrlByIndex(index) {
+        const meta = videos[index];
+        return buildVideoUrl(meta);
+    }
+
+    function pickPreloadedElement(uuid) {
+        const candidates = [preload1, preload2].filter(Boolean);
+        for (const el of candidates) {
+            if (!el || !el.src) continue;
+            if (el.dataset.uuid !== uuid) continue;
+            // HAVE_CURRENT_DATA = 2, HAVE_FUTURE_DATA = 3
+            if (el.readyState >= 2) {
+                return el;
+            }
+        }
+        return null;
+    }
+
+    function preloadVideoToElement(videoIndex, el, mode) {
+        if (!el) return;
+        if (videoIndex < 0 || videoIndex >= videos.length) return;
+
+        const meta = videos[videoIndex];
+        const url = getVideoUrlByIndex(videoIndex);
+
+        if (el.dataset.uuid === meta.uuid && el.src === url) return;
+
+        el.pause();
+        el.removeAttribute('src');
+        el.load();
+
+        el.dataset.uuid = meta.uuid;
+        el.preload = mode || 'auto';
+        el.src = url;
+        el.load();
+
+        // Подталкиваем браузер действительно загрузить начало (для некоторых он ленится)
+        el.play().then(() => {
+            el.pause();
+        }).catch(() => {
+            // игнорируем ошибки автоплея скрытого видео
+        });
+    }
+
+    function playFromPreloaded(el, resumeFromSeconds = 0) {
+        if (!el) return false;
+
+        try {
+            const t = resumeFromSeconds || el.currentTime || 0;
+            player.pause();
+            player.src = el.src;
+
+            if (player.fastSeek) {
+                player.fastSeek(t);
+            } else {
+                player.currentTime = t;
+            }
+
+            player.play().catch((err) => {
+                console.warn('Autoplay blocked (preloaded):', err);
+                setStatusFeed('Нажмите Play, чтобы запустить видео', 'error');
+            });
+            return true;
+        } catch (e) {
+            console.warn('playFromPreloaded failed', e);
+            return false;
+        }
+    }
+
+    function preloadAroundCurrent() {
+        if (videos.length === 0 || currentIndex < 0) return;
+
+        const nextIndex = currentIndex + 1;
+        const afterIndex = currentIndex + 2;
+
+        preloadVideoToElement(nextIndex, preload1, 'auto');
+        preloadVideoToElement(afterIndex, preload2, 'auto');
+    }
+
+    function setStatusFeed(msg, type = '') {
+        statusFeedEl.textContent = msg || '';
+        statusFeedEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function showFeedLoader(show, text = '') {
+        if (!feedLoader) return;
+        feedLoader.classList.toggle('visible', !!show);
+        if (text && feedLoaderText) {
+            feedLoaderText.textContent = text;
+        }
+    }
+
+    function setStatusUpload(msg, type = '') {
+        statusUploadEl.textContent = msg || '';
+        statusUploadEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function setStatusStudio(msg, type = '') {
+        statusStudioEl.textContent = msg || '';
+        statusStudioEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function setStatusSearch(msg, type = '') {
+        if (!statusSearchEl) return;
+        statusSearchEl.textContent = msg || '';
+        statusSearchEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function setStatusAuth(msg, type = '') {
+        statusAuthEl.textContent = msg || '';
+        statusAuthEl.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function availableQualities(v) {
+        if (!v) return [];
+        if (Array.isArray(v.availableQualities) && v.availableQualities.length > 0) {
+            return [...new Set(v.availableQualities)].sort((a, b) => a - b);
+        }
+        if (v.defaultHeight) {
+            return [v.defaultHeight];
+        }
+        return [];
+    }
+
+    function resolveQuality(v) {
+        const qualities = availableQualities(v);
+        if (!qualities.length) return null;
+
+        if (v._selectedQuality && qualities.includes(v._selectedQuality)) {
+            return v._selectedQuality;
+        }
+        if (v.defaultHeight && qualities.includes(v.defaultHeight)) {
+            return v.defaultHeight;
+        }
+        return qualities[qualities.length - 1];
+    }
+
+    function buildVideoUrl(v, overrideQuality) {
+        const q = overrideQuality != null ? overrideQuality : resolveQuality(v);
+        const suffix = q ? `?quality=${q}` : '';
+        return apiBase + '/api/streaming/video/' + v.uuid + suffix;
+    }
+
+    function applyQualitySelector(v) {
+        const qualities = availableQualities(v);
+        if (!qualities.length) {
+            qualityRow.style.display = 'none';
+            qualitySelect.innerHTML = '';
+            return;
+        }
+
+        qualityRow.style.display = 'flex';
+        qualitySelect.innerHTML = '';
+        qualities.forEach(q => {
+            const opt = document.createElement('option');
+            opt.value = q;
+            opt.textContent = `${q}p`;
+            qualitySelect.appendChild(opt);
+        });
+
+        const selected = resolveQuality(v);
+        if (selected) {
+            qualitySelect.value = selected;
+        } else {
+            qualitySelect.selectedIndex = 0;
+        }
+
+        qualitySelect.onchange = () => {
+            const chosen = Number(qualitySelect.value);
+            if (Number.isFinite(chosen)) {
+                v._selectedQuality = chosen;
+            } else {
+                delete v._selectedQuality;
+            }
+            const pos = player.currentTime || 0;
+            const url = buildVideoUrl(v, chosen);
+            hidePoster();
+            player.removeAttribute('poster'); // при смене качества не показываем превью
+            playUrl(url, pos);
+            setStatusFeed(`Качество ${chosen}p`, 'ok');
+        };
+    }
+
+    function playUrl(url, resumeFromSeconds = 0) {
+        player.pause();
+        player.removeAttribute('src');
+        player.load();
+        player.src = url;
+        player.onloadedmetadata = () => {
+            if (resumeFromSeconds) {
+                try {
+                    player.currentTime = resumeFromSeconds;
+                } catch {
+                }
+            }
+        };
+        player.play().catch((err) => {
+            console.warn('Autoplay blocked:', err);
+            setStatusFeed('Нажмите Play, чтобы запустить видео', 'error');
+        });
+    }
+
+    function humanSize(bytes) {
+        if (bytes == null) return '—';
+        const units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+        let i = 0;
+        let val = bytes;
+        while (val >= 1024 && i < units.length - 1) {
+            val /= 1024;
+            i++;
+        }
+        return val.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+
+    function formatDate(iso) {
+        if (!iso) return '—';
+        try {
+            const d = new Date(iso);
+            return d.toLocaleString();
+        } catch {
+            return iso;
+        }
+    }
+
+    // Локальная сортировка клиентских списков видео (дополняет сортировку на бэке)
+    function sortVideosClient(list, sortSpec) {
+        if (!Array.isArray(list) || list.length <= 1) {
+            return list;
+        }
+        const [field, dirRaw] = (sortSpec || 'uploadedAt,desc').split(',');
+        const dir = (dirRaw || 'desc').toLowerCase() === 'asc' ? 1 : -1;
+
+        const getVal = (v) => {
+            switch (field) {
+                case 'likesCount':
+                    return typeof v.likesCount === 'number' ? v.likesCount :
+                        (typeof v.likes === 'number' ? v.likes : 0);
+                case 'viewsCount':
+                    return typeof v.viewsCount === 'number' ? v.viewsCount :
+                        (typeof v.views === 'number' ? v.views : 0);
+                case 'uploadedAt':
+                default:
+                    return v.uploadedAt ? new Date(v.uploadedAt).getTime() : 0;
+            }
+        };
+
+        return [...list].sort((a, b) => {
+            const av = getVal(a);
+            const bv = getVal(b);
+            if (av === bv) return 0;
+            return av > bv ? dir : -dir;
+        });
+    }
+
+    function promotePrefetchToCurrent() {
+        if (!feedPrefetch || !Array.isArray(feedPrefetch.items)) {
+            return false;
+        }
+        videos = feedPrefetch.items;
+        feedHasPrev = !!feedPrefetch.hasPrev;
+        feedHasNext = !!feedPrefetch.hasNext;
+        if (feedPrefetch.feedId) {
+            feedSessionId = feedPrefetch.feedId;
+        }
+        if (Number.isFinite(feedPrefetch.total)) {
+            feedTotal = feedPrefetch.total;
+        }
+        feedEndReached = videos.length === 0 || !feedHasNext;
+        feedPrefetch = null;
+        currentIndex = videos.length > 0 ? 0 : -1;
+        return videos.length > 0;
+    }
+
+    async function goNext() {
+        triggerSwipeAnimation('up');
+        const isProfileFeed = feedMode.type === 'profile' && feedMode.userId;
+        if (videos.length === 0) {
+            if (isProfileFeed) {
+                setStatusFeed('Больше видео пока нет', 'ok');
+                return;
+            }
+            if (feedLoading) {
+                return;
+            }
+            if (!feedSessionId) {
+                await loadVideoPage(0, false);
+            } else {
+                await loadVideoPage(0, true);
+            }
+            if (promotePrefetchToCurrent()) {
+                await playCurrent();
+            } else if (videos.length > 0) {
+                currentIndex = 0;
+                await playCurrent();
+            } else {
+                setStatusFeed('No more videos', 'ok');
+            }
+            return;
+        }
+
+        // 1) Обычный переход вперёд внутри текущей страницы
+        if (currentIndex < videos.length - 1) {
+            currentIndex++;
+            await playCurrent();
+
+            // если близко к концу - подгружаем следующую страницу (только профиль)
+            if (isProfileFeed) {
+                if (feedHasNext && !feedLoading && (videos.length - currentIndex) <= 2) {
+                    loadVideoPage(feedPage + 1, true);
+                }
+            }
+            return;
+        }
+
+        // 2) Мы на последнем видео
+        if (isProfileFeed) {
+            if (!feedLoading && feedHasNext) {
+                await loadVideoPage(feedPage + 1, true);
+
+                if (currentIndex < videos.length - 1) {
+                    currentIndex++;
+                    await playCurrent();
+                } else {
+                    setStatusFeed('Больше видео пока нет', 'ok');
+                }
+                return;
+            }
+            setStatusFeed('Больше видео пока нет', 'ok');
+            return;
+        }
+
+        // глобальная лента: страницы не копим, забираем из prefetch
+        if (promotePrefetchToCurrent()) {
+            await playCurrent();
+            return;
+        }
+        if (feedLoading) {
+            return;
+        }
+        await loadVideoPage(0, true);
+        if (promotePrefetchToCurrent()) {
+            await playCurrent();
+        } else {
+            setStatusFeed('No more videos', 'ok');
+        }
+    }
+
+    async function goPrev() {
+        triggerSwipeAnimation('down');
+        if (videos.length === 0) return;
+
+        if (currentIndex > 0) {
+            currentIndex--;
+            await playCurrent();
+            return;
+        }
+
+        if (feedMode.type === 'profile' && feedMode.userId) {
+            setStatusFeed('Это самое первое видео', 'ok');
+            return;
+        }
+
+        if (!feedSessionId || feedLoading) {
+            setStatusFeed('Это самое первое видео', 'ok');
+            return;
+        }
+
+        if (!feedHasPrev) {
+            setStatusFeed('Это самое первое видео', 'ok');
+            return;
+        }
+        feedLoading = true;
+        showFeedLoader(true, 'Загружаем видео…');
+        try {
+            const url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/prev`;
+            const res = await fetch(url, { headers: feedHeaders() });
+
+            if (res.status === 401 || res.status === 403) {
+                if (authToken) {
+                    setAuth(null, null, null, null);
+                }
+                setStatusFeed('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+
+            const data = await res.json();
+            const items =
+                Array.isArray(data.items) ? data.items :
+                    Array.isArray(data.content) ? data.content :
+                        (Array.isArray(data) ? data : []);
+
+            if (items.length === 0) {
+                setStatusFeed('Это самое первое видео', 'ok');
+                return;
+            }
+
+            if (data && typeof data.hasPrev === 'boolean') {
+                feedHasPrev = data.hasPrev;
+            }
+            if (data && typeof data.hasNext === 'boolean') {
+                feedHasNext = data.hasNext;
+            }
+            if (data && data.feedId) {
+                feedSessionId = data.feedId;
+            }
+            if (data && Number.isFinite(data.total)) {
+                feedTotal = data.total;
+            }
+
+            feedEndReached = !feedHasNext;
+            feedPrefetch = null;
+
+            videos = items;
+            currentIndex = videos.length - 1;
+            await playCurrent();
+        } catch (e) {
+            console.error(e);
+            setStatusFeed('Ошибка загрузки списка видео: ' + e.message, 'error');
+        } finally {
+            feedLoading = false;
+            showFeedLoader(false);
+        }
+    }
+
+    async function playByIndex(idx) {
+        if (idx < 0 || idx >= videos.length) return;
+        currentIndex = idx;
+        await playCurrent();
+    }
+
+    function setPlayerPoster(v) {
+        if (!player) return;
+        const fallbackUrl = v && v.uuid ? `/api/streaming/video/thumbnail/${v.uuid}` : null;
+        const poster = (v && v.thumbnailUrl) ? v.thumbnailUrl : fallbackUrl;
+
+        if (poster) {
+            player.poster = poster;
+            if (videoPosterEl) {
+                videoPosterEl.style.backgroundImage = `url('${poster}')`;
+                videoPosterEl.classList.remove('hidden');
+            }
+            return poster;
+        }
+
+        player.removeAttribute('poster');
+        if (videoPosterEl) {
+            videoPosterEl.style.backgroundImage = 'none';
+            videoPosterEl.classList.remove('hidden');
+        }
+        return null;
+    }
+
+    function waitForPoster(posterUrl, timeoutMs = 250) {
+        return new Promise((resolve) => {
+            if (!posterUrl) {
+                resolve();
+                return;
+            }
+            const img = new Image();
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                resolve();
+            };
+            const timer = setTimeout(finish, timeoutMs);
+            img.onload = () => {
+                clearTimeout(timer);
+                finish();
+            };
+            img.onerror = () => {
+                clearTimeout(timer);
+                finish();
+            };
+            img.src = posterUrl;
+        });
+    }
+
+    function hidePoster() {
+        if (videoPosterEl) {
+            videoPosterEl.classList.add('hidden');
+        }
+    }
+
+    function triggerSwipeAnimation(direction) {
+        if (!videoWrapper) return;
+        videoWrapper.classList.remove('swipe-up', 'swipe-down');
+        // force reflow to restart animation
+        // eslint-disable-next-line no-unused-expressions
+        videoWrapper.offsetHeight;
+        if (direction === 'down') {
+            videoWrapper.classList.add('swipe-down');
+        } else {
+            videoWrapper.classList.add('swipe-up');
+        }
+        setTimeout(() => {
+            videoWrapper.classList.remove('swipe-up', 'swipe-down');
+        }, 240);
+    }
+
+
+    async function loadAvatarFor(elem, userId) {
+        const url = apiBase + `/api/users/${userId}/avatar`;
+
+        try {
+            const res = await fetch(url, {method: "GET"});
+
+            if (res.ok) {
+                elem.innerHTML = `<img src="${url}" alt="">`;
+            } else {
+                elem.innerHTML = `<img src="/static/no-avatar.png" alt="">`;
+            }
+        } catch {
+            elem.innerHTML = `<img src="/static/no-avatar.png" alt="">`;
+        }
+    }
+
+
+    async function playCurrent() {
+        if (videos.length === 0 || currentIndex < 0) {
+            setStatusFeed('Нет доступных видео', 'error');
+            return;
+        }
+
+        const v = videos[currentIndex];
+        if (!v) {
+            setStatusFeed('Видео не найдено в списке', 'error');
+            return;
+        }
+
+        currentVideoUuid = v.uuid;
+        resetWatchProgress(currentVideoUuid);
+
+        const posterUrl = setPlayerPoster(v);
+        if (videoPosterEl) {
+            videoPosterEl.offsetHeight;
+        }
+        await waitForPoster(posterUrl);
+        applyQualitySelector(v);
+        const selectedQuality = resolveQuality(v);
+        const preloadedEl = pickPreloadedElement(v.uuid);
+
+        if (!playFromPreloaded(preloadedEl, 0)) {
+            const url = buildVideoUrl(v, selectedQuality);
+            playUrl(url, 0);
+        }
+
+        // заголовок + автор
+        const name = v.name || '(без названия)';
+        const authorSuffix = v.uploaderName ? ` — ${v.uploaderName}` : '';
+        titleEl.textContent = name + authorSuffix;
+        videoDescriptionEl.textContent = v.description || '';
+
+        videoAuthorNameEl.textContent = v.uploaderName || 'Автор';
+        videoAuthorAvatarEl.innerHTML = v.uploaderAvatarUrl
+            ? `<img src="${v.uploaderAvatarUrl}" alt="">`
+            : '';
+
+        const openAuthorProfile = () => {
+            if (!v.uploaderId) return;
+            openProfilePage(v.uploaderId);
+        };
+        videoAuthorNameEl.onclick = openAuthorProfile;
+        videoAuthorAvatarEl.onclick = openAuthorProfile;
+
+        const sizeText = humanSize(v.contentSize);
+        sizeEl.textContent = selectedQuality ? `${sizeText} · ${selectedQuality}p` : sizeText;
+        dateEl.textContent = formatDate(v.uploadedAt);
+
+        // если total приходит с бэка — можешь использовать его, пока считаем длину массива
+        const displayTotal = Number.isFinite(feedTotal) ? feedTotal : videos.length;
+        countEl.textContent = displayTotal + ' видео';
+
+        // локально известные лайки/просмотры
+        const baseLikes = (typeof v.likesCount === 'number') ? v.likesCount : 0;
+        const baseViews = (typeof v.viewsCount === 'number') ? v.viewsCount : 0;
+        const baseComments = (typeof v.commentsCount === 'number') ? v.commentsCount : 0;
+
+        updateLikeButtonWithCount(baseLikes, false);
+        updateViews(baseViews);
+        renderCommentsCount(baseComments);
+
+        setStatusFeed('Воспроизведение…', 'ok');
+
+        // предзагрузка следующих двух
+        preloadAroundCurrent();
+
+        // --- статус лайка + актуальное количество лайков ---
+        if (authToken) {
+            if (btnReportVideo) btnReportVideo.style.display = '';
+            try {
+                const res = await fetch(apiBase + '/api/videos/' + v.uuid + '/like', {
+                    headers: authHeaders()
+                });
+
+                if (currentVideoUuid !== v.uuid) return;
+
+                if (res.ok) {
+                    const data = await res.json(); // { liked, likesCount? }
+                    if (typeof data.likesCount === 'number') {
+                        v.likesCount = data.likesCount;
+                    }
+                    updateLikeButtonWithCount(v.likesCount, !!data.liked);
+                } else if (res.status === 401 || res.status === 403) {
+                    updateLikeButtonWithCount(v.likesCount, false);
+                } else {
+                    throw new Error(await readApiError(res));
+                }
+            } catch (e) {
+                console.error('like status error', e);
+            }
+        } else {
+            updateLikeButtonWithCount(baseLikes, false);
+            if (btnReportVideo) btnReportVideo.style.display = 'none';
+        }
+
+        // --- просмотры ---
+        try {
+            const resViews = await fetch(apiBase + '/api/videos/' + v.uuid + '/view', {
+                method: 'POST', // если у тебя инкремент через POST
+                headers: authHeaders()
+            });
+
+            if (currentVideoUuid !== v.uuid) return;
+
+            if (resViews.ok) {
+                const data = await resViews.json(); // { count }
+                if (typeof data.count === 'number') {
+                    v.viewsCount = data.count;
+                    updateViews(v.viewsCount);
+                }
+            } else {
+                console.warn('view status HTTP ' + resViews.status);
+            }
+        } catch (e) {
+            console.error('view status error', e);
+        }
+
+        // комментарии для текущего видео
+        loadComments(v.uuid);
+    }
+
+    async function sendViewForVideo(v) {
+        // чтобы не ддосить, можно отметить, что уже отправляли для этого видео в этой сессии
+        if (v._viewSent) return;
+        v._viewSent = true;
+
+        try {
+            const res = await fetch(apiBase + '/api/videos/' + v.uuid + '/view', {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (res.ok) {
+                const data = await res.json(); // { count }
+                v.viewsCount = data.count;
+                // если сейчас всё ещё этот ролик — обновим UI, если ты где-то выводишь просмотры
+                // updateViewsBadge(v.viewsCount);
+            }
+        } catch (e) {
+            console.error('sendView error', e);
+        }
+    }
+
+
+    function createThumbCard(v) {
+        const card = document.createElement('div');
+        card.className = 'thumb-card';
+
+        const img = document.createElement('img');
+        img.src = v.thumbnailUrl;
+        img.alt = v.name || '';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'thumb-card-overlay';
+
+        const likes = v.likesCount ?? 0;
+        const views = v.viewsCount ?? 0;
+
+        overlay.textContent = `♥ ${likes} · 👁 ${views}`;
+        overlay.title = `Загружено: ${formatDate(v.uploadedAt)}`;
+
+        card.appendChild(img);
+        card.appendChild(overlay);
+
+        return card;
+    }
+
+    async function loadComments(videoUuid) {
+        setStatusComments('Загрузка комментариев…', '');
+        commentsListEl.innerHTML = '';
+
+        commentsPaging.set(videoUuid, {page: 0, size: 20, last: false, loading: false});
+        updateCommentsLoadMore(videoUuid);
+
+        // если уже в кэше — сначала покажем его, а потом тихо обновим
+        if (commentsCache.has(videoUuid)) {
+            renderComments(videoUuid, commentsCache.get(videoUuid));
+        }
+
+        await fetchCommentsPage(videoUuid, true);
+    }
+
+    async function fetchCommentsPage(videoUuid, replace = false) {
+        const state = commentsPaging.get(videoUuid) || {page: 0, size: 20, last: false, loading: false};
+        if (state.loading || state.last) {
+            updateCommentsLoadMore(videoUuid);
+            return;
+        }
+        state.loading = true;
+        commentsPaging.set(videoUuid, state);
+        setStatusComments('Загрузка комментариев…', '');
+
+        try {
+            const url = apiBase + `/api/videos/${videoUuid}/comments?page=${state.page}&size=${state.size}`;
+            const res = await fetch(url, { headers: authHeaders() });
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const data = await res.json(); // Page<CommentDto> | List<CommentDto>
+            const pageTotal = typeof data.totalElements === 'number' ? data.totalElements : null;
+            const items = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+
+            if (replace) {
+                commentsCache.set(videoUuid, items);
+                renderComments(videoUuid, items, false);
+            } else {
+                const merged = (commentsCache.get(videoUuid) || []).concat(items);
+                commentsCache.set(videoUuid, merged);
+                renderComments(videoUuid, items, true);
+            }
+
+            const totalCount = pageTotal != null ? pageTotal : (commentsCache.get(videoUuid)?.length || 0);
+            updateCommentsCountForVideo(videoUuid, totalCount);
+
+            const isLast = (data && typeof data.last === 'boolean')
+                ? data.last
+                : (items.length < state.size);
+
+            commentsPaging.set(videoUuid, {
+                page: state.page + 1,
+                size: state.size,
+                last: isLast,
+                loading: false
+            });
+            updateCommentsLoadMore(videoUuid);
+            setStatusComments('', '');
+        } catch (e) {
+            console.error(e);
+            setStatusComments('Ошибка загрузки комментариев: ' + e.message, 'error');
+        } finally {
+            const updated = commentsPaging.get(videoUuid) || state;
+            updated.loading = false;
+            commentsPaging.set(videoUuid, updated);
+            updateCommentsLoadMore(videoUuid);
+        }
+    }
+
+    function renderComments(videoUuid, list, append = false) {
+        if (!append) {
+            commentsListEl.innerHTML = '';
+        }
+
+        if (!list || list.length === 0) {
+            if (!append) {
+                commentsListEl.innerHTML = '<div class="studio-row-meta">Комментариев пока нет</div>';
+                if (currentVideoUuid === videoUuid) {
+                    renderCommentsCount(0);
+                }
+            }
+            return;
+        }
+
+        list.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'comment-row';
+
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'comment-avatar';
+
+            if (c.authorAvatarUrl) {
+                const img = document.createElement('img');
+                img.src = c.authorAvatarUrl;
+                img.alt = c.authorName || 'Автор';
+                avatarDiv.appendChild(img);
+            }
+
+            if (c.authorId) {
+                avatarDiv.addEventListener('click', () => {
+                    openProfilePage(c.authorId);
+                });
+            }
+
+            const bodyDiv = document.createElement('div');
+            bodyDiv.className = 'comment-body';
+
+            const header = document.createElement('div');
+
+            const authorSpan = document.createElement('span');
+            authorSpan.className = 'comment-author';
+            authorSpan.textContent = c.authorName || 'Аноним';
+
+            if (c.authorId) {
+                authorSpan.addEventListener('click', () => {
+                    openProfilePage(c.authorId);
+                });
+            }
+
+            const metaSpan = document.createElement('span');
+            metaSpan.className = 'comment-meta';
+            metaSpan.textContent = formatDate(c.createdAt);
+
+            header.appendChild(authorSpan);
+            header.appendChild(metaSpan);
+
+            const canDelete =
+                c.mine ||
+                (authUser && (authUser.roles || []).some(r => r === 'ADMIN' || r === 'MODERATOR'));
+
+            if (canDelete) {
+                const delSpan = document.createElement('span');
+                delSpan.className = 'comment-delete';
+                delSpan.textContent = 'удалить';
+                delSpan.addEventListener('click', () => deleteComment(videoUuid, c.id));
+                header.appendChild(delSpan);
+            }
+
+            if (authUser && !c.mine) {
+                const complainSpan = document.createElement('span');
+                complainSpan.className = 'comment-delete';
+                complainSpan.textContent = 'пожаловаться';
+                complainSpan.addEventListener('click', () => complainComment(videoUuid, c.id));
+                header.appendChild(complainSpan);
+            }
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'comment-text';
+            textDiv.textContent = c.text;
+
+            bodyDiv.appendChild(header);
+            bodyDiv.appendChild(textDiv);
+
+            row.appendChild(avatarDiv);
+            row.appendChild(bodyDiv);
+
+            commentsListEl.appendChild(row);
+        });
+    }
+
+    async function complainComment(videoUuid, commentId) {
+        if (!authToken) {
+            setStatusComments('Войдите, чтобы отправить жалобу', 'error');
+            activateTab('auth');
+            return;
+        }
+        const reason = (prompt('Опишите причину жалобы') || '').trim();
+        if (!reason) return;
+
+        try {
+            const res = await fetch(apiBase + `/api/moderation/complaints/videos/${videoUuid}/comments/${commentId}`, {
+                method: 'POST',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason })
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusComments('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            setStatusComments('Жалоба отправлена', 'ok');
+        } catch (e) {
+            console.error('complainComment error', e);
+            setStatusComments('Ошибка отправки жалобы: ' + e.message, 'error');
+        }
+    }
+
+    if (btnCommentsMore) {
+        btnCommentsMore.addEventListener('click', () => {
+            if (currentVideoUuid) {
+                fetchCommentsPage(currentVideoUuid, false);
+            }
+        });
+    }
+
+    btnSendComment.addEventListener('click', async () => {
+        if (!authToken) {
+            setStatusComments('Войдите, чтобы комментировать', 'error');
+            activateTab('auth');
+            return;
+        }
+
+        if (currentIndex < 0 || currentIndex >= videos.length) {
+            return;
+        }
+
+        const v = videos[currentIndex];
+
+        const text = commentInputEl.value.trim();
+        if (!text) {
+            setStatusComments('Введите текст комментария', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(apiBase + '/api/videos/' + v.uuid + '/comments', {
+                method: 'POST',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text })
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusComments('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const newComment = await res.json(); // CommentDto
+            commentInputEl.value = '';
+
+            // обновляем кэш и рендер
+            const list = commentsCache.get(v.uuid) || [];
+            list.push(newComment);
+            commentsCache.set(v.uuid, list);
+            renderComments(v.uuid, [newComment], true);
+            adjustCommentsCount(v.uuid, 1);
+            setStatusComments('Комментарий отправлен', 'ok');
+        } catch (e) {
+            console.error(e);
+            setStatusComments('Ошибка отправки: ' + e.message, 'error');
+        }
+    });
+
+    async function deleteComment(videoUuid, commentId) {
+        if (!authToken) {
+            setStatusComments('Войдите, чтобы удалять комментарии', 'error');
+            activateTab('auth');
+            return;
+        }
+
+        if (!confirm('Удалить комментарий?')) return;
+
+        try {
+            const res = await fetch(apiBase + `/api/videos/${videoUuid}/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusComments('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok && res.status !== 204) throw new Error(await readApiError(res));
+
+            const list = (commentsCache.get(videoUuid) || []).filter(c => c.id !== commentId);
+            commentsCache.set(videoUuid, list);
+            renderComments(videoUuid, list);
+            adjustCommentsCount(videoUuid, -1);
+            setStatusComments('Комментарий удалён', 'ok');
+        } catch (e) {
+            console.error(e);
+            setStatusComments('Ошибка удаления: ' + e.message, 'error');
+        }
+    }
+
+    async function loadVideoPage(page = 0, append = false, allowRetry = true) {
+        if (feedLoading) return;
+        feedLoading = true;
+        showFeedLoader(true, 'Загружаем видео…');
+
+        try {
+            let url;
+            let res;
+            const isProfileFeed = feedMode.type === 'profile' && feedMode.userId;
+
+            if (isProfileFeed) {
+                const sort = encodeURIComponent(feedMode.sort || 'uploadedAt,desc');
+                url = apiBase + `/api/users/${feedMode.userId}/videos?page=${page}&size=${FEED_PAGE_SIZE}&sort=${sort}`;
+                res = await fetch(url, { headers: authHeaders() });
+            } else {
+                if (!append || !feedSessionId) {
+                    feedSessionId = null;
+                    feedHasPrev = false;
+                    feedHasNext = false;
+                    feedEndReached = false;
+                    feedTotal = null;
+                    url = apiBase + `/api/streaming/video/feed/session/start?count=${FEED_PAGE_SIZE}`;
+                    res = await fetch(url, { method: 'POST', headers: feedHeaders() });
+                } else {
+                    url = apiBase + `/api/streaming/video/feed/session/${encodeURIComponent(feedSessionId)}/next?count=${FEED_PAGE_SIZE}`;
+                    res = await fetch(url, { headers: feedHeaders() });
+                }
+            }
+
+            if (res.status === 401 || res.status === 403) {
+                // если токен протух/битый — очищаем и пробуем без авторизации
+                if (authToken && allowRetry) {
+                    setAuth(null, null, null, null);
+                    return await loadVideoPage(page, append, false);
+                }
+            }
+
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+
+            const data = await res.json();
+
+            // Универсальный разбор:
+            const items =
+                Array.isArray(data.items) ? data.items :           // кастомный DTO
+                    Array.isArray(data.content) ? data.content :       // Page<...>
+                        (Array.isArray(data) ? data : []);                 // просто массив
+
+            if (isProfileFeed) {
+                if (!append) {
+                    videos = items;
+                } else {
+                    videos = videos.concat(items);
+                }
+
+                // page / number
+                if (typeof data.page === 'number') {
+                    feedPage = data.page;
+                } else if (typeof data.number === 'number') {
+                    feedPage = data.number;
+                } else {
+                    feedPage = page;
+                }
+
+                // hasNext / last / по размеру страницы
+                if (typeof data.hasNext === 'boolean') {
+                    feedHasNext = data.hasNext;
+                } else if (typeof data.last === 'boolean') {
+                    feedHasNext = !data.last;
+                } else {
+                    feedHasNext = items.length === FEED_PAGE_SIZE;
+                }
+
+                const total =
+                    typeof data.total === 'number' ? data.total :
+                        typeof data.totalElements === 'number' ? data.totalElements :
+                            videos.length;
+
+                countEl.textContent = total + ' видео';
+            } else {
+                if (data && data.feedId) {
+                    feedSessionId = data.feedId;
+                }
+                const total =
+                    typeof data.total === 'number' ? data.total :
+                        typeof data.totalElements === 'number' ? data.totalElements :
+                            null;
+                if (Number.isFinite(total)) {
+                    feedTotal = total;
+                }
+                const hasPrev = data && typeof data.hasPrev === 'boolean' ? data.hasPrev : false;
+                const hasNext = data && typeof data.hasNext === 'boolean'
+                    ? data.hasNext
+                    : items.length === FEED_PAGE_SIZE;
+
+                if (!append) {
+                    feedHasPrev = hasPrev;
+                    feedHasNext = hasNext;
+                    feedEndReached = !hasNext;
+                    feedPrefetch = null;
+                    videos = items;
+                } else {
+                    // глобальная лента: держим текущую страницу, следующую складываем в prefetch
+                    if (items.length > 0) {
+                        feedPrefetch = {
+                            items,
+                            hasPrev,
+                            hasNext,
+                            feedId: (data && data.feedId) ? data.feedId : feedSessionId,
+                            total: feedTotal
+                        };
+                    } else {
+                        feedPrefetch = null;
+                        feedHasNext = hasNext;
+                        feedEndReached = !hasNext;
+                    }
+                }
+                const displayTotal = Number.isFinite(feedTotal) ? feedTotal : videos.length;
+                countEl.textContent = displayTotal + ' видео';
+            }
+
+            if (!isProfileFeed && append) {
+                showFeedLoader(false);
+                return;
+            }
+
+            if (videos.length === 0) {
+                titleEl.textContent = 'Видео ещё нет';
+                setStatusFeed('Загрузите видео на вкладке "Загрузка"', 'error');
+                currentIndex = -1;
+                showFeedLoader(false);
+                return;
+            }
+
+            if (feedTargetUuid) {
+                const idx = videosGlobalIndexByUuid(feedTargetUuid);
+                if (idx !== -1) {
+                    currentIndex = idx;
+                } else if (currentIndex === -1) {
+                    currentIndex = 0;
+                }
+                feedTargetUuid = null;
+            } else if (currentIndex === -1) {
+                currentIndex = 0;
+            }
+            await playCurrent();
+            showFeedLoader(false);
+        } catch (e) {
+            console.error(e);
+            setStatusFeed('Ошибка загрузки списка видео: ' + e.message, 'error');
+            showFeedLoader(false);
+        } finally {
+            feedLoading = false;
+            if (videos.length > 0) {
+                showFeedLoader(false);
+            }
+        }
+    }
+
+    async function deleteVideo(uuid) {
+        try {
+            setStatusStudio('Удаляю видео…', 'ok');
+            const res = await fetch(apiBase + '/api/streaming/video/delete/' + uuid, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                setStatusStudio('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            setStatusStudio('Видео удалено', 'ok');
+        await loadVideoPage(0, true);
+            if (authUser) {
+                await loadAccountProfile();
+            }
+        } catch (e) {
+            console.error(e);
+            setStatusStudio('Ошибка удаления: ' + e.message, 'error');
+        }
+    }
+
+    async function openProfilePage(userId) {
+        activateTab('profile');
+        setStatusProfile('Загрузка профиля…', 'ok');
+        profileVideosEl.innerHTML = '';
+
+        // сбрасываем состояние пагинации для этого пользователя
+        const currentSort = profileVideosSortSelect && profileVideosSortSelect.value
+            ? profileVideosSortSelect.value
+            : profileVideosPaging.sort || 'uploadedAt,desc';
+        profileVideosPaging = {
+            userId,
+            page: 0,
+            size: 12,      // первая страница профиля – 12 превью
+            last: false,
+            loading: false,
+            sort: currentSort
+        };
+        if (profileVideosSortSelect) {
+            profileVideosSortSelect.value = currentSort;
+        }
+
+        try {
+            const [userRes, videosRes] = await Promise.all([
+                fetch(apiBase + '/api/users/' + userId + '/profile', {
+                    headers: authHeaders()
+                }),
+                fetch(apiBase + `/api/users/${userId}/videos?page=0&size=${profileVideosPaging.size}&sort=${encodeURIComponent(profileVideosPaging.sort)}`, {
+                    headers: authHeaders()
+                })
+            ]);
+
+            if (!userRes.ok) throw new Error(await readApiError(userRes));
+            if (!videosRes.ok) throw new Error(await readApiError(videosRes));
+
+            const profile = await userRes.json();
+            const vidsPage = await videosRes.json();
+            const vids = Array.isArray(vidsPage.content) ? vidsPage.content : vidsPage;
+            const totalVideos = typeof vidsPage.totalElements === 'number'
+                ? vidsPage.totalElements
+                : vids.length;
+
+            profileCurrentInfo = {
+                id: userId,
+                displayName: profile.displayName || profile.username,
+                username: profile.username,
+                avatarUrl: profile.avatarUrl || null
+            };
+
+            // шапка профиля
+            profileDisplayNameEl.textContent = profile.displayName || profile.username;
+            profileUsernameEl.textContent = '@' + profile.username;
+            profileAvatarEl.innerHTML = profile.avatarUrl
+                ? `<img src="${profile.avatarUrl}" alt="">`
+                : '';
+
+            // статистика чужого профиля
+            if (profileStatsEl) {
+                const followers = profile.followersCount ?? 0;
+                const following = profile.followingCount ?? 0;
+                profileStatsEl.textContent =
+                    `${totalVideos} видео · ${followers} подписчиков · ${following} подписок`;
+            }
+
+            // кнопка подписки (как у тебя было)
+            if (!authUser || authUser.userId === userId) {
+                btnProfileFollow.style.display = 'none';
+            } else {
+                btnProfileFollow.style.display = '';
+                btnProfileFollow.dataset.userId = String(userId);
+                btnProfileFollow.dataset.following = profile.following ? 'true' : 'false';
+                btnProfileFollow.textContent = profile.following ? 'Отписаться' : 'Подписаться';
+            }
+
+            // первая порция видео
+            renderProfileVideos(vids);
+
+            // настраиваем состояние пагинации
+            const pageNumber = typeof vidsPage.number === 'number' ? vidsPage.number : 0;
+            profileVideosPaging.page = pageNumber + 1;  // следующая страница
+            profileVideosPaging.last = !!vidsPage.last;
+
+            setStatusProfile('', '');
+        } catch (e) {
+            console.error(e);
+            setStatusProfile('Ошибка загрузки профиля: ' + e.message, 'error');
+        }
+    }
+
+    btnProfileFollow.addEventListener('click', async () => {
+        if (!authToken) {
+            setStatusProfile('Войдите, чтобы подписываться', 'error');
+            activateTab('auth');
+            return;
+        }
+
+        const userIdStr = btnProfileFollow.dataset.userId;
+        if (!userIdStr) return;
+        const userId = Number(userIdStr);
+
+        const following = btnProfileFollow.dataset.following === 'true';
+        const method = following ? 'DELETE' : 'POST';
+
+        try {
+            const res = await fetch(apiBase + `/api/users/${userId}/follow`, {
+                method,
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusProfile('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            // Предположим, что бэкенд возвращает обновлённый PublicUserProfileDto
+            const updated = await res.json();
+
+            const followers = updated.followersCount ?? 0;
+            const followingCount = updated.followingCount ?? 0;
+
+            if (profileStatsEl) {
+                // totalVideos оставляем как было, но если backend тоже его возвращает — можешь взять оттуда
+                const stats = profileStatsEl.textContent || '';
+                const videosPrefix = stats.split(' · ')[0] || '';
+                profileStatsEl.textContent =
+                    `${videosPrefix || '— видео'} · ${followers} подписчиков · ${followingCount} подписок`;
+            }
+
+            btnProfileFollow.dataset.following = updated.following ? 'true' : 'false';
+            btnProfileFollow.textContent = updated.following ? 'Отписаться' : 'Подписаться';
+        } catch (e) {
+            console.error(e);
+            setStatusProfile('Ошибка изменения подписки: ' + e.message, 'error');
+        }
+    });
+
+
+    function setupFollowButton(profile) {
+        if (!authUser || !authToken || authUser.userId === profile.id) {
+            profileFollowBtn.style.display = 'none';
+            profileFollowBtn.onclick = null;
+            return;
+        }
+
+        profileFollowBtn.style.display = '';
+        updateFollowButtonAppearance(profile.following);
+
+        profileFollowBtn.onclick = async () => {
+            try {
+                const method = profile.following ? 'DELETE' : 'POST';
+                const res = await fetch(apiBase + `/api/users/${profile.id}/follow`, {
+                    method,
+                    headers: authHeaders()
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    setStatusProfile('Сессия истекла, войдите снова', 'error');
+                    activateTab('auth');
+                    return;
+                }
+
+                if (!res.ok) throw new Error(await readApiError(res));
+
+                // поменяли состояние локально
+                profile.following = !profile.following;
+                updateFollowButtonAppearance(profile.following);
+
+                // опционально — дёрнуть профиль ещё раз, чтобы обновить счётчики
+                // const refreshed = await (await fetch(apiBase + `/api/users/${profile.id}/profile`, { headers: authHeaders() })).json();
+                // profileFollowStatsEl.textContent =
+                //   `Подписчики: ${refreshed.followersCount ?? 0} · Подписки: ${refreshed.followingCount ?? 0}`;
+            } catch (e) {
+                console.error(e);
+                setStatusProfile('Ошибка подписки: ' + e.message, 'error');
+            }
+        };
+    }
+
+    function updateFollowButtonAppearance(following) {
+        if (following) {
+            profileFollowBtn.textContent = 'Вы подписаны';
+            profileFollowBtn.classList.remove('secondary');
+            profileFollowBtn.classList.add('danger'); // визуально «отписаться»
+        } else {
+            profileFollowBtn.textContent = 'Подписаться';
+            profileFollowBtn.classList.add('secondary');
+            profileFollowBtn.classList.remove('danger');
+        }
+    }
+
+
+    async function loadMoreProfileVideos(reset = false) {
+        const state = profileVideosPaging;
+        if (!state.userId || state.loading) return;
+        if (state.last && !reset) return;
+
+        if (reset) {
+            state.page = 0;
+            state.last = false;
+            profileVideosEl.innerHTML = '';
+        }
+
+        state.loading = true;
+        setStatusProfile('Загрузка видео…', 'ok');
+
+        try {
+            const sort = encodeURIComponent(state.sort || 'uploadedAt,desc');
+            const url = apiBase + `/api/users/${state.userId}/videos?page=${state.page}&size=${state.size}&sort=${sort}`;
+            const res = await fetch(url, { headers: authHeaders() });
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const page = await res.json(); // Page<PublicUserVideoDto>
+            const vids = page.content || [];
+
+            if (state.page === 0 && vids.length === 0) {
+                profileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
+                state.last = true;
+                setStatusProfile('', '');
+                return;
+            }
+
+            appendProfileVideos(vids);
+
+            const pageNumber = typeof page.number === 'number' ? page.number : state.page;
+            state.page = pageNumber + 1;
+            state.last = page.last === true;
+
+            setStatusProfile('', '');
+        } catch (e) {
+            console.error('loadMoreProfileVideos error', e);
+            setStatusProfile('Ошибка загрузки видео: ' + e.message, 'error');
+        } finally {
+            profileVideosPaging.loading = false;
+        }
+    }
+
+    function appendProfileVideos(videosChunk) {
+        if (!videosChunk || videosChunk.length === 0) return;
+
+        videosChunk.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'thumb-card';
+
+            const img = document.createElement('img');
+            img.src = v.thumbnailUrl;
+            img.alt = v.name || '';
+
+            const overlay = document.createElement('div');
+            overlay.className = 'thumb-card-overlay';
+            overlay.textContent = formatDate(v.uploadedAt);
+
+            const likesVal = (typeof v.likesCount === 'number')
+                ? v.likesCount
+                : (typeof v.likes === 'number' ? v.likes : 0);
+
+            const viewsVal = (typeof v.viewsCount === 'number')
+                ? v.viewsCount
+                : (typeof v.views === 'number' ? v.views : 0);
+
+            const meta = document.createElement('div');
+            meta.className = 'thumb-card-meta';
+            meta.textContent = `likes ${likesVal} · views ${viewsVal}`;
+
+            card.appendChild(img);
+            card.appendChild(overlay);
+            card.appendChild(meta);
+
+            card.addEventListener('click', () => {
+                switchFeedToProfile(profileVideosPaging.userId, profileVideosPaging.sort, v.uuid);
+                activateTab('feed');
+            });
+
+            profileVideosEl.appendChild(card);
+        });
+    }
+
+    function reloadProfileVideos() {
+        if (!profileVideosPaging.userId) return;
+        loadMoreProfileVideos(true);
+    }
+
+    function reloadAuthVideos() {
+        if (!authUser) return;
+        loadMoreAuthProfileVideos(true);
+    }
+
+    function switchFeedToProfile(userId, sort, targetUuid) {
+        feedMode = { type: 'profile', userId, sort: sort || 'uploadedAt,desc' };
+        feedPage = 0;
+        feedHasNext = false;
+        feedHasPrev = false;
+        videos = [];
+        currentIndex = -1;
+        feedTargetUuid = targetUuid || null;
+        feedSessionId = null;
+        feedEndReached = false;
+        feedTotal = null;
+        feedPrefetch = null;
+        loadVideoPage(0, false);
+    }
+
+    function renderProfileVideos(videos) {
+        profileVideosEl.innerHTML = '';
+        if (!videos || videos.length === 0) {
+            profileVideosEl.innerHTML = '<div class="studio-row-meta">Видео пока нет</div>';
+            return;
+        }
+
+        videos.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'thumb-card';
+
+            const img = document.createElement('img');
+            img.src = v.thumbnailUrl;
+            img.alt = v.name || '';
+
+            const overlayDate = document.createElement('div');
+            overlayDate.className = 'thumb-card-overlay';
+            overlayDate.textContent = formatDate(v.uploadedAt);
+
+            const likesVal = (typeof v.likesCount === 'number')
+                ? v.likesCount
+                : (typeof v.likes === 'number' ? v.likes : null);
+
+            const viewsVal = (typeof v.viewsCount === 'number')
+                ? v.viewsCount
+                : (typeof v.views === 'number' ? v.views : null);
+
+            if (likesVal != null || viewsVal != null) {
+                const meta = document.createElement('div');
+                meta.className = 'thumb-card-meta';
+
+                const parts = [];
+                if (viewsVal != null) parts.push('views ' + viewsVal);
+                if (likesVal != null) parts.push('likes ' + likesVal);
+
+                meta.textContent = parts.join(' · ');
+                card.appendChild(meta);
+            }
+
+            card.appendChild(img);
+            card.appendChild(overlayDate);
+
+            card.addEventListener('click', () => {
+                // открыть в ленте
+                activateTab('feed');
+                const globalIndex = videosGlobalIndexByUuid(v.uuid);
+                if (globalIndex !== -1) {
+                    playByIndex(globalIndex);
+                }
+            });
+
+            profileVideosEl.appendChild(card);
+        });
+    }
+
+
+    function videosGlobalIndexByUuid(uuid) {
+        return videos.findIndex(v => v.uuid === uuid);
+    }
+
+    function activateTab(tab) {
+        [tabFeed, tabUpload, tabModeration, tabAuth, tabSearch].forEach(btn => btn && btn.classList.remove('active'));
+        [pageFeed, pageUpload, pageModeration, pageAuth, pageProfile, pageSearch].forEach(p => p && p.classList.remove('active'));
+
+        if (tab === 'feed') {
+            tabFeed.classList.add('active');
+            pageFeed.classList.add('active');
+        } else if (tab === 'profile') {
+            pageProfile.classList.add('active');
+        } else if (tab === 'search') {
+            tabSearch.classList.add('active');
+            pageSearch.classList.add('active');
+        } else if (tab === 'upload') {
+            tabUpload.classList.add('active');
+            pageUpload.classList.add('active');
+        } else if (tab === 'moderation') {
+            tabModeration.classList.add('active');
+            pageModeration.classList.add('active');
+        } else {
+            tabAuth.classList.add('active');
+            pageAuth.classList.add('active');
+        }
+
+        if (tab === 'auth') {
+            setStatusAuth('');
+        }
+    }
+
+    async function loadModerationUsers() {
+        if (!authToken || !isModerator()) {
+            modUsersListEl.innerHTML = '<div class="studio-row-meta">Нет прав для модерации</div>';
+            return;
+        }
+
+        try {
+            const res = await fetch(apiBase + '/api/moderation/users', {
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            modUsers = await res.json(); // массив UserSummaryDto
+            modUsersCountEl.textContent = modUsers.length + ' пользователей';
+        renderModerationUsers();
+        await loadComplaints();
+    } catch (e) {
+        console.error(e);
+        setStatusModeration('Ошибка загрузки пользователей: ' + e.message, 'error');
+        }
+    }
+
+    function renderModerationUsers() {
+        modUsersListEl.innerHTML = '';
+        modUserDetailsEl.innerHTML = '<div class="studio-row-meta">Выберите пользователя</div>';
+        modUserVideosEl.innerHTML = '<div class="studio-row-meta">Видео пользователя будут здесь</div>';
+        if (modComplaintsEl) {
+            modComplaintsEl.innerHTML = '<div class="studio-row-meta">Загрузите жалобы</div>';
+        }
+
+        if (!modUsers || modUsers.length === 0) {
+            modUsersListEl.innerHTML = '<div class="studio-row-meta">Пользователи не найдены</div>';
+            return;
+        }
+
+        modUsers.forEach(u => {
+            const row = document.createElement('div');
+            row.className = 'studio-row';
+
+            const header = document.createElement('div');
+            header.className = 'studio-row-header';
+
+            const title = document.createElement('div');
+            title.className = 'studio-row-title';
+            title.textContent = `${u.username} (${u.displayName})`;
+
+            const btns = document.createElement('div');
+
+            const detailsBtn = document.createElement('button');
+            detailsBtn.className = 'small secondary';
+            detailsBtn.textContent = 'Детали';
+            detailsBtn.addEventListener('click', () => loadUserDetails(u.id));
+
+            const videosBtn = document.createElement('button');
+            videosBtn.className = 'small secondary';
+            videosBtn.textContent = 'Видео';
+            videosBtn.addEventListener('click', () => loadUserVideos(u.id));
+
+            const banBtn = document.createElement('button');
+            banBtn.className = 'small danger';
+            banBtn.textContent = u.enabled ? 'Забанить' : 'Разбанить';
+            banBtn.addEventListener('click', () => toggleBanUser(u));
+
+            btns.appendChild(detailsBtn);
+            btns.appendChild(videosBtn);
+            btns.appendChild(banBtn);
+
+            header.appendChild(title);
+            header.appendChild(btns);
+
+            const meta = document.createElement('div');
+            meta.className = 'studio-row-meta';
+            meta.textContent = `ID: ${u.id} · Email: ${u.email} · Роли: ${Array.isArray(u.roles) ? u.roles.join(', ') : '—'} · Статус: ${u.enabled ? 'активен' : 'забанен'}`;
+
+            row.appendChild(header);
+            row.appendChild(meta);
+            modUsersListEl.appendChild(row);
+        });
+    }
+
+    async function loadUserDetails(userId) {
+        if (!authToken || !isModerator()) return;
+
+        try {
+            const res = await fetch(apiBase + '/api/moderation/users/' + userId, {
+                headers: authHeaders()
+            });
+
+            if (res.status === 404) {
+                modUserDetailsEl.innerHTML = '<div class="studio-row-meta">Пользователь не найден</div>';
+                return;
+            }
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const u = await res.json(); // UserDetailDto
+            modSelectedUserId = u.id;
+            renderUserDetails(u);
+        } catch (e) {
+            console.error(e);
+            setStatusModeration('Ошибка загрузки деталей: ' + e.message, 'error');
+        }
+    }
+
+    function renderUserDetails(u) {
+        modUserDetailsEl.innerHTML = '';
+
+        const row = document.createElement('div');
+        row.className = 'job-row';
+
+        const header = document.createElement('div');
+        header.className = 'job-row-header';
+
+        const left = document.createElement('div');
+        left.textContent = `${u.username} (${u.displayName})`;
+
+        const right = document.createElement('div');
+        right.textContent = `ID: ${u.id}`;
+
+        header.appendChild(left);
+        header.appendChild(right);
+
+        const info = document.createElement('div');
+        info.textContent = `Email: ${u.email} · Статус: ${u.enabled ? 'активен' : 'забанен'}`;
+
+        const rolesDiv = document.createElement('div');
+        rolesDiv.style.marginTop = '4px';
+
+        const rolesText = document.createElement('div');
+        rolesText.textContent = 'Роли: ' + (Array.isArray(u.roles) ? u.roles.join(', ') : '—');
+        rolesDiv.appendChild(rolesText);
+
+        if (isAdmin()) {
+            const editor = document.createElement('div');
+            editor.style.marginTop = '4px';
+
+            const allRoles = ['USER', 'MODERATOR', 'ADMIN'];
+            const current = new Set(u.roles || []);
+
+            allRoles.forEach(r => {
+                const label = document.createElement('label');
+                label.style.fontSize = '11px';
+                label.style.marginRight = '8px';
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = r;
+                cb.checked = current.has(r);
+                cb.style.marginRight = '3px';
+
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(r));
+                editor.appendChild(label);
+            });
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'small';
+            saveBtn.textContent = 'Сохранить роли';
+            saveBtn.style.marginTop = '4px';
+
+            saveBtn.addEventListener('click', async () => {
+                const checkboxes = editor.querySelectorAll('input[type="checkbox"]');
+                const roles = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked) roles.push(cb.value);
+                });
+                await saveUserRoles(u.id, roles);
+            });
+
+            rolesDiv.appendChild(editor);
+            rolesDiv.appendChild(saveBtn);
+        }
+
+        row.appendChild(header);
+        row.appendChild(info);
+        row.appendChild(rolesDiv);
+
+        modUserDetailsEl.appendChild(row);
+    }
+
+    async function loadUserVideos(userId) {
+        if (!authToken || !isModerator()) return;
+
+        try {
+            const res = await fetch(apiBase + '/api/moderation/users/' + userId + '/videos', {
+                headers: authHeaders()
+            });
+
+            if (res.status === 404) {
+                modUserVideosEl.innerHTML = '<div class="studio-row-meta">Пользователь не найден</div>';
+                return;
+            }
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            const videosList = await res.json(); // List<UserVideoDto>
+            renderUserVideos(videosList);
+        } catch (e) {
+            console.error(e);
+            setStatusModeration('Ошибка загрузки видео пользователя: ' + e.message, 'error');
+        }
+    }
+
+    function renderUserVideos(videosList) {
+        modUserVideosEl.innerHTML = '';
+
+        if (!videosList || videosList.length === 0) {
+            modUserVideosEl.innerHTML = '<div class="studio-row-meta">Видео не найдено</div>';
+            return;
+        }
+
+        videosList.forEach(v => {
+            const row = document.createElement('div');
+            row.className = 'job-row';
+
+            const header = document.createElement('div');
+            header.className = 'job-row-header';
+
+            const left = document.createElement('div');
+            left.textContent = v.name || '(без названия)';
+
+            const right = document.createElement('div');
+            right.textContent = `UUID: ${v.uuid}`;
+
+            header.appendChild(left);
+            header.appendChild(right);
+
+            const meta = document.createElement('div');
+            meta.textContent = `${humanSize(v.contentSize)} · ${v.contentType || ''} · ${v.uploadedAt || ''}`;
+
+            row.appendChild(header);
+            row.appendChild(meta);
+
+            modUserVideosEl.appendChild(row);
+        });
+    }
+
+    async function toggleBanUser(user) {
+        if (!authToken || !isModerator()) return;
+
+        const action = user.enabled ? 'ban' : 'unban';
+        const url = apiBase + `/api/moderation/users/${user.id}/${action}`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            setStatusModeration(user.enabled ? 'Пользователь забанен' : 'Пользователь разбанен', 'ok');
+            await loadModerationUsers();
+            if (modSelectedUserId === user.id) {
+                loadUserDetails(user.id);
+            }
+        } catch (e) {
+            console.error(e);
+            setStatusModeration('Ошибка изменения статуса: ' + e.message, 'error');
+        }
+    }
+
+    async function saveUserRoles(userId, roles) {
+        if (!authToken || !isAdmin()) return;
+
+        try {
+            const res = await fetch(apiBase + '/api/admin/users/' + userId + '/roles', {
+                method: 'POST',
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({roles})
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusModeration('Сессия истекла, войдите снова', 'error');
+                activateTab('auth');
+                return;
+            }
+
+            if (!res.ok) throw new Error(await readApiError(res));
+
+            setStatusModeration('Роли обновлены', 'ok');
+
+            await loadModerationUsers();
+            if (modSelectedUserId === userId) {
+                loadUserDetails(userId);
+            }
+        } catch (e) {
+            console.error(e);
+            setStatusModeration('Ошибка сохранения ролей: ' + e.message, 'error');
+        }
+    }
+
+    tabModeration.addEventListener('click', () => {
+        if (!authToken || !isModerator()) {
+            setStatusModeration('Недостаточно прав для модерации', 'error');
+            activateTab('auth');
+            return;
+        }
+        setStatusModeration('');
+        activateTab('moderation');
+        loadModerationUsers();
+    });
+
+    tabFeed.addEventListener('click', () => activateTab('feed'));
+
+    tabUpload.addEventListener('click', () => {
+        if (!authToken) {
+            setStatusUpload('Войдите, чтобы загружать видео', 'error');
+            activateTab('auth');
+            return;
+        }
+        setStatusUpload('');
+        activateTab('upload');
+    });
+
+    tabSearch.addEventListener('click', () => {
+        activateTab('search');
+    });
+
+    tabAuth.addEventListener('click', () => activateTab('auth'));
+
+    // Загрузка с XHR + jobId + ffmpeg-прогресс
+    btnUpload.addEventListener('click', () => {
+        if (!authToken) {
+            setStatusUpload('Войдите, чтобы загружать видео', 'error');
+            activateTab('auth');
+            return;
+        }
+
+        const file = uploadFileInput.files[0];
+        const title = uploadTitleInput.value.trim();
+        const description = uploadDescriptionInput.value.trim();
+
+        if (!file) {
+            setStatusUpload('Выберите файл видео', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('video', file);
+        formData.append('videoName', title || file.name);
+        if (description) {
+            formData.append('description', description);
+        }
+
+        uploadProgressEl.style.display = 'block';
+        uploadProgressEl.value = 0;
+        setStatusUpload('Начинаю загрузку…', 'ok');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', apiBase + '/api/streaming/video/upload', true);
+
+        if (authToken) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + authToken);
+        }
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                uploadProgressEl.value = percent;
+                setStatusUpload(`Загружаю файл… ${percent}%`, 'ok');
+            }
+        };
+
+        xhr.upload.onload = () => {
+            setStatusUpload('Файл загружен, идёт обработка…', 'ok');
+            uploadProgressEl.value = 100;
+        };
+
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    let resp = null;
+                    try {
+                        resp = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        console.warn('Не удалось распарсить ответ upload', e);
+                    }
+                    if (!resp || !resp.jobId) {
+                        setStatusUpload('Сервер не вернул jobId', 'error');
+                        return;
+                    }
+
+                    const jobId = resp.jobId;
+                    const jobLabel = title || file.name;
+                    setStatusUpload('Идёт обработка видео…', 'ok');
+                    trackJob(jobId, jobLabel);
+
+                    // теперь студия внутри аккаунта
+                    activateTab('auth');
+                } else if (xhr.status === 401 || xhr.status === 403) {
+                    setStatusUpload('Сессия истекла, войдите снова', 'error');
+                    activateTab('auth');
+                } else {
+                    const msg = readXhrError(xhr);
+                    setStatusUpload(`Ошибка загрузки: ${msg}`, 'error');
+                }
+            }
+        };
+
+        xhr.onerror = () => {
+            setStatusUpload('Сетевая ошибка при загрузке', 'error');
+        };
+
+        xhr.send(formData);
+    });
+
+    function trackJob(jobId, fileName, initialStatus) {
+        if (activeJobs.has(jobId)) return;
+
+        const job = {
+            jobId,
+            fileName,
+            lastStatus: initialStatus || null,
+            intervalId: null
+        };
+        activeJobs.set(jobId, job);
+        renderStudioJobs();
+
+        const intervalId = setInterval(async () => {
+            try {
+                const res = await fetch(apiBase + '/api/streaming/video/upload/status/' + jobId, {
+                    headers: authHeaders()
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    setStatusUpload('Сессия истекла, войдите снова', 'error');
+                    activateTab('auth');
+                    clearInterval(job.intervalId);
+                    activeJobs.delete(jobId);
+                    renderStudioJobs();
+                    return;
+                }
+
+                if (!res.ok) {
+                    throw new Error(await readApiError(res));
+                }
+                const st = await res.json(); // { stage, percent, message }
+
+                job.lastStatus = st;
+                renderStudioJobs();
+
+                if (st.stage === 'DONE') {
+                    clearInterval(job.intervalId);
+                    activeJobs.delete(jobId);
+                    renderStudioJobs();
+                    setStatusUpload('Видео готово!', 'ok');
+        await loadVideoPage(0, true);
+                    if (authUser) {
+                        await loadAccountProfile();
+                    }
+                }
+                if (st.stage === 'ERROR') {
+                    clearInterval(job.intervalId);
+                    activeJobs.delete(jobId);
+                    renderStudioJobs();
+                    setStatusUpload(st.message || 'Ошибка обработки', 'error');
+                }
+            } catch (e) {
+                console.error('Status polling error:', e);
+                setStatusUpload('Ошибка запроса статуса: ' + e.message, 'error');
+            }
+        }, 1000);
+
+        job.intervalId = intervalId;
+    }
+
+    async function loadActiveJobsFromServer() {
+        if (!authToken) {
+            studioJobsEl.innerHTML = '<div class="studio-row-meta">Войдите, чтобы видеть активные загрузки</div>';
+            return;
+        }
+
+        try {
+            const res = await fetch(apiBase + '/api/streaming/video/upload/active', {
+                headers: authHeaders()
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                studioJobsEl.innerHTML = '<div class="studio-row-meta">Сессия истекла, войдите снова</div>';
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const jobs = await res.json(); // массив UploadJobView
+
+            for (const [_, job] of activeJobs) {
+                if (job.intervalId) {
+                    clearInterval(job.intervalId);
+                }
+            }
+            activeJobs.clear();
+
+            jobs.forEach(j => {
+                const initialStatus = {
+                    stage: j.stage,
+                    percent: j.percent,
+                    message: j.message
+                };
+                trackJob(j.jobId, j.fileName || '(без названия)', initialStatus);
+            });
+
+            renderStudioJobs();
+        } catch (e) {
+            console.error('loadActiveJobsFromServer error', e);
+            setStatusStudio('Ошибка загрузки активных задач: ' + e.message, 'error');
+        }
+    }
+
+    function renderStudioJobs() {
+        studioJobsEl.innerHTML = '';
+        if (activeJobs.size === 0) {
+            studioJobsEl.innerHTML = '<div class="studio-row-meta">Нет активных загрузок</div>';
+            return;
+        }
+
+        for (const [jobId, job] of activeJobs.entries()) {
+            const st = job.lastStatus || {stage: 'UPLOADING', percent: 0, message: 'Загрузка…'};
+            const row = document.createElement('div');
+            row.className = 'job-row';
+
+            const header = document.createElement('div');
+            header.className = 'job-row-header';
+
+            const left = document.createElement('div');
+            left.textContent = job.fileName || '(без названия)';
+
+            const right = document.createElement('div');
+            right.textContent = `${st.percent ?? 0}%`;
+
+            header.appendChild(left);
+            header.appendChild(right);
+
+            const msg = document.createElement('div');
+            msg.textContent = st.message || st.stage;
+
+            const bar = document.createElement('div');
+            bar.className = 'job-progress-bar';
+            const fill = document.createElement('div');
+            fill.className = 'job-progress-fill';
+            fill.style.width = (st.percent ?? 0) + '%';
+            bar.appendChild(fill);
+
+            row.appendChild(header);
+            row.appendChild(msg);
+            row.appendChild(bar);
+
+            studioJobsEl.appendChild(row);
+        }
+    }
+
+    // auth actions
+    btnLogin.addEventListener('click', async () => {
+        const username = loginUsernameInput.value.trim();
+        const password = loginPasswordInput.value;
+
+        if (!username || !password) {
+            setStatusAuth('Введите логин и пароль', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(apiBase + '/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                setStatusAuth('Неверный логин или пароль', 'error');
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const data = await res.json(); // { token, userId, username, displayName, roles, avatarUrl }
+            setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
+            setStatusAuth('Успешный вход', 'ok');
+            setStatusUpload('');
+            setStatusStudio('');
+            setStatusFeed('');
+            await loadVideoPage(0, false);
+            await loadAccountProfile();
+            await loadActiveJobsFromServer();
+        } catch (e) {
+            console.error(e);
+            setStatusAuth('Ошибка входа: ' + e.message, 'error');
+        }
+    });
+
+    btnRegister.addEventListener('click', async () => {
+        const username = regUsernameInput.value.trim();
+        const email = regEmailInput.value.trim();
+        const displayName = regDisplayNameInput.value.trim();
+        const password = regPasswordInput.value;
+
+        if (!username || !email || !displayName || !password) {
+            setStatusAuth('Заполните все поля регистрации', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(apiBase + '/api/auth/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, email, displayName, password})
+            });
+
+            if (res.status === 409) {
+                setStatusAuth('Такой логин или email уже существует', 'error');
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const data = await res.json(); // { token, userId, username, displayName, roles, avatarUrl }
+            setAuth(data.token, data.userId, data.username, data.displayName, data.roles, data.avatarUrl);
+            setStatusAuth('Регистрация прошла успешно', 'ok');
+            setStatusUpload('');
+            setStatusStudio('');
+            setStatusFeed('');
+            await loadVideoPage(0, false);
+            await loadAccountProfile();
+            await loadActiveJobsFromServer();
+        } catch (e) {
+            console.error(e);
+            setStatusAuth('Ошибка регистрации: ' + e.message, 'error');
+        }
+    });
+
+    btnLogout.addEventListener('click', () => {
+        setAuth(null, null, null, null);
+        setStatusAuth('Вы вышли из аккаунта', 'ok');
+        clearAccountProfile();
+    });
+
+    // Кнопки ленты
+    btnNext.addEventListener('click', goNext);
+    btnPrev.addEventListener('click', goPrev);
+
+    player.addEventListener('ended', () => {
+        const duration = Math.floor(player.duration || 0);
+        if (currentVideoUuid && duration > 0) {
+            sendWatchProgress(currentVideoUuid, 100, duration, duration);
+        }
+        goNext();
+    });
+
+    player.addEventListener('error', () => {
+        setStatusFeed('Ошибка воспроизведения видео', 'error');
+    });
+
+    player.addEventListener('playing', hidePoster);
+    player.addEventListener('timeupdate', handleWatchProgress);
+
+    // Swipe вверх/вниз для переключения видео
+    if (videoWrapper) {
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let touchStartTime = 0;
+        let wheelCooldown = false;
+
+        videoWrapper.addEventListener('touchstart', (e) => {
+            if (!e.touches || e.touches.length === 0) return;
+            const t = e.touches[0];
+            touchStartY = t.clientY;
+            touchStartX = t.clientX;
+            touchStartTime = Date.now();
+        }, { passive: true });
+
+        videoWrapper.addEventListener('touchend', (e) => {
+            if (!e.changedTouches || e.changedTouches.length === 0) return;
+            const t = e.changedTouches[0];
+            const dy = t.clientY - touchStartY;
+            const dx = t.clientX - touchStartX;
+            const dt = Date.now() - touchStartTime;
+
+            const isVertical = Math.abs(dy) > Math.abs(dx);
+            const farEnough = Math.abs(dy) > 40;
+            const fastEnough = dt < 600; // чтобы не срабатывать на медленную прокрутку
+
+            if (isVertical && farEnough && fastEnough) {
+                if (dy < 0) {
+                    goNext();
+                } else {
+                    goPrev();
+                }
+            }
+        }, { passive: true });
+
+        // Скролл мышью (не даём улететь страницу, листаем видео)
+        videoWrapper.addEventListener('wheel', (e) => {
+            // Немного ограничим частоту
+            if (wheelCooldown) return;
+            wheelCooldown = true;
+            setTimeout(() => wheelCooldown = false, 300);
+
+            if (Math.abs(e.deltaY) < 10) return;
+
+            if (e.deltaY > 0) {
+                goNext();
+            } else {
+                goPrev();
+            }
+
+            e.preventDefault();
+        }, { passive: false });
+    }
+
+    if (btnSearchGo) {
+        btnSearchGo.addEventListener('click', () => runSearch());
+    }
+
+    if (searchAiToggle) {
+        const saved = localStorage.getItem('searchUseAi');
+        if (saved !== null) {
+            searchAiToggle.checked = saved === 'true';
+        }
+        searchAiToggle.addEventListener('change', () => {
+            localStorage.setItem('searchUseAi', searchAiToggle.checked ? 'true' : 'false');
+            if (!searchAiToggle.checked) {
+                closeSearchAiStream();
+                resetSearchAiStream();
+            }
+        });
+    }
+
+    if (searchInputEl) {
+        searchInputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                runSearch();
+            }
+        });
+        let suggestTimer = null;
+        searchInputEl.addEventListener('input', () => {
+            const q = (searchInputEl.value || '').trim();
+            if (suggestTimer) clearTimeout(suggestTimer);
+            if (!q) {
+                clearSuggestDropdown();
+                return;
+            }
+            suggestTimer = setTimeout(() => runSuggest(q), 250);
+        });
+    }
+    if (searchPrevBtn) {
+        searchPrevBtn.addEventListener('click', () => {
+            if (searchPaging.loading || searchPaging.page <= 0) return;
+            loadSearchPage(searchPaging.page - 1);
+        });
+    }
+    if (searchNextBtn) {
+        searchNextBtn.addEventListener('click', () => {
+            const totalPages = searchTotalPages();
+            if (searchPaging.loading || totalPages === 0) return;
+            const nextPage = searchPaging.page + 1;
+            if (nextPage >= totalPages) return;
+            loadSearchPage(nextPage);
+        });
+    }
+    if (suggestDropdown && searchInputWrapper) {
+        document.addEventListener('click', (e) => {
+            if (!suggestDropdown.classList.contains('visible')) return;
+            if (searchInputWrapper.contains(e.target)) return;
+            clearSuggestDropdown();
+        });
+    }
+
+    function clearSuggestDropdown() {
+        if (suggestDropdown) {
+            suggestDropdown.innerHTML = '';
+            suggestDropdown.classList.remove('visible');
+        }
+    }
+
+    function searchTotalPages() {
+        if (!searchPaging.size || !searchPaging.total) return 0;
+        return Math.max(1, Math.ceil(searchPaging.total / searchPaging.size));
+    }
+
+    function updateSearchPagingControls() {
+        if (!searchPagingControls || !searchPrevBtn || !searchNextBtn || !searchPageInfoEl) return;
+        const totalPages = searchTotalPages();
+        if (totalPages <= 1) {
+            searchPagingControls.style.display = 'none';
+            searchPrevBtn.disabled = true;
+            searchNextBtn.disabled = true;
+            searchPageInfoEl.textContent = '-';
+            return;
+        }
+        const current = Math.min(searchPaging.page + 1, totalPages);
+        searchPagingControls.style.display = 'flex';
+        searchPageInfoEl.textContent = current + ' / ' + totalPages;
+        searchPrevBtn.disabled = searchPaging.loading || searchPaging.page <= 0;
+        searchNextBtn.disabled = searchPaging.loading || current >= totalPages;
+    }
+
+    function isSearchAiEnabled() {
+        return !searchAiToggle || searchAiToggle.checked;
+    }
+
+    function closeSearchAiStream() {
+        if (searchAiSource) {
+            searchAiSource.close();
+            searchAiSource = null;
+        }
+    }
+
+    function resetSearchAiStream() {
+        searchAiOutput = { rewrite: '', expand: '' };
+        searchAiPhase = '';
+        if (searchAiStreamEl) {
+            searchAiStreamEl.textContent = '';
+        }
+        if (searchAiContextEl) {
+            searchAiContextEl.textContent = '';
+        }
+        if (searchAiContextWrap) {
+            searchAiContextWrap.open = false;
+        }
+    }
+
+    function renderSearchAiStream() {
+        if (!searchAiStreamEl) return;
+        const parts = [];
+        if (searchAiOutput.rewrite) {
+            parts.push('rewrite: ' + searchAiOutput.rewrite);
+        }
+        if (searchAiOutput.expand) {
+            parts.push('expand: ' + searchAiOutput.expand);
+        }
+        if (parts.length) {
+            searchAiStreamEl.textContent = parts.join('\n\n');
+            return;
+        }
+        if (searchAiPhase) {
+            searchAiStreamEl.textContent = searchAiPhase;
+            return;
+        }
+        searchAiStreamEl.textContent = 'Ожидание ответа от модели...';
+    }
+
+    function startSearchAiStream(query) {
+        closeSearchAiStream();
+        resetSearchAiStream();
+        let doneResolve;
+        const donePromise = new Promise((resolve) => {
+            doneResolve = resolve;
+        });
+        let finished = false;
+        let timeoutId = null;
+        const finish = () => {
+            if (finished) return;
+            finished = true;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            doneResolve();
+        };
+        if (!searchAiStreamEl || !query || !isSearchAiEnabled()) {
+            finish();
+            return donePromise;
+        }
+        searchAiPhase = 'Запрашиваем модель...';
+        renderSearchAiStream();
+        const useAi = isSearchAiEnabled();
+        const streamPage = Number.isFinite(searchPaging.page) ? searchPaging.page : 0;
+        const streamSize = Number.isFinite(searchPaging.size) ? searchPaging.size : SEARCH_PAGE_SIZE;
+        const url = apiBase + `/api/search/llm/stream?q=${encodeURIComponent(query)}&ai=${useAi}&page=${streamPage}&size=${streamSize}`;
+        const source = new EventSource(url);
+        searchAiSource = source;
+        timeoutId = setTimeout(() => {
+            searchAiPhase = 'LLM: ответ задерживается';
+            renderSearchAiStream();
+        }, SEARCH_AI_WAIT_MS);
+
+        source.addEventListener('status', (e) => {
+            const value = (e.data || '').trim();
+            if (!value) return;
+            if (value === 'rewrite:start') {
+                searchAiPhase = 'LLM: rewrite...';
+            } else if (value === 'rewrite:done') {
+                searchAiPhase = 'LLM: rewrite готово';
+            } else if (value === 'expand:start') {
+                searchAiPhase = 'LLM: expand...';
+            } else if (value === 'expand:done') {
+                searchAiPhase = 'LLM: expand готово';
+            } else if (value === 'too_short') {
+                searchAiPhase = 'LLM: запрос слишком короткий';
+                closeSearchAiStream();
+                finish();
+            } else if (value.startsWith('llm:disabled')) {
+                searchAiPhase = 'LLM: отключена';
+                closeSearchAiStream();
+                finish();
+            } else if (value === 'disabled') {
+                searchAiPhase = 'LLM: выключена';
+                closeSearchAiStream();
+                finish();
+            } else if (value === 'skip:short') {
+                searchAiPhase = 'LLM: пропуск';
+                closeSearchAiStream();
+                finish();
+            } else {
+                searchAiPhase = 'LLM: ' + value;
+            }
+            renderSearchAiStream();
+        });
+
+        source.addEventListener('context', (e) => {
+            if (searchAiContextEl) {
+                searchAiContextEl.textContent = e.data || '';
+            }
+        });
+
+        source.addEventListener('rewrite', (e) => {
+            searchAiOutput.rewrite += e.data || '';
+            renderSearchAiStream();
+        });
+
+        source.addEventListener('expand', (e) => {
+            searchAiOutput.expand += e.data || '';
+            renderSearchAiStream();
+        });
+
+        source.addEventListener('expand-final', (e) => {
+            const payload = (e.data || '').trim();
+            if (payload) {
+                searchAiOutput.expand = payload;
+                renderSearchAiStream();
+            }
+        });
+
+        source.addEventListener('done', () => {
+            searchAiPhase = 'LLM: готово';
+            renderSearchAiStream();
+            closeSearchAiStream();
+            finish();
+        });
+
+        source.addEventListener('llm-error', (e) => {
+            searchAiPhase = 'LLM: ошибка ' + (e.data || '');
+            renderSearchAiStream();
+            closeSearchAiStream();
+            finish();
+        });
+
+        source.onerror = () => {
+            searchAiPhase = 'LLM: ошибка подключения';
+            renderSearchAiStream();
+            closeSearchAiStream();
+            finish();
+        };
+        return donePromise;
+    }
+
+    async function runSuggest(query) {
+        if (!suggestDropdown) return;
+        suggestDropdown.innerHTML = '<div class="suggest-item">Ищу подсказки…</div>';
+        suggestDropdown.classList.add('visible');
+        try {
+            const res = await fetch(apiBase + `/api/search/videos/suggest?q=${encodeURIComponent(query)}&ai=false`, {
+                headers: authHeaders()
+            });
+            if (!res.ok) throw new Error(await readApiError(res));
+            const items = await res.json();
+            if (!Array.isArray(items) || items.length === 0) {
+                suggestDropdown.innerHTML = '<div class="suggest-item">Нет подсказок</div>';
+                suggestDropdown.classList.add('visible');
+                return;
+            }
+            suggestDropdown.innerHTML = '';
+            items.forEach(v => {
+                const row = document.createElement('div');
+                row.className = 'suggest-item';
+                row.innerHTML = `<div>${v.name || '(без названия)'}</div><div class=\"suggest-meta\">${formatDate(v.uploadedAt)} · ${humanSize(v.contentSize || 0)}</div>`;
+                row.addEventListener('click', () => {
+                    searchInputEl.value = v.name || '';
+                    clearSuggestDropdown();
+                    const idx = videosGlobalIndexByUuid(v.uuid);
+                    if (idx !== -1) {
+                        activateTab('feed');
+                        playByIndex(idx);
+                    } else {
+                        runSearch();
+                    }
+                });
+                suggestDropdown.appendChild(row);
+            });
+            suggestDropdown.classList.add('visible');
+        } catch (e) {
+            console.error(e);
+            suggestDropdown.innerHTML = '<div class="suggest-item">Ошибка: ' + e.message + '</div>';
+            suggestDropdown.classList.add('visible');
+        }
+    }
+
+    async function loadSearchPage(page) {
+        const q = searchPaging.query || (searchInputEl ? (searchInputEl.value || '').trim() : '');
+        if (!q) {
+            setStatusSearch('\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u0430\u043f\u0440\u043e\u0441', 'error');
+            return;
+        }
+        if (!searchResultsEl) return;
+        searchPaging.loading = true;
+        if (btnSearchGo) {
+            btnSearchGo.disabled = true;
+        }
+        updateSearchPagingControls();
+        setStatusSearch('\u0418\u0449\u0443\u2026', 'ok');
+        searchResultsEl.innerHTML = '';
+        try {
+            const useAi = isSearchAiEnabled();
+            const res = await fetch(
+                apiBase + `/api/search/videos?q=${encodeURIComponent(q)}&page=${page}&size=${searchPaging.size}&ai=${useAi}`,
+                { headers: authHeaders() }
+            );
+            if (!res.ok) {
+                throw new Error(await readApiError(res));
+            }
+            const pageData = await res.json(); // Page<FileMetadataDto>
+            const items = Array.isArray(pageData.content)
+                ? pageData.content
+                : (Array.isArray(pageData) ? pageData : []);
+            const pageNumber = typeof pageData.page === 'number'
+                ? pageData.page
+                : (typeof pageData.number === 'number' ? pageData.number : page);
+            const pageSize = typeof pageData.size === 'number' ? pageData.size : searchPaging.size;
+            const total = typeof pageData.totalElements === 'number'
+                ? pageData.totalElements
+                : (typeof pageData.total === 'number' ? pageData.total : items.length);
+
+            searchPaging.page = pageNumber;
+            searchPaging.size = pageSize;
+            searchPaging.total = total;
+            updateSearchPagingControls();
+
+            if (searchCountEl) {
+                searchCountEl.textContent = total + ' \u0432\u0438\u0434\u0435\u043e';
+            }
+
+            if (!items.length) {
+                searchResultsEl.innerHTML = '<div class="studio-row-meta">\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e</div>';
+                setStatusSearch('', '');
+                return;
+            }
+
+            items.forEach(v => {
+                const row = document.createElement('div');
+                row.className = 'studio-row';
+
+                const header = document.createElement('div');
+                header.className = 'studio-row-header';
+                const title = document.createElement('div');
+                title.className = 'studio-row-title';
+                title.textContent = v.name || '(\u0431\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f)';
+                header.appendChild(title);
+
+                const meta = document.createElement('div');
+                meta.className = 'studio-row-meta';
+                meta.textContent = `${formatDate(v.uploadedAt)} \u00b7 ${humanSize(v.contentSize)}`;
+
+                const desc = document.createElement('div');
+                desc.className = 'studio-row-meta';
+                desc.textContent = v.description || '';
+
+                row.appendChild(header);
+                row.appendChild(meta);
+                if (desc.textContent) row.appendChild(desc);
+
+                row.addEventListener('click', () => {
+                    const idx = videosGlobalIndexByUuid(v.uuid);
+                    if (idx !== -1) {
+                        activateTab('feed');
+                        playByIndex(idx);
+                    }
+                });
+
+                searchResultsEl.appendChild(row);
+            });
+
+            setStatusSearch('', '');
+        } catch (e) {
+            console.error(e);
+            setStatusSearch('\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u043e\u0438\u0441\u043a\u0430: ' + e.message, 'error');
+        } finally {
+            searchPaging.loading = false;
+            if (btnSearchGo) {
+                btnSearchGo.disabled = false;
+            }
+            updateSearchPagingControls();
+        }
+    }
+
+    async function runSearch() {
+        const q = (searchInputEl ? (searchInputEl.value || '') : '').trim();
+        if (!q) {
+            setStatusSearch('\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u0430\u043f\u0440\u043e\u0441', 'error');
+            if (btnSearchGo) {
+                btnSearchGo.disabled = false;
+            }
+            return;
+        }
+        if (searchPaging.loading) {
+            return;
+        }
+        closeSearchAiStream();
+        resetSearchAiStream();
+        if (searchResultsEl) {
+            searchResultsEl.innerHTML = '';
+        }
+        if (btnSearchGo) {
+            btnSearchGo.disabled = true;
+        }
+        searchPaging.loading = true;
+        searchPaging.query = q;
+        searchPaging.page = 0;
+        searchPaging.size = SEARCH_PAGE_SIZE;
+        searchPaging.total = 0;
+        updateSearchPagingControls();
+        clearSuggestDropdown();
+        const aiStreamPromise = startSearchAiStream(q);
+        await loadSearchPage(0);
+        await aiStreamPromise;
+    }
+
+
+    // старт
+    initAuth();
+    showFeedLoader(true, 'Готовим ленту…');
+    loadVideoPage(0, false).then(() => {
+        loadActiveJobsFromServer();
+    });
+</script>
+</body>
+</html>

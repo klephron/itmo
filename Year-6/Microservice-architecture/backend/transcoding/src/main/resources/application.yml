@@ -1,0 +1,59 @@
+server:
+  port: ${PORT:0}
+
+# ffmpeg/ffprobe paths are provided via env (TRANSCODER_FFMPEG_PATH/TRANSCODER_FFPROBE_PATH)
+# or OS-specific profile (see application-windows.yml)
+
+spring:
+  application:
+    name: transcoding-service
+  profiles:
+    default: dev
+  #  cloud:
+  #    loadbalancer:
+  #      configurations: round_robin
+  #      cache:
+  #        enabled: true
+  #        ttl: 2s
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:6}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "ru.itmo.zavar.brainstop.*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${random.uuid}
+
+springdoc:
+  swagger-ui:
+    display-request-duration: true
+    urls-primary-name: transcoding-service
+
+app:
+  jwt:
+    secret: "super-secret-key-change-me-to-long-random-string"
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
