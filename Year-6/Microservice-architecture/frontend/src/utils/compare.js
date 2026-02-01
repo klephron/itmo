@@ -1,0 +1,1 @@
+export const objectsAreEqual = (a, b) => a && b && Object.keys(a).every((k) => a[k] === b[k]);

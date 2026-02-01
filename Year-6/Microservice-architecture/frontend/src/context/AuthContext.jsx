@@ -1,0 +1,88 @@
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { apiBase, authHeaders, getAvatarUrl } from '../api/api';
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+    const [token, setToken] = useState(null);
+    const [user, setUser] = useState(null); // { userId, username, displayName, roles, avatarUrl }
+    const [authReady, setAuthReady] = useState(false);
+
+    const isModerator = useMemo(() => {
+        return !!user?.roles?.includes('MODERATOR') || !!user?.roles?.includes('ADMIN');
+    }, [user?.roles]);
+
+    const isAdmin = useMemo(() => {
+        return !!user?.roles?.includes('ADMIN');
+    }, [user?.roles]);
+
+    const setAuth = useCallback((newToken, newUser) => {
+        if (newToken) {
+            setToken(newToken);
+            setUser(newUser ?? null);
+            localStorage.setItem('authToken', newToken);
+        } else {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('authToken');
+        }
+    }, []);
+
+    const initAuth = useCallback(async () => {
+        const savedToken = localStorage.getItem('authToken');
+
+        if (!savedToken) {
+            setAuth(null, null);
+            setAuthReady(true);
+            return;
+        }
+
+        setToken(savedToken);
+
+        try {
+            const res = await fetch(apiBase + '/api/auth/me', {
+                headers: authHeaders(savedToken)
+            });
+
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    setAuth(null, null);
+                }
+                return;
+            }
+
+            const data = await res.json();
+            setUser({
+                userId: data.userId,
+                username: data.username,
+                displayName: data.displayName,
+                roles: data.roles ?? [],
+                avatarUrl: getAvatarUrl(data.userId),
+            });
+        } finally {
+            setAuthReady(true);
+        }
+    }, [setAuth]);
+
+    useEffect(() => {
+        initAuth();
+    }, [initAuth]);
+
+    const value = useMemo(() => ({
+        token,
+        user,
+        authReady,
+        isModerator,
+        isAdmin,
+        setAuth,
+        initAuth,
+    }), [token, user, isModerator, isAdmin, setAuth, initAuth, authReady]);
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+    const ctx = useContext(AuthContext);
+    if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+    return ctx;
+}

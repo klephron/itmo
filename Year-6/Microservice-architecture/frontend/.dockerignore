@@ -1,0 +1,7 @@
+.git/
+dist/
+node_modules/
+.gitlab-ci.yml
+Dockerfile
+README.md
+.env.development
