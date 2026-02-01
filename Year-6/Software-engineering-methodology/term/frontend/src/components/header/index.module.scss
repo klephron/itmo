@@ -1,0 +1,39 @@
+.header {
+  background-color: lightgray;
+  display: flex;
+  align-items: stretch;
+}
+
+.element {
+  &:not(:first-child) {
+    border-left: 1px solid #000;
+  }
+
+  padding: 3px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  overflow: hidden;
+  white-space: nowrap;
+
+  // for running text
+  width: 100%;
+}
+
+.runningtext {
+  display: inline-block;
+  animation: marquee 10s linear infinite;
+  width: 100%;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}

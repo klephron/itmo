@@ -1,0 +1,25 @@
+.dashboard {
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: auto 1fr;
+}
+
+.topleft {
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
+}
+
+.topright {
+  border-bottom: 1px solid black;
+}
+
+.bottomleft {
+  border-right: 1px solid black;
+  overflow: auto;
+}
+
+.bottomright {
+  overflow: auto;
+}

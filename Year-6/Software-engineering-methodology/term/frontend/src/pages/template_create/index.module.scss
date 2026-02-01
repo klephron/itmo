@@ -1,0 +1,45 @@
+.root {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+.error {
+  border: 1px solid #d14343;
+  background-color: #fce8e6;
+  color: #9f2d2d;
+  padding: 10px;
+  border-radius: 4px;
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+}
+
+.table {
+  border: 1px solid black;
+  border-collapse: collapse;
+
+  tr {
+    border: 1px solid black;
+
+    td,
+    th {
+      padding: 5px;
+      border: 1px solid black;
+    }
+  }
+}

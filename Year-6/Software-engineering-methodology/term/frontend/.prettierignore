@@ -1,0 +1,5 @@
+**/.git
+**/node_modules
+pnpm-lock.yaml
+src/api/gen**
+src/api/pai-api-1.0.yml

@@ -1,0 +1,73 @@
+.root {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+.formCard {
+  border: 1px solid #000;
+  padding: 10px;
+  border-radius: 4px;
+  gap: 10px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  textarea,
+  input {
+    width: 100%;
+  }
+}
+
+.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #991b1b;
+}
+
+.hint {
+  color: #7f1d1d;
+  font-size: 12px;
+}
+
+.table {
+  border: 1px solid black;
+  border-collapse: collapse;
+
+  tr {
+    border: 1px solid black;
+
+    td,
+    th {
+      padding: 5px;
+      border: 1px solid black;
+    }
+  }
+}

@@ -1,0 +1,44 @@
+.root {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+  }
+}
+
+.table {
+  border: 1px solid #000;
+  border-collapse: collapse;
+  width: 100%;
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 6px;
+    vertical-align: top;
+  }
+}
+
+.hint {
+  color: #7f1d1d;
+  font-size: 12px;
+}
+
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

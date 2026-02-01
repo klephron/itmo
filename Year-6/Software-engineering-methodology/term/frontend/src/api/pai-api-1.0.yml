@@ -1,0 +1,2013 @@
+openapi: 3.0.1
+info:
+  title: PAI API
+  version: "1.0"
+security:
+- bearerAuth: []
+paths:
+  /api/cases/{id}:
+    get:
+      tags:
+      - cases
+      summary: Получить дело
+      description: Возвращает дело по его идентификатору
+      operationId: getCase
+      parameters:
+      - name: id
+        in: path
+        description: ID дела
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: Дело найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseDto"
+        "404":
+          description: Дело не найдено
+      security:
+      - bearerAuth: []
+  /api/cases/{id}/clues:
+    get:
+      tags:
+      - cases
+      summary: Получить улики дела
+      description: "Возвращает список улик, связанных с делом"
+      operationId: getCaseClues
+      parameters:
+      - name: id
+        in: path
+        description: ID дела
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: Список улик
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClueMainInfoDto"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - cases
+      summary: Добавить улику к делу
+      description: "Создаёт новую улику, связанную с делом"
+      operationId: addCaseClue
+      parameters:
+      - name: id
+        in: path
+        description: ID дела
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      requestBody:
+        description: Данные для создания улики
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddClueRequest"
+        required: true
+      responses:
+        "200":
+          description: Улика успешно добавлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClueMainInfoDto"
+        "404":
+          description: Ошибка создания улики (дело не найдено или параметры некорректны)
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/cases/{id}/suspects:
+    get:
+      tags:
+      - cases
+      operationId: getAllCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: getAllCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseSuspectMainInfoDto"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - cases
+      operationId: addCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCaseSuspectRequest"
+        required: true
+      responses:
+        "200":
+          description: addCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
+  /api/cases/{id}/templates:
+    get:
+      tags:
+      - cases
+      summary: Получить шаблоны дела
+      description: "Возвращает список шаблонов, связанных с делом"
+      operationId: getCaseTemplates
+      parameters:
+      - name: id
+        in: path
+        description: ID дела
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: Список шаблонов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateMainInfoDto"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - cases
+      summary: Добавить шаблон к делу
+      description: "Создаёт новый шаблон, связанный с делом"
+      operationId: addCaseTemplate
+      parameters:
+      - name: id
+        in: path
+        description: ID дела
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      requestBody:
+        description: Данные для создания шаблона
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddTemplateRequest"
+        required: true
+      responses:
+        "200":
+          description: Шаблон успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateDto"
+        "404":
+          description: Ошибка создания шаблона (дело не найдено или параметры некорректны)
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/clues/{id}:
+    get:
+      tags:
+      - clues
+      summary: Получить улику
+      description: Возвращает информацию об улике по её идентификатору
+      operationId: getClue
+      parameters:
+      - name: id
+        in: path
+        description: ID улики
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 17
+      responses:
+        "200":
+          description: Улика найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClueDto"
+        "404":
+          description: Улика не найдена
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - clues
+      summary: Обновить улику
+      description: Обновляет параметры улики по идентификатору
+      operationId: updateClue
+      parameters:
+      - name: id
+        in: path
+        description: ID улики
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 17
+      requestBody:
+        description: Параметры для обновления улики
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClueRequest"
+        required: true
+      responses:
+        "200":
+          description: Улика успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClueDto"
+        "404":
+          description: Улика не найдена
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - clues
+      summary: Удалить улику
+      description: Удаляет улику по идентификатору
+      operationId: deleteClue
+      parameters:
+      - name: id
+        in: path
+        description: ID улики
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 17
+      responses:
+        "204":
+          description: Улика успешно удалена
+        "404":
+          description: Улика не найдена
+      security:
+      - bearerAuth: []
+  /api/incidents:
+    get:
+      tags:
+      - incidents
+      summary: Получить список инцидентов
+      description: Возвращает все инциденты
+      operationId: getIncidents
+      responses:
+        "200":
+          description: Список инцидентов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IncidentMainInfoDto"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - incidents
+      summary: Создать инцидент
+      description: Создаёт новый инцидент с заданными параметрами
+      operationId: addIncident
+      requestBody:
+        description: Параметры нового инцидента
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddIncidentRequest"
+        required: true
+      responses:
+        "200":
+          description: Инцидент успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentMainInfoDto"
+        "404":
+          description: Ошибка создания (не найден связанный объект)
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/incidents/{id}:
+    get:
+      tags:
+      - incidents
+      summary: Получить инцидент по ID
+      description: Возвращает подробную информацию об инциденте
+      operationId: getIncident
+      parameters:
+      - name: id
+        in: path
+        description: ID инцидента
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "200":
+          description: Инцидент найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentDto"
+        "404":
+          description: Инцидент не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - incidents
+      summary: Обновить инцидент
+      description: Обновляет данные существующего инцидента по идентификатору
+      operationId: updateIncident
+      parameters:
+      - name: id
+        in: path
+        description: ID инцидента
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        description: Новые параметры инцидента
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateIncidentRequest"
+        required: true
+      responses:
+        "200":
+          description: Инцидент успешно обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentMainInfoDto"
+        "404":
+          description: Инцидент не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - incidents
+      summary: Удалить инцидент
+      description: Удаляет инцидент по идентификатору
+      operationId: deleteIncident
+      parameters:
+      - name: id
+        in: path
+        description: ID инцидента
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "204":
+          description: Инцидент успешно удалён
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Ошибка удаления (инцидент не найден или уже удалён)
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/incidents/{id}/case:
+    put:
+      tags:
+      - incidents
+      summary: Обновить дело по инциденту
+      description: "Обновляет существующее дело, связанное с инцидентом"
+      operationId: updateCaseForIncident
+      parameters:
+      - name: id
+        in: path
+        description: ID инцидента
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        description: Новые параметры дела
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseRequest"
+        required: true
+      responses:
+        "200":
+          description: Дело успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseDto"
+        "404":
+          description: Инцидент или дело не найдены
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - incidents
+      summary: Создать дело по инциденту
+      description: Добавляет новое дело к указанному инциденту
+      operationId: addCaseForIncident
+      parameters:
+      - name: id
+        in: path
+        description: ID инцидента
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        description: Параметры нового дела
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCaseRequest"
+        required: true
+      responses:
+        "200":
+          description: Дело успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseDto"
+        "404":
+          description: Инцидент не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/login:
+    post:
+      tags:
+      - auth
+      summary: Авторизация пользователя
+      description: "Проверяет логин и пароль, возвращает access и refresh токены,\
+        \ а также информацию о пользователе"
+      operationId: login
+      requestBody:
+        description: Данные для входа (логин и пароль)
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: Аутентификация успешна
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Неверный логин или пароль
+  /api/notifications:
+    get:
+      tags:
+      - notifications
+      summary: Получить список уведомлений
+      description: Возвращает список всех уведомлений. Можно фильтровать по статусу
+        (прочитано/непрочитано/все) и диапазону дат.
+      operationId: getNotifications
+      parameters:
+      - name: to
+        in: query
+        description: "Дата и время конца интервала (например, 2025-05-26T17:48:43.000Z)"
+        schema:
+          type: string
+          format: date-time
+          nullable: true
+        example: 2025-05-26T17:48:43.000Z
+      - name: from
+        in: query
+        description: "Дата и время начала интервала (например, 2025-05-26T17:28:43.000Z)"
+        schema:
+          type: string
+          format: date-time
+          nullable: true
+        example: 2025-05-26T17:28:43.000Z
+      - name: status
+        in: query
+        description: Статус уведомлений для фильтрации
+        schema:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/NotificationsController.Status"
+        example: ALL
+      responses:
+        "200":
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationDto"
+      security:
+      - bearerAuth: []
+  /api/notifications/{id}:
+    get:
+      tags:
+      - notifications
+      summary: Получить уведомление
+      description: Возвращает уведомление по его идентификатору
+      operationId: getNotification
+      parameters:
+      - name: id
+        in: path
+        description: ID уведомления
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 5
+      responses:
+        "200":
+          description: Уведомление найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationDto"
+        "404":
+          description: Уведомление не найдено
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - notifications
+      summary: Обновить уведомление
+      description: "Обновляет уведомление, например, устанавливает дату прочтения"
+      operationId: updateNotification
+      parameters:
+      - name: id
+        in: path
+        description: ID уведомления
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 5
+      requestBody:
+        description: Данные для обновления уведомления
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationRequest"
+        required: true
+      responses:
+        "200":
+          description: Уведомление успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationDto"
+        "404":
+          description: Уведомление не найдено
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - notifications
+      summary: Удалить уведомление
+      description: Удаляет уведомление по идентификатору
+      operationId: deleteNotification
+      parameters:
+      - name: id
+        in: path
+        description: ID уведомления
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 5
+      responses:
+        "204":
+          description: Уведомление успешно удалено
+        "404":
+          description: Уведомление не найдено
+      security:
+      - bearerAuth: []
+  /api/suspects/{id}:
+    get:
+      operationId: getCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Шаблон успешно обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseSuspectDto"
+        "404":
+          description: Шаблон не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+    post:
+      operationId: updateCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseSuspectRequest"
+        required: true
+      responses:
+        "200":
+          description: updateCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
+    delete:
+      operationId: deleteCaseSuspect
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: deleteCaseSuspect 200 response
+          content:
+            application/json:
+              schema:
+                type: object
+      security:
+      - bearerAuth: []
+  /api/templates/{id}:
+    get:
+      tags:
+      - templates
+      summary: Получить шаблон
+      description: Возвращает шаблон по идентификатору
+      operationId: getTemplate
+      parameters:
+      - name: id
+        in: path
+        description: ID шаблона
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      responses:
+        "200":
+          description: Шаблон найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateDto"
+        "404":
+          description: Шаблон не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - templates
+      summary: Обновить шаблон
+      description: Обновляет шаблон по идентификатору
+      operationId: updateTemplate
+      parameters:
+      - name: id
+        in: path
+        description: ID шаблона
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      requestBody:
+        description: Данные для обновления шаблона
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTemplateRequest"
+        required: true
+      responses:
+        "200":
+          description: Шаблон успешно обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateDto"
+        "404":
+          description: Шаблон не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - templates
+      summary: Удалить шаблон
+      description: Удаляет шаблон по идентификатору
+      operationId: deleteTemplate
+      parameters:
+      - name: id
+        in: path
+        description: ID шаблона
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      responses:
+        "200":
+          description: Шаблон успешно удалён
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: Шаблон не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/templates/{id}/cdb:
+    post:
+      tags:
+      - templates
+      summary: Опубликовать шаблон в Центральной БД
+      description: Переводит шаблон в статус 'добавлен в CDB' (Центральную Базу Данных)
+      operationId: addTemplateToCDB
+      parameters:
+      - name: id
+        in: path
+        description: ID шаблона
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      responses:
+        "200":
+          description: Шаблон успешно опубликован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateDto"
+        "404":
+          description: Шаблон не найден
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/test/check/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/test/check2/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions2 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/test/check3/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions3 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/test/check4/{id}:
+    get:
+      tags:
+      - test
+      operationId: checkPermissions4
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: checkPermissions4 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/test/hello:
+    get:
+      tags:
+      - test
+      operationId: index
+      responses:
+        "200":
+          description: index 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/test/manual/{id}:
+    get:
+      tags:
+      - test
+      operationId: manualCheck
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: manualCheck 200 response
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/test/register:
+    post:
+      tags:
+      - test
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: register 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+  /api/users:
+    get:
+      tags:
+      - users
+      summary: Получить список пользователей
+      description: Возвращает список всех пользователей
+      operationId: getUsers
+      responses:
+        "200":
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserInfoResponse"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - users
+      summary: Добавить пользователя
+      description: Регистрирует нового пользователя
+      operationId: addUser
+      requestBody:
+        description: Данные для регистрации пользователя
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "201":
+          description: Пользователь успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+        "409":
+          description: Пользователь с таким логином уже существует
+      security:
+      - bearerAuth: []
+  /api/users/{id}:
+    get:
+      tags:
+      - users
+      summary: Получить пользователя по ID
+      description: Возвращает информацию о пользователе по идентификатору
+      operationId: getUser
+      parameters:
+      - name: id
+        in: path
+        description: ID пользователя
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "200":
+          description: Пользователь найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+        "404":
+          description: Пользователь не найден
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - users
+      summary: Удалить пользователя
+      description: Удаляет пользователя по идентификатору
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        description: ID пользователя
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "204":
+          description: Пользователь успешно удалён
+        "404":
+          description: Пользователь не найден
+      security:
+      - bearerAuth: []
+  /api/users/{id}/cases:
+    get:
+      tags:
+      - users
+      summary: Получить дела пользователя
+      description: "Возвращает список дел, связанных с пользователем"
+      operationId: getUserCases
+      parameters:
+      - name: id
+        in: path
+        description: ID пользователя
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "200":
+          description: Список дел пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserCaseDto"
+      security:
+      - bearerAuth: []
+  /api/users/{id}/location:
+    put:
+      tags:
+      - users
+      summary: Обновить местоположение пользователя
+      description: Обновляет координаты пользователя по идентификатору
+      operationId: updateUserLocation
+      parameters:
+      - name: id
+        in: path
+        description: ID пользователя
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        description: Новые координаты пользователя
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: Местоположение успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+        "404":
+          description: Пользователь не найден
+      security:
+      - bearerAuth: []
+  /api/users/{id}/permissions:
+    get:
+      tags:
+        - users
+      summary: Получить права пользователя
+      description: Возвращает список привилегий пользователя
+      operationId: getUserPermissions
+      parameters:
+      - name: id
+        in: path
+        description: ID пользователя
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        "200":
+          description: Права пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPermissionsResponse"
+        "404":
+          description: Пользователь не найден
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - users
+      summary: Обновить права пользователя
+      description: Изменяет список прав пользователя
+      operationId: updateUserPermissions
+      parameters:
+      - name: id
+        in: path
+        description: ID пользователя
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      requestBody:
+        description: Новый список прав пользователя
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPermissionsRequest"
+        required: true
+      responses:
+        "200":
+          description: Права пользователя обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPermissionsResponse"
+        "404":
+          description: Пользователь не найден
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    AddCaseRequest:
+      required:
+      - title
+      - users
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
+        users:
+          type: object
+          additionalProperties:
+            minLength: 1
+            type: string
+    AddCaseSuspectRequest:
+      required:
+      - identifier
+      - name
+      - status
+      - surname
+      type: object
+      properties:
+        name:
+          type: string
+        surname:
+          type: string
+        patronymic:
+          type: string
+          nullable: true
+        identifier:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        verdict:
+          type: string
+          nullable: true
+        accusation:
+          type: string
+          nullable: true
+    AddClueRequest:
+      required:
+      - description
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        description:
+          minLength: 1
+          type: string
+        status:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ClueEntity.Status"
+    AddIncidentRequest:
+      required:
+      - estimatedTime
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - reason
+      - type
+      type: object
+      properties:
+        applicant:
+          type: string
+          nullable: true
+        type:
+          minLength: 1
+          type: string
+        reason:
+          minLength: 1
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+        estimatedTime:
+          type: string
+          format: date-time
+    AddTemplateRequest:
+      required:
+      - metadata
+      - title
+      type: object
+      properties:
+        title:
+          minLength: 1
+          type: string
+        metadata:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
+    CaseDto:
+      required:
+      - createdAt
+      - creatorId
+      - id
+      - incidentId
+      - status
+      - title
+      - updatedAt
+      - updatorId
+      - users
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/CaseEntity.Status"
+        incidentId:
+          type: integer
+          format: int64
+        users:
+          type: object
+          additionalProperties:
+            minLength: 1
+            type: string
+      description: DTO for ru.itmopai.backend.entity.CaseEntity
+    CaseEntity.Status:
+      type: string
+      enum:
+      - OPENED
+      - FROZEN
+      - CLOSED
+      - REJECTED
+    CaseSuspectDto:
+      required:
+      - accusation
+      - createdAt
+      - creatorId
+      - id
+      - identifier
+      - name
+      - patronymic
+      - relatedCaseId
+      - status
+      - surname
+      - updatedAt
+      - updatorId
+      - verdict
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        name:
+          type: string
+        surname:
+          type: string
+        patronymic:
+          type: string
+        identifier:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        relatedCaseId:
+          type: integer
+          format: int64
+        verdict:
+          type: string
+        accusation:
+          type: string
+      description: DTO for ru.itmopai.backend.entity.CaseSuspectEntity
+    CaseSuspectEntity.Status:
+      type: string
+      enum:
+      - SUSPECTED
+      - JUSTIFIED
+      - ACCUSED
+    CaseSuspectMainInfoDto:
+      required:
+      - accusation
+      - id
+      - identifier
+      - name
+      - patronymic
+      - status
+      - surname
+      - verdict
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        surname:
+          type: string
+        patronymic:
+          type: string
+        identifier:
+          type: string
+        status:
+          $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        verdict:
+          type: string
+        accusation:
+          type: string
+      description: DTO for ru.itmopai.backend.entity.CaseSuspectEntity
+    ClueDto:
+      required:
+      - createdAt
+      - creatorId
+      - id
+      - relatedCaseId
+      - status
+      - title
+      - updatedAt
+      - updatorId
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/ClueEntity.Status"
+        metadata:
+          type: string
+          nullable: true
+        relatedCaseId:
+          type: integer
+          format: int64
+      description: DTO for ru.itmopai.backend.entity.ClueEntity
+    ClueEntity.Status:
+      type: string
+      enum:
+      - ACCEPTED
+      - REJECTED
+      - PENDING
+    ClueMainInfoDto:
+      required:
+      - id
+      - status
+      - title
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/ClueEntity.Status"
+      description: DTO for ru.itmopai.backend.entity.ClueEntity
+    IncidentDto:
+      required:
+      - createdAt
+      - creatorId
+      - estimatedTime
+      - id
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - reason
+      - type
+      - updatedAt
+      - updatorId
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        applicant:
+          type: string
+          nullable: true
+        type:
+          minLength: 1
+          type: string
+        reason:
+          minLength: 1
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+        estimatedTime:
+          type: string
+          format: date-time
+        relatedCaseId:
+          type: integer
+          format: int64
+          nullable: true
+      description: DTO for ru.itmopai.backend.entity.IncidentEntity
+    IncidentMainInfoDto:
+      required:
+      - estimatedTime
+      - id
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - reason
+      - type
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        applicant:
+          type: string
+          nullable: true
+        type:
+          minLength: 1
+          type: string
+        reason:
+          minLength: 1
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+        estimatedTime:
+          type: string
+          format: date-time
+      description: DTO for ru.itmopai.backend.entity.IncidentEntity
+    LocationUpdateRequest:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        altitude:
+          type: number
+          format: double
+          nullable: true
+    LoginRequest:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          minLength: 1
+          type: string
+        password:
+          minLength: 1
+          type: string
+    LoginResponse:
+      required:
+      - accessToken
+      - expiresIn
+      - iat
+      - id
+      - refreshToken
+      - username
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          format: int32
+        username:
+          type: string
+        id:
+          type: integer
+          format: int64
+        iat:
+          type: integer
+          format: int64
+    NotificationDto:
+      required:
+      - createdAt
+      - id
+      - title
+      - userId
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+      description: DTO for ru.itmopai.backend.entity.NotificationEntity
+    NotificationsController.Status:
+      type: string
+      enum:
+      - READ
+      - UNREAD
+      - ALL
+    RegisterRequest:
+      required:
+      - name
+      - password
+      - surname
+      - username
+      type: object
+      properties:
+        username:
+          minLength: 1
+          type: string
+        password:
+          minLength: 1
+          type: string
+        name:
+          minLength: 1
+          type: string
+        surname:
+          minLength: 1
+          type: string
+        patronymic:
+          type: string
+          nullable: true
+        primaryPosition:
+          type: string
+          nullable: true
+    TemplateDto:
+      required:
+      - createdAt
+      - creatorId
+      - id
+      - metadata
+      - relatedCaseId
+      - status
+      - title
+      - updatedAt
+      - updatorId
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        creatorId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatorId:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
+        title:
+          minLength: 1
+          type: string
+        status:
+          $ref: "#/components/schemas/TemplateEntity.Status"
+        metadata:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
+        uri:
+          type: string
+          nullable: true
+        cdbURI:
+          type: string
+          nullable: true
+        relatedCaseId:
+          type: integer
+          format: int64
+      description: DTO for ru.itmopai.backend.entity.TemplateEntity
+    TemplateEntity.Status:
+      type: string
+      enum:
+      - PENDING
+      - CREATED
+      - CDB_ADDED
+    TemplateMainInfoDto:
+      required:
+      - id
+      - metadata
+      - status
+      - title
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          minLength: 1
+          type: string
+        status:
+          $ref: "#/components/schemas/TemplateEntity.Status"
+        metadata:
+          minLength: 1
+          type: string
+        description:
+          type: string
+          nullable: true
+      description: DTO for ru.itmopai.backend.entity.TemplateEntity
+    UpdateCaseRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/CaseEntity.Status"
+        users:
+          type: object
+          additionalProperties:
+            minLength: 1
+            type: string
+          nullable: true
+    UpdateCaseSuspectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        surname:
+          type: string
+          nullable: true
+        patronymic:
+          type: string
+          nullable: true
+        identifier:
+          type: string
+          nullable: true
+        status:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/CaseSuspectEntity.Status"
+        verdict:
+          type: string
+          nullable: true
+        accusation:
+          type: string
+          nullable: true
+    UpdateClueRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ClueEntity.Status"
+    UpdateIncidentRequest:
+      type: object
+      properties:
+        applicant:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        locationLatitude:
+          type: number
+          format: double
+          nullable: true
+        locationLongitude:
+          type: number
+          format: double
+          nullable: true
+        locationAltitude:
+          type: number
+          format: double
+          nullable: true
+        estimatedTime:
+          type: string
+          format: date-time
+          nullable: true
+    UpdateNotificationRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        status:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/TemplateEntity.Status"
+        metadata:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+    UserCaseDto:
+      required:
+      - idRelatedCaseId
+      - idRelatedCaseTitle
+      - idUserId
+      - position
+      - status
+      type: object
+      properties:
+        idUserId:
+          type: integer
+          format: int64
+        idRelatedCaseId:
+          type: integer
+          format: int64
+        idRelatedCaseTitle:
+          type: string
+        position:
+          minLength: 1
+          type: string
+        status:
+          $ref: "#/components/schemas/UserCaseEntity.Status"
+      description: DTO for ru.itmopai.backend.entity.UserCaseEntity
+    UserCaseEntity.Status:
+      type: string
+      enum:
+      - WORKING
+      - VACATION
+      - TRANSFERED
+    UserDto:
+      required:
+      - id
+      - locationAltitude
+      - locationLatitude
+      - locationLongitude
+      - name
+      - surname
+      - username
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          minLength: 1
+          type: string
+        name:
+          minLength: 1
+          type: string
+        surname:
+          minLength: 1
+          type: string
+        patronymic:
+          type: string
+          nullable: true
+        primaryPosition:
+          type: string
+          nullable: true
+        locationLatitude:
+          type: number
+          format: double
+        locationLongitude:
+          type: number
+          format: double
+        locationAltitude:
+          type: number
+          format: double
+    UserInfoResponse:
+      required:
+      - id
+      - username
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+    UserPermissionsRequest:
+      type: object
+      properties:
+        permissions:
+          type: array
+          nullable: true
+          items:
+            type: string
+    UserPermissionsResponse:
+      required:
+      - permissions
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
